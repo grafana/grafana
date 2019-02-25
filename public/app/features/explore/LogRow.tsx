@@ -166,15 +166,14 @@ export class LogRow extends PureComponent<Props, State> {
               highlightClassName="logs-row__field-highlight"
             />
           )}
-          {!parsed &&
-            needsHighlighter && (
-              <Highlighter
-                textToHighlight={row.entry}
-                searchWords={highlights}
-                findChunks={findHighlightChunksInText}
-                highlightClassName={highlightClassName}
-              />
-            )}
+          {!parsed && needsHighlighter && (
+            <Highlighter
+              textToHighlight={row.entry}
+              searchWords={highlights}
+              findChunks={findHighlightChunksInText}
+              highlightClassName={highlightClassName}
+            />
+          )}
           {!parsed && !needsHighlighter && row.entry}
           {showFieldStats && (
             <div className="logs-row__stats">

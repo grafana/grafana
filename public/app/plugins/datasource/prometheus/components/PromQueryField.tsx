@@ -38,15 +38,17 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   const metricsOptions = _.chain(metrics)
     .filter(metric => !ruleRegex.test(metric))
     .groupBy(metric => metric.split(delimiter)[0])
-    .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
-      const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-      const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
-      return {
-        children,
-        label: prefix,
-        value: prefix,
-      };
-    })
+    .map(
+      (metricsForPrefix: string[], prefix: string): CascaderOption => {
+        const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        return {
+          children,
+          label: prefix,
+          value: prefix,
+        };
+      }
+    )
     .sortBy('label')
     .value();
 

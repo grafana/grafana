@@ -237,17 +237,16 @@ export default class Logs extends PureComponent<Props, State> {
           </div>
         </div>
 
-        {hasData &&
-          meta && (
-            <div className="logs-panel-meta">
-              {meta.map(item => (
-                <div className="logs-panel-meta__item" key={item.label}>
-                  <span className="logs-panel-meta__label">{item.label}:</span>
-                  <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {hasData && meta && (
+          <div className="logs-panel-meta">
+            {meta.map(item => (
+              <div className="logs-panel-meta__item" key={item.label}>
+                <span className="logs-panel-meta__label">{item.label}:</span>
+                <span className="logs-panel-meta__value">{renderMetaItem(item.value, item.kind)}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="logs-rows">
           {hasData &&
@@ -282,16 +281,14 @@ export default class Logs extends PureComponent<Props, State> {
             ))}
           {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
         </div>
-        {!loading &&
-          !hasData &&
-          !scanning && (
-            <div className="logs-panel-nodata">
-              No logs found.
-              <a className="link" onClick={this.onClickScan}>
-                Scan for older logs
-              </a>
-            </div>
-          )}
+        {!loading && !hasData && !scanning && (
+          <div className="logs-panel-nodata">
+            No logs found.
+            <a className="link" onClick={this.onClickScan}>
+              Scan for older logs
+            </a>
+          </div>
+        )}
 
         {scanning && (
           <div className="logs-panel-nodata">
