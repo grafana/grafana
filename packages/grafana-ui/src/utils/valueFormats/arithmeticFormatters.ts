@@ -4,14 +4,16 @@ export function toPercent(size: number, decimals: DecimalCount) {
   if (size === null) {
     return '';
   }
-  return toFixed(size, decimals) + '%';
+
+  return toFixed(100 * size, decimals) + '%';
 }
 
 export function toPercentUnit(size: number, decimals: DecimalCount) {
   if (size === null) {
     return '';
   }
-  return toFixed(100 * size, decimals) + '%';
+
+  return toFixed(size, decimals) + '%';
 }
 
 export function toHex0x(value: number, decimals: DecimalCount) {
