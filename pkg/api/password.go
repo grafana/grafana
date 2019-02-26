@@ -25,7 +25,8 @@ func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailFor
 
 	emailCmd := m.SendResetPasswordEmailCommand{User: userQuery.Result}
 	if err := bus.Dispatch(&emailCmd); err != nil {
-		return Error(500, "Failed to send email", err)
+		c.Logger.Error("Failed to send password reset email for ", "user", userQuery.LoginOrEmail)
+		return Error(200, "Email sent", err)
 	}
 
 	return Success("Email sent")
