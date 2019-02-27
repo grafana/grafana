@@ -496,9 +496,6 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 	}
 
 	alias := model.Get("alias").MustString()
-	/*if alias == "" {
-		alias = "{{metric}}_{{stat}}"
-	}*/
 
 	returnData := model.Get("returnData").MustBool(false)
 	highResolution := model.Get("highResolution").MustBool(false)
