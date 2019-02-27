@@ -4,10 +4,9 @@ import * as d3 from 'd3';
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
 
-
 export enum PiechartType {
   PIE = 'pie',
-  DONUT = 'donut'
+  DONUT = 'donut',
 }
 
 export interface PiechartDataPoint {
@@ -55,7 +54,7 @@ export class Piechart extends PureComponent<Props> {
     const height = this.canvasElement.height;
     const radius = Math.min(width, height) / 2;
 
-    const innerRadius = pieType === PiechartType.PIE? 0: radius;
+    const innerRadius = pieType === PiechartType.PIE ? 0 : radius;
 
     const context = this.canvasElement.getContext('2d');
     context.translate(width / 2, height / 2);
@@ -64,7 +63,8 @@ export class Piechart extends PureComponent<Props> {
     const pie = d3.pie();
 
     const arcs = pie(data);
-    const arc = d3.arc()
+    const arc = d3
+      .arc()
       .outerRadius(radius - 10)
       .innerRadius(innerRadius)
       .padAngle(0.03)
