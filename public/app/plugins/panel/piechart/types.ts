@@ -1,5 +1,7 @@
+import { PiechartType } from '@grafana/ui';
+
 export interface PiechartOptions {
-  pieType: string;
+  pieType: PiechartType;
   strokeWidth: number;
 
   valueOptions: PiechartValueOptions;
@@ -12,7 +14,7 @@ export interface PiechartValueOptions {
 }
 
 export const defaults: PiechartOptions = {
-  pieType: 'pie',
+  pieType: PiechartType.PIE,
   strokeWidth: 1,
   valueOptions: {
     unit: 'short',
