@@ -149,7 +149,7 @@ export class GrafanaApp {
 
     // Preload selected app plugins
     _.each(config.bootData.settings.preload, pluginId => {
-      importPluginModule( `plugins/${pluginId}/module` );
+      importPluginModule(`plugins/${pluginId}/module`);
     });
   }
 }
