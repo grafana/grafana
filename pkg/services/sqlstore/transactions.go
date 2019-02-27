@@ -89,7 +89,7 @@ func inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, 
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(e); err != nil {
-				log.Error(3, "Failed to publish event after commit", err)
+				log.Error(3, "Failed to publish event after commit. error: %v", err)
 			}
 		}
 	}

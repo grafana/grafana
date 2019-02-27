@@ -1,14 +1,14 @@
 import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
 
-describe('HeatmapCtrl', function() {
-  let ctx = <any>{};
+describe('HeatmapCtrl', () => {
+  const ctx = {} as any;
 
-  let $injector = {
+  const $injector = {
     get: () => {},
   };
 
-  let $scope = {
+  const $scope = {
     $on: () => {},
   };
 
@@ -23,9 +23,9 @@ describe('HeatmapCtrl', function() {
     ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
   });
 
-  describe('when time series are outside range', function() {
-    beforeEach(function() {
-      var data = [
+  describe('when time series are outside range', () => {
+    beforeEach(() => {
+      const data = [
         {
           target: 'test.cpu1',
           datapoints: [[45, 1234567890], [60, 1234567899]],
@@ -36,21 +36,21 @@ describe('HeatmapCtrl', function() {
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsOutside', function() {
+    it('should set datapointsOutside', () => {
       expect(ctx.ctrl.dataWarning.title).toBe('Data points outside time range');
     });
   });
 
-  describe('when time series are inside range', function() {
-    beforeEach(function() {
-      var range = {
+  describe('when time series are inside range', () => {
+    beforeEach(() => {
+      const range = {
         from: moment()
           .subtract(1, 'days')
           .valueOf(),
         to: moment().valueOf(),
       };
 
-      var data = [
+      const data = [
         {
           target: 'test.cpu1',
           datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
@@ -61,18 +61,18 @@ describe('HeatmapCtrl', function() {
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsOutside', function() {
+    it('should set datapointsOutside', () => {
       expect(ctx.ctrl.dataWarning).toBe(null);
     });
   });
 
-  describe('datapointsCount given 2 series', function() {
-    beforeEach(function() {
-      var data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+  describe('datapointsCount given 2 series', () => {
+    beforeEach(() => {
+      const data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should set datapointsCount warning', function() {
+    it('should set datapointsCount warning', () => {
       expect(ctx.ctrl.dataWarning.title).toBe('No data points');
     });
   });

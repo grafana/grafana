@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-xorm/xorm"
+	"github.com/lib/pq"
 )
 
 type Postgres struct {
@@ -100,9 +101,9 @@ func (db *Postgres) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Postgres) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{"grafana", tableName}
-	sql := "SELECT table_name FROM information_schema.tables WHERE table_schema=? and table_name=?"
+func (db *Postgres) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+	args := []interface{}{tableName, indexName}
+	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
 	return sql, args
 }
 
@@ -135,4 +136,14 @@ func (db *Postgres) CleanDB() error {
 	}
 
 	return nil
+}
+
+func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+	if driverErr, ok := err.(*pq.Error); ok {
+		if driverErr.Code == "23505" {
+			return true
+		}
+	}
+
+	return false
 }

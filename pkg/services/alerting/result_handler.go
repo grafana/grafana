@@ -5,8 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -67,6 +67,15 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			}
 
 			handler.log.Error("Failed to save state", "error", err)
+		} else {
+
+			// StateChanges is used for de duping alert notifications
+			// when two servers are raising. This makes sure that the server
+			// with the last state change always sends a notification.
+			evalContext.Rule.StateChanges = cmd.Result.StateChanges
+
+			// Update the last state change of the alert rule in memory
+			evalContext.Rule.LastStateChange = time.Now()
 		}
 
 		// save annotation
@@ -89,6 +98,5 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	handler.notifier.SendIfNeeded(evalContext)
-
 	return nil
 }

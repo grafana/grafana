@@ -1,19 +1,23 @@
 import _ from 'lodash';
+import { PanelPlugin } from 'app/types/plugins';
+import { GrafanaTheme, getTheme, GrafanaThemeType } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
   commit: string;
   isEnterprise: boolean;
   env: string;
+  latestVersion: string;
+  hasUpdate: boolean;
 }
 
 export class Settings {
   datasources: any;
-  panels: any;
+  panels: PanelPlugin[];
   appSubUrl: string;
-  window_title_prefix: string;
+  windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  new_panel_title: string;
+  newPanelTitle: string;
   bootData: any;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -22,6 +26,8 @@ export class Settings {
   disableLoginForm: boolean;
   defaultDatasource: string;
   alertingEnabled: boolean;
+  alertingErrorOrTimeout: string;
+  alertingNoDataOrNullValues: string;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
@@ -29,13 +35,19 @@ export class Settings {
   disableUserSignUp: boolean;
   loginHint: any;
   loginError: any;
+  viewersCanEdit: boolean;
+  editorsCanOwn: boolean;
+  disableSanitizeHtml: boolean;
+  theme: GrafanaTheme;
 
-  constructor(options) {
-    var defaults = {
+  constructor(options: Settings) {
+    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+
+    const defaults = {
       datasources: {},
-      window_title_prefix: 'Grafana - ',
+      windowTitlePrefix: 'Grafana - ',
       panels: {},
-      new_panel_title: 'Panel Title',
+      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appSubUrl: '',
@@ -45,15 +57,22 @@ export class Settings {
         env: 'production',
         isEnterprise: false,
       },
+      viewersCanEdit: false,
+      editorsCanOwn: false,
+      disableSanitizeHtml: false,
     };
 
     _.extend(this, defaults, options);
   }
 }
 
-var bootData = (<any>window).grafanaBootData || { settings: {} };
-var options = bootData.settings;
+const bootData = (window as any).grafanaBootData || {
+  settings: {},
+  user: {},
+};
+
+const options = bootData.settings;
 options.bootData = bootData;
 
-const config = new Settings(options);
+export const config = new Settings(options);
 export default config;

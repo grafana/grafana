@@ -5,21 +5,28 @@ export class ResultTransformer {
   constructor(private templateSrv) {}
 
   transform(response: any, options: any): any[] {
-    let prometheusResult = response.data.data.result;
+    const prometheusResult = response.data.data.result;
 
     if (options.format === 'table') {
-      return [this.transformMetricDataToTable(prometheusResult, options.responseListLength, options.refId)];
-    } else if (options.format === 'heatmap') {
+      return [
+        this.transformMetricDataToTable(
+          prometheusResult,
+          options.responseListLength,
+          options.refId,
+          options.valueWithRefId
+        ),
+      ];
+    } else if (prometheusResult && options.format === 'heatmap') {
       let seriesList = [];
       prometheusResult.sort(sortSeriesByLabel);
-      for (let metricData of prometheusResult) {
+      for (const metricData of prometheusResult) {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
-    } else {
-      let seriesList = [];
-      for (let metricData of prometheusResult) {
+    } else if (prometheusResult) {
+      const seriesList = [];
+      for (const metricData of prometheusResult) {
         if (response.data.data.resultType === 'matrix') {
           seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
         } else if (response.data.data.resultType === 'vector') {
@@ -32,22 +39,22 @@ export class ResultTransformer {
   }
 
   transformMetricData(metricData, options, start, end) {
-    let dps = [],
-      metricLabel = null;
+    const dps = [];
+    let metricLabel = null;
 
     metricLabel = this.createMetricLabel(metricData.metric, options);
 
-    const stepMs = parseInt(options.step) * 1000;
+    const stepMs = parseInt(options.step, 10) * 1000;
     let baseTimestamp = start * 1000;
 
     if (metricData.values === undefined) {
       throw new Error('Prometheus heatmap error: data should be a time series');
     }
 
-    for (let value of metricData.values) {
-      let dp_value = parseFloat(value[1]);
-      if (_.isNaN(dp_value)) {
-        dp_value = null;
+    for (const value of metricData.values) {
+      let dpValue = parseFloat(value[1]);
+      if (_.isNaN(dpValue)) {
+        dpValue = null;
       }
 
       const timestamp = parseFloat(value[0]) * 1000;
@@ -55,7 +62,7 @@ export class ResultTransformer {
         dps.push([null, t]);
       }
       baseTimestamp = timestamp + stepMs;
-      dps.push([dp_value, timestamp]);
+      dps.push([dpValue, timestamp]);
     }
 
     const endTimestamp = end * 1000;
@@ -66,23 +73,22 @@ export class ResultTransformer {
     return {
       datapoints: dps,
       query: options.query,
-      responseIndex: options.responseIndex,
       target: metricLabel,
     };
   }
 
-  transformMetricDataToTable(md, resultCount: number, refId: string) {
-    var table = new TableModel();
-    var i, j;
-    var metricLabels = {};
+  transformMetricDataToTable(md, resultCount: number, refId: string, valueWithRefId?: boolean) {
+    const table = new TableModel();
+    let i, j;
+    const metricLabels = {};
 
-    if (md.length === 0) {
+    if (!md || md.length === 0) {
       return table;
     }
 
     // Collect all labels across all metrics
-    _.each(md, function(series) {
-      for (var label in series.metric) {
+    _.each(md, series => {
+      for (const label in series.metric) {
         if (!metricLabels.hasOwnProperty(label)) {
           metricLabels[label] = 1;
         }
@@ -90,27 +96,27 @@ export class ResultTransformer {
     });
 
     // Sort metric labels, create columns for them and record their index
-    var sortedLabels = _.keys(metricLabels).sort();
+    const sortedLabels = _.keys(metricLabels).sort();
     table.columns.push({ text: 'Time', type: 'time' });
-    _.each(sortedLabels, function(label, labelIndex) {
+    _.each(sortedLabels, (label, labelIndex) => {
       metricLabels[label] = labelIndex + 1;
-      table.columns.push({ text: label, filterable: !label.startsWith('__') });
+      table.columns.push({ text: label, filterable: true });
     });
-    let valueText = resultCount > 1 ? `Value #${refId}` : 'Value';
+    const valueText = resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
 
     // Populate rows, set value to empty string when label not present.
-    _.each(md, function(series) {
+    _.each(md, series => {
       if (series.value) {
         series.values = [series.value];
       }
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
-          var values = series.values[i];
-          var reordered: any = [values[0] * 1000];
+          const values = series.values[i];
+          const reordered: any = [values[0] * 1000];
           if (series.metric) {
             for (j = 0; j < sortedLabels.length; j++) {
-              var label = sortedLabels[j];
+              const label = sortedLabels[j];
               if (series.metric.hasOwnProperty(label)) {
                 reordered.push(series.metric[label]);
               } else {
@@ -128,8 +134,8 @@ export class ResultTransformer {
   }
 
   transformInstantMetricData(md, options) {
-    var dps = [],
-      metricLabel = null;
+    const dps = [];
+    let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
     return { target: metricLabel, datapoints: dps, labels: md.metric };
@@ -149,8 +155,8 @@ export class ResultTransformer {
   }
 
   renderTemplate(aliasPattern, aliasData) {
-    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    return aliasPattern.replace(aliasRegex, function(match, g1) {
+    const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+    return aliasPattern.replace(aliasRegex, (match, g1) => {
       if (aliasData[g1]) {
         return aliasData[g1];
       }
@@ -159,9 +165,9 @@ export class ResultTransformer {
   }
 
   getOriginalMetricName(labelData) {
-    var metricName = labelData.__name__ || '';
+    const metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    var labelPart = _.map(_.toPairs(labelData), function(label) {
+    const labelPart = _.map(_.toPairs(labelData), label => {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
@@ -175,8 +181,8 @@ export class ResultTransformer {
     le30    30  10  35    =>    10  0   5
     */
     for (let i = seriesList.length - 1; i > 0; i--) {
-      let topSeries = seriesList[i].datapoints;
-      let bottomSeries = seriesList[i - 1].datapoints;
+      const topSeries = seriesList[i].datapoints;
+      const bottomSeries = seriesList[i - 1].datapoints;
       if (!topSeries || !bottomSeries) {
         throw new Error('Prometheus heatmap transform error: data should be a time series');
       }

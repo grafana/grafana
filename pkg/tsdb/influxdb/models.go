@@ -13,6 +13,7 @@ type Query struct {
 	UseRawQuery  bool
 	Alias        string
 	Interval     time.Duration
+	Tz           string
 }
 
 type Tag struct {

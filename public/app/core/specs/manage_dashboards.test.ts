@@ -562,5 +562,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     },
   };
 
-  return new ManageDashboardsCtrl({}, { getNav: () => {} }, <SearchSrv>searchSrvStub, { isEditor: true });
+  return new ManageDashboardsCtrl({}, { getNav: () => {} }, searchSrvStub as SearchSrv, { isEditor: true });
 }

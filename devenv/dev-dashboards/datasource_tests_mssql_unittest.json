@@ -64,7 +64,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1533713720618,
+  "iteration": 1534507501976,
   "links": [],
   "panels": [
     {
@@ -1197,6 +1197,196 @@
         "x": 0,
         "y": 27
       },
+      "id": 38,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  measurement as metric, \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__unixEpochGroup(timeInt32, '$summarize'), \n  measurement \nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series with metric column using unixEpochGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mssql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 39,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": true,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 3,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "MovingAverageValueOne",
+          "dashes": true,
+          "lines": false
+        },
+        {
+          "alias": "MovingAverageValueTwo",
+          "dashes": true,
+          "lines": false,
+          "yaxis": 1
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  $__unixEpochGroupAlias(timeInt32, '$summarize'), \n  avg(valueOne) as valueOne,\n  avg(valueTwo) as valueTwo\nFROM\n  metric_values \nWHERE\n  $__unixEpochFilter(timeInt32) AND\n  ($metric = 'ALL' OR measurement = $metric)\nGROUP BY \n  $__unixEpochGroup(timeInt32, '$summarize')\nORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT \n  time,\n  avg(valueOne) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueOne,\n  avg(valueTwo) OVER (ORDER BY time ROWS BETWEEN 6 PRECEDING AND 6 FOLLOWING) as MovingAverageValueTwo\nFROM\n  metric_values \nWHERE \n  $__timeFilter(time) AND \n  ($metric = 'ALL' OR measurement = $metric)\nORDER BY 1",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multiple series without metric column using unixEpochGroup macro ($summarize)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-mssql-ds-tests",
+      "fill": 2,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
       "id": 4,
       "legend": {
         "alignAsTable": true,
@@ -1282,7 +1472,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 35
       },
       "id": 28,
       "legend": {
@@ -1367,7 +1557,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 43
       },
       "id": 19,
       "legend": {
@@ -1454,7 +1644,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 43
       },
       "id": 18,
       "legend": {
@@ -1539,7 +1729,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "id": 17,
       "legend": {
@@ -1626,7 +1816,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 51
       },
       "id": 20,
       "legend": {
@@ -1711,7 +1901,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "id": 29,
       "legend": {
@@ -1798,7 +1988,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "id": 30,
       "legend": {
@@ -1885,7 +2075,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 14,
       "legend": {
@@ -1973,7 +2163,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 67
       },
       "id": 15,
       "legend": {
@@ -2060,7 +2250,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 67
+        "y": 75
       },
       "id": 25,
       "legend": {
@@ -2148,7 +2338,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 67
+        "y": 75
       },
       "id": 22,
       "legend": {
@@ -2235,7 +2425,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "id": 21,
       "legend": {
@@ -2323,7 +2513,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 75
+        "y": 83
       },
       "id": 26,
       "legend": {
@@ -2410,7 +2600,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 83
+        "y": 91
       },
       "id": 23,
       "legend": {
@@ -2498,7 +2688,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 83
+        "y": 91
       },
       "id": 24,
       "legend": {
@@ -2708,5 +2898,5 @@
   "timezone": "",
   "title": "Datasource tests - MSSQL (unit test)",
   "uid": "GlAqcPgmz",
-  "version": 10
+  "version": 2
 }

@@ -240,6 +240,7 @@ type DateHistogramAgg struct {
 	Missing        *string         `json:"missing,omitempty"`
 	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
 	Format         string          `json:"format"`
+	Offset         string          `json:"offset,omitempty"`
 }
 
 // FiltersAggregation represents a filters aggregation
@@ -291,7 +292,7 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 
 // PipelineAggregation represents a metric aggregation
 type PipelineAggregation struct {
-	BucketPath string
+	BucketPath interface{}
 	Settings   map[string]interface{}
 }
 

@@ -2,24 +2,27 @@
   <div class="login-content">
     <div class="login-branding">
       <img class="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
-      <i class="icon-gf icon-gf-grafana_wordmark"></i>
+      <div class="logo-wordmark" />
     </div>
     <div class="login-outer-box">
       <div class="login-inner-box" id="login-view">
         <form name="loginForm" class="login-form-group gf-form-group" ng-hide="disableLoginForm">
           <div class="login-form">
             <input type="text" name="username" class="gf-form-input login-form-input" required ng-model='formModel.user' placeholder={{loginHint}}
-              autofocus>
+              autofocus autofill-event-fix>
           </div>
           <div class="login-form">
             <input type="password" name="password" class="gf-form-input login-form-input" required ng-model="formModel.password" id="inputPassword"
               placeholder="password">
           </div>
           <div class="login-button-group">
-            <button type="submit" class="btn btn-large p-x-2" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+            <button type="submit" class="btn btn-large p-x-2" ng-if="!loggingIn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
               Log In
             </button>
-            <div class="small login-button-forgot-password">
+            <button type="submit" class="btn btn-large p-x-2 btn-inverse btn-loading" ng-if="loggingIn">
+              Logging In<span>.</span><span>.</span><span>.</span>
+            </button>
+            <div class="small login-button-forgot-password" ng-hide="ldapEnabled || authProxyEnabled">
               <a href="user/password/send-reset-email">
                 Forgot your password?
               </a>
@@ -55,12 +58,12 @@
             <i class="btn-service-icon fa fa-gitlab"></i>
             Sign in with GitLab
           </a>
-          <a class="btn btn-medium btn-inverse btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self"
+          <a class="btn btn-medium btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self"
             ng-if="oauth.grafana_com">
             <i class="btn-service-icon"></i>
             Sign in with Grafana.com
           </a>
-          <a class="btn btn-medium btn-inverse btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self"
+          <a class="btn btn-medium btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self"
             ng-if="oauth.generic_oauth">
             <i class="btn-service-icon fa fa-sign-in"></i>
             Sign in with {{oauth.generic_oauth.name}}
@@ -96,7 +99,7 @@
                 If you skip you will be prompted to change password next time you login.
               </info-popover>
             </a>
-            <button type="submit" class="btn btn-large p-x-2" ng-click="changePassword();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-success': loginForm.$valid}">
+            <button type="submit" class="btn btn-large p-x-2" ng-click="changePassword();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
               Save
             </button>
           </div>

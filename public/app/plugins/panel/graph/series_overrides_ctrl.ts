@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
@@ -7,13 +7,13 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.currentOverrides = [];
   $scope.override = $scope.override || {};
 
-  $scope.addOverrideOption = function(name, propertyName, values) {
-    var option = {
+  $scope.addOverrideOption = (name, propertyName, values) => {
+    const option = {
       text: name,
       propertyName: propertyName,
-      index: $scope.overrideMenu.lenght,
+      index: $scope.overrideMenu.length,
       values: values,
-      submenu: _.map(values, function(value) {
+      submenu: _.map(values, value => {
         return { text: String(value), value: value };
       }),
     };
@@ -21,7 +21,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.overrideMenu.push(option);
   };
 
-  $scope.setOverride = function(item, subItem) {
+  $scope.setOverride = (item, subItem) => {
     // handle color overrides
     if (item.propertyName === 'color') {
       $scope.openColorSelector($scope.override['color']);
@@ -41,46 +41,48 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     $scope.ctrl.render();
   };
 
-  $scope.colorSelected = function(color) {
+  $scope.colorSelected = color => {
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
   };
 
-  $scope.openColorSelector = function(color) {
-    var fakeSeries = { color: color };
+  $scope.openColorSelector = color => {
+    const fakeSeries = { color: color };
     popoverSrv.show({
       element: $element.find('.dropdown')[0],
       position: 'top center',
       openOn: 'click',
-      template: '<series-color-picker series="series" onColorChange="colorSelected" />',
+      template: '<series-color-picker-popover color="color" onColorChange="colorSelected" />',
+      classNames: 'drop-popover drop-popover--transparent',
       model: {
         autoClose: true,
         colorSelected: $scope.colorSelected,
         series: fakeSeries,
+        color,
       },
-      onClose: function() {
+      onClose: () => {
         $scope.ctrl.render();
       },
     });
   };
 
-  $scope.removeOverride = function(option) {
+  $scope.removeOverride = option => {
     delete $scope.override[option.propertyName];
     $scope.updateCurrentOverrides();
     $scope.ctrl.refresh();
   };
 
-  $scope.getSeriesNames = function() {
-    return _.map($scope.ctrl.seriesList, function(series) {
+  $scope.getSeriesNames = () => {
+    return _.map($scope.ctrl.seriesList, series => {
       return series.alias;
     });
   };
 
-  $scope.updateCurrentOverrides = function() {
+  $scope.updateCurrentOverrides = () => {
     $scope.currentOverrides = [];
-    _.each($scope.overrideMenu, function(option) {
-      var value = $scope.override[option.propertyName];
+    _.each($scope.overrideMenu, option => {
+      const value = $scope.override[option.propertyName];
       if (_.isUndefined(value)) {
         return;
       }
@@ -156,4 +158,4 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.updateCurrentOverrides();
 }
 
-angular.module('grafana.controllers').controller('SeriesOverridesCtrl', SeriesOverridesCtrl);
+coreModule.controller('SeriesOverridesCtrl', SeriesOverridesCtrl);

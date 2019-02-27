@@ -7,7 +7,8 @@ import (
 
 // Typed errors
 var (
-	ErrUserNotFound = errors.New("User not found")
+	ErrUserNotFound     = errors.New("User not found")
+	ErrLastGrafanaAdmin = errors.New("Cannot remove last grafana admin")
 )
 
 type Password string
@@ -165,6 +166,7 @@ type SignedInUser struct {
 	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
+	Teams          []int64
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {

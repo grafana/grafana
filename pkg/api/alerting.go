@@ -134,11 +134,15 @@ func AlertTest(c *m.ReqContext, dto dtos.AlertTestCommand) Response {
 		OrgId:     c.OrgId,
 		Dashboard: dto.Dashboard,
 		PanelId:   dto.PanelId,
+		User:      c.SignedInUser,
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
 			return Error(422, validationErr.Error(), nil)
+		}
+		if err == m.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Failed to test rule", err)
 	}
@@ -192,14 +196,7 @@ func GetAlertNotifications(c *m.ReqContext) Response {
 	result := make([]*dtos.AlertNotification, 0)
 
 	for _, notification := range query.Result {
-		result = append(result, &dtos.AlertNotification{
-			Id:        notification.Id,
-			Name:      notification.Name,
-			Type:      notification.Type,
-			IsDefault: notification.IsDefault,
-			Created:   notification.Created,
-			Updated:   notification.Updated,
-		})
+		result = append(result, dtos.NewAlertNotification(notification))
 	}
 
 	return JSON(200, result)
@@ -215,7 +212,11 @@ func GetAlertNotificationByID(c *m.ReqContext) Response {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
-	return JSON(200, query.Result)
+	if query.Result == nil {
+		return Error(404, "Alert notification not found", nil)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationCommand) Response {
@@ -225,7 +226,7 @@ func CreateAlertNotification(c *m.ReqContext, cmd m.CreateAlertNotificationComma
 		return Error(500, "Failed to create alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	return JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
 func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationCommand) Response {
@@ -235,7 +236,7 @@ func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationComma
 		return Error(500, "Failed to update alert notification", err)
 	}
 
-	return JSON(200, cmd.Result)
+	return JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
 func DeleteAlertNotification(c *m.ReqContext) Response {
@@ -298,7 +299,7 @@ func PauseAlert(c *m.ReqContext, dto dtos.PauseAlertCommand) Response {
 		return Error(500, "", err)
 	}
 
-	var response m.AlertStateType = m.AlertStatePending
+	var response m.AlertStateType = m.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = m.AlertStatePaused

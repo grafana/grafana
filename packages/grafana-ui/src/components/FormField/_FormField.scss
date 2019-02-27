@@ -1,0 +1,12 @@
+.form-field {
+  margin-bottom: $gf-form-margin;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  position: relative;
+
+  &--grow {
+    flex-grow: 1;
+  }
+}

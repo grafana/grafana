@@ -5,7 +5,6 @@ const common = require('./webpack.common.js');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
@@ -81,11 +80,16 @@ module.exports = merge(common, {
   plugins: [
     new CleanWebpackPlugin('../../public/build', { allowExternal: true }),
     new MiniCssExtractPlugin({
-      filename: "grafana.[name].css"
+      filename: "grafana.[name].[hash].css"
+    }),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error-template.html'),
+      inject: false,
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index.template.html'),
+      template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: 'body',
       chunks: ['manifest', 'vendor', 'app'],
     }),

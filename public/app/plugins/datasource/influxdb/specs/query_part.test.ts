@@ -3,7 +3,7 @@ import queryPart from '../query_part';
 describe('InfluxQueryPart', () => {
   describe('series with measurement only', () => {
     it('should handle nested function parts', () => {
-      var part = queryPart.create({
+      const part = queryPart.create({
         type: 'derivative',
         params: ['10s'],
       });
@@ -13,7 +13,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should nest spread function', () => {
-      var part = queryPart.create({
+      const part = queryPart.create({
         type: 'spread',
       });
 
@@ -22,7 +22,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should handle suffix parts', () => {
-      var part = queryPart.create({
+      const part = queryPart.create({
         type: 'math',
         params: ['/ 100'],
       });
@@ -32,7 +32,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should handle alias parts', () => {
-      var part = queryPart.create({
+      const part = queryPart.create({
         type: 'alias',
         params: ['test'],
       });
@@ -42,7 +42,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should nest distinct when count is selected', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -52,7 +52,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'distinct',
         category: queryPart.getCategories().Aggregations,
       });
@@ -64,7 +64,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should convert to count distinct when distinct is selected and count added', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -74,7 +74,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'count',
         category: queryPart.getCategories().Aggregations,
       });
@@ -86,7 +86,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should replace count distinct if an aggregation is selected', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -100,7 +100,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'mean',
         category: queryPart.getCategories().Selectors,
       });
@@ -112,7 +112,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should not allowed nested counts when count distinct is selected', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -126,7 +126,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'count',
         category: queryPart.getCategories().Aggregations,
       });
@@ -139,7 +139,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should not remove count distinct when distinct is added', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -153,7 +153,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'distinct',
         category: queryPart.getCategories().Aggregations,
       });
@@ -166,7 +166,7 @@ describe('InfluxQueryPart', () => {
     });
 
     it('should remove distinct when sum aggregation is selected', () => {
-      var selectParts = [
+      const selectParts = [
         queryPart.create({
           type: 'field',
           category: queryPart.getCategories().Fields,
@@ -176,7 +176,7 @@ describe('InfluxQueryPart', () => {
           category: queryPart.getCategories().Aggregations,
         }),
       ];
-      var partModel = queryPart.create({
+      const partModel = queryPart.create({
         type: 'sum',
         category: queryPart.getCategories().Aggregations,
       });

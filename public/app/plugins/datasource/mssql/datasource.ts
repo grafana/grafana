@@ -5,12 +5,14 @@ export class MssqlDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
+  interval: string;
 
-  /** @ngInject **/
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
+  /** @ngInject */
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
+    this.interval = (instanceSettings.jsonData || {}).timeInterval;
   }
 
   interpolateVariable(value, variable) {
@@ -26,7 +28,7 @@ export class MssqlDatasource {
       return value;
     }
 
-    var quotedValues = _.map(value, function(val) {
+    const quotedValues = _.map(value, val => {
       if (typeof value === 'number') {
         return value;
       }
@@ -37,7 +39,7 @@ export class MssqlDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
       return {
@@ -105,13 +107,18 @@ export class MssqlDatasource {
       format: 'table',
     };
 
+    const range = this.timeSrv.timeRange();
+    const data = {
+      queries: [interpolatedQuery],
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
+    };
+
     return this.backendSrv
       .datasourceRequest({
         url: '/api/tsdb/query',
         method: 'POST',
-        data: {
-          queries: [interpolatedQuery],
-        },
+        data: data,
       })
       .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }

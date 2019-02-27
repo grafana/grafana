@@ -2,7 +2,7 @@ import * as fileExport from '../utils/file_export';
 import { beforeEach, expect } from 'test/lib/common';
 
 describe('file_export', () => {
-  let ctx: any = {};
+  const ctx: any = {};
 
   beforeEach(() => {
     ctx.seriesList = [
@@ -28,7 +28,7 @@ describe('file_export', () => {
 
   describe('when exporting series as rows', () => {
     it('should export points in proper order', () => {
-      let text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
       const expectedText =
         '"Series";"Time";"Value"\r\n' +
         '"series_1";"1500026100";1\r\n' +
@@ -48,7 +48,7 @@ describe('file_export', () => {
 
   describe('when exporting series as columns', () => {
     it('should export points in proper order', () => {
-      let text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
       const expectedText =
         '"Time";"series_1";"series_2"\r\n' +
         '"1500026100";1;11\r\n' +
@@ -73,6 +73,7 @@ describe('file_export', () => {
         ],
         rows: [
           [123, 'some_string', 1.234, true],
+          [1000, 'some_string', 1.234567891, true],
           [0o765, 'some string with " in the middle', 1e-2, false],
           [0o765, 'some string with "" in the middle', 1e-2, false],
           [0o765, 'some string with """ in the middle', 1e-2, false],
@@ -89,6 +90,7 @@ describe('file_export', () => {
       const expectedText =
         '"integer_value";"string_value";"float_value";"boolean_value"\r\n' +
         '123;"some_string";1.234;true\r\n' +
+        '1000;"some_string";1.234567891;true\r\n' +
         '501;"some string with "" in the middle";0.01;false\r\n' +
         '501;"some string with """" in the middle";0.01;false\r\n' +
         '501;"some string with """""" in the middle";0.01;false\r\n' +
@@ -101,7 +103,7 @@ describe('file_export', () => {
       expect(returnedText).toBe(expectedText);
     });
 
-    it('should decode HTML encoded characters', function() {
+    it('should decode HTML encoded characters', () => {
       const inputTable = {
         columns: [{ text: 'string_value' }],
         rows: [

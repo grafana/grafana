@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -52,14 +53,15 @@ func TestTelegramNotifier(t *testing.T) {
 			})
 
 			Convey("generateCaption should generate a message with all pertinent details", func() {
-				evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-					Name:    "This is an alarm",
-					Message: "Some kind of message.",
-					State:   m.AlertStateOK,
-				})
+				evalContext := alerting.NewEvalContext(context.Background(),
+					&alerting.Rule{
+						Name:    "This is an alarm",
+						Message: "Some kind of message.",
+						State:   m.AlertStateOK,
+					})
 
 				caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
-				So(len(caption), ShouldBeLessThanOrEqualTo, 200)
+				So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
 				So(caption, ShouldContainSubstring, "Some kind of message.")
 				So(caption, ShouldContainSubstring, "[OK] This is an alarm")
 				So(caption, ShouldContainSubstring, "http://grafa.url/abcdef")
@@ -68,16 +70,17 @@ func TestTelegramNotifier(t *testing.T) {
 			Convey("When generating a message", func() {
 
 				Convey("URL should be skipped if it's too long", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message.",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message.",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
-						"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 						"foo bar")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 200)
+					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
 					So(caption, ShouldContainSubstring, "Some kind of message.")
 					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
 					So(caption, ShouldContainSubstring, "foo bar")
@@ -85,32 +88,34 @@ func TestTelegramNotifier(t *testing.T) {
 				})
 
 				Convey("Message should be trimmed if it's too long", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it.",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis scelerisque. Nulla ipsum ex, iaculis vitae vehicula sit amet, fermentum eu eros.",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",
 						"")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 200)
+					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
 					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
 					So(caption, ShouldNotContainSubstring, "http")
-					So(caption, ShouldContainSubstring, "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise ")
+					So(caption, ShouldContainSubstring, "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri")
 				})
 
 				Convey("Metrics should be skipped if they don't fit", func() {
-					evalContext := alerting.NewEvalContext(nil, &alerting.Rule{
-						Name:    "This is an alarm",
-						Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I ",
-						State:   m.AlertStateOK,
-					})
+					evalContext := alerting.NewEvalContext(context.Background(),
+						&alerting.Rule{
+							Name:    "This is an alarm",
+							Message: "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri",
+							State:   m.AlertStateOK,
+						})
 
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",
 						"foo bar long song")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 200)
+					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
 					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
 					So(caption, ShouldNotContainSubstring, "http")
 					So(caption, ShouldNotContainSubstring, "foo bar")

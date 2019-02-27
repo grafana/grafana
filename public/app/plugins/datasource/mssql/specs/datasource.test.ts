@@ -1,23 +1,24 @@
 import moment from 'moment';
 import { MssqlDatasource } from '../datasource';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import q from 'q';
 
-describe('MSSQLDatasource', function() {
+describe('MSSQLDatasource', () => {
   const ctx: any = {
     backendSrv: {},
     templateSrv: new TemplateSrvStub(),
+    timeSrv: new TimeSrvStub(),
   };
 
-  beforeEach(function() {
+  beforeEach(() => {
     ctx.$q = q;
     ctx.instanceSettings = { name: 'mssql' };
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv, ctx.timeSrv);
   });
 
-  describe('When performing annotationQuery', function() {
+  describe('When performing annotationQuery', () => {
     let results;
 
     const annotationName = 'MyAnno';
@@ -61,7 +62,7 @@ describe('MSSQLDatasource', function() {
       });
     });
 
-    it('should return annotation list', function() {
+    it('should return annotation list', () => {
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -75,7 +76,7 @@ describe('MSSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery', function() {
+  describe('When performing metricFindQuery', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -95,24 +96,24 @@ describe('MSSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+      return ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
     });
 
-    it('should return list of all column values', function() {
+    it('should return list of all column values', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns', function() {
+  describe('When performing metricFindQuery with key, value columns', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -132,17 +133,17 @@ describe('MSSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+      return ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
     });
 
-    it('should return list of as text, value', function() {
+    it('should return list of as text, value', () => {
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('value1');
@@ -151,7 +152,7 @@ describe('MSSQLDatasource', function() {
     });
   });
 
-  describe('When performing metricFindQuery with key, value columns and with duplicate keys', function() {
+  describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
     let results;
     const query = 'select * from atable';
     const response = {
@@ -171,25 +172,68 @@ describe('MSSQLDatasource', function() {
       },
     };
 
-    beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(options) {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(function(data) {
+      return ctx.ds.metricFindQuery(query).then(data => {
         results = data;
       });
     });
 
-    it('should return list of unique keys', function() {
+    it('should return list of unique keys', () => {
       expect(results.length).toBe(1);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('same');
     });
   });
 
+  describe('When performing metricFindQuery', () => {
+    let results;
+    const query = 'select * from atable';
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 1,
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{ text: 'title' }],
+              rows: [['aTitle']],
+            },
+          ],
+        },
+      },
+    };
+    const time = {
+      from: moment(1521545610656),
+      to: moment(1521546251185),
+    };
+
+    beforeEach(() => {
+      ctx.timeSrv.setTime(time);
+
+      ctx.backendSrv.datasourceRequest = options => {
+        results = options.data;
+        return ctx.$q.when({ data: response, status: 200 });
+      };
+
+      return ctx.ds.metricFindQuery(query);
+    });
+
+    it('should pass timerange to datasourceRequest', () => {
+      expect(results.from).toBe(time.from.valueOf().toString());
+      expect(results.to).toBe(time.to.valueOf().toString());
+      expect(results.queries.length).toBe(1);
+      expect(results.queries[0].rawSql).toBe(query);
+    });
+  });
+
   describe('When interpolating variables', () => {
-    beforeEach(function() {
+    beforeEach(() => {
       ctx.variable = new CustomVariable({}, {});
     });
 

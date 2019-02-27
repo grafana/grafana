@@ -2,31 +2,34 @@ import '../all';
 
 import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
 
-describe('VariableSrv init', function() {
-  let templateSrv = {
+describe('VariableSrv init', function(this: any) {
+  const templateSrv = {
     init: vars => {
       this.variables = vars;
     },
     variableInitialized: () => {},
-    updateTemplateData: () => {},
+    updateIndex: () => {},
     replace: str =>
       str.replace(this.regex, match => {
         return match;
       }),
   };
 
-  let $injector = <any>{};
-  let $rootscope = {
-    $on: () => {},
+  const timeSrv = {
+    timeRange: () => {
+      return { from: '2018-01-29', to: '2019-01-29' };
+    },
   };
 
-  let ctx = <any>{};
+  const $injector = {} as any;
+  let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
     describe(desc, () => {
-      var scenario: any = {
+      const scenario: any = {
         urlParams: {},
         setup: setupFn => {
           scenario.setupFn = setupFn;
@@ -46,7 +49,8 @@ describe('VariableSrv init', function() {
           templateSrv,
         };
 
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+        // @ts-ignore
+        ctx.variableSrv = new VariableSrv($q, {}, $injector, templateSrv, timeSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);
@@ -56,9 +60,9 @@ describe('VariableSrv init', function() {
         ctx.variableSrv.datasourceSrv = ctx.datasourceSrv;
 
         ctx.variableSrv.$location.search = () => scenario.urlParams;
-        ctx.variableSrv.dashboard = {
+        ctx.variableSrv.dashboard = new DashboardModel({
           templating: { list: scenario.variables },
-        };
+        });
 
         await ctx.variableSrv.init(ctx.variableSrv.dashboard);
 
@@ -76,8 +80,8 @@ describe('VariableSrv init', function() {
           {
             name: 'apps',
             type: type,
-            current: { text: 'test', value: 'test' },
-            options: [{ text: 'test', value: 'test' }],
+            current: { text: 'Test', value: 'test' },
+            options: [{ text: 'Test', value: 'test' }],
           },
         ];
         scenario.urlParams['var-apps'] = 'new';
@@ -92,7 +96,7 @@ describe('VariableSrv init', function() {
   });
 
   describe('given dependent variables', () => {
-    var variableList = [
+    const variableList = [
       {
         name: 'app',
         type: 'query',
@@ -110,7 +114,7 @@ describe('VariableSrv init', function() {
       },
     ];
 
-    describeInitScenario('when setting parent var from url', scenario => {
+    describeInitScenario('when setting parent const from url', scenario => {
       scenario.setup(() => {
         scenario.variables = _.cloneDeep(variableList);
         scenario.urlParams['var-app'] = 'google';
@@ -148,7 +152,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options.length).toBe(2);
     });
   });
@@ -160,11 +164,11 @@ describe('VariableSrv init', function() {
           name: 'apps',
           type: 'query',
           multi: true,
-          current: { text: 'val1', value: 'val1' },
+          current: { text: 'Val1', value: 'val1' },
           options: [
-            { text: 'val1', value: 'val1' },
-            { text: 'val2', value: 'val2' },
-            { text: 'val3', value: 'val3', selected: true },
+            { text: 'Val1', value: 'val1' },
+            { text: 'Val2', value: 'val2' },
+            { text: 'Val3', value: 'val3', selected: true },
           ],
         },
       ];
@@ -172,20 +176,44 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
       expect(variable.current.value[1]).toBe('val1');
-      expect(variable.current.text).toBe('val2 + val1');
+      expect(variable.current.text).toBe('Val2 + Val1');
       expect(variable.options[0].selected).toBe(true);
       expect(variable.options[1].selected).toBe(true);
     });
 
     it('should set options that are not in value to selected false', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
   });
+
+  describeInitScenario(
+    'when template variable is present in url multiple times and variables have no text',
+    scenario => {
+      scenario.setup(() => {
+        scenario.variables = [
+          {
+            name: 'apps',
+            type: 'query',
+            multi: true,
+          },
+        ];
+        scenario.urlParams['var-apps'] = ['val1', 'val2'];
+      });
+
+      it('should display concatenated values in text', () => {
+        const variable = ctx.variableSrv.variables[0];
+        expect(variable.current.value.length).toBe(2);
+        expect(variable.current.value[0]).toBe('val1');
+        expect(variable.current.value[1]).toBe('val2');
+        expect(variable.current.text).toBe('val1 + val2');
+      });
+    }
+  );
 
   describeInitScenario('when template variable is present in url multiple times using key/values', scenario => {
     scenario.setup(() => {
@@ -206,7 +234,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should update current value', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
       expect(variable.current.value[1]).toBe('val1');
@@ -216,7 +244,7 @@ describe('VariableSrv init', function() {
     });
 
     it('should set options that are not in value to selected false', () => {
-      var variable = ctx.variableSrv.variables[0];
+      const variable = ctx.variableSrv.variables[0];
       expect(variable.options[2].selected).toBe(false);
     });
   });

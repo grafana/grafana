@@ -8,6 +8,8 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   orgId: number;
+  orgName: string;
+  orgCount: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
@@ -57,11 +59,15 @@ export class ContextSrv {
     this.sidemenu = !this.sidemenu;
     store.set('grafana.sidemenu', this.sidemenu);
   }
+
+  hasAccessToExplore() {
+    return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
+  }
 }
 
-var contextSrv = new ContextSrv();
+const contextSrv = new ContextSrv();
 export { contextSrv };
 
-coreModule.factory('contextSrv', function() {
+coreModule.factory('contextSrv', () => {
   return contextSrv;
 });

@@ -5,8 +5,8 @@ describe('influxdb response parser', () => {
   const parser = new ResponseParser();
 
   describe('SHOW TAG response', () => {
-    var query = 'SHOW TAG KEYS FROM "cpu"';
-    var response = {
+    const query = 'SHOW TAG KEYS FROM "cpu"';
+    const response = {
       results: [
         {
           series: [
@@ -20,7 +20,7 @@ describe('influxdb response parser', () => {
       ],
     };
 
-    var result = parser.parse(query, response);
+    const result = parser.parse(query, response);
 
     it('expects three results', () => {
       expect(_.size(result)).toBe(3);
@@ -28,10 +28,10 @@ describe('influxdb response parser', () => {
   });
 
   describe('SHOW TAG VALUES response', () => {
-    var query = 'SHOW TAG VALUES FROM "cpu" WITH KEY = "hostname"';
+    const query = 'SHOW TAG VALUES FROM "cpu" WITH KEY = "hostname"';
 
     describe('response from 0.10.0', () => {
-      var response = {
+      const response = {
         results: [
           {
             series: [
@@ -45,7 +45,7 @@ describe('influxdb response parser', () => {
         ],
       };
 
-      var result = parser.parse(query, response);
+      const result = parser.parse(query, response);
 
       it('should get two responses', () => {
         expect(_.size(result)).toBe(2);
@@ -55,7 +55,7 @@ describe('influxdb response parser', () => {
     });
 
     describe('response from 0.12.0', () => {
-      var response = {
+      const response = {
         results: [
           {
             series: [
@@ -74,7 +74,7 @@ describe('influxdb response parser', () => {
         ],
       };
 
-      var result = parser.parse(query, response);
+      const result = parser.parse(query, response);
 
       it('should get two responses', () => {
         expect(_.size(result)).toBe(3);
@@ -86,8 +86,8 @@ describe('influxdb response parser', () => {
   });
 
   describe('SELECT response', () => {
-    var query = 'SELECT "usage_iowait" FROM "cpu" LIMIT 10';
-    var response = {
+    const query = 'SELECT "usage_iowait" FROM "cpu" LIMIT 10';
+    const response = {
       results: [
         {
           series: [
@@ -101,7 +101,7 @@ describe('influxdb response parser', () => {
       ],
     };
 
-    var result = parser.parse(query, response);
+    const result = parser.parse(query, response);
 
     it('should return second column', () => {
       expect(_.size(result)).toBe(3);
@@ -112,10 +112,10 @@ describe('influxdb response parser', () => {
   });
 
   describe('SHOW FIELD response', () => {
-    var query = 'SHOW FIELD KEYS FROM "cpu"';
+    const query = 'SHOW FIELD KEYS FROM "cpu"';
 
     describe('response from pre-1.0', () => {
-      var response = {
+      const response = {
         results: [
           {
             series: [
@@ -129,7 +129,7 @@ describe('influxdb response parser', () => {
         ],
       };
 
-      var result = parser.parse(query, response);
+      const result = parser.parse(query, response);
 
       it('should get two responses', () => {
         expect(_.size(result)).toBe(1);
@@ -137,7 +137,7 @@ describe('influxdb response parser', () => {
     });
 
     describe('response from 1.0', () => {
-      var response = {
+      const response = {
         results: [
           {
             series: [
@@ -151,7 +151,7 @@ describe('influxdb response parser', () => {
         ],
       };
 
-      var result = parser.parse(query, response);
+      const result = parser.parse(query, response);
 
       it('should return first column', () => {
         expect(_.size(result)).toBe(1);

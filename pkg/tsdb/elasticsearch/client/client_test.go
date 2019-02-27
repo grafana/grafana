@@ -25,7 +25,7 @@ func TestClient(t *testing.T) {
 					JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -36,11 +36,11 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("When unspported version set should return error", func() {
+			Convey("When unsupported version set should return error", func() {
 				ds := &models.DataSource{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
 						"esVersion": 6,
@@ -48,7 +48,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				_, err := NewClient(nil, ds, nil)
+				_, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -60,7 +60,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 2)
 			})
@@ -73,7 +73,7 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 5)
 			})
@@ -86,9 +86,22 @@ func TestClient(t *testing.T) {
 					}),
 				}
 
-				c, err := NewClient(nil, ds, nil)
+				c, err := NewClient(context.Background(), ds, nil)
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 56)
+			})
+
+			Convey("When version 60 should return v6.0 client", func() {
+				ds := &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 60,
+						"timeField": "@timestamp",
+					}),
+				}
+
+				c, err := NewClient(context.Background(), ds, nil)
+				So(err, ShouldBeNil)
+				So(c.GetVersion(), ShouldEqual, 60)
 			})
 		})
 
@@ -153,8 +166,6 @@ func TestClient(t *testing.T) {
 						jBody, err := simplejson.NewJson(bodyBytes)
 						So(err, ShouldBeNil)
 
-						fmt.Println("body", string(headerBytes))
-
 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "count")
@@ -209,8 +220,6 @@ func TestClient(t *testing.T) {
 						jBody, err := simplejson.NewJson(bodyBytes)
 						So(err, ShouldBeNil)
 
-						fmt.Println("body", string(headerBytes))
-
 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
@@ -264,8 +273,6 @@ func TestClient(t *testing.T) {
 
 						jBody, err := simplejson.NewJson(bodyBytes)
 						So(err, ShouldBeNil)
-
-						fmt.Println("body", string(headerBytes))
 
 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)

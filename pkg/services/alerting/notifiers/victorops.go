@@ -51,7 +51,7 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	}
 
 	return &VictoropsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		URL:          url,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.victorops"),

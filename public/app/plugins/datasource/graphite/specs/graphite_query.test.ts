@@ -2,7 +2,7 @@ import gfunc from '../gfunc';
 import GraphiteQuery from '../graphite_query';
 
 describe('Graphite query model', () => {
-  let ctx: any = {
+  const ctx: any = {
     datasource: {
       getFuncDef: gfunc.getFuncDef,
       getFuncDefs: jest.fn().mockReturnValue(Promise.resolve(gfunc.getFuncDefs('1.0'))),

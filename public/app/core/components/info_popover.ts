@@ -7,11 +7,11 @@ export function infoPopover() {
     restrict: 'E',
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
-    link: function(scope, elem, attrs, ctrl, transclude) {
-      let offset = attrs.offset || '0 -10px';
-      let position = attrs.position || 'right middle';
+    link: (scope, elem, attrs, ctrl, transclude) => {
+      const offset = attrs.offset || '0 -10px';
+      const position = attrs.position || 'right middle';
       let classes = 'drop-help drop-hide-out-of-bounds';
-      let openOn = 'hover';
+      const openOn = 'hover';
 
       elem.addClass('gf-form-help-icon');
 
@@ -23,15 +23,15 @@ export function infoPopover() {
         elem.addClass('gf-form-help-icon--' + attrs.mode);
       }
 
-      transclude(function(clone, newScope) {
-        let content = document.createElement('div');
+      transclude((clone, newScope) => {
+        const content = document.createElement('div');
         content.className = 'markdown-html';
 
         _.each(clone, node => {
           content.appendChild(node);
         });
 
-        let dropOptions = {
+        const dropOptions = {
           target: elem[0],
           content: content,
           position: position,
@@ -52,9 +52,9 @@ export function infoPopover() {
 
         // Create drop in next digest after directive content is rendered.
         scope.$applyAsync(() => {
-          let drop = new Drop(dropOptions);
+          const drop = new Drop(dropOptions);
 
-          let unbind = scope.$on('$destroy', function() {
+          const unbind = scope.$on('$destroy', () => {
             drop.destroy();
             unbind();
           });

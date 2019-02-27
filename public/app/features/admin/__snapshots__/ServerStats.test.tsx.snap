@@ -1,0 +1,258 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ServerStats Should render table with stats 1`] = `
+<div
+  className="page-scrollbar-wrapper"
+>
+  <div
+    className="custom-scrollbar custom-scrollbar--page"
+    style={
+      Object {
+        "height": "auto",
+        "maxHeight": "100%",
+        "minHeight": "100%",
+        "overflow": "hidden",
+        "position": "relative",
+        "width": "100%",
+      }
+    }
+  >
+    <div
+      className="view"
+      style={
+        Object {
+          "WebkitOverflowScrolling": "touch",
+          "bottom": undefined,
+          "left": undefined,
+          "marginBottom": 0,
+          "marginRight": 0,
+          "maxHeight": "calc(100% + 0px)",
+          "minHeight": "calc(100% + 0px)",
+          "overflow": "scroll",
+          "position": "relative",
+          "right": undefined,
+          "top": undefined,
+        }
+      }
+    >
+      <div
+        className="page-scrollbar-content"
+      >
+        <div
+          className="page-header-canvas"
+        >
+          <div
+            className="page-container"
+          >
+            <div
+              className="page-header"
+            >
+              <div
+                className="page-header__inner"
+              >
+                <span
+                  className="page-header__logo"
+                >
+                  <i
+                    className="page-header__icon fa fa-fw fa-warning"
+                  />
+                </span>
+                <div
+                  className="page-header__info-block"
+                >
+                  <h1
+                    className="page-header__title"
+                  >
+                    Admin
+                  </h1>
+                  <div
+                    className="page-header__sub-title"
+                  >
+                    subTitle
+                  </div>
+                </div>
+              </div>
+              <nav>
+                <div
+                  className="gf-form-select-wrapper width-20 page-header__select-nav"
+                >
+                  <label
+                    className="gf-form-select-icon icon"
+                    htmlFor="page-header-select-nav"
+                  />
+                  <select
+                    className="gf-select-nav gf-form-input"
+                    id="page-header-select-nav"
+                    onChange={[Function]}
+                    value="Admin"
+                  >
+                    <option
+                      value="Admin"
+                    >
+                      Admin
+                    </option>
+                  </select>
+                </div>
+                <ul
+                  className="gf-tabs page-header__tabs"
+                >
+                  <li
+                    className="gf-tabs-item"
+                  >
+                    <a
+                      className="gf-tabs-link active"
+                      href="Admin"
+                    >
+                      <i
+                        className="icon"
+                      />
+                      Admin
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+        <div
+          className="page-container page-body"
+        >
+          <table
+            className="filter-table form-inline"
+          >
+            <thead>
+              <tr>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  Total dashboards
+                </td>
+                <td>
+                  10
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Total Users
+                </td>
+                <td>
+                  1
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <footer
+          className="footer"
+        >
+          <div
+            className="text-center"
+          >
+            <ul>
+              <li>
+                <a
+                  href="http://docs.grafana.org"
+                  target="_blank"
+                >
+                  <i
+                    className="fa fa-file-code-o"
+                  />
+                   Docs
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://grafana.com/services/support"
+                  target="_blank"
+                >
+                  <i
+                    className="fa fa-support"
+                  />
+                   Support Plans
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://community.grafana.com/"
+                  target="_blank"
+                >
+                  <i
+                    className="fa fa-comments-o"
+                  />
+                   Community
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://grafana.com"
+                  target="_blank"
+                >
+                  Grafana
+                </a>
+                 
+                <span>
+                  v
+                  v1.0
+                   (commit: 
+                  1
+                  )
+                </span>
+              </li>
+            </ul>
+          </div>
+        </footer>
+      </div>
+    </div>
+    <div
+      className="track-horizontal"
+      style={
+        Object {
+          "display": "none",
+          "height": 6,
+          "position": "absolute",
+        }
+      }
+    >
+      <div
+        className="thumb-horizontal"
+        style={
+          Object {
+            "display": "block",
+            "height": "100%",
+            "position": "relative",
+          }
+        }
+      />
+    </div>
+    <div
+      className="track-vertical"
+      style={
+        Object {
+          "display": "none",
+          "position": "absolute",
+          "width": 6,
+        }
+      }
+    >
+      <div
+        className="thumb-vertical"
+        style={
+          Object {
+            "display": "block",
+            "position": "relative",
+            "width": "100%",
+          }
+        }
+      />
+    </div>
+  </div>
+</div>
+`;

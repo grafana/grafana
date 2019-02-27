@@ -8,7 +8,7 @@ aliases = ["/datasources/cloudwatch"]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
 parent = "datasources"
-weight = 10
+weight = 5
 +++
 
 # Using AWS CloudWatch in Grafana
@@ -38,7 +38,7 @@ Name | Description
 
 ### IAM Roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
 Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
@@ -46,7 +46,7 @@ Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGu
 ## IAM Policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
-and EC2 tags/instances. You can attach these permissions to IAM roles and
+and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
 utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
@@ -60,18 +60,26 @@ Here is a minimal policy example:
             "Effect": "Allow",
             "Action": [
                 "cloudwatch:ListMetrics",
-                "cloudwatch:GetMetricStatistics"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:GetMetricData"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "AllowReadingTagsFromEC2",
+            "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
             "Effect": "Allow",
             "Action": [
                 "ec2:DescribeTags",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ec2:DescribeRegions"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowReadingResourcesForTags",
+            "Effect" : "Allow",
+            "Action" : "tag:GetResources",
+            "Resource" : "*"
         }
     ]
 }
@@ -126,6 +134,7 @@ Name | Description
 *dimension_values(region, namespace, metric, dimension_key, [filters])* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well.
 *ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
 *ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
+*resource_arns(region, resource_type, tags)* | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -141,6 +150,8 @@ Query | Service
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
 *dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})* | CloudWatch Agent
+*resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | ELB
+*resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})* | EC2
 
 ## ec2_instance_attribute examples
 
@@ -201,6 +212,16 @@ Example `ec2_instance_attribute()` query
 
 ```javascript
 ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
+```
+
+## Using json format template variables
+
+Some of query takes JSON format filter. Grafana support to interpolate template variable to JSON format string, it can use as filter string.
+
+If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
+
+```
+resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 ```
 
 ## Cost

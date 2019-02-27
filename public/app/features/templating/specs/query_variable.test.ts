@@ -3,7 +3,7 @@ import { QueryVariable } from '../query_variable';
 describe('QueryVariable', () => {
   describe('when creating from model', () => {
     it('should set defaults', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable({}, null, null, null, null);
       expect(variable.datasource).toBe(null);
       expect(variable.refresh).toBe(0);
       expect(variable.sort).toBe(0);
@@ -15,13 +15,13 @@ describe('QueryVariable', () => {
     });
 
     it('get model should copy changes back to model', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable({}, null, null, null, null);
       variable.options = [{ text: 'test' }];
       variable.datasource = 'google';
       variable.regex = 'asd';
       variable.sort = 50;
 
-      var model = variable.getSaveModel();
+      const model = variable.getSaveModel();
       expect(model.options.length).toBe(1);
       expect(model.options[0].text).toBe('test');
       expect(model.datasource).toBe('google');
@@ -30,11 +30,11 @@ describe('QueryVariable', () => {
     });
 
     it('if refresh != 0 then remove options in presisted mode', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      const variable = new QueryVariable({}, null, null, null, null);
       variable.options = [{ text: 'test' }];
       variable.refresh = 1;
 
-      var model = variable.getSaveModel();
+      const model = variable.getSaveModel();
       expect(model.options.length).toBe(0);
     });
   });
@@ -69,7 +69,7 @@ describe('QueryVariable', () => {
       });
 
       it('should return in same order', () => {
-        var i = 0;
+        let i = 0;
         expect(result.length).toBe(11);
         expect(result[i++].text).toBe('');
         expect(result[i++].text).toBe('0');
@@ -90,7 +90,7 @@ describe('QueryVariable', () => {
       });
 
       it('should return in same order', () => {
-        var i = 0;
+        let i = 0;
         expect(result.length).toBe(11);
         expect(result[i++].text).toBe('');
         expect(result[i++].text).toBe('0');

@@ -1,6 +1,6 @@
 import { alignYLevel } from '../align_yaxes';
 
-describe('Graph Y axes aligner', function() {
+describe('Graph Y axes aligner', () => {
   let yaxes, expected;
   let alignY = 0;
 

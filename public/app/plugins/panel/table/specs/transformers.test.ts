@@ -1,11 +1,11 @@
 import { transformers, transformDataToTable } from '../transformers';
 
 describe('when transforming time series table', () => {
-  var table;
+  let table;
 
   describe('given 2 time series', () => {
-    var time = new Date().getTime();
-    var timeSeries = [
+    const time = new Date().getTime();
+    const timeSeries = [
       {
         target: 'series1',
         datapoints: [[12.12, time], [14.44, time + 1]],
@@ -17,7 +17,7 @@ describe('when transforming time series table', () => {
     ];
 
     describe('timeseries_to_rows', () => {
-      var panel = {
+      const panel = {
         transform: 'timeseries_to_rows',
         sort: { col: 0, desc: true },
       };
@@ -43,7 +43,7 @@ describe('when transforming time series table', () => {
     });
 
     describe('timeseries_to_columns', () => {
-      var panel = {
+      const panel = {
         transform: 'timeseries_to_columns',
       };
 
@@ -70,7 +70,7 @@ describe('when transforming time series table', () => {
     });
 
     describe('timeseries_aggregations', () => {
-      var panel = {
+      const panel = {
         transform: 'timeseries_aggregations',
         sort: { col: 0, desc: true },
         columns: [{ text: 'Max', value: 'max' }, { text: 'Min', value: 'min' }],
@@ -99,12 +99,12 @@ describe('when transforming time series table', () => {
   describe('table data sets', () => {
     describe('Table', () => {
       const transform = 'table';
-      var panel = {
+      const panel = {
         transform,
       };
-      var time = new Date().getTime();
+      const time = new Date().getTime();
 
-      var nonTableData = [
+      const nonTableData = [
         {
           type: 'foo',
           columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
@@ -112,7 +112,7 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      var singleQueryData = [
+      const singleQueryData = [
         {
           type: 'table',
           columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
@@ -120,7 +120,7 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      var multipleQueriesDataSameLabels = [
+      const multipleQueriesDataSameLabels = [
         {
           type: 'table',
           columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Label Key 2' }, { text: 'Value #A' }],
@@ -143,53 +143,25 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      var multipleQueriesDataDifferentLabels = [
-        {
-          type: 'table',
-          columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value #A' }],
-          rows: [[time, 'Label Value 1', 42]],
-        },
-        {
-          type: 'table',
-          columns: [{ text: 'Time' }, { text: 'Label Key 2' }, { text: 'Value #B' }],
-          rows: [[time, 'Label Value 2', 13]],
-        },
-        {
-          type: 'table',
-          columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value #C' }],
-          rows: [[time, 'Label Value 3', 7]],
-        },
-      ];
-
-      describe('getColumns', function() {
-        it('should return data columns given a single query', function() {
-          var columns = transformers[transform].getColumns(singleQueryData);
+      describe('getColumns', () => {
+        it('should return data columns given a single query', () => {
+          const columns = transformers[transform].getColumns(singleQueryData);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
           expect(columns[2].text).toBe('Value');
         });
 
-        it('should return the union of data columns given a multiple queries', function() {
-          var columns = transformers[transform].getColumns(multipleQueriesDataSameLabels);
+        it('should return the union of data columns given a multiple queries', () => {
+          const columns = transformers[transform].getColumns(multipleQueriesDataSameLabels);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
           expect(columns[2].text).toBe('Label Key 2');
           expect(columns[3].text).toBe('Value #A');
           expect(columns[4].text).toBe('Value #B');
         });
-
-        it('should return the union of data columns given a multiple queries with different labels', function() {
-          var columns = transformers[transform].getColumns(multipleQueriesDataDifferentLabels);
-          expect(columns[0].text).toBe('Time');
-          expect(columns[1].text).toBe('Label Key 1');
-          expect(columns[2].text).toBe('Value #A');
-          expect(columns[3].text).toBe('Label Key 2');
-          expect(columns[4].text).toBe('Value #B');
-          expect(columns[5].text).toBe('Value #C');
-        });
       });
 
-      describe('transform', function() {
+      describe('transform', () => {
         it('should throw an error with non-table data', () => {
           expect(() => transformDataToTable(nonTableData, panel)).toThrow();
         });
@@ -237,33 +209,13 @@ describe('when transforming time series table', () => {
           expect(table.rows[1][4]).toBeUndefined();
           expect(table.rows[1][5]).toBe(7);
         });
-
-        it('should return 2 rows for multiple queries with different label values', () => {
-          table = transformDataToTable(multipleQueriesDataDifferentLabels, panel);
-          expect(table.rows.length).toBe(2);
-          expect(table.columns.length).toBe(6);
-
-          expect(table.rows[0][0]).toBe(time);
-          expect(table.rows[0][1]).toBe('Label Value 1');
-          expect(table.rows[0][2]).toBe(42);
-          expect(table.rows[0][3]).toBe('Label Value 2');
-          expect(table.rows[0][4]).toBe(13);
-          expect(table.rows[0][5]).toBeUndefined();
-
-          expect(table.rows[1][0]).toBe(time);
-          expect(table.rows[1][1]).toBe('Label Value 3');
-          expect(table.rows[1][2]).toBeUndefined();
-          expect(table.rows[1][3]).toBeUndefined();
-          expect(table.rows[1][4]).toBeUndefined();
-          expect(table.rows[1][5]).toBe(7);
-        });
       });
     });
   });
 
   describe('doc data sets', () => {
     describe('JSON Data', () => {
-      var panel = {
+      const panel = {
         transform: 'json',
         columns: [
           { text: 'Timestamp', value: 'timestamp' },
@@ -271,7 +223,7 @@ describe('when transforming time series table', () => {
           { text: 'nested.level2', value: 'nested.level2' },
         ],
       };
-      var rawData = [
+      const rawData = [
         {
           type: 'docs',
           datapoints: [
@@ -286,16 +238,16 @@ describe('when transforming time series table', () => {
         },
       ];
 
-      describe('getColumns', function() {
-        it('should return nested properties', function() {
-          var columns = transformers['json'].getColumns(rawData);
+      describe('getColumns', () => {
+        it('should return nested properties', () => {
+          const columns = transformers['json'].getColumns(rawData);
           expect(columns[0].text).toBe('timestamp');
           expect(columns[1].text).toBe('message');
           expect(columns[2].text).toBe('nested.level2');
         });
       });
 
-      describe('transform', function() {
+      describe('transform', () => {
         beforeEach(() => {
           table = transformDataToTable(rawData, panel);
         });
@@ -319,8 +271,8 @@ describe('when transforming time series table', () => {
 
   describe('annotation data', () => {
     describe('Annnotations', () => {
-      var panel = { transform: 'annotations' };
-      var rawData = {
+      const panel = { transform: 'annotations' };
+      const rawData = {
         annotations: [
           {
             time: 1000,

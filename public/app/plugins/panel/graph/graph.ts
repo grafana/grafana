@@ -11,30 +11,39 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
+import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { getValueFormat } from '@grafana/ui';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
+
+const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
   tooltip: any;
   dashboard: any;
-  annotations: Array<object>;
+  annotations: object[];
   panel: any;
   plot: any;
-  sortedSeries: Array<any>;
-  data: Array<any>;
+  sortedSeries: any[];
+  data: any[];
   panelWidth: number;
   eventManager: EventManager;
   thresholdManager: ThresholdManager;
+  timeRegionManager: TimeRegionManager;
+  legendElem: HTMLElement;
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
@@ -45,31 +54,25 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(this.ctrl, config.theme.type);
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
 
     // panel events
-    this.ctrl.events.on('panel-teardown', this.onPanelteardown.bind(this));
-
-    /**
-     * Split graph rendering into two parts.
-     * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
-     * (see ctrl.events.on('render') in legend.ts).
-     * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
-     */
+    this.ctrl.events.on('panel-teardown', this.onPanelTeardown.bind(this));
     this.ctrl.events.on('render', this.onRender.bind(this));
-    this.ctrl.events.on('legend-rendering-complete', this.onLegendRenderingComplete.bind(this));
 
     // global events
     appEvents.on('graph-hover', this.onGraphHover.bind(this), scope);
-
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
-
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
-
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
-    scope.$on('$destroy', this.onScopeDestroy.bind(this));
+
+    // get graph legend element
+    if (this.elem && this.elem.parent) {
+      this.legendElem = this.elem.parent().find('.graph-legend')[0];
+    }
   }
 
   onRender(renderData) {
@@ -77,12 +80,37 @@ class GraphElement {
     if (!this.data) {
       return;
     }
+
     this.annotations = this.ctrl.annotations || [];
     this.buildFlotPairs(this.data);
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
 
-    this.ctrl.events.emit('render-legend');
+    if (!this.panel.legend.show) {
+      if (this.legendElem.hasChildNodes()) {
+        ReactDOM.unmountComponentAtNode(this.legendElem);
+      }
+      this.renderPanel();
+      return;
+    }
+
+    const { values, min, max, avg, current, total } = this.panel.legend;
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
+    const valueOptions = { values, min, max, avg, current, total };
+    const legendProps: GraphLegendProps = {
+      seriesList: this.data,
+      hiddenSeries: this.ctrl.hiddenSeries,
+      ...legendOptions,
+      ...valueOptions,
+      onToggleSeries: this.ctrl.onToggleSeries,
+      onToggleSort: this.ctrl.onToggleSort,
+      onColorChange: this.ctrl.onColorChange,
+      onToggleAxis: this.ctrl.onToggleAxis,
+    };
+
+    const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
+    ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
   onGraphHover(evt) {
@@ -99,17 +127,20 @@ class GraphElement {
     this.tooltip.show(evt.pos);
   }
 
-  onPanelteardown() {
+  onPanelTeardown() {
     this.thresholdManager = null;
+    this.timeRegionManager = null;
 
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
     }
-  }
 
-  onLegendRenderingComplete() {
-    this.render_panel();
+    this.tooltip.destroy();
+    this.elem.off();
+    this.elem.remove();
+
+    ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
   onGraphHoverClear(event, info) {
@@ -148,19 +179,13 @@ class GraphElement {
 
     if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Skip if range selected (added in "plotselected" event handler)
-      let isRangeSelection = pos.x !== pos.x1;
+      const isRangeSelection = pos.x !== pos.x1;
       if (!isRangeSelection) {
         setTimeout(() => {
           this.eventManager.updateTime({ from: pos.x, to: null });
         }, 100);
       }
     }
-  }
-
-  onScopeDestroy() {
-    this.tooltip.destroy();
-    this.elem.off();
-    this.elem.remove();
   }
 
   shouldAbortRender() {
@@ -195,11 +220,12 @@ class GraphElement {
     }
 
     this.thresholdManager.draw(plot);
+    this.timeRegionManager.draw(plot);
   }
 
   processOffsetHook(plot, gridMargin) {
-    var left = this.panel.yaxes[0];
-    var right = this.panel.yaxes[1];
+    const left = this.panel.yaxes[0];
+    const right = this.panel.yaxes[1];
     if (left.show && left.label) {
       gridMargin.left = 20;
     }
@@ -208,17 +234,17 @@ class GraphElement {
     }
 
     // apply y-axis min/max options
-    var yaxis = plot.getYAxes();
-    for (var i = 0; i < yaxis.length; i++) {
-      var axis = yaxis[i];
-      var panelOptions = this.panel.yaxes[i];
+    const yaxis = plot.getYAxes();
+    for (let i = 0; i < yaxis.length; i++) {
+      const axis = yaxis[i];
+      const panelOptions = this.panel.yaxes[i];
       axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
       axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
     }
   }
 
   processRangeHook(plot) {
-    var yAxes = plot.getYAxes();
+    const yAxes = plot.getYAxes();
     const align = this.panel.yaxis.align || false;
 
     if (yAxes.length > 1 && align === true) {
@@ -231,7 +257,7 @@ class GraphElement {
   // let's find the smallest one so that bars are correctly rendered.
   // In addition, only take series which are rendered as bars for this.
   getMinTimeStepOfSeries(data) {
-    var min = Number.MAX_VALUE;
+    let min = Number.MAX_VALUE;
 
     for (let i = 0; i < data.length; i++) {
       if (!data[i].stats.timeStep) {
@@ -256,7 +282,7 @@ class GraphElement {
   }
 
   // Function for rendering panel
-  render_panel() {
+  renderPanel() {
     this.panelWidth = this.elem.width();
     if (this.shouldAbortRender()) {
       return;
@@ -269,10 +295,11 @@ class GraphElement {
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
 
     // Populate element
-    let options: any = this.buildFlotOptions(this.panel);
+    const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
     this.thresholdManager.addFlotOptions(options, this.panel);
+    this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
 
     this.sortedSeries = this.sortSeries(this.data, this.panel);
@@ -281,7 +308,7 @@ class GraphElement {
 
   buildFlotPairs(data) {
     for (let i = 0; i < data.length; i++) {
-      let series = data[i];
+      const series = data[i];
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
 
       // if hidden remove points and disable stack
@@ -299,7 +326,7 @@ class GraphElement {
         options.series.bars.align = 'center';
 
         for (let i = 0; i < this.data.length; i++) {
-          let series = this.data[i];
+          const series = this.data[i];
           series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
         }
 
@@ -310,9 +337,9 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          let histMin = _.min(_.map(this.data, s => s.stats.min));
-          let histMax = _.max(_.map(this.data, s => s.stats.max));
-          let ticks = panel.xaxis.buckets || this.panelWidth / 50;
+          const histMin = _.min(_.map(this.data, s => s.stats.min));
+          const histMax = _.max(_.map(this.data, s => s.stats.max));
+          const ticks = panel.xaxis.buckets || this.panelWidth / 50;
           bucketSize = tickStep(histMin, histMax, ticks);
           options.series.bars.barWidth = bucketSize * 0.8;
           this.data = convertToHistogramData(this.data, bucketSize, this.ctrl.hiddenSeries, histMin, histMax);
@@ -362,7 +389,7 @@ class GraphElement {
       gridColor = '#a1a1a1';
     }
     const stack = panel.stack ? true : null;
-    let options = {
+    const options = {
       hooks: {
         draw: [this.drawHook.bind(this)],
         processOffset: [this.processOffsetHook.bind(this)],
@@ -424,12 +451,12 @@ class GraphElement {
   }
 
   sortSeries(series, panel) {
-    var sortBy = panel.legend.sort;
-    var sortOrder = panel.legend.sortDesc;
-    var haveSortBy = sortBy !== null && sortBy !== undefined;
-    var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
-    var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
-    var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
+    const sortBy = panel.legend.sort;
+    const sortOrder = panel.legend.sortDesc;
+    const haveSortBy = sortBy !== null && sortBy !== undefined;
+    const haveSortOrder = sortOrder !== null && sortOrder !== undefined;
+    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+    const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {
       return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
@@ -447,9 +474,9 @@ class GraphElement {
   }
 
   addTimeAxis(options) {
-    var ticks = this.panelWidth / 100;
-    var min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
-    var max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+    const ticks = this.panelWidth / 100;
+    const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
+    const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
@@ -464,7 +491,7 @@ class GraphElement {
   }
 
   addXSeriesAxis(options) {
-    var ticks = _.map(this.data, function(series, index) {
+    const ticks = _.map(this.data, (series, index) => {
       return [index + 1, series.alias];
     });
 
@@ -481,31 +508,31 @@ class GraphElement {
 
   addXHistogramAxis(options, bucketSize) {
     let ticks, min, max;
-    let defaultTicks = this.panelWidth / 50;
+    const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
-      let tick_values = [];
-      for (let d of this.data) {
-        for (let point of d.data) {
-          tick_values[point[0]] = true;
+      const tickValues = [];
+      for (const d of this.data) {
+        for (const point of d.data) {
+          tickValues[point[0]] = true;
         }
       }
-      ticks = Object.keys(tick_values).map(v => Number(v));
+      ticks = Object.keys(tickValues).map(v => Number(v));
       min = _.min(ticks);
       max = _.max(ticks);
 
       // Adjust tick step
       let tickStep = bucketSize;
-      let ticks_num = Math.floor((max - min) / tickStep);
-      while (ticks_num > defaultTicks) {
+      let ticksNum = Math.floor((max - min) / tickStep);
+      while (ticksNum > defaultTicks) {
         tickStep = tickStep * 2;
-        ticks_num = Math.ceil((max - min) / tickStep);
+        ticksNum = Math.ceil((max - min) / tickStep);
       }
 
       // Expand ticks for pretty view
       min = Math.floor(min / tickStep) * tickStep;
       // 1.01 is 101% - ensure we have enough space for last bar
-      max = Math.ceil(max * 1.01 / tickStep) * tickStep;
+      max = Math.ceil((max * 1.01) / tickStep) * tickStep;
 
       ticks = [];
       for (let i = min; i <= max; i += tickStep) {
@@ -533,9 +560,9 @@ class GraphElement {
   }
 
   addXTableAxis(options) {
-    var ticks = _.map(this.data, function(series, seriesIndex) {
-      return _.map(series.datapoints, function(point, pointIndex) {
-        var tickIndex = seriesIndex * series.datapoints.length + pointIndex;
+    let ticks = _.map(this.data, (series, seriesIndex) => {
+      return _.map(series.datapoints, (point, pointIndex) => {
+        const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
         return [tickIndex + 1, point[1]];
       });
     });
@@ -553,7 +580,7 @@ class GraphElement {
   }
 
   configureYAxisOptions(data, options) {
-    var defaults = {
+    const defaults = {
       position: 'left',
       show: this.panel.yaxes[0].show,
       index: 1,
@@ -566,7 +593,7 @@ class GraphElement {
     options.yaxes.push(defaults);
 
     if (_.find(data, { yaxis: 2 })) {
-      var secondY = _.clone(defaults);
+      const secondY = _.clone(defaults);
       secondY.index = 2;
       secondY.show = this.panel.yaxes[1].show;
       secondY.logBase = this.panel.yaxes[1].logBase || 1;
@@ -611,8 +638,8 @@ class GraphElement {
       axis.max = null;
     }
 
-    var series, i;
-    var max = axis.max,
+    let series, i;
+    let max = axis.max,
       min = axis.min;
 
     for (i = 0; i < data.length; i++) {
@@ -627,10 +654,10 @@ class GraphElement {
       }
     }
 
-    axis.transform = function(v) {
+    axis.transform = v => {
       return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
     };
-    axis.inverseTransform = function(v) {
+    axis.inverseTransform = v => {
       return Math.pow(axis.logBase, v);
     };
 
@@ -681,7 +708,7 @@ class GraphElement {
   generateTicksForLogScaleYAxis(min, max, logBase) {
     let ticks = [];
 
-    var nextTick;
+    let nextTick;
     for (nextTick = min; nextTick <= max; nextTick *= logBase) {
       ticks.push(nextTick);
     }
@@ -701,20 +728,24 @@ class GraphElement {
   }
 
   configureAxisMode(axis, format) {
-    axis.tickFormatter = function(val, axis) {
-      if (!kbn.valueFormats[format]) {
+    axis.tickFormatter = (val, axis) => {
+      const formatter = getValueFormat(format);
+
+      if (!formatter) {
         throw new Error(`Unit '${format}' is not supported`);
       }
-      return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+      return formatter(val, axis.tickDecimals, axis.scaledDecimals);
     };
   }
 
   time_format(ticks, min, max) {
     if (min && max && ticks) {
-      var range = max - min;
-      var secPerTick = range / ticks / 1000;
-      var oneDay = 86400000;
-      var oneYear = 31536000000;
+      const range = max - min;
+      const secPerTick = range / ticks / 1000;
+      // Need have 10 millisecond margin on the day range
+      // As sometimes last 24 hour dashboard evaluates to more than 86400000
+      const oneDay = 86400010;
+      const oneYear = 31536000000;
 
       if (secPerTick <= 45) {
         return '%H:%M:%S';
@@ -735,7 +766,7 @@ class GraphElement {
   }
 }
 
-/** @ngInject **/
+/** @ngInject */
 function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',

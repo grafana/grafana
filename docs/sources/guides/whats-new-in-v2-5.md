@@ -25,7 +25,7 @@ correctly in UTC mode.
 <br>
 
 This release brings a fully featured query editor for Elasticsearch. You will now be able to visualize
-logs or any kind of data stored in Elasticserarch. The query editor allows you to build both simple
+logs or any kind of data stored in Elasticsearch. The query editor allows you to build both simple
 and complex queries for logs or metrics.
 
 - Compute metrics from your documents, supported Elasticsearch aggregations:

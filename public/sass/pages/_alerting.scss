@@ -66,6 +66,13 @@
       content: '\e611';
     }
   }
+
+  &--pending {
+    .panel-alert-icon:before {
+      color: $warn;
+      content: '\e611';
+    }
+  }
 }
 
 @keyframes alerting-panel {
@@ -100,6 +107,7 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  justify-content: center;
   overflow: hidden;
 }
 

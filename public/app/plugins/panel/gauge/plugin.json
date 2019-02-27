@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Gauge",
+  "id": "gauge",
+
+  "dataFormats": ["time_series"],
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icon_gauge.svg",
+      "large": "img/icon_gauge.svg"
+    }
+  }
+}

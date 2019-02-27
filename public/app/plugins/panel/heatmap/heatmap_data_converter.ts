@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-let VALUE_INDEX = 0;
-let TIME_INDEX = 1;
+const VALUE_INDEX = 0;
+const TIME_INDEX = 1;
 
 interface XBucket {
   x: number;
@@ -18,18 +18,18 @@ interface YBucket {
  * @param seriesList List of time series
  */
 function histogramToHeatmap(seriesList) {
-  let heatmap = {};
+  const heatmap = {};
 
   for (let i = 0; i < seriesList.length; i++) {
-    let series = seriesList[i];
-    let bound = i;
+    const series = seriesList[i];
+    const bound = i;
     if (isNaN(bound)) {
       return heatmap;
     }
 
-    for (let point of series.datapoints) {
-      let count = point[VALUE_INDEX];
-      let time = point[TIME_INDEX];
+    for (const point of series.datapoints) {
+      const count = point[VALUE_INDEX];
+      const time = point[TIME_INDEX];
 
       if (!_.isNumber(count)) {
         continue;
@@ -101,10 +101,10 @@ function parseHistogramLabel(label: string): number {
 function convertToCards(buckets) {
   let min = 0,
     max = 0;
-  let cards = [];
+  const cards = [];
   _.forEach(buckets, xBucket => {
     _.forEach(xBucket.buckets, yBucket => {
-      let card = {
+      const card = {
         x: xBucket.x,
         y: yBucket.y,
         yBounds: yBucket.bounds,
@@ -123,7 +123,7 @@ function convertToCards(buckets) {
     });
   });
 
-  let cardStats = { min, max };
+  const cardStats = { min, max };
   return { cards, cardStats };
 }
 
@@ -146,19 +146,19 @@ function convertToCards(buckets) {
  */
 function mergeZeroBuckets(buckets, minValue) {
   _.forEach(buckets, xBucket => {
-    let yBuckets = xBucket.buckets;
+    const yBuckets = xBucket.buckets;
 
-    let emptyBucket = {
+    const emptyBucket = {
       bounds: { bottom: 0, top: 0 },
       values: [],
       points: [],
       count: 0,
     };
 
-    let nullBucket = yBuckets[0] || emptyBucket;
-    let minBucket = yBuckets[minValue] || emptyBucket;
+    const nullBucket = yBuckets[0] || emptyBucket;
+    const minBucket = yBuckets[minValue] || emptyBucket;
 
-    let newBucket = {
+    const newBucket = {
       y: 0,
       bounds: { bottom: minValue, top: minBucket.bounds.top || minValue },
       values: [],
@@ -211,11 +211,11 @@ function mergeZeroBuckets(buckets, minValue) {
  * }
  */
 function convertToHeatMap(seriesList, yBucketSize, xBucketSize, logBase = 1) {
-  let heatmap = {};
+  const heatmap = {};
 
-  for (let series of seriesList) {
-    let datapoints = series.datapoints;
-    let seriesName = series.label;
+  for (const series of seriesList) {
+    const datapoints = series.datapoints;
+    const seriesName = series.label;
 
     // Slice series into X axis buckets
     // |    | ** |    |  * |  **|
@@ -224,7 +224,7 @@ function convertToHeatMap(seriesList, yBucketSize, xBucketSize, logBase = 1) {
     // |____|____|____|____|____|_
     //
     _.forEach(datapoints, point => {
-      let bucketBound = getBucketBound(point[TIME_INDEX], xBucketSize);
+      const bucketBound = getBucketBound(point[TIME_INDEX], xBucketSize);
       pushToXBuckets(heatmap, point, bucketBound, seriesName);
     });
   }
@@ -247,31 +247,31 @@ function convertToHeatMap(seriesList, yBucketSize, xBucketSize, logBase = 1) {
 }
 
 function pushToXBuckets(buckets, point, bucketNum, seriesName) {
-  let value = point[VALUE_INDEX];
+  const value = point[VALUE_INDEX];
   if (value === null || value === undefined || isNaN(value)) {
     return;
   }
 
   // Add series name to point for future identification
-  let point_ext = _.concat(point, seriesName);
+  const pointExt = _.concat(point, seriesName);
 
   if (buckets[bucketNum] && buckets[bucketNum].values) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point_ext);
+    buckets[bucketNum].points.push(pointExt);
   } else {
     buckets[bucketNum] = {
       x: bucketNum,
       values: [value],
-      points: [point_ext],
+      points: [pointExt],
     };
   }
 }
 
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
-  var count = 1;
+  let count = 1;
   // Use the 3rd argument as scale/count
   if (point.length > 3) {
-    count = parseInt(point[2]);
+    count = parseInt(point[2], 10);
   }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
@@ -308,18 +308,18 @@ function getBucketBounds(value, bucketSize) {
 }
 
 function getBucketBound(value, bucketSize) {
-  let bounds = getBucketBounds(value, bucketSize);
+  const bounds = getBucketBounds(value, bucketSize);
   return bounds.bottom;
 }
 
 function convertToValueBuckets(xBucket, bucketSize) {
-  let values = xBucket.values;
-  let points = xBucket.points;
-  let buckets = {};
+  const values = xBucket.values;
+  const points = xBucket.points;
+  const buckets = {};
 
   _.forEach(values, (val, index) => {
-    let bounds = getBucketBounds(val, bucketSize);
-    let bucketNum = bounds.bottom;
+    const bounds = getBucketBounds(val, bucketSize);
+    const bucketNum = bounds.bottom;
     pushToYBuckets(buckets, bucketNum, val, points[index], bounds);
   });
 
@@ -335,17 +335,17 @@ function getLogScaleBucketBounds(value, yBucketSplitFactor, logBase) {
     return { bottom: 0, top: 0 };
   }
 
-  let value_log = logp(value, logBase);
+  const valueLog = logp(value, logBase);
   let pow, powTop;
   if (yBucketSplitFactor === 1 || !yBucketSplitFactor) {
-    pow = Math.floor(value_log);
+    pow = Math.floor(valueLog);
     powTop = pow + 1;
   } else {
-    let additional_bucket_size = 1 / yBucketSplitFactor;
-    let additional_log = value_log - Math.floor(value_log);
-    additional_log = Math.floor(additional_log / additional_bucket_size) * additional_bucket_size;
-    pow = Math.floor(value_log) + additional_log;
-    powTop = pow + additional_bucket_size;
+    const additionalBucketSize = 1 / yBucketSplitFactor;
+    let additionalLog = valueLog - Math.floor(valueLog);
+    additionalLog = Math.floor(additionalLog / additionalBucketSize) * additionalBucketSize;
+    pow = Math.floor(valueLog) + additionalLog;
+    powTop = pow + additionalBucketSize;
   }
   bottom = Math.pow(logBase, pow);
   top = Math.pow(logBase, powTop);
@@ -354,18 +354,18 @@ function getLogScaleBucketBounds(value, yBucketSplitFactor, logBase) {
 }
 
 function getLogScaleBucketBound(value, yBucketSplitFactor, logBase) {
-  let bounds = getLogScaleBucketBounds(value, yBucketSplitFactor, logBase);
+  const bounds = getLogScaleBucketBounds(value, yBucketSplitFactor, logBase);
   return bounds.bottom;
 }
 
 function convertToLogScaleValueBuckets(xBucket, yBucketSplitFactor, logBase) {
-  let values = xBucket.values;
-  let points = xBucket.points;
+  const values = xBucket.values;
+  const points = xBucket.points;
 
-  let buckets = {};
+  const buckets = {};
   _.forEach(values, (val, index) => {
-    let bounds = getLogScaleBucketBounds(val, yBucketSplitFactor, logBase);
-    let bucketNum = bounds.bottom;
+    const bounds = getLogScaleBucketBounds(val, yBucketSplitFactor, logBase);
+    const bucketNum = bounds.bottom;
     pushToYBuckets(buckets, bucketNum, val, points[index], bounds);
   });
 
@@ -396,7 +396,7 @@ function calculateBucketSize(bounds: number[], logBase = 1): number {
   } else {
     bounds = _.sortBy(bounds);
     for (let i = 1; i < bounds.length; i++) {
-      let distance = getDistance(bounds[i], bounds[i - 1], logBase);
+      const distance = getDistance(bounds[i], bounds[i - 1], logBase);
       bucketSize = distance < bucketSize ? distance : bucketSize;
     }
   }
@@ -416,7 +416,7 @@ function getDistance(a: number, b: number, logBase = 1): number {
     return Math.abs(b - a);
   } else {
     // logarithmic distance
-    let ratio = Math.max(a, b) / Math.min(a, b);
+    const ratio = Math.max(a, b) / Math.min(a, b);
     return logp(ratio, logBase);
   }
 }
@@ -427,46 +427,46 @@ function getDistance(a: number, b: number, logBase = 1): number {
  * @param objB
  */
 function isHeatmapDataEqual(objA: any, objB: any): boolean {
-  let is_eql = !emptyXOR(objA, objB);
+  let isEql = !emptyXOR(objA, objB);
 
   _.forEach(objA, (xBucket: XBucket, x) => {
     if (objB[x]) {
       if (emptyXOR(xBucket.buckets, objB[x].buckets)) {
-        is_eql = false;
+        isEql = false;
         return false;
       }
 
       _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
         if (objB[x].buckets && objB[x].buckets[y]) {
           if (objB[x].buckets[y].values) {
-            is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
-            if (!is_eql) {
+            isEql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
+            if (!isEql) {
               return false;
             } else {
               return true;
             }
           } else {
-            is_eql = false;
+            isEql = false;
             return false;
           }
         } else {
-          is_eql = false;
+          isEql = false;
           return false;
         }
       });
 
-      if (!is_eql) {
+      if (!isEql) {
         return false;
       } else {
         return true;
       }
     } else {
-      is_eql = false;
+      isEql = false;
       return false;
     }
   });
 
-  return is_eql;
+  return isEql;
 }
 
 function emptyXOR(foo: any, bar: any): boolean {

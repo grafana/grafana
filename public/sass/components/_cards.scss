@@ -35,7 +35,7 @@
 }
 
 .card-section {
-  margin-bottom: $spacer*2;
+  margin-bottom: $spacer * 2;
 }
 
 .card-list {
@@ -107,6 +107,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+}
+
+.card-item-label {
+  margin-left: 8px;
 }
 
 .card-item-sub-name {
@@ -191,6 +195,7 @@
   .card-item-wrapper {
     padding: 0;
     width: 100%;
+    margin-bottom: 3px;
   }
 
   .card-item-wrapper--clickable {
@@ -198,7 +203,6 @@
   }
 
   .card-item {
-    border-bottom: 3px solid $page-bg;
     border-radius: 2px;
   }
 

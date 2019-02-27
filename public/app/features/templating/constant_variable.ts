@@ -17,7 +17,7 @@ export class ConstantVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }

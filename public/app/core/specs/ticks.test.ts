@@ -2,7 +2,7 @@ import * as ticks from '../utils/ticks';
 
 describe('ticks', () => {
   describe('getFlotTickDecimals()', () => {
-    let ctx: any = {};
+    const ctx: any = {};
 
     beforeEach(() => {
       ctx.axis = {};

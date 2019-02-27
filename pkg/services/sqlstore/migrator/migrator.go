@@ -12,7 +12,7 @@ import (
 
 type Migrator struct {
 	x          *xorm.Engine
-	dialect    Dialect
+	Dialect    Dialect
 	migrations []Migration
 	Logger     log.Logger
 }
@@ -31,7 +31,7 @@ func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg.x = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
-	mg.dialect = NewDialect(mg.x)
+	mg.Dialect = NewDialect(mg.x)
 	return mg
 }
 
@@ -86,15 +86,13 @@ func (mg *Migrator) Start() error {
 			continue
 		}
 
-		sql := m.Sql(mg.dialect)
+		sql := m.Sql(mg.Dialect)
 
 		record := MigrationLog{
 			MigrationId: m.Id(),
 			Sql:         sql,
 			Timestamp:   time.Now(),
 		}
-
-		mg.Logger.Debug("Executing", "sql", sql)
 
 		err := mg.inTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
@@ -122,15 +120,33 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 	condition := m.GetCondition()
 	if condition != nil {
-		sql, args := condition.Sql(mg.dialect)
-		results, err := sess.SQL(sql).Query(args...)
-		if err != nil || len(results) == 0 {
-			mg.Logger.Debug("Skipping migration condition not fulfilled", "id", m.Id())
-			return sess.Rollback()
+		sql, args := condition.Sql(mg.Dialect)
+
+		if sql != "" {
+			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
+			results, err := sess.SQL(sql, args...).Query()
+			if err != nil {
+				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
+				return err
+			}
+
+			if !condition.IsFulfilled(results) {
+				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
+				return nil
+			}
 		}
 	}
 
-	_, err := sess.Exec(m.Sql(mg.dialect))
+	var err error
+	if codeMigration, ok := m.(CodeMigration); ok {
+		mg.Logger.Debug("Executing code migration", "id", m.Id())
+		err = codeMigration.Exec(sess, mg)
+	} else {
+		sql := m.Sql(mg.Dialect)
+		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+		_, err = sess.Exec(sql)
+	}
+
 	if err != nil {
 		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
 		return err

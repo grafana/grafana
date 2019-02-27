@@ -36,5 +36,11 @@ func TestStatsDataAccess(t *testing.T) {
 			err := GetDataSourceAccessStats(&query)
 			So(err, ShouldBeNil)
 		})
+
+		Convey("Get alert notifier stats should not results in error", func() {
+			query := m.GetAlertNotifierUsageStatsQuery{}
+			err := GetAlertNotifiersUsageStats(context.Background(), &query)
+			So(err, ShouldBeNil)
+		})
 	})
 }

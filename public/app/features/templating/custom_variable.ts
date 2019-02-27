@@ -23,7 +23,7 @@ export class CustomVariable implements Variable {
     skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
@@ -38,8 +38,9 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), function(text) {
+    // extract options in comma separated string (use backslash to escape wanted commas)
+    this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
+      text = text.replace('\\,', ',');
       return { text: text.trim(), value: text.trim() };
     });
 

@@ -2,20 +2,19 @@ import $ from 'jquery';
 import angular from 'angular';
 import _ from 'lodash';
 
-var $win = $(window);
+const $win = $(window);
 
-$.fn.place_tt = (function() {
-  var defaults = {
+$.fn.place_tt = (() => {
+  const defaults = {
     offset: 5,
   };
 
-  return function(x, y, opts) {
+  return function(this: any, x, y, opts) {
     opts = $.extend(true, {}, defaults, opts);
 
-    return this.each(function() {
-      var $tooltip = $(this),
-        width,
-        height;
+    return this.each(() => {
+      const $tooltip = $(this);
+      let width, height;
 
       $tooltip.addClass('grafana-tooltip');
 
@@ -29,8 +28,8 @@ $.fn.place_tt = (function() {
           .invoke([
             '$compile',
             '$rootScope',
-            function($compile, $rootScope) {
-              var tmpScope = $rootScope.$new(true);
+            ($compile, $rootScope) => {
+              const tmpScope = $rootScope.$new(true);
               _.extend(tmpScope, opts.scopeData);
 
               $compile($tooltip)(tmpScope);

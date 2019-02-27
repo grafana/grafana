@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"strings"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -20,7 +20,10 @@ func init() {
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
-	cnnstr := generateConnectionString(datasource)
+	cnnstr, err := generateConnectionString(datasource)
+	if err != nil {
+		return nil, err
+	}
 	logger.Debug("getEngine", "connection", cnnstr)
 
 	config := tsdb.SqlQueryEndpointConfiguration{
@@ -37,7 +40,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource) string {
+func generateConnectionString(datasource *models.DataSource) (string, error) {
 	password := ""
 	for key, value := range datasource.SecureJsonData.Decrypt() {
 		if key == "password" {
@@ -46,19 +49,20 @@ func generateConnectionString(datasource *models.DataSource) string {
 		}
 	}
 
-	hostParts := strings.Split(datasource.Url, ":")
-	if len(hostParts) < 2 {
-		hostParts = append(hostParts, "1433")
-	}
+	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
 
-	server, port := hostParts[0], hostParts[1]
-	return fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
+	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
 		server,
 		port,
 		datasource.Database,
 		datasource.User,
 		password,
 	)
+	if encrypt != "false" {
+		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
+	}
+	return connStr, nil
 }
 
 type mssqlRowTransformer struct {

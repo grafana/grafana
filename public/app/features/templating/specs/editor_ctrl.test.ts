@@ -9,7 +9,7 @@ jest.mock('app/core/app_events', () => {
 });
 
 describe('VariableEditorCtrl', () => {
-  let scope = {
+  const scope = {
     runQuery: () => {
       return Promise.resolve({});
     },

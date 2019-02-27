@@ -25,7 +25,7 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
-- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `$varname`  Example: apps.frontend.$server.requests.count
 - `[[varname]]` Example: apps.frontend.[[server]].requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
@@ -38,20 +38,81 @@ documentation article for details on value escaping during interpolation.
 
 ### Advanced Formatting Options
 
-> Only available in Grafana v5.1+.
-
 The formatting of the variable interpolation depends on the data source but there are some situations where you might want to change the default formatting. For example, the default for the MySql datasource is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases you might want to have a comma-separated string without quotes: `server01,server02`. This is now possible with the advanced formatting options.
 
 Syntax: `${var_name:option}`
 
-Filter Option | Example | Raw | Interpolated | Description
------------- | ------------- | ------------- | -------------  | -------------
-`glob` | ${servers:glob} |  `'test1', 'test2'` | `{test1,test2}` | (Default) Formats multi-value variable into a glob (for Graphite queries)
-`regex` | ${servers:regex} | `'test.', 'test2'` | <code>(test\.&#124;test2)</code> | Formats multi-value variable into a regex string
-`pipe` | ${servers:pipe} | `'test.', 'test2'` |  <code>test.&#124;test2</code> | Formats multi-value variable into a pipe-separated string
-`csv`| ${servers:csv} |  `'test1', 'test2'` | `test1,test2` | Formats multi-value variable as a comma-separated string
-`distributed`| ${servers:distributed} | `'test1', 'test2'` | `test1,servers=test2` | Formats multi-value variable in custom format for OpenTSDB.
-`lucene`| ${servers:lucene} | `'test', 'test2'` | `("test" OR "test2")` | Formats multi-value variable as a lucene expression.
+#### Glob
+Formats multi-value variable into a glob (for Graphite queries).
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:glob}'
+Interpolation result: '{test1,test2}'
+```
+
+### Regex
+Formats multi-value variable into a regex string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:regex}'
+Interpolation result: '(test\.|test2)'
+```
+
+### Pipe
+Formats multi-value variable into a pipe-separated string.
+
+```bash
+servers = ['test1.', 'test2']
+String to interpolate: '${servers:pipe}'
+Interpolation result: 'test.|test2'
+```
+
+### Csv
+Formats multi-value variable as a comma-separated string.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:csv}'
+Interpolation result: 'test,test2'
+```
+
+### Json
+Formats multi-value variable as a comma-separated string.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:json}'
+Interpolation result: '["test1", "test2"]'
+```
+
+### Distributed
+Formats multi-value variable in custom format for OpenTSDB.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:distributed}'
+Interpolation result: 'test1,servers=test2'
+```
+
+### Lucene
+Formats multi-value variable in lucene format for Elasticsearch.
+
+```bash
+servers = ['test1', 'test2']
+String to interpolate: '${servers:lucene}'
+Interpolation result: '("test1" OR "test2")'
+```
+
+### Percentencode
+Formats single & multi valued variables for use in URL parameters.
+
+```bash
+servers = ['foo()bar BAZ', 'test2']
+String to interpolate: '${servers:lucene}'
+Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
+```
 
 Test the formatting options on the [Grafana Play site](http://play.grafana.org/d/cJtIfcWiz/template-variable-formatting-options?orgId=1).
 
@@ -90,6 +151,7 @@ Type | Description
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
 *Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
+*Text box* | This variable type will display as a free text input field with an optional default value.
 
 ### Query options
 
@@ -243,9 +305,14 @@ summarize($myinterval, sum, false)
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
 
+### Time range variables
+
+Grafana has two built in time range variables in `$__from` and `$__to`. They are currently always interpolated
+as epoch milliseconds. These variables are only available in Grafana v6.0 and above.
+
 ### The $__interval Variable
 
-This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
+This $__interval variable is similar to the `auto` interval variable that is described above. It can be used as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
 Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
@@ -284,24 +351,40 @@ Currently only supported for Prometheus data sources. This variable represents t
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
 Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
 
-If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel or one row and have Grafana repeat that row
-for every selected value. You find this option under the General tab in panel edit mode. Select the variable to repeat by, and a `min span`.
-The `min span` controls how small Grafana will make the panels (if you have many values selected). Grafana will automatically adjust the width of
-each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated panel.
+If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel and have Grafana repeat that panel
+for every selected value. You find the *Repeat* feature under the *General tab* in panel edit mode.
+
+The `direction` controls how the panels will be arranged.
+
+By choosing `horizontal` the panels will be arranged side-by-side. Grafana will automatically adjust the width
+of each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated
+panel.
+
+Set `Max per row` to tell grafana how many panels per row you want at most. It defaults to *4* if you don't set anything.
+
+By choosing `vertical` the panels will be arranged from top to bottom in a column. The width of the repeated panels will be the same as of the first panel (the original template) being repeated.
 
 Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
 You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
 
 ## Repeating Rows
 
-This option requires you to open the row options view. Hover over the row left side to trigger the row menu, in this menu click `Row Options`. This
-opens the row options view. Here you find a *Repeat* dropdown where you can select the variable to repeat by.
+As seen above with the *Panels* you can also repeat *Rows* if you have variables set with  `Multi-value` or
+`Include all value` selection option.
 
-### URL state
+To enable this feature you need to first add a new *Row* using the *Add Panel* menu. Then by hovering the row title and
+clicking on the cog button, you will access the `Row Options` configuration panel. You can then select the variable
+you want to repeat the row for.
+
+It may be a good idea to use a variable in the row title as well.
+
+Example: [Repeated Rows Dashboard](http://play.grafana.org/dashboard/db/repeated-rows)
+
+## URL state
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
-### Examples
+## Examples
 
 - [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 - [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)

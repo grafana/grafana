@@ -5,20 +5,20 @@ import $q from 'q';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('graphiteDatasource', () => {
-  let ctx: any = {
+  const ctx: any = {
     backendSrv: {},
     $q: $q,
     templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
   };
 
-  beforeEach(function() {
+  beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
   });
 
-  describe('When querying graphite with one target using query editor target spec', function() {
-    let query = {
+  describe('When querying graphite with one target using query editor target spec', () => {
+    const query = {
       panelId: 3,
       dashboardId: 5,
       rangeRaw: { from: 'now-1h', to: 'now' },
@@ -30,14 +30,14 @@ describe('graphiteDatasource', () => {
     let requestOptions;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = options => {
         requestOptions = options;
         return ctx.$q.when({
           data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
         });
       };
 
-      await ctx.ds.query(query).then(function(data) {
+      await ctx.ds.query(query).then(data => {
         results = data;
       });
     });
@@ -47,33 +47,33 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.headers['X-Panel-Id']).toBe(3);
     });
 
-    it('should generate the correct query', function() {
+    it('should generate the correct query', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/render');
     });
 
-    it('should set unique requestId', function() {
+    it('should set unique requestId', () => {
       expect(requestOptions.requestId).toBe('graphiteProd.panelId.3');
     });
 
-    it('should query correctly', function() {
-      let params = requestOptions.data.split('&');
+    it('should query correctly', () => {
+      const params = requestOptions.data.split('&');
       expect(params).toContain('target=prod1.count');
       expect(params).toContain('target=prod2.count');
       expect(params).toContain('from=-1h');
       expect(params).toContain('until=now');
     });
 
-    it('should exclude undefined params', function() {
-      let params = requestOptions.data.split('&');
+    it('should exclude undefined params', () => {
+      const params = requestOptions.data.split('&');
       expect(params).not.toContain('cacheTimeout=undefined');
     });
 
-    it('should return series list', function() {
+    it('should return series list', () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('prod1.count');
     });
 
-    it('should convert to millisecond resolution', function() {
+    it('should convert to millisecond resolution', () => {
       expect(results.data[0].datapoints[0][0]).toBe(10);
     });
   });
@@ -106,11 +106,11 @@ describe('graphiteDatasource', () => {
       };
 
       beforeEach(async () => {
-        ctx.backendSrv.datasourceRequest = function(options) {
+        ctx.backendSrv.datasourceRequest = options => {
           return ctx.$q.when(response);
         };
 
-        await ctx.ds.annotationQuery(options).then(function(data) {
+        await ctx.ds.annotationQuery(options).then(data => {
           results = data;
         });
       });
@@ -136,11 +136,11 @@ describe('graphiteDatasource', () => {
         ],
       };
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = function(options) {
+        ctx.backendSrv.datasourceRequest = options => {
           return ctx.$q.when(response);
         };
 
-        ctx.ds.annotationQuery(options).then(function(data) {
+        ctx.ds.annotationQuery(options).then(data => {
           results = data;
         });
         // ctx.$rootScope.$apply();
@@ -155,30 +155,30 @@ describe('graphiteDatasource', () => {
     });
   });
 
-  describe('building graphite params', function() {
-    it('should return empty array if no targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+  describe('building graphite params', () => {
+    it('should return empty array if no targets', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{}],
       });
       expect(results.length).toBe(0);
     });
 
-    it('should uri escape targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should uri escape targets', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
       });
       expect(results).toContain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
-    it('should replace target placeholder', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should replace target placeholder', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
       });
       expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
     });
 
-    it('should replace target placeholder for hidden series', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should replace target placeholder for hidden series', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [
           { target: 'series1', hide: true },
           { target: 'sumSeries(#A)', hide: true },
@@ -188,29 +188,29 @@ describe('graphiteDatasource', () => {
       expect(results[0]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
-    it('should replace target placeholder when nesting query references', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should replace target placeholder when nesting query references', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
       });
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
-    it('should fix wrong minute interval parameters', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should fix wrong minute interval parameters', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
       });
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
-    it('should fix wrong month interval parameters', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should fix wrong month interval parameters', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
       });
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
-    it('should ignore empty targets', function() {
-      let results = ctx.ds.buildGraphiteParams({
+    it('should ignore empty targets', () => {
+      const results = ctx.ds.buildGraphiteParams({
         targets: [{ target: 'series1' }, { target: '' }],
       });
       expect(results.length).toBe(2);
@@ -222,7 +222,7 @@ describe('graphiteDatasource', () => {
     let requestOptions;
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = function(options) {
+      ctx.backendSrv.datasourceRequest = options => {
         requestOptions = options;
         return ctx.$q.when({
           data: ['backend_01', 'backend_02'],
@@ -307,24 +307,24 @@ describe('graphiteDatasource', () => {
 });
 
 function accessScenario(name, url, fn) {
-  describe('access scenario ' + name, function() {
-    let ctx: any = {
+  describe('access scenario ' + name, () => {
+    const ctx: any = {
       backendSrv: {},
       $q: $q,
       templateSrv: new TemplateSrvStub(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
-    let httpOptions = {
+    const httpOptions = {
       headers: {},
     };
 
     describe('when using proxy mode', () => {
-      let options = { dashboardId: 1, panelId: 2 };
+      const options = { dashboardId: 1, panelId: 2 };
 
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
-        var ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
+        const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
       });
@@ -332,12 +332,12 @@ function accessScenario(name, url, fn) {
   });
 }
 
-accessScenario('with proxy access', '/api/datasources/proxy/1', function(httpOptions) {
+accessScenario('with proxy access', '/api/datasources/proxy/1', httpOptions => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
   expect(httpOptions.headers['X-Panel-Id']).toBe(2);
 });
 
-accessScenario('with direct access', 'http://localhost:8080', function(httpOptions) {
+accessScenario('with direct access', 'http://localhost:8080', httpOptions => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
   expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });

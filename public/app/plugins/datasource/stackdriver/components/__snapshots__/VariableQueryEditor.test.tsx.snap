@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`VariableQueryEditor renders correctly 1`] = `
+Array [
+  <div
+    className="gf-form max-width-21"
+  >
+    <span
+      className="gf-form-label width-10 query-keyword"
+    >
+      Query Type
+    </span>
+    <div
+      className="gf-form-select-wrapper max-width-12"
+    >
+      <select
+        className="gf-form-input"
+        onChange={[Function]}
+        required={true}
+        value="services"
+      >
+        <option
+          value="services"
+        >
+          Services
+        </option>
+        <option
+          value="metricTypes"
+        >
+          Metric Types
+        </option>
+        <option
+          value="labelKeys"
+        >
+          Label Keys
+        </option>
+        <option
+          value="labelValues"
+        >
+          Label Values
+        </option>
+        <option
+          value="resourceTypes"
+        >
+          Resource Types
+        </option>
+        <option
+          value="aggregations"
+        >
+          Aggregations
+        </option>
+        <option
+          value="aligners"
+        >
+          Aligners
+        </option>
+        <option
+          value="alignmentPeriods"
+        >
+          Alignment Periods
+        </option>
+      </select>
+    </div>
+  </div>,
+  "",
+]
+`;

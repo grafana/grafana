@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -725,8 +726,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: m.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
 				{SaveError: m.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
-				{SaveError: m.ErrDashboardContainsInvalidAlertData, ExpectedStatusCode: 500},
-				{SaveError: m.ErrDashboardFailedToUpdateAlertData, ExpectedStatusCode: 500},
+				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: 422},
 				{SaveError: m.ErrDashboardFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 				{SaveError: m.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
 				{SaveError: m.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},
@@ -881,12 +881,16 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Bus: bus.GetBus(),
+		}
+
 		sc := setupScenarioContext(url)
 		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
-			return PostDashboard(c, cmd)
+			return hs.PostDashboard(c, cmd)
 		})
 
 		origNewDashboardService := dashboards.NewService

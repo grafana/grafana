@@ -77,10 +77,10 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, opts Opts) (*Re
 		Height:    int32(opts.Height),
 		FilePath:  pngPath,
 		Timeout:   int32(opts.Timeout.Seconds()),
-		RenderKey: rs.getRenderKey(opts.UserId, opts.OrgId, opts.OrgRole),
+		RenderKey: rs.getRenderKey(opts.OrgId, opts.UserId, opts.OrgRole),
 		Encoding:  opts.Encoding,
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
-		Domain:    rs.getLocalDomain(),
+		Domain:    rs.domain,
 	})
 
 	if err != nil {
