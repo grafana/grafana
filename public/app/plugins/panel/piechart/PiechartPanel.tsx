@@ -48,7 +48,6 @@ export class PiechartPanel extends PureComponent<Props> {
             pieType={options.pieType}
             strokeWidth={options.strokeWidth}
             unit={valueOptions.unit}
-            stat={valueOptions.stat}
             theme={theme}
           />
         )}

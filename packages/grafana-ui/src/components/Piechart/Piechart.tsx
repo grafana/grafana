@@ -16,8 +16,6 @@ export interface Props extends Themeable {
 
   unit: string;
   pieType: string;
-  format: string;
-  stat: string;
   strokeWidth: number;
 }
 
