@@ -240,7 +240,7 @@ export class ValueSelectDropdownCtrl {
 /** @ngInject */
 export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
   return {
-    scope: { variable: '=', onUpdated: '&' },
+    scope: { dashboard: '=', variable: '=', onUpdated: '&' },
     templateUrl: 'public/app/partials/valueSelectDropdown.html',
     controller: 'ValueSelectDropdownCtrl',
     controllerAs: 'vm',
@@ -288,13 +288,13 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         }
       });
 
-      const cleanUp = $rootScope.$on('template-variable-value-updated', () => {
-        scope.vm.updateLinkText();
-      });
-
-      scope.$on('$destroy', () => {
-        cleanUp();
-      });
+      scope.vm.dashboard.on(
+        'template-variable-value-updated',
+        () => {
+          scope.vm.updateLinkText();
+        },
+        scope
+      );
 
       scope.vm.init();
     },

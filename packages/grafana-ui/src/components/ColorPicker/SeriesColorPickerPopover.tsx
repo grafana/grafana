@@ -1,7 +1,6 @@
 import React, { FunctionComponent } from 'react';
 
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorPickerProps } from './ColorPicker';
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import { Switch } from '../Switch/Switch';
 import { withTheme } from '../../themes/ThemeContext';
