@@ -203,11 +203,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	var preload []string
 
 	for _, plugin := range enabledPlugins.Apps {
-		// TODO -- where should we save the setting? either
-		// 1. Add a column 'preload' to SQL, like 'enabled' and 'pinned'
-		// 2. Use option stored in the JsonData section (but not loaded here)
-		// 3. Add `preload` to the plugin.json file -- so it is statically defined
-		if "ryantxu-firebase-app" == plugin.Id {
+		if plugin.Preload {
 			preload = append(preload, plugin.Id)
 		}
 

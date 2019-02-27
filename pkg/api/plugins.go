@@ -105,6 +105,12 @@ func GetPluginSettingByID(c *m.ReqContext) Response {
 		State:         def.State,
 	}
 
+	if "app" == def.Type {
+		if app, ok := plugins.Apps[def.Id]; ok {
+			dto.Preload = app.Preload
+		}
+	}
+
 	query := m.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
 		if err != m.ErrPluginSettingNotFound {
