@@ -28,7 +28,7 @@ Array [
             <div
               className="css-0 gf-form-select-box__placeholder"
             >
-              Select Aggregation
+              Select Reducer
             </div>
             <div
               className="css-0"
