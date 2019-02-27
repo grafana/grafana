@@ -143,7 +143,7 @@ kbn.secondsToHhmmss = seconds => {
 };
 
 kbn.to_percent = (nr, outof) => {
-  return Math.floor(nr / outof * 10000) / 100 + '%';
+  return Math.floor((nr / outof) * 10000) / 100 + '%';
 };
 
 kbn.addslashes = str => {
@@ -289,21 +289,21 @@ kbn.getUnitFormats = () => {
 //
 // Backward compatible layer for value formats to support old plugins
 //
-if (typeof Proxy !== "undefined") {
+if (typeof Proxy !== 'undefined') {
   kbn.valueFormats = new Proxy(kbn.valueFormats, {
     get(target, name, receiver) {
       if (typeof name !== 'string') {
-        throw {message: `Value format ${String(name)} is not a string` };
+        throw { message: `Value format ${String(name)} is not a string` };
       }
 
       const formatter = getValueFormat(name);
-      if  (formatter) {
+      if (formatter) {
         return formatter;
       }
 
       // default to look here
       return Reflect.get(target, name, receiver);
-    }
+    },
   });
 } else {
   kbn.valueFormats = getValueFormatterIndex();

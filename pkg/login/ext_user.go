@@ -4,18 +4,30 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 func init() {
-	bus.AddHandler("auth", UpsertUser)
+	registry.RegisterService(&LoginService{})
 }
 
 var (
 	logger = log.New("login.ext_user")
 )
 
-func UpsertUser(cmd *m.UpsertUserCommand) error {
+type LoginService struct {
+	Bus          bus.Bus             `inject:""`
+	QuotaService *quota.QuotaService `inject:""`
+}
+
+func (ls *LoginService) Init() error {
+	ls.Bus.AddHandler(ls.UpsertUser)
+
+	return nil
+}
+
+func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := &m.GetUserByAuthInfoQuery{
@@ -37,7 +49,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 			return ErrInvalidCredentials
 		}
 
-		limitReached, err := quota.QuotaReached(cmd.ReqContext, "user")
+		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
 			log.Warn("Error getting user quota. error: %v", err)
 			return ErrGettingUserQuota
@@ -57,7 +69,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
 			}
-			if err := bus.Dispatch(cmd2); err != nil {
+			if err := ls.Bus.Dispatch(cmd2); err != nil {
 				return err
 			}
 		}
@@ -78,12 +90,12 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+		if err := ls.Bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
 			return err
 		}
 	}
 
-	err = bus.Dispatch(&m.SyncTeamsCommand{
+	err = ls.Bus.Dispatch(&m.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})

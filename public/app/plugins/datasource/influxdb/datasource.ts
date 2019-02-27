@@ -78,46 +78,48 @@ export default class InfluxDatasource {
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options).then((data): any => {
-      if (!data || !data.results) {
-        return [];
-      }
-
-      const seriesList = [];
-      for (i = 0; i < data.results.length; i++) {
-        const result = data.results[i];
-        if (!result || !result.series) {
-          continue;
+    return this._seriesQuery(allQueries, options).then(
+      (data): any => {
+        if (!data || !data.results) {
+          return [];
         }
 
-        const target = queryTargets[i];
-        let alias = target.alias;
-        if (alias) {
-          alias = this.templateSrv.replace(target.alias, options.scopedVars);
-        }
-
-        const influxSeries = new InfluxSeries({
-          series: data.results[i].series,
-          alias: alias,
-        });
-
-        switch (target.resultFormat) {
-          case 'table': {
-            seriesList.push(influxSeries.getTable());
-            break;
+        const seriesList = [];
+        for (i = 0; i < data.results.length; i++) {
+          const result = data.results[i];
+          if (!result || !result.series) {
+            continue;
           }
-          default: {
-            const timeSeries = influxSeries.getTimeSeries();
-            for (y = 0; y < timeSeries.length; y++) {
-              seriesList.push(timeSeries[y]);
+
+          const target = queryTargets[i];
+          let alias = target.alias;
+          if (alias) {
+            alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
+          const influxSeries = new InfluxSeries({
+            series: data.results[i].series,
+            alias: alias,
+          });
+
+          switch (target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
             }
-            break;
+            default: {
+              const timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
-      }
 
-      return { data: seriesList };
-    });
+        return { data: seriesList };
+      }
+    );
   }
 
   annotationQuery(options) {
@@ -127,7 +129,7 @@ export default class InfluxDatasource {
       });
     }
 
-    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
+    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
@@ -184,7 +186,7 @@ export default class InfluxDatasource {
     }
 
     if (options && options.range) {
-      const timeFilter = this.getTimeFilter({ rangeRaw: options.range });
+      const timeFilter = this.getTimeFilter({ rangeRaw: options.range, timezone: options.timezone });
       query = query.replace('$timeFilter', timeFilter);
     }
 
@@ -291,8 +293,8 @@ export default class InfluxDatasource {
   }
 
   getTimeFilter(options) {
-    const from = this.getInfluxTime(options.rangeRaw.from, false);
-    const until = this.getInfluxTime(options.rangeRaw.to, true);
+    const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
+    const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
     const fromIsAbsolute = from[from.length - 1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
@@ -302,7 +304,7 @@ export default class InfluxDatasource {
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date, roundUp) {
+  getInfluxTime(date, roundUp, timezone) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
@@ -314,7 +316,7 @@ export default class InfluxDatasource {
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp, timezone);
     }
 
     return date.valueOf() + 'ms';

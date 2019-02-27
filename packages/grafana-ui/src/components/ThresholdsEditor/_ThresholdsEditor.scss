@@ -21,7 +21,7 @@
 }
 
 .thresholds-row-add-button {
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, $text-color);
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, #fff);
 
   align-self: center;
   margin-right: 5px;
@@ -34,7 +34,7 @@
   cursor: pointer;
 
   &:hover {
-    color: $text-color-strong;
+    color: $white;
   }
 }
 
@@ -43,7 +43,7 @@
 }
 
 .thresholds-row-input {
-  margin-top: 49px;
+  margin-top: 44px;
   margin-left: 2px;
 }
 

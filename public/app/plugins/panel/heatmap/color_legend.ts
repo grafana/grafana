@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
-import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
+import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -173,8 +173,7 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
   const posY = getSvgElemHeight(legendElem) + LEGEND_VALUE_MARGIN;
   const posX = getSvgElemX(colorRect);
 
-  d3
-    .select(legendElem.get(0))
+  d3.select(legendElem.get(0))
     .append('g')
     .attr('class', 'axis')
     .attr('transform', 'translate(' + posX + ',' + posY + ')')
@@ -250,7 +249,10 @@ function drawSimpleOpacityLegend(elem, options) {
       .attr('stroke-width', 0)
       .attr(
         'fill',
-        getColorFromHexRgbOrName(options.cardColor, contextSrv.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark)
+        getColorFromHexRgbOrName(
+          options.cardColor,
+          contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
+        )
       )
       .style('opacity', d => legendOpacityScale(d));
   }

@@ -22,7 +22,7 @@ export enum LogLevel {
   dbug = 'debug',
   debug = 'debug',
   trace = 'trace',
-  unkown = 'unkown',
+  unknown = 'unknown',
 }
 
 export const LogLevelColor = {
@@ -32,7 +32,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unkown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
 export interface LogSearchMatch {
@@ -44,9 +44,11 @@ export interface LogSearchMatch {
 export interface LogRowModel {
   duplicates?: number;
   entry: string;
+  hasAnsi: boolean;
   key: string; // timestamp + labels
   labels: LogsStreamLabels;
   logLevel: LogLevel;
+  raw: string;
   searchWords?: string[];
   timestamp: string; // ISO with nanosec precision
   timeFromNow: string;
@@ -340,6 +342,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return { datapoints: series.datapoints, target: series.alias, color: series.color };
+    return {
+      datapoints: series.datapoints,
+      target: series.alias,
+      alias: series.alias,
+      color: series.color,
+    };
   });
 }

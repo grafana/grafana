@@ -36,18 +36,16 @@ export class OrgDetailsPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-            <div className="page-container page-body">
-              {!isLoading && (
-                <div>
-                  <OrgProfile
-                    onOrgNameChange={name => this.onOrgNameChange(name)}
-                    onSubmit={this.onUpdateOrganization}
-                    orgName={organization.name}
-                  />
-                  <SharedPreferences resourceUri="org" />
-                </div>
-              )}
+          {!isLoading && (
+            <div>
+              <OrgProfile
+                onOrgNameChange={name => this.onOrgNameChange(name)}
+                onSubmit={this.onUpdateOrganization}
+                orgName={organization.name}
+              />
+              <SharedPreferences resourceUri="org" />
             </div>
+          )}
         </Page.Contents>
       </Page>
     );
@@ -67,4 +65,9 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(OrgDetailsPage)
+);

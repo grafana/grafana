@@ -1,7 +1,7 @@
 import React, { createRef } from 'react';
 import * as PopperJS from 'popper.js';
-import Popper from './Popper';
-import PopperController, { UsingPopperProps } from './PopperController';
+import { Popper } from './Popper';
+import { PopperController, UsingPopperProps } from './PopperController';
 
 interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error';
@@ -21,7 +21,7 @@ export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) =
                 onMouseEnter={showPopper}
                 onMouseLeave={hidePopper}
                 referenceElement={tooltipTriggerRef.current}
-                wrapperClassName='popper'
+                wrapperClassName="popper"
                 className={popperBackgroundClassName}
                 renderArrow={({ arrowProps, placement }) => (
                   <div className="popper__arrow" data-placement={placement} {...arrowProps} />

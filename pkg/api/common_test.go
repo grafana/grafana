@@ -94,14 +94,13 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 }
 
 type scenarioContext struct {
-	m                    *macaron.Macaron
-	context              *m.ReqContext
-	resp                 *httptest.ResponseRecorder
-	handlerFunc          handlerFunc
-	defaultHandler       macaron.Handler
-	req                  *http.Request
-	url                  string
-	userAuthTokenService *fakeUserAuthTokenService
+	m              *macaron.Macaron
+	context        *m.ReqContext
+	resp           *httptest.ResponseRecorder
+	handlerFunc    handlerFunc
+	defaultHandler macaron.Handler
+	req            *http.Request
+	url            string
 }
 
 func (sc *scenarioContext) exec() {
@@ -123,30 +122,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.userAuthTokenService = newFakeUserAuthTokenService()
-	sc.m.Use(middleware.GetContextHandler(sc.userAuthTokenService))
+	sc.m.Use(middleware.GetContextHandler(nil))
 
 	return sc
 }
-
-type fakeUserAuthTokenService struct {
-	initContextWithTokenProvider func(ctx *m.ReqContext, orgID int64) bool
-}
-
-func newFakeUserAuthTokenService() *fakeUserAuthTokenService {
-	return &fakeUserAuthTokenService{
-		initContextWithTokenProvider: func(ctx *m.ReqContext, orgID int64) bool {
-			return false
-		},
-	}
-}
-
-func (s *fakeUserAuthTokenService) InitContextWithToken(ctx *m.ReqContext, orgID int64) bool {
-	return s.initContextWithTokenProvider(ctx, orgID)
-}
-
-func (s *fakeUserAuthTokenService) UserAuthenticatedHook(user *m.User, c *m.ReqContext) error {
-	return nil
-}
-
-func (s *fakeUserAuthTokenService) SignOutUser(c *m.ReqContext) error { return nil }

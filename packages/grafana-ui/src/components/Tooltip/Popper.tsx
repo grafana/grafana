@@ -1,7 +1,7 @@
 ﻿import React, { PureComponent } from 'react';
 import * as PopperJS from 'popper.js';
 import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
-import { Portal } from '@grafana/ui';
+import { Portal } from '../Portal/Portal';
 import Transition from 'react-transition-group/Transition';
 import { PopperContent } from './PopperController';
 
@@ -17,12 +17,7 @@ const transitionStyles: { [key: string]: object } = {
   exiting: { opacity: 0, transitionDelay: '500ms' },
 };
 
-export type RenderPopperArrowFn = (
-  props: {
-    arrowProps: PopperArrowProps;
-    placement: string;
-  }
-) => JSX.Element;
+export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placement: string }) => JSX.Element;
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
@@ -35,8 +30,16 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 class Popper extends PureComponent<Props> {
   render() {
-    const { show, placement, onMouseEnter, onMouseLeave, className, wrapperClassName, renderArrow } = this.props;
-    const { content } = this.props;
+    const {
+      content,
+      show,
+      placement,
+      onMouseEnter,
+      onMouseLeave,
+      className,
+      wrapperClassName,
+      renderArrow,
+    } = this.props;
 
     return (
       <Manager>
@@ -65,11 +68,12 @@ class Popper extends PureComponent<Props> {
                         className={`${wrapperClassName}`}
                       >
                         <div className={className}>
-                          {typeof content === 'string'
-                            ? content
-                            : React.cloneElement(content, {
-                                updatePopperPosition: scheduleUpdate,
-                              })}
+                          {typeof content === 'string' && content}
+                          {React.isValidElement(content) && React.cloneElement(content)}
+                          {typeof content === 'function' &&
+                            content({
+                              updatePopperPosition: scheduleUpdate,
+                            })}
                           {renderArrow &&
                             renderArrow({
                               arrowProps,
@@ -89,4 +93,4 @@ class Popper extends PureComponent<Props> {
   }
 }
 
-export default Popper;
+export { Popper };

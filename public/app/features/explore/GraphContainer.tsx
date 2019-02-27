@@ -20,11 +20,12 @@ interface GraphContainerProps {
   split: boolean;
   toggleGraph: typeof toggleGraph;
   changeTime: typeof changeTime;
+  width: number;
 }
 
 export class GraphContainer extends PureComponent<GraphContainerProps> {
   onClickGraphButton = () => {
-    this.props.toggleGraph(this.props.exploreId);
+    this.props.toggleGraph(this.props.exploreId, this.props.showingGraph);
   };
 
   onChangeTime = (timeRange: TimeRange) => {
@@ -32,8 +33,8 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   };
 
   render() {
-    const { exploreId, graphResult, loading, showingGraph, showingTable, range, split } = this.props;
-    const graphHeight = showingGraph && showingTable ? '200px' : '400px';
+    const { exploreId, graphResult, loading, showingGraph, showingTable, range, split, width } = this.props;
+    const graphHeight = showingGraph && showingTable ? 200 : 400;
 
     if (!graphResult) {
       return null;
@@ -48,6 +49,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
           onChangeTime={this.onChangeTime}
           range={range}
           split={split}
+          width={width}
         />
       </Panel>
     );
@@ -68,4 +70,9 @@ const mapDispatchToProps = {
   changeTime,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(GraphContainer));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(GraphContainer)
+);

@@ -6,4 +6,3 @@ export interface LokiQuery extends DataQuery {
 }
 
 export type LokiQueryResultFormats = 'time_series' | 'logs';
-

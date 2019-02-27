@@ -31,8 +31,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
 
   this.query = function(options) {
     const graphOptions = {
-      from: this.translateTime(options.rangeRaw.from, false),
-      until: this.translateTime(options.rangeRaw.to, true),
+      from: this.translateTime(options.rangeRaw.from, false, options.timezone),
+      until: this.translateTime(options.rangeRaw.to, true, options.timezone),
       targets: options.targets,
       format: options.format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -165,9 +165,9 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
         method: 'GET',
         url:
           '/events/get_data?from=' +
-          this.translateTime(options.range.from, false) +
+          this.translateTime(options.range.from, false, options.timezone) +
           '&until=' +
-          this.translateTime(options.range.to, true) +
+          this.translateTime(options.range.to, true, options.timezone) +
           tags,
       });
     } catch (err) {
@@ -179,7 +179,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     return templateSrv.variableExists(target.target);
   };
 
-  this.translateTime = (date, roundUp) => {
+  this.translateTime = (date, roundUp, timezone) => {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -189,7 +189,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
         date = date.replace('M', 'mon');
         return date;
       }
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp, timezone);
     }
 
     // graphite' s from filter is exclusive
@@ -255,8 +255,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     };
 
     if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false);
-      httpOptions.params.until = this.translateTime(options.range.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
+      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -280,8 +280,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     };
 
     if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false);
-      httpOptions.params.until = this.translateTime(options.range.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
+      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -305,8 +305,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     };
 
     if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false);
-      httpOptions.params.until = this.translateTime(options.range.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
+      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -343,8 +343,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       httpOptions.params.limit = options.limit;
     }
     if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false);
-      httpOptions.params.until = this.translateTime(options.range.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
+      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -379,8 +379,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
       httpOptions.params.limit = options.limit;
     }
     if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false);
-      httpOptions.params.until = this.translateTime(options.range.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
+      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {

@@ -11,7 +11,7 @@ import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui/src/types';
+import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -21,6 +21,7 @@ import {
   QueryIntervals,
   QueryOptions,
 } from 'app/types/explore';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -31,6 +32,7 @@ export const DEFAULT_UI_STATE = {
   showingTable: true,
   showingGraph: true,
   showingLogs: true,
+  dedupStrategy: LogsDedupStrategy.none,
 };
 
 const MAX_HISTORY_ITEMS = 100;
@@ -151,7 +153,7 @@ export function buildQueryTransaction(
   };
 }
 
-export const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
 const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('expr');
 const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
@@ -183,6 +185,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
               showingGraph: segment.ui[0],
               showingLogs: segment.ui[1],
               showingTable: segment.ui[2],
+              dedupStrategy: segment.ui[3],
             };
           }
         });
@@ -204,7 +207,14 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
-      { ui: [!!urlState.ui.showingGraph, !!urlState.ui.showingLogs, !!urlState.ui.showingTable] },
+      {
+        ui: [
+          !!urlState.ui.showingGraph,
+          !!urlState.ui.showingLogs,
+          !!urlState.ui.showingTable,
+          urlState.ui.dedupStrategy,
+        ],
+      },
     ]);
   }
   return JSON.stringify(urlState);

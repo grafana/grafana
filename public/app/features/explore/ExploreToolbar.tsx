@@ -102,19 +102,17 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
           <div className="explore-toolbar-header">
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
-                <a className="navbar-page-btn">
-                  <i className="fa fa-rocket fa-fw" />
+                <span className="navbar-page-btn">
+                  <i className="gicon gicon-explore" />
                   Explore
-                </a>
+                </span>
               )}
             </div>
-            <div className="explore-toolbar-header-close">
-              {exploreId === 'right' && (
-                <a onClick={this.props.closeSplit}>
-                  <i className="fa fa-times fa-fw" />
-                </a>
-              )}
-            </div>
+            {exploreId === 'right' && (
+              <a className="explore-toolbar-header-close" onClick={this.props.closeSplit}>
+                <i className="fa fa-times fa-fw" />
+              </a>
+            )}
           </div>
         </div>
         <div className="explore-toolbar-item">
@@ -156,7 +154,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 splitted,
                 title: 'Run Query',
                 onClick: this.onRunQuery,
-                buttonClassName: 'navbar-button--primary',
+                buttonClassName: 'navbar-button--secondary',
                 iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
                 iconSide: IconSide.right,
               })}
@@ -195,4 +193,9 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
 };
 
-export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
+export const ExploreToolbar = hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UnConnectedExploreToolbar)
+);

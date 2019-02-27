@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { PanelPlugin } from 'app/types/plugins';
+import { GrafanaTheme, getTheme, GrafanaThemeType } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
@@ -35,9 +36,13 @@ export class Settings {
   loginHint: any;
   loginError: any;
   viewersCanEdit: boolean;
+  editorsCanOwn: boolean;
   disableSanitizeHtml: boolean;
+  theme: GrafanaTheme;
 
   constructor(options: Settings) {
+    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+
     const defaults = {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
@@ -53,7 +58,8 @@ export class Settings {
         isEnterprise: false,
       },
       viewersCanEdit: false,
-      disableSanitizeHtml: false
+      editorsCanOwn: false,
+      disableSanitizeHtml: false,
     };
 
     _.extend(this, defaults, options);
@@ -68,5 +74,5 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
-const config = new Settings(options);
+export const config = new Settings(options);
 export default config;

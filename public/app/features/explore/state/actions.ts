@@ -67,14 +67,26 @@ import {
   ToggleGraphPayload,
   ToggleLogsPayload,
   ToggleTablePayload,
+  updateUIStateAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
-// /**
-//  * Adds a query row after the row with the given index.
-//  */
+/**
+ * Updates UI state and save it to the URL
+ */
+const updateExploreUIState = (exploreId, uiStateFragment: Partial<ExploreUIState>) => {
+  return dispatch => {
+    dispatch(updateUIStateAction({ exploreId, ...uiStateFragment }));
+    dispatch(stateSave());
+  };
+};
+
+/**
+ * Adds a query row after the row with the given index.
+ */
 export function addQueryRow(exploreId: ExploreId, index: number): ActionOf<AddQueryRowPayload> {
   const query = generateEmptyQuery(index + 1);
   return addQueryRowAction({ exploreId, index, query });
@@ -669,6 +681,7 @@ export function stateSave() {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
         showingTable: left.showingTable,
+        dedupStrategy: left.dedupStrategy,
       },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
@@ -677,7 +690,12 @@ export function stateSave() {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
         range: right.range,
-        ui: { showingGraph: right.showingGraph, showingLogs: right.showingLogs, showingTable: right.showingTable },
+        ui: {
+          showingGraph: right.showingGraph,
+          showingLogs: right.showingLogs,
+          showingTable: right.showingTable,
+          dedupStrategy: right.dedupStrategy,
+        },
       };
 
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
@@ -696,23 +714,25 @@ const togglePanelActionCreator = (
     | ActionCreator<ToggleGraphPayload>
     | ActionCreator<ToggleLogsPayload>
     | ActionCreator<ToggleTablePayload>
-) => (exploreId: ExploreId) => {
-  return (dispatch, getState) => {
-    let shouldRunQueries;
-    dispatch(actionCreator({ exploreId }));
-    dispatch(stateSave());
+) => (exploreId: ExploreId, isPanelVisible: boolean) => {
+  return dispatch => {
+    let uiFragmentStateUpdate: Partial<ExploreUIState>;
+    const shouldRunQueries = !isPanelVisible;
 
     switch (actionCreator.type) {
       case toggleGraphAction.type:
-        shouldRunQueries = getState().explore[exploreId].showingGraph;
+        uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
         break;
       case toggleLogsAction.type:
-        shouldRunQueries = getState().explore[exploreId].showingLogs;
+        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
       case toggleTableAction.type:
-        shouldRunQueries = getState().explore[exploreId].showingTable;
+        uiFragmentStateUpdate = { showingTable: !isPanelVisible };
         break;
     }
+
+    dispatch(actionCreator({ exploreId }));
+    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate));
 
     if (shouldRunQueries) {
       dispatch(runQueries(exploreId));
@@ -734,3 +754,12 @@ export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
 export const toggleTable = togglePanelActionCreator(toggleTableAction);
+
+/**
+ * Change logs deduplication strategy and update URL.
+ */
+export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy) => {
+  return dispatch => {
+    dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
+  };
+};

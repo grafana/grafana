@@ -160,6 +160,13 @@ The path to the directory where the front end files (HTML, JS, and CSS
 files). Default to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
+### enable_gzip
+
+Set this option to `true` to enable HTTP compression, this can improve 
+transfer speed and bandwidth utilization. It is recommended that most 
+users set it to `true`. By default it is set to `false` for compatibility 
+reasons.
+
 ### cert_file
 
 Path to the certificate file (if `protocol` is set to `https`).
@@ -286,6 +293,14 @@ Default is `false`.
 ### data_source_proxy_whitelist
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
 
 <hr />
 
@@ -586,7 +601,7 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
 
-# concurrent_render_limit
+### concurrent_render_limit
 
 > Available in 5.3  and above
 

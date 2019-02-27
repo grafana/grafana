@@ -8,7 +8,7 @@ aliases = ["/datasources/cloudwatch"]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
 parent = "datasources"
-weight = 10
+weight = 5
 +++
 
 # Using AWS CloudWatch in Grafana
@@ -77,9 +77,9 @@ Here is a minimal policy example:
         },
         {
             "Sid": "AllowReadingResourcesForTags",
-            "Effect" : "Allow",      
-            "Action" : "tag:GetResources",      
-            "Resource" : "*"      
+            "Effect" : "Allow",
+            "Action" : "tag:GetResources",
+            "Resource" : "*"
         }
     ]
 }
@@ -212,6 +212,16 @@ Example `ec2_instance_attribute()` query
 
 ```javascript
 ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
+```
+
+## Using json format template variables
+
+Some of query takes JSON format filter. Grafana support to interpolate template variable to JSON format string, it can use as filter string.
+
+If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
+
+```
+resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 ```
 
 ## Cost

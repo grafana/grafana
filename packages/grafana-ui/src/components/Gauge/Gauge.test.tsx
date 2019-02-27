@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { ValueMapping, MappingType } from '../../types';
+import { getTheme } from '../../themes';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
@@ -24,6 +25,7 @@ const setup = (propOverrides?: object) => {
     width: 300,
     value: 25,
     decimals: 0,
+    theme: getTheme(),
   };
 
   Object.assign(props, propOverrides);
@@ -82,9 +84,9 @@ describe('Get thresholds formatted', () => {
   it('should get the correct formatted values when thresholds are added', () => {
     const { instance } = setup({
       thresholds: [
-        { index: 2, value: 75, color: '#6ED0E0' },
-        { index: 1, value: 50, color: '#EAB839' },
         { index: 0, value: -Infinity, color: '#7EB26D' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 2, value: 75, color: '#6ED0E0' },
       ],
     });
 

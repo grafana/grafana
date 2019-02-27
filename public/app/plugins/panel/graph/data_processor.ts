@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { colors, GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
+import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
@@ -113,7 +113,7 @@ export class DataProcessor {
     const series = new TimeSeries({
       datapoints: datapoints,
       alias: alias,
-      color: getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark),
+      color: getColorFromHexRgbOrName(color, config.theme.type),
       unit: seriesData.unit,
     });
 

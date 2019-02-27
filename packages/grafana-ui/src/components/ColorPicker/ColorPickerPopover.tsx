@@ -1,23 +1,37 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { ColorPickerProps, warnAboutColorPickerPropsDeprecation } from './ColorPicker';
-import { GrafanaTheme } from '../../types';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import SpectrumPalette from './SpectrumPalette';
+import { GrafanaThemeType, Themeable } from '../../types/theme';
+import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 
+export type ColorPickerChangeHandler = (color: string) => void;
+
+export interface ColorPickerProps extends Themeable {
+  color: string;
+  onChange: ColorPickerChangeHandler;
+
+  /**
+   * @deprecated Use onChange instead
+   */
+  onColorChange?: ColorPickerChangeHandler;
+  enableNamedColors?: boolean;
+  children?: JSX.Element;
+}
 export interface Props<T> extends ColorPickerProps, PopperContentProps {
   customPickers?: T;
 }
 
 type PickerType = 'palette' | 'spectrum';
 
-interface CustomPickersDescriptor {
+export interface CustomPickersDescriptor {
   [key: string]: {
     tabComponent: React.ComponentType<ColorPickerProps>;
     name: string;
   };
 }
+
 interface State<T> {
   activePicker: PickerType | keyof T;
 }
@@ -43,7 +57,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(getColorFromHexRgbOrName(color, theme));
+    changeHandler(getColorFromHexRgbOrName(color, theme.type));
   };
 
   handleTabChange = (tab: PickerType | keyof T) => {
@@ -58,7 +72,9 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
       case 'spectrum':
         return <SpectrumPalette color={color} onChange={this.handleChange} theme={theme} />;
       case 'palette':
-        return <NamedColorsPalette color={getColorName(color, theme)} onChange={this.handleChange} theme={theme} />;
+        return (
+          <NamedColorsPalette color={getColorName(color, theme.type)} onChange={this.handleChange} theme={theme} />
+        );
       default:
         return this.renderCustomPicker(activePicker);
     }
@@ -88,11 +104,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
       <>
         {Object.keys(customPickers).map(key => {
           return (
-            <div
-              className={this.getTabClassName(key)}
-              onClick={this.handleTabChange(key)}
-              key={key}
-            >
+            <div className={this.getTabClassName(key)} onClick={this.handleTabChange(key)} key={key}>
               {customPickers[key].name}
             </div>
           );
@@ -103,21 +115,14 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
 
   render() {
     const { theme } = this.props;
-    const colorPickerTheme = theme || GrafanaTheme.Dark;
-
+    const colorPickerTheme = theme.type || GrafanaThemeType.Dark;
     return (
       <div className={`ColorPickerPopover ColorPickerPopover--${colorPickerTheme}`}>
         <div className="ColorPickerPopover__tabs">
-          <div
-            className={this.getTabClassName('palette')}
-            onClick={this.handleTabChange('palette')}
-          >
+          <div className={this.getTabClassName('palette')} onClick={this.handleTabChange('palette')}>
             Colors
           </div>
-          <div
-            className={this.getTabClassName('spectrum')}
-            onClick={this.handleTabChange('spectrum')}
-          >
+          <div className={this.getTabClassName('spectrum')} onClick={this.handleTabChange('spectrum')}>
             Custom
           </div>
           {this.renderCustomPickerTabs()}

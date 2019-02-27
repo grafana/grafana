@@ -37,6 +37,8 @@ import {
   toggleLogsAction,
   toggleTableAction,
   queriesImportedAction,
+  updateUIStateAction,
+  toggleLogLevelAction,
 } from './actionTypes';
 
 export const DEFAULT_RANGE = {
@@ -407,6 +409,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: updateUIStateAction,
+    mapper: (state, action): ExploreItemState => {
+      return { ...state, ...action.payload };
+    },
+  })
+  .addMapper({
     filter: toggleGraphAction,
     mapper: (state): ExploreItemState => {
       const showingGraph = !state.showingGraph;
@@ -415,7 +423,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         // Discard transactions related to Graph query
         nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
       }
-      return { ...state, queryTransactions: nextQueryTransactions, showingGraph };
+      return { ...state, queryTransactions: nextQueryTransactions };
     },
   })
   .addMapper({
@@ -427,7 +435,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         // Discard transactions related to Logs query
         nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
       }
-      return { ...state, queryTransactions: nextQueryTransactions, showingLogs };
+      return { ...state, queryTransactions: nextQueryTransactions };
     },
   })
   .addMapper({
@@ -435,7 +443,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state): ExploreItemState => {
       const showingTable = !state.showingTable;
       if (showingTable) {
-        return { ...state, showingTable, queryTransactions: state.queryTransactions };
+        return { ...state, queryTransactions: state.queryTransactions };
       }
 
       // Toggle off needs discarding of table queries and results
@@ -446,7 +454,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         state.queryIntervals.intervalMs
       );
 
-      return { ...state, ...results, queryTransactions: nextQueryTransactions, showingTable };
+      return { ...state, ...results, queryTransactions: nextQueryTransactions };
     },
   })
   .addMapper({
@@ -457,6 +465,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queries,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      };
+    },
+  })
+  .addMapper({
+    filter: toggleLogLevelAction,
+    mapper: (state, action): ExploreItemState => {
+      const { hiddenLogLevels } = action.payload;
+      return {
+        ...state,
+        hiddenLogLevels: Array.from(hiddenLogLevels),
       };
     },
   })

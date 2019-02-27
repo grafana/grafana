@@ -16,7 +16,7 @@ import SelectOptionGroup from './SelectOptionGroup';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
-import { CustomScrollbar } from '..';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export interface SelectOptionItem {
   label?: string;
@@ -61,7 +61,9 @@ interface AsyncProps {
 export const MenuList = (props: any) => {
   return (
     <components.MenuList {...props}>
-      <CustomScrollbar autoHide={false} autoHeightMax="inherit">{props.children}</CustomScrollbar>
+      <CustomScrollbar autoHide={false} autoHeightMax="inherit">
+        {props.children}
+      </CustomScrollbar>
     </components.MenuList>
   );
 };

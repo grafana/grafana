@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import isNumber from 'lodash/isNumber';
 
 import { colors } from './colors';
 
@@ -51,7 +51,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
       }
 
       if (currentValue !== null && typeof currentValue !== 'number') {
-        throw {message: 'Time series contains non number values'};
+        throw { message: 'Time series contains non number values' };
       }
 
       // Due to missing values we could have different timeStep all along the series
@@ -75,7 +75,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
       }
 
       if (currentValue !== null) {
-        if (_.isNumber(currentValue)) {
+        if (isNumber(currentValue)) {
           total += currentValue;
           allIsNull = false;
           nonNulls++;

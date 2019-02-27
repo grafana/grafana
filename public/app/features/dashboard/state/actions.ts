@@ -1,39 +1,43 @@
-import { StoreState } from 'app/types';
-import { ThunkAction } from 'redux-thunk';
+// Services & Utils
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import appEvents from 'app/core/app_events';
+import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+
+// Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
+import { notifyApp } from 'app/core/actions';
+
+// Types
 import {
+  ThunkResult,
   DashboardAcl,
   DashboardAclDTO,
   PermissionLevel,
   DashboardAclUpdateDTO,
   NewDashboardAclItem,
-} from 'app/types/acl';
+  MutableDashboard,
+  DashboardInitError,
+} from 'app/types';
 
-export enum ActionTypes {
-  LoadDashboardPermissions = 'LOAD_DASHBOARD_PERMISSIONS',
-  LoadStarredDashboards = 'LOAD_STARRED_DASHBOARDS',
-}
+export const loadDashboardPermissions = actionCreatorFactory<DashboardAclDTO[]>('LOAD_DASHBOARD_PERMISSIONS').create();
 
-export interface LoadDashboardPermissionsAction {
-  type: ActionTypes.LoadDashboardPermissions;
-  payload: DashboardAcl[];
-}
+export const dashboardInitFetching = noPayloadActionCreatorFactory('DASHBOARD_INIT_FETCHING').create();
 
-export interface LoadStarredDashboardsAction {
-  type: ActionTypes.LoadStarredDashboards;
-  payload: DashboardAcl[];
-}
+export const dashboardInitServices = noPayloadActionCreatorFactory('DASHBOARD_INIT_SERVICES').create();
 
-export type Action = LoadDashboardPermissionsAction | LoadStarredDashboardsAction;
+export const dashboardInitSlow = noPayloadActionCreatorFactory('SET_DASHBOARD_INIT_SLOW').create();
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
+export const dashboardInitCompleted = actionCreatorFactory<MutableDashboard>('DASHBOARD_INIT_COMLETED').create();
 
-export const loadDashboardPermissions = (items: DashboardAclDTO[]): LoadDashboardPermissionsAction => ({
-  type: ActionTypes.LoadDashboardPermissions,
-  payload: items,
-});
+/*
+ * Unrecoverable init failure (fetch or model creation failed)
+ */
+export const dashboardInitFailed = actionCreatorFactory<DashboardInitError>('DASHBOARD_INIT_FAILED').create();
+
+/*
+ * When leaving dashboard, resets state
+ * */
+export const cleanUpDashboard = noPayloadActionCreatorFactory('DASHBOARD_CLEAN_UP').create();
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async dispatch => {
@@ -124,7 +128,7 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post('/api/dashboards/import', data);
-    appEvents.emit('alert-success', ['Dashboard Imported', dashboardTitle]);
+    dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));
     dispatch(loadPluginDashboards());
   };
 }

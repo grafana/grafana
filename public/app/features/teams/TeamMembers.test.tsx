@@ -55,9 +55,8 @@ describe('Functions', () => {
   describe('on search member query change', () => {
     it('it should call setSearchMemberQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'member' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('member');
 
       expect(instance.props.setSearchMemberQuery).toHaveBeenCalledWith('member');
     });

@@ -191,6 +191,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('l/h') },
       { name: 'Litre/min (l/min)', id: 'flowlpm', fn: toFixedUnit('l/min') },
       { name: 'milliLitre/min (mL/min)', id: 'flowmlpm', fn: toFixedUnit('mL/min') },
+      { name: 'Lux (lx)', id: 'lux', fn: toFixedUnit('lux') },
     ],
   },
   {
@@ -306,7 +307,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
-    ]
+    ],
   },
   {
     name: 'Volume',
@@ -318,5 +319,5 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'cubic decimetre', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
     ],
-  }
+  },
 ];

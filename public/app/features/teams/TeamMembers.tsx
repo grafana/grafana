@@ -7,6 +7,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   members: TeamMember[];
@@ -33,8 +34,8 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.loadTeamMembers();
   }
 
-  onSearchQueryChange = event => {
-    this.props.setSearchMemberQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchMemberQuery(value);
   };
 
   onRemoveMember(member: TeamMember) {
@@ -61,7 +62,9 @@ export class TeamMembers extends PureComponent<Props, State> {
 
     return (
       <td>
-        {labels.map(label => <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />)}
+        {labels.map(label => (
+          <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
+        ))}
       </td>
     );
   }
@@ -89,22 +92,19 @@ export class TeamMembers extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search members"
-                value={searchMemberQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search members"
+              value={searchMemberQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add a member
+          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+            Add member
           </button>
         </div>
 
@@ -113,11 +113,11 @@ export class TeamMembers extends PureComponent<Props, State> {
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
               <i className="fa fa-close" />
             </button>
-            <h5>Add Team Member</h5>
+            <h5>Add team member</h5>
             <div className="gf-form-inline">
               <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
-                <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                <button className="btn btn-primary gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
                 </button>
               )}
@@ -158,4 +158,7 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamMembers);

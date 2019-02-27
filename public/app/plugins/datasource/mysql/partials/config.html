@@ -1,4 +1,3 @@
-
 <h3 class="page-heading">MySQL Connection</h3>
 
 <div class="gf-form-group">
@@ -22,7 +21,23 @@
 			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>
 		</div>
 	</div>
-</div>
+
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<gf-form-checkbox class="gf-form" label="TLS Client Auth" label-class="width-10"
+				checked="ctrl.current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-checkbox>
+			<gf-form-checkbox class="gf-form" label="With CA Cert" tooltip="Needed for
+				verifing self-signed TLS Certs" checked="ctrl.current.jsonData.tlsAuthWithCACert" label-class="width-11"
+				switch-class="max-width-6"></gf-form-checkbox>
+		</div>
+		<div class="gf-form-inline">
+			<gf-form-checkbox class="gf-form" label="Skip TLS Verify" label-class="width-10"
+				checked="ctrl.current.jsonData.tlsSkipVerify" switch-class="max-width-6"></gf-form-checkbox>
+		</div>
+	</div>
+
+<datasource-tls-auth-settings current="ctrl.current" ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert)">
+</datasource-tls-auth-settings>
 
 <b>Connection limits</b>
 
@@ -84,4 +99,3 @@
 		</p>
 	</div>
 </div>
-

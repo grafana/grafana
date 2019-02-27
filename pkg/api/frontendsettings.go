@@ -145,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"info":         panel.Info,
 			"hideFromList": panel.HideFromList,
 			"sort":         getPanelSort(panel.Id),
+			"dataFormats":  panel.DataFormats,
 		}
 	}
 
@@ -166,6 +167,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"viewersCanEdit":             setting.ViewersCanEdit,
+		"editorsCanOwn":              hs.Cfg.EditorsCanOwn,
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,

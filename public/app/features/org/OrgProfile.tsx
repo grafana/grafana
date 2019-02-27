@@ -32,7 +32,7 @@ const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
           </div>
         </div>
         <div className="gf-form-button-row">
-          <button type="submit" className="btn btn-success">
+          <button type="submit" className="btn btn-primary">
             Save
           </button>
         </div>

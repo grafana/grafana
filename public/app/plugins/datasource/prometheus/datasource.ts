@@ -396,6 +396,10 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
       const expandedQueries = queries.map(query => ({
         ...query,
         expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+
+        // null out values we don't support in Explore yet
+        legendFormat: null,
+        step: null,
       }));
       state = {
         ...state,
@@ -487,13 +491,15 @@ export function alignRange(start, end, step) {
 export function extractRuleMappingFromGroups(groups: any[]) {
   return groups.reduce(
     (mapping, group) =>
-      group.rules.filter(rule => rule.type === 'recording').reduce(
-        (acc, rule) => ({
-          ...acc,
-          [rule.name]: rule.query,
-        }),
-        mapping
-      ),
+      group.rules
+        .filter(rule => rule.type === 'recording')
+        .reduce(
+          (acc, rule) => ({
+            ...acc,
+            [rule.name]: rule.query,
+          }),
+          mapping
+        ),
     {}
   );
 }

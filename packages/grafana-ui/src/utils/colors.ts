@@ -1,4 +1,8 @@
-import _ from 'lodash';
+import map from 'lodash/map';
+import sortBy from 'lodash/sortBy';
+import flattenDeep from 'lodash/flattenDeep';
+import chunk from 'lodash/chunk';
+import zip from 'lodash/zip';
 import tinycolor from 'tinycolor2';
 
 export const PALETTE_ROWS = 4;
@@ -69,16 +73,16 @@ export const colors = [
 ];
 
 function sortColorsByHue(hexColors: string[]) {
-  const hslColors = _.map(hexColors, hexToHsl);
+  const hslColors = map(hexColors, hexToHsl);
 
-  const sortedHSLColors = _.sortBy(hslColors, ['h']);
-  const chunkedHSLColors = _.chunk(sortedHSLColors, PALETTE_ROWS);
-  const sortedChunkedHSLColors = _.map(chunkedHSLColors, chunk => {
-    return _.sortBy(chunk, 'l');
+  const sortedHSLColors = sortBy(hslColors, ['h']);
+  const chunkedHSLColors = chunk(sortedHSLColors, PALETTE_ROWS);
+  const sortedChunkedHSLColors = map(chunkedHSLColors, chunk => {
+    return sortBy(chunk, 'l');
   });
-  const flattenedZippedSortedChunkedHSLColors = _.flattenDeep(_.zip(...sortedChunkedHSLColors));
+  const flattenedZippedSortedChunkedHSLColors = flattenDeep(zip(...sortedChunkedHSLColors));
 
-  return _.map(flattenedZippedSortedChunkedHSLColors, hslToHex);
+  return map(flattenedZippedSortedChunkedHSLColors, hslToHex);
 }
 
 function hexToHsl(color: string) {

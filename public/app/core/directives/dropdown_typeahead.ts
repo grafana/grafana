@@ -128,7 +128,7 @@ export function dropdownTypeahead2($compile) {
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
   const buttonTemplate =
-    '<a class="gf-form-input dropdown-toggle"' +
+    '<a class="{{buttonTemplateClass}} dropdown-toggle"' +
     ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
     ' ><i class="fa fa-plus"></i></a>';
 
@@ -137,12 +137,18 @@ export function dropdownTypeahead2($compile) {
       menuItems: '=dropdownTypeahead2',
       dropdownTypeaheadOnSelect: '&dropdownTypeaheadOnSelect',
       model: '=ngModel',
+      buttonTemplateClass: '@',
     },
     link: ($scope, elem, attrs) => {
       const $input = $(inputTemplate);
+
+      if (!$scope.buttonTemplateClass) {
+        $scope.buttonTemplateClass = 'gf-form-input';
+      }
+
       const $button = $(buttonTemplate);
       const timeoutId = {
-        blur: null
+        blur: null,
       };
       $input.appendTo(elem);
       $button.appendTo(elem);

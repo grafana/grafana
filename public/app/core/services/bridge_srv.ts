@@ -46,6 +46,10 @@ export class BridgeSrv {
       if (angularUrl !== url) {
         this.$timeout(() => {
           this.$location.url(url);
+          // some state changes should not trigger new browser history
+          if (state.location.replace) {
+            this.$location.replace();
+          }
         });
         console.log('store updating angular $location.url', url);
       }
