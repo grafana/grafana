@@ -1,24 +1,24 @@
 +++
-title = "Organisation HTTP API "
-description = "Grafana Organisation HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "organisation"]
-aliases = ["/http_api/organisation/"]
+title = "Organization HTTP API "
+description = "Grafana Organization HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "organization"]
+aliases = ["/http_api/organization/"]
 type = "docs"
 [menu.docs]
-name = "Organisation"
+name = "Organization"
 parent = "http_api"
 +++
 
 
-# Organisation API
+# Organization API
 
-The Organisation HTTP API is divided in two resources, `/api/org` (current organisation)
-and `/api/orgs` (admin organisations). One big difference between these are that
-the admin of all organisations API only works with basic authentication, see [Admin Organisations API](#admin-organisations-api) for more information.
+The Organization HTTP API is divided in two resources, `/api/org` (current organization)
+and `/api/orgs` (admin organizations). One big difference between these are that
+the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-## Current Organisation API
+## Current Organization API
 
-### Get current Organisation
+### Get current Organization
 
 `GET /api/org/`
 
@@ -43,7 +43,7 @@ Content-Type: application/json
 }
 ```
 
-### Get all users within the current organisation
+### Get all users within the current organization
 
 `GET /api/org/users`
 
@@ -99,7 +99,7 @@ Content-Type: application/json
 {"message":"Organization user updated"}
 ```
 
-### Delete user in current organisation
+### Delete user in current organization
 
 `DELETE /api/org/users/:userId`
 
@@ -121,7 +121,7 @@ Content-Type: application/json
 {"message":"User removed from organization"}
 ```
 
-### Update current Organisation
+### Update current Organization
 
 `PUT /api/org`
 
@@ -147,11 +147,11 @@ Content-Type: application/json
 {"message":"Organization updated"}
 ```
 
-### Add a new user to the current organisation
+### Add a new user to the current organization
 
 `POST /api/org/users`
 
-Adds a global user to the current organisation.
+Adds a global user to the current organization.
 
 **Example Request**:
 
@@ -176,19 +176,19 @@ Content-Type: application/json
 {"message":"User added to organization"}
 ```
 
-## Admin Organisations API
+## Admin Organizations API
 
-The Admin Organisations HTTP API does not currently work with an API Token. API Tokens are currently
+The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently
 only linked to an organization and an organization role. They cannot be given the permission of server
 admin, only users can be given that permission. So in order to use these API calls you will have to
 use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user
 is called `admin` and has permission to use this API).
 
-### Get Organisation by Id
+### Get Organization by Id
 
 `GET /api/orgs/:orgId`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -217,11 +217,11 @@ Content-Type: application/json
   }
 }
 ```
-### Get Organisation by Name
+### Get Organization by Name
 
 `GET /api/orgs/name/:orgName`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -251,11 +251,11 @@ Content-Type: application/json
 }
 ```
 
-### Create Organisation
+### Create Organization
 
 `POST /api/orgs`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -284,11 +284,11 @@ Content-Type: application/json
 }
 ```
 
-### Search all Organisations
+### Search all Organizations
 
 `GET /api/orgs`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -314,12 +314,12 @@ Content-Type: application/json
 ]
 ```
 
-### Update Organisation
+### Update Organization
 
 `PUT /api/orgs/:orgId`
 
-Update Organisation, fields *Address 1*, *Address 2*, *City* are not implemented yet.
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Update Organization, fields *Address 1*, *Address 2*, *City* are not implemented yet.
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -342,11 +342,11 @@ Content-Type: application/json
 {"message":"Organization updated"}
 ```
 
-### Delete Organisation
+### Delete Organization
 
 `DELETE /api/orgs/:orgId`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -364,11 +364,11 @@ Content-Type: application/json
 {"message":"Organization deleted"}
 ```
 
-### Get Users in Organisation
+### Get Users in Organization
 
 `GET /api/orgs/:orgId/users`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -397,11 +397,11 @@ Content-Type: application/json
 ]
 ```
 
-### Add User in Organisation
+### Add User in Organization
 
 `POST /api/orgs/:orgId/users`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -425,11 +425,11 @@ Content-Type: application/json
 {"message":"User added to organization"}
 ```
 
-### Update Users in Organisation
+### Update Users in Organization
 
 `PATCH /api/orgs/:orgId/users/:userId`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 
@@ -452,11 +452,11 @@ Content-Type: application/json
 {"message":"Organization user updated"}
 ```
 
-### Delete User in Organisation
+### Delete User in Organization
 
 `DELETE /api/orgs/:orgId/users/:userId`
 
-Only works with Basic Authentication (username and password), see [introduction](#admin-organisations-api).
+Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
 **Example Request**:
 

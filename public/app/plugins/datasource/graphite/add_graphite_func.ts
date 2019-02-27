@@ -1,8 +1,8 @@
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import rst2html from 'rst2html';
 import Drop from 'tether-drop';
+import coreModule from 'app/core/core_module';
 
 /** @ngInject */
 export function graphiteAddFunc($compile) {
@@ -130,7 +130,7 @@ export function graphiteAddFunc($compile) {
   };
 }
 
-angular.module('grafana.directives').directive('graphiteAddFunc', graphiteAddFunc);
+coreModule.directive('graphiteAddFunc', graphiteAddFunc);
 
 function createFunctionDropDownMenu(funcDefs) {
   const categories = {};

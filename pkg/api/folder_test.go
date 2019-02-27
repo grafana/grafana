@@ -133,16 +133,6 @@ func TestFoldersApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderByUID(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderByUID
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-}
-
-func callDeleteFolder(sc *scenarioContext) {
-	sc.handlerFunc = DeleteFolder
-	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-}
-
 func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }

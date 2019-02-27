@@ -20,3 +20,24 @@ configure({ adapter: new Adapter() });
 
 const global = window as any;
 global.$ = global.jQuery = $;
+
+const localStorageMock = (() => {
+  let store = {};
+  return {
+    getItem: key => {
+      return store[key];
+    },
+    setItem: (key, value) => {
+      store[key] = value.toString();
+    },
+    clear: () => {
+      store = {};
+    },
+    removeItem: key => {
+      delete store[key];
+    },
+  };
+})();
+
+global.localStorage = localStorageMock;
+// Object.defineProperty(window, 'localStorage', { value: localStorageMock });

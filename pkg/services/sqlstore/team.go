@@ -74,7 +74,7 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 
 		sess.MustCols("email")
 
-		affectedRows, err := sess.Id(cmd.Id).Update(&team)
+		affectedRows, err := sess.ID(cmd.Id).Update(&team)
 
 		if err != nil {
 			return err
@@ -169,7 +169,7 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 		sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
 	}
 
-	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
 
@@ -196,7 +196,7 @@ func GetTeamById(query *m.GetTeamByIdQuery) error {
 	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
 
 	var team m.TeamDTO
-	exists, err := x.Sql(sql.String(), query.OrgId, query.Id).Get(&team)
+	exists, err := x.SQL(sql.String(), query.OrgId, query.Id).Get(&team)
 
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
 	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
-	err := x.Sql(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
+	err := x.SQL(sql.String(), query.OrgId, query.UserId).Find(&query.Result)
 	return err
 }
 
@@ -240,11 +240,12 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 		}
 
 		entity := m.TeamMember{
-			OrgId:   cmd.OrgId,
-			TeamId:  cmd.TeamId,
-			UserId:  cmd.UserId,
-			Created: time.Now(),
-			Updated: time.Now(),
+			OrgId:    cmd.OrgId,
+			TeamId:   cmd.TeamId,
+			UserId:   cmd.UserId,
+			External: cmd.External,
+			Created:  time.Now(),
+			Updated:  time.Now(),
 		}
 
 		_, err := sess.Insert(&entity)
@@ -289,7 +290,10 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	if query.UserId != 0 {
 		sess.Where("team_member.user_id=?", query.UserId)
 	}
-	sess.Cols("user.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login")
+	if query.External {
+		sess.Where("team_member.external=?", dialect.BooleanStr(true))
+	}
+	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)

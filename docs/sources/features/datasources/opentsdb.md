@@ -7,7 +7,7 @@ aliases = ["/datasources/opentsdb",	"docs/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
-weight = 5
+weight = 19
 +++
 
 # Using OpenTSDB in Grafana
@@ -84,7 +84,7 @@ Some examples are mentioned below to make nested template queries work successfu
 Query | Description
 ------------ | -------------
 *tag_values(cpu, hostname, env=$env)*  | Return tag values for cpu metric, selected env tag value and tag key hostname
-*tag_values(cpu, hostanme, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
+*tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
 For details on OpenTSDB metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 

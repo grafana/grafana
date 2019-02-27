@@ -21,14 +21,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc ec2iface.EC2API
+	ec2Svc  ec2iface.EC2API
+	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 type DatasourceInfo struct {
@@ -86,9 +88,10 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 }
 
 func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
+	results := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
+	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 
 	eg, ectx := errgroup.WithContext(ctx)
 
@@ -102,10 +105,10 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		RefId := queryContext.Queries[i].RefId
 		query, err := parseQuery(queryContext.Queries[i].Model)
 		if err != nil {
-			result.Results[RefId] = &tsdb.QueryResult{
+			results.Results[RefId] = &tsdb.QueryResult{
 				Error: err,
 			}
-			return result, nil
+			return results, nil
 		}
 		query.RefId = RefId
 
@@ -118,21 +121,37 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 
 		if query.Id == "" && query.Expression != "" {
-			result.Results[query.RefId] = &tsdb.QueryResult{
+			results.Results[query.RefId] = &tsdb.QueryResult{
 				Error: fmt.Errorf("Invalid query: id should be set if using expression"),
 			}
-			return result, nil
+			return results, nil
 		}
 
 		eg.Go(func() error {
+			defer func() {
+				if err := recover(); err != nil {
+					plog.Error("Execute Query Panic", "error", err, "stack", log.Stack(1))
+					if theErr, ok := err.(error); ok {
+						resultChan <- &tsdb.QueryResult{
+							RefId: query.RefId,
+							Error: theErr,
+						}
+					}
+				}
+			}()
+
 			queryRes, err := e.executeQuery(ectx, query, queryContext)
 			if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 				return err
 			}
-			result.Results[queryRes.RefId] = queryRes
 			if err != nil {
-				result.Results[queryRes.RefId].Error = err
+				resultChan <- &tsdb.QueryResult{
+					RefId: query.RefId,
+					Error: err,
+				}
+				return nil
 			}
+			resultChan <- queryRes
 			return nil
 		})
 	}
@@ -141,15 +160,26 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		for region, getMetricDataQuery := range getMetricDataQueries {
 			q := getMetricDataQuery
 			eg.Go(func() error {
+				defer func() {
+					if err := recover(); err != nil {
+						plog.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+						if theErr, ok := err.(error); ok {
+							resultChan <- &tsdb.QueryResult{
+								Error: theErr,
+							}
+						}
+					}
+				}()
+
 				queryResponses, err := e.executeGetMetricDataQuery(ectx, region, q, queryContext)
 				if ae, ok := err.(awserr.Error); ok && ae.Code() == "500" {
 					return err
 				}
 				for _, queryRes := range queryResponses {
-					result.Results[queryRes.RefId] = queryRes
 					if err != nil {
-						result.Results[queryRes.RefId].Error = err
+						queryRes.Error = err
 					}
+					resultChan <- queryRes
 				}
 				return nil
 			})
@@ -159,8 +189,12 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	if err := eg.Wait(); err != nil {
 		return nil, err
 	}
+	close(resultChan)
+	for result := range resultChan {
+		results.Results[result.RefId] = result
+	}
 
-	return result, nil
+	return results, nil
 }
 
 func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatchQuery, queryContext *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {
@@ -179,8 +213,8 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 		return nil, err
 	}
 
-	if endTime.Before(startTime) {
-		return nil, fmt.Errorf("Invalid time range: End time can't be before start time")
+	if !startTime.Before(endTime) {
+		return nil, fmt.Errorf("Invalid time range: Start time must be before end time")
 	}
 
 	params := &cloudwatch.GetMetricStatisticsInput{
@@ -196,7 +230,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, query *CloudWatch
 		params.ExtendedStatistics = query.ExtendedStatistics
 	}
 
-	// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+	// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 	if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
 		return nil, errors.New("too long query period")
 	}
@@ -267,9 +301,9 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 	for _, query := range queries {
-		// 1 minutes resolutin metrics is stored for 15 days, 15 * 24 * 60 = 21600
+		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
 		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
-			return nil, errors.New("too long query period")
+			return queryResponses, errors.New("too long query period")
 		}
 
 		mdq := &cloudwatch.MetricDataQuery{
@@ -362,6 +396,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Meta = simplejson.New()
 		queryResponses = append(queryResponses, queryRes)
 	}
 
@@ -565,6 +600,12 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Meta = simplejson.New()
+		if len(resp.Datapoints) > 0 && resp.Datapoints[0].Unit != nil {
+			if unit, ok := cloudwatchUnitMappings[*resp.Datapoints[0].Unit]; ok {
+				queryRes.Meta.Set("unit", unit)
+			}
+		}
 	}
 
 	return queryRes, nil

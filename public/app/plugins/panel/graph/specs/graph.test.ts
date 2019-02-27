@@ -114,6 +114,7 @@ describe('grafanaGraph', () => {
       {}
     );
 
+    // @ts-ignore
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
@@ -125,7 +126,7 @@ describe('grafanaGraph', () => {
 
     //Emulate functions called by event listeners
     link.buildFlotPairs(link.data);
-    link.render_panel();
+    link.renderPanel();
     ctx.plotData = ctrl.plot.mock.calls[0][1];
 
     ctx.plotOptions = ctrl.plot.mock.calls[0][2];

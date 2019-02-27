@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.11](https://golang.org/dl/)
+- [Go (Latest Stable)](https://golang.org/dl/)
 - [Git](https://git-scm.com/downloads)
 - [NodeJS LTS](https://nodejs.org/download/)
 - node-gyp is the Node.js native addon build tool and it requires extra dependencies: python 2.7, make and GCC. These are already installed for most Linux distros and MacOS. See the Building On Windows section or the [node-gyp installation instructions](https://github.com/nodejs/node-gyp#installation) for more details.
@@ -57,7 +57,7 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-yarn watch
+yarn start
 ```
 
 ## Running Grafana Locally
@@ -83,7 +83,7 @@ go get github.com/Unknwon/bra
 bra run
 ```
 
-You'll also need to run `yarn watch` to watch for changes to the front-end (typescript, html, sass)
+You'll also need to run `yarn start` to watch for changes to the front-end (typescript, html, sass)
 
 ### Running tests
 

@@ -60,6 +60,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -121,7 +122,7 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should cancel query for invalid extended statistics', () => {
+    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
       const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -133,7 +134,7 @@ describe('CloudWatchDatasource', () => {
             dimensions: {
               InstanceId: 'i-12345678',
             },
-            statistics: ['pNN.NN'],
+            statistics: [stat],
             period: '60s',
           },
         ],
@@ -221,6 +222,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',
@@ -375,6 +377,33 @@ describe('CloudWatchDatasource', () => {
       expect(scenario.result[0].text).toContain('i-12345678');
       expect(scenario.request.queries[0].type).toBe('metricFindQuery');
       expect(scenario.request.queries[0].subtype).toBe('dimension_values');
+    });
+  });
+
+  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              {
+                rows: [
+                  [
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567',
+                    'arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321',
+                  ],
+                ],
+              },
+            ],
+          },
+        },
+      };
+    });
+
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).toContain('arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567');
+      expect(scenario.request.queries[0].type).toBe('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).toBe('resource_arns');
     });
   });
 

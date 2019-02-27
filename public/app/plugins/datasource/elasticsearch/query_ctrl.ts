@@ -1,5 +1,6 @@
 import './bucket_agg';
 import './metric_agg';
+import './pipeline_variables';
 
 import angular from 'angular';
 import _ from 'lodash';
@@ -17,6 +18,19 @@ export class ElasticQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;
+
+    this.target = this.target || {};
+    this.target.metrics = this.target.metrics || [queryDef.defaultMetricAgg()];
+    this.target.bucketAggs = this.target.bucketAggs || [queryDef.defaultBucketAgg()];
+
+    if (this.target.bucketAggs.length === 0) {
+      const metric = this.target.metrics[0];
+      if (!metric || metric.type !== 'raw_document') {
+        this.target.bucketAggs = [queryDef.defaultBucketAgg()];
+      }
+      this.refresh();
+    }
+
     this.queryUpdated();
   }
 
@@ -56,6 +70,9 @@ export class ElasticQueryCtrl extends QueryCtrl {
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
+      }
+      if (aggDef.supportsMultipleBucketPaths) {
+        text += metric.settings.script.replace(new RegExp('params.', 'g'), '');
       }
       text += '), ';
     });

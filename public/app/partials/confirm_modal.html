@@ -26,7 +26,7 @@
 		</div>
 
 		<div class="confirm-modal-buttons">
-			<button ng-show="onAltAction" type="button" class="btn btn-success" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
+			<button ng-show="onAltAction" type="button" class="btn btn-primary" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
 			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
 			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
 		</div>

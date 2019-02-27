@@ -13,10 +13,18 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
 
 var activeUserTimeLimit = time.Hour * 24 * 30
+
+func GetAlertNotifiersUsageStats(ctx context.Context, query *m.GetAlertNotifierUsageStatsQuery) error {
+	var rawSql = `SELECT COUNT(*) as count, type FROM alert_notification GROUP BY type`
+	query.Result = make([]*m.NotifierUsageStats, 0)
+	err := x.SQL(rawSql).Find(&query.Result)
+	return err
+}
 
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
@@ -66,7 +74,8 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
+	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens`)
 
 	var stats m.SystemStats
 	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)

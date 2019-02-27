@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -123,8 +122,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
+	sc.m.Use(middleware.GetContextHandler(nil))
 
 	return sc
 }

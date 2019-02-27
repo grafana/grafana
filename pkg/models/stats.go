@@ -15,6 +15,7 @@ type SystemStats struct {
 	FolderPermissions     int64
 	Folders               int64
 	ProvisionedDashboards int64
+	AuthTokens            int64
 }
 
 type DataSourceStats struct {
@@ -38,6 +39,15 @@ type DataSourceAccessStats struct {
 
 type GetDataSourceAccessStatsQuery struct {
 	Result []*DataSourceAccessStats
+}
+
+type NotifierUsageStats struct {
+	Type  string
+	Count int64
+}
+
+type GetAlertNotifierUsageStatsQuery struct {
+	Result []*NotifierUsageStats
 }
 
 type AdminStats struct {

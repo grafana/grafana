@@ -95,52 +95,9 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 			}
 		}
 	case "diff":
-		var (
-			points = series.Points
-			first  float64
-			i      int
-		)
-		// get the newest point
-		for i = len(points) - 1; i >= 0; i-- {
-			if points[i][0].Valid {
-				allNull = false
-				first = points[i][0].Float64
-				break
-			}
-		}
-		// get the oldest point
-		points = points[0:i]
-		for i := 0; i < len(points); i++ {
-			if points[i][0].Valid {
-				allNull = false
-				value = first - points[i][0].Float64
-				break
-			}
-		}
+		allNull, value = calculateDiff(series, allNull, value, diff)
 	case "percent_diff":
-		var (
-			points = series.Points
-			first  float64
-			i      int
-		)
-		// get the newest point
-		for i = len(points) - 1; i >= 0; i-- {
-			if points[i][0].Valid {
-				allNull = false
-				first = points[i][0].Float64
-				break
-			}
-		}
-		// get the oldest point
-		points = points[0:i]
-		for i := 0; i < len(points); i++ {
-			if points[i][0].Valid {
-				allNull = false
-				val := (first - points[i][0].Float64) / points[i][0].Float64 * 100
-				value = math.Abs(val)
-				break
-			}
-		}
+		allNull, value = calculateDiff(series, allNull, value, percentDiff)
 	case "count_non_null":
 		for _, v := range series.Points {
 			if v[0].Valid {
@@ -162,4 +119,41 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 
 func NewSimpleReducer(typ string) *SimpleReducer {
 	return &SimpleReducer{Type: typ}
+}
+
+func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func(float64, float64) float64) (bool, float64) {
+	var (
+		points = series.Points
+		first  float64
+		i      int
+	)
+	// get the newest point
+	for i = len(points) - 1; i >= 0; i-- {
+		if points[i][0].Valid {
+			allNull = false
+			first = points[i][0].Float64
+			break
+		}
+	}
+	if i >= 1 {
+		// get the oldest point
+		points = points[0:i]
+		for i := 0; i < len(points); i++ {
+			if points[i][0].Valid {
+				allNull = false
+				val := fn(first, points[i][0].Float64)
+				value = math.Abs(val)
+				break
+			}
+		}
+	}
+	return allNull, value
+}
+
+var diff = func(newest, oldest float64) float64 {
+	return newest - oldest
+}
+
+var percentDiff = func(newest, oldest float64) float64 {
+	return (newest - oldest) / oldest * 100
 }

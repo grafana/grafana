@@ -1,15 +1,16 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
+import config from 'app/core/config';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export class BackendSrv {
   private inFlightRequests = {};
-  private HTTP_REQUEST_CANCELLED = -1;
+  private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
 
   /** @ngInject */
-  constructor(private $http, private alertSrv, private $q, private $timeout, private contextSrv) {}
+  constructor(private $http, private $q, private $timeout, private contextSrv) {}
 
   get(url, params?) {
     return this.request({ method: 'GET', url: url, params: params });
@@ -49,14 +50,14 @@ export class BackendSrv {
     }
 
     if (err.status === 422) {
-      this.alertSrv.set('Validation failed', data.message, 'warning', 4000);
+      appEvents.emit('alert-warning', ['Validation failed', data.message]);
       throw data;
     }
 
-    data.severity = 'error';
+    let severity = 'error';
 
     if (err.status < 500) {
-      data.severity = 'warning';
+      severity = 'warning';
     }
 
     if (data.message) {
@@ -66,7 +67,8 @@ export class BackendSrv {
         description = message;
         message = 'Error';
       }
-      this.alertSrv.set(message, description, data.severity, 10000);
+
+      appEvents.emit('alert-' + severity, [message, description]);
     }
 
     throw data;
@@ -93,7 +95,7 @@ export class BackendSrv {
         if (options.method !== 'GET') {
           if (results && results.data.message) {
             if (options.showSuccessAlert !== false) {
-              this.alertSrv.set(results.data.message, '', 'success', 3000);
+              appEvents.emit('alert-success', [results.data.message]);
             }
           }
         }
@@ -102,10 +104,17 @@ export class BackendSrv {
       err => {
         // handle unauthorized
         if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
-          return this.loginPing().then(() => {
-            options.retry = 1;
-            return this.request(options);
-          });
+          return this.loginPing()
+            .then(() => {
+              options.retry = 1;
+              return this.request(options);
+            })
+            .catch(err => {
+              if (err.status === 401) {
+                window.location.href = config.appSubUrl + '/logout';
+                throw err;
+              }
+            });
         }
 
         this.$timeout(this.requestErrorHandler.bind(this, err), 50);
@@ -177,19 +186,26 @@ export class BackendSrv {
         return response;
       })
       .catch(err => {
-        if (err.status === this.HTTP_REQUEST_CANCELLED) {
+        if (err.status === this.HTTP_REQUEST_CANCELED) {
           throw { err, cancelled: true };
         }
 
         // handle unauthorized for backend requests
         if (requestIsLocal && firstAttempt && err.status === 401) {
-          return this.loginPing().then(() => {
-            options.retry = 1;
-            if (canceler) {
-              canceler.resolve();
-            }
-            return this.datasourceRequest(options);
-          });
+          return this.loginPing()
+            .then(() => {
+              options.retry = 1;
+              if (canceler) {
+                canceler.resolve();
+              }
+              return this.datasourceRequest(options);
+            })
+            .catch(err => {
+              if (err.status === 401) {
+                window.location.href = config.appSubUrl + '/logout';
+                throw err;
+              }
+            });
         }
 
         // populate error obj on Internal Error
@@ -250,16 +266,6 @@ export class BackendSrv {
 
   createFolder(payload: any) {
     return this.post('/api/folders', payload);
-  }
-
-  updateFolder(folder, options) {
-    options = options || {};
-
-    return this.put(`/api/folders/${folder.uid}`, {
-      title: folder.title,
-      version: folder.version,
-      overwrite: options.overwrite === true,
-    });
   }
 
   deleteFolder(uid: string, showSuccessAlert) {

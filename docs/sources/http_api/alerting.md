@@ -160,11 +160,14 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
 ```http
 POST /api/admin/pause-all-alerts HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "paused": true
@@ -227,7 +230,7 @@ Content-Type: application/json
 
 ## Create alert notification
 
-You can find the full list of [supported notifers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page.
+You can find the full list of [supported notifiers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page.
 
 `POST /api/alert-notifications`
 
@@ -290,7 +293,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses: "carl@grafana.com;dev@grafana.com"
+    "addresses": "carl@grafana.com;dev@grafana.com"
   }
 }
 ```

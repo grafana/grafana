@@ -121,7 +121,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 			pm.checkForUpdates()
 		case <-ctx.Done():
 			run = false
-			break
 		}
 	}
 
@@ -170,7 +169,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	}
 
 	if f.Name() == "node_modules" {
-		return util.WalkSkipDir
+		return util.ErrWalkSkipDir
 	}
 
 	if f.IsDir() {

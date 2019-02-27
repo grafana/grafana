@@ -20,7 +20,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		fakeDash.Id = 1
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
-		fakeDash.Uid = util.GenerateShortUid()
+		fakeDash.Uid = util.GenerateShortUID()
 
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
