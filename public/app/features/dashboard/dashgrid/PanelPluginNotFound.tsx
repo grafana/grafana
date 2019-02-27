@@ -1,6 +1,10 @@
+// Libraries
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
-import { PanelPlugin, PanelProps } from 'app/types';
+
+// Types
+import { PanelProps, ReactPanelPlugin } from '@grafana/ui';
+import { PanelPlugin } from 'app/types';
 
 interface Props {
   pluginId: string;
@@ -42,6 +46,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     sort: 100,
     module: '',
     baseUrl: '',
+    dataFormats: [],
     info: {
       author: {
         name: '',
@@ -58,7 +63,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     },
 
     exports: {
-      Panel: NotFound,
+      reactPanel: new ReactPanelPlugin(NotFound),
     },
   };
 }

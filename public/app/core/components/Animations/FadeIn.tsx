@@ -1,14 +1,15 @@
-import React, { SFC } from 'react';
-import Transition from 'react-transition-group/Transition';
+import React, { FC } from 'react';
+import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {
   duration: number;
   children: JSX.Element;
   in: boolean;
   unmountOnExit?: boolean;
+  onExited?: ExitHandler;
 }
 
-export const FadeIn: SFC<Props> = props => {
+export const FadeIn: FC<Props> = props => {
   const defaultStyle = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,
@@ -22,7 +23,12 @@ export const FadeIn: SFC<Props> = props => {
   };
 
   return (
-    <Transition in={props.in} timeout={props.duration} unmountOnExit={props.unmountOnExit || false}>
+    <Transition
+      in={props.in}
+      timeout={props.duration}
+      unmountOnExit={props.unmountOnExit || false}
+      onExited={props.onExited}
+    >
       {state => (
         <div
           style={{

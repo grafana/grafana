@@ -233,12 +233,12 @@ func buildFilterString(metricType string, filterParts []interface{}) string {
 }
 
 func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
-	primaryAggregation := query.Model.Get("primaryAggregation").MustString()
+	crossSeriesReducer := query.Model.Get("crossSeriesReducer").MustString()
 	perSeriesAligner := query.Model.Get("perSeriesAligner").MustString()
 	alignmentPeriod := query.Model.Get("alignmentPeriod").MustString()
 
-	if primaryAggregation == "" {
-		primaryAggregation = "REDUCE_NONE"
+	if crossSeriesReducer == "" {
+		crossSeriesReducer = "REDUCE_NONE"
 	}
 
 	if perSeriesAligner == "" {
@@ -267,7 +267,7 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 		alignmentPeriod = "+3600s"
 	}
 
-	params.Add("aggregation.crossSeriesReducer", primaryAggregation)
+	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)
 	params.Add("aggregation.perSeriesAligner", perSeriesAligner)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 
@@ -335,6 +335,8 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 	if err != nil {
 		return StackdriverResponse{}, err
 	}
+
+	// slog.Info("stackdriver", "response", string(body))
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
@@ -559,7 +561,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	} else if bucketOptions.ExponentialBuckets != nil {
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	} else if bucketOptions.ExplicitBuckets != nil {
-		bucketBound = strconv.FormatInt(bucketOptions.ExplicitBuckets.Bounds[(n-1)], 10)
+		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
 	}
 	return bucketBound
 }

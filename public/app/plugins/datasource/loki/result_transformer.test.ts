@@ -11,11 +11,11 @@ import {
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(LogLevel.unkown);
+    expect(getLogLevel('')).toBe(LogLevel.unknown);
   });
 
   it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is information')).toBe(LogLevel.unkown);
+    expect(getLogLevel('this is information')).toBe(LogLevel.unknown);
   });
 
   it('returns same log level for long and short version', () => {
@@ -99,7 +99,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
       ],
     };
@@ -120,7 +120,7 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'WARN boooo',
-          timestamp: '1970-01-01T00:00:01Z',
+          ts: '1970-01-01T00:00:01Z',
         },
       ],
     };
@@ -129,11 +129,11 @@ describe('mergeStreamsToLogs()', () => {
       entries: [
         {
           line: 'INFO 1',
-          timestamp: '1970-01-01T00:00:00Z',
+          ts: '1970-01-01T00:00:00Z',
         },
         {
           line: 'INFO 2',
-          timestamp: '1970-01-01T00:00:02Z',
+          ts: '1970-01-01T00:00:02Z',
         },
       ],
     };
@@ -155,6 +155,48 @@ describe('mergeStreamsToLogs()', () => {
         labels: { foo: 'bar', baz: '2' },
         logLevel: 'info',
         uniqueLabels: { baz: '2' },
+      },
+    ]);
+  });
+
+  it('detects ANSI codes', () => {
+    expect(
+      mergeStreamsToLogs([
+        {
+          labels: '{foo="bar"}',
+          entries: [
+            {
+              line: "foo: [32m'bar'[39m",
+              ts: '1970-01-01T00:00:00Z',
+            },
+          ],
+        },
+        {
+          labels: '{bar="foo"}',
+          entries: [
+            {
+              line: "bar: 'foo'",
+              ts: '1970-01-01T00:00:00Z',
+            },
+          ],
+        },
+      ]).rows
+    ).toMatchObject([
+      {
+        entry: "bar: 'foo'",
+        hasAnsi: false,
+        key: 'EK1970-01-01T00:00:00Z{bar="foo"}',
+        labels: { bar: 'foo' },
+        logLevel: 'unknown',
+        raw: "bar: 'foo'",
+      },
+      {
+        entry: "foo: 'bar'",
+        hasAnsi: true,
+        key: 'EK1970-01-01T00:00:00Z{foo="bar"}',
+        labels: { foo: 'bar' },
+        logLevel: 'unknown',
+        raw: "foo: [32m'bar'[39m",
       },
     ]);
   });

@@ -41,7 +41,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
 			})
 
 			Convey("interpolate __timeFrom function", func() {
@@ -115,6 +115,25 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
+			})
+			Convey("interpolate __unixEpochNanoFrom function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFrom()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", from.UnixNano()))
+			})
+
+			Convey("interpolate __unixEpochNanoTo function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoTo()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.UnixNano()))
+			})
 
 			Convey("interpolate __unixEpochGroup function", func() {
 
@@ -138,7 +157,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -146,6 +165,12 @@ func TestMacroEngine(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
+			})
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
 			})
 		})
 
@@ -158,7 +183,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
@@ -167,6 +192,29 @@ func TestMacroEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.Unix(), to.Unix()))
 			})
+			Convey("interpolate __unixEpochNanoFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select time >= %d AND time <= %d", from.UnixNano(), to.UnixNano()))
+			})
 		})
+
+		Convey("Given a time range between 1960-02-01 07:00:00.5 and 1980-02-03 08:00:00.5", func() {
+			from := time.Date(1960, 2, 1, 7, 0, 0, 500e6, time.UTC)
+			to := time.Date(1980, 2, 3, 8, 0, 0, 500e6, time.UTC)
+			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+
+			So(from.Format(time.RFC3339Nano), ShouldEqual, "1960-02-01T07:00:00.5Z")
+			So(to.Format(time.RFC3339Nano), ShouldEqual, "1980-02-03T08:00:00.5Z")
+			Convey("interpolate __timeFilter function", func() {
+				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)))
+			})
+
+		})
+
 	})
 }

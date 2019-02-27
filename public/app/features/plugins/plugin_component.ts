@@ -105,23 +105,17 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        const datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
-          scope.datasource = ds;
-
-          return importPluginModule(ds.meta.module).then(dsModule => {
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-ctrl-' + ds.meta.id,
-              bindings: { target: '=', panelCtrl: '=', datasource: '=' },
-              attrs: {
-                target: 'target',
-                'panel-ctrl': 'ctrl',
-                datasource: 'datasource',
-              },
-              Component: dsModule.QueryCtrl,
-            };
-          });
+        const ds = scope.ctrl.datasource;
+        return $q.when({
+          baseUrl: ds.meta.baseUrl,
+          name: 'query-ctrl-' + ds.meta.id,
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
+          attrs: {
+            target: 'ctrl.target',
+            'panel-ctrl': 'ctrl',
+            datasource: 'ctrl.datasource',
+          },
+          Component: ds.pluginExports.QueryCtrl,
         });
       }
       // Annotations
@@ -142,27 +136,29 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
-        return importPluginModule(dsMeta.module).then((dsModule): any => {
-          if (!dsModule.ConfigCtrl) {
-            return { notFound: true };
+        return importPluginModule(dsMeta.module).then(
+          (dsModule): any => {
+            if (!dsModule.ConfigCtrl) {
+              return { notFound: true };
+            }
+
+            scope.$watch(
+              'ctrl.current',
+              () => {
+                scope.onModelChanged(scope.ctrl.current);
+              },
+              true
+            );
+
+            return {
+              baseUrl: dsMeta.baseUrl,
+              name: 'ds-config-' + dsMeta.id,
+              bindings: { meta: '=', current: '=' },
+              attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
+              Component: dsModule.ConfigCtrl,
+            };
           }
-
-          scope.$watch(
-            'ctrl.current',
-            () => {
-              scope.onModelChanged(scope.ctrl.current);
-            },
-            true
-          );
-
-          return {
-            baseUrl: dsMeta.baseUrl,
-            name: 'ds-config-' + dsMeta.id,
-            bindings: { meta: '=', current: '=' },
-            attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsModule.ConfigCtrl,
-          };
-        });
+        );
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {

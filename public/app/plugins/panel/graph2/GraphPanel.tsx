@@ -2,31 +2,30 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-// Components
-import Graph from 'app/viz/Graph';
+// Utils
+import { processTimeSeries } from '@grafana/ui/src/utils';
 
-// Services & Utils
-import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+// Components
+import { Graph } from '@grafana/ui';
 
 // Types
-import { PanelProps, NullValueMode } from 'app/types';
+import { PanelProps, NullValueMode, TimeSeriesVMs } from '@grafana/ui/src/types';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
 
 export class GraphPanel extends PureComponent<Props> {
-  constructor(props) {
-    super(props);
-  }
-
   render() {
-    const { timeSeries, timeRange, width, height } = this.props;
+    const { panelData, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const vmSeries = getTimeSeriesVMs({
-      timeSeries: timeSeries,
-      nullValueMode: NullValueMode.Ignore,
-    });
+    let vmSeries: TimeSeriesVMs;
+    if (panelData.timeSeries) {
+      vmSeries = processTimeSeries({
+        timeSeries: panelData.timeSeries,
+        nullValueMode: NullValueMode.Ignore,
+      });
+    }
 
     return (
       <Graph

@@ -220,10 +220,37 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.Type, ShouldEqual, "email")
 			So(cmd.Result.Frequency, ShouldEqual, 10*time.Second)
 			So(cmd.Result.DisableResolveMessage, ShouldBeFalse)
+			So(cmd.Result.Uid, ShouldNotBeEmpty)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
 				err = CreateAlertNotificationCommand(cmd)
 				So(err, ShouldNotBeNil)
+			})
+			Convey("Cannot save Alert Notification with the same name and another uid", func() {
+				anotherUidCmd := &models.CreateAlertNotificationCommand{
+					Name:         cmd.Name,
+					Type:         cmd.Type,
+					OrgId:        1,
+					SendReminder: cmd.SendReminder,
+					Frequency:    cmd.Frequency,
+					Settings:     cmd.Settings,
+					Uid:          "notifier1",
+				}
+				err = CreateAlertNotificationCommand(anotherUidCmd)
+				So(err, ShouldNotBeNil)
+			})
+			Convey("Can save Alert Notification with another name and another uid", func() {
+				anotherUidCmd := &models.CreateAlertNotificationCommand{
+					Name:         "another ops",
+					Type:         cmd.Type,
+					OrgId:        1,
+					SendReminder: cmd.SendReminder,
+					Frequency:    cmd.Frequency,
+					Settings:     cmd.Settings,
+					Uid:          "notifier2",
+				}
+				err = CreateAlertNotificationCommand(anotherUidCmd)
+				So(err, ShouldBeNil)
 			})
 
 			Convey("Can update alert notification", func() {
@@ -274,12 +301,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(CreateAlertNotificationCommand(&otherOrg), ShouldBeNil)
 
 			Convey("search", func() {
-				query := &models.GetAlertNotificationsToSendQuery{
-					Ids:   []int64{cmd1.Result.Id, cmd2.Result.Id, 112341231},
+				query := &models.GetAlertNotificationsWithUidToSendQuery{
+					Uids:  []string{cmd1.Result.Uid, cmd2.Result.Uid, "112341231"},
 					OrgId: 1,
 				}
 
-				err := GetAlertNotificationsToSend(query)
+				err := GetAlertNotificationsWithUidToSend(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 3)
 			})

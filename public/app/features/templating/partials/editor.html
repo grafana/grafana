@@ -11,7 +11,7 @@
 		<div ng-if="variables.length === 0">
 			<div class="empty-list-cta">
 				<div class="empty-list-cta__title">There are no variables added yet</div>
-				<a ng-click="setMode('new')" class="empty-list-cta__button btn btn-xlarge btn-success">
+				<a ng-click="setMode('new')" class="empty-list-cta__button btn btn-xlarge btn-primary">
 					<i class="gicon gicon-add-variable"></i>
 					Add variable
 				</a>
@@ -34,7 +34,7 @@
 		<div ng-if="variables.length">
 			<div class="page-action-bar">
 				<div class="page-action-bar__spacer"></div>
-				<a type="button" class="btn btn-success" ng-click="setMode('new');"><i class="fa fa-plus"></i> New</a>
+				<a type="button" class="btn btn-primary" ng-click="setMode('new');"><i class="fa fa-plus"></i> New</a>
 			</div>
 
 			<table class="filter-table filter-table--hover">
@@ -317,8 +317,8 @@
 		</div>
 
 		<div class="gf-form-button-row p-y-0">
-			<button type="submit" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-			<button type="submit" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
+			<button type="submit" class="btn btn-primary" ng-show="mode === 'edit'" ng-click="update();">Update</button>
+			<button type="submit" class="btn btn-primary" ng-show="mode === 'new'" ng-click="add();">Add</button>
 		</div>
 
 	</form>

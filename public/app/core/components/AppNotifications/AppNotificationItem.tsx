@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { AppNotification } from 'app/types';
+import { AlertBox } from '../AlertBox/AlertBox';
 
 interface Props {
   appNotification: AppNotification;
@@ -22,18 +23,13 @@ export default class AppNotificationItem extends Component<Props> {
     const { appNotification, onClearNotification } = this.props;
 
     return (
-      <div className={`alert-${appNotification.severity} alert`}>
-        <div className="alert-icon">
-          <i className={appNotification.icon} />
-        </div>
-        <div className="alert-body">
-          <div className="alert-title">{appNotification.title}</div>
-          <div className="alert-text">{appNotification.text}</div>
-        </div>
-        <button type="button" className="alert-close" onClick={() => onClearNotification(appNotification.id)}>
-          <i className="fa fa fa-remove" />
-        </button>
-      </div>
+      <AlertBox
+        severity={appNotification.severity}
+        title={appNotification.title}
+        text={appNotification.text}
+        icon={appNotification.icon}
+        onClose={() => onClearNotification(appNotification.id)}
+      />
     );
   }
 }

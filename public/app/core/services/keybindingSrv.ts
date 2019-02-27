@@ -1,13 +1,13 @@
 import $ from 'jquery';
 import _ from 'lodash';
 
-import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -21,7 +21,7 @@ export class KeybindingSrv {
     private $timeout,
     private datasourceSrv,
     private timeSrv,
-    private contextSrv
+    private contextSrv: ContextSrv
   ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
@@ -104,7 +104,7 @@ export class KeybindingSrv {
     }
 
     if (search.fullscreen) {
-      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      appEvents.emit('panel-change-view', { fullscreen: false, edit: false });
       return;
     }
 
@@ -137,6 +137,10 @@ export class KeybindingSrv {
       },
       'keydown'
     );
+  }
+
+  unbind(keyArg: string, keyType?: string) {
+    Mousetrap.unbind(keyArg, keyType);
   }
 
   showDashEditView() {
@@ -174,7 +178,7 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: true,
           panelId: dashboard.meta.focusPanelId,
@@ -186,7 +190,7 @@ export class KeybindingSrv {
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: null,
           panelId: dashboard.meta.focusPanelId,
@@ -196,7 +200,7 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if (this.contextSrv.isEditor && config.exploreEnabled) {
+    if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
@@ -212,9 +216,7 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-remove', {
-          panelId: dashboard.meta.focusPanelId,
-        });
+        appEvents.emit('remove-panel', dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
     });
@@ -236,7 +238,7 @@ export class KeybindingSrv {
         shareScope.dashboard = dashboard;
 
         appEvents.emit('show-modal', {
-          src: 'public/app/features/dashboard/partials/shareModal.html',
+          src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
       }
@@ -249,7 +251,7 @@ export class KeybindingSrv {
         if (panelInfo.panel.legend) {
           const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
           panelRef.legend.show = !panelRef.legend.show;
-          panelRef.refresh();
+          panelRef.render();
         }
       }
     });
@@ -293,3 +295,17 @@ export class KeybindingSrv {
 }
 
 coreModule.service('keybindingSrv', KeybindingSrv);
+
+/**
+ * Code below exports the service to react components
+ */
+
+let singletonInstance: KeybindingSrv;
+
+export function setKeybindingSrv(instance: KeybindingSrv) {
+  singletonInstance = instance;
+}
+
+export function getKeybindingSrv(): KeybindingSrv {
+  return singletonInstance;
+}

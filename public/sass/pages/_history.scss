@@ -29,10 +29,6 @@
   white-space: nowrap;
   position: relative;
 
-  &:before,
-  &:after {
-  }
-
   &:after {
     left: -40px;
   }

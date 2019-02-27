@@ -1,6 +1,5 @@
 import _ from 'lodash';
-
-import { QueryHint } from 'app/types/explore';
+import { QueryHint } from '@grafana/ui/src/types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints

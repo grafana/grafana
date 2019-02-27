@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, TimeRange } from 'app/types/series';
+import { RawTimeRange, TimeRange } from '@grafana/ui';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -293,6 +293,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
 
   render() {
     const { isUtc, rangeString, refreshInterval } = this.state;
+
     return (
       <div className="timepicker">
         <div className="navbar-buttons">

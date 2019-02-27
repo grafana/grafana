@@ -4,7 +4,6 @@
   align-items: center;
   padding: 3px 20px 3px 20px;
   position: relative;
-  z-index: 1;
   flex: 0 0 auto;
   background: $toolbar-bg;
   border-radius: 3px;
@@ -14,6 +13,12 @@
 .toolbar__heading {
   font-size: $font-size-lg;
   padding-right: 20px;
+}
+
+.toolbar__left {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
 }
 
 .toolbar__main {

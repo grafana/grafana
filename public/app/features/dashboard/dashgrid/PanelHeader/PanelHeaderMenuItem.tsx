@@ -1,11 +1,11 @@
-import React, { SFC } from 'react';
-import { PanelMenuItem } from 'app/types/panel';
+import React, { FC } from 'react';
+import { PanelMenuItem } from '@grafana/ui';
 
 interface Props {
   children: any;
 }
 
-export const PanelHeaderMenuItem: SFC<Props & PanelMenuItem> = props => {
+export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
   return isDivider ? (

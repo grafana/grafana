@@ -2,9 +2,10 @@
 import store from 'app/core/store';
 
 // Models
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelModel } from 'app/features/dashboard/panel_model';
-import { TimeRange } from 'app/types/series';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelData, TimeRange, TimeSeries } from '@grafana/ui';
+import { TableData } from '@grafana/ui/src';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -80,7 +81,7 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   appEvents.emit('show-modal', {
-    src: 'public/app/features/dashboard/partials/shareModal.html',
+    src: 'public/app/features/dashboard/components/ShareModal/template.html',
     model: {
       dashboard: dashboard,
       panel: panel,
@@ -142,12 +143,15 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
 
     const timeShift = '-' + timeShiftInterpolated;
     newTimeData.timeInfo += ' timeshift ' + timeShift;
+    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false);
+    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true);
+
     newTimeData.timeRange = {
-      from: dateMath.parseDateMath(timeShift, timeRange.from, false),
-      to: dateMath.parseDateMath(timeShift, timeRange.to, true),
+      from,
+      to,
       raw: {
-        from: timeRange.from,
-        to: timeRange.to,
+        from,
+        to,
       },
     };
   }
@@ -165,3 +169,19 @@ export function getResolution(panel: PanelModel): number {
 
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
 }
+
+const isTimeSeries = (data: any): data is TimeSeries => data && data.hasOwnProperty('datapoints');
+const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
+export const snapshotDataToPanelData = (panel: PanelModel): PanelData => {
+  const snapshotData = panel.snapshotData;
+  if (isTimeSeries(snapshotData[0])) {
+    return {
+      timeSeries: snapshotData,
+    } as PanelData;
+  } else if (isTableData(snapshotData[0])) {
+    return {
+      tableData: snapshotData[0],
+    } as PanelData;
+  }
+  throw new Error('snapshotData is invalid:' + snapshotData.toString());
+};

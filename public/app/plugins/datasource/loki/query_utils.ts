@@ -1,5 +1,6 @@
 const selectorRegexp = /(?:^|\s){[^{]*}/g;
 export function parseQuery(input: string) {
+  input = input || '';
   const match = input.match(selectorRegexp);
   let query = '';
   let regexp = input;

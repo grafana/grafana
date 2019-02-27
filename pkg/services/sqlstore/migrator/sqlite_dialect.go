@@ -68,9 +68,10 @@ func (db *Sqlite3) SqlType(c *Column) string {
 	}
 }
 
-func (db *Sqlite3) TableCheckSql(tableName string) (string, []interface{}) {
-	args := []interface{}{tableName}
-	return "SELECT name FROM sqlite_master WHERE type='table' and name = ?", args
+func (db *Sqlite3) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+	args := []interface{}{tableName, indexName}
+	sql := "SELECT 1 FROM " + db.Quote("sqlite_master") + " WHERE " + db.Quote("type") + "='index' AND " + db.Quote("tbl_name") + "=? AND " + db.Quote("name") + "=?"
+	return sql, args
 }
 
 func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {

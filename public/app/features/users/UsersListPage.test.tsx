@@ -11,7 +11,14 @@ jest.mock('../../core/app_events', () => ({
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration',
+      },
+      node: {
+        text: 'Users',
+      },
+    } as NavModel,
     users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',

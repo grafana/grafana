@@ -21,14 +21,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc ec2iface.EC2API
+	ec2Svc  ec2iface.EC2API
+	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 type DatasourceInfo struct {

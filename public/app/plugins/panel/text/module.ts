@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import Remarkable from 'remarkable';
+import { sanitize } from 'app/core/utils/text';
+import config from 'app/core/config';
 
 const defaultContent = `
 # Title
@@ -33,11 +35,16 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
 
+    const renderWhenChanged = (scope: any) => {
+      const { panel } = scope.ctrl;
+      return [panel.content, panel.mode].join();
+    };
+
     $scope.$watch(
-      'ctrl.panel.content',
+      renderWhenChanged,
       _.throttle(() => {
         this.render();
-      }, 1000)
+      }, 100)
     );
   }
 
@@ -62,7 +69,7 @@ export class TextPanelCtrl extends PanelCtrl {
     this.renderingCompleted();
   }
 
-  renderText(content) {
+  renderText(content: string) {
     content = content
       .replace(/&/g, '&amp;')
       .replace(/>/g, '&gt;')
@@ -71,7 +78,7 @@ export class TextPanelCtrl extends PanelCtrl {
     this.updateContent(content);
   }
 
-  renderMarkdown(content) {
+  renderMarkdown(content: string) {
     if (!this.remarkable) {
       this.remarkable = new Remarkable();
     }
@@ -81,7 +88,8 @@ export class TextPanelCtrl extends PanelCtrl {
     });
   }
 
-  updateContent(html) {
+  updateContent(html: string) {
+    html = config.disableSanitizeHtml ? html : sanitize(html);
     try {
       this.content = this.$sce.trustAsHtml(this.templateSrv.replace(html, this.panel.scopedVars));
     } catch (e) {

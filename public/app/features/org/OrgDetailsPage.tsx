@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import PageHeader from '../../core/components/PageHeader/PageHeader';
-import PageLoader from '../../core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import OrgProfile from './OrgProfile';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
 import { NavModel, Organization, StoreState } from 'app/types';
-import { getNavModel } from '../../core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 export interface Props {
   navModel: NavModel;
@@ -35,10 +34,8 @@ export class OrgDetailsPage extends PureComponent<Props> {
     const isLoading = Object.keys(organization).length === 0;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          {isLoading && <PageLoader pageName="Organization" />}
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={isLoading}>
           {!isLoading && (
             <div>
               <OrgProfile
@@ -49,8 +46,8 @@ export class OrgDetailsPage extends PureComponent<Props> {
               <SharedPreferences resourceUri="org" />
             </div>
           )}
-        </div>
-      </div>
+        </Page.Contents>
+      </Page>
     );
   }
 }
@@ -68,4 +65,9 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(OrgDetailsPage)
+);

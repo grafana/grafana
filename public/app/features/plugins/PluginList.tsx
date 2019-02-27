@@ -1,5 +1,5 @@
-import React, { SFC } from 'react';
-import classNames from 'classnames/bind';
+import React, { FC } from 'react';
+import classNames from 'classnames';
 import PluginListItem from './PluginListItem';
 import { Plugin } from 'app/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
@@ -9,7 +9,7 @@ interface Props {
   layoutMode: LayoutMode;
 }
 
-const PluginList: SFC<Props> = props => {
+const PluginList: FC<Props> = props => {
   const { plugins, layoutMode } = props;
 
   const listStyle = classNames({

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select } from 'app/core/components/Select/Select';
+import { Select } from '@grafana/ui';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
@@ -61,15 +61,14 @@ export default class PermissionsListItem extends PureComponent<Props> {
           {item.name} <ItemDescription item={item} />
         </td>
         <td>
-          {item.inherited &&
-            folderInfo && (
-              <em className="muted no-wrap">
-                Inherited from folder{' '}
-                <a className="text-link" href={`${folderInfo.url}/permissions`}>
-                  {folderInfo.title}
-                </a>{' '}
-              </em>
-            )}
+          {item.inherited && folderInfo && (
+            <em className="muted no-wrap">
+              Inherited from folder{' '}
+              <a className="text-link" href={`${folderInfo.url}/permissions`}>
+                {folderInfo.title}
+              </a>{' '}
+            </em>
+          )}
           {inheritedFromRoot && <em className="muted no-wrap">Default Permission</em>}
         </td>
         <td className="query-keyword">Can</td>

@@ -1,6 +1,12 @@
+// Libraries
 import _ from 'lodash';
 import moment from 'moment';
 
+// Services & Utils
+import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
+import syntax from './syntax';
+
+// Types
 import {
   CompletionItem,
   CompletionItemGroup,
@@ -9,9 +15,7 @@ import {
   TypeaheadOutput,
   HistoryItem,
 } from 'app/types/explore';
-import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax from './syntax';
-import { DataQuery } from 'app/types';
+import { LokiQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -20,7 +24,9 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
 const wrapLabel = (label: string) => ({ label });
 
-export function addHistoryMetadata(item: CompletionItem, history: HistoryItem[]): CompletionItem {
+type LokiHistoryItem = HistoryItem<LokiQuery>;
+
+export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryItem[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
   const historyForItem = history.filter(h => h.ts > cutoffTs && (h.query.expr as string) === item.label);
   const count = historyForItem.length;
@@ -155,7 +161,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, refresher, suggestions };
   }
 
-  async importQueries(queries: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
+  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async query => {
@@ -167,8 +173,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
         })
       );
     }
+    // Return a cleaned LokiQuery
     return queries.map(query => ({
-      ...query,
+      refId: query.refId,
       expr: '',
     }));
   }

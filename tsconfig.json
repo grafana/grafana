@@ -4,7 +4,7 @@
     "outDir": "public/dist",
     "target": "es5",
     "lib": ["es6", "dom"],
-    "rootDir": "public/",
+    "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",
     "declaration": false,
@@ -26,8 +26,10 @@
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
+    "typeRoots": ["node_modules/@types", "types"],
     "paths": {
-      "app": ["app"]
+      "app": ["app"],
+      "sass": ["sass"]
     }
   },
   "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts"]

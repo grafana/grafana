@@ -112,7 +112,7 @@ func NewDashboard(title string) *Dashboard {
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
 	folder.IsFolder = true
-	folder.Data.Set("schemaVersion", 16)
+	folder.Data.Set("schemaVersion", 17)
 	folder.Data.Set("version", 0)
 	folder.IsFolder = true
 	return folder

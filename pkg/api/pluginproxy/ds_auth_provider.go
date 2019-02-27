@@ -39,7 +39,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	req.URL.Scheme = routeURL.Scheme
 	req.URL.Host = routeURL.Host
 	req.Host = routeURL.Host
-	req.URL.Path = util.JoinUrlFragments(routeURL.Path, proxyPath)
+	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)

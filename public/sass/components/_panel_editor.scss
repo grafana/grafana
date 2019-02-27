@@ -14,18 +14,19 @@
 
   &--view {
     flex: 1 1 0;
-    height: 80%;
+    height: 90%;
     margin: 0 $dashboard-padding;
     padding-top: $dashboard-padding;
   }
 }
 
 .panel-editor-container__editor {
-  margin-top: $panel-margin*2;
+  margin-top: $panel-margin * 2;
   display: flex;
   flex-direction: row;
   flex: 1 1 0;
   position: relative;
+  min-height: 0;
 }
 
 .panel-editor__right {
@@ -34,8 +35,10 @@
   flex-grow: 1;
   background: $input-bg;
   margin: 0 20px 0 84px;
+  width: calc(100% - 84px);
   border-radius: 3px;
   box-shadow: $panel-editor-shadow;
+  min-height: 0;
 }
 
 .panel-editor__close {
@@ -60,6 +63,7 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
+  min-height: 0;
 }
 
 .panel-editor__content {
@@ -81,6 +85,10 @@
 
   .panel-editor-container__panel {
     margin: 0 $dashboard-padding;
+  }
+
+  .search-container {
+    left: 0 !important;
   }
 }
 
@@ -115,7 +123,6 @@
 }
 
 .viz-picker {
-  padding: 0px 20px;
   position: relative;
 }
 
@@ -142,15 +149,16 @@
   padding-bottom: 6px;
   transition: transform 1 ease;
 
-  &--current {
-    box-shadow: 0 0 6px $orange;
-    border: 1px solid $orange;
-  }
-
   &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
+  }
+
+  &--current {
+    box-shadow: 0 0 6px $orange !important;
+    border: 1px solid $orange !important;
+    background: $panel-editor-viz-item-bg !important;
   }
 }
 
@@ -171,7 +179,6 @@
 }
 
 .panel-editor-tabs {
-  position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -218,7 +225,6 @@
 
     &:hover {
       filter: $panel-editor-side-menu-shadow;
-      transform: translate(-2px, -2px);
       transform: scale(1.1);
     }
   }
@@ -227,32 +233,4 @@
 .ds-picker {
   position: relative;
   min-width: 200px;
-}
-
-.panel-option-section {
-  margin-bottom: 10px;
-  border: $panel-option-section-border;
-  border-radius: $border-radius;
-}
-
-.panel-option-section__header {
-  padding: 4px 20px;
-  font-size: 1.1rem;
-  background: $panel-option-section-header-bg;
-  position: relative;
-
-  .btn {
-    position: absolute;
-    right: 0;
-    top: 0px;
-  }
-}
-
-.panel-option-section__body {
-  padding: 20px;
-  background: $page-bg;
-
-  &--queries {
-    min-height: 200px;
-  }
 }

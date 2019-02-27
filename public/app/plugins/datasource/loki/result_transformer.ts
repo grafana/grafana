@@ -1,3 +1,4 @@
+import ansicolor from 'ansicolor';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -5,13 +6,14 @@ import {
   LogLevel,
   LogsMetaItem,
   LogsModel,
-  LogRow,
+  LogRowModel,
   LogsStream,
   LogsStreamEntry,
   LogsStreamLabels,
   LogsMetaKind,
 } from 'app/core/logs_model';
-import { DEFAULT_LIMIT } from './datasource';
+import { hasAnsiCodes } from 'app/core/utils/text';
+import { DEFAULT_MAX_LINES } from './datasource';
 
 /**
  * Returns the log level of a log line.
@@ -21,7 +23,7 @@ import { DEFAULT_LIMIT } from './datasource';
  */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
-    return LogLevel.unkown;
+    return LogLevel.unknown;
   }
   let level: LogLevel;
   Object.keys(LogLevel).forEach(key => {
@@ -33,7 +35,7 @@ export function getLogLevel(line: string): LogLevel {
     }
   });
   if (!level) {
-    level = LogLevel.unkown;
+    level = LogLevel.unknown;
   }
   return level;
 }
@@ -115,15 +117,17 @@ export function processEntry(
   parsedLabels: LogsStreamLabels,
   uniqueLabels: LogsStreamLabels,
   search: string
-): LogRow {
-  const { line, timestamp } = entry;
+): LogRowModel {
+  const { line } = entry;
+  const ts = entry.ts || entry.timestamp;
   // Assumes unique-ness, needs nanosec precision for timestamp
-  const key = `EK${timestamp}${labels}`;
-  const time = moment(timestamp);
+  const key = `EK${ts}${labels}`;
+  const time = moment(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(line);
+  const hasAnsi = hasAnsiCodes(line);
 
   return {
     key,
@@ -132,14 +136,16 @@ export function processEntry(
     timeEpochMs,
     timeLocal,
     uniqueLabels,
-    entry: line,
+    hasAnsi,
+    entry: hasAnsi ? ansicolor.strip(line) : line,
+    raw: line,
     labels: parsedLabels,
     searchWords: search ? [search] : [],
-    timestamp: timestamp,
+    timestamp: ts,
   };
 }
 
-export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT): LogsModel {
+export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LINES): LogsModel {
   // Unique model identifier
   const id = streams.map(stream => stream.labels).join();
 
@@ -155,9 +161,9 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_LIMIT)
   }));
 
   // Merge stream entries into single list of log rows
-  const sortedRows: LogRow[] = _.chain(streams)
+  const sortedRows: LogRowModel[] = _.chain(streams)
     .reduce(
-      (acc: LogRow[], stream: LogsStream) => [
+      (acc: LogRowModel[], stream: LogsStream) => [
         ...acc,
         ...stream.entries.map(entry =>
           processEntry(entry, stream.labels, stream.parsedLabels, stream.uniqueLabels, stream.search)

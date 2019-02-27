@@ -1,7 +1,7 @@
 # Plugin Development 
 
-This document is not meant as complete guide for developing plugins but more as a changelog for changes in
-Grafana that can impact plugin development. When ever you as plugin author encounter an issue with your plugin after
+This document is not meant as a complete guide for developing plugins but more as a changelog for changes in
+Grafana that can impact plugin development. Whenever you as a plugin author encounter an issue with your plugin after
 upgrading Grafana please check here before creating an issue. 
 
 ## Links
