@@ -73,7 +73,7 @@ export class Aggregations extends React.Component<Props, State> {
               value={crossSeriesReducer}
               variables={templateSrv.variables}
               options={aggOptions}
-              placeholder="Select Aggregation"
+              placeholder="Select Reducer"
               className="width-15"
             />
           </div>
