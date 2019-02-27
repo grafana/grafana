@@ -496,9 +496,9 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 	}
 
 	alias := model.Get("alias").MustString()
-	if alias == "" {
+	/*if alias == "" {
 		alias = "{{metric}}_{{stat}}"
-	}
+	}*/
 
 	returnData := model.Get("returnData").MustBool(false)
 	highResolution := model.Get("highResolution").MustBool(false)
@@ -521,7 +521,11 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 
 func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]string) string {
 	if len(query.Id) > 0 && len(query.Expression) > 0 {
-		return query.Id
+		if len(query.Alias) > 0 {
+			return query.Alias
+		} else {
+			return query.Id
+		}
 	}
 
 	data := map[string]string{}
