@@ -95,7 +95,8 @@ exposeToPlugin('app/features/dashboard/impression_store', {
 });
 
 exposeToPlugin('app/core/services/backend_srv', {
-  BackendSrv, getBackendSrv,
+  BackendSrv,
+  getBackendSrv,
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
