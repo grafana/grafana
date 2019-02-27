@@ -100,7 +100,7 @@ export class ResultTransformer {
     table.columns.push({ text: 'Time', type: 'time' });
     _.each(sortedLabels, (label, labelIndex) => {
       metricLabels[label] = labelIndex + 1;
-      table.columns.push({ text: label, filterable: !label.startsWith('__') });
+      table.columns.push({ text: label, filterable: true });
     });
     const valueText = resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value';
     table.columns.push({ text: valueText });
