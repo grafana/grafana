@@ -121,11 +121,12 @@ func TestAuthJWT(t *testing.T) {
 
 		// Check Firebase Support
 		Convey("Should parse firebase tokens", func() {
-
+			setting.AuthJwtLoginClaim = "email"
 			setting.AuthJwtVerification = pwd + "/jwt_test_data.firebase.json" //https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
 			setting.AuthJwtExpectClaims = make(map[string]string)
 			setting.AuthJwtExpectClaims["iss"] = "https://securetoken.google.com/safetronx"
 			InitAuthJwtKey()
+
 			So(decoder.CheckReady(), ShouldBeTrue)
 
 			// Expired token

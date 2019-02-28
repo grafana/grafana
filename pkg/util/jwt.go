@@ -1,7 +1,7 @@
 package util
 
 import (
-	"gopkg.in/square/go-jose.v2"
+	jose "gopkg.in/square/go-jose.v2"
 
 	"crypto/x509"
 	"encoding/base64"
@@ -31,6 +31,7 @@ const (
 	JWT_ERROR_DecryptFailed JWTErrorCode = 4
 	JWT_ERROR_Expired       JWTErrorCode = 5
 	JWT_ERROR_Unexpected    JWTErrorCode = 6
+	JWT_ERROR_NotReadyYet   JWTErrorCode = 7
 )
 
 type JWTError struct {
@@ -144,8 +145,12 @@ func getTimeFromClaim(val interface{}) time.Time {
 	return time.Unix(unix, 0)
 }
 
-// Read the claims and validate
+// Decode ... Read the claims and validate
 func (d *JWTDecoder) Decode(text string) (map[string]interface{}, *JWTError) {
+	if d.keys == nil {
+		return nil, newJWTError(JWT_ERROR_NotReadyYet, "Decode not initalized")
+	}
+
 	object, err := jose.ParseSigned(text)
 	if err != nil {
 		return nil, newJWTError(JWT_ERROR_UnableToRead, "Could not parse")
@@ -173,11 +178,8 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, *JWTError) {
 		d.mutex.Unlock()
 	}
 
-	// Validate the signature
+	// Find the verification keys
 	signature := object.Signatures[0]
-
-	// algo := jose.SignatureAlgorithm(signature.Header.Algorithm)
-
 	keys := d.keys.getVerificationKeys(signature.Header)
 	if len(keys) == 0 {
 		return nil, newJWTError(JWT_ERROR_UnknownKey, "Key Not Found")
