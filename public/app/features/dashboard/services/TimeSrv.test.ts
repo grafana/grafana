@@ -177,7 +177,7 @@ describe('timeSrv', () => {
       expect(_dashboard.refresh).toBe('10s');
     });
 
-    it('should disable refresh after zooming out', function() {
+    it('should disable refresh after zooming out', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
       expect(_dashboard.refresh).toBe('10s');
