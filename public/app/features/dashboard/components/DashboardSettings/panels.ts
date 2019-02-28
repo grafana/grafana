@@ -1,7 +1,7 @@
 import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
-import { PanelModel } from '../panel_model';
+import { PanelModel } from '../../state/PanelModel';
 
 export class DSInfo {
   name: string = null;
@@ -125,7 +125,7 @@ function dashPanelsEditor() {
   return {
     restrict: 'E',
     controller: DashPanelsEditorCtrl,
-    templateUrl: 'public/app/features/dashboard/settings/panels.html',
+    templateUrl: 'public/app/features/dashboard/components/DashboardSettings/panels.html',
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
