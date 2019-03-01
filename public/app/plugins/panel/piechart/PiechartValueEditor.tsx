@@ -37,17 +37,17 @@ export default class PiechartValueEditor extends PureComponent<Props> {
     return (
       <PanelOptionsGroup title="Value">
         <div className="gf-form">
-          <FormLabel width={labelWidth}>Stat</FormLabel>
+          <FormLabel width={labelWidth}>Unit</FormLabel>
+          <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
+        </div>
+        <div className="gf-form">
+          <FormLabel width={labelWidth}>Value</FormLabel>
           <Select
             width={12}
             options={statOptions}
             onChange={this.onStatChange}
             value={statOptions.find(option => option.value === stat)}
           />
-        </div>
-        <div className="gf-form">
-          <FormLabel width={labelWidth}>Unit</FormLabel>
-          <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
         </div>
       </PanelOptionsGroup>
     );
