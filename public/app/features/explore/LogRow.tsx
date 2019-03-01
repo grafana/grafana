@@ -150,7 +150,7 @@ export class LogRow extends PureComponent<Props, State> {
           </div>
         )}
         {showLocalTime && (
-          <div className="logs-row__time" title={`${row.timestamp} (${row.timeFromNow})`}>
+          <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
             {row.timeLocal}
           </div>
         )}
