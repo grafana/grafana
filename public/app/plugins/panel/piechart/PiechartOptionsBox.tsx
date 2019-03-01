@@ -11,13 +11,9 @@ import { PiechartOptions } from './types';
 
 import * as _ from 'lodash';
 
-
 const labelWidth = 8;
 
-const piechartOptions = [
-  { value: PiechartType.PIE, label: 'Pie' },
-  { value: PiechartType.DONUT, label: 'Donut' },
-];
+const piechartOptions = [{ value: PiechartType.PIE, label: 'Pie' }, { value: PiechartType.DONUT, label: 'Donut' }];
 
 export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartOptions>> {
   onPieTypeChange = ({ target }) => this.props.onChange({ ...this.props.options, pieType: target.value });
@@ -39,7 +35,12 @@ export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartO
           />
         </div>
         <div className="gf-form">
-          <FormField label="Divider width" labelWidth={labelWidth} onChange={this.onStrokeWidthChange} value={strokeWidth} />
+          <FormField
+            label="Divider width"
+            labelWidth={labelWidth}
+            onChange={this.onStrokeWidthChange}
+            value={strokeWidth}
+          />
         </div>
       </PanelOptionsGroup>
     );
