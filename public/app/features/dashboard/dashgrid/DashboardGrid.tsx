@@ -198,6 +198,10 @@ export class DashboardGrid extends PureComponent<Props> {
     // elem is set *after* the first render
     const elem = this.panelRef[panel.id.toString()];
     if (!elem) {
+      // NOTE the gridPos is also not valid until after the first render
+      // since it is passed to the layout engine and made to be valid
+      // for example, you can have Y=0 for everything and it will stack them
+      // down vertically in the second call
       return false;
     }
 
@@ -218,11 +222,23 @@ export class DashboardGrid extends PureComponent<Props> {
     // Use the whole browser height (larger than real value)
     // TODO? is there a better way
     const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
-
     const viewBot = viewTop + viewHeight;
     if (top > viewBot + buffer) {
       //      console.log( panel.id, 'Below', viewBot, top );
       return false;
+    }
+
+    // To be accurate, the top needs to add 50px for each row, but that is
+    // not a property that you can get from the gridPos
+    const fromGridTop = panel.gridPos.y * GRID_CELL_HEIGHT;
+    const fromGridHeight = panel.gridPos.h * GRID_CELL_HEIGHT + 40; // Not sure why 40
+    if (fromGridTop !== top) {
+      const dT = top - fromGridTop;
+      const dH = height - fromGridHeight;
+      console.log('Panel:' + panel.id, 'Top Difference=', dT);
+      if (dH !== 0) {
+        console.log('  >> ', 'Height Difference=', dH);
+      }
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
@@ -230,7 +246,7 @@ export class DashboardGrid extends PureComponent<Props> {
 
   renderPanels() {
     const panelElements = [];
-
+    console.log('===== RENDER DashboardGrid =====', this.props.scrollTop);
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       const id = panel.id.toString();
