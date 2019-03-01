@@ -6,6 +6,7 @@ import { AlertRule } from '../../types';
 export interface Props {
   rule: AlertRule;
   search: string;
+  style: any;
   onTogglePause: () => void;
 }
 
@@ -21,7 +22,7 @@ class AlertRuleItem extends PureComponent<Props> {
   }
 
   render() {
-    const { rule, onTogglePause } = this.props;
+    const { rule, onTogglePause, style } = this.props;
 
     const iconClassName = classNames({
       fa: true,
@@ -32,7 +33,7 @@ class AlertRuleItem extends PureComponent<Props> {
     const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
-      <li className="alert-rule-item">
+      <li className="alert-rule-item" style={style}>
         <span className={`alert-rule-item__icon ${rule.stateClass}`}>
           <i className={rule.stateIcon} />
         </span>

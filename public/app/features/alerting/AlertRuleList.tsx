@@ -3,6 +3,8 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import AlertRuleItem from './AlertRuleItem';
+import { List, AutoSizer } from 'react-virtualized';
+
 import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -86,9 +88,23 @@ export class AlertRuleList extends PureComponent<Props, any> {
     );
   };
 
+  renderRule = ({ index, key, style }) => {
+    const alertRules = this.props.alertRules;
+    const alertRule = alertRules[index];
+    return (
+      <AlertRuleItem
+        rule={alertRule}
+        style={style}
+        key={key}
+        className="row"
+        search={this.props.search}
+        onTogglePause={() => this.onTogglePause(alertRule)}
+      />
+    );
+  };
+
   render() {
     const { navModel, alertRules, search, isLoading } = this.props;
-
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
@@ -116,18 +132,21 @@ export class AlertRuleList extends PureComponent<Props, any> {
               <i className="fa fa-info-circle" /> How to add an alert
             </a>
           </div>
-          <section>
-            <ol className="alert-rule-list">
-              {alertRules.map(rule => (
-                <AlertRuleItem
-                  rule={rule}
-                  key={rule.id}
-                  search={search}
-                  onTogglePause={() => this.onTogglePause(rule)}
+          <AutoSizer>
+            {({ width, height }) => {
+              return (
+                <List
+                  class="alert-rule-list"
+                  width={width}
+                  height={height}
+                  rowHeight={63}
+                  rowRenderer={this.renderRule}
+                  rowCount={alertRules.length}
+                  overscanRowcount={50}
                 />
-              ))}
-            </ol>
-          </section>
+              );
+            }}
+          </AutoSizer>
         </Page.Contents>
       </Page>
     );
