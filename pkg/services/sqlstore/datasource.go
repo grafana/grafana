@@ -3,6 +3,8 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -95,6 +97,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			return m.ErrDataSourceNameExists
 		}
 
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -142,6 +148,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
