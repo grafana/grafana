@@ -1,5 +1,4 @@
 import kbn from 'app/core/utils/kbn';
-import { appEvents } from 'app/core/core';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
 import { getValueFormat } from '@grafana/ui';
@@ -10,12 +9,8 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   }
 
   if (aliasOrRegex[0] === '/') {
-    try {
-      const regex = kbn.stringToJsRegex(aliasOrRegex);
-      return seriesAlias.match(regex) != null;
-    } catch (e) {
-      return appEvents.emit('alert-error', ['Invalid aliasOrRegex value.', e.message]);
-    }
+    const regex = kbn.stringToJsRegex(aliasOrRegex);
+    return seriesAlias.match(regex) != null;
   }
 
   return aliasOrRegex === seriesAlias;
