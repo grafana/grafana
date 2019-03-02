@@ -1,4 +1,4 @@
-import { findMatchesInText } from './text';
+import { findMatchesInText, stripAnsi } from './text';
 
 describe('findMatchesInText()', () => {
   it('gets no matches for when search and or line are empty', () => {
@@ -31,5 +31,12 @@ describe('findMatchesInText()', () => {
     ]);
     expect(findMatchesInText('foo foo bar', '(')).toEqual([]);
     expect(findMatchesInText('foo foo bar', '(foo|')).toEqual([]);
+  });
+});
+
+describe('stripAnsi()', () => {
+  test('should strip ansi codes', () => {
+    expect(stripAnsi("foo: 'bar'")).toBe("foo: 'bar'");
+    expect(stripAnsi("foo: [32m'bar'[39m")).toBe("foo: 'bar'");
   });
 });

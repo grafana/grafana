@@ -72,3 +72,15 @@ export function sanitize(unsanitizedString: string): string {
 export function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
 }
+
+// From npm module ansicolor (import broke phantomjs)
+// https://github.com/xpl/ansicolor/blob/b82360563ed29de444dc7618b9236191e0a77096/ansicolor.js#L370
+const ANSI_REGEX = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]/g;
+
+/**
+ * Strips ANSI codes from a string
+ * @param input a string containing ANSI escape codes.
+ */
+export function stripAnsi(input: string): string {
+  return input.replace(ANSI_REGEX, '');
+}

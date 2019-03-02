@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+// BEWARE Importing this will break phantomjs-based image rendering.
+// Ok to leave it here for now, until LogMessageAnsi is used in other places than Explore.
 import ansicolor from 'ansicolor';
 
 interface Style {

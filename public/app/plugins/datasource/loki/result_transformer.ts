@@ -1,4 +1,3 @@
-import ansicolor from 'ansicolor';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -12,7 +11,7 @@ import {
   LogsStreamLabels,
   LogsMetaKind,
 } from 'app/core/logs_model';
-import { hasAnsiCodes } from 'app/core/utils/text';
+import { hasAnsiCodes, stripAnsi } from 'app/core/utils/text';
 import { DEFAULT_MAX_LINES } from './datasource';
 
 /**
@@ -137,7 +136,7 @@ export function processEntry(
     timeLocal,
     uniqueLabels,
     hasAnsi,
-    entry: hasAnsi ? ansicolor.strip(line) : line,
+    entry: hasAnsi ? stripAnsi(line) : line,
     raw: line,
     labels: parsedLabels,
     searchWords: search ? [search] : [],
