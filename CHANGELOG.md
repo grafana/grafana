@@ -1,3 +1,9 @@
+
+# 6.1.0 (unreleased)
+
+### Bug Fixes
+* **Api**: Invalid org invite code [#10506](https://github.com/grafana/grafana/issues/10506)
+
 # 6.0.1 (unreleased)
 
 ### Bug Fixes
