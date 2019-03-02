@@ -125,7 +125,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (Metric)',
     formats: [
-      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('d') },
+      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('b') },
       { name: 'bytes', id: 'decbytes', fn: decimalSIPrefix('B') },
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
