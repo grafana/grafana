@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,14 +57,37 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
 
-	transport := &http.Transport{
-		TLSClientConfig: tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
+	var proxy func(*http.Request) (*url.URL, error)
+	var dial func(network, address string) (net.Conn, error)
+
+	switch strings.Split(ds.Url, ":")[0] {
+	case "unix":
+		urlParsed, err := url.Parse(ds.Url)
+		if err != nil {
+			return nil, err
+		}
+		proxy = http.ProxyURL(urlParsed)
+		dial = func(network, address string) (net.Conn, error) {
+			defaultDial := (&net.Dialer{
+				Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).Dial
+			return defaultDial(urlParsed.Scheme, urlParsed.Path)
+		}
+	default:
+		proxy = http.ProxyFromEnvironment
+		dial = (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
 			DualStack: true,
-		}).Dial,
+		}).Dial
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig:       tlsConfig,
+		Proxy:                 proxy,
+		Dial:                  dial,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		MaxIdleConns:          100,

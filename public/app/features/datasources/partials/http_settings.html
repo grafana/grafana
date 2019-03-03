@@ -7,7 +7,7 @@
         <input class="gf-form-input" type="text"
               ng-model='current.url' placeholder="{{suggestUrl}}"
               bs-typeahead="getSuggestUrls"  min-length="0"
-              ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
+              ng-pattern="/^(ftp|http|https|unix):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
         <info-popover mode="right-absolute">
           <p>Specify a complete HTTP URL (for example http://your_server:8080)</p>
           <span ng-show="current.access === 'direct'">

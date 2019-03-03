@@ -41,7 +41,12 @@ type httpClient interface {
 }
 
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+	dsURL := ds.Url
+	if strings.Split(ds.Url, ":")[0] == "unix" {
+		dsURL = "http://localhost"
+	}
+
+	targetURL, _ := url.Parse(dsURL)
 
 	return &DataSourceProxy{
 		ds:        ds,
