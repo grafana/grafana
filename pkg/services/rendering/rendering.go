@@ -67,7 +67,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	if plugins.Renderer == nil {
-		rs.renderAction = rs.renderViaPhantomJS
+		rs.renderAction = rs.renderViaChromeDP
 		<-ctx.Done()
 		return nil
 	}
