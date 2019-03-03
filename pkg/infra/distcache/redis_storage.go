@@ -11,13 +11,7 @@ type redisStorage struct {
 }
 
 func newRedisStorage(c *redis.Client) *redisStorage {
-	opt := &redis.Options{
-		Network: "tcp",
-		Addr:    "localhost:6379",
-	}
-	return &redisStorage{
-		c: redis.NewClient(opt),
-	}
+	return &redisStorage{c: c}
 }
 
 // Set sets value to given key in session.

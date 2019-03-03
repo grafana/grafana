@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	redis "gopkg.in/redis.v2"
 
 	"github.com/grafana/grafana/pkg/registry"
 )
@@ -35,11 +36,16 @@ type CacheOpts struct {
 
 func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 	if opts.name == "redis" {
-		return newRedisStorage(nil)
+		opt := &redis.Options{
+			Network: "tcp",
+			Addr:    "localhost:6379",
+		}
+
+		return newRedisStorage(redis.NewClient(opt))
 	}
 
 	if opts.name == "memcache" {
-		return newMemcacheStorage("localhost:9090")
+		return newMemcacheStorage("localhost:11211")
 	}
 
 	// if opts.name == "memory" {

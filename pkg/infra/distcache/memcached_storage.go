@@ -24,7 +24,7 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 	}
 }
 
-// Set sets value to given key in the cache.
+// Put sets value to given key in the cache.
 func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 
@@ -35,13 +35,17 @@ func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration
 
 	memcacheItem := newItem(key, bytes, int32(expires))
 
-	s.c.Add(memcacheItem)
-	return nil
+	return s.c.Add(memcacheItem)
 }
 
 // Get gets value by given key in the cache.
 func (s *memcacheStorage) Get(key string) (interface{}, error) {
 	i, err := s.c.Get(key)
+
+	if err != nil && err.Error() == "memcache: cache miss" {
+		return nil, ErrCacheItemNotFound
+	}
+
 	if err != nil {
 		return nil, err
 	}
