@@ -26,16 +26,16 @@ func createTestClient(t *testing.T, name string) cacheStorage {
 	return createClient(CacheOpts{name: name}, sqlstore)
 }
 
-func TestAllCacheClients(t *testing.T) {
-	clients := []string{"memory"} // add redis, memcache, memory
+func TestMemoryStorageClient(t *testing.T) {
 
-	for _, v := range clients {
-		client := createTestClient(t, v)
+	client := createTestClient(t, "memory")
+	RunTestsForClient(t, client)
+}
 
-		CanPutGetAndDeleteCachedObjects(t, client)
-		CanNotFetchExpiredItems(t, client)
-		CanSetInfiniteCacheExpiration(t, client)
-	}
+func RunTestsForClient(t *testing.T, client cacheStorage) {
+	CanPutGetAndDeleteCachedObjects(t, client)
+	CanNotFetchExpiredItems(t, client)
+	CanSetInfiniteCacheExpiration(t, client)
 }
 
 func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {

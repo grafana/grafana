@@ -35,7 +35,7 @@ func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration
 
 	memcacheItem := newItem(key, bytes, int32(expires))
 
-	return s.c.Add(memcacheItem)
+	return s.c.Set(memcacheItem)
 }
 
 // Get gets value by given key in the cache.
