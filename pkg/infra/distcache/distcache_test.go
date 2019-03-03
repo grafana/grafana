@@ -26,19 +26,13 @@ func createTestClient(t *testing.T, name string) cacheStorage {
 	return createClient(CacheOpts{name: name}, sqlstore)
 }
 
-func TestMemoryStorageClient(t *testing.T) {
-
-	client := createTestClient(t, "memory")
-	RunTestsForClient(t, client)
+func runTestsForClient(t *testing.T, client cacheStorage) {
+	canPutGetAndDeleteCachedObjects(t, client)
+	canNotFetchExpiredItems(t, client)
+	canSetInfiniteCacheExpiration(t, client)
 }
 
-func RunTestsForClient(t *testing.T, client cacheStorage) {
-	CanPutGetAndDeleteCachedObjects(t, client)
-	CanNotFetchExpiredItems(t, client)
-	CanSetInfiniteCacheExpiration(t, client)
-}
-
-func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
+func canPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	err := client.Put("key", cacheableStruct, 0)
@@ -58,7 +52,7 @@ func CanPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func CanNotFetchExpiredItems(t *testing.T, client cacheStorage) {
+func canNotFetchExpiredItems(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	err := client.Put("key", cacheableStruct, time.Second)
@@ -72,7 +66,7 @@ func CanNotFetchExpiredItems(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func CanSetInfiniteCacheExpiration(t *testing.T, client cacheStorage) {
+func canSetInfiniteCacheExpiration(t *testing.T, client cacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back
