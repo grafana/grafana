@@ -3,6 +3,7 @@ package distcache
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	redis "gopkg.in/redis.v2"
 )
 
@@ -10,8 +11,12 @@ type redisStorage struct {
 	c *redis.Client
 }
 
-func newRedisStorage(c *redis.Client) *redisStorage {
-	return &redisStorage{c: c}
+func newRedisStorage(opts *setting.CacheOpts) *redisStorage {
+	opt := &redis.Options{
+		Network: "tcp",
+		Addr:    opts.ConnStr,
+	}
+	return &redisStorage{c: redis.NewClient(opt)}
 }
 
 // Set sets value to given key in session.

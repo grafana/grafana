@@ -1,7 +1,12 @@
 package distcache
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 func TestMemcachedCacheStorage(t *testing.T) {
-	runTestsForClient(t, createTestClient(t, "memcache"))
+	opts := &setting.CacheOpts{Name: "memcache", ConnStr: "localhost:11211"}
+	runTestsForClient(t, createTestClient(t, opts, nil))
 }

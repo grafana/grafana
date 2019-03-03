@@ -1,7 +1,12 @@
 package distcache
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 func TestMemoryCacheStorage(t *testing.T) {
-	runTestsForClient(t, createTestClient(t, "memory"))
+	opts := &setting.CacheOpts{Name: "memory"}
+	runTestsForClient(t, createTestClient(t, opts, nil))
 }

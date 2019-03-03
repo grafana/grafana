@@ -1,7 +1,13 @@
 package distcache
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 func TestRedisCacheStorage(t *testing.T) {
-	runTestsForClient(t, createTestClient(t, "redis"))
+
+	opts := &setting.CacheOpts{Name: "redis", ConnStr: "localhost:6379"}
+	runTestsForClient(t, createTestClient(t, opts, nil))
 }

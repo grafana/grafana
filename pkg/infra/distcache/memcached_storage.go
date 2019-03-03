@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type memcacheStorage struct {
 	c *memcache.Client
 }
 
-func newMemcacheStorage(connStr string) *memcacheStorage {
+func newMemcacheStorage(opts *setting.CacheOpts) *memcacheStorage {
 	return &memcacheStorage{
-		c: memcache.New(connStr),
+		c: memcache.New(opts.ConnStr),
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/bmizerany/assert"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CacheableStruct struct {
@@ -19,11 +20,34 @@ func init() {
 	gob.Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, name string) cacheStorage {
+func createTestClient(t *testing.T, opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
 	t.Helper()
 
-	sqlstore := sqlstore.InitTestDB(t)
-	return createClient(CacheOpts{name: name}, sqlstore)
+	dc := &DistributedCache{
+		SQLStore: sqlstore,
+		Cfg: &setting.Cfg{
+			CacheOptions: opts,
+		},
+	}
+
+	err := dc.Init()
+	if err != nil {
+		t.Fatalf("failed to init client for test. error: %v", err)
+	}
+
+	return dc.Client
+}
+
+func TestCachedBasedOnConfig(t *testing.T) {
+
+	cfg := setting.NewCfg()
+	cfg.Load(&setting.CommandLineArgs{
+		HomePath: "../../../",
+	})
+
+	client := createTestClient(t, cfg.CacheOptions, sqlstore.InitTestDB(t))
+
+	runTestsForClient(t, client)
 }
 
 func runTestsForClient(t *testing.T, client cacheStorage) {

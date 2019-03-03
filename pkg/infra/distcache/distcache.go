@@ -6,9 +6,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	redis "gopkg.in/redis.v2"
 
 	"github.com/grafana/grafana/pkg/registry"
 )
@@ -25,30 +26,21 @@ func init() {
 func (ds *DistributedCache) Init() error {
 	ds.log = log.New("distributed.cache")
 
-	ds.Client = createClient(CacheOpts{}, ds.SQLStore)
+	ds.Client = createClient(ds.Cfg.CacheOptions, ds.SQLStore)
 
 	return nil
 }
 
-type CacheOpts struct {
-	name string
-}
-
-func createClient(opts CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
-	if opts.name == "redis" {
-		opt := &redis.Options{
-			Network: "tcp",
-			Addr:    "localhost:6379",
-		}
-
-		return newRedisStorage(redis.NewClient(opt))
+func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
+	if opts.Name == "redis" {
+		return newRedisStorage(opts)
 	}
 
-	if opts.name == "memcache" {
-		return newMemcacheStorage("localhost:11211")
+	if opts.Name == "memcache" {
+		return newMemcacheStorage(opts)
 	}
 
-	if opts.name == "memory" {
+	if opts.Name == "memory" {
 		return newMemoryStorage()
 	}
 
@@ -60,6 +52,7 @@ type DistributedCache struct {
 	log      log.Logger
 	Client   cacheStorage
 	SQLStore *sqlstore.SqlStore `inject:""`
+	Cfg      *setting.Cfg       `inject:""`
 }
 
 type cachedItem struct {

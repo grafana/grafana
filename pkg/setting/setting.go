@@ -240,6 +240,9 @@ type Cfg struct {
 
 	// User
 	EditorsCanOwn bool
+
+	// DistributedCache
+	CacheOptions *CacheOpts
 }
 
 type CommandLineArgs struct {
@@ -779,7 +782,20 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
 
+	cacheServer := iniFile.Section("cache_server")
+	//cfg.DistCacheType = cacheServer.Key("type").MustString("database")
+	//cfg.DistCacheConnStr = cacheServer.Key("connstr").MustString("")
+	cfg.CacheOptions = &CacheOpts{
+		Name:    cacheServer.Key("type").MustString("database"),
+		ConnStr: cacheServer.Key("connstr").MustString(""),
+	}
+
 	return nil
+}
+
+type CacheOpts struct {
+	Name    string
+	ConnStr string
 }
 
 func (cfg *Cfg) readSessionConfig() {
