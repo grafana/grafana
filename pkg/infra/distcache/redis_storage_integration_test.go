@@ -1,3 +1,5 @@
+// +build redis
+
 package distcache
 
 import (

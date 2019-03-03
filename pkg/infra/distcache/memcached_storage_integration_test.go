@@ -1,3 +1,5 @@
+// +build memcached
+
 package distcache
 
 import (
