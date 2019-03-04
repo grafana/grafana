@@ -309,7 +309,9 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 			params = append(params, v)
 		}
 
-		res, err := sess.Exec(buffer.String(), params...)
+		sqlOrArgs := append([]interface{}{buffer.String()}, params...)
+
+		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
 			return err
 		}

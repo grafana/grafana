@@ -1,3 +1,7 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
@@ -74,6 +78,7 @@ type Dialect interface {
 	GetIndexes(tableName string) (map[string]*Index, error)
 
 	Filters() []Filter
+	SetParams(params map[string]string)
 }
 
 func OpenDialect(dialect Dialect) (*DB, error) {
@@ -148,7 +153,8 @@ func (db *Base) SupportDropIfExists() bool {
 }
 
 func (db *Base) DropTableSql(tableName string) string {
-	return fmt.Sprintf("DROP TABLE IF EXISTS `%s`", tableName)
+	quote := db.dialect.Quote
+	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
 }
 
 func (db *Base) HasRecords(query string, args ...interface{}) (bool, error) {
@@ -287,6 +293,9 @@ func (b *Base) LogSQL(sql string, args []interface{}) {
 			b.logger.Infof("[SQL] %v", sql)
 		}
 	}
+}
+
+func (b *Base) SetParams(params map[string]string) {
 }
 
 var (
