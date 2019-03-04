@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -28,6 +29,19 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	proxyHeaderValue := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
 	if len(proxyHeaderValue) == 0 {
 		return false
+	}
+
+	// if JSON header property is defined then username will be get from it
+	if len(setting.AuthProxyJsonHeaderProperty) == 0 {
+		headermap := map[string]string{}
+
+		err := json.Unmarshal([]byte(proxyHeaderValue), &headermap)
+		if err != nil {
+			ctx.Handle(500, "Unable to authenticate user", err)
+			return false
+		}
+
+		proxyHeaderValue = headermap[setting.AuthProxyJsonHeaderProperty]
 	}
 
 	// if auth proxy ip(s) defined, check if request comes from one of those

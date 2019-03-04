@@ -25,6 +25,8 @@ enabled = true
 header_name = X-WEBAUTH-USER
 # HTTP Header property, defaults to `username` but can also be `email`
 header_property = username
+# JSON string HTTP Header property for the JSON key that will contain the user as a value.
+json_header_property = preferred_username
 # Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
 # If combined with Grafana LDAP integration define sync interval
