@@ -11,6 +11,7 @@ import ButtonRow from './ButtonRow';
 
 // Services & Utils
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -235,6 +236,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   isReadOnly={this.isReadOnly()}
                   onDelete={this.onDelete}
                   onTest={event => this.onTest(event)}
+                  datasourcesPageHref={`${config.appSubUrl}/datasources`}
                 />
               </form>
             </div>
