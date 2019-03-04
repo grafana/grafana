@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 
 // Utils
 import { isValidTimeSpan } from 'app/core/utils/rangeutil';
@@ -9,7 +9,7 @@ import { Switch } from '@grafana/ui';
 import { Input } from 'app/core/components/Form';
 import { EventsWithValidation } from 'app/core/components/Form/Input';
 import { InputStatus } from 'app/core/components/Form/Input';
-import DataSourceOption from './DataSourceOption';
+import { DataSourceOption } from './DataSourceOption';
 import { FormLabel } from '@grafana/ui';
 
 // Types
@@ -43,15 +43,60 @@ interface Props {
 interface State {
   relativeTime: string;
   timeShift: string;
+  cacheTimeout: string;
+  maxDataPoints: string;
+  interval: string;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
+  allOptions = {
+    cacheTimeout: {
+      label: 'Cache timeout',
+      placeholder: '60',
+      name: 'cacheTimeout',
+      tooltipInfo: (
+        <>
+          If your time series store has a query cache this option can override the default cache timeout. Specify a
+          numeric value in seconds.
+        </>
+      ),
+    },
+    maxDataPoints: {
+      label: 'Max data points',
+      placeholder: 'auto',
+      name: 'maxDataPoints',
+      tooltipInfo: (
+        <>
+          The maximum data points the query should return. For graphs this is automatically set to one data point per
+          pixel.
+        </>
+      ),
+    },
+    minInterval: {
+      label: 'Min time interval',
+      placeholder: '0',
+      name: 'minInterval',
+      panelKey: 'interval',
+      tooltipInfo: (
+        <>
+          A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
+          <code>1m</code> if your data is written every minute. Access auto interval via variable{' '}
+          <code>$__interval</code> for time range string and <code>$__interval_ms</code> for numeric variable that can
+          be used in math expressions.
+        </>
+      ),
+    },
+  };
+
   constructor(props) {
     super(props);
 
     this.state = {
       relativeTime: props.panel.timeFrom || '',
       timeShift: props.panel.timeShift || '',
+      cacheTimeout: props.panel.cacheTimeout || '',
+      maxDataPoints: props.panel.maxDataPoints || '',
+      interval: props.panel.interval || '',
     };
   }
 
@@ -93,68 +138,39 @@ export class QueryOptions extends PureComponent<Props, State> {
     panel.refresh();
   };
 
-  renderOptions() {
-    const { datasource, panel } = this.props;
+  onDataSourceOptionBlur = (panelKey: string) => (event: ChangeEvent<HTMLInputElement>) => {
+    const { panel } = this.props;
+
+    panel[panelKey] = this.state[panelKey];
+    panel.refresh();
+  };
+
+  onDataSourceOptionChange = (panelKey: string) => (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ ...this.state, [panelKey]: event.target.value });
+  };
+
+  renderOptions = () => {
+    const { datasource } = this.props;
     const { queryOptions } = datasource.meta;
 
     if (!queryOptions) {
       return null;
     }
 
-    const onChangeFn = (panelKey: string) => {
-      return (value: string | number) => {
-        panel[panelKey] = value;
-        panel.refresh();
-      };
-    };
-
-    const allOptions = {
-      cacheTimeout: {
-        label: 'Cache timeout',
-        placeholder: '60',
-        name: 'cacheTimeout',
-        value: panel.cacheTimeout,
-        tooltipInfo: (
-          <>
-            If your time series store has a query cache this option can override the default cache timeout. Specify a
-            numeric value in seconds.
-          </>
-        ),
-      },
-      maxDataPoints: {
-        label: 'Max data points',
-        placeholder: 'auto',
-        name: 'maxDataPoints',
-        value: panel.maxDataPoints,
-        tooltipInfo: (
-          <>
-            The maximum data points the query should return. For graphs this is automatically set to one data point per
-            pixel.
-          </>
-        ),
-      },
-      minInterval: {
-        label: 'Min time interval',
-        placeholder: '0',
-        name: 'minInterval',
-        value: panel.interval,
-        panelKey: 'interval',
-        tooltipInfo: (
-          <>
-            A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
-            <code>1m</code> if your data is written every minute. Access auto interval via variable{' '}
-            <code>$__interval</code> for time range string and <code>$__interval_ms</code> for numeric variable that can
-            be used in math expressions.
-          </>
-        ),
-      },
-    };
-
     return Object.keys(queryOptions).map(key => {
-      const options = allOptions[key];
-      return <DataSourceOption key={key} {...options} onChange={onChangeFn(allOptions[key].panelKey || key)} />;
+      const options = this.allOptions[key];
+      const panelKey = options.panelKey || key;
+      return (
+        <DataSourceOption
+          key={key}
+          {...options}
+          onChange={this.onDataSourceOptionChange(panelKey)}
+          onBlur={this.onDataSourceOptionBlur(panelKey)}
+          value={this.state[panelKey]}
+        />
+      );
     });
-  }
+  };
 
   render() {
     const hideTimeOverride = this.props.panel.hideTimeOverride;
