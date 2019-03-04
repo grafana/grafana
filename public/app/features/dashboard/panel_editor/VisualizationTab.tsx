@@ -66,7 +66,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       const PanelEditor = plugin.exports.reactPanel.editor;
 
       if (PanelEditor) {
-        return <PanelEditor options={this.getReactPanelOptions()} onChange={this.onPanelOptionsChanged} />;
+        return <PanelEditor options={this.getReactPanelOptions()} updateOptions={this.onPanelOptionsChanged} />;
       }
     }
 
