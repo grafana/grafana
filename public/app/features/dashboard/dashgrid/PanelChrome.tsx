@@ -179,6 +179,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             isVisible={this.isVisible}
             widthPixels={width}
             refreshCounter={refreshCounter}
+            scopedVars={panel.scopedVars}
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
