@@ -21,7 +21,6 @@ exports[`Render should render component 1`] = `
   </button>
   <a
     className="btn btn-inverse"
-    href="/datasources"
   >
     Back
   </a>
@@ -50,7 +49,6 @@ exports[`Render should render with buttons enabled 1`] = `
   </button>
   <a
     className="btn btn-inverse"
-    href="/datasources"
   >
     Back
   </a>

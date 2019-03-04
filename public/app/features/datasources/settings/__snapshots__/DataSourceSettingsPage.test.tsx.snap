@@ -91,6 +91,7 @@ exports[`Render should render alpha info text 1`] = `
           className="gf-form-group"
         />
         <ButtonRow
+          datasourcesPageHref="/datasources"
           isReadOnly={false}
           onDelete={[Function]}
           onSubmit={[Function]}
@@ -193,6 +194,7 @@ exports[`Render should render beta info text 1`] = `
           className="gf-form-group"
         />
         <ButtonRow
+          datasourcesPageHref="/datasources"
           isReadOnly={false}
           onDelete={[Function]}
           onSubmit={[Function]}
@@ -290,6 +292,7 @@ exports[`Render should render component 1`] = `
           className="gf-form-group"
         />
         <ButtonRow
+          datasourcesPageHref="/datasources"
           isReadOnly={false}
           onDelete={[Function]}
           onSubmit={[Function]}
@@ -392,6 +395,7 @@ exports[`Render should render is ready only message 1`] = `
           className="gf-form-group"
         />
         <ButtonRow
+          datasourcesPageHref="/datasources"
           isReadOnly={true}
           onDelete={[Function]}
           onSubmit={[Function]}
