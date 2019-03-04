@@ -61,6 +61,7 @@ export interface Threshold {
   index: number;
   value: number;
   color: string;
+  text?: string;
 }
 
 export enum BasicGaugeColor {

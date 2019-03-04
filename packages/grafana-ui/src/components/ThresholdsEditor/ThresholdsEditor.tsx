@@ -1,14 +1,19 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Threshold } from '../../types';
+
 import { ColorPicker } from '..';
 import { PanelOptionsGroup } from '..';
+
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { getColorFromHexRgbOrName } from '../../utils';
+
+import { ThemeContext } from '../../themes';
+
+import { Threshold } from '../../types';
 
 export interface Props {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
+  withText?: boolean;
 }
 
 interface State {
@@ -160,6 +165,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   renderInput = (threshold: Threshold) => {
+    const { withText } = this.props;
+
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -172,7 +179,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         </div>
         {threshold.index === 0 && (
           <div className="thresholds-row-input-inner-value">
-            <input type="text" value="Base" readOnly />
+            {withText && <input className="width-7" type="text" placeholder="Text" />}
+            <input className="width-4" type="text" value="Base" readOnly />
           </div>
         )}
         {threshold.index > 0 && (
@@ -185,7 +193,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 value={threshold.value}
                 onBlur={this.onBlur}
                 readOnly={threshold.index === 0}
+                className="width-7"
               />
+              {withText && (
+                <input type="text" className="width-7" style={{ borderLeft: '1px solid #dde4ed' }} placeholder="Text" />
+              )}
             </div>
             <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
               <i className="fa fa-times" />
