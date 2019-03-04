@@ -2,12 +2,13 @@ import React, { FC } from 'react';
 
 export interface Props {
   isReadOnly: boolean;
+  datasourcesPageHref?: string;
   onDelete: () => void;
   onSubmit: (event) => void;
   onTest: (event) => void;
 }
 
-const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
+const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, datasourcesPageHref, onTest }) => {
   return (
     <div className="gf-form-button-row">
       {!isReadOnly && (
@@ -23,7 +24,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
       <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>
         Delete
       </button>
-      <a className="btn btn-inverse" href="/datasources">
+      <a className="btn btn-inverse" href={datasourcesPageHref}>
         Back
       </a>
     </div>
