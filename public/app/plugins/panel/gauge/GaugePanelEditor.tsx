@@ -14,31 +14,31 @@ import { GaugeOptions, SingleStatValueOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.props.updateOptions({
+    this.props.onOptionsChange({
       ...this.props.options,
       thresholds,
     });
 
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.updateOptions({
+    this.props.onOptionsChange({
       ...this.props.options,
       valueMappings,
     });
 
   onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
-    this.props.updateOptions({
+    this.props.onOptionsChange({
       ...this.props.options,
       valueOptions,
     });
 
   render() {
-    const { updateOptions, options } = this.props;
+    const { onOptionsChange, options } = this.props;
 
     return (
       <>
         <PanelOptionsGrid>
           <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
-          <GaugeOptionsBox updateOptions={updateOptions} options={options} />
+          <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
 

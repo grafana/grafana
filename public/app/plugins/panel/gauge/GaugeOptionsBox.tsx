@@ -10,14 +10,17 @@ import { GaugeOptions } from './types';
 
 export class GaugeOptionsBox extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onToggleThresholdLabels = () =>
-    this.props.updateOptions({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
+    this.props.onOptionsChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
 
   onToggleThresholdMarkers = () =>
-    this.props.updateOptions({ ...this.props.options, showThresholdMarkers: !this.props.options.showThresholdMarkers });
+    this.props.onOptionsChange({
+      ...this.props.options,
+      showThresholdMarkers: !this.props.options.showThresholdMarkers,
+    });
 
-  onMinValueChange = ({ target }) => this.props.updateOptions({ ...this.props.options, minValue: target.value });
+  onMinValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, minValue: target.value });
 
-  onMaxValueChange = ({ target }) => this.props.updateOptions({ ...this.props.options, maxValue: target.value });
+  onMaxValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, maxValue: target.value });
 
   render() {
     const { options } = this.props;

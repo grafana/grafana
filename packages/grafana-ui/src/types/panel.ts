@@ -22,7 +22,7 @@ export interface PanelData {
 
 export interface PanelEditorProps<T = any> {
   options: T;
-  updateOptions: (options: T) => void;
+  onOptionsChange: (options: T) => void;
 }
 
 export class ReactPanelPlugin<TOptions = any> {
