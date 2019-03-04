@@ -85,7 +85,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  onInterpolate = (value: string, format?: string) => {
+  replaceVariables = (value: string, format?: string) => {
     return templateSrv.replace(value, this.props.panel.scopedVars, format);
   };
 
@@ -158,7 +158,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           width={width - 2 * variables.panelhorizontalpadding}
           height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
           renderCounter={renderCounter}
-          onInterpolate={this.onInterpolate}
+          replaceVariables={this.replaceVariables}
         />
       </div>
     );

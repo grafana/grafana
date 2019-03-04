@@ -12,7 +12,7 @@ export interface PanelProps<T = any> {
   renderCounter: number;
   width: number;
   height: number;
-  onInterpolate: InterpolateFunction;
+  replaceVariables: InterpolateFunction;
 }
 
 export interface PanelData {
