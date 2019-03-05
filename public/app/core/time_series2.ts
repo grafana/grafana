@@ -97,6 +97,9 @@ export default class TimeSeries {
   transform: any;
   flotpairs: any;
   unit: any;
+  // *** START_OF_CHANGE ***
+  extraOptions: any;
+  // *** END_OF_CHANGE ***
 
   constructor(opts) {
     this.datapoints = opts.datapoints;
@@ -111,6 +114,9 @@ export default class TimeSeries {
     this.legend = true;
     this.unit = opts.unit;
     this.hasMsResolution = this.isMsResolutionNeeded();
+    // *** START_OF_CHANGE ***
+    this.extraOptions = opts.extraOptions;
+    // *** END_OF_CHANGE ***
   }
 
   applySeriesOverrides(overrides) {
@@ -124,6 +130,32 @@ export default class TimeSeries {
     this.nullPointMode = null;
     delete this.stack;
     delete this.bars.show;
+
+    // *** START_OF_CHANGE ****
+    if (this.extraOptions !== undefined) {
+      for (const opt in this.extraOptions) {
+        if (this.extraOptions.hasOwnProperty(opt) === true) {
+          this[opt] = this.extraOptions[opt];
+        }
+      }
+
+      // Fix for Y-axis in case of graphs with bands
+      // The main series Y-axis is used, otherwise the
+      // main series and the band-series would be on
+      // different Y-axis
+      for (let idx = 0; idx < overrides.length; ++idx) {
+        const ovr = overrides[idx];
+        if (
+          this.extraOptions.mainSeries !== undefined &&
+          matchSeriesOverride(ovr.alias, this.extraOptions.mainSeries) === true
+        ) {
+          if (ovr.yaxis !== undefined) {
+            this.yaxis = ovr.yaxis;
+          }
+        }
+      }
+    }
+    // *** END_OF_CHANGE ***
 
     for (let i = 0; i < overrides.length; i++) {
       const override = overrides[i];

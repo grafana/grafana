@@ -115,6 +115,9 @@ export class DataProcessor {
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
       unit: seriesData.unit,
+      // *** START_OF_CHANGE ****
+      extraOptions: seriesData.options,
+      // *** END_OF_CHANGE ****
     });
 
     if (datapoints && datapoints.length > 0) {

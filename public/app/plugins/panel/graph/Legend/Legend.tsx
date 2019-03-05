@@ -109,8 +109,16 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
       if (hiddenSeries[series.alias]) {
         delete hiddenSeries[series.alias];
+        // *** START_OF_CHANGE ****
+        delete hiddenSeries[series.alias + '_low_DO_NOT_TOUCH'];
+        delete hiddenSeries[series.alias + '_high_DO_NOT_TOUCH'];
+        // *** END_OF_CHANGE ****
       } else {
         hiddenSeries[series.alias] = true;
+        // *** START_OF_CHANGE ****
+        hiddenSeries[series.alias + '_low_DO_NOT_TOUCH'] = true;
+        hiddenSeries[series.alias + '_high_DO_NOT_TOUCH'] = true;
+        // *** END_OF_CHANGE ****
       }
     } else {
       hiddenSeries = this.toggleSeriesExclusiveMode(series);
@@ -124,11 +132,21 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
     if (hiddenSeries[series.alias]) {
       delete hiddenSeries[series.alias];
+      // *** START_OF_CHANGE ****
+      delete hiddenSeries[series.alias + '_low_DO_NOT_TOUCH'];
+      delete hiddenSeries[series.alias + '_high_DO_NOT_TOUCH'];
+      // *** END_OF_CHANGE ****
     }
 
     // check if every other series is hidden
     const alreadyExclusive = this.props.seriesList.every(value => {
-      if (value.alias === series.alias) {
+      if (
+        value.alias === series.alias ||
+        // *** START_OF_CHANGE ****
+        value.alias === series.alias + '_low_DO_NOT_TOUCH' ||
+        value.alias === series.alias + '_high_DO_NOT_TOUCH'
+        // *** END_OF_CHANGE ****
+      ) {
         return true;
       }
 
@@ -143,7 +161,13 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     } else {
       // hide all but this serie
       this.props.seriesList.forEach(value => {
-        if (value.alias === series.alias) {
+        if (
+          value.alias === series.alias ||
+          // *** START_OF_CHANGE ****
+          value.alias === series.alias + '_low_DO_NOT_TOUCH' ||
+          value.alias === series.alias + '_high_DO_NOT_TOUCH'
+          // *** END_OF_CHANGE ****
+        ) {
           return;
         }
 

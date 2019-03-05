@@ -78,6 +78,9 @@ export interface PluginExports {
   VariableQueryEditor?: any;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
+  // *** START_OF_CHANGE ****
+  QueryOptionsCtrl?: any;
+  // *** END_OF_CHANGE ***
 
   // Panel plugin
   PanelCtrl?: any;

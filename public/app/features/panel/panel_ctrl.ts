@@ -28,6 +28,9 @@ export class PanelCtrl {
   $timeout: any;
   inspector: any;
   editModeInitiated: boolean;
+  //*** START_OF_CHANGE ****
+  editorHelpIndex: number;
+  //*** END_OF_CHANGE ***
   height: any;
   containerHeight: any;
   events: Emitter;
@@ -208,6 +211,16 @@ export class PanelCtrl {
   render(payload?) {
     this.events.emit('render', payload);
   }
+
+  // *** START_OF_CHANGE ****
+  toggleEditorHelp(index) {
+    if (this.editorHelpIndex === index) {
+      this.editorHelpIndex = null;
+      return;
+    }
+    this.editorHelpIndex = index;
+  }
+  // *** END_OF_CHANGE ***
 
   duplicate() {
     duplicatePanel(this.dashboard, this.panel);
