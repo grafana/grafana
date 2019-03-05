@@ -1,7 +1,11 @@
 # 6.1.0 (unreleased)
 
+### New Features
+* **Prometheus**: adhoc filter support [#8253](https://github.com/grafana/grafana/issues/8253), thx [@mtanda](https://github.com/mtanda)
+
 ### Minor
 * **Cloudwatch**: Add AWS RDS MaximumUsedTransactionIDs metric [#15077](https://github.com/grafana/grafana/pull/15077), thx [@activeshadow](https://github.com/activeshadow)
+
 
 ### Bug Fixes
 * **Api**: Invalid org invite code [#10506](https://github.com/grafana/grafana/issues/10506)
