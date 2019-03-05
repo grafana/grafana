@@ -61,6 +61,11 @@ func (hs *HTTPServer) CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) R
 		return toFolderError(err)
 	}
 
+	if hs.Cfg.EditorsCanOwn {
+		aclService := dashboards.NewAclService()
+		aclService.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, cmd.Result.Id)
+	}
+
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
 	return JSON(200, toFolderDto(g, cmd.Result))
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
-	"time"
 )
 
 // FolderService service for operating on folders
@@ -113,45 +112,6 @@ func (dr *dashboardServiceImpl) CreateFolder(cmd *models.CreateFolderCommand) er
 	err = bus.Dispatch(saveDashboardCmd)
 	if err != nil {
 		return toFolderError(err)
-	}
-
-	rtEditor := models.ROLE_EDITOR
-	rtViewer := models.ROLE_VIEWER
-
-	items := []*models.DashboardAcl{
-		{
-			OrgId:       dr.orgId,
-			DashboardId: saveDashboardCmd.Result.Id,
-			UserId:      saveDashboardCmd.Result.CreatedBy,
-			Permission:  models.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-		{
-			OrgId:       dr.orgId,
-			DashboardId: saveDashboardCmd.Result.Id,
-			Role:        &rtEditor,
-			Permission:  models.PERMISSION_EDIT,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-		{
-			OrgId:       dr.orgId,
-			DashboardId: saveDashboardCmd.Result.Id,
-			Role:        &rtViewer,
-			Permission:  models.PERMISSION_VIEW,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-	}
-
-	aclCmd := &models.UpdateDashboardAclCommand{
-		DashboardId: saveDashboardCmd.Result.Id,
-		Items:       items,
-	}
-
-	if err = bus.Dispatch(aclCmd); err != nil {
-		return err
 	}
 
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: saveDashboardCmd.Result.Id}
