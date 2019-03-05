@@ -210,10 +210,11 @@ export class QueryOptions extends PureComponent<Props, State> {
             value={timeShift}
           />
         </div>
-
-        <div className="gf-form-inline">
-          <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-        </div>
+        {(timeShift || relativeTime) && (
+          <div className="gf-form-inline">
+            <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+          </div>
+        )}
       </div>
     );
   }
