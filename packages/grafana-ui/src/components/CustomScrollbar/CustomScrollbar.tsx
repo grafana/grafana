@@ -15,6 +15,7 @@ interface Props {
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
+  updateAfterMountMs?: number;
 }
 
 /**
@@ -48,6 +49,20 @@ export class CustomScrollbar extends Component<Props> {
 
   componentDidMount() {
     this.updateScroll();
+
+    // this logic is to make scrollbar visible when content is added body after mount
+    if (this.props.updateAfterMountMs) {
+      setTimeout(() => this.updateAfterMount(), this.props.updateAfterMountMs);
+    }
+  }
+
+  updateAfterMount() {
+    if (this.ref && this.ref.current) {
+      const scrollbar = this.ref.current as any;
+      if (scrollbar.update) {
+        scrollbar.update();
+      }
+    }
   }
 
   componentDidUpdate() {
