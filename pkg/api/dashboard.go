@@ -213,7 +213,8 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 
 	dash := cmd.GetDashboardModel()
 
-	if dash.Id == 0 && dash.Uid == "" {
+	newDashboard := dash.Id == 0 && dash.Uid == ""
+	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
 			return Error(500, "failed to get quota", err)
@@ -274,6 +275,14 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
 		return Error(500, "Failed to save dashboard", err)
+	}
+
+	if hs.Cfg.EditorsCanOwn && newDashboard {
+		aclService := dashboards.NewAclService()
+		err := aclService.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id)
+		if err != nil {
+			hs.log.Error("Could not make user admin", "error", err)
+		}
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)

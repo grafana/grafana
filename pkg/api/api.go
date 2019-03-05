@@ -265,7 +265,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
 			folderRoute.Get("/", Wrap(GetFolders))
 			folderRoute.Get("/id/:id", Wrap(GetFolderByID))
-			folderRoute.Post("/", bind(m.CreateFolderCommand{}), Wrap(CreateFolder))
+			folderRoute.Post("/", bind(m.CreateFolderCommand{}), Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", Wrap(GetFolderByUID))
