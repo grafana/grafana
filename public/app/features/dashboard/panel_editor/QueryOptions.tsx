@@ -44,7 +44,7 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: number;
+  maxDataPoints: string;
   interval: string;
   hideTimeOverride: boolean;
 }
@@ -89,14 +89,14 @@ export class QueryOptions extends PureComponent<Props, State> {
     },
   };
 
-  constructor(props: Props) {
+  constructor(props) {
     super(props);
 
     this.state = {
       relativeTime: props.panel.timeFrom || '',
       timeShift: props.panel.timeShift || '',
       cacheTimeout: props.panel.cacheTimeout || '',
-      maxDataPoints: props.panel.maxDataPoints || null,
+      maxDataPoints: props.panel.maxDataPoints || '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
     };
