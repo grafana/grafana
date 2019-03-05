@@ -1,6 +1,6 @@
+import { createLodashMemoizedSelector } from 'app/core/utils/reselect';
 import { ExploreItemState } from 'app/types';
 import { filterLogLevels, dedupLogRows } from 'app/core/logs_model';
-import { createSelector } from 'reselect';
 
 export const exploreItemUIStateSelector = (itemState: ExploreItemState) => {
   const { showingGraph, showingLogs, showingTable, showingStartPage, dedupStrategy } = itemState;
@@ -16,8 +16,7 @@ export const exploreItemUIStateSelector = (itemState: ExploreItemState) => {
 const logsSelector = (state: ExploreItemState) => state.logsResult;
 const hiddenLogLevelsSelector = (state: ExploreItemState) => state.hiddenLogLevels;
 const dedupStrategySelector = (state: ExploreItemState) => state.dedupStrategy;
-
-export const deduplicatedLogsSelector = createSelector(
+export const deduplicatedLogsSelector = createLodashMemoizedSelector(
   logsSelector,
   hiddenLogLevelsSelector,
   dedupStrategySelector,
