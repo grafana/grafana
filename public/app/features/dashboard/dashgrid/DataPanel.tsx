@@ -15,6 +15,7 @@ import {
   TableData,
   TimeRange,
   TimeSeries,
+  ScopedVars,
 } from '@grafana/ui';
 
 interface RenderProps {
@@ -33,6 +34,7 @@ export interface Props {
   refreshCounter: number;
   minInterval?: string;
   maxDataPoints?: number;
+  scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
   onError: (message: string, error: DataQueryError) => void;
@@ -95,6 +97,7 @@ export class DataPanel extends Component<Props, State> {
       timeRange,
       widthPixels,
       maxDataPoints,
+      scopedVars,
       onDataResponse,
       onError,
     } = this.props;
@@ -127,7 +130,7 @@ export class DataPanel extends Component<Props, State> {
         intervalMs: intervalRes.intervalMs,
         targets: queries,
         maxDataPoints: maxDataPoints || widthPixels,
-        scopedVars: {},
+        scopedVars: scopedVars || {},
         cacheTimeout: null,
       };
 

@@ -15,11 +15,11 @@ interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
   render() {
-    const { panelData, width, height, onInterpolate, options } = this.props;
+    const { panelData, width, height, replaceVariables, options } = this.props;
     const { valueOptions } = options;
 
-    const prefix = onInterpolate(valueOptions.prefix);
-    const suffix = onInterpolate(valueOptions.suffix);
+    const prefix = replaceVariables(valueOptions.prefix);
+    const suffix = replaceVariables(valueOptions.suffix);
     let value: TimeSeriesValue;
 
     if (panelData.timeSeries) {

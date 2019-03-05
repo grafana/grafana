@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
+import { ScopedVars } from '@grafana/ui';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -16,7 +17,7 @@ export interface Props {
   timeInfo: string;
   title?: string;
   description?: string;
-  scopedVars?: string;
+  scopedVars?: ScopedVars;
   links?: [];
   error?: string;
   isFullscreen: boolean;

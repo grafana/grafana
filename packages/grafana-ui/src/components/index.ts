@@ -27,3 +27,4 @@ export { Gauge } from './Gauge/Gauge';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { Piechart, PiechartDataPoint, PiechartType } from './Piechart/Piechart';
+export { UnitPicker } from './UnitPicker/UnitPicker';

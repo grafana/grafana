@@ -13,5 +13,5 @@ export function getMessageFromError(err: any): string | null {
     }
   }
 
-  return null;
+  return err;
 }

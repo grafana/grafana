@@ -109,6 +109,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       autoHide={false}
       autoHideDuration={200}
       autoHideTimeout={200}
+      className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
       scrollTop={0}
       setScrollTop={[Function]}
@@ -344,6 +345,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       autoHide={false}
       autoHideDuration={200}
       autoHideTimeout={200}
+      className="custom-scrollbar--page"
       hideTracksWhenNotNeeded={false}
       scrollTop={0}
       setScrollTop={[Function]}

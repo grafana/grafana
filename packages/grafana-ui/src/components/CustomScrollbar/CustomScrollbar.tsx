@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
@@ -20,7 +20,7 @@ interface Props {
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class CustomScrollbar extends PureComponent<Props> {
+export class CustomScrollbar extends Component<Props> {
   static defaultProps: Partial<Props> = {
     autoHide: false,
     autoHideTimeout: 200,
@@ -42,11 +42,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     const ref = this.ref.current;
 
     if (ref && !isNil(this.props.scrollTop)) {
-      if (this.props.scrollTop > 10000) {
-        ref.scrollToBottom();
-      } else {
-        ref.scrollTop(this.props.scrollTop);
-      }
+      ref.scrollTop(this.props.scrollTop);
     }
   }
 

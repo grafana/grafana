@@ -1,6 +1,8 @@
 import React, { PureComponent } from 'react';
-import { getValueFormats } from '@grafana/ui';
-import { Select } from '@grafana/ui';
+
+import { Select } from '..';
+
+import { getValueFormats } from '../../utils';
 
 interface Props {
   onChange: (item: any) => void;
@@ -8,7 +10,7 @@ interface Props {
   width?: number;
 }
 
-export default class UnitPicker extends PureComponent<Props> {
+export class UnitPicker extends PureComponent<Props> {
   static defaultProps = {
     width: 12,
   };
