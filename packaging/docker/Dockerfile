@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -qq -y tar && \
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
+# Change to tar xfzv to make tar print every file it extracts
 RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
 ARG BASE_IMAGE=debian:stretch-slim
