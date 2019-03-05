@@ -65,5 +65,5 @@ export interface TableData {
   columns: FieldInfo[];
   rows: any[];
   type: string; // ?? always = 'table' right?
-  columnMap: any;
+  columnMap: Map<string, FieldInfo>;
 }

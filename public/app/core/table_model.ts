@@ -1,24 +1,20 @@
 import _ from 'lodash';
+import { TableData, FieldInfo } from '@grafana/ui';
 
-interface Column {
-  text: string;
-  title?: string;
-  type?: string;
+interface Column extends FieldInfo {
   sort?: boolean;
   desc?: boolean;
-  filterable?: boolean;
-  unit?: string;
 }
 
-export default class TableModel {
+export default class TableModel implements TableData {
   columns: Column[];
   rows: any[];
   type: string;
-  columnMap: any;
+  columnMap: Map<string, Column>;
 
   constructor(table?: any) {
     this.columns = [];
-    this.columnMap = {};
+    this.columnMap = new Map();
     this.rows = [];
     this.type = 'table';
 
