@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
 import { isValidTimeSpan } from 'app/core/utils/rangeutil';
@@ -44,8 +44,9 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: string;
+  maxDataPoints: number;
   interval: string;
+  hideTimeOverride: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
@@ -88,32 +89,33 @@ export class QueryOptions extends PureComponent<Props, State> {
     },
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
       relativeTime: props.panel.timeFrom || '',
       timeShift: props.panel.timeShift || '',
       cacheTimeout: props.panel.cacheTimeout || '',
-      maxDataPoints: props.panel.maxDataPoints || '',
+      maxDataPoints: props.panel.maxDataPoints || null,
       interval: props.panel.interval || '',
+      hideTimeOverride: props.panel.hideTimeOverride || false,
     };
   }
 
-  onRelativeTimeChange = event => {
+  onRelativeTimeChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       relativeTime: event.target.value,
     });
   };
 
-  onTimeShiftChange = event => {
+  onTimeShiftChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       timeShift: event.target.value,
     });
   };
 
-  onOverrideTime = (evt, status: InputStatus) => {
-    const { value } = evt.target;
+  onOverrideTime = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+    const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
     if (status === InputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
@@ -122,8 +124,8 @@ export class QueryOptions extends PureComponent<Props, State> {
     }
   };
 
-  onTimeShift = (evt, status: InputStatus) => {
-    const { value } = evt.target;
+  onTimeShift = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+    const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
     if (status === InputStatus.Valid && panel.timeShift !== emptyToNullValue) {
@@ -134,11 +136,13 @@ export class QueryOptions extends PureComponent<Props, State> {
 
   onToggleTimeOverride = () => {
     const { panel } = this.props;
-    panel.hideTimeOverride = !panel.hideTimeOverride;
-    panel.refresh();
+    this.setState({ hideTimeOverride: !this.state.hideTimeOverride }, () => {
+      panel.hideTimeOverride = this.state.hideTimeOverride;
+      panel.refresh();
+    });
   };
 
-  onDataSourceOptionBlur = (panelKey: string) => (event: ChangeEvent<HTMLInputElement>) => {
+  onDataSourceOptionBlur = (panelKey: string) => () => {
     const { panel } = this.props;
 
     panel[panelKey] = this.state[panelKey];
@@ -173,9 +177,8 @@ export class QueryOptions extends PureComponent<Props, State> {
   };
 
   render() {
-    const hideTimeOverride = this.props.panel.hideTimeOverride;
+    const { hideTimeOverride } = this.state;
     const { relativeTime, timeShift } = this.state;
-
     return (
       <div className="gf-form-inline">
         {this.renderOptions()}
