@@ -94,7 +94,10 @@ const ensureMasterBranch = async () => {
 };
 
 const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm }) => {
-  await ensureMasterBranch();
+  if (publishToNpm) {
+    await ensureMasterBranch();
+  }
+
   await execTask(buildTask)();
 
   let releaseConfirmed = false;
