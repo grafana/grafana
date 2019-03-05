@@ -162,7 +162,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
-    "@torkelo/react-select": "2.1.1",
+    "@torkelo/react-select": "2.4.1",
     "@types/reselect": "^2.2.0",
     "angular": "1.6.6",
     "angular-bindonce": "0.3.1",
