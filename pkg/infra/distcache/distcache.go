@@ -36,8 +36,8 @@ func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheSto
 		return newRedisStorage(opts)
 	}
 
-	if opts.Name == "memcache" {
-		return newMemcacheStorage(opts)
+	if opts.Name == "memcached" {
+		return newMemcachedStorage(opts)
 	}
 
 	return newDatabaseCache(sqlstore)

@@ -7,12 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type memcacheStorage struct {
+type memcachedStorage struct {
 	c *memcache.Client
 }
 
-func newMemcacheStorage(opts *setting.CacheOpts) *memcacheStorage {
-	return &memcacheStorage{
+func newMemcachedStorage(opts *setting.CacheOpts) *memcachedStorage {
+	return &memcachedStorage{
 		c: memcache.New(opts.ConnStr),
 	}
 }
@@ -26,7 +26,7 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 }
 
 // Put sets value to given key in the cache.
-func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration) error {
+func (s *memcachedStorage) Put(key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 
 	bytes, err := encodeGob(item)
@@ -40,7 +40,7 @@ func (s *memcacheStorage) Put(key string, val interface{}, expires time.Duration
 }
 
 // Get gets value by given key in the cache.
-func (s *memcacheStorage) Get(key string) (interface{}, error) {
+func (s *memcachedStorage) Get(key string) (interface{}, error) {
 	i, err := s.c.Get(key)
 
 	if err != nil && err.Error() == "memcache: cache miss" {
@@ -62,6 +62,6 @@ func (s *memcacheStorage) Get(key string) (interface{}, error) {
 }
 
 // Delete delete a key from the cache
-func (s *memcacheStorage) Delete(key string) error {
+func (s *memcachedStorage) Delete(key string) error {
 	return s.c.Delete(key)
 }
