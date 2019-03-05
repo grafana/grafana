@@ -14,8 +14,8 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 // Types
-import { PanelModel } from '../state/PanelModel';
-import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state';
+import { DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types/plugins';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
@@ -33,6 +33,7 @@ interface State {
   isVizPickerOpen: boolean;
   searchQuery: string;
   scrollTop: number;
+  hasBeenFocused: boolean;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
@@ -45,6 +46,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     this.state = {
       isVizPickerOpen: this.props.urlOpenVizPicker,
+      hasBeenFocused: false,
       searchQuery: '',
       scrollTop: 0,
     };
@@ -171,11 +173,20 @@ export class VisualizationTab extends PureComponent<Props, State> {
     });
   };
 
+  setSearchInputRef = (element: HTMLInputElement) => {
+    if (!this.state.hasBeenFocused) {
+      if (element) {
+        element.focus();
+      }
+    }
+    this.setState({ hasBeenFocused: true });
+  };
+
   renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
-    const { searchQuery } = this.state;
+    const { isVizPickerOpen, searchQuery } = this.state;
 
-    if (this.state.isVizPickerOpen) {
+    if (isVizPickerOpen) {
       return (
         <>
           <FilterInput
@@ -184,7 +195,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
             placeholder=""
             onChange={this.onSearchQueryChange}
             value={searchQuery}
-            ref={elem => elem && elem.focus()}
+            ref={element => this.setSearchInputRef(element)}
           />
           <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
             <i className="fa fa-chevron-up" />
