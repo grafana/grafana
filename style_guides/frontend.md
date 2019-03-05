@@ -22,9 +22,7 @@ Generally we follow the Airbnb  [React Style Guide](https://github.com/airbnb/ja
 * Components and types that needs to be used by external plugins needs to go into @grafana/ui
 * Components should get their own folder under features/xxx/components
   * Sub components can live in that component folders, so small component do not need their own folder
-  * Place test next to their component file (same dir)
-  * Mocks in __mocks__ dir
-  * Test utils in __tests__ dir
+  * Place test next to their component file (same dir)  
   * Component sass should live in the same folder as component code
 * State logic & domain models should live in features/xxx/state
 * Containers (pages) can live in feature root features/xxx
