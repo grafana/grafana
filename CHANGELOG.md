@@ -7,6 +7,7 @@
 * **Api**: Invalid org invite code [#10506](https://github.com/grafana/grafana/issues/10506)
 * **Datasource**: Handles nil jsondata field gracefully [#14239](https://github.com/grafana/grafana/issues/14239)
 * **Gauge**: Interpolate scoped variables in repeated gauges [#15739](https://github.com/grafana/grafana/issues/15739)
+* **Datasource**: Empty user/password was not updated when updating datasources [#15608](https://github.com/grafana/grafana/pull/15608), thx [@Maddin-619](https://github.com/Maddin-619)
 
 # 6.0.1 (unreleased)
 
