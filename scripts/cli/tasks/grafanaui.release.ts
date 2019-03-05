@@ -83,7 +83,19 @@ const publishPackage = (name: string, version: string) =>
     await execa('npm', ['publish', '--access', 'public']);
   })();
 
+const ensureMasterBranch = async () => {
+  const currentBranch = await execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
+  const status = await execa.stdout('git', ['status', '--porcelain']);
+  console.log(status === '');
+
+  if (currentBranch !== 'master' && status !== '') {
+    console.error(chalk.red.bold('You need to be on clean master branch to release @grafana/ui'));
+    process.exit(1);
+  }
+};
+
 const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm }) => {
+  await ensureMasterBranch();
   await execTask(buildTask)();
 
   let releaseConfirmed = false;
