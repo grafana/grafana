@@ -40,10 +40,6 @@ func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheSto
 		return newMemcacheStorage(opts)
 	}
 
-	if opts.Name == "memory" {
-		return newMemoryStorage()
-	}
-
 	return newDatabaseCache(sqlstore)
 }
 
