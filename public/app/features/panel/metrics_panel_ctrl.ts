@@ -79,9 +79,28 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
+    // set "mydatasource" to whatever the panel has defined
+    let mydatasource = this.panel.datasource;
+    let datasourceVarName = '';
+
+    // look for data source variables
+    for (let i = 0; i < this.templateSrv.variables.length; i++) {
+      const variable = this.templateSrv.variables[i];
+      if (variable.type !== 'datasource') {
+        continue;
+      }
+
+      datasourceVarName = variable.name;
+    }
+
+    // if a data source variable was found, use its value
+    if (datasourceVarName !== '' && this.panel.scopedVars && this.panel.scopedVars[datasourceVarName]) {
+      mydatasource = this.panel.scopedVars[datasourceVarName].value;
+    }
+
     // load datasource service
     this.datasourceSrv
-      .get(this.panel.datasource)
+      .get(mydatasource)
       .then(this.updateTimeRange.bind(this))
       .then(this.issueQueries.bind(this))
       .then(this.handleQueryResult.bind(this))
