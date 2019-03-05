@@ -20,7 +20,7 @@ func init() {
 	gob.Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
+func createTestClient(t *testing.T, opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) CacheStorage {
 	t.Helper()
 
 	dc := &DistributedCache{
@@ -50,16 +50,16 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	runTestsForClient(t, client)
 }
 
-func runTestsForClient(t *testing.T, client cacheStorage) {
+func runTestsForClient(t *testing.T, client CacheStorage) {
 	canPutGetAndDeleteCachedObjects(t, client)
 	canNotFetchExpiredItems(t, client)
 	canSetInfiniteCacheExpiration(t, client)
 }
 
-func canPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
+func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	err := client.Put("key", cacheableStruct, 0)
+	err := client.Set("key", cacheableStruct, 0)
 	assert.Equal(t, err, nil)
 
 	data, err := client.Get("key")
@@ -76,10 +76,10 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func canNotFetchExpiredItems(t *testing.T, client cacheStorage) {
+func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
-	err := client.Put("key", cacheableStruct, time.Second)
+	err := client.Set("key", cacheableStruct, time.Second)
 	assert.Equal(t, err, nil)
 
 	//not sure how this can be avoided when testing redis/memcached :/
@@ -90,12 +90,12 @@ func canNotFetchExpiredItems(t *testing.T, client cacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
-func canSetInfiniteCacheExpiration(t *testing.T, client cacheStorage) {
+func canSetInfiniteCacheExpiration(t *testing.T, client CacheStorage) {
 	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
 
 	// insert cache item one day back
 	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	err := client.Put("key", cacheableStruct, 0)
+	err := client.Set("key", cacheableStruct, 0)
 	assert.Equal(t, err, nil)
 
 	// should not be able to read that value since its expired

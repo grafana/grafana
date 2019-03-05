@@ -31,7 +31,7 @@ func (ds *DistributedCache) Init() error {
 	return nil
 }
 
-func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheStorage {
+func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) CacheStorage {
 	if opts.Name == "redis" {
 		return newRedisStorage(opts)
 	}
@@ -46,7 +46,7 @@ func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) cacheSto
 // DistributedCache allows Grafana to cache data outside its own process
 type DistributedCache struct {
 	log      log.Logger
-	Client   cacheStorage
+	Client   CacheStorage
 	SQLStore *sqlstore.SqlStore `inject:""`
 	Cfg      *setting.Cfg       `inject:""`
 }
@@ -66,12 +66,16 @@ func decodeGob(data []byte, out *cachedItem) error {
 	return gob.NewDecoder(buf).Decode(&out)
 }
 
-type cacheStorage interface {
+// CacheStorage allows the caller to set, get and delete items in the cache.
+// Cached items are stored as byte arrays and marshalled using "encoding/gob"
+// so any struct added to the cache needs to be registred with `gob.Register`
+// ex `gob.Register(CacheableStruct{})``
+type CacheStorage interface {
 	// Get reads object from Cache
 	Get(key string) (interface{}, error)
 
-	// Puts an object into the cache
-	Put(key string, value interface{}, expire time.Duration) error
+	// Set sets an object into the cache
+	Set(key string, value interface{}, expire time.Duration) error
 
 	// Delete object from cache
 	Delete(key string) error

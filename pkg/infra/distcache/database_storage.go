@@ -79,7 +79,7 @@ type cacheData struct {
 	CreatedAt int64
 }
 
-func (dc *databaseCache) Put(key string, value interface{}, expire time.Duration) error {
+func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration) error {
 	item := &cachedItem{Val: value}
 	data, err := encodeGob(item)
 	if err != nil {

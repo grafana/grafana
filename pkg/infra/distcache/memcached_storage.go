@@ -25,8 +25,8 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 	}
 }
 
-// Put sets value to given key in the cache.
-func (s *memcachedStorage) Put(key string, val interface{}, expires time.Duration) error {
+// Set sets value to given key in the cache.
+func (s *memcachedStorage) Set(key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 
 	bytes, err := encodeGob(item)

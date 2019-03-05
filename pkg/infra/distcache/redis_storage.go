@@ -20,7 +20,7 @@ func newRedisStorage(opts *setting.CacheOpts) *redisStorage {
 }
 
 // Set sets value to given key in session.
-func (s *redisStorage) Put(key string, val interface{}, expires time.Duration) error {
+func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 	value, err := encodeGob(item)
 	if err != nil {
