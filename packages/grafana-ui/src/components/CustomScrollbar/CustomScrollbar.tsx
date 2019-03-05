@@ -42,11 +42,7 @@ export class CustomScrollbar extends Component<Props> {
     const ref = this.ref.current;
 
     if (ref && !isNil(this.props.scrollTop)) {
-      if (this.props.scrollTop > 10000) {
-        ref.scrollToBottom();
-      } else {
-        ref.scrollTop(this.props.scrollTop);
-      }
+      ref.scrollTop(this.props.scrollTop);
     }
   }
 
