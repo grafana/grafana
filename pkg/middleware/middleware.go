@@ -17,11 +17,10 @@ import (
 )
 
 var (
-	ReqGrafanaAdmin               = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
-	ReqSignedIn                   = Auth(&AuthOptions{ReqSignedIn: true})
-	ReqEditorRole                 = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	ReqOrgAdmin                   = RoleAuth(m.ROLE_ADMIN)
-	ReqViewersCanEditOrEditorRole = ViewersCanEditOrRoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
 func GetContextHandler(ats m.UserTokenService) macaron.Handler {

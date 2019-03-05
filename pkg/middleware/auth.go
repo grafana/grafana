@@ -52,23 +52,9 @@ func notAuthorized(c *m.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func ViewersCanEditOrRoleAuth(roles ...m.RoleType) macaron.Handler {
-	return func(c *m.ReqContext) {
-		ok := false
-		if setting.ViewersCanEdit == true {
-			ok = true
-		}
-		if ok == false {
-			for _, role := range roles {
-				if role == c.OrgRole {
-					ok = true
-					break
-				}
-			}
-		}
-		if !ok {
-			accessForbidden(c)
-		}
+func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
+	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+		accessForbidden(c)
 	}
 }
 
