@@ -142,6 +142,11 @@
     "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p",
     "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && grunt precommit"
+    }
+  },
   "lint-staged": {
     "*.{ts,tsx,json,scss}": [
       "prettier --write",
