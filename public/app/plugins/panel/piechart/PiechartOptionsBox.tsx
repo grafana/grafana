@@ -16,8 +16,8 @@ const labelWidth = 8;
 const piechartOptions = [{ value: PiechartType.PIE, label: 'Pie' }, { value: PiechartType.DONUT, label: 'Donut' }];
 
 export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartOptions>> {
-  onPieTypeChange = ({ target }) => this.props.onChange({ ...this.props.options, pieType: target.value });
-  onStrokeWidthChange = ({ target }) => this.props.onChange({ ...this.props.options, strokeWidth: target.value });
+  onPieTypeChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, pieType: target.value });
+  onStrokeWidthChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, strokeWidth: target.value });
 
   render() {
     const { options } = this.props;

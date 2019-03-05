@@ -7,19 +7,19 @@ import { PiechartOptions, PiechartValueOptions } from './types';
 
 export default class PiechartPanelEditor extends PureComponent<PanelEditorProps<PiechartOptions>> {
   onValueOptionsChanged = (valueOptions: PiechartValueOptions) =>
-    this.props.onChange({
+    this.props.onOptionsChange({
       ...this.props.options,
       valueOptions,
     });
 
   render() {
-    const { onChange, options } = this.props;
+    const { onOptionsChange, options } = this.props;
 
     return (
       <>
         <PanelOptionsGrid>
           <PiechartValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
-          <PiechartOptionsBox onChange={onChange} options={options} />
+          <PiechartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
       </>
     );

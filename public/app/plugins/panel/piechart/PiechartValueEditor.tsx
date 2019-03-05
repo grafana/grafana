@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { FormLabel, PanelOptionsGroup, Select } from '@grafana/ui';
-import UnitPicker from 'app/core/components/Select/UnitPicker';
+import { FormLabel, PanelOptionsGroup, Select, UnitPicker } from '@grafana/ui';
 import { PiechartValueOptions } from './types';
 
 const statOptions = [
