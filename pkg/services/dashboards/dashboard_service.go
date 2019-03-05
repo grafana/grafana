@@ -238,49 +238,6 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 		return nil, err
 	}
 
-	// TODO: check if dashboard exists already. could have id set but not exist
-	if dto.Dashboard.Id == 0 && dto.Dashboard.Uid == "" {
-		rtEditor := models.ROLE_EDITOR
-		rtViewer := models.ROLE_VIEWER
-
-		items := []*models.DashboardAcl{
-			{
-				OrgId:       dr.orgId,
-				DashboardId: cmd.Result.Id,
-				UserId:      cmd.Result.CreatedBy,
-				Permission:  models.PERMISSION_ADMIN,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			{
-				OrgId:       dr.orgId,
-				DashboardId: cmd.Result.Id,
-				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			{
-				OrgId:       dr.orgId,
-				DashboardId: cmd.Result.Id,
-				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		}
-
-		aclCmd := &models.UpdateDashboardAclCommand{
-			DashboardId: cmd.Result.Id,
-			Items:       items,
-		}
-
-		if err = bus.Dispatch(aclCmd); err != nil {
-			return cmd.Result, err
-		}
-
-	}
-
 	return cmd.Result, nil
 }
 

@@ -54,7 +54,7 @@ func GetFolderByID(c *m.ReqContext) Response {
 	return JSON(200, toFolderDto(g, folder))
 }
 
-func CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
+func (hs *HTTPServer) CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.CreateFolder(&cmd)
 	if err != nil {
