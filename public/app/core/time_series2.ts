@@ -1,7 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, processTimeSeries, NullValueMode } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -98,11 +98,14 @@ export default class TimeSeries {
   flotpairs: any;
   unit: any;
 
+  target: string;
+
   constructor(opts) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
     this.id = opts.alias;
     this.alias = opts.alias;
+    this.target = opts.alias;
     this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
     this.bars = { fillColor: opts.color };
@@ -194,125 +197,23 @@ export default class TimeSeries {
   }
 
   getFlotPairs(fillStyle) {
-    const result = [];
-
-    this.stats.total = 0;
-    this.stats.max = -Number.MAX_VALUE;
-    this.stats.min = Number.MAX_VALUE;
-    this.stats.logmin = Number.MAX_VALUE;
-    this.stats.avg = null;
-    this.stats.current = null;
-    this.stats.first = null;
-    this.stats.delta = 0;
-    this.stats.diff = null;
-    this.stats.range = null;
-    this.stats.timeStep = Number.MAX_VALUE;
-    this.allIsNull = true;
-    this.allIsZero = true;
-
-    const ignoreNulls = fillStyle === 'connected';
-    const nullAsZero = fillStyle === 'null as zero';
-    let currentTime;
-    let currentValue;
-    let nonNulls = 0;
-    let previousTime;
-    let previousValue = 0;
-    let previousDeltaUp = true;
-
-    for (let i = 0; i < this.datapoints.length; i++) {
-      currentValue = this.datapoints[i][0];
-      currentTime = this.datapoints[i][1];
-
-      // Due to missing values we could have different timeStep all along the series
-      // so we have to find the minimum one (could occur with aggregators such as ZimSum)
-      if (previousTime !== undefined) {
-        const timeStep = currentTime - previousTime;
-        if (timeStep < this.stats.timeStep) {
-          this.stats.timeStep = timeStep;
-        }
-      }
-      previousTime = currentTime;
-
-      if (currentValue === null) {
-        if (ignoreNulls) {
-          continue;
-        }
-        if (nullAsZero) {
-          currentValue = 0;
-        }
-      }
-
-      if (currentValue !== null) {
-        if (_.isNumber(currentValue)) {
-          this.stats.total += currentValue;
-          this.allIsNull = false;
-          nonNulls++;
-        }
-
-        if (currentValue > this.stats.max) {
-          this.stats.max = currentValue;
-        }
-
-        if (currentValue < this.stats.min) {
-          this.stats.min = currentValue;
-        }
-
-        if (this.stats.first === null) {
-          this.stats.first = currentValue;
-        } else {
-          if (previousValue > currentValue) {
-            // counter reset
-            previousDeltaUp = false;
-            if (i === this.datapoints.length - 1) {
-              // reset on last
-              this.stats.delta += currentValue;
-            }
-          } else {
-            if (previousDeltaUp) {
-              this.stats.delta += currentValue - previousValue; // normal increment
-            } else {
-              this.stats.delta += currentValue; // account for counter reset
-            }
-            previousDeltaUp = true;
-          }
-        }
-        previousValue = currentValue;
-
-        if (currentValue < this.stats.logmin && currentValue > 0) {
-          this.stats.logmin = currentValue;
-        }
-
-        if (currentValue !== 0) {
-          this.allIsZero = false;
-        }
-      }
-
-      result.push([currentTime, currentValue]);
+    let mode = NullValueMode.Null;
+    if (fillStyle === 'connected') {
+      mode = NullValueMode.Ignore;
+    } else if (fillStyle === 'null as zero') {
+      mode = NullValueMode.AsZero;
     }
 
-    if (this.stats.max === -Number.MAX_VALUE) {
-      this.stats.max = null;
-    }
-    if (this.stats.min === Number.MAX_VALUE) {
-      this.stats.min = null;
-    }
+    const viewModel = processTimeSeries({
+      timeSeries: [this],
+      nullValueMode: mode,
+    })[0];
 
-    if (result.length && !this.allIsNull) {
-      this.stats.avg = this.stats.total / nonNulls;
-      this.stats.current = result[result.length - 1][1];
-      if (this.stats.current === null && result.length > 1) {
-        this.stats.current = result[result.length - 2][1];
-      }
-    }
-    if (this.stats.max !== null && this.stats.min !== null) {
-      this.stats.range = this.stats.max - this.stats.min;
-    }
-    if (this.stats.current !== null && this.stats.first !== null) {
-      this.stats.diff = this.stats.current - this.stats.first;
-    }
+    this.stats = viewModel.stats;
+    this.allIsNull = viewModel.allIsNull;
+    this.allIsZero = viewModel.allIsZero;
 
-    this.stats.count = result.length;
-    return result;
+    return viewModel.data;
   }
 
   updateLegendValues(formater, decimals, scaledDecimals) {
