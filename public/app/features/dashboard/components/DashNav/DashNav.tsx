@@ -8,6 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 // Components
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 import { DashNavButton } from './DashNavButton';
 import { Tooltip } from '@grafana/ui';
 
@@ -16,7 +17,6 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { DashboardModel } from '../../state';
-import { ClickOutsideWrapper } from '../../../../core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   dashboard: DashboardModel;
