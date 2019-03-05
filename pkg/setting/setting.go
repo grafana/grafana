@@ -783,8 +783,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
 
 	cacheServer := iniFile.Section("cache_server")
-	//cfg.DistCacheType = cacheServer.Key("type").MustString("database")
-	//cfg.DistCacheConnStr = cacheServer.Key("connstr").MustString("")
 	cfg.CacheOptions = &CacheOpts{
 		Name:    cacheServer.Key("type").MustString("database"),
 		ConnStr: cacheServer.Key("connstr").MustString(""),

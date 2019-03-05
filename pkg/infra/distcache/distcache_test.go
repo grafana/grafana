@@ -1,7 +1,6 @@
 package distcache
 
 import (
-	"encoding/gob"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ type CacheableStruct struct {
 }
 
 func init() {
-	gob.Register(CacheableStruct{})
+	Register(CacheableStruct{})
 }
 
 func createTestClient(t *testing.T, opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) CacheStorage {

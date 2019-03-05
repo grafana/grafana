@@ -28,6 +28,7 @@ import (
 
 	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
+	_ "github.com/grafana/grafana/pkg/infra/distcache"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"

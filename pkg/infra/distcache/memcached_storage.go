@@ -28,21 +28,18 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 // Set sets value to given key in the cache.
 func (s *memcachedStorage) Set(key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
-
 	bytes, err := encodeGob(item)
 	if err != nil {
 		return err
 	}
 
-	memcacheItem := newItem(key, bytes, int32(expires))
-
-	return s.c.Set(memcacheItem)
+	memcachedItem := newItem(key, bytes, int32(expires))
+	return s.c.Set(memcachedItem)
 }
 
 // Get gets value by given key in the cache.
 func (s *memcachedStorage) Get(key string) (interface{}, error) {
-	i, err := s.c.Get(key)
-
+	memcachedItem, err := s.c.Get(key)
 	if err != nil && err.Error() == "memcache: cache miss" {
 		return nil, ErrCacheItemNotFound
 	}
@@ -53,7 +50,7 @@ func (s *memcachedStorage) Get(key string) (interface{}, error) {
 
 	item := &cachedItem{}
 
-	err = decodeGob(i.Value, item)
+	err = decodeGob(memcachedItem.Value, item)
 	if err != nil {
 		return nil, err
 	}
