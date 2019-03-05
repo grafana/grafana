@@ -86,7 +86,6 @@ const publishPackage = (name: string, version: string) =>
 const ensureMasterBranch = async () => {
   const currentBranch = await execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
   const status = await execa.stdout('git', ['status', '--porcelain']);
-  console.log(status === '');
 
   if (currentBranch !== 'master' && status !== '') {
     console.error(chalk.red.bold('You need to be on clean master branch to release @grafana/ui'));
