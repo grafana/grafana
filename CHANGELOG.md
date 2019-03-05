@@ -6,7 +6,7 @@
 ### Bug Fixes
 * **Api**: Invalid org invite code [#10506](https://github.com/grafana/grafana/issues/10506)
 * **Datasource**: Handles nil jsondata field gracefully [#14239](https://github.com/grafana/grafana/issues/14239)
-* **Gauge**: Interpolate scoped variables in repeated gauges [#15732](https://github.com/grafana/grafana/pull/15752)
+* **Gauge**: Interpolate scoped variables in repeated gauges [#15739](https://github.com/grafana/grafana/issues/15739)
 
 # 6.0.1 (unreleased)
 
