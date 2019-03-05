@@ -1,14 +1,14 @@
 import React, { FC } from 'react';
+import config from 'app/core/config';
 
 export interface Props {
   isReadOnly: boolean;
-  datasourcesPageHref?: string;
   onDelete: () => void;
   onSubmit: (event) => void;
   onTest: (event) => void;
 }
 
-const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, datasourcesPageHref, onTest }) => {
+const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
   return (
     <div className="gf-form-button-row">
       {!isReadOnly && (
@@ -24,7 +24,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, datasourcesPageH
       <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>
         Delete
       </button>
-      <a className="btn btn-inverse" href={datasourcesPageHref}>
+      <a className="btn btn-inverse" href={`${config.appSubUrl}/datasources`}>
         Back
       </a>
     </div>
