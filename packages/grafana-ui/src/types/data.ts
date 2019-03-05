@@ -5,7 +5,7 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-// [value:any, unixtimestamp:number]
+/** [value:any, unixtimestamp:number] */
 export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
@@ -13,10 +13,9 @@ export type TimeSeriesPoints = TimeSeriesValue[][];
 export interface FieldInfo {
   text?: string; // the field name
   title?: string; // display string
-  type?: string; // time | number | string
+  type?: 'time' | 'number' | 'string' | 'object';
   filterable?: boolean;
-  unit?: string;
-  color?: string;
+  unit?: string; // format key
 }
 
 export interface TimeSeries extends FieldInfo {
@@ -62,14 +61,9 @@ export interface TimeSeriesVMs {
   length: number;
 }
 
-interface Column extends FieldInfo {
-  sort?: boolean; // These do not belong in the root data model
-  desc?: boolean; // I think they should just be in the Table panel
-}
-
 export interface TableData {
-  columns: Column[];
+  columns: FieldInfo[];
   rows: any[];
-  type: string;
+  type: string; // ?? always = 'table' right?
   columnMap: any;
 }
