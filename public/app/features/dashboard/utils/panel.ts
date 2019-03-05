@@ -70,6 +70,7 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
     updateHandler: (newPanel: PanelModel, oldPanel: PanelModel) => {
       replacePanel(dashboard, newPanel, oldPanel);
     },
+    canUpdate: dashboard.meta.canEdit,
     enableCopy: true,
   };
 
