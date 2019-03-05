@@ -1,7 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, DataModel, FieldInfo } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -67,7 +67,7 @@ export function getDataMinMax(data: TimeSeries[]) {
   return { datamin, datamax };
 }
 
-export default class TimeSeries {
+export default class TimeSeries implements DataModel {
   datapoints: any;
   id: string;
   label: string;
@@ -111,6 +111,25 @@ export default class TimeSeries {
     this.legend = true;
     this.unit = opts.unit;
     this.hasMsResolution = this.isMsResolutionNeeded();
+  }
+
+  getInfo(): FieldInfo[] {
+    let type = null;
+    if (_.isNumber(this.stats.current)) {
+      type = 'number';
+    } else if (_.isString(this.stats.current)) {
+      type = 'string';
+    }
+
+    return [{ type: type, unit: this.unit, text: this.alias }, { type: 'time', unit: 'ms', text: 'Time' }];
+  }
+
+  getRow(index: number): any[] {
+    return this.datapoints[index];
+  }
+
+  getCount(): number {
+    return this.datapoints.length;
   }
 
   applySeriesOverrides(overrides) {

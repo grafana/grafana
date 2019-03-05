@@ -1,12 +1,13 @@
 import _ from 'lodash';
-import { TableData, FieldInfo } from '@grafana/ui';
+import { TableData, FieldInfo, DataModel, TimeSeriesStats } from '@grafana/ui';
 
 interface Column extends FieldInfo {
   sort?: boolean;
   desc?: boolean;
+  stats?: TimeSeriesStats;
 }
 
-export default class TableModel implements TableData {
+export default class TableModel implements TableData, DataModel {
   columns: Column[];
   rows: any[];
   type: string;
@@ -26,6 +27,18 @@ export default class TableModel implements TableData {
         table.rows.forEach(row => this.addRow(row));
       }
     }
+  }
+
+  getInfo(): FieldInfo[] {
+    return this.columns;
+  }
+
+  getRow(index: number): any[] {
+    return this.rows[index];
+  }
+
+  getCount(): number {
+    return this.rows.length;
   }
 
   sort(options) {

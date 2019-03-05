@@ -12,11 +12,12 @@ import {
   DataQueryError,
   LoadingState,
   PanelData,
-  TableData,
   TimeRange,
-  TimeSeries,
   ScopedVars,
+  DataModel,
 } from '@grafana/ui';
+import TableModel from 'app/core/table_model';
+import { TimeSeries } from 'app/core/core';
 
 interface RenderProps {
   loading: LoadingState;
@@ -171,18 +172,13 @@ export class DataPanel extends Component<Props, State> {
 
   getPanelData = () => {
     const { response } = this.state;
-
-    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
-      return {
-        tableData: response.data[0] as TableData,
-        timeSeries: null,
-      };
-    }
-
-    return {
-      timeSeries: response.data as TimeSeries[],
-      tableData: null,
-    };
+    const data: DataModel[] = response.data.map((data, index) => {
+      if (data.type === 'table') {
+        return new TableModel(data);
+      }
+      return new TimeSeries(data);
+    });
+    return { data };
   };
 
   render() {

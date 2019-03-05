@@ -1,40 +1,66 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '@grafana/ui';
 
 // Components
 import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { PanelProps, TimeSeriesValue } from '@grafana/ui/src/types';
+import { calculateSimpleStats } from '@grafana/ui/src/utils/processData';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
-export class GaugePanel extends PureComponent<Props> {
-  render() {
-    const { panelData, width, height, onInterpolate, options } = this.props;
+interface State {
+  values?: TimeSeriesValue[];
+}
+
+export class GaugePanel extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      values: this.calculateStats(),
+    };
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    const { panelData, options } = this.props;
+
+    if (panelData !== prevProps.panelData || options.valueOptions.stat !== prevProps.options.valueOptions.stat) {
+      this.setState({ values: this.calculateStats() });
+    }
+  }
+
+  calculateStats(): TimeSeriesValue[] {
+    const { panelData, options } = this.props;
     const { valueOptions } = options;
+
+    // For now assume we are always looking at the first value
+    const dimension = 0;
+
+    return panelData.data.map((data, index) => {
+      const stats = calculateSimpleStats(data, dimension);
+      return stats[valueOptions.stat];
+    });
+  }
+
+  render() {
+    const { width, height, onInterpolate, options } = this.props;
+    const { valueOptions } = options;
+    const { values } = this.state;
 
     const prefix = onInterpolate(valueOptions.prefix);
     const suffix = onInterpolate(valueOptions.suffix);
+
     let value: TimeSeriesValue;
 
-    if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      if (vmSeries[0]) {
-        value = vmSeries[0].stats[valueOptions.stat];
-      } else {
-        value = null;
-      }
-    } else if (panelData.tableData) {
-      value = panelData.tableData.rows[0].find(prop => prop > 0);
+    if (values && values.length > 0) {
+      value = values[0]; // for now
+    } else {
+      return <div>no data yet...</div>;
     }
 
     return (

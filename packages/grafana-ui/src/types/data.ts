@@ -67,3 +67,10 @@ export interface TableData {
   type: string; // ?? always = 'table' right?
   columnMap: Map<string, FieldInfo>;
 }
+
+/** Implemented by both table & time_series format */
+export interface DataModel {
+  getInfo(): FieldInfo[];
+  getRow(index: number): any[];
+  getCount(): number;
+}

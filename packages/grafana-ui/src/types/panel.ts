@@ -1,5 +1,5 @@
 import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { LoadingState, DataModel } from './data';
 import { TimeRange } from './time';
 
 export type InterpolateFunction = (value: string, format?: string | Function) => string;
@@ -16,8 +16,7 @@ export interface PanelProps<T = any> {
 }
 
 export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
+  data?: DataModel[];
 }
 
 export interface PanelEditorProps<T = any> {

@@ -3,13 +3,13 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Utils
-import { processTimeSeries } from '@grafana/ui/src/utils';
+import { processTimeSeriesFromData } from '@grafana/ui/src/utils/processData';
 
 // Components
 import { Graph } from '@grafana/ui';
 
 // Types
-import { PanelProps, NullValueMode, TimeSeriesVMs } from '@grafana/ui/src/types';
+import { PanelProps, TimeSeriesVMs, NullValueMode } from '@grafana/ui/src/types';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
@@ -20,9 +20,9 @@ export class GraphPanel extends PureComponent<Props> {
     const { showLines, showBars, showPoints } = this.props.options;
 
     let vmSeries: TimeSeriesVMs;
-    if (panelData.timeSeries) {
-      vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
+    if (panelData.data) {
+      vmSeries = processTimeSeriesFromData({
+        dataModels: panelData.data,
         nullValueMode: NullValueMode.Ignore,
       });
     }
