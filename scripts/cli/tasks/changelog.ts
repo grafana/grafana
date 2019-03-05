@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import axios from 'axios';
-import issueRegex from 'issue-regex';
 
 const githubGrafanaUrl = 'https://github.com/grafana/grafana';
 
@@ -16,12 +15,9 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async () => {
   let markdown = '';
 
   for (const item of res.data) {
-    markdown += '* ' + item.title;
-    markdown += ` [#${item.number}](${githubGrafanaUrl}/issues/${item.number})`;
-
-    for (const issue of item.body.match(issueRegex())) {
-      markdown += ` [#${issue}](${githubGrafanaUrl}/issues/${issue})`;
-    }
+    markdown += '* ' + item.title + '.';
+    markdown += ` [#${item.number}](${githubGrafanaUrl}/pull/${item.number})`;
+    markdown += `, [@${item.user.login}](${item.user.html_url})`;
 
     markdown += '\n';
   }
