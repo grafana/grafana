@@ -5,14 +5,23 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+// [value:any, unixtimestamp:number]
 export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
-export interface TimeSeries {
+export interface FieldInfo {
+  text?: string; // the field name
+  title?: string; // display string
+  type?: string; // time | number | string
+  filterable?: boolean;
+  unit?: string;
+  color?: string;
+}
+
+export interface TimeSeries extends FieldInfo {
   target: string;
   datapoints: TimeSeriesPoints;
-  unit?: string;
 }
 
 /** View model projection of a time series */
@@ -53,14 +62,9 @@ export interface TimeSeriesVMs {
   length: number;
 }
 
-interface Column {
-  text: string;
-  title?: string;
-  type?: string;
-  sort?: boolean;
-  desc?: boolean;
-  filterable?: boolean;
-  unit?: string;
+interface Column extends FieldInfo {
+  sort?: boolean; // These do not belong in the root data model
+  desc?: boolean; // I think they should just be in the Table panel
 }
 
 export interface TableData {
