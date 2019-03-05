@@ -8,6 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 // Components
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 import { DashNavButton } from './DashNavButton';
 import { Tooltip } from '@grafana/ui';
 
@@ -173,26 +174,28 @@ export class DashNav extends PureComponent<Props> {
         {this.renderDashboardTitleSearchButton()}
 
         {this.playlistSrv.isPlaying && (
-          <div className="navbar-buttons navbar-buttons--playlist">
-            <DashNavButton
-              tooltip="Go to previous dashboard"
-              classSuffix="tight"
-              icon="fa fa-step-backward"
-              onClick={this.onPlaylistPrev}
-            />
-            <DashNavButton
-              tooltip="Stop playlist"
-              classSuffix="tight"
-              icon="fa fa-stop"
-              onClick={this.onPlaylistStop}
-            />
-            <DashNavButton
-              tooltip="Go to next dashboard"
-              classSuffix="tight"
-              icon="fa fa-forward"
-              onClick={this.onPlaylistNext}
-            />
-          </div>
+          <ClickOutsideWrapper onClick={this.onPlaylistStop}>
+            <div className="navbar-buttons navbar-buttons--playlist">
+              <DashNavButton
+                tooltip="Go to previous dashboard"
+                classSuffix="tight"
+                icon="fa fa-step-backward"
+                onClick={this.onPlaylistPrev}
+              />
+              <DashNavButton
+                tooltip="Stop playlist"
+                classSuffix="tight"
+                icon="fa fa-stop"
+                onClick={this.onPlaylistStop}
+              />
+              <DashNavButton
+                tooltip="Go to next dashboard"
+                classSuffix="tight"
+                icon="fa fa-forward"
+                onClick={this.onPlaylistNext}
+              />
+            </div>
+          </ClickOutsideWrapper>
         )}
 
         <div className="navbar-buttons navbar-buttons--actions">
