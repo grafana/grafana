@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import Remarkable from 'remarkable';
 import { sanitize } from 'app/core/utils/text';
 import config from 'app/core/config';
-import templateSrv from 'app/features/templating/template_srv';
 import { debounce } from 'lodash';
 
 // Types
@@ -21,15 +20,8 @@ export class TextPanel extends Component<Props, State> {
   constructor(props) {
     super(props);
 
-    // TODO thre must be some better way to start with defualt options!
-    let opts = props.options;
-    if (opts && opts['options']) {
-      opts = opts['options'];
-      console.log('WEIRD!', opts);
-    }
-
     this.state = {
-      html: this.processContent(opts),
+      html: this.processContent(props.options),
     };
   }
 
@@ -47,10 +39,11 @@ export class TextPanel extends Component<Props, State> {
   }
 
   prepareHTML(html: string): string {
-    const scopedVars = {}; // TODO?? = this.props.;
+    const { replaceVariables } = this.props;
+
     html = config.disableSanitizeHtml ? html : sanitize(html);
     try {
-      return templateSrv.replace(html, scopedVars);
+      return replaceVariables(html);
     } catch (e) {
       // TODO -- put the error in the header window
       console.log('Text panel error: ', e);
