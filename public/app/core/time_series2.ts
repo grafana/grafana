@@ -212,7 +212,8 @@ export default class TimeSeries {
     this.stats = viewModel.stats;
     this.allIsNull = viewModel.allIsNull;
     this.allIsZero = viewModel.allIsZero;
-
+    this.color = viewModel.color;
+    // ignore the .label
     return viewModel.data;
   }
 
