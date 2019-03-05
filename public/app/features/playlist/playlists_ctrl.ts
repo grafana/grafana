@@ -6,7 +6,11 @@ export class PlaylistsCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv, navModelSrv) {
+  constructor(private $scope, private backendSrv, navModelSrv, playlistSrv) {
+    if (playlistSrv.isPlaying) {
+      playlistSrv.stop();
+    }
+
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
 
     backendSrv.get('/api/playlists').then(result => {

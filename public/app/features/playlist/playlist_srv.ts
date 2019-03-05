@@ -45,6 +45,7 @@ export class PlaylistSrv {
     this.$timeout(() => {
       const stripedUrl = locationUtil.stripBaseFromUrl(dash.url);
       this.$location.url(stripedUrl + '?' + toUrlParams(filteredParams));
+      this.$location.replace();
     });
 
     this.index++;
