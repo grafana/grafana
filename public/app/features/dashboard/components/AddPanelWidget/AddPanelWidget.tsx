@@ -95,11 +95,17 @@ export class AddPanelWidget extends React.Component<Props, State> {
 
   onPasteCopiedPanel = panelPluginInfo => {
     const dashboard = this.props.dashboard;
+    const { gridPos } = this.props.panel;
 
     const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
-      gridPos: panelPluginInfo.defaults.gridPos,
+      gridPos: {
+        x: gridPos.x,
+        y: gridPos.y,
+        w: panelPluginInfo.defaults.gridPos.w,
+        h: panelPluginInfo.defaults.gridPos.h,
+      },
     };
 
     // apply panel template / defaults
