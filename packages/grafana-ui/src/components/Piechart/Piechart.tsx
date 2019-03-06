@@ -26,7 +26,7 @@ export interface Props extends Themeable {
 }
 
 export class Piechart extends PureComponent<Props> {
-  canvasElement: any;
+  containerElement: any;
 
   static defaultProps = {
     pieType: 'pie',
@@ -50,46 +50,51 @@ export class Piechart extends PureComponent<Props> {
     const data = datapoints.map(datapoint => datapoint.value);
     const colors = datapoints.map(datapoint => datapoint.color);
 
-    const width = this.canvasElement.width;
-    const height = this.canvasElement.height;
+    const width = this.containerElement.offsetWidth;
+    const height = this.containerElement.offsetHeight;
     const radius = Math.min(width, height) / 2;
-
     const innerRadius = pieType === PiechartType.PIE ? 0 : radius;
 
-    const context = this.canvasElement.getContext('2d');
-    context.translate(width / 2, height / 2);
-    context.globalAlpha = 0.5;
+    d3.select('.piechart-container svg').remove();
+    const svg = d3.select('.piechart-container')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('class', 'shadow')
+      .append('g')
+      .attr('transform', `translate(${width / 2},${height / 2})`);
 
-    const pie = d3.pie();
-
-    const arcs = pie(data);
     const arc = d3
       .arc()
       .outerRadius(radius - 10)
       .innerRadius(innerRadius)
-      .padAngle(0.03)
-      .context(context);
+      .padAngle(0);
 
-    arcs.forEach((d, idx) => {
-      context.beginPath();
-      arc(d as any);
-      context.fillStyle = colors[idx];
-      context.fill();
-    });
+    const pie = d3.pie();
 
-    context.globalAlpha = 1;
-    context.beginPath();
-    arcs.forEach(arc as any);
-    context.lineWidth = strokeWidth;
-    context.stroke();
+    svg.selectAll('path')
+      .data(pie(data))
+      .enter()
+      .append('path')
+      .attr('d', arc as any)
+      .attr('fill', (d: any, i: any) => {
+        return colors[i];
+      })
+      .style('fill-opacity', 0.15)
+      .style('stroke', (d: any, i: any) => {
+        return colors[i];
+      })
+      .style('stroke-width', `${strokeWidth}px`);
   }
 
   render() {
     const { height, width } = this.props;
 
     return (
-      <div className="piechart-panel">
+      <div className='piechart-panel'>
         <div
+          ref={element => (this.containerElement = element)}
+          className='piechart-container'
           style={{
             height: `${height * 0.9}px`,
             width: `${Math.min(width, height * 1.3)}px`,
@@ -97,7 +102,6 @@ export class Piechart extends PureComponent<Props> {
             margin: 'auto',
           }}
         >
-          <canvas ref={element => (this.canvasElement = element)} />
         </div>
       </div>
     );
