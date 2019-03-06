@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 import moment from 'moment';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 
 import ReactTable from 'react-table';
 
@@ -222,21 +222,21 @@ export class TablePanel extends PureComponent<Props> {
       value = column.formatter(value, column.style);
     }
 
-    const style = {};
+    const style: CSSProperties = {};
     const cellClasses = [];
     let cellClass = '';
 
     if (this.colorState.cell) {
-      style['backgroundColor'] = this.colorState.cell;
-      style['color'] = 'white';
+      style.backgroundColor = this.colorState.cell;
+      style.color = 'white';
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      style['color'] = this.colorState.value;
+      style.color = this.colorState.value;
       this.colorState.value = null;
     }
 
     if (value === undefined) {
-      style['display'] = 'none';
+      style.display = 'none';
       column.hidden = true;
     } else {
       column.hidden = false;
@@ -246,14 +246,14 @@ export class TablePanel extends PureComponent<Props> {
       cellClasses.push('table-panel-cell-pre');
     }
 
-    let columnHtml;
+    let columnHtml: JSX.Element;
     if (column.style && column.style.link) {
       // Render cell as link
-      const scopedconsts = this.renderRowVariables(rowIndex);
-      scopedconsts['__cell'] = { value: value };
+      const scopedVars = this.renderRowVariables(rowIndex);
+      scopedVars['__cell'] = { value: value };
 
-      const cellLink = templateSrv.replace(column.style.linkUrl, scopedconsts, encodeURIComponent);
-      const cellLinkTooltip = templateSrv.replace(column.style.linkTooltip, scopedconsts);
+      const cellLink = templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
+      const cellLinkTooltip = templateSrv.replace(column.style.linkTooltip, scopedVars);
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
@@ -272,7 +272,7 @@ export class TablePanel extends PureComponent<Props> {
       columnHtml = <span>{value}</span>;
     }
 
-    let filterLink;
+    let filterLink: JSX.Element;
     if (column.filterable) {
       cellClasses.push('table-panel-cell-filterable');
       filterLink = (
@@ -307,8 +307,8 @@ export class TablePanel extends PureComponent<Props> {
       cellClass = cellClasses.join(' ');
     }
 
-    style['width'] = '100%';
-    style['height'] = '100%';
+    style.width = '100%';
+    style.height = '100%';
     columnHtml = (
       <div className={cellClass} style={style}>
         {columnHtml}
