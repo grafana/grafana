@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeSeries, Threshold } from '@grafana/ui';
+import { DataQuery, TimeSeries, Threshold, ScopedVars } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -71,7 +71,7 @@ export class PanelModel {
   type: string;
   title: string;
   alert?: any;
-  scopedVars?: any;
+  scopedVars?: ScopedVars;
   repeat?: string;
   repeatIteration?: number;
   repeatPanelId?: number;

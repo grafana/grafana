@@ -18,6 +18,7 @@ import (
 
 type ILdapConn interface {
 	Bind(username, password string) error
+	UnauthenticatedBind(username string) error
 	Search(*ldap.SearchRequest) (*ldap.SearchResult, error)
 	StartTLS(*tls.Config) error
 	Close()
@@ -259,7 +260,17 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 		bindPath = fmt.Sprintf(a.server.BindDN, username)
 	}
 
-	if err := a.conn.Bind(bindPath, userPassword); err != nil {
+	bindFn := func() error {
+		return a.conn.Bind(bindPath, userPassword)
+	}
+
+	if userPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(bindPath)
+		}
+	}
+
+	if err := bindFn(); err != nil {
 		a.log.Info("Initial bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
