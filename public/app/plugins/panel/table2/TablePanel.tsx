@@ -355,9 +355,9 @@ export class TablePanel extends PureComponent<Props> {
       <ReactTable
         data={rows}
         columns={columns}
-        defaultPageSize={pageSize}
+        pageSize={pageSize}
         style={{
-          height: height - 20 + 'px',
+          height: height + 'px',
         }}
         showPaginationBottom={showPaginationBottom}
         getTdProps={(state, rowInfo, column, instance) => {
