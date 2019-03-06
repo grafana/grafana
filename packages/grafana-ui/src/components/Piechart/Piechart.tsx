@@ -53,7 +53,9 @@ export class Piechart extends PureComponent<Props> {
     const width = this.containerElement.offsetWidth;
     const height = this.containerElement.offsetHeight;
     const radius = Math.min(width, height) / 2;
-    const innerRadius = pieType === PiechartType.PIE ? 0 : radius;
+
+    const outerRadius = radius - (radius / 10);
+    const innerRadius = pieType === PiechartType.PIE ? 0 : radius - (radius / 3);
 
     d3.select('.piechart-container svg').remove();
     const svg = d3
@@ -67,7 +69,7 @@ export class Piechart extends PureComponent<Props> {
 
     const arc = d3
       .arc()
-      .outerRadius(radius - 10)
+      .outerRadius(outerRadius)
       .innerRadius(innerRadius)
       .padAngle(0);
 
