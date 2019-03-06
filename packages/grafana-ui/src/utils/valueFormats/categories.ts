@@ -137,7 +137,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
-      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('B/s') },
+      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('Bs') },
       { name: 'kilobytes/sec', id: 'KBs', fn: decimalSIPrefix('Bs', 1) },
       { name: 'kilobits/sec', id: 'Kbits', fn: decimalSIPrefix('bps', 1) },
       { name: 'megabytes/sec', id: 'MBs', fn: decimalSIPrefix('Bs', 2) },
