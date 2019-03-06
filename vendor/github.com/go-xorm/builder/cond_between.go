@@ -17,10 +17,35 @@ var _ Cond = Between{}
 
 // WriteTo write data to Writer
 func (between Between) WriteTo(w Writer) error {
-	if _, err := fmt.Fprintf(w, "%s BETWEEN ? AND ?", between.Col); err != nil {
+	if _, err := fmt.Fprintf(w, "%s BETWEEN ", between.Col); err != nil {
 		return err
 	}
-	w.Append(between.LessVal, between.MoreVal)
+	if lv, ok := between.LessVal.(expr); ok {
+		if err := lv.WriteTo(w); err != nil {
+			return err
+		}
+	} else {
+		if _, err := fmt.Fprint(w, "?"); err != nil {
+			return err
+		}
+		w.Append(between.LessVal)
+	}
+
+	if _, err := fmt.Fprint(w, " AND "); err != nil {
+		return err
+	}
+
+	if mv, ok := between.MoreVal.(expr); ok {
+		if err := mv.WriteTo(w); err != nil {
+			return err
+		}
+	} else {
+		if _, err := fmt.Fprint(w, "?"); err != nil {
+			return err
+		}
+		w.Append(between.MoreVal)
+	}
+
 	return nil
 }
 
