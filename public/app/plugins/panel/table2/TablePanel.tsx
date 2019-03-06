@@ -205,7 +205,7 @@ export class TablePanel extends PureComponent<Props> {
     this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
   }
 
-  renderRowconstiables(rowIndex) {
+  renderRowVariables(rowIndex) {
     const { panelData } = this.props;
 
     const scopedVars = {};
@@ -249,7 +249,7 @@ export class TablePanel extends PureComponent<Props> {
     let columnHtml;
     if (column.style && column.style.link) {
       // Render cell as link
-      const scopedconsts = this.renderRowconstiables(rowIndex);
+      const scopedconsts = this.renderRowVariables(rowIndex);
       scopedconsts['__cell'] = { value: value };
 
       const cellLink = templateSrv.replace(column.style.linkUrl, scopedconsts, encodeURIComponent);

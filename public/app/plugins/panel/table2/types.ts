@@ -35,7 +35,7 @@ export interface Column {
 
 export interface Options {
   showHeader: boolean;
-  styles: Style[]; // TODO, just a copy from existing table
+  styles: Style[];
   pageSize: number;
 }
 
