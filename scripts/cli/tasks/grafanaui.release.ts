@@ -12,6 +12,7 @@ type VersionBumpType = 'prerelease' | 'patch' | 'minor' | 'major';
 
 interface ReleaseTaskOptions {
   publishToNpm: boolean;
+  usePackageJsonVersion: boolean;
 }
 
 const promptBumpType = async () => {
@@ -93,7 +94,7 @@ const ensureMasterBranch = async () => {
   }
 };
 
-const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm }) => {
+const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm, usePackageJsonVersion }) => {
   if (publishToNpm) {
     await ensureMasterBranch();
   }
@@ -109,28 +110,40 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm 
   console.log(`Current version: ${pkg.version}`);
 
   do {
-    const { type } = await promptBumpType();
-    console.log(type);
-    if (type === 'prerelease') {
-      const { id } = await promptPrereleaseId('What kind of prerelease?', false);
-      nextVersion = semver.inc(pkg.version, type, id);
-    } else {
-      const { id } = await promptPrereleaseId();
-      if (id !== 'no') {
-        nextVersion = semver.inc(pkg.version, `pre${type}`, id);
+    if (!usePackageJsonVersion) {
+      const { type } = await promptBumpType();
+      console.log(type);
+      if (type === 'prerelease') {
+        const { id } = await promptPrereleaseId('What kind of prerelease?', false);
+        nextVersion = semver.inc(pkg.version, type, id);
       } else {
-        nextVersion = semver.inc(pkg.version, type);
+        const { id } = await promptPrereleaseId();
+        if (id !== 'no') {
+          nextVersion = semver.inc(pkg.version, `pre${type}`, id);
+        } else {
+          nextVersion = semver.inc(pkg.version, type);
+        }
       }
+    } else {
+      nextVersion = pkg.version;
     }
 
     console.log(chalk.yellowBright.bold(`You are going to release a new version of ${pkg.name}`));
-    console.log(chalk.green(`Version bump: ${pkg.version} ->`), chalk.bold.yellowBright(`${nextVersion}`));
+
+    if (usePackageJsonVersion) {
+      console.log(chalk.green(`Version based on package.json: `), chalk.bold.yellowBright(`${nextVersion}`));
+    } else {
+      console.log(chalk.green(`Version bump: ${pkg.version} ->`), chalk.bold.yellowBright(`${nextVersion}`));
+    }
+
     const { confirmed } = await promptConfirm();
 
     releaseConfirmed = confirmed;
   } while (!releaseConfirmed);
 
-  await bumpVersion(nextVersion);
+  if (!usePackageJsonVersion) {
+    await bumpVersion(nextVersion);
+  }
 
   if (publishToNpm) {
     await publishPackage(pkg.name, nextVersion);
