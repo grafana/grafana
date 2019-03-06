@@ -917,4 +917,18 @@ export class DashboardModel {
       }
     }
   }
+
+  toggleLegendsForAll() {
+    const panels = this.panels.filter(panel => {
+      return panel.legend !== undefined && panel.legend !== null;
+    });
+    // determine if more panels are displaying legends or not
+    const onCount = panels.filter(panel => panel.legend.show).length;
+    const offCount = panels.length - onCount;
+    const panelLegendsOn = onCount >= offCount;
+    panels.forEach(panel => {
+      panel.legend.show = !panelLegendsOn;
+      panel.render();
+    });
+  }
 }

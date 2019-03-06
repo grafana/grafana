@@ -106,6 +106,7 @@ export class PanelModel {
   events: Emitter;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
+  legend?: { show: boolean };
 
   constructor(model) {
     this.events = new Emitter();
