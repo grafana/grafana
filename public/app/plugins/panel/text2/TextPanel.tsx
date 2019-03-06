@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
 import Remarkable from 'remarkable';
 import { sanitize } from 'app/core/utils/text';
@@ -14,7 +14,7 @@ interface State {
   html: string;
 }
 
-export class TextPanel extends Component<Props, State> {
+export class TextPanel extends PureComponent<Props, State> {
   remarkable: Remarkable;
 
   constructor(props) {
@@ -30,11 +30,11 @@ export class TextPanel extends Component<Props, State> {
     if (html !== this.state.html) {
       this.setState({ html });
     }
-  }, 100);
+  }, 150);
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,
-    // This needs to process everything
+    // This needs to process everytime (with debounce)
     this.updateHTML();
   }
 
