@@ -86,3 +86,20 @@ func Auth(options *AuthOptions) macaron.Handler {
 		}
 	}
 }
+
+func EditorCanAdmin(enabled bool) macaron.Handler {
+	return func(c *m.ReqContext) {
+		ok := false
+		if c.OrgRole == m.ROLE_ADMIN {
+			ok = true
+		}
+
+		if c.OrgRole == m.ROLE_EDITOR && enabled {
+			ok = true
+		}
+
+		if !ok {
+			accessForbidden(c)
+		}
+	}
+}
