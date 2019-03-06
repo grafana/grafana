@@ -7,14 +7,10 @@ import { sanitize } from 'app/core/utils/text';
 
 // Types
 import kbn from 'app/core/utils/kbn';
-import {
-  getValueFormat,
-  getColorFromHexRgbOrName,
-  GrafanaThemeType,
-  InterpolateFunction,
-  TableData,
-} from '@grafana/ui';
-import { Options, Style } from './types';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, InterpolateFunction } from '@grafana/ui';
+import { Style } from './types';
+import { SortedTableData } from './sortable';
+import { Index } from 'react-virtualized';
 
 type CellFormatter = (v: any, style: Style) => string;
 
@@ -32,12 +28,13 @@ export class TableRenderer {
 
   columns: ColumnInfo[];
   colorState: any;
+  theme?: GrafanaThemeType;
 
   constructor(
-    private data: TableData,
-    options: Options,
-    private replaceVariables: InterpolateFunction,
-    private theme?: GrafanaThemeType
+    styles: Style[],
+    data: SortedTableData,
+    private rowGetter: (info: Index) => any[], // matches the table rowGetter
+    private replaceVariables: InterpolateFunction
   ) {
     this.colorState = {};
 
@@ -45,9 +42,8 @@ export class TableRenderer {
       this.columns = [];
       return;
     }
-    const { styles } = options;
 
-    this.columns = data.columns.map((col, index) => {
+    this.columns = data.getInfo().map((col, index) => {
       let title = col.text;
       let style: Style = null;
 
@@ -70,6 +66,10 @@ export class TableRenderer {
         formatter: this.createColumnFormatter(style, col),
       };
     });
+  }
+
+  setTheme(theme: GrafanaThemeType) {
+    this.theme = theme;
   }
 
   getColorForValue(value, style: Style) {
@@ -222,7 +222,7 @@ export class TableRenderer {
 
   renderRowVariables(rowIndex: number) {
     const scopedVars = {};
-    const row = this.data.rows[rowIndex];
+    const row = this.rowGetter({ index: rowIndex });
     for (let i = 0; i < row.length; i++) {
       scopedVars[`__cell_${i}`] = { value: row[i] };
     }

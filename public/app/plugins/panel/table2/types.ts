@@ -22,17 +22,6 @@ export interface Style {
   preserveFormat?: boolean;
 }
 
-export type CellFormatter = (v: any, style: Style) => string;
-
-export interface ColumnInfo {
-  header: string;
-  accessor: string; // the field name
-  style?: Style;
-  hidden?: boolean;
-  formatter: CellFormatter;
-  filterable?: boolean;
-}
-
 export interface Options {
   showHeader: boolean;
   styles: Style[];
