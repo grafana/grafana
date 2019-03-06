@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton, Select } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User } from 'app/types';
+import { TeamMember, User, teamsPermissionLevels } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -70,6 +70,7 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 
   renderMember(member: TeamMember, syncEnabled: boolean) {
+    const currentPermissionLevel = teamsPermissionLevels.find(dp => dp.value === member.permission);
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
@@ -77,6 +78,18 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
+        <td>
+          <div className="gf-form">
+            <Select
+              isSearchable={false}
+              options={teamsPermissionLevels}
+              onChange={() => {}}
+              className="gf-form-select-box__control--menu-right"
+              value={currentPermissionLevel}
+              isDisabled={true}
+            />
+          </div>
+        </td>{' '}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
           <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
@@ -132,6 +145,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
+                <th>Permission</th>
                 {syncEnabled && <th />}
                 <th style={{ width: '1%' }} />
               </tr>

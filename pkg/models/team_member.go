@@ -55,12 +55,13 @@ type GetTeamMembersQuery struct {
 // Projections and DTOs
 
 type TeamMemberDTO struct {
-	OrgId     int64    `json:"orgId"`
-	TeamId    int64    `json:"teamId"`
-	UserId    int64    `json:"userId"`
-	External  bool     `json:"-"`
-	Email     string   `json:"email"`
-	Login     string   `json:"login"`
-	AvatarUrl string   `json:"avatarUrl"`
-	Labels    []string `json:"labels"`
+	OrgId      int64    `json:"orgId"`
+	TeamId     int64    `json:"teamId"`
+	UserId     int64    `json:"userId"`
+	External   bool     `json:"-"`
+	Email      string   `json:"email"`
+	Login      string   `json:"login"`
+	AvatarUrl  string   `json:"avatarUrl"`
+	Labels     []string `json:"labels"`
+	Permission int64    `json:"permission"`
 }

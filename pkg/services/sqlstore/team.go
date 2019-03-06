@@ -294,7 +294,7 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	if query.External {
 		sess.Where("team_member.external=?", dialect.BooleanStr(true))
 	}
-	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external")
+	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external", "team_member.permission")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)

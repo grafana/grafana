@@ -69,6 +69,9 @@ exports[`Render should render component 1`] = `
           <th>
             Email
           </th>
+          <th>
+            Permission
+          </th>
           <th
             style={
               Object {
@@ -153,6 +156,9 @@ exports[`Render should render team members 1`] = `
           <th>
             Email
           </th>
+          <th>
+            Permission
+          </th>
           <th
             style={
               Object {
@@ -180,6 +186,48 @@ exports[`Render should render team members 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td
             className="text-right"
           >
@@ -205,6 +253,48 @@ exports[`Render should render team members 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td
             className="text-right"
           >
@@ -230,6 +320,48 @@ exports[`Render should render team members 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td
             className="text-right"
           >
@@ -255,6 +387,48 @@ exports[`Render should render team members 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td
             className="text-right"
           >
@@ -280,6 +454,48 @@ exports[`Render should render team members 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td
             className="text-right"
           >
@@ -363,6 +579,9 @@ exports[`Render should render team members when sync enabled 1`] = `
           <th>
             Email
           </th>
+          <th>
+            Permission
+          </th>
           <th />
           <th
             style={
@@ -391,6 +610,48 @@ exports[`Render should render team members when sync enabled 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td>
             <TagBadge
               count={0}
@@ -433,6 +694,48 @@ exports[`Render should render team members when sync enabled 1`] = `
             test@test.com
           </td>
           <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
+          <td>
             <TagBadge
               count={0}
               key="label 1"
@@ -473,6 +776,48 @@ exports[`Render should render team members when sync enabled 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td>
             <TagBadge
               count={0}
@@ -515,6 +860,48 @@ exports[`Render should render team members when sync enabled 1`] = `
             test@test.com
           </td>
           <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
+          <td>
             <TagBadge
               count={0}
               key="label 1"
@@ -555,6 +942,48 @@ exports[`Render should render team members when sync enabled 1`] = `
           <td>
             test@test.com
           </td>
+          <td>
+            <div
+              className="gf-form"
+            >
+              <Select
+                autoFocus={false}
+                backspaceRemovesValue={true}
+                className="gf-form-select-box__control--menu-right"
+                isClearable={false}
+                isDisabled={true}
+                isLoading={false}
+                isMulti={false}
+                isSearchable={false}
+                maxMenuHeight={300}
+                onChange={[Function]}
+                openMenuOnFocus={false}
+                options={
+                  Array [
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    },
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    },
+                  ]
+                }
+                value={
+                  Object {
+                    "description": "Is team member",
+                    "label": "Member",
+                    "value": 0,
+                  }
+                }
+                width={null}
+              />
+            </div>
+          </td>
+           
           <td>
             <TagBadge
               count={0}
