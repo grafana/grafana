@@ -13,6 +13,7 @@ export interface TeamMember {
   email: string;
   login: string;
   labels: string[];
+  permission: number;
 }
 
 export interface TeamGroup {
