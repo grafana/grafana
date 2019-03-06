@@ -1,7 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
-import { TimeRange } from '@grafana/ui/src';
+import { TimeRange, ScopedVars } from '@grafana/ui/src';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -220,7 +220,7 @@ export class TemplateSrv {
     return values;
   }
 
-  replace(target, scopedVars?, format?) {
+  replace(target: string, scopedVars?: ScopedVars, format?: string | Function) {
     if (!target) {
       return target;
     }
