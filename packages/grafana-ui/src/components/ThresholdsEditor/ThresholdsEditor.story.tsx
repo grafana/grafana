@@ -19,7 +19,7 @@ ThresholdsEditorStories.add('with thresholds', () => {
   );
 });
 
-ThresholdsEditorStories.add('withText=true', () => {
+ThresholdsEditorStories.add('with text', () => {
   return (
     <ThresholdsEditor
       thresholds={[{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 50, color: 'red' }]}
