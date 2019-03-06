@@ -18,6 +18,7 @@ import { configureStore } from 'app/store/configureStore';
 
 // Types
 import { KioskUrlValue } from 'app/types';
+import { PlaylistSrv, setPlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -32,6 +33,7 @@ export class GrafanaCtrl {
     timeSrv: TimeSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
+    playlistSrv: PlaylistSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -40,6 +42,8 @@ export class GrafanaCtrl {
     setDatasourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
     setKeybindingSrv(keybindingSrv);
+    setKeybindingSrv(keybindingSrv);
+    setPlaylistSrv(playlistSrv);
     configureStore();
 
     $scope.init = () => {

@@ -96,4 +96,29 @@ describe('PlaylistSrv', () => {
     expect(hrefMock).toHaveBeenCalledTimes(3);
     expect(hrefMock).toHaveBeenLastCalledWith(initialUrl);
   });
+
+  it('should stop playlist when navigating out of it', async () => {
+    await srv.start(1);
+    expect(srv.isPlaying).toBeTruthy();
+
+    srv.handleLocationUpdate(
+      {
+        state: { playlistRunning: true },
+      },
+      { state: {} }
+    );
+
+    expect(srv.isPlaying).toBeFalsy();
+
+    await srv.start(1);
+    expect(srv.isPlaying).toBeTruthy();
+
+    srv.handleLocationUpdate(
+      {
+        state: { playlistRunning: true },
+      },
+      { state: null }
+    );
+    expect(srv.isPlaying).toBeFalsy();
+  });
 });

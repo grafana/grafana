@@ -7,6 +7,7 @@ import coreModule from '../../core/core_module';
 import appEvents from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import kbn from 'app/core/utils/kbn';
+import { LocationUpdate } from 'app/types';
 
 export class PlaylistSrv {
   private cancelPromise: any;
@@ -45,6 +46,7 @@ export class PlaylistSrv {
     this.$timeout(() => {
       const stripedUrl = locationUtil.stripBaseFromUrl(dash.url);
       this.$location.url(stripedUrl + '?' + toUrlParams(filteredParams));
+      this.$location.state({ playlistRunning: true });
       this.$location.replace();
     });
 
@@ -92,6 +94,27 @@ export class PlaylistSrv {
 
     appEvents.emit('playlist-stopped');
   }
+
+  handleLocationUpdate = (location: LocationUpdate, nextLocation: LocationUpdate) => {
+    // Stop playlist when navigating from playlist to anywhere else
+    if (
+      location.state &&
+      location.state.playlistRunning &&
+      (nextLocation.state === null || (nextLocation.state && !nextLocation.state.playlistRunning))
+    ) {
+      this.stop();
+    }
+  };
+}
+
+let singleton;
+
+export function setPlaylistSrv(srv: PlaylistSrv) {
+  singleton = srv;
+}
+
+export function getPlaylistSrv(): PlaylistSrv {
+  return singleton;
 }
 
 coreModule.service('playlistSrv', PlaylistSrv);
