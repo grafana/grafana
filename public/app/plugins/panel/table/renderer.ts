@@ -2,6 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType } from '@grafana/ui';
+import { Style } from '../table2/types';
 
 export class TableRenderer {
   formatters: any[];
@@ -51,7 +52,7 @@ export class TableRenderer {
     }
   }
 
-  getColorForValue(value, style) {
+  getColorForValue(value, style: Style) {
     if (!style.thresholds) {
       return null;
     }
@@ -63,7 +64,7 @@ export class TableRenderer {
     return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
   }
 
-  defaultCellFormatter(v, style) {
+  defaultCellFormatter(v, style: Style) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -190,7 +191,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value, style) {
+  setColorState(value, style: Style) {
     if (!style.colorMode) {
       return;
     }
