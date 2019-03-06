@@ -9,14 +9,12 @@ import { FormField, PanelEditorProps } from '@grafana/ui';
 import { PiechartType } from '@grafana/ui';
 import { PiechartOptions } from './types';
 
-import * as _ from 'lodash';
-
 const labelWidth = 8;
 
 const piechartOptions = [{ value: PiechartType.PIE, label: 'Pie' }, { value: PiechartType.DONUT, label: 'Donut' }];
 
 export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartOptions>> {
-  onPieTypeChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, pieType: target.value });
+  onPieTypeChange = pieType => this.props.onOptionsChange({ ...this.props.options, pieType: pieType.value });
   onStrokeWidthChange = ({ target }) =>
     this.props.onOptionsChange({ ...this.props.options, strokeWidth: target.value });
 
