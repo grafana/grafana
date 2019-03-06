@@ -12,8 +12,6 @@ import { PanelProps } from '@grafana/ui/src/types';
 import { Options, Style, Column, CellFormatter } from './types';
 import kbn from 'app/core/utils/kbn';
 
-import templateSrv from 'app/features/templating/template_srv';
-
 interface Props extends PanelProps<Options> {}
 
 export class TablePanel extends PureComponent<Props> {
@@ -252,8 +250,10 @@ export class TablePanel extends PureComponent<Props> {
       const scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      const cellLink = templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
-      const cellLinkTooltip = templateSrv.replace(column.style.linkTooltip, scopedVars);
+      const { replaceVariables } = this.props;
+
+      const cellLink = replaceVariables(column.style.linkUrl, scopedVars, encodeURIComponent);
+      const cellLinkTooltip = replaceVariables(column.style.linkTooltip, scopedVars);
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
@@ -342,8 +342,6 @@ export class TablePanel extends PureComponent<Props> {
           },
         };
       });
-      console.log(templateSrv);
-      console.log(rows);
     } else {
       return <div>No Table Data...</div>;
     }
