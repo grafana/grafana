@@ -41,9 +41,17 @@ program
 
 program
   .command('core:changelog')
+  .option('-m, --milestone <milestone>', 'Specify milestone')
   .description('Builds changelog markdown')
   .action(async cmd => {
-    await execTask(changelogTask)({});
+    if (!cmd.milestone) {
+      console.log('Please specify milestone, example: --m 6.0.1');
+      return;
+    }
+
+    await execTask(changelogTask)({
+      milestone: cmd.milestone,
+    });
   });
 
 program.parse(process.argv);
