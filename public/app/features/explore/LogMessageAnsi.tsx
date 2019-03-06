@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import ansicolor from 'ansicolor';
+import ansicolor from 'vendor/ansicolor/ansicolor';
 
 interface Style {
   [key: string]: string;
