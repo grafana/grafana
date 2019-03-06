@@ -123,10 +123,10 @@
   },
   "scripts": {
     "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
-    "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme",
-    "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot --theme",
-    "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot",
-    "watch": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme -d watch,start",
+    "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --watchTheme",
+    "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot --watchTheme",
+    "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot",
+    "watch": "yarn start -d watch,start core:start --watchTheme ",
     "build": "grunt build",
     "test": "grunt test",
     "tslint": "tslint -c tslint.json --project tsconfig.json",
@@ -136,8 +136,11 @@
     "storybook": "cd packages/grafana-ui && yarn storybook",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
-    "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --build",
-    "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --release"
+    "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
+    "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
+    "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
+    "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p",
+    "cli:help": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --help"
   },
   "husky": {
     "hooks": {

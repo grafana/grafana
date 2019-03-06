@@ -1,14 +1,19 @@
 import execa from 'execa';
-import { Task } from '..';
 import { execTask } from '../utils/execTask';
 import { changeCwdToGrafanaUiDist, changeCwdToGrafanaUi } from '../utils/cwd';
 import semver from 'semver';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { startSpinner } from '../utils/startSpinner';
-import { savePackage } from './grafanaui.build';
+import { useSpinner } from '../utils/useSpinner';
+import { savePackage, buildTask } from './grafanaui.build';
+import { TaskRunner, Task } from './task';
 
-type VersionBumpType = 'patch' | 'minor' | 'major';
+type VersionBumpType = 'prerelease' | 'patch' | 'minor' | 'major';
+
+interface ReleaseTaskOptions {
+  publishToNpm: boolean;
+  usePackageJsonVersion: boolean;
+}
 
 const promptBumpType = async () => {
   return inquirer.prompt<{ type: VersionBumpType }>([
@@ -16,7 +21,7 @@ const promptBumpType = async () => {
       type: 'list',
       message: 'Select version bump',
       name: 'type',
-      choices: ['patch', 'minor', 'major'],
+      choices: ['prerelease', 'patch', 'minor', 'major'],
       validate: answer => {
         if (answer.length < 1) {
           return 'You must choose something';
@@ -28,13 +33,13 @@ const promptBumpType = async () => {
   ]);
 };
 
-const promptPrereleaseId = async () => {
+const promptPrereleaseId = async (message = 'Is this a prerelease?', allowNo = true) => {
   return inquirer.prompt<{ id: string }>([
     {
       type: 'list',
-      message: 'Is this a prerelease?',
+      message: message,
       name: 'id',
-      choices: ['no', 'alpha', 'beta'],
+      choices: allowNo ? ['no', 'alpha', 'beta'] : ['alpha', 'beta'],
       validate: answer => {
         if (answer.length < 1) {
           return 'You must choose something';
@@ -57,47 +62,45 @@ const promptConfirm = async (message?: string) => {
   ]);
 };
 
-const bumpVersion = async (version: string) => {
-  const spinner = startSpinner(`Saving version ${version} to package.json`);
-  changeCwdToGrafanaUi();
-
-  try {
+const bumpVersion = (version: string) =>
+  useSpinner<void>(`Saving version ${version} to package.json`, async () => {
+    changeCwdToGrafanaUi();
     await execa('npm', ['version', version]);
-    spinner.succeed();
-  } catch (e) {
-    console.log(e);
-    spinner.fail();
-  }
+    changeCwdToGrafanaUiDist();
+    const pkg = require(`${process.cwd()}/package.json`);
+    pkg.version = version;
+    await savePackage({ path: `${process.cwd()}/package.json`, pkg });
+  })();
 
-  changeCwdToGrafanaUiDist();
-  const pkg = require(`${process.cwd()}/package.json`);
-  pkg.version = version;
-  await savePackage(`${process.cwd()}/package.json`, pkg);
-};
+const publishPackage = (name: string, version: string) =>
+  useSpinner<void>(`Publishing ${name} @ ${version} to npm registry...`, async () => {
+    changeCwdToGrafanaUiDist();
+    console.log(chalk.yellowBright.bold(`\nReview dist package.json before proceeding!\n`));
+    const { confirmed } = await promptConfirm('Are you ready to publish to npm?');
 
-const publishPackage = async (name: string, version: string) => {
-  changeCwdToGrafanaUiDist();
-  console.log(chalk.yellowBright.bold(`\nReview dist package.json before proceeding!\n`));
-  const { confirmed } = await promptConfirm('Are you ready to publish to npm?');
-
-  if (!confirmed) {
-    process.exit();
-  }
-
-  const spinner = startSpinner(`Publishing ${name} @ ${version} to npm registry...`);
-
-  try {
+    if (!confirmed) {
+      process.exit();
+    }
     await execa('npm', ['publish', '--access', 'public']);
-    spinner.succeed();
-  } catch (e) {
-    console.log(e);
-    spinner.fail();
+  })();
+
+const ensureMasterBranch = async () => {
+  const currentBranch = await execa.stdout('git', ['symbolic-ref', '--short', 'HEAD']);
+  const status = await execa.stdout('git', ['status', '--porcelain']);
+
+  if (currentBranch !== 'master' && status !== '') {
+    console.error(chalk.red.bold('You need to be on clean master branch to release @grafana/ui'));
     process.exit(1);
   }
 };
 
-const releaseTask: Task<void> = async () => {
-  await execTask('grafanaui.build');
+const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm, usePackageJsonVersion }) => {
+  if (publishToNpm) {
+    await ensureMasterBranch();
+  }
+
+  await execTask(buildTask)();
+
   let releaseConfirmed = false;
   let nextVersion;
   changeCwdToGrafanaUiDist();
@@ -107,27 +110,56 @@ const releaseTask: Task<void> = async () => {
   console.log(`Current version: ${pkg.version}`);
 
   do {
-    const { type } = await promptBumpType();
-    const { id } = await promptPrereleaseId();
-
-    if (id !== 'no') {
-      nextVersion = semver.inc(pkg.version, `pre${type}`, id);
+    if (!usePackageJsonVersion) {
+      const { type } = await promptBumpType();
+      console.log(type);
+      if (type === 'prerelease') {
+        const { id } = await promptPrereleaseId('What kind of prerelease?', false);
+        nextVersion = semver.inc(pkg.version, type, id);
+      } else {
+        const { id } = await promptPrereleaseId();
+        if (id !== 'no') {
+          nextVersion = semver.inc(pkg.version, `pre${type}`, id);
+        } else {
+          nextVersion = semver.inc(pkg.version, type);
+        }
+      }
     } else {
-      nextVersion = semver.inc(pkg.version, type);
+      nextVersion = pkg.version;
     }
 
     console.log(chalk.yellowBright.bold(`You are going to release a new version of ${pkg.name}`));
-    console.log(chalk.green(`Version bump: ${pkg.version} ->`), chalk.bold.yellowBright(`${nextVersion}`));
+
+    if (usePackageJsonVersion) {
+      console.log(chalk.green(`Version based on package.json: `), chalk.bold.yellowBright(`${nextVersion}`));
+    } else {
+      console.log(chalk.green(`Version bump: ${pkg.version} ->`), chalk.bold.yellowBright(`${nextVersion}`));
+    }
+
     const { confirmed } = await promptConfirm();
 
     releaseConfirmed = confirmed;
   } while (!releaseConfirmed);
 
-  await bumpVersion(nextVersion);
-  await publishPackage(pkg.name, nextVersion);
+  if (!usePackageJsonVersion) {
+    await bumpVersion(nextVersion);
+  }
 
-  console.log(chalk.green(`\nVersion ${nextVersion} of ${pkg.name} succesfully released!`));
-  console.log(chalk.yellow(`\nUpdated @grafana/ui/package.json with version bump created - COMMIT THIS FILE!`));
+  if (publishToNpm) {
+    await publishPackage(pkg.name, nextVersion);
+    console.log(chalk.green(`\nVersion ${nextVersion} of ${pkg.name} succesfully released!`));
+    console.log(chalk.yellow(`\nUpdated @grafana/ui/package.json with version bump created - COMMIT THIS FILE!`));
+    process.exit();
+  } else {
+    console.log(
+      chalk.green(
+        `\nVersion ${nextVersion} of ${pkg.name} succesfully prepared for release. See packages/grafana-ui/dist`
+      )
+    );
+    console.log(chalk.green(`\nTo publish to npm registry run`), chalk.bold.blue(`npm run gui:publish`));
+  }
 };
 
-export default releaseTask;
+export const releaseTask = new Task<ReleaseTaskOptions>();
+releaseTask.setName('@grafana/ui release');
+releaseTask.setRunner(releaseTaskRunner);
