@@ -1,24 +1,38 @@
 // Libraries
 import _ from 'lodash';
 import moment from 'moment';
-import React, { PureComponent, CSSProperties } from 'react';
-
-import ReactTable from 'react-table';
+import React, { Component, CSSProperties, ReactNode } from 'react';
 
 import { sanitize } from 'app/core/utils/text';
 
 // Types
 import { PanelProps } from '@grafana/ui/src/types';
-import { Options, Style, Column, CellFormatter } from './types';
+import { Options, Style, CellFormatter, ColumnInfo } from './types';
 import kbn from 'app/core/utils/kbn';
+import { Table, SortDirectionType, SortIndicator, Column, TableHeaderProps, TableCellProps } from 'react-virtualized';
 
 interface Props extends PanelProps<Options> {}
 
-export class TablePanel extends PureComponent<Props> {
+interface State {
+  sortBy: string;
+  sortDirection: SortDirectionType;
+  sortedList: any[];
+}
+
+export class TablePanel extends Component<Props, State> {
   isUTC: false; // TODO? get UTC from props?
 
-  columns: Column[];
+  columns: ColumnInfo[];
   colorState: any;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      sortBy: 'index',
+      sortDirection: 'ASC',
+      sortedList: [],
+    };
+  }
 
   initColumns() {
     this.colorState = {};
@@ -318,57 +332,76 @@ export class TablePanel extends PureComponent<Props> {
     return columnHtml;
   }
 
-  render() {
-    const { panelData, height, options } = this.props;
-    const { pageSize } = options;
+  _rowGetter = ({ index }) => {
+    return this.props.panelData.tableData.rows[index];
+  };
 
-    let rows = [];
-    let columns = [];
-    if (panelData.tableData) {
-      this.initColumns();
-      const fields = this.columns.map(c => {
-        return c.accessor;
-      });
-      rows = panelData.tableData.rows.map(row => {
-        return _.zipObject(fields, row);
-      });
-      columns = this.columns.map((c, columnIndex) => {
-        return {
-          Header: c.header,
-          accessor: c.accessor,
-          filterable: !!c.filterable,
-          Cell: row => {
-            return this.renderCell(columnIndex, row.index, row.value);
-          },
-        };
-      });
-    } else {
+  _sort = ({ sortBy, sortDirection }) => {
+    // const sortedList = this._sortList({sortBy, sortDirection});
+
+    // this.setState({sortBy, sortDirection, sortedList});
+    console.log('TODO, sort!', sortBy, sortDirection);
+  };
+
+  _headerRenderer = (header: TableHeaderProps): ReactNode => {
+    const tableData = this.props.panelData.tableData!;
+    const col = tableData.columns[header.dataKey];
+    if (!col) {
+      return <div>??{header.dataKey}</div>;
+    }
+
+    return (
+      <div>
+        {col.text} {header.sortBy === header.dataKey && <SortIndicator sortDirection={header.sortDirection} />}
+      </div>
+    );
+  };
+
+  _cellRenderer = (cell: TableCellProps) => {
+    const tableData = this.props.panelData.tableData!;
+    const val = tableData.rows[cell.rowIndex][cell.dataKey];
+    return <div>{val}</div>;
+  };
+
+  render() {
+    const { panelData, width, height, options } = this.props;
+    const { showHeader } = options;
+    const { sortBy, sortDirection } = this.state;
+    const { tableData } = panelData;
+
+    if (!tableData) {
       return <div>No Table Data...</div>;
     }
 
-    // Only show paging if necessary
-    const showPaginationBottom = pageSize && pageSize < panelData.tableData.rows.length;
-
     return (
-      <ReactTable
-        data={rows}
-        columns={columns}
-        pageSize={pageSize}
-        style={{
-          height: height + 'px',
-        }}
-        showPaginationBottom={showPaginationBottom}
-        getTdProps={(state, rowInfo, column, instance) => {
-          return {
-            onClick: (e, handleOriginal) => {
-              console.log('filter', rowInfo.row[column.id]);
-              if (handleOriginal) {
-                handleOriginal();
-              }
-            },
-          };
-        }}
-      />
+      <Table
+        disableHeader={!showHeader}
+        headerClassName={'hhhh'}
+        headerHeight={30}
+        height={height}
+        overscanRowCount={10}
+        rowClassName={'rrrrr'}
+        rowHeight={30}
+        rowGetter={this._rowGetter}
+        rowCount={tableData.rows.length}
+        sort={this._sort}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        width={width}
+      >
+        {tableData.columns.map((col, index) => {
+          return (
+            <Column
+              key={index}
+              dataKey={index}
+              headerRenderer={this._headerRenderer}
+              cellRenderer={this._cellRenderer}
+              flexGrow={1}
+              width={60}
+            />
+          );
+        })}
+      </Table>
     );
   }
 }

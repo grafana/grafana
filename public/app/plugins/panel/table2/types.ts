@@ -24,7 +24,7 @@ export interface Style {
 
 export type CellFormatter = (v: any, style: Style) => string;
 
-export interface Column {
+export interface ColumnInfo {
   header: string;
   accessor: string; // the field name
   style?: Style;
