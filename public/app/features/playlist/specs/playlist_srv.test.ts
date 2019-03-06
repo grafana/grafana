@@ -1,4 +1,14 @@
+import configureMockStore from 'redux-mock-store';
 import { PlaylistSrv } from '../playlist_srv';
+import { setStore } from 'app/store/store';
+
+const mockStore = configureMockStore();
+
+setStore(
+  mockStore({
+    location: {},
+  })
+);
 
 const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
 
@@ -19,6 +29,7 @@ const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any, any> }
   const mockLocation = {
     url: jest.fn(),
     search: () => ({}),
+    path: () => '/playlists/1',
   };
 
   const mockTimeout = jest.fn();
@@ -95,5 +106,33 @@ describe('PlaylistSrv', () => {
 
     expect(hrefMock).toHaveBeenCalledTimes(3);
     expect(hrefMock).toHaveBeenLastCalledWith(initialUrl);
+  });
+
+  it('storeUpdated should stop playlist when navigating away', async () => {
+    await srv.start(1);
+
+    srv.storeUpdated();
+
+    expect(srv.isPlaying).toBe(false);
+  });
+
+  it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
+    await srv.start(1);
+
+    srv.next();
+
+    setStore(
+      mockStore({
+        location: {
+          path: 'dash2',
+        },
+      })
+    );
+
+    expect((srv as any).validPlaylistUrl).toBe('dash2');
+
+    srv.storeUpdated();
+
+    expect(srv.isPlaying).toBe(true);
   });
 });

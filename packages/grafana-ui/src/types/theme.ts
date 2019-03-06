@@ -113,25 +113,33 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     queryPurple: string;
     queryKeyword: string;
     queryOrange: string;
+    brandPrimary: string;
+    brandSuccess: string;
+    brandWarning: string;
+    brandDanger: string;
 
     // Status colors
     online: string;
     warn: string;
     critical: string;
 
+    // Link colors
+    link: string;
+    linkDisabled: string;
+    linkHover: string;
+    linkExternal: string;
+
+    // Text colors
+    body: string;
+    text: string;
+    textStrong: string;
+    textWeak: string;
+    textFaint: string;
+    textEmphasis: string;
+
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;
-    bodyColor: string;
-    textColor: string;
-    textColorStrong: string;
-    textColorWeak: string;
-    textColorFaint: string;
-    textColorEmphasis: string;
-    linkColor: string;
-    linkColorDisabled: string;
-    linkColorHover: string;
-    linkColorExternal: string;
     headingColor: string;
   };
 }
