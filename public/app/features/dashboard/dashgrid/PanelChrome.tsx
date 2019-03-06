@@ -91,7 +91,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    console.log('VARiables', vars);
     return templateSrv.replace(value, vars, format);
   };
 
