@@ -1,4 +1,4 @@
-﻿.custom-scrollbars {
+.custom-scrollbars {
   // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
   // make scroll working it should fit outer container size (scroll appears only when inner container size is
   // greater than outer one).
@@ -14,7 +14,7 @@
   .track-vertical {
     border-radius: 3px;
     width: 6px !important;
-    right: 2px;
+    right: 0px;
     bottom: 2px;
     top: 2px;
   }
