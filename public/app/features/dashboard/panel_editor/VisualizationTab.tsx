@@ -17,7 +17,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types/plugins';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { VizPickerSearch } from './VizPickerSearch';
 
 interface Props {
   panel: PanelModel;
@@ -39,7 +39,6 @@ interface State {
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
-  searchInput: HTMLElement;
 
   constructor(props) {
     super(props);
@@ -164,7 +163,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       this.props.updateLocation({ query: { openVizPicker: null }, partial: true });
     }
 
-    this.setState({ isVizPickerOpen: false });
+    this.setState({ isVizPickerOpen: false, hasBeenFocused: false });
   };
 
   onSearchQueryChange = (value: string) => {
@@ -173,34 +172,18 @@ export class VisualizationTab extends PureComponent<Props, State> {
     });
   };
 
-  setSearchInputRef = (element: HTMLInputElement) => {
-    if (!this.state.hasBeenFocused) {
-      if (element) {
-        element.focus();
-      }
-    }
-    this.setState({ hasBeenFocused: true });
-  };
-
   renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
 
     if (isVizPickerOpen) {
       return (
-        <>
-          <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-13"
-            placeholder=""
-            onChange={this.onSearchQueryChange}
-            value={searchQuery}
-            ref={element => this.setSearchInputRef(element)}
-          />
-          <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
-            <i className="fa fa-chevron-up" />
-          </button>
-        </>
+        <VizPickerSearch
+          plugin={plugin}
+          searchQuery={searchQuery}
+          onChange={this.onSearchQueryChange}
+          onClose={this.onCloseVizPicker}
+        />
       );
     } else {
       return (
