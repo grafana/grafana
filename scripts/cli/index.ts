@@ -5,6 +5,7 @@ import { startTask } from './tasks/core.start';
 import { buildTask } from './tasks/grafanaui.build';
 import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
+import { cherryPickTask } from './tasks/cherrypick';
 
 program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
 
@@ -40,7 +41,7 @@ program
   });
 
 program
-  .command('core:changelog')
+  .command('changelog')
   .option('-m, --milestone <milestone>', 'Specify milestone')
   .description('Builds changelog markdown')
   .action(async cmd => {
@@ -52,6 +53,13 @@ program
     await execTask(changelogTask)({
       milestone: cmd.milestone,
     });
+  });
+
+program
+  .command('cherrypick')
+  .description('Helps find commits to cherry pick')
+  .action(async cmd => {
+    await execTask(cherryPickTask)({});
   });
 
 program.parse(process.argv);
