@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TablePanel } from '../TablePanel';
+
 import { getColorDefinitionByName } from '@grafana/ui';
 import { Options } from '../types';
 import { PanelProps, LoadingState } from '@grafana/ui/src/types';
 import moment from 'moment';
+import { TableRenderer } from '../renderer';
 
 // TODO: this is commented out with *x* describe!
 // Essentially all the elements need to replace the <td> with <div>
@@ -202,9 +203,8 @@ xdescribe('when rendering table', () => {
       renderCounter: 1,
       options: panel,
     };
-
-    const renderer = new TablePanel(props); //panel, table, 'utc', sanitize, templateSrv);
-    renderer.render(); // This will initalize
+    const theme = null;
+    const renderer = new TableRenderer(table, panel, props.replaceVariables, theme); //panel, table, 'utc', sanitize, templateSrv);
 
     it('time column should be formated', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
