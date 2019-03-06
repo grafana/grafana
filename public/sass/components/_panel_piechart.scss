@@ -8,4 +8,28 @@
     width: 100%;
     height: 100%;
   }
+
+  .piechart-tooltip {
+    white-space: nowrap;
+    font-size: 12px;
+    background-color: #141414;
+    color: #d8d9da;
+    opacity: 0;
+  }
+
+  .piechart-tooltip .piechart-tooltip-time {
+    text-align: center;
+    position: relative;
+    top: -3px;
+    padding: 0.2rem;
+    font-weight: bold;
+    color: #d8d9da;
+  }
+
+  .piechart-tooltip .piechart-tooltip-value {
+    display: table-cell;
+    font-weight: bold;
+    padding-left: 15px;
+    text-align: right;
+  }
 }

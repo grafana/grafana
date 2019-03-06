@@ -48,6 +48,7 @@ export class Piechart extends PureComponent<Props> {
     const { datapoints, pieType, strokeWidth } = this.props;
 
     const data = datapoints.map(datapoint => datapoint.value);
+    const names = datapoints.map(datapoint => datapoint.name);
     const colors = datapoints.map(datapoint => datapoint.color);
 
     const width = this.containerElement.offsetWidth;
@@ -81,14 +82,29 @@ export class Piechart extends PureComponent<Props> {
       .enter()
       .append('path')
       .attr('d', arc as any)
-      .attr('fill', (d: any, i: any) => {
-        return colors[i];
+      .attr('fill', (d: any, idx: number) => {
+        return colors[idx];
       })
       .style('fill-opacity', 0.15)
-      .style('stroke', (d: any, i: any) => {
-        return colors[i];
+      .style('stroke', (d: any, idx: number) => {
+        return colors[idx];
       })
-      .style('stroke-width', `${strokeWidth}px`);
+      .style('stroke-width', `${strokeWidth}px`)
+      .on('mouseover', (d: any, idx: any) => {
+        d3.select('#tooltip')
+          .style('opacity', 1)
+          .select('#tooltip-value')
+          // TODO: show percents
+          .text(`${names[idx]} (${data[idx]})`);
+      })
+      .on('mousemove', () => {
+        d3.select('#tooltip')
+          .style('top', d3.event.pageY - 10 + 'px')
+          .style('left', d3.event.pageX + 10 + 'px');
+      })
+      .on('mouseout', () => {
+        d3.select('#tooltip').style('opacity', 0);
+      });
   }
 
   render() {
@@ -106,6 +122,11 @@ export class Piechart extends PureComponent<Props> {
             margin: 'auto',
           }}
         />
+        <div id="tooltip" className="piechart-tooltip">
+          <div className="piechart-tooltip-time">
+            <div id="tooltip-value" className="piechart-tooltip-value" />
+          </div>
+        </div>
       </div>
     );
   }
