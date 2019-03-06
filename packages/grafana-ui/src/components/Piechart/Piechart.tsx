@@ -56,7 +56,8 @@ export class Piechart extends PureComponent<Props> {
     const innerRadius = pieType === PiechartType.PIE ? 0 : radius;
 
     d3.select('.piechart-container svg').remove();
-    const svg = d3.select('.piechart-container')
+    const svg = d3
+      .select('.piechart-container')
       .append('svg')
       .attr('width', width)
       .attr('height', height)
@@ -72,7 +73,8 @@ export class Piechart extends PureComponent<Props> {
 
     const pie = d3.pie();
 
-    svg.selectAll('path')
+    svg
+      .selectAll('path')
       .data(pie(data))
       .enter()
       .append('path')
@@ -91,18 +93,17 @@ export class Piechart extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className='piechart-panel'>
+      <div className="piechart-panel">
         <div
           ref={element => (this.containerElement = element)}
-          className='piechart-container'
+          className="piechart-container"
           style={{
             height: `${height * 0.9}px`,
             width: `${Math.min(width, height * 1.3)}px`,
             top: '10px',
             margin: 'auto',
           }}
-        >
-        </div>
+        />
       </div>
     );
   }
