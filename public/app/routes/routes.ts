@@ -81,6 +81,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
@@ -89,6 +90,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
