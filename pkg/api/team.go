@@ -8,13 +8,24 @@ import (
 )
 
 // POST /api/teams
-func CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Response {
+func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(409, "Team name taken", err)
 		}
 		return Error(500, "Failed to create Team", err)
+	}
+
+	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanOwn {
+		addMemberCmd := m.AddTeamMemberCommand{
+			UserId:     c.SignedInUser.UserId,
+			OrgId:      cmd.OrgId,
+			TeamId:     cmd.Result.Id,
+			Permission: int64(m.PERMISSION_ADMIN),
+		}
+		err := bus.Dispatch(&addMemberCmd)
+		c.Logger.Error("Could not add creator to team.", "error", err)
 	}
 
 	return JSON(200, &util.DynMap{

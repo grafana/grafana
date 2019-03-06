@@ -12,11 +12,12 @@ var (
 
 // TeamMember model
 type TeamMember struct {
-	Id       int64
-	OrgId    int64
-	TeamId   int64
-	UserId   int64
-	External bool
+	Id         int64
+	OrgId      int64
+	TeamId     int64
+	UserId     int64
+	External   bool
+	Permission int64
 
 	Created time.Time
 	Updated time.Time
@@ -26,10 +27,11 @@ type TeamMember struct {
 // COMMANDS
 
 type AddTeamMemberCommand struct {
-	UserId   int64 `json:"userId" binding:"Required"`
-	OrgId    int64 `json:"-"`
-	TeamId   int64 `json:"-"`
-	External bool  `json:"-"`
+	UserId     int64 `json:"userId" binding:"Required"`
+	OrgId      int64 `json:"-"`
+	TeamId     int64 `json:"-"`
+	External   bool  `json:"-"`
+	Permission int64 `json:"-"`
 }
 
 type RemoveTeamMemberCommand struct {
