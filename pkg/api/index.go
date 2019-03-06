@@ -327,6 +327,34 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
+	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanOwn {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/org/teams",
+			Children: []*dtos.NavLink{
+				{
+					Text:        "Teams",
+					Id:          "teams",
+					Description: "Manage org groups",
+					Icon:        "gicon gicon-team",
+					Url:         setting.AppSubUrl + "/org/teams",
+				},
+				{
+					Text:        "Plugins",
+					Id:          "plugins",
+					Description: "View and configure plugins",
+					Icon:        "gicon gicon-plugins",
+					Url:         setting.AppSubUrl + "/plugins",
+				},
+			},
+		}
+
+		data.NavTree = append(data.NavTree, cfgNode)
+	}
+
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:         "Help",
 		SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
