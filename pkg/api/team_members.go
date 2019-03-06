@@ -50,6 +50,21 @@ func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
 	})
 }
 
+// PUT /:teamId/members/:userId
+func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
+	cmd.TeamId = c.ParamsInt64(":teamId")
+	cmd.UserId = c.ParamsInt64(":userId")
+	cmd.OrgId = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrTeamMemberNotFound {
+			return Error(404, "Team member not found.", nil)
+		}
+		return Error(500, "Failed to update team member.", err)
+	}
+	return Success("Team member updated")
+}
+
 // DELETE /api/teams/:teamId/members/:userId
 func RemoveTeamMember(c *m.ReqContext) Response {
 	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId"), UserId: c.ParamsInt64(":userId")}); err != nil {

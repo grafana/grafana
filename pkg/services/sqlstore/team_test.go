@@ -75,6 +75,33 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(q2.Result[0].External, ShouldEqual, true)
 			})
 
+			Convey("Should be able to update users in a team", func() {
+				userId := userIds[0]
+				team := group1.Result
+				addMemberCmd := m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team.Id, UserId: userId}
+				err = AddTeamMember(&addMemberCmd)
+				So(err, ShouldBeNil)
+
+				qBeforeUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qBeforeUpdate)
+				So(err, ShouldBeNil)
+				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+
+				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
+					UserId:     userId,
+					OrgId:      testOrgId,
+					TeamId:     team.Id,
+					Permission: int64(m.PERMISSION_ADMIN),
+				})
+
+				So(err, ShouldBeNil)
+
+				qAfterUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qAfterUpdate)
+				So(err, ShouldBeNil)
+				So(qAfterUpdate.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
+			})
+
 			Convey("Should be able to search for teams", func() {
 				query := &m.SearchTeamsQuery{OrgId: testOrgId, Query: "group", Page: 1}
 				err = SearchTeams(query)

@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", GetTeamsByUser)
 
 	bus.AddHandler("sql", AddTeamMember)
+	bus.AddHandler("sql", UpdateTeamMember)
 	bus.AddHandler("sql", RemoveTeamMember)
 	bus.AddHandler("sql", GetTeamMembers)
 }
@@ -250,6 +251,29 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 		}
 
 		_, err := sess.Insert(&entity)
+		return err
+	})
+}
+
+// UpdateTeamMember updates a team member
+func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		rawSql := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
+
+		var member m.TeamMember
+		exists, err := sess.SQL(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId).Get(&member)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return m.ErrTeamMemberNotFound
+		}
+
+		member.Permission = cmd.Permission
+		_, err = sess.Update(member)
+
 		return err
 	})
 }
