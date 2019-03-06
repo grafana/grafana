@@ -30,6 +30,7 @@ export const locationReducer = (state = initialState, action: Action): LocationS
         routeParams: routeParams || state.routeParams,
         replace: replace === true,
         lastUpdated: new Date().getTime(),
+        state: action.payload.state,
       };
     }
   }

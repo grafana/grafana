@@ -157,7 +157,17 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // add missing orgId query param
     const storeState = getState();
     if (!storeState.location.query.orgId) {
-      dispatch(updateLocation({ query: { orgId: storeState.user.orgId }, partial: true, replace: true }));
+      dispatch(
+        updateLocation({
+          query: { orgId: storeState.user.orgId },
+          partial: true,
+          replace: true,
+          // Persisting location state, as dashboard might be running in playlist.
+          // Without this, state will be cleared when initialising dashboard within playlist
+          // making it impossible to stop on navigation out from playlist
+          state: storeState.location.state,
+        })
+      );
     }
 
     // init services

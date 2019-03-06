@@ -23,6 +23,7 @@ export class BridgeSrv {
             path: this.$location.path(),
             query: this.$location.search(),
             routeParams: this.$route.current.params,
+            state: this.$location.state(),
           })
         );
       }
@@ -34,6 +35,7 @@ export class BridgeSrv {
           path: this.$location.path(),
           query: this.$location.search(),
           routeParams: this.$route.current.params,
+          state: this.$location.state(),
         })
       );
     });

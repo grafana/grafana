@@ -1,4 +1,5 @@
 import { LocationUpdate } from 'app/types';
+import { getPlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 export enum CoreActionTypes {
   UpdateLocation = 'UPDATE_LOCATION',
@@ -11,7 +12,15 @@ export interface UpdateLocationAction {
   payload: LocationUpdate;
 }
 
-export const updateLocation = (location: LocationUpdate): UpdateLocationAction => ({
-  type: CoreActionTypes.UpdateLocation,
-  payload: location,
-});
+export const updateLocation = (location: LocationUpdate) => (dispatch, getState) => {
+  const playlistSrv = getPlaylistSrv();
+
+  if (playlistSrv && playlistSrv.isPlaying) {
+    playlistSrv.handleLocationUpdate(getState().location, location);
+  }
+
+  dispatch({
+    type: CoreActionTypes.UpdateLocation,
+    payload: location,
+  });
+};

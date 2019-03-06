@@ -7,6 +7,9 @@ export interface LocationUpdate {
    * If true this will replace url state (ie cause no new browser history)
    */
   replace?: boolean;
+  state?: {
+    playlistRunning?: boolean;
+  };
 }
 
 export interface LocationState {
@@ -16,6 +19,9 @@ export interface LocationState {
   routeParams: UrlQueryMap;
   replace: boolean;
   lastUpdated: number;
+  state?: {
+    playlistRunning?: boolean;
+  };
 }
 
 export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[];
