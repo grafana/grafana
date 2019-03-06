@@ -27,7 +27,7 @@ describe('PanelChrome', () => {
     expect(out).toBe('hello AAA');
   });
 
-  it('It should prefer the diret variables', () => {
+  it('But it should prefer the local variable value', () => {
     const extra = { aaa: { text: '???', value: 'XXX' } };
     const out = chrome.replaceVariables('hello $aaa and $bbb', extra);
     expect(out).toBe('hello XXX and BBB');
