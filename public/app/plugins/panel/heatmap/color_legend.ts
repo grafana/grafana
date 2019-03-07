@@ -12,6 +12,7 @@ const LEGEND_WIDTH_PX = 100;
 const LEGEND_TICK_SIZE = 0;
 const LEGEND_VALUE_MARGIN = 0;
 const LEGEND_PADDING_LEFT = 10;
+const LEGEND_SEGMENT_WIDTH = 10;
 
 /**
  * Color legend for heatmap editor.
@@ -96,7 +97,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * 2;
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
@@ -109,9 +110,9 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => d * widthFactor)
+    .attr('x', d => Math.round(d * widthFactor))
     .attr('y', 0)
-    .attr('width', rangeStep * widthFactor + 1) // Overlap rectangles to prevent gaps
+    .attr('width', Math.round(rangeStep * widthFactor + 1)) // Overlap rectangles to prevent gaps
     .attr('height', legendHeight)
     .attr('stroke-width', 0)
     .attr('fill', d => colorScale(d));
@@ -127,7 +128,7 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * 2;
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
@@ -140,9 +141,9 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => d * widthFactor)
+    .attr('x', d => Math.round(d * widthFactor))
     .attr('y', 0)
-    .attr('width', rangeStep * widthFactor)
+    .attr('width', Math.round(rangeStep * widthFactor))
     .attr('height', legendHeight)
     .attr('stroke-width', 0)
     .attr('fill', options.cardColor)
