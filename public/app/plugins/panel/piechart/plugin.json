@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "PieChart",
   "id": "piechart",
+  "state": "alpha",
 
   "dataFormats": ["time_series"],
 
