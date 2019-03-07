@@ -1,15 +1,13 @@
 ---
 name: Bug report
 about: Report a bug you found when using Grafana
-title: ''
 labels: 'type: bug'
-assignees: ''
 ---
 
 <!--
 Please use this template while reporting a bug and provide as much info as possible.
 Questions should be posted to https://community.grafana.com
-Use Query Inspector to troubleshoot issues: https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630
+Use query inspector to troubleshoot issues: https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630
 -->
 
 **What happened**:
