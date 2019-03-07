@@ -256,6 +256,11 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle all panel legends
+    this.bind('d l', () => {
+      dashboard.toggleLegendsForAll();
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
