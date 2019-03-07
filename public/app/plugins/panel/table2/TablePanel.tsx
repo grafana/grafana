@@ -13,7 +13,7 @@ import { SortedTableData } from './sortable';
 interface Props extends PanelProps<Options> {}
 
 interface State {
-  sortBy?: number; // but really is a number!
+  sortBy?: number;
   sortDirection?: SortDirectionType;
   data: SortedTableData;
 }
@@ -37,11 +37,8 @@ export class TablePanel extends Component<Props, State> {
     const { panelData, options } = this.props;
     const { sortBy, sortDirection } = this.state;
 
-    console.log('componentDidUpdate', this.props);
-
     // Update the renderer if options change
     if (options !== prevProps.options) {
-      console.log('Options Changed, update renderer', options);
       this.renderer = new TableRenderer(options.styles, this.state.data, this._rowGetter, this.props.replaceVariables);
     }
 
@@ -49,7 +46,6 @@ export class TablePanel extends Component<Props, State> {
     if (panelData !== prevProps.panelData || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       const data = new SortedTableData(panelData.tableData, sortBy, sortDirection === 'DESC');
       this.setState({ data });
-      console.log('Data Changed, update', data);
     }
   }
 
@@ -74,21 +70,13 @@ export class TablePanel extends Component<Props, State> {
   };
 
   _headerRenderer = (header: TableHeaderProps): ReactNode => {
-    const dataKey = header.dataKey as any; // types say string, but it is number?
+    const dataKey = header.dataKey as any; // types say string, but it is number!
     const { data, sortBy, sortDirection } = this.state;
-
     const col = data.getInfo()[dataKey];
-    if (!col) {
-      return <div>??{dataKey}??</div>;
-    }
-
-    const isSorted = sortBy === dataKey;
-
-    console.log('header SORT', sortBy, isSorted);
 
     return (
       <div>
-        {col.text} {isSorted && <SortIndicator sortDirection={sortDirection} />}
+        {col.text} {sortBy === dataKey && <SortIndicator sortDirection={sortDirection} />}
       </div>
     );
   };
@@ -101,12 +89,12 @@ export class TablePanel extends Component<Props, State> {
   };
 
   render() {
-    const { panelData, width, height, options } = this.props;
+    const { width, height, options } = this.props;
     const { showHeader } = options;
     //   const { sortBy, sortDirection } = this.state;
-    const { tableData } = panelData;
+    const { data } = this.state;
 
-    if (!tableData || tableData.rows.length < 1) {
+    if (!data) {
       return <div>No Table Data...</div>;
     }
 
@@ -122,18 +110,21 @@ export class TablePanel extends Component<Props, State> {
             overscanRowCount={10}
             rowHeight={30}
             rowGetter={this._rowGetter}
-            rowCount={tableData.rows.length}
+            rowCount={data.getCount()}
             sort={this._sort}
             width={width}
           >
-            {tableData.columns.map((col, index) => {
+            {data.getInfo().map((col, index) => {
               return (
                 <Column
                   key={index}
                   dataKey={index}
                   headerRenderer={this._headerRenderer}
                   cellRenderer={this._cellRenderer}
-                  width={300}
+                  width={150}
+                  minWidth={50}
+                  maxWidth={400}
+                  flexGrow={1}
                 />
               );
             })}
