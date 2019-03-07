@@ -7,17 +7,13 @@ export function sortTableData(data: TableData, sortIndex?: number, reverse = fal
   if (isNumber(sortIndex)) {
     const copy = {
       ...data,
-      rows: data.rows.map((row, index) => {
-        return row;
+      rows: [...data.rows].sort((a, b) => {
+        a = a[sortIndex];
+        b = b[sortIndex];
+        // Sort null or undefined separately from comparable values
+        return +(a == null) - +(b == null) || +(a > b) || -(a < b);
       }),
     };
-
-    copy.rows.sort((a, b) => {
-      a = a[sortIndex];
-      b = b[sortIndex];
-      // Sort null or undefined separately from comparable values
-      return +(a == null) - +(b == null) || +(a > b) || -(a < b);
-    });
 
     if (reverse) {
       copy.rows.reverse();
