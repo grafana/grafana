@@ -16,7 +16,7 @@ program
   .description('Starts Grafana front-end in development mode with watch enabled')
   .action(async cmd => {
     await execTask(startTask)({
-      watchThemes: cmd.theme,
+      watchThemes: cmd.watchTheme,
       hot: cmd.hot,
     });
   });
