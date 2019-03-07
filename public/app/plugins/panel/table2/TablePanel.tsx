@@ -30,7 +30,7 @@ export class TablePanel extends Component<Props, State> {
       data: new SortedTableData(panelData.tableData),
     };
 
-    this.renderer = new TableRenderer(options.styles, this.state.data, this._rowGetter, replaceVariables);
+    this.renderer = new TableRenderer(options.styles, this.state.data, this.rowGetter, replaceVariables);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -39,7 +39,7 @@ export class TablePanel extends Component<Props, State> {
 
     // Update the renderer if options change
     if (options !== prevProps.options) {
-      this.renderer = new TableRenderer(options.styles, this.state.data, this._rowGetter, this.props.replaceVariables);
+      this.renderer = new TableRenderer(options.styles, this.state.data, this.rowGetter, this.props.replaceVariables);
     }
 
     // Update the data when data or sort changes
@@ -49,11 +49,11 @@ export class TablePanel extends Component<Props, State> {
     }
   }
 
-  _rowGetter = ({ index }) => {
+  rowGetter = ({ index }) => {
     return this.state.data.getRow(index);
   };
 
-  _sort = ({ sortBy }) => {
+  doSort = ({ sortBy }) => {
     let sortDirection = this.state.sortDirection;
     if (sortBy !== this.state.sortBy) {
       sortDirection = 'DESC';
@@ -69,7 +69,7 @@ export class TablePanel extends Component<Props, State> {
     this.setState({ sortBy, sortDirection });
   };
 
-  _headerRenderer = (header: TableHeaderProps): ReactNode => {
+  headerRenderer = (header: TableHeaderProps): ReactNode => {
     const dataKey = header.dataKey as any; // types say string, but it is number!
     const { data, sortBy, sortDirection } = this.state;
     const col = data.getInfo()[dataKey];
@@ -81,7 +81,7 @@ export class TablePanel extends Component<Props, State> {
     );
   };
 
-  _cellRenderer = (cell: TableCellProps) => {
+  cellRenderer = (cell: TableCellProps) => {
     const { columnIndex, rowIndex } = cell;
     const row = this.state.data.getRow(rowIndex);
     const val = row[columnIndex];
@@ -109,9 +109,9 @@ export class TablePanel extends Component<Props, State> {
             height={height}
             overscanRowCount={10}
             rowHeight={30}
-            rowGetter={this._rowGetter}
+            rowGetter={this.rowGetter}
             rowCount={data.getCount()}
-            sort={this._sort}
+            sort={this.doSort}
             width={width}
           >
             {data.getInfo().map((col, index) => {
@@ -119,11 +119,10 @@ export class TablePanel extends Component<Props, State> {
                 <Column
                   key={index}
                   dataKey={index}
-                  headerRenderer={this._headerRenderer}
-                  cellRenderer={this._cellRenderer}
+                  headerRenderer={this.headerRenderer}
+                  cellRenderer={this.cellRenderer}
                   width={150}
                   minWidth={50}
-                  maxWidth={400}
                   flexGrow={1}
                 />
               );
