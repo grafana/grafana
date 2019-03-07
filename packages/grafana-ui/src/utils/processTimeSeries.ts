@@ -8,13 +8,28 @@ import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../typ
 
 interface Options {
   data: TableData[];
-  xColumn: number; // Time
-  yColumn: number; // Value
+  xColumn?: number; // Time
+  yColumn?: number; // Value
   nullValueMode: NullValueMode;
 }
 
 export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Options): TimeSeriesVMs {
   const vmSeries = data.map((item, index) => {
+    if (!isNumber(xColumn)) {
+      xColumn = 1; // Default timeseries colum.  TODO, find first time field!
+    }
+    if (!isNumber(yColumn)) {
+      yColumn = 0; // TODO, find first non-time field
+    }
+
+    // TODO? either % or throw error?
+    if (xColumn >= item.columns.length) {
+      throw new Error('invalid colum: ' + xColumn);
+    }
+    if (yColumn >= item.columns.length) {
+      throw new Error('invalid colum: ' + yColumn);
+    }
+
     const colorIndex = index % colors.length;
     const label = item.columns[yColumn].text;
     const result = [];

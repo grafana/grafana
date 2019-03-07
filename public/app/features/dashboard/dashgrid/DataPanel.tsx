@@ -145,12 +145,10 @@ export class DataPanel extends Component<Props, State> {
         onDataResponse(resp);
       }
 
-      const data = toTableData(resp.data);
-      console.log('Converted:', data);
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        data,
+        data: toTableData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {
@@ -189,8 +187,6 @@ export class DataPanel extends Component<Props, State> {
         </div>
       );
     }
-
-    console.log('RENDER', data);
 
     return (
       <>

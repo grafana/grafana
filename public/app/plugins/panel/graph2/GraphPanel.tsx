@@ -21,13 +21,8 @@ export class GraphPanel extends PureComponent<Props> {
 
     let vmSeries: TimeSeriesVMs;
     if (data) {
-      // For now, assume timeseries defaults
-      const xColumn = 1; // time
-      const yColumn = 0; // value
       vmSeries = processTimeSeries({
         data,
-        xColumn,
-        yColumn,
         nullValueMode: NullValueMode.Ignore,
       });
     }
