@@ -50,6 +50,10 @@ func init() {
 		OptionsTemplate: `
       <h3 class="page-heading">Pushover settings</h3>
       <div class="gf-form">
+        <span class="gf-form-label width-10">Pushover Endpoint</span>
+        <input type="text" class="gf-form-input" placeholder="The URL of the Pushover service. Leave empty for the default value" ng-model="ctrl.model.settings.endpoint"></input>
+      </div>
+      <div class="gf-form">
         <span class="gf-form-label width-10">API Token</span>
         <input type="text" class="gf-form-input" required placeholder="Application token" ng-model="ctrl.model.settings.apiToken"></input>
       </div>
@@ -97,6 +101,7 @@ func init() {
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
 func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	endpoint := model.Settings.Get("endpoint").MustString()
 	userKey := model.Settings.Get("userKey").MustString()
 	APIToken := model.Settings.Get("apiToken").MustString()
 	device := model.Settings.Get("device").MustString()
@@ -107,6 +112,9 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	okSound := model.Settings.Get("okSound").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
+	if endpoint == "" {
+		endpoint = "https://api.pushover.net/1/messages.json"
+	}
 	if userKey == "" {
 		return nil, alerting.ValidationError{Reason: "User key not given"}
 	}
@@ -115,6 +123,7 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 	}
 	return &PushoverNotifier{
 		NotifierBase:  NewNotifierBase(model),
+		Endpoint:      endpoint,
 		UserKey:       userKey,
 		APIToken:      APIToken,
 		Priority:      priority,
@@ -132,6 +141,7 @@ func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, er
 // alert notifications to Pushover
 type PushoverNotifier struct {
 	NotifierBase
+	Endpoint      string
 	UserKey       string
 	APIToken      string
 	Priority      int
@@ -146,7 +156,8 @@ type PushoverNotifier struct {
 
 // Notify sends a alert notification to Pushover
 func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
-	ruleURL, err := evalContext.GetRuleURL()
+	pn.log.Info("Executing pushover notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
 		pn.log.Error("Failed get rule link", "error", err)
 		return err
@@ -174,7 +185,7 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        pushoverEndpoint,
+		Url:        pn.Endpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
