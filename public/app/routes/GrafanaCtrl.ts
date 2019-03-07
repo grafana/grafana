@@ -116,11 +116,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       sidemenuOpen = scope.contextSrv.sidemenu;
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
-      appEvents.on('toggle-sidemenu', () => {
-        sidemenuOpen = scope.contextSrv.sidemenu;
-        body.toggleClass('sidemenu-open');
-      });
-
       appEvents.on('toggle-sidemenu-mobile', () => {
         body.toggleClass('sidemenu-open--xs');
       });
