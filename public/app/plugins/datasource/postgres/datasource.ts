@@ -17,7 +17,7 @@ export class PostgresDatasource {
     this.jsonData = instanceSettings.jsonData;
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new PostgresQuery({});
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
   interpolateVariable = (value, variable) => {

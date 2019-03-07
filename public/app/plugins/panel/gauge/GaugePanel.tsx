@@ -1,5 +1,5 @@
 // Libraries
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
 // Services & Utils
 import { ThemeContext } from '@grafana/ui';
@@ -14,26 +14,7 @@ import { calculateSimpleStats } from '@grafana/ui/src/utils/processData';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
-interface State {
-  values?: TimeSeriesValue[];
-}
-
-export class GaugePanel extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      values: this.calculateStats(),
-    };
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    const { panelData, options } = this.props;
-
-    if (panelData !== prevProps.panelData || options.valueOptions.stat !== prevProps.options.valueOptions.stat) {
-      this.setState({ values: this.calculateStats() });
-    }
-  }
-
+export class GaugePanel extends PureComponent<Props> {
   calculateStats(): TimeSeriesValue[] {
     const { panelData, options } = this.props;
     const { valueOptions } = options;
@@ -48,19 +29,16 @@ export class GaugePanel extends Component<Props, State> {
   }
 
   render() {
-    const { width, height, onInterpolate, options } = this.props;
+    const { width, height, replaceVariables, options } = this.props;
     const { valueOptions } = options;
-    const { values } = this.state;
 
-    const prefix = onInterpolate(valueOptions.prefix);
-    const suffix = onInterpolate(valueOptions.suffix);
-
+    const prefix = replaceVariables(valueOptions.prefix);
+    const suffix = replaceVariables(valueOptions.suffix);
     let value: TimeSeriesValue;
 
-    if (values && values.length > 0) {
-      value = values[0]; // for now
-    } else {
-      return <div>no data yet...</div>;
+    const stats = this.calculateStats();
+    if (stats.length > 0) {
+      value = stats[valueOptions.stat];
     }
 
     return (
