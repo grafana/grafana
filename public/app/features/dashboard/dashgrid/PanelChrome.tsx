@@ -11,14 +11,14 @@ import { DataPanel } from './DataPanel';
 import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
-import { applyPanelTimeOverrides, snapshotDataToPanelData } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, TableData, DataQueryError } from '@grafana/ui';
+import { DataQueryResponse, TimeRange, LoadingState, TableData, DataQueryError, toTableData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import variables from 'sass/_variables.generated.scss';
@@ -139,7 +139,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get getDataForPanel() {
-    return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
+    return this.hasPanelSnapshot ? toTableData(this.props.panel.snapshotData) : null;
   }
 
   renderPanelPlugin(loading: LoadingState, data: TableData[], width: number, height: number): JSX.Element {

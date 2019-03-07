@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TableData, TimeRange, TimeSeries } from '@grafana/ui';
+import { TimeRange } from '@grafana/ui';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -169,40 +169,3 @@ export function getResolution(panel: PanelModel): number {
 
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
 }
-
-const isTimeSeries = (data: any): data is TimeSeries => data && data.hasOwnProperty('datapoints');
-const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
-export const snapshotDataToPanelData = (panel: PanelModel): TableData[] => {
-  return toTableData(panel.snapshotData);
-};
-
-export const toTableData = (results: any[]): TableData[] => {
-  if (!results) {
-    return [];
-  }
-  return results.map(data => {
-    if (isTableData(data)) {
-      return data as TableData;
-    }
-    if (isTimeSeries(data)) {
-      const ts = data as TimeSeries;
-      return {
-        type: 'timeseries',
-        columns: [
-          {
-            text: ts.target,
-            unit: ts.unit,
-            type: 'number', // Is this really true?
-          },
-          {
-            text: 'time',
-            type: 'time',
-          },
-        ],
-        rows: ts.datapoints,
-      } as TableData;
-    }
-    console.warn('Can not convert', data);
-    throw new Error('Unsupported data format');
-  });
-};

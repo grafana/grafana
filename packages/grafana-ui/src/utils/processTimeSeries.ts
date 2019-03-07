@@ -4,12 +4,12 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
-import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../types';
+import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData, TimeSeries } from '../types';
 
 interface Options {
   data: TableData[];
-  xColumn?: number; // Time
-  yColumn?: number; // Value
+  xColumn?: number; // Time (or null to guess)
+  yColumn?: number; // Value (or null to guess)
   nullValueMode: NullValueMode;
 }
 
@@ -190,3 +190,38 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
 
   return vmSeries;
 }
+
+export const toTableData = (results: any[]): TableData[] => {
+  const tables: TableData[] = [];
+  if (results) {
+    for (let i = 0; i < results.length; i++) {
+      const data = results[i];
+      if (data) {
+        if (data.hasOwnProperty('columns')) {
+          tables.push(data as TableData);
+        } else if (data.hasOwnProperty('datapoints')) {
+          const ts = data as TimeSeries;
+          tables.push({
+            type: 'timeseries',
+            columns: [
+              {
+                text: ts.target,
+                unit: ts.unit,
+                type: 'number', // Is this really true?
+              },
+              {
+                text: 'time',
+                type: 'time',
+              },
+            ],
+            rows: ts.datapoints,
+          } as TableData);
+        } else {
+          console.warn('Can not convert', data);
+          throw new Error('Unsupported data format');
+        }
+      }
+    }
+  }
+  return tables;
+};

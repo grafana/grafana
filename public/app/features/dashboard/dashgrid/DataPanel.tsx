@@ -14,9 +14,8 @@ import {
   TableData,
   TimeRange,
   ScopedVars,
+  toTableData,
 } from '@grafana/ui';
-
-import { toTableData } from '../utils/panel';
 
 interface RenderProps {
   loading: LoadingState;
