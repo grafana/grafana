@@ -41,12 +41,10 @@ type httpClient interface {
 }
 
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
-	dsURL := ds.Url
-	if strings.Split(ds.Url, ":")[0] == "unix" {
-		dsURL = "http://localhost"
+	targetURL, _ := url.Parse(ds.Url)
+	if targetURL.Scheme == "unix" {
+		targetURL, _ = url.Parse("http://localhost")
 	}
-
-	targetURL, _ := url.Parse(dsURL)
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -224,7 +222,13 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
-	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
+	host := proxy.targetUrl.Host
+
+	dsURLParsed, _ := url.Parse(proxy.ds.Url)
+	if dsURLParsed.Scheme == "unix" {
+		host = proxy.ds.Url
+	}
+	if !checkWhiteList(proxy.ctx, host) {
 		return errors.New("Target url is not a valid target")
 	}
 

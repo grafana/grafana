@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -60,20 +59,20 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 	var proxy func(*http.Request) (*url.URL, error)
 	var dial func(network, address string) (net.Conn, error)
 
-	switch strings.Split(ds.Url, ":")[0] {
+	dsURL, err := url.Parse(ds.Url)
+	if err != nil {
+		return nil, err
+	}
+	switch dsURL.Scheme {
 	case "unix":
-		urlParsed, err := url.Parse(ds.Url)
-		if err != nil {
-			return nil, err
-		}
-		proxy = http.ProxyURL(urlParsed)
+		proxy = http.ProxyURL(dsURL)
 		dial = func(network, address string) (net.Conn, error) {
 			defaultDial := (&net.Dialer{
 				Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 				KeepAlive: 30 * time.Second,
 				DualStack: true,
 			}).Dial
-			return defaultDial(urlParsed.Scheme, urlParsed.Path)
+			return defaultDial(dsURL.Scheme, dsURL.Path)
 		}
 	default:
 		proxy = http.ProxyFromEnvironment
