@@ -16,10 +16,10 @@ export interface GrafanaThemeCommons {
   typography: {
     fontFamily: {
       sansSerif: string;
-      serif: string;
       monospace: string;
     };
     size: {
+      root: string;
       base: string;
       xs: string;
       s: string;

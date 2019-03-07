@@ -17,7 +17,7 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$spacer: 1rem !default;
+$spacer: .875rem !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -84,46 +84,32 @@ $enable-flex: true;
 // Typography
 // -------------------------
 
-$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
-$font-family-serif: Georgia, 'Times New Roman', Times, serif;
-$font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
+$font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
+$font-family-monospace: ${theme.typography.fontFamily.monospace};
 $font-family-base: $font-family-sans-serif !default;
 
-$font-size-root: 14px !default;
-$font-size-base: 13px !default;
+$font-size-root: ${theme.typography.size.root} !default;
+$font-size-base: ${theme.typography.size.base} !default;
 
-$font-size-lg: 18px !default;
-$font-size-md: 14px !default;
-$font-size-sm: 12px !default;
-$font-size-xs: 10px !default;
+$font-size-lg: ${theme.typography.size.l} !default;
+$font-size-md: ${theme.typography.size.m} !default;
+$font-size-sm: ${theme.typography.size.s} !default;
+$font-size-xs: ${theme.typography.size.xs} !default;
 
-$line-height-base: 1.5 !default;
-$font-weight-semi-bold: 500;
+$line-height-base: ${theme.typography.lineHeight.l} !default;
+$font-weight-semi-bold: ${theme.typography.weight.semibold};
 
-$font-size-h1: 2rem !default;
-$font-size-h2: 1.75rem !default;
-$font-size-h3: 1.5rem !default;
-$font-size-h4: 1.3rem !default;
-$font-size-h5: 1.2rem !default;
-$font-size-h6: 1rem !default;
-
-$display1-size: 6rem !default;
-$display2-size: 5.5rem !default;
-$display3-size: 4.5rem !default;
-$display4-size: 3.5rem !default;
-
-$display1-weight: 400 !default;
-$display2-weight: 400 !default;
-$display3-weight: 400 !default;
-$display4-weight: 400 !default;
-
-$lead-font-size: 1.25rem !default;
-$lead-font-weight: 300 !default;
+$font-size-h1: ${theme.typography.heading.h1} !default;
+$font-size-h2: ${theme.typography.heading.h2} !default;
+$font-size-h3: ${theme.typography.heading.h3} !default;
+$font-size-h4: ${theme.typography.heading.h4} !default;
+$font-size-h5: ${theme.typography.heading.h5} !default;
+$font-size-h6: ${theme.typography.heading.h6} !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-$headings-font-weight: 400 !default;
-$headings-line-height: 1.1 !default;
+$headings-font-weight: ${theme.typography.weight.normal} !default;
+$headings-line-height: ${theme.typography.lineHeight.s} !default;
 
 $hr-border-width: $border-width !default;
 $dt-font-weight: bold !default;
@@ -141,8 +127,8 @@ $border-radius-sm: 2px !default;
 
 // Page
 
-$page-sidebar-width: 11rem;
-$page-sidebar-margin: 4rem;
+$page-sidebar-width: 9.625rem;
+$page-sidebar-margin: 3.5rem;
 
 // Links
 // -------------------------
@@ -174,7 +160,7 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 0.2rem;
+$gf-form-margin: 0.175rem;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
@@ -199,12 +185,12 @@ $zindex-typeahead: 1060;
 // Buttons
 //
 
-$btn-padding-x: 1rem !default;
-$btn-padding-y: 0.7rem !default;
+$btn-padding-x: .875rem !default;
+$btn-padding-y: 0.6125rem !default;
 $btn-line-height: 1 !default;
-$btn-font-weight: 500 !default;
+$btn-font-weight: ${theme.typography.weight.semibold} !default;
 
-$btn-padding-x-sm: 0.5rem !default;
+$btn-padding-x-sm: 0.4375rem !default;
 $btn-padding-y-sm: 0.25rem !default;
 
 $btn-padding-x-lg: 21px !default;
