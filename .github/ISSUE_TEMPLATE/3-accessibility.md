@@ -1,5 +1,5 @@
 ---
-name: Accessibility problem or improvement request
+name: Accessibility issue
 about: Help make Grafana be better at keyboard navigation, screen-readable and accessible to all.
 labels: 'type: accessibility'
 ---

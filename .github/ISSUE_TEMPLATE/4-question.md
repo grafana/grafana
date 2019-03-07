@@ -1,5 +1,5 @@
 ---
-name: Question / Support request
+name: Support request
 about: 'Question or support request relating to using Grafana'
 title: ''
 labels: ''
