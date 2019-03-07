@@ -7,9 +7,8 @@ import { sanitize } from 'app/core/utils/text';
 
 // Types
 import kbn from 'app/core/utils/kbn';
-import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, InterpolateFunction } from '@grafana/ui';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, InterpolateFunction, Column } from '@grafana/ui';
 import { Style } from './types';
-import { SortedTableData } from './sortable';
 import { Index } from 'react-virtualized';
 
 type CellFormatter = (v: any, style: Style) => string;
@@ -32,18 +31,18 @@ export class TableRenderer {
 
   constructor(
     styles: Style[],
-    data: SortedTableData,
+    schema: Column[],
     private rowGetter: (info: Index) => any[], // matches the table rowGetter
     private replaceVariables: InterpolateFunction
   ) {
     this.colorState = {};
 
-    if (!data) {
+    if (!schema) {
       this.columns = [];
       return;
     }
 
-    this.columns = data.getInfo().map((col, index) => {
+    this.columns = schema.map((col, index) => {
       let title = col.text;
       let style: Style = null;
 

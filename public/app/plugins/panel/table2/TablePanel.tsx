@@ -3,19 +3,19 @@ import _ from 'lodash';
 import React, { Component, ReactNode } from 'react';
 
 // Types
-import { PanelProps, ThemeContext } from '@grafana/ui';
+import { PanelProps, ThemeContext, TableData } from '@grafana/ui';
 import { Options } from './types';
 import { Table, SortDirectionType, SortIndicator, Column, TableHeaderProps, TableCellProps } from 'react-virtualized';
 
 import { TableRenderer } from './renderer';
-import { SortedTableData } from './sortable';
+import { sortTableData } from './sortable';
 
 interface Props extends PanelProps<Options> {}
 
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data: SortedTableData;
+  data: TableData;
 }
 
 export class TablePanel extends Component<Props, State> {
@@ -27,10 +27,10 @@ export class TablePanel extends Component<Props, State> {
     const { panelData, options, replaceVariables } = this.props;
 
     this.state = {
-      data: new SortedTableData(panelData.tableData),
+      data: panelData.tableData,
     };
 
-    this.renderer = new TableRenderer(options.styles, this.state.data, this.rowGetter, replaceVariables);
+    this.renderer = new TableRenderer(options.styles, this.state.data.columns, this.rowGetter, replaceVariables);
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -39,18 +39,23 @@ export class TablePanel extends Component<Props, State> {
 
     // Update the renderer if options change
     if (options !== prevProps.options) {
-      this.renderer = new TableRenderer(options.styles, this.state.data, this.rowGetter, this.props.replaceVariables);
+      this.renderer = new TableRenderer(
+        options.styles,
+        this.state.data.columns,
+        this.rowGetter,
+        this.props.replaceVariables
+      );
     }
 
     // Update the data when data or sort changes
     if (panelData !== prevProps.panelData || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
-      const data = new SortedTableData(panelData.tableData, sortBy, sortDirection === 'DESC');
+      const data = sortTableData(panelData.tableData, sortBy, sortDirection === 'DESC');
       this.setState({ data });
     }
   }
 
   rowGetter = ({ index }) => {
-    return this.state.data.getRow(index);
+    return this.state.data.rows[index];
   };
 
   doSort = ({ sortBy }) => {
@@ -63,16 +68,13 @@ export class TablePanel extends Component<Props, State> {
       sortBy = null;
     }
 
-    // This will trigger sort via properties
-    console.log('SORT', sortBy, typeof sortBy, sortDirection);
-
     this.setState({ sortBy, sortDirection });
   };
 
   headerRenderer = (header: TableHeaderProps): ReactNode => {
     const dataKey = header.dataKey as any; // types say string, but it is number!
     const { data, sortBy, sortDirection } = this.state;
-    const col = data.getInfo()[dataKey];
+    const col = data.columns[dataKey];
 
     return (
       <div>
@@ -83,7 +85,7 @@ export class TablePanel extends Component<Props, State> {
 
   cellRenderer = (cell: TableCellProps) => {
     const { columnIndex, rowIndex } = cell;
-    const row = this.state.data.getRow(rowIndex);
+    const row = this.state.data.rows[rowIndex];
     const val = row[columnIndex];
     return this.renderer.renderCell(columnIndex, rowIndex, val);
   };
@@ -110,11 +112,11 @@ export class TablePanel extends Component<Props, State> {
             overscanRowCount={10}
             rowHeight={30}
             rowGetter={this.rowGetter}
-            rowCount={data.getCount()}
+            rowCount={data.rows.length}
             sort={this.doSort}
             width={width}
           >
-            {data.getInfo().map((col, index) => {
+            {data.columns.map((col, index) => {
               return (
                 <Column
                   key={index}

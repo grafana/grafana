@@ -6,7 +6,6 @@ import { Options } from '../types';
 import { PanelProps, LoadingState } from '@grafana/ui/src/types';
 import moment from 'moment';
 import { TableRenderer } from '../renderer';
-import { SortedTableData } from '../sortable';
 
 // TODO: this is commented out with *x* describe!
 // Essentially all the elements need to replace the <td> with <div>
@@ -204,9 +203,8 @@ xdescribe('when rendering table', () => {
       renderCounter: 1,
       options: panel,
     };
-    const data = new SortedTableData(table);
-    const rowGetter = ({ index }) => data.getRow(index);
-    const renderer = new TableRenderer(panel.styles, data, rowGetter, props.replaceVariables);
+    const rowGetter = ({ index }) => table.rows[index];
+    const renderer = new TableRenderer(panel.styles, table.columns, rowGetter, props.replaceVariables);
     renderer.setTheme(null);
 
     it('time column should be formated', () => {
