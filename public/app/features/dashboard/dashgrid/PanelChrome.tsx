@@ -18,7 +18,7 @@ import { profiler } from 'app/core/profiler';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
+import { DataQueryResponse, TimeRange, LoadingState, TableData, DataQueryError } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import variables from 'sass/_variables.generated.scss';
@@ -142,7 +142,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
   }
 
-  renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, data: TableData[], width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.reactPanel.panel;
@@ -157,7 +157,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       <div className="panel-content">
         <PanelComponent
           loading={loading}
-          panelData={panelData}
+          data={data}
           timeRange={timeRange}
           options={panel.getOptions(plugin.exports.reactPanel.defaults)}
           width={width - 2 * variables.panelhorizontalpadding}
@@ -188,8 +188,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
-            {({ loading, panelData }) => {
-              return this.renderPanelPlugin(loading, panelData, width, height);
+            {({ loading, data }) => {
+              return this.renderPanelPlugin(loading, data, width, height);
             }}
           </DataPanel>
         ) : (

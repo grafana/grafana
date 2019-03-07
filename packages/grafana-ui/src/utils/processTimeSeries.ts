@@ -4,17 +4,19 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
-import { TimeSeries, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
+import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../types';
 
 interface Options {
-  timeSeries: TimeSeries[];
+  data: TableData[];
+  xColumn: number; // Time
+  yColumn: number; // Value
   nullValueMode: NullValueMode;
 }
 
-export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeSeriesVMs {
-  const vmSeries = timeSeries.map((item, index) => {
+export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Options): TimeSeriesVMs {
+  const vmSeries = data.map((item, index) => {
     const colorIndex = index % colors.length;
-    const label = item.target;
+    const label = item.columns[yColumn].text;
     const result = [];
 
     // stat defaults
@@ -42,9 +44,9 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
     let previousValue = 0;
     let previousDeltaUp = true;
 
-    for (let i = 0; i < item.datapoints.length; i++) {
-      currentValue = item.datapoints[i][0];
-      currentTime = item.datapoints[i][1];
+    for (let i = 0; i < item.rows.length; i++) {
+      currentValue = item.rows[i][yColumn];
+      currentTime = item.rows[i][xColumn];
 
       if (typeof currentTime !== 'number') {
         continue;
@@ -95,7 +97,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
           if (previousValue > currentValue) {
             // counter reset
             previousDeltaUp = false;
-            if (i === item.datapoints.length - 1) {
+            if (i === item.rows.length - 1) {
               // reset on last
               delta += currentValue;
             }

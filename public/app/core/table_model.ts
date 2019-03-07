@@ -1,17 +1,15 @@
 import _ from 'lodash';
+import { Column, TableData } from '@grafana/ui';
 
-interface Column {
-  text: string;
+// This class mutates and uses the extra column fields
+interface ColumnEX extends Column {
   title?: string;
-  type?: string;
   sort?: boolean;
   desc?: boolean;
-  filterable?: boolean;
-  unit?: string;
 }
 
-export default class TableModel {
-  columns: Column[];
+export default class TableModel implements TableData {
+  columns: ColumnEX[];
   rows: any[];
   type: string;
   columnMap: any;

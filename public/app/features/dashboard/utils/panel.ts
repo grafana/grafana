@@ -4,8 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelData, TimeRange, TimeSeries } from '@grafana/ui';
-import { TableData } from '@grafana/ui/src';
+import { TableData, TimeRange, TimeSeries } from '@grafana/ui';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -173,16 +172,37 @@ export function getResolution(panel: PanelModel): number {
 
 const isTimeSeries = (data: any): data is TimeSeries => data && data.hasOwnProperty('datapoints');
 const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
-export const snapshotDataToPanelData = (panel: PanelModel): PanelData => {
-  const snapshotData = panel.snapshotData;
-  if (isTimeSeries(snapshotData[0])) {
-    return {
-      timeSeries: snapshotData,
-    } as PanelData;
-  } else if (isTableData(snapshotData[0])) {
-    return {
-      tableData: snapshotData[0],
-    } as PanelData;
+export const snapshotDataToPanelData = (panel: PanelModel): TableData[] => {
+  return toTableData(panel.snapshotData);
+};
+
+export const toTableData = (results: any[]): TableData[] => {
+  if (!results) {
+    return [];
   }
-  throw new Error('snapshotData is invalid:' + snapshotData.toString());
+  return results.map(data => {
+    if (isTableData(data)) {
+      return data as TableData;
+    }
+    if (isTimeSeries(data)) {
+      const ts = data as TimeSeries;
+      return {
+        type: 'timeseries',
+        columns: [
+          {
+            text: ts.target,
+            unit: ts.unit,
+            type: 'number', // Is this really true?
+          },
+          {
+            text: 'time',
+            type: 'time',
+          },
+        ],
+        rows: ts.datapoints,
+      } as TableData;
+    }
+    console.warn('Can not convert', data);
+    throw new Error('Unsupported data format');
+  });
 };

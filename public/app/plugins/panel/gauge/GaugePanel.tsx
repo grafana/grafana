@@ -22,29 +22,39 @@ export class GaugePanel extends Component<Props, State> {
     this.state = {
       value: this.findValue(props),
     };
+    console.log('CONSTRUCTOR!', this.props.data);
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (this.props.panelData !== prevProps.panelData) {
+    console.log('UPDATE', this.props.data);
+
+    if (this.props.data !== prevProps.data) {
       this.setState({ value: this.findValue(this.props) });
     }
   }
 
   findValue(props: Props): number | null {
-    const { panelData, options } = props;
+    const { data, options } = props;
     const { valueOptions } = options;
 
-    if (panelData.timeSeries) {
+    console.log('FIND VALUE', data);
+
+    if (data) {
+      // For now, assume timeseries defaults
+      const xColumn = 1; // time
+      const yColumn = 0; // value
       const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
+        data,
+        xColumn,
+        yColumn,
         nullValueMode: NullValueMode.Null,
       });
+
+      console.log('GOT', vmSeries);
 
       if (vmSeries[0]) {
         return vmSeries[0].stats[valueOptions.stat];
       }
-    } else if (panelData.tableData) {
-      return panelData.tableData.rows[0].find(prop => prop > 0);
     }
     return null;
   }
