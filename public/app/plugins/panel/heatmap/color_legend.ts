@@ -95,10 +95,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  let rangeStep = 1;
-  if (rangeTo - rangeFrom > legendWidth) {
-    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
-  }
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * 2;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
@@ -115,7 +112,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
     .attr('stroke-width', 0)
     .attr('fill', d => colorScale(d));
 
-  drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
+  drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange);
 }
 
 function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue) {
@@ -126,10 +123,7 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  let rangeStep = 1;
-  if (rangeTo - rangeFrom > legendWidth) {
-    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
-  }
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * 2;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
@@ -147,10 +141,10 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
     .attr('fill', options.cardColor)
     .style('opacity', d => opacityScale(d));
 
-  drawLegendValues(elem, opacityScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
+  drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange);
 }
 
-function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth) {
+function drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange) {
   const legendElem = $(elem).find('svg');
   const legend = d3.select(legendElem.get(0));
 
