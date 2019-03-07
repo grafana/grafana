@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 
 // Services & Utils
 import { processTimeSeries, ThemeContext } from '@grafana/ui';
@@ -12,15 +12,27 @@ import { GaugeOptions } from './types';
 import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
 
 interface Props extends PanelProps<GaugeOptions> {}
+interface State {
+  value: TimeSeriesValue;
+}
 
-export class GaugePanel extends PureComponent<Props> {
-  render() {
-    const { panelData, width, height, replaceVariables, options } = this.props;
+export class GaugePanel extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      value: this.findValue(props),
+    };
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.panelData !== prevProps.panelData) {
+      this.setState({ value: this.findValue(this.props) });
+    }
+  }
+
+  findValue(props: Props): number | null {
+    const { panelData, options } = props;
     const { valueOptions } = options;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
-    let value: TimeSeriesValue;
 
     if (panelData.timeSeries) {
       const vmSeries = processTimeSeries({
@@ -29,14 +41,21 @@ export class GaugePanel extends PureComponent<Props> {
       });
 
       if (vmSeries[0]) {
-        value = vmSeries[0].stats[valueOptions.stat];
-      } else {
-        value = null;
+        return vmSeries[0].stats[valueOptions.stat];
       }
     } else if (panelData.tableData) {
-      value = panelData.tableData.rows[0].find(prop => prop > 0);
+      return panelData.tableData.rows[0].find(prop => prop > 0);
     }
+    return null;
+  }
 
+  render() {
+    const { width, height, replaceVariables, options } = this.props;
+    const { valueOptions } = options;
+    const { value } = this.state;
+
+    const prefix = replaceVariables(valueOptions.prefix);
+    const suffix = replaceVariables(valueOptions.suffix);
     return (
       <ThemeContext.Consumer>
         {theme => (
