@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+var getTime = time.Now
+
 type databaseCache struct {
 	SQLStore *sqlstore.SqlStore
 	log      log.Logger
@@ -34,8 +36,6 @@ func (dc *databaseCache) Run(ctx context.Context) error {
 	}
 }
 
-var getTime = time.Now
-
 func (dc *databaseCache) internalRunGC() {
 	now := getTime().Unix()
 	sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
@@ -47,19 +47,20 @@ func (dc *databaseCache) internalRunGC() {
 }
 
 func (dc *databaseCache) Get(key string) (interface{}, error) {
-	cacheHits := []cacheData{}
-	err := dc.SQLStore.NewSession().Where(`key = ?`, key).Find(&cacheHits)
+	cacheHits := []CacheData{}
+	sess := dc.SQLStore.NewSession()
+	defer sess.Close()
+	err := sess.Where("cache_key= ?", key).Find(&cacheHits)
+
 	if err != nil {
 		return nil, err
 	}
 
-	var cacheHit cacheData
 	if len(cacheHits) == 0 {
 		return nil, ErrCacheItemNotFound
 	}
 
-	cacheHit = cacheHits[0]
-	// if Expires is set. Make sure its still valid.
+	cacheHit := cacheHits[0]
 	if cacheHit.Expires > 0 {
 		existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
 		if existedButExpired {
@@ -83,9 +84,10 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 		return err
 	}
 
-	now := getTime().Unix()
-	cacheHits := []cacheData{}
-	err = dc.SQLStore.NewSession().Where(`key = ?`, key).Find(&cacheHits)
+	session := dc.SQLStore.NewSession()
+
+	var cacheHit CacheData
+	has, err := session.Where("cache_key = ?", key).Get(&cacheHit)
 	if err != nil {
 		return err
 	}
@@ -95,27 +97,28 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 		expiresAtEpoch = int64(expire) / int64(time.Second)
 	}
 
-	session := dc.SQLStore.NewSession()
 	// insert or update depending on if item already exist
-	if len(cacheHits) > 0 {
-		_, err = session.Exec("UPDATE cache_data SET data=?, created=?, expire=? WHERE key=?", data, now, expiresAtEpoch, key)
+	if has {
+		_, err = session.Exec(`UPDATE cache_data SET data=?, created=?, expire=? WHERE cache_key='?'`, data, getTime().Unix(), expiresAtEpoch, key)
 	} else {
-		_, err = session.Exec("INSERT INTO cache_data(key,data,created_at,expires) VALUES(?,?,?,?)", key, data, now, expiresAtEpoch)
+		_, err = session.Exec(`INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`, key, data, getTime().Unix(), expiresAtEpoch)
 	}
 
 	return err
 }
 
 func (dc *databaseCache) Delete(key string) error {
-	sql := `DELETE FROM cache_data WHERE key = ?`
+	sql := "DELETE FROM cache_data WHERE cache_key=?"
 	_, err := dc.SQLStore.NewSession().Exec(sql, key)
 
 	return err
 }
 
-type cacheData struct {
-	Key       string
+type CacheData struct {
+	CacheKey  string
 	Data      []byte
 	Expires   int64
 	CreatedAt int64
 }
+
+// func (cd CacheData) TableName() string { return "cache_data" }

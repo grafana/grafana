@@ -21,10 +21,16 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	obj := &CacheableStruct{String: "foolbar"}
 
 	//set time.now to 2 weeks ago
+	var err error
 	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	db.Set("key1", obj, 1000*time.Second)
-	db.Set("key2", obj, 1000*time.Second)
-	db.Set("key3", obj, 1000*time.Second)
+	err = db.Set("key1", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
+
+	err = db.Set("key2", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
+
+	err = db.Set("key3", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
 
 	// insert object that should never expire
 	db.Set("key4", obj, 0)
@@ -36,8 +42,8 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	db.internalRunGC()
 
 	//try to read values
-	_, err := db.Get("key1")
-	assert.Equal(t, err, ErrCacheItemNotFound)
+	_, err = db.Get("key1")
+	assert.Equal(t, err, ErrCacheItemNotFound, "expected cache item not found. got: ", err)
 	_, err = db.Get("key2")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 	_, err = db.Get("key3")

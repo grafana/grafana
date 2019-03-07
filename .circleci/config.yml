@@ -64,11 +64,8 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
         - checkout
-        #- run: sudo apt update
-        #- run: sudo apt install -y postgresql-client
         - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
-        - run: dockerize -wait tcp://127.0.0.1:6739 -timeout 120s
-        #- run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
+        - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
@@ -561,6 +558,8 @@ workflows:
         - mysql-integration-test:
             filters: *filter-not-release-or-master
         - postgres-integration-test:
+            filters: *filter-not-release-or-master
+        - cache-server-test:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
