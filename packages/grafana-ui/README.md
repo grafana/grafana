@@ -14,13 +14,13 @@ See [package source](https://github.com/grafana/grafana/tree/master/packages/gra
 
 ## Development
 
-For development purposes we suggest using `yarn link` that will create symlink to @grafana/ui lib. To do so navigate to `packages/grafana-ui` and run `yarn link`. Then, navigate to your project and run `yarn link @grafana/ui` to use linked version of the lib. To unlink follow the same procedure, but use `yarn unlink` instead.
+For development purposes we suggest using `yarn link` that will create symlink to @grafana/ui lib. To do so navigate to `packages/grafana-ui` and run `yarn link`. Then, navigate to your project and run `yarn link @grafana/ui` to use the linked version of the lib. To unlink follow the same procedure, but use `yarn unlink` instead.
 
 ## Building @grafana/ui
 To build @grafana/ui run `npm run gui:build` script *from Grafana repository root*. The build will be created in `packages/grafana-ui/dist` directory. Following steps from [Development](#development) you can test built package.
 
 ## Releasing new version
-To release new version run `npm run gui:release` script *from Grafana repository root*. The script will prepare distribution package as well as allow you to bump library version and publish new version to NPM registry.
+To release new version run `npm run gui:release` script *from Grafana repository root*. The script will prepare the distribution package as well as prompt you to bump library version and publish it to the NPM registry.
 
 ### Automatic version bump
 When running `npm run gui:release` package.json file will be automatically updated. Also, package.json file will be commited and pushed to upstream branch.
