@@ -1,5 +1,5 @@
 ---
-name: Enhancement Request
+name: Enhancement request
 about: Suggest an enhancement or new feature for the Grafana project
 labels: 'type: feature request'
 ---
