@@ -11,6 +11,7 @@ const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
 const LEGEND_TICK_SIZE = 0;
 const LEGEND_VALUE_MARGIN = 0;
+const LEGEND_PADDING_LEFT = 10;
 
 /**
  * Color legend for heatmap editor.
@@ -101,6 +102,9 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
 
   const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
   legend
+    .append('g')
+    .attr('class', 'legend-color-bar')
+    .attr('transform', 'translate(' + LEGEND_PADDING_LEFT + ',0)')
     .selectAll('.heatmap-color-legend-rect')
     .data(valuesRange)
     .enter()
@@ -129,6 +133,9 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
 
   const opacityScale = getOpacityScale(options, maxValue, minValue);
   legend
+    .append('g')
+    .attr('class', 'legend-color-bar')
+    .attr('transform', 'translate(' + LEGEND_PADDING_LEFT + ',0)')
     .selectAll('.heatmap-opacity-legend-rect')
     .data(valuesRange)
     .enter()
@@ -165,7 +172,7 @@ function drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWi
 
   const colorRect = legendElem.find(':first-child');
   const posY = getSvgElemHeight(legendElem) + LEGEND_VALUE_MARGIN;
-  const posX = getSvgElemX(colorRect);
+  const posX = getSvgElemX(colorRect) + LEGEND_PADDING_LEFT;
 
   d3.select(legendElem.get(0))
     .append('g')
