@@ -120,7 +120,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 
 ## Upgrading to v6.0
 
-If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitzied HTML.
+If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
 
 ### Authentication and security

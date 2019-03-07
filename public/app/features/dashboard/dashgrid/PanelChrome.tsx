@@ -19,6 +19,7 @@ import { profiler } from 'app/core/profiler';
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
+import { ScopedVars } from '@grafana/ui';
 
 import variables from 'sass/_variables.generated.scss';
 import templateSrv from 'app/features/templating/template_srv';
@@ -100,8 +101,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
-  onInterpolate = (value: string, format?: string) => {
-    return templateSrv.replace(value, this.props.panel.scopedVars, format);
+  replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
+    let vars = this.props.panel.scopedVars;
+    if (extraVars) {
+      vars = vars ? { ...vars, ...extraVars } : extraVars;
+    }
+    return templateSrv.replace(value, vars, format);
   };
 
   onDataResponse = (dataQueryResponse: DataQueryResponse) => {
@@ -169,7 +174,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           width={width - 2 * variables.panelhorizontalpadding}
           height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
           renderCounter={renderCounter}
-          onInterpolate={this.onInterpolate}
+          replaceVariables={this.replaceVariables}
         />
       </div>
     );
@@ -189,6 +194,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeRange={timeRange}
             widthPixels={width}
             refreshCounter={refreshCounter}
+            scopedVars={panel.scopedVars}
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
