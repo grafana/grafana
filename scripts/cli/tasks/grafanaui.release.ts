@@ -62,6 +62,12 @@ const promptConfirm = async (message?: string) => {
   ]);
 };
 
+// Since Grafana core depends on @grafana/ui highly, we run full check before release
+const runChecksAndTests = async () =>
+  useSpinner<void>(`Running checks and tests`, async () => {
+    await execa('npm', ['run', 'test']);
+  })();
+
 const bumpVersion = (version: string) =>
   useSpinner<void>(`Saving version ${version} to package.json`, async () => {
     changeCwdToGrafanaUi();
@@ -105,6 +111,7 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
   usePackageJsonVersion,
   createVersionCommit,
 }) => {
+  await runChecksAndTests();
   if (publishToNpm) {
     // TODO: Ensure release branch
     // When need to update this when we star keeping @grafana/ui releases in sync with core
