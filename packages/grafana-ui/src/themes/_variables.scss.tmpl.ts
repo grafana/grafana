@@ -17,7 +17,7 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$spacer: .875rem !default;
+$spacer: ${theme.spacing.m} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -46,7 +46,7 @@ $spacers: (
     ),
   ),
 ) !default;
-$border-width: 1px !default;
+$border-width: ${theme.border.width.s} !default;
 
 // Grid breakpoints
 //
@@ -54,11 +54,11 @@ $border-width: 1px !default;
 // adapting to different screen sizes, for use in media queries.
 
 $grid-breakpoints: (
-  xs: 0,
-  sm: 544px,
-  md: 768px,
-  lg: 992px,
-  xl: 1200px,
+  xs: ${theme.breakpoints.xs},
+  sm: ${theme.breakpoints.s},
+  md: ${theme.breakpoints.m},
+  lg: ${theme.breakpoints.l},
+  xl: ${theme.breakpoints.xl},
 ) !default;
 
 // Grid containers
@@ -127,8 +127,8 @@ $border-radius-sm: 2px !default;
 
 // Page
 
-$page-sidebar-width: 9.625rem;
-$page-sidebar-margin: 3.5rem;
+$page-sidebar-width: 154px;
+$page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
@@ -160,7 +160,7 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 0.175rem;
+$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
@@ -185,13 +185,13 @@ $zindex-typeahead: 1060;
 // Buttons
 //
 
-$btn-padding-x: .875rem !default;
-$btn-padding-y: 0.6125rem !default;
+$btn-padding-x: 14px !default;
+$btn-padding-y: 10px !default;
 $btn-line-height: 1 !default;
 $btn-font-weight: ${theme.typography.weight.semibold} !default;
 
-$btn-padding-x-sm: 0.4375rem !default;
-$btn-padding-y-sm: 0.25rem !default;
+$btn-padding-x-sm: 7px !default;
+$btn-padding-y-sm: 4px !default;
 
 $btn-padding-x-lg: 21px !default;
 $btn-padding-y-lg: 11px !default;

@@ -20,7 +20,7 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$spacer: 0.875rem !default;
+$spacer: 14px !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -91,23 +91,23 @@ $font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
 $font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
 $font-family-base: $font-family-sans-serif !default;
 
-$font-size-root: 100% !default;
-$font-size-base: 0.8125rem !default;
+$font-size-root: 14px !default;
+$font-size-base: 13px !default;
 
-$font-size-lg: 1.125rem !default;
-$font-size-md: 0.875rem !default;
-$font-size-sm: 0.75rem !default;
-$font-size-xs: 0.625rem !default;
+$font-size-lg: 18px !default;
+$font-size-md: 14px !default;
+$font-size-sm: 12px !default;
+$font-size-xs: 10px !default;
 
 $line-height-base: 1.5 !default;
 $font-weight-semi-bold: 500;
 
-$font-size-h1: 1.75rem !default;
-$font-size-h2: 1.5rem !default;
-$font-size-h3: 1.3125rem !default;
-$font-size-h4: 1.125rem !default;
-$font-size-h5: 1rem !default;
-$font-size-h6: 0.875rem !default;
+$font-size-h1: 28px !default;
+$font-size-h2: 24px !default;
+$font-size-h3: 21px !default;
+$font-size-h4: 18px !default;
+$font-size-h5: 16px !default;
+$font-size-h6: 14px !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -130,8 +130,8 @@ $border-radius-sm: 2px !default;
 
 // Page
 
-$page-sidebar-width: 9.625rem;
-$page-sidebar-margin: 3.5rem;
+$page-sidebar-width: 154px;
+$page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
@@ -163,7 +163,7 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 0.175rem;
+$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
@@ -188,13 +188,13 @@ $zindex-typeahead: 1060;
 // Buttons
 //
 
-$btn-padding-x: 0.875rem !default;
-$btn-padding-y: 0.6125rem !default;
+$btn-padding-x: 14px !default;
+$btn-padding-y: 10px !default;
 $btn-line-height: 1 !default;
 $btn-font-weight: 500 !default;
 
-$btn-padding-x-sm: 0.4375rem !default;
-$btn-padding-y-sm: 0.25rem !default;
+$btn-padding-x-sm: 7px !default;
+$btn-padding-y-sm: 4px !default;
 
 $btn-padding-x-lg: 21px !default;
 $btn-padding-y-lg: 11px !default;

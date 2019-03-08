@@ -6,7 +6,7 @@ export enum GrafanaThemeType {
 export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
-  brakpoints: {
+  breakpoints: {
     xs: string;
     s: string;
     m: string;
@@ -59,6 +59,9 @@ export interface GrafanaThemeCommons {
       xs: string;
       s: string;
       m: string;
+    };
+    width: {
+      s: string;
     };
   };
 }

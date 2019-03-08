@@ -8,20 +8,20 @@ const theme: GrafanaThemeCommons = {
       monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
-      root: '100%',
-      base: '.8125rem',
-      xs: '.625rem',
-      s: '.75rem',
-      m: '.875rem',
-      l: '1.125rem',
+      root: '14px',
+      base: '13px',
+      xs: '10px',
+      s: '12px',
+      m: '14px',
+      l: '18px',
     },
     heading: {
-      h1: '1.75rem',
-      h2: '1.5rem',
-      h3: '1.3125rem',
-      h4: '1.125rem',
-      h5: '1rem',
-      h6: '.875rem',
+      h1: '28px',
+      h2: '24px',
+      h3: '21px',
+      h4: '18px',
+      h5: '16px',
+      h6: '14px',
     },
     weight: {
       light: 300,
@@ -35,7 +35,7 @@ const theme: GrafanaThemeCommons = {
       l: 1.5,
     },
   },
-  brakpoints: {
+  breakpoints: {
     xs: '0',
     s: '544px',
     m: '768px',
@@ -44,9 +44,9 @@ const theme: GrafanaThemeCommons = {
   },
   spacing: {
     xs: '0',
-    s: '0.2rem',
-    m: '1rem',
-    l: '1.5rem',
+    s: '3px',
+    m: '14px',
+    l: '21px',
     gutter: '30px',
   },
   border: {
@@ -54,6 +54,9 @@ const theme: GrafanaThemeCommons = {
       xs: '2px',
       s: '3px',
       m: '5px',
+    },
+    width: {
+      s: '1px',
     },
   },
 };
