@@ -16,11 +16,11 @@ func (c *Conn) ResetSession(ctx context.Context) error {
 	}
 	c.resetSession = true
 
-	if c.connector == nil || len(c.connector.ResetSQL) == 0 {
+	if c.connector == nil || len(c.connector.SessionInitSQL) == 0 {
 		return nil
 	}
 
-	s, err := c.prepareContext(ctx, c.connector.ResetSQL)
+	s, err := c.prepareContext(ctx, c.connector.SessionInitSQL)
 	if err != nil {
 		return driver.ErrBadConn
 	}

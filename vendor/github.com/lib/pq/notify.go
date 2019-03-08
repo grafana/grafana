@@ -725,6 +725,9 @@ func (l *Listener) Close() error {
 	}
 	l.isClosed = true
 
+	// Unblock calls to Listen()
+	l.reconnectCond.Broadcast()
+
 	return nil
 }
 

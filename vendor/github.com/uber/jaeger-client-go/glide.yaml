@@ -1,0 +1,22 @@
+package: github.com/uber/jaeger-client-go
+import:
+- package: github.com/opentracing/opentracing-go
+  version: ^1
+  subpackages:
+  - ext
+  - log
+- package: github.com/crossdock/crossdock-go
+- package: github.com/uber/jaeger-lib
+  version: ^1.2.1
+  subpackages:
+  - metrics
+- package: github.com/pkg/errors
+  version: ~0.8.0
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+  - require
+  - suite
+- package: github.com/prometheus/client_golang
+  version: v0.8.0

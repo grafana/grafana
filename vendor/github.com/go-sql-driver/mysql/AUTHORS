@@ -13,11 +13,14 @@
 
 Aaron Hopkins <go-sql-driver at die.net>
 Achille Roussel <achille.roussel at gmail.com>
+Alexey Palazhchenko <alexey.palazhchenko at gmail.com>
+Andrew Reid <andrew.reid at tixtrack.com>
 Arne Hormann <arnehormann at gmail.com>
 Asta Xie <xiemengjun at gmail.com>
 Bulat Gaifullin <gaifullinbf at gmail.com>
 Carlos Nieto <jose.carlos at menteslibres.net>
 Chris Moos <chris at tech9computers.com>
+Craig Wilson <craiggwilson at gmail.com>
 Daniel Montoya <dsmontoyam at gmail.com>
 Daniel Nichter <nil at codenode.com>
 Daniël van Eeden <git at myname.nl>
@@ -27,6 +30,7 @@ Egor Smolyakov <egorsmkv at gmail.com>
 Evan Shaw <evan at vendhq.com>
 Frederick Mayle <frederickmayle at gmail.com>
 Gustavo Kristic <gkristic at gmail.com>
+Hajime Nakagami <nakagami at gmail.com>
 Hanno Braun <mail at hannobraun.com>
 Henri Yandell <flamefew at gmail.com>
 Hirotaka Yamamoto <ymmt2005 at gmail.com>
@@ -52,7 +56,7 @@ Lion Yang <lion at aosc.xyz>
 Luca Looz <luca.looz92 at gmail.com>
 Lucas Liu <extrafliu at gmail.com>
 Luke Scott <luke at webconnex.com>
-Maciej Zimnoch <maciej.zimnoch@codilime.com>
+Maciej Zimnoch <maciej.zimnoch at codilime.com>
 Michael Woolnough <michael.woolnough at gmail.com>
 Nicola Peduzzi <thenikso at gmail.com>
 Olivier Mengué <dolmen at cpan.org>
@@ -60,8 +64,10 @@ oscarzhao <oscarzhaosl at gmail.com>
 Paul Bonser <misterpib at gmail.com>
 Peter Schultz <peter.schultz at classmarkets.com>
 Rebecca Chin <rchin at pivotal.io>
-Runrioter Wung <runrioter at gmail.com>
+Reed Allman <rdallman10 at gmail.com>
+Richard Wilkes <wilkes at me.com>
 Robert Russell <robert at rrbrussell.com>
+Runrioter Wung <runrioter at gmail.com>
 Shuode Li <elemount at qq.com>
 Soroush Pour <me at soroushjp.com>
 Stan Putrya <root.vagner at gmail.com>
@@ -78,5 +84,6 @@ Counting Ltd.
 Google Inc.
 InfoSum Ltd.
 Keybase Inc.
+Percona LLC
 Pivotal Inc.
 Stripe Inc.

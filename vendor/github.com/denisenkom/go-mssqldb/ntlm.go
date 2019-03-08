@@ -15,44 +15,44 @@ import (
 )
 
 const (
-	NEGOTIATE_MESSAGE    = 1
-	CHALLENGE_MESSAGE    = 2
-	AUTHENTICATE_MESSAGE = 3
+	_NEGOTIATE_MESSAGE    = 1
+	_CHALLENGE_MESSAGE    = 2
+	_AUTHENTICATE_MESSAGE = 3
 )
 
 const (
-	NEGOTIATE_UNICODE                  = 0x00000001
-	NEGOTIATE_OEM                      = 0x00000002
-	NEGOTIATE_TARGET                   = 0x00000004
-	NEGOTIATE_SIGN                     = 0x00000010
-	NEGOTIATE_SEAL                     = 0x00000020
-	NEGOTIATE_DATAGRAM                 = 0x00000040
-	NEGOTIATE_LMKEY                    = 0x00000080
-	NEGOTIATE_NTLM                     = 0x00000200
-	NEGOTIATE_ANONYMOUS                = 0x00000800
-	NEGOTIATE_OEM_DOMAIN_SUPPLIED      = 0x00001000
-	NEGOTIATE_OEM_WORKSTATION_SUPPLIED = 0x00002000
-	NEGOTIATE_ALWAYS_SIGN              = 0x00008000
-	NEGOTIATE_TARGET_TYPE_DOMAIN       = 0x00010000
-	NEGOTIATE_TARGET_TYPE_SERVER       = 0x00020000
-	NEGOTIATE_EXTENDED_SESSIONSECURITY = 0x00080000
-	NEGOTIATE_IDENTIFY                 = 0x00100000
-	REQUEST_NON_NT_SESSION_KEY         = 0x00400000
-	NEGOTIATE_TARGET_INFO              = 0x00800000
-	NEGOTIATE_VERSION                  = 0x02000000
-	NEGOTIATE_128                      = 0x20000000
-	NEGOTIATE_KEY_EXCH                 = 0x40000000
-	NEGOTIATE_56                       = 0x80000000
+	_NEGOTIATE_UNICODE                  = 0x00000001
+	_NEGOTIATE_OEM                      = 0x00000002
+	_NEGOTIATE_TARGET                   = 0x00000004
+	_NEGOTIATE_SIGN                     = 0x00000010
+	_NEGOTIATE_SEAL                     = 0x00000020
+	_NEGOTIATE_DATAGRAM                 = 0x00000040
+	_NEGOTIATE_LMKEY                    = 0x00000080
+	_NEGOTIATE_NTLM                     = 0x00000200
+	_NEGOTIATE_ANONYMOUS                = 0x00000800
+	_NEGOTIATE_OEM_DOMAIN_SUPPLIED      = 0x00001000
+	_NEGOTIATE_OEM_WORKSTATION_SUPPLIED = 0x00002000
+	_NEGOTIATE_ALWAYS_SIGN              = 0x00008000
+	_NEGOTIATE_TARGET_TYPE_DOMAIN       = 0x00010000
+	_NEGOTIATE_TARGET_TYPE_SERVER       = 0x00020000
+	_NEGOTIATE_EXTENDED_SESSIONSECURITY = 0x00080000
+	_NEGOTIATE_IDENTIFY                 = 0x00100000
+	_REQUEST_NON_NT_SESSION_KEY         = 0x00400000
+	_NEGOTIATE_TARGET_INFO              = 0x00800000
+	_NEGOTIATE_VERSION                  = 0x02000000
+	_NEGOTIATE_128                      = 0x20000000
+	_NEGOTIATE_KEY_EXCH                 = 0x40000000
+	_NEGOTIATE_56                       = 0x80000000
 )
 
-const NEGOTIATE_FLAGS = NEGOTIATE_UNICODE |
-	NEGOTIATE_NTLM |
-	NEGOTIATE_OEM_DOMAIN_SUPPLIED |
-	NEGOTIATE_OEM_WORKSTATION_SUPPLIED |
-	NEGOTIATE_ALWAYS_SIGN |
-	NEGOTIATE_EXTENDED_SESSIONSECURITY
+const _NEGOTIATE_FLAGS = _NEGOTIATE_UNICODE |
+	_NEGOTIATE_NTLM |
+	_NEGOTIATE_OEM_DOMAIN_SUPPLIED |
+	_NEGOTIATE_OEM_WORKSTATION_SUPPLIED |
+	_NEGOTIATE_ALWAYS_SIGN |
+	_NEGOTIATE_EXTENDED_SESSIONSECURITY
 
-type NTLMAuth struct {
+type ntlmAuth struct {
 	Domain      string
 	UserName    string
 	Password    string
@@ -64,7 +64,7 @@ func getAuth(user, password, service, workstation string) (auth, bool) {
 		return nil, false
 	}
 	domain_user := strings.SplitN(user, "\\", 2)
-	return &NTLMAuth{
+	return &ntlmAuth{
 		Domain:      domain_user[0],
 		UserName:    domain_user[1],
 		Password:    password,
@@ -86,13 +86,13 @@ func utf16le(val string) []byte {
 	return v
 }
 
-func (auth *NTLMAuth) InitialBytes() ([]byte, error) {
+func (auth *ntlmAuth) InitialBytes() ([]byte, error) {
 	domain_len := len(auth.Domain)
 	workstation_len := len(auth.Workstation)
 	msg := make([]byte, 40+domain_len+workstation_len)
 	copy(msg, []byte("NTLMSSP\x00"))
-	binary.LittleEndian.PutUint32(msg[8:], NEGOTIATE_MESSAGE)
-	binary.LittleEndian.PutUint32(msg[12:], NEGOTIATE_FLAGS)
+	binary.LittleEndian.PutUint32(msg[8:], _NEGOTIATE_MESSAGE)
+	binary.LittleEndian.PutUint32(msg[12:], _NEGOTIATE_FLAGS)
 	// Domain Name Fields
 	binary.LittleEndian.PutUint16(msg[16:], uint16(domain_len))
 	binary.LittleEndian.PutUint16(msg[18:], uint16(domain_len))
@@ -198,11 +198,11 @@ func ntlmSessionResponse(clientNonce [8]byte, serverChallenge [8]byte, password 
 	return response(hash, passwordHash)
 }
 
-func (auth *NTLMAuth) NextBytes(bytes []byte) ([]byte, error) {
+func (auth *ntlmAuth) NextBytes(bytes []byte) ([]byte, error) {
 	if string(bytes[0:8]) != "NTLMSSP\x00" {
 		return nil, errorNTLM
 	}
-	if binary.LittleEndian.Uint32(bytes[8:12]) != CHALLENGE_MESSAGE {
+	if binary.LittleEndian.Uint32(bytes[8:12]) != _CHALLENGE_MESSAGE {
 		return nil, errorNTLM
 	}
 	flags := binary.LittleEndian.Uint32(bytes[20:24])
@@ -210,7 +210,7 @@ func (auth *NTLMAuth) NextBytes(bytes []byte) ([]byte, error) {
 	copy(challenge[:], bytes[24:32])
 
 	var lm, nt []byte
-	if (flags & NEGOTIATE_EXTENDED_SESSIONSECURITY) != 0 {
+	if (flags & _NEGOTIATE_EXTENDED_SESSIONSECURITY) != 0 {
 		nonce := clientChallenge()
 		var lm_bytes [24]byte
 		copy(lm_bytes[:8], nonce[:])
@@ -235,7 +235,7 @@ func (auth *NTLMAuth) NextBytes(bytes []byte) ([]byte, error) {
 
 	msg := make([]byte, 88+lm_len+nt_len+domain_len+user_len+workstation_len)
 	copy(msg, []byte("NTLMSSP\x00"))
-	binary.LittleEndian.PutUint32(msg[8:], AUTHENTICATE_MESSAGE)
+	binary.LittleEndian.PutUint32(msg[8:], _AUTHENTICATE_MESSAGE)
 	// Lm Challenge Response Fields
 	binary.LittleEndian.PutUint16(msg[12:], uint16(lm_len))
 	binary.LittleEndian.PutUint16(msg[14:], uint16(lm_len))
@@ -279,5 +279,5 @@ func (auth *NTLMAuth) NextBytes(bytes []byte) ([]byte, error) {
 	return msg, nil
 }
 
-func (auth *NTLMAuth) Free() {
+func (auth *ntlmAuth) Free() {
 }

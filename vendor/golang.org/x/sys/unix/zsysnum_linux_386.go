@@ -387,4 +387,6 @@ const (
 	SYS_PKEY_FREE              = 382
 	SYS_STATX                  = 383
 	SYS_ARCH_PRCTL             = 384
+	SYS_IO_PGETEVENTS          = 385
+	SYS_RSEQ                   = 386
 )
