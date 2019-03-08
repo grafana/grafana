@@ -2,14 +2,22 @@ import { toTableData } from './processTimeSeries';
 
 describe('toTableData', () => {
   it('converts timeseries to table skipping nulls', () => {
-    const input = {
+    const input1 = {
       target: 'Field Name',
       datapoints: [[100, 1], [200, 2]],
     };
-    const data = toTableData([null, input, null, null]);
-    expect(data.length).toBe(1);
-    expect(data[0].columns[0].text).toBe(input.target);
-    expect(data[0].rows).toBe(input.datapoints);
+    const input2 = {
+      // without target
+      target: '',
+      datapoints: [[100, 1], [200, 2]],
+    };
+    const data = toTableData([null, input1, input2, null, null]);
+    expect(data.length).toBe(2);
+    expect(data[0].columns[0].text).toBe(input1.target);
+    expect(data[0].rows).toBe(input1.datapoints);
+
+    // Default name
+    expect(data[1].columns[0].text).toEqual('Value');
   });
 
   it('keeps tableData unchanged', () => {

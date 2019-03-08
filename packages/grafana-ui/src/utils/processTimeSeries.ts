@@ -209,7 +209,7 @@ export const toTableData = (results?: any[]): TableData[] => {
         return {
           columns: [
             {
-              text: ts.target || 'Timeseries',
+              text: ts.target || 'Value',
               unit: ts.unit,
             },
             {
