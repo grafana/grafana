@@ -533,8 +533,8 @@ describe('grafanaGraph', () => {
 
     it('should not contain values lower than min', () => {
         const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 200);
-        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 300);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
     });
   });
 
@@ -554,8 +554,8 @@ describe('grafanaGraph', () => {
 
     it('should not contain values lower than min', () => {
         const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 100);
-        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 200);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
     });
   });
 
@@ -576,8 +576,8 @@ describe('grafanaGraph', () => {
 
     it('should not contain values lower than min', () => {
         const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-        expect(Math.min.apply(Math, nonZero.map(t => t[0])) === 200);
-        expect(Math.max.apply(Math, nonZero.map(t => t[0])) === 200);
+        expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+        expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
     });
   });
 });
