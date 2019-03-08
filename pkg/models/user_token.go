@@ -29,5 +29,8 @@ type UserTokenService interface {
 	LookupToken(unhashedToken string) (*UserToken, error)
 	TryRotateToken(token *UserToken, clientIP, userAgent string) (bool, error)
 	RevokeToken(token *UserToken) error
+	RevokeAllUserTokens(userId int64) error
 	ActiveTokenCount() (int64, error)
+	GetUserToken(userId, userTokenId int64) (*UserToken, error)
+	GetUserTokens(userId int64) ([]*UserToken, error)
 }
