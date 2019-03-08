@@ -57,34 +57,34 @@ $orange: #eb7b18;
 $purple: #9933cc;
 $variable: #32d1df;
 
-$brand-primary: $orange;
-$brand-success: $green-base;
-$brand-warning: $brand-primary;
-$brand-danger: $red-base;
+$brand-primary: #eb7b18;
+$brand-success: #299c46;
+$brand-warning: #eb7b18;
+$brand-danger: #e02f44;
 
-$query-red: $red-base;
+$query-red: #e02f44;
 $query-green: #74e680;
 $query-purple: #fe85fc;
+$query-orange: #eb7b18;
 $query-keyword: #66d9ef;
-$query-orange: $orange;
 
 // Status colors
 // -------------------------
-$online: $green-base;
+$online: #299c46;
 $warn: #f79520;
-$critical: $red-base;
+$critical: #e02f44;
 
 // Scaffolding
 // -------------------------
 $body-bg: #161719;
 $page-bg: #161719;
 
-$body-color: $gray-4;
-$text-color: $gray-4;
-$text-color-strong: $white;
-$text-color-weak: $gray-2;
-$text-color-faint: $dark-10;
-$text-color-emphasis: $gray-5;
+$body-color: #d8d9da;
+$text-color: #d8d9da;
+$text-color-strong: #ffffff;
+$text-color-weak: #8e8e8e;
+$text-color-faint: #222426;
+$text-color-emphasis: #ececec;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -102,14 +102,14 @@ $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
 // -------------------------
-$link-color: darken($white, 11%);
-$link-color-disabled: darken($link-color, 30%);
-$link-hover-color: $white;
-$external-link-color: $blue-light;
+$link-color: #e3e3e3;
+$link-color-disabled: #e3e3e3;
+$link-hover-color: #ffffff;
+$external-link-color: #33b5e5;
 
 // Typography
 // -------------------------
-$headings-color: darken($white, 11%);
+$headings-color: #e3e3e3;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 

@@ -224,7 +224,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
-        icon: 'fa fa-fw fa-rocket',
+        icon: 'gicon gicon-explore',
         shortcut: 'x',
       });
     }

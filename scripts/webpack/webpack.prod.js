@@ -47,17 +47,7 @@ module.exports = merge(common, {
       })
     ]
   },
-
   optimization: {
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          name: "vendor",
-          chunks: "all"
-        }
-      }
-    },
     minimizer: [
       new UglifyJsPlugin({
         cache: true,
@@ -67,7 +57,6 @@ module.exports = merge(common, {
       new OptimizeCSSAssetsPlugin({})
     ]
   },
-
   plugins: [
     new MiniCssExtractPlugin({
       filename: "grafana.[name].[hash].css"

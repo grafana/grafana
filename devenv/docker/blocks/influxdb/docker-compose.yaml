@@ -1,5 +1,3 @@
-version: '2'
-services:
   influxdb:
     image: influxdb:latest
     container_name: influxdb

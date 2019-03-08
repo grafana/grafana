@@ -8,15 +8,15 @@ import { Options } from './types';
 
 export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleLines = () => {
-    this.props.onChange({ ...this.props.options, showLines: !this.props.options.showLines });
+    this.props.onOptionsChange({ ...this.props.options, showLines: !this.props.options.showLines });
   };
 
   onToggleBars = () => {
-    this.props.onChange({ ...this.props.options, showBars: !this.props.options.showBars });
+    this.props.onOptionsChange({ ...this.props.options, showBars: !this.props.options.showBars });
   };
 
   onTogglePoints = () => {
-    this.props.onChange({ ...this.props.options, showPoints: !this.props.options.showPoints });
+    this.props.onOptionsChange({ ...this.props.options, showPoints: !this.props.options.showPoints });
   };
 
   render() {
