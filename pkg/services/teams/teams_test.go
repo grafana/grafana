@@ -32,7 +32,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := UpdateTeam(editor, &cmd)
+				err := UpdateTeam(&editor, &cmd)
 
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
@@ -73,7 +73,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := UpdateTeam(editor, &cmd)
+				err := UpdateTeam(&editor, &cmd)
 
 				So(teamUpdated, ShouldBeTrue)
 				So(err, ShouldBeNil)
@@ -111,7 +111,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := UpdateTeam(editor, &cmd)
+				err := UpdateTeam(&editor, &cmd)
 
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
@@ -142,7 +142,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := UpdateTeam(editor, &cmd)
+				err := UpdateTeam(&editor, &cmd)
 
 				So(teamUpdated, ShouldBeTrue)
 				So(err, ShouldBeNil)
