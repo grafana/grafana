@@ -272,7 +272,7 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 		}
 
 		member.Permission = cmd.Permission
-		_, err = sess.Where("org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId).Update(member)
+		_, err = sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId).Update(member)
 
 		return err
 	})
