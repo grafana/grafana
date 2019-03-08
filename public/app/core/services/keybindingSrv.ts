@@ -257,6 +257,16 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle panel stack attr
+    this.bind('p k', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+        panelRef.stack = !panelRef.stack;
+        panelRef.fill = 10 - panelRef.fill;
+        panelRef.render();
+      }
+    });
+
     // toggle all panel legends
     this.bind('d l', () => {
       dashboard.toggleLegendsForAll();

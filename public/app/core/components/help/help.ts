@@ -36,6 +36,7 @@ export class HelpCtrl {
         { keys: ['p', 'd'], description: 'Duplicate Panel' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
         { keys: ['p', 'l'], description: 'Toggle panel legend' },
+        { keys: ['p', 'k'], description: 'Toggle stacking' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },
