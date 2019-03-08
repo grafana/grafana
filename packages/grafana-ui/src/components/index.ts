@@ -26,3 +26,4 @@ export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Gauge } from './Gauge/Gauge';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { UnitPicker } from './UnitPicker/UnitPicker';

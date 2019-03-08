@@ -100,7 +100,12 @@ export class AddPanelWidget extends React.Component<Props, State> {
     const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
-      gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      gridPos: {
+        x: gridPos.x,
+        y: gridPos.y,
+        w: panelPluginInfo.defaults.gridPos.w,
+        h: panelPluginInfo.defaults.gridPos.h,
+      },
     };
 
     // apply panel template / defaults

@@ -49,7 +49,7 @@
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-25">
 			<label class="gf-form-label query-keyword width-8">Down sample</label>
-			<input type="text" class="gf-form-input"
+			<input type="text" class="gf-form-input gf-form-input--has-help-icon"
 						 ng-model="ctrl.target.downsampleInterval"
 						 ng-model-onblur
 			       ng-change="ctrl.targetBlur()"
@@ -139,7 +139,7 @@
 			</div>
 
       <gf-form-switch class="gf-form"
-                    label="Group by" 
+                    label="Group by"
                     label-class="query-keyword"
                     checked="ctrl.target.currentFilterGroupBy"
                     on-change="ctrl.targetBlur()">

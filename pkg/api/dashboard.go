@@ -488,6 +488,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.Resto
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	saveCmd.FolderId = dash.FolderId
 
 	return hs.PostDashboard(c, saveCmd)
 }

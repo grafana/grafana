@@ -4,6 +4,121 @@
 
 package xorm
 
+import (
+	"reflect"
+	"strings"
+	"time"
+
+	"github.com/go-xorm/core"
+)
+
+type incrParam struct {
+	colName string
+	arg     interface{}
+}
+
+type decrParam struct {
+	colName string
+	arg     interface{}
+}
+
+type exprParam struct {
+	colName string
+	expr    string
+}
+
+type columnMap []string
+
+func (m columnMap) contain(colName string) bool {
+	if len(m) == 0 {
+		return false
+	}
+
+	n := len(colName)
+	for _, mk := range m {
+		if len(mk) != n {
+			continue
+		}
+		if strings.EqualFold(mk, colName) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *columnMap) add(colName string) bool {
+	if m.contain(colName) {
+		return false
+	}
+	*m = append(*m, colName)
+	return true
+}
+
+func setColumnInt(bean interface{}, col *core.Column, t int64) {
+	v, err := col.ValueOf(bean)
+	if err != nil {
+		return
+	}
+	if v.CanSet() {
+		switch v.Type().Kind() {
+		case reflect.Int, reflect.Int64, reflect.Int32:
+			v.SetInt(t)
+		case reflect.Uint, reflect.Uint64, reflect.Uint32:
+			v.SetUint(uint64(t))
+		}
+	}
+}
+
+func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
+	v, err := col.ValueOf(bean)
+	if err != nil {
+		return
+	}
+	if v.CanSet() {
+		switch v.Type().Kind() {
+		case reflect.Struct:
+			v.Set(reflect.ValueOf(t).Convert(v.Type()))
+		case reflect.Int, reflect.Int64, reflect.Int32:
+			v.SetInt(t.Unix())
+		case reflect.Uint, reflect.Uint64, reflect.Uint32:
+			v.SetUint(uint64(t.Unix()))
+		}
+	}
+}
+
+func getFlagForColumn(m map[string]bool, col *core.Column) (val bool, has bool) {
+	if len(m) == 0 {
+		return false, false
+	}
+
+	n := len(col.Name)
+
+	for mk := range m {
+		if len(mk) != n {
+			continue
+		}
+		if strings.EqualFold(mk, col.Name) {
+			return m[mk], true
+		}
+	}
+
+	return false, false
+}
+
+func col2NewCols(columns ...string) []string {
+	newColumns := make([]string, 0, len(columns))
+	for _, col := range columns {
+		col = strings.Replace(col, "`", "", -1)
+		col = strings.Replace(col, `"`, "", -1)
+		ccols := strings.Split(col, ",")
+		for _, c := range ccols {
+			newColumns = append(newColumns, strings.TrimSpace(c))
+		}
+	}
+	return newColumns
+}
+
 // Incr provides a query string like "count = count + 1"
 func (session *Session) Incr(column string, arg ...interface{}) *Session {
 	session.statement.Incr(column, arg...)

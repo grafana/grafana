@@ -111,63 +111,68 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	json, _ := bodyJSON.MarshalJSON()
 
-	content_type := "application/json"
-
-	var body []byte
-
-	if embeddedImage {
-
-		var b bytes.Buffer
-
-		w := multipart.NewWriter(&b)
-
-		f, err := os.Open(evalContext.ImageOnDiskPath)
-
-		if err != nil {
-			this.log.Error("Can't open graph file", err)
-			return err
-		}
-
-		defer f.Close()
-
-		fw, err := w.CreateFormField("payload_json")
-		if err != nil {
-			return err
-		}
-
-		if _, err = fw.Write([]byte(string(json))); err != nil {
-			return err
-		}
-
-		fw, err = w.CreateFormFile("file", "graph.png")
-		if err != nil {
-			return err
-		}
-
-		if _, err = io.Copy(fw, f); err != nil {
-			return err
-		}
-
-		w.Close()
-
-		body = b.Bytes()
-		content_type = w.FormDataContentType()
-
-	} else {
-		body = json
-	}
-
 	cmd := &m.SendWebhookSync{
 		Url:         this.WebhookURL,
-		Body:        string(body),
 		HttpMethod:  "POST",
-		ContentType: content_type,
+		ContentType: "application/json",
+	}
+
+	if !embeddedImage {
+		cmd.Body = string(json)
+	} else {
+		err := this.embedImage(cmd, evalContext.ImageOnDiskPath, json)
+		if err != nil {
+			this.log.Error("failed to embed image", "error", err)
+			return err
+		}
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send notification to Discord", "error", err)
 		return err
 	}
+
+	return nil
+}
+
+func (this *DiscordNotifier) embedImage(cmd *m.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
+	f, err := os.Open(imagePath)
+	defer f.Close()
+	if err != nil {
+		if os.IsNotExist(err) {
+			cmd.Body = string(existingJSONBody)
+			return nil
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	fw, err := w.CreateFormField("payload_json")
+	if err != nil {
+		return err
+	}
+
+	if _, err = fw.Write([]byte(string(existingJSONBody))); err != nil {
+		return err
+	}
+
+	fw, err = w.CreateFormFile("file", "graph.png")
+	if err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(fw, f); err != nil {
+		return err
+	}
+
+	w.Close()
+
+	cmd.Body = string(b.Bytes())
+	cmd.ContentType = w.FormDataContentType()
 
 	return nil
 }

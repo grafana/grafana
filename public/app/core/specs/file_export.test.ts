@@ -60,6 +60,16 @@ describe('file_export', () => {
 
       expect(text).toBe(expectedText);
     });
+
+    it('should not modify series.datapoints', () => {
+      const expectedSeries1DataPoints = ctx.seriesList[0].datapoints.slice();
+      const expectedSeries2DataPoints = ctx.seriesList[1].datapoints.slice();
+
+      fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+
+      expect(expectedSeries1DataPoints).toEqual(ctx.seriesList[0].datapoints);
+      expect(expectedSeries2DataPoints).toEqual(ctx.seriesList[1].datapoints);
+    });
   });
 
   describe('when exporting table data to csv', () => {
