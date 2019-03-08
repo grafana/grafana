@@ -24,8 +24,10 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 			TeamId:     cmd.Result.Id,
 			Permission: int64(m.PERMISSION_ADMIN),
 		}
-		err := bus.Dispatch(&addMemberCmd)
-		c.Logger.Error("Could not add creator to team.", "error", err)
+
+		if err := bus.Dispatch(&addMemberCmd); err != nil {
+			c.Logger.Error("Could not add creator to team.", "error", err)
+		}
 	}
 
 	return JSON(200, &util.DynMap{
