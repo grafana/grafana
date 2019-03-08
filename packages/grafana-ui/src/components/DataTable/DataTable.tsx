@@ -86,7 +86,8 @@ export class DataTable extends Component<Props, State> {
 
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
-      this.setState({ data: sortTableData(data, sortBy, sortDirection === 'DESC') });
+      const sorted = data ? sortTableData(data, sortBy, sortDirection === 'DESC') : data;
+      this.setState({ data: sorted });
     }
   }
 

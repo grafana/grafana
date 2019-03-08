@@ -98,7 +98,7 @@ export class TableRenderer {
     }
   }
 
-  createColumnFormatter(header: Column, style?: ColumnStyle): CellFormatter {
+  createColumnFormatter(schema: Column, style?: ColumnStyle): CellFormatter {
     if (!style) {
       return this.defaultCellFormatter;
     }
@@ -181,7 +181,7 @@ export class TableRenderer {
     }
 
     if (style.type === 'number') {
-      const valueFormatter = getValueFormat(style.unit || header.unit);
+      const valueFormatter = getValueFormat(style.unit || schema.unit || 'none');
 
       return v => {
         if (v === null || v === void 0) {

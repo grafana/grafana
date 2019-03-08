@@ -3,7 +3,6 @@ import TableModel from 'app/core/table_model';
 
 import { getColorDefinitionByName } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui/src/types';
-import moment from 'moment';
 import { TableRenderer } from './renderer';
 import { Index } from 'react-virtualized';
 import { ColumnStyle } from './DataTable';

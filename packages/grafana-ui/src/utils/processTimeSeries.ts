@@ -174,8 +174,8 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
   return vmSeries;
 }
 
-export function sortTableData(data?: TableData, sortIndex?: number, reverse = false): TableData {
-  if (data && isNumber(sortIndex)) {
+export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {
+  if (isNumber(sortIndex)) {
     const copy = {
       ...data,
       rows: [...data.rows].sort((a, b) => {
