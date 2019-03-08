@@ -5,7 +5,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func canUpdateTeam(orgId int64, teamId int64, user m.SignedInUser) error {
+func canUpdateTeam(orgId int64, teamId int64, user *m.SignedInUser) error {
 	if user.OrgRole == m.ROLE_ADMIN {
 		return nil
 	}
@@ -36,7 +36,7 @@ func canUpdateTeam(orgId int64, teamId int64, user m.SignedInUser) error {
 	return m.ErrNotAllowedToUpdateTeam
 }
 
-func UpdateTeam(user m.SignedInUser, cmd *m.UpdateTeamCommand) error {
+func UpdateTeam(user *m.SignedInUser, cmd *m.UpdateTeamCommand) error {
 	if err := canUpdateTeam(cmd.OrgId, cmd.Id, user); err != nil {
 		return err
 	}
