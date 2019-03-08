@@ -138,19 +138,8 @@ describe('dedupLogRows()', () => {
         entry: 'WARN 123',
       },
     ]);
-    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toEqual([
-      {
-        duplicates: 0,
-        entry: 'INFO 123',
-      },
-      {
-        duplicates: 0,
-        entry: 'WARN 123',
-      },
-      {
-        entry: 'WARN 123',
-      },
-    ]);
+
+    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toEqual(logs.rows);
   });
 });
 
