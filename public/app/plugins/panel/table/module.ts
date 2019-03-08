@@ -6,6 +6,7 @@ import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
+import { isTableData } from '@grafana/ui';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -104,7 +105,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
-      if (this.dataRaw[0].type === 'table') {
+      if (isTableData(this.dataRaw[0])) {
         this.panel.transform = 'table';
       } else {
         if (this.dataRaw[0].type === 'docs') {

@@ -191,6 +191,8 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
   return vmSeries;
 }
 
+export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
+
 export const toTableData = (results: any[]): TableData[] => {
   const tables: TableData[] = [];
   if (results) {
@@ -202,15 +204,13 @@ export const toTableData = (results: any[]): TableData[] => {
         } else if (data.hasOwnProperty('datapoints')) {
           const ts = data as TimeSeries;
           tables.push({
-            type: 'timeseries',
             columns: [
               {
                 text: ts.target,
                 unit: ts.unit,
-                type: 'number', // Is this really true?
               },
               {
-                text: 'time',
+                text: 'Time',
                 type: 'time',
               },
             ],

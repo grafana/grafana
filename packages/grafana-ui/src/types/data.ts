@@ -63,5 +63,4 @@ export interface Column {
 export interface TableData {
   columns: Column[];
   rows: any[];
-  type: string;
 }
