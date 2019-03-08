@@ -18,12 +18,6 @@ exit_if_fail gometalinter --enable-gc --vendor --deadline 10m --disable-all \
   --enable=staticcheck
 
 go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-go get -u github.com/tsenart/deadcode
-go get -u github.com/jgautheron/goconst/cmd/goconst
-go get -u github.com/gordonklaus/ineffassign
-go get -u github.com/opennota/check/cmd/structcheck
-go get -u github.com/mdempsky/unconvert
-go get -u github.com/opennota/check/cmd/varcheck
 
 exit_if_fail golangci-lint run --deadline 10m --disable-all \
   --enable=goconst\
