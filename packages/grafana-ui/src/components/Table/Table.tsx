@@ -450,6 +450,7 @@ export class Table extends Component<Props, State> {
     if (!data) {
       return <div>NO Data</div>;
     }
+
     return (
       <RVTable
         disableHeader={!showHeader}
