@@ -1,9 +1,11 @@
+// Libraries
 import React, { PureComponent } from 'react';
-
 import Remarkable from 'remarkable';
+import { debounce } from 'lodash';
+
+// Utils
 import { sanitize } from 'app/core/utils/text';
 import config from 'app/core/config';
-import { debounce } from 'lodash';
 
 // Types
 import { TextOptions } from './types';
@@ -42,13 +44,8 @@ export class TextPanel extends PureComponent<Props, State> {
     const { replaceVariables } = this.props;
 
     html = config.disableSanitizeHtml ? html : sanitize(html);
-    try {
-      return replaceVariables(html);
-    } catch (e) {
-      // TODO -- put the error in the header window
-      console.log('Text panel error: ', e);
-      return html;
-    }
+
+    return replaceVariables(html);
   }
 
   prepareText(content: string): string {
