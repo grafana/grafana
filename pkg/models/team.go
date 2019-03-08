@@ -7,9 +7,11 @@ import (
 
 // Typed errors
 var (
-	ErrTeamNotFound       = errors.New("Team not found")
-	ErrTeamNameTaken      = errors.New("Team name is taken")
-	ErrTeamMemberNotFound = errors.New("Team member not found")
+	ErrTeamNotFound                         = errors.New("Team not found")
+	ErrTeamNameTaken                        = errors.New("Team name is taken")
+	ErrTeamMemberNotFound                   = errors.New("Team member not found")
+	ErrNotAllowedToUpdateTeam               = errors.New("User not allowed to update team")
+	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("User not allowed to update team in another org")
 )
 
 // Team model
