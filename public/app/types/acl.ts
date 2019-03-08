@@ -100,7 +100,7 @@ export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
 ];
 
 export enum TeamPermissionLevel {
-  Member = 0,
+  Member = 1,
   Admin = 4,
 }
 
