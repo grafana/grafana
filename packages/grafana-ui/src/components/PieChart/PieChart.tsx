@@ -27,6 +27,9 @@ export interface Props extends Themeable {
 
 export class PieChart extends PureComponent<Props> {
   containerElement: any;
+  svgElement: any;
+  tooltipElement: any;
+  tooltipValueElement: any;
 
   static defaultProps = {
     pieType: 'pie',
@@ -58,12 +61,10 @@ export class PieChart extends PureComponent<Props> {
     const outerRadius = radius - radius / 10;
     const innerRadius = pieType === PieChartType.PIE ? 0 : radius - radius / 3;
 
-    select('.piechart-container svg').remove();
-    const svg = select('.piechart-container')
-      .append('svg')
+    const svg = select(this.svgElement)
+      .html('')
       .attr('width', width)
       .attr('height', height)
-      .attr('class', 'shadow')
       .append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`);
 
@@ -85,20 +86,18 @@ export class PieChart extends PureComponent<Props> {
       .style('stroke', (d: any, idx: number) => colors[idx])
       .style('stroke-width', `${strokeWidth}px`)
       .on('mouseover', (d: any, idx: any) => {
-        select('#tooltip')
-          .style('opacity', 1)
-          .select('#tooltip-value')
-          // TODO: show percents
-          .text(`${names[idx]} (${data[idx]})`);
+        select(this.tooltipElement).style('opacity', 1);
+        // TODO: show percents
+        select(this.tooltipValueElement).text(`${names[idx]} (${data[idx]})`);
       })
       .on('mousemove', () => {
-        select('#tooltip')
+        select(this.tooltipElement)
           // TODO: right position
           .style('top', `${event.pageY}px`)
           .style('left', `${event.pageX}px`);
       })
       .on('mouseout', () => {
-        select('#tooltip').style('opacity', 0);
+        select(this.tooltipElement).style('opacity', 0);
       });
   }
 
@@ -113,13 +112,17 @@ export class PieChart extends PureComponent<Props> {
           style={{
             height: `${height * 0.9}px`,
             width: `${Math.min(width, height * 1.3)}px`,
-            top: '10px',
-            margin: 'auto',
           }}
-        />
-        <div id="tooltip" className="piechart-tooltip">
+        >
+          <svg ref={element => (this.svgElement = element)} />
+        </div>
+        <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
           <div className="piechart-tooltip-time">
-            <div id="tooltip-value" className="piechart-tooltip-value" />
+            <div
+              id="tooltip-value"
+              className="piechart-tooltip-value"
+              ref={element => (this.tooltipValueElement = element)}
+            />
           </div>
         </div>
       </div>
