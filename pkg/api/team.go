@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/teams"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -40,7 +41,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := teams.UpdateTeam(c.SignedInUser, &cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(400, "Team name taken", err)
 		}
