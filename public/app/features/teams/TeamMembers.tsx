@@ -2,10 +2,16 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { DeleteButton, Select } from '@grafana/ui';
+import { DeleteButton, Select, SelectOptionItem } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User, teamsPermissionLevels } from 'app/types';
-import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
+import {
+  loadTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  setSearchMemberQuery,
+  updateTeamMember,
+} from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
@@ -18,6 +24,7 @@ export interface Props {
   addTeamMember: typeof addTeamMember;
   removeTeamMember: typeof removeTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
+  updateTeamMember: typeof updateTeamMember;
   syncEnabled: boolean;
 }
 
@@ -71,8 +78,14 @@ export class TeamMembers extends PureComponent<Props, State> {
     );
   }
 
+  onPermissionChange = (item: SelectOptionItem, member: TeamMember) => {
+    const permission = item.value;
+    const updatedTeamMember = { ...member, permission };
+
+    this.props.updateTeamMember(updatedTeamMember);
+  };
+
   renderMember(member: TeamMember, syncEnabled: boolean) {
-    const currentPermissionLevel = teamsPermissionLevels.find(dp => dp.value === member.permission);
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
@@ -86,10 +99,9 @@ export class TeamMembers extends PureComponent<Props, State> {
               <Select
                 isSearchable={false}
                 options={teamsPermissionLevels}
-                onChange={() => {}}
+                onChange={item => this.onPermissionChange(item, member)}
                 className="gf-form-select-box__control--menu-right"
-                value={currentPermissionLevel}
-                isDisabled={true}
+                value={teamsPermissionLevels.find(dp => dp.value === member.permission)}
               />
             </div>
           </td>
@@ -176,6 +188,7 @@ const mapDispatchToProps = {
   addTeamMember,
   removeTeamMember,
   setSearchMemberQuery,
+  updateTeamMember,
 };
 
 export default connect(
