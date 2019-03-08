@@ -1,8 +1,9 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TeamMembers, Props, State } from './TeamMembers';
-import { TeamMember } from '../../types';
+import { TeamMember, TeamPermissionLevel } from '../../types';
 import { getMockTeamMember, getMockTeamMembers } from './__mocks__/teamMocks';
+import { SelectOptionItem } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -12,6 +13,7 @@ const setup = (propOverrides?: object) => {
     loadTeamMembers: jest.fn(),
     addTeamMember: jest.fn(),
     removeTeamMember: jest.fn(),
+    updateTeamMember: jest.fn(),
     syncEnabled: false,
   };
 
@@ -85,5 +87,25 @@ describe('Functions', () => {
     instance.onAddUserToTeam();
 
     expect(instance.props.addTeamMember).toHaveBeenCalledWith(1);
+  });
+
+  describe('on update permision for user in team', () => {
+    const { instance } = setup();
+    const permission = TeamPermissionLevel.Admin;
+    const item: SelectOptionItem = { value: permission };
+    const member: TeamMember = {
+      userId: 3,
+      teamId: 2,
+      avatarUrl: '',
+      email: 'user@user.org',
+      labels: [],
+      login: 'member',
+      permission: TeamPermissionLevel.Member,
+    };
+    const expectedTeamMemeber = { ...member, permission };
+
+    instance.onPermissionChange(item, member);
+
+    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMemeber);
   });
 });
