@@ -39,6 +39,16 @@ export interface DataQueryError {
   statusText?: string;
 }
 
+export interface ScopedVar {
+  text: any;
+  value: any;
+  [key: string]: any;
+}
+
+export interface ScopedVars {
+  [key: string]: ScopedVar;
+}
+
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
@@ -50,7 +60,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
-  scopedVars: object;
+  scopedVars: ScopedVars;
 }
 
 export interface QueryFix {

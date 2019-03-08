@@ -250,6 +250,10 @@ $input-border: 1px solid $input-border-color;
   &--plaintext {
     white-space: unset;
   }
+
+  &--has-help-icon {
+    padding-right: $input-padding-x * 3;
+  }
 }
 
 .gf-form-hint {
