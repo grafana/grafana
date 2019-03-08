@@ -1,6 +1,10 @@
 package notifiers
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -8,19 +12,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-func init() {
-	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:        "dingding",
-		Name:        "DingDing",
-		Description: "Sends HTTP POST request to DingDing",
-		Factory:     NewDingDingNotifier,
-		OptionsTemplate: `
+const DefaultDingdingMsgType = "link"
+const DingdingOptionsTemplate = `
       <h3 class="page-heading">DingDing settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
+        <input type="text" required class="gf-form-input max-width-70" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
       </div>
-    `,
+      <div class="gf-form">
+        <span class="gf-form-label width-10">MessageType</span>
+        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.msgType" ng-options="s for s in ['link','actionCard']" ng-init="ctrl.model.settings.msgType=ctrl.model.settings.msgType || '` + DefaultDingdingMsgType + `'"></select>
+      </div>
+`
+
+func init() {
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:            "dingding",
+		Name:            "DingDing",
+		Description:     "Sends HTTP POST request to DingDing",
+		Factory:         NewDingDingNotifier,
+		OptionsTemplate: DingdingOptionsTemplate,
 	})
 
 }
@@ -31,8 +42,11 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	msgType := model.Settings.Get("msgType").MustString(DefaultDingdingMsgType)
+
 	return &DingDingNotifier{
 		NotifierBase: NewNotifierBase(model),
+		MsgType:      msgType,
 		Url:          url,
 		log:          log.New("alerting.notifier.dingding"),
 	}, nil
@@ -40,8 +54,9 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 
 type DingDingNotifier struct {
 	NotifierBase
-	Url string
-	log log.Logger
+	MsgType string
+	Url     string
+	log     log.Logger
 }
 
 func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -52,6 +67,16 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		this.log.Error("Failed to get messageUrl", "error", err, "dingding", this.Name)
 		messageUrl = ""
 	}
+
+	q := url.Values{
+		"pc_slide": {"false"},
+		"url":      {messageUrl},
+	}
+
+	// Use special link to auto open the message url outside of Dingding
+	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
+	messageUrl = "dingtalk://dingtalkclient/page/link?" + q.Encode()
+
 	this.log.Info("messageUrl:" + messageUrl)
 
 	message := evalContext.Rule.Message
@@ -61,15 +86,39 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = title
 	}
 
-	bodyJSON, err := simplejson.NewJson([]byte(`{
-		"msgtype": "link",
-		"link": {
-			"text": "` + message + `",
-			"title": "` + title + `",
-			"picUrl": "` + picUrl + `",
-			"messageUrl": "` + messageUrl + `"
+	for i, match := range evalContext.EvalMatches {
+		message += fmt.Sprintf("\\n%2d. %s: %s", i+1, match.Metric, match.Value)
+	}
+
+	var bodyStr string
+	if this.MsgType == "actionCard" {
+		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
+		if picUrl != "" {
+			message = "![](" + picUrl + ")\\n\\n" + message
 		}
-	}`))
+
+		bodyStr = `{
+			"msgtype": "actionCard",
+			"actionCard": {
+				"text": "` + strings.Replace(message, `"`, "'", -1) + `",
+				"title": "` + strings.Replace(title, `"`, "'", -1) + `",
+				"singleTitle": "More",
+				"singleURL": "` + messageUrl + `"
+			}
+		}`
+	} else {
+		bodyStr = `{
+			"msgtype": "link",
+			"link": {
+				"text": "` + message + `",
+				"title": "` + title + `",
+				"picUrl": "` + picUrl + `",
+				"messageUrl": "` + messageUrl + `"
+			}
+		}`
+	}
+
+	bodyJSON, err := simplejson.NewJson([]byte(bodyStr))
 
 	if err != nil {
 		this.log.Error("Failed to create Json data", "error", err, "dingding", this.Name)
