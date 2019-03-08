@@ -20,7 +20,7 @@ Fixes #
 
 **Release note**:
 <!--
-If this is a user facing change and should be mentioned in relase note add it below. If no, just write "NONE" below.
+If this is a user facing change and should be mentioned in release note add it below. If no, just write "NONE" below.
 -->
 ```release-note
 
