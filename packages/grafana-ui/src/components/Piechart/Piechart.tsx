@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import * as d3 from 'd3';
+import { select, pie, arc, event } from 'd3';
 
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
@@ -58,9 +58,8 @@ export class Piechart extends PureComponent<Props> {
     const outerRadius = radius - radius / 10;
     const innerRadius = pieType === PiechartType.PIE ? 0 : radius - radius / 3;
 
-    d3.select('.piechart-container svg').remove();
-    const svg = d3
-      .select('.piechart-container')
+    select('.piechart-container svg').remove();
+    const svg = select('.piechart-container')
       .append('svg')
       .attr('width', width)
       .attr('height', height)
@@ -68,42 +67,38 @@ export class Piechart extends PureComponent<Props> {
       .append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`);
 
-    const arc = d3
-      .arc()
+    const pieChart = pie();
+
+    const customArc = arc()
       .outerRadius(outerRadius)
       .innerRadius(innerRadius)
       .padAngle(0);
 
-    const pie = d3.pie();
-
     svg
       .selectAll('path')
-      .data(pie(data))
+      .data(pieChart(data))
       .enter()
       .append('path')
-      .attr('d', arc as any)
-      .attr('fill', (d: any, idx: number) => {
-        return colors[idx];
-      })
+      .attr('d', customArc as any)
+      .attr('fill', (d: any, idx: number) => colors[idx])
       .style('fill-opacity', 0.15)
-      .style('stroke', (d: any, idx: number) => {
-        return colors[idx];
-      })
+      .style('stroke', (d: any, idx: number) => colors[idx])
       .style('stroke-width', `${strokeWidth}px`)
       .on('mouseover', (d: any, idx: any) => {
-        d3.select('#tooltip')
+        select('#tooltip')
           .style('opacity', 1)
           .select('#tooltip-value')
           // TODO: show percents
           .text(`${names[idx]} (${data[idx]})`);
       })
       .on('mousemove', () => {
-        d3.select('#tooltip')
-          .style('top', d3.event.pageY - 10 + 'px')
-          .style('left', d3.event.pageX + 10 + 'px');
+        select('#tooltip')
+          // TODO: right position
+          .style('top', `${event.pageY}px`)
+          .style('left', `${event.pageX}px`);
       })
       .on('mouseout', () => {
-        d3.select('#tooltip').style('opacity', 0);
+        select('#tooltip').style('opacity', 0);
       });
   }
 
