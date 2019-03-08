@@ -156,6 +156,7 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
+  "id": 1,
   "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
