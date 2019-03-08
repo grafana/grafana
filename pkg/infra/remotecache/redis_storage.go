@@ -1,4 +1,4 @@
-package distcache
+package remotecache
 
 import (
 	"time"
@@ -11,7 +11,7 @@ type redisStorage struct {
 	c *redis.Client
 }
 
-func newRedisStorage(opts *setting.CacheOpts) *redisStorage {
+func newRedisStorage(opts *setting.RemoteCacheOptions) *redisStorage {
 	opt := &redis.Options{
 		Network: "tcp",
 		Addr:    opts.ConnStr,

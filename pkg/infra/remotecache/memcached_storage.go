@@ -1,4 +1,4 @@
-package distcache
+package remotecache
 
 import (
 	"time"
@@ -11,7 +11,7 @@ type memcachedStorage struct {
 	c *memcache.Client
 }
 
-func newMemcachedStorage(opts *setting.CacheOpts) *memcachedStorage {
+func newMemcachedStorage(opts *setting.RemoteCacheOptions) *memcachedStorage {
 	return &memcachedStorage{
 		c: memcache.New(opts.ConnStr),
 	}

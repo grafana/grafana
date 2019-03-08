@@ -1,4 +1,4 @@
-package distcache
+package remotecache
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&DistributedCache{})
+	registry.RegisterService(&RemoteCache{})
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -38,8 +38,8 @@ type CacheStorage interface {
 	Delete(key string) error
 }
 
-// DistributedCache allows Grafana to cache data outside its own process
-type DistributedCache struct {
+// RemoteCache allows Grafana to cache data outside its own process
+type RemoteCache struct {
 	log      log.Logger
 	Client   CacheStorage
 	SQLStore *sqlstore.SqlStore `inject:""`
@@ -47,15 +47,17 @@ type DistributedCache struct {
 }
 
 // Init initializes the service
-func (ds *DistributedCache) Init() error {
-	ds.log = log.New("distributed.cache")
+func (ds *RemoteCache) Init() error {
+	ds.log = log.New("cache.remote")
 
-	ds.Client = createClient(ds.Cfg.CacheOptions, ds.SQLStore)
+	ds.Client = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
 
 	return nil
 }
 
-func (ds *DistributedCache) Run(ctx context.Context) error {
+// Run start the backend processes for cache clients
+func (ds *RemoteCache) Run(ctx context.Context) error {
+	//create new interface if more clients need GC jobs
 	backgroundjob, ok := ds.Client.(registry.BackgroundService)
 	if ok {
 		return backgroundjob.Run(ctx)
@@ -65,7 +67,7 @@ func (ds *DistributedCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) CacheStorage {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) CacheStorage {
 	if opts.Name == "redis" {
 		return newRedisStorage(opts)
 	}

@@ -1,4 +1,4 @@
-package distcache
+package remotecache
 
 import (
 	"testing"
@@ -19,13 +19,13 @@ func init() {
 	Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, opts *setting.CacheOpts, sqlstore *sqlstore.SqlStore) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) CacheStorage {
 	t.Helper()
 
-	dc := &DistributedCache{
+	dc := &RemoteCache{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
-			CacheOptions: opts,
+			RemoteCacheOptions: opts,
 		},
 	}
 
@@ -44,7 +44,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 		HomePath: "../../../",
 	})
 
-	client := createTestClient(t, cfg.CacheOptions, sqlstore.InitTestDB(t))
+	client := createTestClient(t, cfg.RemoteCacheOptions, sqlstore.InitTestDB(t))
 
 	runTestsForClient(t, client)
 }

@@ -1,6 +1,6 @@
 // +build memcached
 
-package distcache
+package remotecache
 
 import (
 	"testing"
@@ -9,6 +9,6 @@ import (
 )
 
 func TestMemcachedCacheStorage(t *testing.T) {
-	opts := &setting.CacheOpts{Name: "memcached", ConnStr: "localhost:11211"}
+	opts := &setting.RemoteCacheOptions{Name: "memcached", ConnStr: "localhost:11211"}
 	runTestsForClient(t, createTestClient(t, opts, nil))
 }
