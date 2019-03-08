@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember } from 'app/types';
+import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
@@ -36,7 +36,7 @@ export const getMockTeamMembers = (amount: number): TeamMember[] => {
       email: 'test@test.com',
       login: `testUser-${i}`,
       labels: ['label 1', 'label 2'],
-      permission: 0,
+      permission: TeamPermissionLevel.Member,
     });
   }
 
@@ -51,7 +51,7 @@ export const getMockTeamMember = (): TeamMember => {
     email: 'test@test.com',
     login: 'testUser',
     labels: [],
-    permission: 0,
+    permission: TeamPermissionLevel.Member,
   };
 };
 
