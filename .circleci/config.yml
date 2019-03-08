@@ -72,7 +72,7 @@ jobs:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  linters:
+  linters-backend:
     docker:
       - image: circleci/golang:1.11.5
         environment:
@@ -82,8 +82,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: linters tests
-          command: './scripts/linters.sh'
+          name: backend linters tests
+          command: './scripts/linters-backend.sh'
 
   test-frontend:
     docker:
@@ -435,7 +435,7 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - linters:
+      - linters-backend:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -451,7 +451,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -462,7 +462,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -472,7 +472,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -486,7 +486,7 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - linters:
+      - linters-backend:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -502,7 +502,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -513,7 +513,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -524,7 +524,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - linters
+            - linters-backend
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -535,7 +535,7 @@ workflows:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
-        - linters:
+        - linters-backend:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -551,7 +551,7 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - linters
+              - linters-backend
               - mysql-integration-test
               - postgres-integration-test
             filters: *filter-not-release-or-master
