@@ -218,7 +218,7 @@ exports[`Render should render team members 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -231,7 +231,7 @@ exports[`Render should render team members 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -288,7 +288,7 @@ exports[`Render should render team members 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -301,7 +301,7 @@ exports[`Render should render team members 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -358,7 +358,7 @@ exports[`Render should render team members 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -371,7 +371,7 @@ exports[`Render should render team members 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -428,7 +428,7 @@ exports[`Render should render team members 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -441,7 +441,7 @@ exports[`Render should render team members 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -498,7 +498,7 @@ exports[`Render should render team members 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -511,7 +511,7 @@ exports[`Render should render team members 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -661,7 +661,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -674,7 +674,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -747,7 +747,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -760,7 +760,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -833,7 +833,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -846,7 +846,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -919,7 +919,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -932,7 +932,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
@@ -1005,7 +1005,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                       Object {
                         "description": "Is team member",
                         "label": "Member",
-                        "value": 0,
+                        "value": 1,
                       },
                       Object {
                         "description": "Can add/remove permissions and delete team.",
@@ -1018,7 +1018,7 @@ exports[`Render should render team members when sync enabled 1`] = `
                     Object {
                       "description": "Is team member",
                       "label": "Member",
-                      "value": 0,
+                      "value": 1,
                     }
                   }
                   width={null}
