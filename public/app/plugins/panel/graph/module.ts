@@ -235,11 +235,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     for (const series of this.seriesList) {
-      try {
-        series.applySeriesOverrides(this.panel.seriesOverrides);
-      } catch (e) {
-        this.publishAppEvent('alert-error', [e.message]);
-      }
+      series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
