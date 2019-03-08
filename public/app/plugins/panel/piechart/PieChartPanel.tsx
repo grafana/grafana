@@ -5,20 +5,20 @@ import React, { PureComponent } from 'react';
 import { processTimeSeries, ThemeContext } from '@grafana/ui';
 
 // Components
-import { Piechart, PiechartDataPoint } from '@grafana/ui';
+import { PieChart, PieChartDataPoint } from '@grafana/ui';
 
 // Types
-import { PiechartOptions } from './types';
+import { PieChartOptions } from './types';
 import { PanelProps, NullValueMode } from '@grafana/ui/src/types';
 
-interface Props extends PanelProps<PiechartOptions> {}
+interface Props extends PanelProps<PieChartOptions> {}
 
-export class PiechartPanel extends PureComponent<Props> {
+export class PieChartPanel extends PureComponent<Props> {
   render() {
     const { panelData, width, height, options } = this.props;
     const { valueOptions } = options;
 
-    const datapoints: PiechartDataPoint[] = [];
+    const datapoints: PieChartDataPoint[] = [];
     if (panelData.timeSeries) {
       const vmSeries = processTimeSeries({
         timeSeries: panelData.timeSeries,
@@ -41,7 +41,7 @@ export class PiechartPanel extends PureComponent<Props> {
     return (
       <ThemeContext.Consumer>
         {theme => (
-          <Piechart
+          <PieChart
             width={width}
             height={height}
             datapoints={datapoints}

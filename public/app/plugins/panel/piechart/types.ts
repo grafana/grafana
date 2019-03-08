@@ -1,20 +1,20 @@
-import { PiechartType } from '@grafana/ui';
+import { PieChartType } from '@grafana/ui';
 
-export interface PiechartOptions {
-  pieType: PiechartType;
+export interface PieChartOptions {
+  pieType: PieChartType;
   strokeWidth: number;
 
-  valueOptions: PiechartValueOptions;
+  valueOptions: PieChartValueOptions;
   // TODO: Options for Legend / Combine components
 }
 
-export interface PiechartValueOptions {
+export interface PieChartValueOptions {
   unit: string;
   stat: string;
 }
 
-export const defaults: PiechartOptions = {
-  pieType: PiechartType.PIE,
+export const defaults: PieChartOptions = {
+  pieType: PieChartType.PIE,
   strokeWidth: 1,
   valueOptions: {
     unit: 'short',

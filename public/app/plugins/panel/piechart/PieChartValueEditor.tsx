@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { FormLabel, PanelOptionsGroup, Select, UnitPicker } from '@grafana/ui';
-import { PiechartValueOptions } from './types';
+import { PieChartValueOptions } from './types';
 
 const statOptions = [
   { value: 'min', label: 'Min' },
@@ -13,11 +13,11 @@ const statOptions = [
 const labelWidth = 6;
 
 export interface Props {
-  options: PiechartValueOptions;
-  onChange: (valueOptions: PiechartValueOptions) => void;
+  options: PieChartValueOptions;
+  onChange: (valueOptions: PieChartValueOptions) => void;
 }
 
-export default class PiechartValueEditor extends PureComponent<Props> {
+export default class PieChartValueEditor extends PureComponent<Props> {
   onUnitChange = unit =>
     this.props.onChange({
       ...this.props.options,

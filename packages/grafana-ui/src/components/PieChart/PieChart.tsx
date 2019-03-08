@@ -4,12 +4,12 @@ import { select, pie, arc, event } from 'd3';
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
 
-export enum PiechartType {
+export enum PieChartType {
   PIE = 'pie',
   DONUT = 'donut',
 }
 
-export interface PiechartDataPoint {
+export interface PieChartDataPoint {
   value: number;
   name: string;
   color: string;
@@ -18,14 +18,14 @@ export interface PiechartDataPoint {
 export interface Props extends Themeable {
   height: number;
   width: number;
-  datapoints: PiechartDataPoint[];
+  datapoints: PieChartDataPoint[];
 
   unit: string;
-  pieType: PiechartType;
+  pieType: PieChartType;
   strokeWidth: number;
 }
 
-export class Piechart extends PureComponent<Props> {
+export class PieChart extends PureComponent<Props> {
   containerElement: any;
 
   static defaultProps = {
@@ -56,7 +56,7 @@ export class Piechart extends PureComponent<Props> {
     const radius = Math.min(width, height) / 2;
 
     const outerRadius = radius - radius / 10;
-    const innerRadius = pieType === PiechartType.PIE ? 0 : radius - radius / 3;
+    const innerRadius = pieType === PieChartType.PIE ? 0 : radius - radius / 3;
 
     select('.piechart-container svg').remove();
     const svg = select('.piechart-container')
@@ -127,4 +127,4 @@ export class Piechart extends PureComponent<Props> {
   }
 }
 
-export default Piechart;
+export default PieChart;

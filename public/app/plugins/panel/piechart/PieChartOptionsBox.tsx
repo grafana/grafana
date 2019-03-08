@@ -6,14 +6,14 @@ import { Select, FormLabel, PanelOptionsGroup } from '@grafana/ui';
 
 // Types
 import { FormField, PanelEditorProps } from '@grafana/ui';
-import { PiechartType } from '@grafana/ui';
-import { PiechartOptions } from './types';
+import { PieChartType } from '@grafana/ui';
+import { PieChartOptions } from './types';
 
 const labelWidth = 8;
 
-const piechartOptions = [{ value: PiechartType.PIE, label: 'Pie' }, { value: PiechartType.DONUT, label: 'Donut' }];
+const pieChartOptions = [{ value: PieChartType.PIE, label: 'Pie' }, { value: PieChartType.DONUT, label: 'Donut' }];
 
-export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartOptions>> {
+export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onPieTypeChange = pieType => this.props.onOptionsChange({ ...this.props.options, pieType: pieType.value });
   onStrokeWidthChange = ({ target }) =>
     this.props.onOptionsChange({ ...this.props.options, strokeWidth: target.value });
@@ -23,14 +23,14 @@ export class PiechartOptionsBox extends PureComponent<PanelEditorProps<PiechartO
     const { pieType, strokeWidth } = options;
 
     return (
-      <PanelOptionsGroup title="Piechart">
+      <PanelOptionsGroup title="PieChart">
         <div className="gf-form">
           <FormLabel width={labelWidth}>Type</FormLabel>
           <Select
             width={12}
-            options={piechartOptions}
+            options={pieChartOptions}
             onChange={this.onPieTypeChange}
-            value={piechartOptions.find(option => option.value === pieType)}
+            value={pieChartOptions.find(option => option.value === pieType)}
           />
         </div>
         <div className="gf-form">

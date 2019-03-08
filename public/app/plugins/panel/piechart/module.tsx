@@ -1,10 +1,10 @@
 import { ReactPanelPlugin } from '@grafana/ui';
 
-import PiechartPanelEditor from './PiechartPanelEditor';
-import { PiechartPanel } from './PiechartPanel';
-import { PiechartOptions, defaults } from './types';
+import PieChartPanelEditor from './PieChartPanelEditor';
+import { PieChartPanel } from './PieChartPanel';
+import { PieChartOptions, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<PiechartOptions>(PiechartPanel);
+export const reactPanel = new ReactPanelPlugin<PieChartOptions>(PieChartPanel);
 
-reactPanel.setEditor(PiechartPanelEditor);
+reactPanel.setEditor(PieChartPanelEditor);
 reactPanel.setDefaults(defaults);
