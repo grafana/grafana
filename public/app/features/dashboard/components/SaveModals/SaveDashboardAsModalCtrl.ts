@@ -26,9 +26,11 @@ const template = `
                        enable-create-new="true"
                        label-class="width-8"
                        dashboard-id="ctrl.clone.id">
-        </folder-picker>
-      <gf-form-switch class="gf-form" label="Preserve tags" label-class="width-8" checked="ctrl.preseveTags">
-	    </gf-form-switch>
+      </folder-picker>
+      <div class="gf-form-inline">
+        <gf-form-switch class="gf-form" label="Copy tags" label-class="width-8" checked="ctrl.copyTags">
+        </gf-form-switch>
+      </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
@@ -44,7 +46,7 @@ export class SaveDashboardAsModalCtrl {
   folderId: any;
   dismiss: () => void;
   isValidFolderSelection = true;
-  preseveTags: boolean;
+  copyTags: boolean;
 
   /** @ngInject */
   constructor(private dashboardSrv) {
@@ -56,7 +58,7 @@ export class SaveDashboardAsModalCtrl {
     this.clone.editable = true;
     this.clone.hideControls = false;
     this.folderId = dashboard.meta.folderId;
-    this.preseveTags = false;
+    this.copyTags = false;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
@@ -73,7 +75,7 @@ export class SaveDashboardAsModalCtrl {
   }
 
   save() {
-    if (!this.preseveTags) {
+    if (!this.copyTags) {
       this.clone.tags = [];
     }
 
