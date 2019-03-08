@@ -810,6 +810,93 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given dashboard in folder being restored should restore to folder", t, func() {
+		fakeDash := m.NewDashboard("Child dash")
+		fakeDash.Id = 2
+		fakeDash.FolderId = 1
+		fakeDash.HasAcl = false
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = fakeDash
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}
+			return nil
+		})
+
+		mock := &dashboards.FakeDashboardService{
+			SaveDashboardResult: &m.Dashboard{
+				Id:      2,
+				Uid:     "uid",
+				Title:   "Dash",
+				Slug:    "dash",
+				Version: 1,
+			},
+		}
+
+		cmd := dtos.RestoreDashboardVersionCommand{
+			Version: 1,
+		}
+
+		restoreDashboardVersionScenario("When calling POST on", "/api/dashboards/id/1/restore", "/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
+			CallRestoreDashboardVersion(sc)
+			So(sc.resp.Code, ShouldEqual, 200)
+			dto := mock.SavedDashboards[0]
+			So(dto.Dashboard.FolderId, ShouldEqual, 1)
+			So(dto.Dashboard.Title, ShouldEqual, "Child dash")
+			So(dto.Message, ShouldEqual, "Restored from version 1")
+		})
+	})
+
+	Convey("Given dashboard in general folder being restored should restore to general folder", t, func() {
+		fakeDash := m.NewDashboard("Child dash")
+		fakeDash.Id = 2
+		fakeDash.HasAcl = false
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = fakeDash
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}
+			return nil
+		})
+
+		mock := &dashboards.FakeDashboardService{
+			SaveDashboardResult: &m.Dashboard{
+				Id:      2,
+				Uid:     "uid",
+				Title:   "Dash",
+				Slug:    "dash",
+				Version: 1,
+			},
+		}
+
+		cmd := dtos.RestoreDashboardVersionCommand{
+			Version: 1,
+		}
+
+		restoreDashboardVersionScenario("When calling POST on", "/api/dashboards/id/1/restore", "/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
+			CallRestoreDashboardVersion(sc)
+			So(sc.resp.Code, ShouldEqual, 200)
+			dto := mock.SavedDashboards[0]
+			So(dto.Dashboard.FolderId, ShouldEqual, 0)
+			So(dto.Dashboard.Title, ShouldEqual, "Child dash")
+			So(dto.Message, ShouldEqual, "Restored from version 1")
+		})
+	})
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
@@ -871,6 +958,10 @@ func CallPostDashboard(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
+func CallRestoreDashboardVersion(sc *scenarioContext) {
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+}
+
 func CallPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	CallPostDashboard(sc)
 
@@ -923,6 +1014,39 @@ func postDiffScenario(desc string, url string, routePattern string, cmd dtos.Cal
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func restoreDashboardVersionScenario(desc string, url string, routePattern string, mock *dashboards.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		hs := HTTPServer{
+			Bus: bus.GetBus(),
+		}
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			sc.context.SignedInUser = &m.SignedInUser{
+				OrgId:  TestOrgID,
+				UserId: TestUserID,
+			}
+			sc.context.OrgRole = m.ROLE_ADMIN
+
+			return hs.RestoreDashboardVersion(c, cmd)
+		})
+
+		origNewDashboardService := dashboards.NewService
+		dashboards.MockDashboardService(mock)
+
+		sc.m.Post(routePattern, sc.defaultHandler)
+
+		defer func() {
+			dashboards.NewService = origNewDashboardService
+		}()
 
 		fn(sc)
 	})

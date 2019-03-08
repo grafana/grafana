@@ -8,7 +8,7 @@
 
   <div class="gf-form" ng-show='ctrl.current.jsonData.authType == "credentials"'>
     <label class="gf-form-label width-13">Credentials profile name</label>
-    <input type="text" class="gf-form-input max-width-18" ng-model='ctrl.current.database' placeholder="default"></input>
+    <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon" ng-model='ctrl.current.database' placeholder="default"></input>
     <info-popover mode="right-absolute">
       Credentials profile name, as specified in ~/.aws/credentials, leave blank for default
     </info-popover>
@@ -30,7 +30,7 @@
 
   <div class="gf-form" ng-show='ctrl.current.jsonData.authType == "arn"'>
     <label class="gf-form-label width-13">Assume Role ARN</label>
-    <input type="text" class="gf-form-input max-width-18" ng-model='ctrl.current.jsonData.assumeRoleArn' placeholder="arn:aws:iam:*"></input>
+    <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.assumeRoleArn' placeholder="arn:aws:iam:*"></input>
     <info-popover mode="right-absolute">
       ARN of Assume Role
     </info-popover>
@@ -47,7 +47,7 @@
   </div>
   <div class="gf-form">
     <label class="gf-form-label width-13">Custom Metrics</label>
-    <input type="text" class="gf-form-input max-width-18" ng-model='ctrl.current.jsonData.customMetricsNamespaces' placeholder="Namespace1,Namespace2"></input>
+    <input type="text" class="gf-form-input max-width-18 gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.customMetricsNamespaces' placeholder="Namespace1,Namespace2"></input>
     <info-popover mode="right-absolute">
       Namespaces of Custom Metrics
     </info-popover>

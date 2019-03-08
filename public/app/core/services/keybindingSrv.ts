@@ -4,6 +4,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { store } from 'app/store/store';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
@@ -256,6 +257,11 @@ export class KeybindingSrv {
       }
     });
 
+    // toggle all panel legends
+    this.bind('d l', () => {
+      dashboard.toggleLegendsForAll();
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
@@ -289,7 +295,9 @@ export class KeybindingSrv {
     //Autofit panels
     this.bind('d a', () => {
       // this has to be a full page reload
-      window.location.href = window.location.href + '&autofitpanels';
+      const queryParams = store.getState().location.query;
+      const newUrlParam = queryParams.autofitpanels ? '' : '&autofitpanels';
+      window.location.href = window.location.href + newUrlParam;
     });
   }
 }

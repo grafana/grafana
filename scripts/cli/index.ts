@@ -1,33 +1,75 @@
 import program from 'commander';
-import chalk from 'chalk';
 import { execTask } from './utils/execTask';
+import chalk from 'chalk';
+import { startTask } from './tasks/core.start';
+import { buildTask } from './tasks/grafanaui.build';
+import { releaseTask } from './tasks/grafanaui.release';
+import { changelogTask } from './tasks/changelog';
+import { cherryPickTask } from './tasks/cherrypick';
 
-export type Task<T> = (options: T) => Promise<void>;
+program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
 
-// TODO: Refactor to commander commands
-// This will enable us to have command scoped options and limit the ifs below
 program
-  .option('-h, --hot', 'Runs front-end with hot reload enabled')
-  .option('-t, --theme', 'Watches for theme changes and regenerates variables.scss files')
-  .option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','))
-  .option('-b, --build', 'Created @grafana/ui build')
-  .option('-r, --release', 'Releases @grafana/ui to npm')
-  .parse(process.argv);
-
-if (program.build) {
-  execTask('grafanaui.build');
-} else if (program.release) {
-  execTask('grafanaui.release');
-} else {
-  if (program.depreciate && program.depreciate.length === 2) {
-    console.log(
-      chalk.yellow.bold(
-        `[NPM script depreciation] ${program.depreciate[0]} is deprecated! Use ${program.depreciate[1]} instead!`
-      )
-    );
-  }
-  execTask('core.start', {
-    watchThemes: !!program.theme,
-    hot: !!program.hot,
+  .command('core:start')
+  .option('-h, --hot', 'Run front-end with HRM enabled')
+  .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
+  .description('Starts Grafana front-end in development mode with watch enabled')
+  .action(async cmd => {
+    await execTask(startTask)({
+      watchThemes: cmd.watchTheme,
+      hot: cmd.hot,
+    });
   });
+
+program
+  .command('gui:build')
+  .description('Builds @grafana/ui package to packages/grafana-ui/dist')
+  .action(async cmd => {
+    await execTask(buildTask)();
+  });
+
+program
+  .command('gui:release')
+  .description('Prepares @grafana/ui release (and publishes to npm on demand)')
+  .option('-p, --publish', 'Publish @grafana/ui to npm registry')
+  .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
+  .option('--createVersionCommit', 'Create and push version commit')
+  .action(async cmd => {
+    await execTask(releaseTask)({
+      publishToNpm: !!cmd.publish,
+      usePackageJsonVersion: !!cmd.usePackageJsonVersion,
+      createVersionCommit: !!cmd.createVersionCommit,
+    });
+  });
+
+program
+  .command('changelog')
+  .option('-m, --milestone <milestone>', 'Specify milestone')
+  .description('Builds changelog markdown')
+  .action(async cmd => {
+    if (!cmd.milestone) {
+      console.log('Please specify milestone, example: --m 6.0.1');
+      return;
+    }
+
+    await execTask(changelogTask)({
+      milestone: cmd.milestone,
+    });
+  });
+
+program
+  .command('cherrypick')
+  .description('Helps find commits to cherry pick')
+  .action(async cmd => {
+    await execTask(cherryPickTask)({});
+  });
+
+program.parse(process.argv);
+
+if (program.depreciate && program.depreciate.length === 2) {
+  console.log(
+    chalk.yellow.bold(
+      `[NPM script depreciation] ${program.depreciate[0]} is deprecated! Use ${program.depreciate[1]} instead!`
+    )
+  );
 }

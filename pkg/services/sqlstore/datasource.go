@@ -3,6 +3,8 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -95,6 +97,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			return m.ErrDataSourceNameExists
 		}
 
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -142,6 +148,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
@@ -164,11 +174,6 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			Version:           cmd.Version + 1,
 		}
 
-		sess.UseBool("is_default")
-		sess.UseBool("basic_auth")
-		sess.UseBool("with_credentials")
-		sess.UseBool("read_only")
-
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {
 			// the reason we allow cmd.version > db.version is make it possible for people to force
@@ -180,7 +185,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}
 
-		affected, err := updateSession.Update(ds)
+		affected, err := updateSession.AllCols().Omit("created").Update(ds)
 		if err != nil {
 			return err
 		}

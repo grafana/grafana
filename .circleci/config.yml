@@ -35,7 +35,7 @@ jobs:
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
             name: mysql integration tests
-            command: 'GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/... ./pkg/tsdb/mysql/... '
+            command: './scripts/circle-test-mysql.sh'
 
   postgres-integration-test:
     docker:
@@ -54,7 +54,7 @@ jobs:
         - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
         - run:
             name: postgres integration tests
-            command: 'GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/... ./pkg/tsdb/postgres/...'
+            command: './scripts/circle-test-postgres.sh'
 
   codespell:
     docker:
