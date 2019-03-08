@@ -1,11 +1,10 @@
 // Libraries
-import _ from 'lodash';
 import React, { Component } from 'react';
 
 // Types
 import { PanelProps, ThemeContext } from '@grafana/ui';
 import { Options } from './types';
-import DataTable from '@grafana/ui/src/components/DataTable/DataTable';
+import Table from '@grafana/ui/src/components/Table/Table';
 
 interface Props extends PanelProps<Options> {}
 
@@ -23,7 +22,7 @@ export class TablePanel extends Component<Props> {
 
     return (
       <ThemeContext.Consumer>
-        {theme => <DataTable {...this.props} {...options} theme={theme} data={panelData.tableData} />}
+        {theme => <Table {...this.props} {...options} theme={theme} data={panelData.tableData} />}
       </ThemeContext.Consumer>
     );
   }

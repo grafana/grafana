@@ -3,9 +3,8 @@ import TableModel from 'app/core/table_model';
 
 import { getColorDefinitionByName } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui/src/types';
-import { TableRenderer } from './renderer';
-import { Index } from 'react-virtualized';
-import { ColumnStyle } from './DataTable';
+import { getTheme } from '../../themes';
+import Table, { ColumnStyle } from './Table';
 
 // TODO: this is commented out with *x* describe!
 // Essentially all the elements need to replace the <td> with <div>
@@ -181,12 +180,14 @@ xdescribe('when rendering table', () => {
       }
       return value;
     };
-    const rowGetter = ({ index }: Index) => table.rows[index];
-    const renderer = new TableRenderer({
+    const renderer = new Table({
       styles,
-      schema: table.columns,
-      rowGetter,
+      data: table,
       replaceVariables,
+      showHeader: true,
+      width: 100,
+      height: 100,
+      theme: getTheme(),
     });
 
     it('time column should be formated', () => {

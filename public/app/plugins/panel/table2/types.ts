@@ -1,4 +1,4 @@
-import { ColumnStyle } from '@grafana/ui/src/components/DataTable/DataTable';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/Table';
 
 export interface Options {
   showHeader: boolean;

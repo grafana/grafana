@@ -1,17 +1,55 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { Component, CSSProperties, ReactNode } from 'react';
+import {
+  Table as RVTable,
+  SortDirectionType,
+  SortIndicator,
+  Column as RVColumn,
+  TableHeaderProps,
+  TableCellProps,
+} from 'react-virtualized';
+import { Themeable } from '../../types/theme';
+
+import { sortTableData } from '../../utils/processTimeSeries';
 
 import { sanitize } from 'app/core/utils/text';
 
+import moment from 'moment';
+
+import { getValueFormat, TableData, getColorFromHexRgbOrName, InterpolateFunction, Column } from '@grafana/ui';
+import { Index } from 'react-virtualized';
+import { ColumnStyle } from './Table';
+
 // Types
 import kbn from 'app/core/utils/kbn';
-import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, InterpolateFunction, Column } from '@grafana/ui';
-import { Index } from 'react-virtualized';
-import { ColumnStyle } from './DataTable';
 
-type CellFormatter = (v: any, style?: ColumnStyle) => string | undefined;
+// Made to match the existing (untyped) settings in the angular table
+export interface ColumnStyle {
+  pattern?: string;
+
+  alias?: string;
+  colorMode?: string;
+  colors?: any[];
+  decimals?: number;
+  thresholds?: any[];
+  type?: 'date' | 'number' | 'string' | 'hidden';
+  unit?: string;
+  dateFormat?: string;
+  sanitize?: boolean;
+  mappingType?: any;
+  valueMaps?: any;
+  rangeMaps?: any;
+
+  link?: any;
+  linkUrl?: any;
+  linkTooltip?: any;
+  linkTargetBlank?: boolean;
+
+  preserveFormat?: boolean;
+}
+
+type CellFormatter = (v: any, style?: ColumnStyle) => ReactNode;
 
 interface ColumnInfo {
   header: string;
@@ -22,29 +60,66 @@ interface ColumnInfo {
   filterable?: boolean;
 }
 
-interface RendererOptions {
+interface Props extends Themeable {
+  data?: TableData;
+  showHeader: boolean;
   styles: ColumnStyle[];
-  schema: Column[];
-  rowGetter: (info: Index) => any[]; // matches the table rowGetter
   replaceVariables: InterpolateFunction;
-  isUTC?: boolean; // TODO? get UTC from props?
-  theme?: GrafanaThemeType | undefined;
+  width: number;
+  height: number;
+  isUTC?: boolean;
 }
 
-export class TableRenderer {
-  columns: ColumnInfo[];
+interface State {
+  sortBy?: number;
+  sortDirection?: SortDirectionType;
+  data?: TableData;
+}
+
+export class Table extends Component<Props, State> {
+  columns: ColumnInfo[] = [];
   colorState: any;
 
-  constructor(private options: RendererOptions) {
-    const { schema, styles } = options;
-    this.colorState = {};
+  static defaultProps = {
+    showHeader: true,
+  };
 
-    if (!schema) {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      data: props.data,
+    };
+
+    this.initRenderer();
+  }
+
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    const { data, styles } = this.props;
+    const { sortBy, sortDirection } = this.state;
+    const dataChanged = data !== prevProps.data;
+
+    // Update the renderer if options change
+    if (dataChanged || styles !== prevProps.styles) {
+      this.initRenderer();
+    }
+
+    // Update the data when data or sort changes
+    if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
+      const sorted = data ? sortTableData(data, sortBy, sortDirection === 'DESC') : data;
+      this.setState({ data: sorted });
+    }
+  }
+
+  initRenderer() {
+    const { styles } = this.props;
+    const { data } = this.state;
+    this.colorState = {};
+    if (!data || !data.columns) {
       this.columns = [];
       return;
     }
-
-    this.columns = options.schema.map((col, index) => {
+    this.columns = data.columns.map((col, index) => {
       let title = col.text;
       let style; // ColumnStyle
 
@@ -70,16 +145,22 @@ export class TableRenderer {
     });
   }
 
+  //----------------------------------------------------------------------
+  // renderer.ts copy (taken from angular version!!!)
+  //----------------------------------------------------------------------
+
   getColorForValue(value: any, style: ColumnStyle) {
-    if (!style.thresholds) {
+    if (!style.thresholds || !style.colors) {
       return null;
     }
+    const { theme } = this.props;
+
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return getColorFromHexRgbOrName(style.colors![i], this.options.theme);
+        return getColorFromHexRgbOrName(style.colors[i], theme.type);
       }
     }
-    return getColorFromHexRgbOrName(_.first(style.colors), this.options.theme);
+    return getColorFromHexRgbOrName(_.first(style.colors), theme.type);
   }
 
   defaultCellFormatter(v: any, style?: ColumnStyle): string {
@@ -119,7 +200,7 @@ export class TableRenderer {
           v = v[0];
         }
         let date = moment(v);
-        if (this.options.isUTC) {
+        if (this.props.isUTC) {
           date = date.utc();
         }
         return date.format(style.dateFormat);
@@ -220,7 +301,7 @@ export class TableRenderer {
 
   renderRowVariables(rowIndex: number) {
     const scopedVars: any = {};
-    const row = this.options.rowGetter({ index: rowIndex });
+    const row = this.rowGetter({ index: rowIndex });
     for (let i = 0; i < row.length; i++) {
       scopedVars[`__cell_${i}`] = { value: row[i] };
     }
@@ -260,7 +341,7 @@ export class TableRenderer {
     let columnHtml: JSX.Element;
     if (column.style && column.style.link) {
       // Render cell as link
-      const { replaceVariables } = this.options;
+      const { replaceVariables } = this.props;
       const scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
@@ -329,4 +410,80 @@ export class TableRenderer {
     );
     return columnHtml;
   }
+
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+
+  rowGetter = ({ index }: Index) => {
+    return this.state.data!.rows[index];
+  };
+
+  doSort = (info: any) => {
+    let dir = info.sortDirection;
+    let sort = info.sortBy;
+    if (sort !== this.state.sortBy) {
+      dir = 'DESC';
+    } else if (dir === 'DESC') {
+      dir = 'ASC';
+    } else {
+      sort = null;
+    }
+    this.setState({ sortBy: sort, sortDirection: dir });
+  };
+
+  headerRenderer = (header: TableHeaderProps): ReactNode => {
+    const dataKey = header.dataKey as any; // types say string, but it is number!
+    const { data, sortBy, sortDirection } = this.state;
+    const col = data!.columns[dataKey];
+
+    return (
+      <div>
+        {col.text} {sortBy === dataKey && <SortIndicator sortDirection={sortDirection} />}
+      </div>
+    );
+  };
+
+  cellRenderer = (cell: TableCellProps) => {
+    const { columnIndex, rowIndex } = cell;
+    const row = this.state.data!.rows[rowIndex];
+    const val = row[columnIndex];
+    return this.renderCell(columnIndex, rowIndex, val);
+  };
+
+  render() {
+    const { width, height, showHeader } = this.props;
+    const { data } = this.props;
+    if (!data) {
+      return <div>NO Data</div>;
+    }
+    return (
+      <RVTable
+        disableHeader={!showHeader}
+        headerHeight={30}
+        height={height}
+        overscanRowCount={10}
+        rowHeight={30}
+        rowGetter={this.rowGetter}
+        rowCount={data.rows.length}
+        sort={this.doSort}
+        width={width}
+      >
+        {data.columns.map((col, index) => {
+          return (
+            <RVColumn
+              key={index}
+              dataKey={index}
+              headerRenderer={this.headerRenderer}
+              cellRenderer={this.cellRenderer}
+              width={150}
+              minWidth={50}
+              flexGrow={1}
+            />
+          );
+        })}
+      </RVTable>
+    );
+  }
 }
+
+export default Table;
