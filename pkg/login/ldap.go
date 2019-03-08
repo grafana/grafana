@@ -219,8 +219,18 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 }
 
 func (a *ldapAuther) serverBind() error {
+	bindFn := func() error {
+		return a.conn.Bind(a.server.BindDN, a.server.BindPassword)
+	}
+
+	if a.server.BindPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(a.server.BindDN)
+		}
+	}
+
 	// bind_dn and bind_password to bind
-	if err := a.conn.Bind(a.server.BindDN, a.server.BindPassword); err != nil {
+	if err := bindFn(); err != nil {
 		a.log.Info("LDAP initial bind failed, %v", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
