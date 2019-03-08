@@ -8,33 +8,35 @@ import { sanitize } from 'app/core/utils/text';
 // Types
 import kbn from 'app/core/utils/kbn';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, InterpolateFunction, Column } from '@grafana/ui';
-import { Style } from './types';
 import { Index } from 'react-virtualized';
+import { ColumnStyle } from './DataTable';
 
-type CellFormatter = (v: any, style: Style) => string;
+type CellFormatter = (v: any, style?: ColumnStyle) => string | undefined;
 
 interface ColumnInfo {
   header: string;
   accessor: string; // the field name
-  style?: Style;
+  style?: ColumnStyle;
   hidden?: boolean;
   formatter: CellFormatter;
   filterable?: boolean;
 }
 
-export class TableRenderer {
-  isUTC: false; // TODO? get UTC from props?
+interface RendererOptions {
+  styles: ColumnStyle[];
+  schema: Column[];
+  rowGetter: (info: Index) => any[]; // matches the table rowGetter
+  replaceVariables: InterpolateFunction;
+  isUTC?: boolean; // TODO? get UTC from props?
+  theme?: GrafanaThemeType | undefined;
+}
 
+export class TableRenderer {
   columns: ColumnInfo[];
   colorState: any;
-  theme?: GrafanaThemeType;
 
-  constructor(
-    styles: Style[],
-    schema: Column[],
-    private rowGetter: (info: Index) => any[], // matches the table rowGetter
-    private replaceVariables: InterpolateFunction
-  ) {
+  constructor(private options: RendererOptions) {
+    const { schema, styles } = options;
     this.colorState = {};
 
     if (!schema) {
@@ -42,10 +44,11 @@ export class TableRenderer {
       return;
     }
 
-    this.columns = schema.map((col, index) => {
+    this.columns = options.schema.map((col, index) => {
       let title = col.text;
-      let style: Style = null;
+      let style; // ColumnStyle
 
+      // Find the style based on the text
       for (let i = 0; i < styles.length; i++) {
         const s = styles[i];
         const regex = kbn.stringToJsRegex(s.pattern);
@@ -62,28 +65,24 @@ export class TableRenderer {
         header: title,
         accessor: col.text, // unique?
         style: style,
-        formatter: this.createColumnFormatter(style, col),
+        formatter: this.createColumnFormatter(col, style),
       };
     });
   }
 
-  setTheme(theme: GrafanaThemeType) {
-    this.theme = theme;
-  }
-
-  getColorForValue(value, style: Style) {
+  getColorForValue(value: any, style: ColumnStyle) {
     if (!style.thresholds) {
       return null;
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return getColorFromHexRgbOrName(style.colors[i], this.theme);
+        return getColorFromHexRgbOrName(style.colors![i], this.options.theme);
       }
     }
-    return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
+    return getColorFromHexRgbOrName(_.first(style.colors), this.options.theme);
   }
 
-  defaultCellFormatter(v: any, style: Style): string {
+  defaultCellFormatter(v: any, style?: ColumnStyle): string {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -99,7 +98,7 @@ export class TableRenderer {
     }
   }
 
-  createColumnFormatter(style: Style, header: any): CellFormatter {
+  createColumnFormatter(header: Column, style?: ColumnStyle): CellFormatter {
     if (!style) {
       return this.defaultCellFormatter;
     }
@@ -120,7 +119,7 @@ export class TableRenderer {
           v = v[0];
         }
         let date = moment(v);
-        if (this.isUTC) {
+        if (this.options.isUTC) {
           date = date.utc();
         }
         return date.format(style.dateFormat);
@@ -203,7 +202,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value: any, style: Style) {
+  setColorState(value: any, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
@@ -220,8 +219,8 @@ export class TableRenderer {
   }
 
   renderRowVariables(rowIndex: number) {
-    const scopedVars = {};
-    const row = this.rowGetter({ index: rowIndex });
+    const scopedVars: any = {};
+    const row = this.options.rowGetter({ index: rowIndex });
     for (let i = 0; i < row.length; i++) {
       scopedVars[`__cell_${i}`] = { value: row[i] };
     }
@@ -261,11 +260,12 @@ export class TableRenderer {
     let columnHtml: JSX.Element;
     if (column.style && column.style.link) {
       // Render cell as link
+      const { replaceVariables } = this.options;
       const scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      const cellLink = this.replaceVariables(column.style.linkUrl, scopedVars, encodeURIComponent);
-      const cellLinkTooltip = this.replaceVariables(column.style.linkTooltip, scopedVars);
+      const cellLink = replaceVariables(column.style.linkUrl, scopedVars, encodeURIComponent);
+      const cellLinkTooltip = replaceVariables(column.style.linkTooltip, scopedVars);
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
@@ -284,7 +284,7 @@ export class TableRenderer {
       columnHtml = <span>{value}</span>;
     }
 
-    let filterLink: JSX.Element;
+    let filterLink: JSX.Element | null = null;
     if (column.filterable) {
       cellClasses.push('table-panel-cell-filterable');
       filterLink = (

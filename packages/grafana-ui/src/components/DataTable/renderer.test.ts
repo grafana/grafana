@@ -2,10 +2,11 @@ import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 
 import { getColorDefinitionByName } from '@grafana/ui';
-import { Options } from '../types';
-import { PanelProps, LoadingState } from '@grafana/ui/src/types';
+import { ScopedVars } from '@grafana/ui/src/types';
 import moment from 'moment';
-import { TableRenderer } from '../renderer';
+import { TableRenderer } from './renderer';
+import { Index } from 'react-virtualized';
+import { ColumnStyle } from './DataTable';
 
 // TODO: this is commented out with *x* describe!
 // Essentially all the elements need to replace the <td> with <div>
@@ -33,179 +34,161 @@ xdescribe('when rendering table', () => {
       [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2],
     ];
 
-    const panel: Options = {
-      showHeader: true,
-      pageSize: 10,
-      styles: [
-        {
-          pattern: 'Time',
-          type: 'date',
-          alias: 'Timestamp',
-        },
-        {
-          pattern: '/(Val)ue/',
-          type: 'number',
-          unit: 'ms',
-          decimals: 3,
-          alias: '$1',
-        },
-        {
-          pattern: 'Colored',
-          type: 'number',
-          unit: 'none',
-          decimals: 1,
-          colorMode: 'value',
-          thresholds: [50, 80],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
-        },
-        {
-          pattern: 'String',
-          type: 'string',
-        },
-        {
-          pattern: 'String',
-          type: 'string',
-        },
-        {
-          pattern: 'United',
-          type: 'number',
-          unit: 'ms',
-          decimals: 2,
-        },
-        {
-          pattern: 'Sanitized',
-          type: 'string',
-          sanitize: true,
-        },
-        {
-          pattern: 'Link',
-          type: 'string',
-          link: true,
-          linkUrl: '/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2',
-          linkTooltip: '$__cell $__cell_1 $__cell_6',
-          linkTargetBlank: true,
-        },
-        {
-          pattern: 'Array',
-          type: 'number',
-          unit: 'ms',
-          decimals: 3,
-        },
-        {
-          pattern: 'Mapping',
-          type: 'string',
-          mappingType: 1,
-          valueMaps: [
-            {
-              value: '1',
-              text: 'on',
-            },
-            {
-              value: '0',
-              text: 'off',
-            },
-            {
-              value: 'HELLO WORLD',
-              text: 'HELLO GRAFANA',
-            },
-            {
-              value: 'value1, value2',
-              text: 'value3, value4',
-            },
-          ],
-        },
-        {
-          pattern: 'RangeMapping',
-          type: 'string',
-          mappingType: 2,
-          rangeMaps: [
-            {
-              from: '1',
-              to: '3',
-              text: 'on',
-            },
-            {
-              from: '3',
-              to: '6',
-              text: 'off',
-            },
-          ],
-        },
-        {
-          pattern: 'MappingColored',
-          type: 'string',
-          mappingType: 1,
-          valueMaps: [
-            {
-              value: '1',
-              text: 'on',
-            },
-            {
-              value: '0',
-              text: 'off',
-            },
-          ],
-          colorMode: 'value',
-          thresholds: [1, 2],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
-        },
-        {
-          pattern: 'RangeMappingColored',
-          type: 'string',
-          mappingType: 2,
-          rangeMaps: [
-            {
-              from: '1',
-              to: '3',
-              text: 'on',
-            },
-            {
-              from: '3',
-              to: '6',
-              text: 'off',
-            },
-          ],
-          colorMode: 'value',
-          thresholds: [2, 5],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
-        },
-      ],
-    };
+    const styles: ColumnStyle[] = [
+      {
+        pattern: 'Time',
+        type: 'date',
+        alias: 'Timestamp',
+      },
+      {
+        pattern: '/(Val)ue/',
+        type: 'number',
+        unit: 'ms',
+        decimals: 3,
+        alias: '$1',
+      },
+      {
+        pattern: 'Colored',
+        type: 'number',
+        unit: 'none',
+        decimals: 1,
+        colorMode: 'value',
+        thresholds: [50, 80],
+        colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+      },
+      {
+        pattern: 'String',
+        type: 'string',
+      },
+      {
+        pattern: 'String',
+        type: 'string',
+      },
+      {
+        pattern: 'United',
+        type: 'number',
+        unit: 'ms',
+        decimals: 2,
+      },
+      {
+        pattern: 'Sanitized',
+        type: 'string',
+        sanitize: true,
+      },
+      {
+        pattern: 'Link',
+        type: 'string',
+        link: true,
+        linkUrl: '/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2',
+        linkTooltip: '$__cell $__cell_1 $__cell_6',
+        linkTargetBlank: true,
+      },
+      {
+        pattern: 'Array',
+        type: 'number',
+        unit: 'ms',
+        decimals: 3,
+      },
+      {
+        pattern: 'Mapping',
+        type: 'string',
+        mappingType: 1,
+        valueMaps: [
+          {
+            value: '1',
+            text: 'on',
+          },
+          {
+            value: '0',
+            text: 'off',
+          },
+          {
+            value: 'HELLO WORLD',
+            text: 'HELLO GRAFANA',
+          },
+          {
+            value: 'value1, value2',
+            text: 'value3, value4',
+          },
+        ],
+      },
+      {
+        pattern: 'RangeMapping',
+        type: 'string',
+        mappingType: 2,
+        rangeMaps: [
+          {
+            from: '1',
+            to: '3',
+            text: 'on',
+          },
+          {
+            from: '3',
+            to: '6',
+            text: 'off',
+          },
+        ],
+      },
+      {
+        pattern: 'MappingColored',
+        type: 'string',
+        mappingType: 1,
+        valueMaps: [
+          {
+            value: '1',
+            text: 'on',
+          },
+          {
+            value: '0',
+            text: 'off',
+          },
+        ],
+        colorMode: 'value',
+        thresholds: [1, 2],
+        colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+      },
+      {
+        pattern: 'RangeMappingColored',
+        type: 'string',
+        mappingType: 2,
+        rangeMaps: [
+          {
+            from: '1',
+            to: '3',
+            text: 'on',
+          },
+          {
+            from: '3',
+            to: '6',
+            text: 'off',
+          },
+        ],
+        colorMode: 'value',
+        thresholds: [2, 5],
+        colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+      },
+    ];
 
     // const sanitize = value => {
     //   return 'sanitized';
     // };
 
-    const props: PanelProps<Options> = {
-      panelData: {
-        tableData: table,
-      },
-      width: 100,
-      height: 100,
-      timeRange: {
-        from: moment(),
-        to: moment(),
-        raw: {
-          from: moment(),
-          to: moment(),
-        },
-      },
-      loading: LoadingState.Done,
-      replaceVariables: (value, scopedVars) => {
-        if (scopedVars) {
-          // For testing variables replacement in link
-          _.each(scopedVars, (val, key) => {
-            value = value.replace('$' + key, val.value);
-          });
-        }
-        return value;
-      },
-      renderCounter: 1,
-      options: panel,
+    const replaceVariables = (value: any, scopedVars: ScopedVars | undefined) => {
+      if (scopedVars) {
+        // For testing variables replacement in link
+        _.each(scopedVars, (val, key) => {
+          value = value.replace('$' + key, val.value);
+        });
+      }
+      return value;
     };
-    const rowGetter = ({ index }) => table.rows[index];
-    const renderer = new TableRenderer(panel.styles, table.columns, rowGetter, props.replaceVariables);
-    renderer.setTheme(null);
+    const rowGetter = ({ index }: Index) => table.rows[index];
+    const renderer = new TableRenderer({
+      styles,
+      schema: table.columns,
+      rowGetter,
+      replaceVariables,
+    });
 
     it('time column should be formated', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
@@ -314,7 +297,7 @@ xdescribe('when rendering table', () => {
           </a>
         </td>
       `;
-      expect(normalize(html)).toBe(normalize(expectedHtml));
+      expect(normalize(html + '')).toBe(normalize(expectedHtml));
     });
 
     it('Array column should not use number as formatter', () => {
@@ -404,6 +387,6 @@ xdescribe('when rendering table', () => {
   });
 });
 
-function normalize(str) {
+function normalize(str: string) {
   return str.replace(/\s+/gm, ' ').trim();
 }

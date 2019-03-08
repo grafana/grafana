@@ -1,31 +1,8 @@
-// Made to match the existing (untyped) settings in the angular table
-export interface Style {
-  alias?: string;
-  colorMode?: string;
-  colors?: any[];
-  decimals?: number;
-  pattern?: string;
-  thresholds?: any[];
-  type?: 'date' | 'number' | 'string' | 'hidden';
-  unit?: string;
-  dateFormat?: string;
-  sanitize?: boolean;
-  mappingType?: any;
-  valueMaps?: any;
-  rangeMaps?: any;
-
-  link?: any;
-  linkUrl?: any;
-  linkTooltip?: any;
-  linkTargetBlank?: boolean;
-
-  preserveFormat?: boolean;
-}
+import { ColumnStyle } from '@grafana/ui/src/components/DataTable/DataTable';
 
 export interface Options {
   showHeader: boolean;
-  styles: Style[];
-  pageSize: number;
+  styles: ColumnStyle[];
 }
 
 export const defaults: Options = {
@@ -48,5 +25,4 @@ export const defaults: Options = {
       thresholds: [],
     },
   ],
-  pageSize: 100,
 };
