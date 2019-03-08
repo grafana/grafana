@@ -78,6 +78,69 @@ func TestLdapAuther(t *testing.T) {
 		})
 	})
 
+	Convey("serverBind", t, func() {
+		Convey("Given bind dn and password configured", func() {
+			conn := &mockLdapConn{}
+			var actualUsername, actualPassword string
+			conn.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN:       "o=users,dc=grafana,dc=org",
+					BindPassword: "bindpwd",
+				},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "bindpwd")
+		})
+
+		Convey("Given bind dn configured", func() {
+			conn := &mockLdapConn{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			conn.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN: "o=users,dc=grafana,dc=org",
+				},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
+		})
+
+		Convey("Given empty bind dn and password", func() {
+			conn := &mockLdapConn{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			conn.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn:   conn,
+				server: &LdapServerConf{},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldBeEmpty)
+		})
+	})
+
 	Convey("When translating ldap user to grafana user", t, func() {
 
 		var user1 = &m.User{}
