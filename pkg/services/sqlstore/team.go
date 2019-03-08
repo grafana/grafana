@@ -280,7 +280,7 @@ func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	query.Result = make([]*m.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
-	sess.Join("INNER", "user", fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
 	if query.OrgId != 0 {
 		sess.Where("team_member.org_id=?", query.OrgId)
 	}

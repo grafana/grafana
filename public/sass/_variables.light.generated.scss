@@ -49,34 +49,34 @@ $orange: #ff7941;
 $purple: #9954bb;
 $variable: #0083b3;
 
-$brand-primary: $orange;
-$brand-success: $green-base;
-$brand-warning: $orange;
-$brand-danger: $red-base;
+$brand-primary: #ff7941;
+$brand-success: #3eb15b;
+$brand-warning: #ff7941;
+$brand-danger: #e02f44;
 
-$query-red: $red-base;
-$query-green: $green-base;
-$query-purple: $purple;
-$query-orange: $orange;
-$query-keyword: $blue-base;
+$query-red: #e02f44;
+$query-green: #3eb15b;
+$query-purple: #9954bb;
+$query-orange: #ff7941;
+$query-keyword: #3274d9;
 
 // Status colors
 // -------------------------
-$online: $green-shade;
+$online: #369b4f;
 $warn: #f79520;
-$critical: $red-shade;
+$critical: #c4162a;
 
 // Scaffolding
 // -------------------------
 $body-bg: #f7f8fa;
 $page-bg: #f7f8fa;
 
-$body-color: $gray-1;
-$text-color: $gray-1;
-$text-color-strong: $dark-1;
-$text-color-weak: $gray-2;
-$text-color-faint: $gray-4;
-$text-color-emphasis: $dark-2;
+$body-color: #52545c;
+$text-color: #52545c;
+$text-color-strong: #41444b;
+$text-color-weak: #767980;
+$text-color-faint: #35373f;
+$text-color-emphasis: #dde4ed;
 
 $text-shadow-faint: none;
 
@@ -88,14 +88,14 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
-$link-color: $gray-1;
-$link-color-disabled: lighten($link-color, 30%);
-$link-hover-color: darken($link-color, 20%);
-$external-link-color: $blue-shade;
+$link-color: #52545c;
+$link-color-disabled: #9ea0a9;
+$link-hover-color: #222326;
+$external-link-color: #5794f2;
 
 // Typography
 // -------------------------
-$headings-color: $text-color;
+$headings-color: #52545c;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 

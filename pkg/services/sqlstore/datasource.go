@@ -174,11 +174,6 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			Version:           cmd.Version + 1,
 		}
 
-		sess.UseBool("is_default")
-		sess.UseBool("basic_auth")
-		sess.UseBool("with_credentials")
-		sess.UseBool("read_only")
-
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {
 			// the reason we allow cmd.version > db.version is make it possible for people to force
@@ -190,7 +185,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}
 
-		affected, err := updateSession.Update(ds)
+		affected, err := updateSession.AllCols().Omit("created").Update(ds)
 		if err != nil {
 			return err
 		}

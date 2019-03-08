@@ -49,6 +49,35 @@ type Engine struct {
 	tagHandlers map[string]tagHandler
 
 	engineGroup *EngineGroup
+
+	cachers    map[string]core.Cacher
+	cacherLock sync.RWMutex
+}
+
+func (engine *Engine) setCacher(tableName string, cacher core.Cacher) {
+	engine.cacherLock.Lock()
+	engine.cachers[tableName] = cacher
+	engine.cacherLock.Unlock()
+}
+
+func (engine *Engine) SetCacher(tableName string, cacher core.Cacher) {
+	engine.setCacher(tableName, cacher)
+}
+
+func (engine *Engine) getCacher(tableName string) core.Cacher {
+	var cacher core.Cacher
+	var ok bool
+	engine.cacherLock.RLock()
+	cacher, ok = engine.cachers[tableName]
+	engine.cacherLock.RUnlock()
+	if !ok && !engine.disableGlobalCache {
+		cacher = engine.Cacher
+	}
+	return cacher
+}
+
+func (engine *Engine) GetCacher(tableName string) core.Cacher {
+	return engine.getCacher(tableName)
 }
 
 // BufferSize sets buffer size for iterate
@@ -148,6 +177,14 @@ func (engine *Engine) QuoteStr() string {
 	return engine.dialect.QuoteStr()
 }
 
+func (engine *Engine) quoteColumns(columnStr string) string {
+	columns := strings.Split(columnStr, ",")
+	for i := 0; i < len(columns); i++ {
+		columns[i] = engine.Quote(strings.TrimSpace(columns[i]))
+	}
+	return strings.Join(columns, ",")
+}
+
 // Quote Use QuoteStr quote the string sql
 func (engine *Engine) Quote(value string) string {
 	value = strings.TrimSpace(value)
@@ -165,7 +202,7 @@ func (engine *Engine) Quote(value string) string {
 }
 
 // QuoteTo quotes string and writes into the buffer
-func (engine *Engine) QuoteTo(buf *bytes.Buffer, value string) {
+func (engine *Engine) QuoteTo(buf *builder.StringBuilder, value string) {
 	if buf == nil {
 		return
 	}
@@ -208,6 +245,11 @@ func (engine *Engine) AutoIncrStr() string {
 	return engine.dialect.AutoIncrStr()
 }
 
+// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+func (engine *Engine) SetConnMaxLifetime(d time.Duration) {
+	engine.db.SetConnMaxLifetime(d)
+}
+
 // SetMaxOpenConns is only available for go 1.2+
 func (engine *Engine) SetMaxOpenConns(conns int) {
 	engine.db.SetMaxOpenConns(conns)
@@ -245,13 +287,7 @@ func (engine *Engine) NoCascade() *Session {
 
 // MapCacher Set a table use a special cacher
 func (engine *Engine) MapCacher(bean interface{}, cacher core.Cacher) error {
-	v := rValue(bean)
-	tb, err := engine.autoMapType(v)
-	if err != nil {
-		return err
-	}
-
-	tb.Cacher = cacher
+	engine.setCacher(engine.TableName(bean, true), cacher)
 	return nil
 }
 
@@ -534,33 +570,6 @@ func (engine *Engine) dumpTables(tables []*core.Table, w io.Writer, tp ...core.D
 		}
 	}
 	return nil
-}
-
-func (engine *Engine) tableName(beanOrTableName interface{}) (string, error) {
-	v := rValue(beanOrTableName)
-	if v.Type().Kind() == reflect.String {
-		return beanOrTableName.(string), nil
-	} else if v.Type().Kind() == reflect.Struct {
-		return engine.tbName(v), nil
-	}
-	return "", errors.New("bean should be a struct or struct's point")
-}
-
-func (engine *Engine) tbName(v reflect.Value) string {
-	if tb, ok := v.Interface().(TableName); ok {
-		return tb.TableName()
-	}
-
-	if v.Type().Kind() == reflect.Ptr {
-		if tb, ok := reflect.Indirect(v).Interface().(TableName); ok {
-			return tb.TableName()
-		}
-	} else if v.CanAddr() {
-		if tb, ok := v.Addr().Interface().(TableName); ok {
-			return tb.TableName()
-		}
-	}
-	return engine.TableMapper.Obj2Table(reflect.Indirect(v).Type().Name())
 }
 
 // Cascade use cascade or not
@@ -846,7 +855,7 @@ func (engine *Engine) TableInfo(bean interface{}) *Table {
 	if err != nil {
 		engine.logger.Error(err)
 	}
-	return &Table{tb, engine.tbName(v)}
+	return &Table{tb, engine.TableName(bean)}
 }
 
 func addIndex(indexName string, table *core.Table, col *core.Column, indexType int) {
@@ -861,15 +870,6 @@ func addIndex(indexName string, table *core.Table, col *core.Column, indexType i
 	}
 }
 
-func (engine *Engine) newTable() *core.Table {
-	table := core.NewEmptyTable()
-
-	if !engine.disableGlobalCache {
-		table.Cacher = engine.Cacher
-	}
-	return table
-}
-
 // TableName table name interface to define customerize table name
 type TableName interface {
 	TableName() string
@@ -881,21 +881,9 @@ var (
 
 func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 	t := v.Type()
-	table := engine.newTable()
-	if tb, ok := v.Interface().(TableName); ok {
-		table.Name = tb.TableName()
-	} else {
-		if v.CanAddr() {
-			if tb, ok = v.Addr().Interface().(TableName); ok {
-				table.Name = tb.TableName()
-			}
-		}
-		if table.Name == "" {
-			table.Name = engine.TableMapper.Obj2Table(t.Name())
-		}
-	}
-
+	table := core.NewEmptyTable()
 	table.Type = t
+	table.Name = engine.tbNameForMap(v)
 
 	var idFieldColName string
 	var hasCacheTag, hasNoCacheTag bool
@@ -1049,15 +1037,15 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 	if hasCacheTag {
 		if engine.Cacher != nil { // !nash! use engine's cacher if provided
 			engine.logger.Info("enable cache on table:", table.Name)
-			table.Cacher = engine.Cacher
+			engine.setCacher(table.Name, engine.Cacher)
 		} else {
 			engine.logger.Info("enable LRU cache on table:", table.Name)
-			table.Cacher = NewLRUCacher2(NewMemoryStore(), time.Hour, 10000) // !nashtsai! HACK use LRU cacher for now
+			engine.setCacher(table.Name, NewLRUCacher2(NewMemoryStore(), time.Hour, 10000))
 		}
 	}
 	if hasNoCacheTag {
-		engine.logger.Info("no cache on table:", table.Name)
-		table.Cacher = nil
+		engine.logger.Info("disable cache on table:", table.Name)
+		engine.setCacher(table.Name, nil)
 	}
 
 	return table, nil
@@ -1116,7 +1104,25 @@ func (engine *Engine) idOfV(rv reflect.Value) (core.PK, error) {
 	pk := make([]interface{}, len(table.PrimaryKeys))
 	for i, col := range table.PKColumns() {
 		var err error
-		pkField := v.FieldByName(col.FieldName)
+
+		fieldName := col.FieldName
+		for {
+			parts := strings.SplitN(fieldName, ".", 2)
+			if len(parts) == 1 {
+				break
+			}
+
+			v = v.FieldByName(parts[0])
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
+			}
+			if v.Kind() != reflect.Struct {
+				return nil, ErrUnSupportedType
+			}
+			fieldName = parts[1]
+		}
+
+		pkField := v.FieldByName(fieldName)
 		switch pkField.Kind() {
 		case reflect.String:
 			pk[i], err = engine.idTypeAssertion(col, pkField.String())
@@ -1162,26 +1168,10 @@ func (engine *Engine) CreateUniques(bean interface{}) error {
 	return session.CreateUniques(bean)
 }
 
-func (engine *Engine) getCacher2(table *core.Table) core.Cacher {
-	return table.Cacher
-}
-
 // ClearCacheBean if enabled cache, clear the cache bean
 func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
-	v := rValue(bean)
-	t := v.Type()
-	if t.Kind() != reflect.Struct {
-		return errors.New("error params")
-	}
-	tableName := engine.tbName(v)
-	table, err := engine.autoMapType(v)
-	if err != nil {
-		return err
-	}
-	cacher := table.Cacher
-	if cacher == nil {
-		cacher = engine.Cacher
-	}
+	tableName := engine.TableName(bean)
+	cacher := engine.getCacher(tableName)
 	if cacher != nil {
 		cacher.ClearIds(tableName)
 		cacher.DelBean(tableName, id)
@@ -1192,21 +1182,8 @@ func (engine *Engine) ClearCacheBean(bean interface{}, id string) error {
 // ClearCache if enabled cache, clear some tables' cache
 func (engine *Engine) ClearCache(beans ...interface{}) error {
 	for _, bean := range beans {
-		v := rValue(bean)
-		t := v.Type()
-		if t.Kind() != reflect.Struct {
-			return errors.New("error params")
-		}
-		tableName := engine.tbName(v)
-		table, err := engine.autoMapType(v)
-		if err != nil {
-			return err
-		}
-
-		cacher := table.Cacher
-		if cacher == nil {
-			cacher = engine.Cacher
-		}
+		tableName := engine.TableName(bean)
+		cacher := engine.getCacher(tableName)
 		if cacher != nil {
 			cacher.ClearIds(tableName)
 			cacher.ClearBeans(tableName)
@@ -1224,13 +1201,13 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 
 	for _, bean := range beans {
 		v := rValue(bean)
-		tableName := engine.tbName(v)
+		tableNameNoSchema := engine.TableName(bean)
 		table, err := engine.autoMapType(v)
 		if err != nil {
 			return err
 		}
 
-		isExist, err := session.Table(bean).isTableExist(tableName)
+		isExist, err := session.Table(bean).isTableExist(tableNameNoSchema)
 		if err != nil {
 			return err
 		}
@@ -1256,12 +1233,12 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 			}
 		} else {
 			for _, col := range table.Columns() {
-				isExist, err := engine.dialect.IsColumnExist(tableName, col.Name)
+				isExist, err := engine.dialect.IsColumnExist(tableNameNoSchema, col.Name)
 				if err != nil {
 					return err
 				}
 				if !isExist {
-					if err := session.statement.setRefValue(v); err != nil {
+					if err := session.statement.setRefBean(bean); err != nil {
 						return err
 					}
 					err = session.addColumn(col.Name)
@@ -1272,35 +1249,35 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 			}
 
 			for name, index := range table.Indexes {
-				if err := session.statement.setRefValue(v); err != nil {
+				if err := session.statement.setRefBean(bean); err != nil {
 					return err
 				}
 				if index.Type == core.UniqueType {
-					isExist, err := session.isIndexExist2(tableName, index.Cols, true)
+					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, true)
 					if err != nil {
 						return err
 					}
 					if !isExist {
-						if err := session.statement.setRefValue(v); err != nil {
+						if err := session.statement.setRefBean(bean); err != nil {
 							return err
 						}
 
-						err = session.addUnique(tableName, name)
+						err = session.addUnique(tableNameNoSchema, name)
 						if err != nil {
 							return err
 						}
 					}
 				} else if index.Type == core.IndexType {
-					isExist, err := session.isIndexExist2(tableName, index.Cols, false)
+					isExist, err := session.isIndexExist2(tableNameNoSchema, index.Cols, false)
 					if err != nil {
 						return err
 					}
 					if !isExist {
-						if err := session.statement.setRefValue(v); err != nil {
+						if err := session.statement.setRefBean(bean); err != nil {
 							return err
 						}
 
-						err = session.addIndex(tableName, name)
+						err = session.addIndex(tableNameNoSchema, name)
 						if err != nil {
 							return err
 						}
@@ -1369,10 +1346,10 @@ func (engine *Engine) DropIndexes(bean interface{}) error {
 }
 
 // Exec raw sql
-func (engine *Engine) Exec(sql string, args ...interface{}) (sql.Result, error) {
+func (engine *Engine) Exec(sqlorArgs ...interface{}) (sql.Result, error) {
 	session := engine.NewSession()
 	defer session.Close()
-	return session.Exec(sql, args...)
+	return session.Exec(sqlorArgs...)
 }
 
 // Query a raw sql and return records as []map[string][]byte
@@ -1451,6 +1428,13 @@ func (engine *Engine) Find(beans interface{}, condiBeans ...interface{}) error {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Find(beans, condiBeans...)
+}
+
+// FindAndCount find the results and also return the counts
+func (engine *Engine) FindAndCount(rowsSlicePtr interface{}, condiBean ...interface{}) (int64, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return session.FindAndCount(rowsSlicePtr, condiBean...)
 }
 
 // Iterate record by record handle records from table, bean's non-empty fields
@@ -1627,6 +1611,11 @@ func (engine *Engine) GetTZDatabase() *time.Location {
 // SetTZDatabase sets time zone of the database
 func (engine *Engine) SetTZDatabase(tz *time.Location) {
 	engine.DatabaseTZ = tz
+}
+
+// SetSchema sets the schema of database
+func (engine *Engine) SetSchema(schema string) {
+	engine.dialect.URI().Schema = schema
 }
 
 // Unscoped always disable struct tag "deleted"

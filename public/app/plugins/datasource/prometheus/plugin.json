@@ -42,7 +42,6 @@
         "name": "Prometheus",
         "url": "https://prometheus.io/"
       }
-    ],
-    "version": "5.0.0"
+    ]
   }
 }

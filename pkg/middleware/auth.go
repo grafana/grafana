@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,6 +50,12 @@ func notAuthorized(c *m.ReqContext) {
 	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, false, true)
 
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
+	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+		accessForbidden(c)
+	}
 }
 
 func RoleAuth(roles ...m.RoleType) macaron.Handler {

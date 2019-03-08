@@ -635,4 +635,32 @@ describe('DashboardModel', () => {
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });
   });
+
+  describe('Given a dashboard with one panel legend on and two off', () => {
+    let model;
+
+    beforeEach(() => {
+      const data = {
+        panels: [
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
+        ],
+      };
+      model = new DashboardModel(data);
+    });
+
+    it('toggleLegendsForAll should toggle all legends on on first execution', () => {
+      model.toggleLegendsForAll();
+      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      expect(legendsOn.length).toBe(3);
+    });
+
+    it('toggleLegendsForAll should toggle all legends off on second execution', () => {
+      model.toggleLegendsForAll();
+      model.toggleLegendsForAll();
+      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      expect(legendsOn.length).toBe(0);
+    });
+  });
 });
