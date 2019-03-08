@@ -103,8 +103,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     if (!this.state.show && this.props.isInView) {
-      const { panel } = this.props;
-      console.log('Load Panel:', panel.title, `(id:${panel.id})`);
       this.setState({ show: true });
     }
 

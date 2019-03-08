@@ -205,17 +205,15 @@ export class DashboardGrid extends PureComponent<Props> {
       return false;
     }
 
-    // TODO? Is there a better way to get this?
     const top = parseInt(elem.style.top.replace('px', ''), 10);
-    const height = parseInt(elem.style.height.replace('px', ''), 10);
+    const height = panel.gridPos.h * GRID_CELL_HEIGHT + 40;
     const bottom = top + height;
 
     // Show things that are almost in the view
-    const buffer = 150;
+    const buffer = 250;
 
     const viewTop = this.props.scrollTop;
     if (viewTop > bottom + buffer) {
-      //      console.log( panel.id, 'Above', viewTop, bottom );
       return false; // The panel is above the viewport
     }
 
@@ -224,21 +222,7 @@ export class DashboardGrid extends PureComponent<Props> {
     const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
     const viewBot = viewTop + viewHeight;
     if (top > viewBot + buffer) {
-      //      console.log( panel.id, 'Below', viewBot, top );
       return false;
-    }
-
-    // To be accurate, the top needs to add 50px for each row, but that is
-    // not a property that you can get from the gridPos
-    const fromGridTop = panel.gridPos.y * GRID_CELL_HEIGHT;
-    const fromGridHeight = panel.gridPos.h * GRID_CELL_HEIGHT + 40; // Not sure why 40
-    if (fromGridTop !== top) {
-      const dT = top - fromGridTop;
-      const dH = height - fromGridHeight;
-      console.log('Panel:' + panel.id, 'Top Difference=', dT);
-      if (dH !== 0) {
-        console.log('  >> ', 'Height Difference=', dH);
-      }
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
@@ -246,7 +230,6 @@ export class DashboardGrid extends PureComponent<Props> {
 
   renderPanels() {
     const panelElements = [];
-    console.log('===== RENDER DashboardGrid =====', this.props.scrollTop);
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       const id = panel.id.toString();
