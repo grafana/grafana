@@ -193,35 +193,35 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
 
 export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
 
-export const toTableData = (results: any[]): TableData[] => {
-  const tables: TableData[] = [];
-  if (results) {
-    for (let i = 0; i < results.length; i++) {
-      const data = results[i];
-      if (data) {
-        if (data.hasOwnProperty('columns')) {
-          tables.push(data as TableData);
-        } else if (data.hasOwnProperty('datapoints')) {
-          const ts = data as TimeSeries;
-          tables.push({
-            columns: [
-              {
-                text: ts.target,
-                unit: ts.unit,
-              },
-              {
-                text: 'Time',
-                type: 'time',
-              },
-            ],
-            rows: ts.datapoints,
-          } as TableData);
-        } else {
-          console.warn('Can not convert', data);
-          throw new Error('Unsupported data format');
-        }
-      }
-    }
+export const toTableData = (results?: any[]): TableData[] => {
+  if (!results) {
+    return [];
   }
-  return tables;
+
+  return results
+    .filter(d => !!d)
+    .map(data => {
+      if (data.hasOwnProperty('columns')) {
+        return data as TableData;
+      }
+      if (data.hasOwnProperty('datapoints')) {
+        const ts = data as TimeSeries;
+        return {
+          columns: [
+            {
+              text: ts.target || 'Timeseries',
+              unit: ts.unit,
+            },
+            {
+              text: 'Time',
+              type: 'time',
+            },
+          ],
+          rows: ts.datapoints,
+        } as TableData;
+      }
+      // TODO, try to convert JSON to table?
+      console.warn('Can not convert', data);
+      throw new Error('Unsupported data format');
+    });
 };
