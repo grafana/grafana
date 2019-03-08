@@ -1,6 +1,8 @@
 package models
 
-import "errors"
+import (
+	"errors"
+)
 
 // Typed errors
 var (
@@ -21,6 +23,10 @@ type UserToken struct {
 	CreatedAt     int64
 	UpdatedAt     int64
 	UnhashedToken string
+}
+
+type RevokeAuthTokenCmd struct {
+	AuthTokenId int64 `json:"authTokenId"`
 }
 
 // UserTokenService are used for generating and validating user tokens
