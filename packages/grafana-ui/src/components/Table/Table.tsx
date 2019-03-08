@@ -13,16 +13,14 @@ import { Themeable } from '../../types/theme';
 
 import { sortTableData } from '../../utils/processTimeSeries';
 
-import { sanitize } from 'app/core/utils/text';
-
 import moment from 'moment';
 
 import { getValueFormat, TableData, getColorFromHexRgbOrName, InterpolateFunction, Column } from '@grafana/ui';
 import { Index } from 'react-virtualized';
 import { ColumnStyle } from './Table';
 
-// Types
-import kbn from 'app/core/utils/kbn';
+// APP Imports!!!
+// import kbn from 'app/core/utils/kbn';
 
 // Made to match the existing (untyped) settings in the angular table
 export interface ColumnStyle {
@@ -36,7 +34,7 @@ export interface ColumnStyle {
   type?: 'date' | 'number' | 'string' | 'hidden';
   unit?: string;
   dateFormat?: string;
-  sanitize?: boolean;
+  sanitize?: boolean; // not used in react
   mappingType?: any;
   valueMaps?: any;
   rangeMaps?: any;
@@ -126,7 +124,7 @@ export class Table extends Component<Props, State> {
       // Find the style based on the text
       for (let i = 0; i < styles.length; i++) {
         const s = styles[i];
-        const regex = kbn.stringToJsRegex(s.pattern);
+        const regex = 'XXX'; //kbn.stringToJsRegex(s.pattern);
         if (title.match(regex)) {
           style = s;
           if (s.alias) {
@@ -172,11 +170,7 @@ export class Table extends Component<Props, State> {
       v = v.join(', ');
     }
 
-    if (style && style.sanitize) {
-      return sanitize(v);
-    } else {
-      return _.escape(v);
-    }
+    return v; // react will sanitize
   }
 
   createColumnFormatter(schema: Column, style?: ColumnStyle): CellFormatter {

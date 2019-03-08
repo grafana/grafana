@@ -1,8 +1,7 @@
 import _ from 'lodash';
-import TableModel from 'app/core/table_model';
 
 import { getColorDefinitionByName } from '@grafana/ui';
-import { ScopedVars } from '@grafana/ui/src/types';
+import { ScopedVars, TableData } from '@grafana/ui/src/types';
 import { getTheme } from '../../themes';
 import Table, { ColumnStyle } from './Table';
 
@@ -12,25 +11,25 @@ xdescribe('when rendering table', () => {
   const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
 
   describe('given 13 columns', () => {
-    const table = new TableModel();
-    table.columns = [
-      { text: 'Time' },
-      { text: 'Value' },
-      { text: 'Colored' },
-      { text: 'Undefined' },
-      { text: 'String' },
-      { text: 'United', unit: 'bps' },
-      { text: 'Sanitized' },
-      { text: 'Link' },
-      { text: 'Array' },
-      { text: 'Mapping' },
-      { text: 'RangeMapping' },
-      { text: 'MappingColored' },
-      { text: 'RangeMappingColored' },
-    ];
-    table.rows = [
-      [1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2],
-    ];
+    const table = {
+      type: 'table',
+      columns: [
+        { text: 'Time' },
+        { text: 'Value' },
+        { text: 'Colored' },
+        { text: 'Undefined' },
+        { text: 'String' },
+        { text: 'United', unit: 'bps' },
+        { text: 'Sanitized' },
+        { text: 'Link' },
+        { text: 'Array' },
+        { text: 'Mapping' },
+        { text: 'RangeMapping' },
+        { text: 'MappingColored' },
+        { text: 'RangeMappingColored' },
+      ],
+      rows: [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2]],
+    } as TableData;
 
     const styles: ColumnStyle[] = [
       {
