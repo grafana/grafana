@@ -128,7 +128,7 @@ func prepareStaticOptions(dir string, options []StaticOptions) StaticOptions {
 }
 
 func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) bool {
-	if ctx.Req.Method != "GET" && ctx.Req.Method != "HEAD" {
+	if ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead {
 		return false
 	}
 

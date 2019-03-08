@@ -14,7 +14,7 @@ import (
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, getMethod, url, url, m.ROLE_EDITOR, fn)
+	loggedInUserScenarioWithRole(desc, http.MethodGet, url, url, m.ROLE_EDITOR, fn)
 }
 
 func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role m.RoleType, fn scenarioFunc) {
@@ -35,9 +35,9 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 		})
 
 		switch method {
-		case getMethod:
+		case http.MethodGet:
 			sc.m.Get(routePattern, sc.defaultHandler)
-		case deleteMethod:
+		case http.MethodDelete:
 			sc.m.Delete(routePattern, sc.defaultHandler)
 		}
 
@@ -60,9 +60,9 @@ func anonymousUserScenario(desc string, method string, url string, routePattern 
 		})
 
 		switch method {
-		case getMethod:
+		case http.MethodGet:
 			sc.m.Get(routePattern, sc.defaultHandler)
-		case deleteMethod:
+		case http.MethodDelete:
 			sc.m.Delete(routePattern, sc.defaultHandler)
 		}
 

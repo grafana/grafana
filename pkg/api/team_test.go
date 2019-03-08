@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -34,7 +35,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 				})
 
 				sc.handlerFunc = SearchTeams
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 
 				So(sentLimit, ShouldEqual, 1000)
 				So(sendPage, ShouldEqual, 1)
@@ -61,7 +62,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 				})
 
 				sc.handlerFunc = SearchTeams
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 				So(sentLimit, ShouldEqual, 10)
 				So(sendPage, ShouldEqual, 2)

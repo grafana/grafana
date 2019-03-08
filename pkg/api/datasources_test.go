@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -33,7 +34,7 @@ func TestDataSourcesProxy(t *testing.T) {
 
 			// handler func being tested
 			sc.handlerFunc = GetDataSources
-			sc.fakeReq(getMethod, "/api/datasources").exec()
+			sc.fakeReq(http.MethodGet, "/api/datasources").exec()
 
 			respJSON := []map[string]interface{}{}
 			err := json.NewDecoder(sc.resp.Body).Decode(&respJSON)
@@ -50,7 +51,7 @@ func TestDataSourcesProxy(t *testing.T) {
 		Convey("Should be able to save a data source", func() {
 			loggedInUserScenario("When calling DELETE on non-existing", "/api/datasources/name/12345", func(sc *scenarioContext) {
 				sc.handlerFunc = DeleteDataSourceByName
-				sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 				So(sc.resp.Code, ShouldEqual, 404)
 			})
 		})

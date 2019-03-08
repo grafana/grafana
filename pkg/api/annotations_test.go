@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -51,15 +52,15 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationRegion
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 			})
@@ -83,15 +84,15 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationRegion
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
@@ -164,15 +165,15 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationRegion
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 403)
 				})
 			})
@@ -196,15 +197,15 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/1", "/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationByID
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 
-				loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
+				loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/annotations/region/1", "/api/annotations/region/:regionId", role, func(sc *scenarioContext) {
 					sc.handlerFunc = DeleteAnnotationRegion
-					sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+					sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})

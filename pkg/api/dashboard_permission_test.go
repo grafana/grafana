@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -19,7 +20,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return m.ErrDashboardNotFound
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetDashboardPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 404)
 			})
@@ -46,7 +47,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetDashboardPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -87,7 +88,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				callGetDashboardPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
@@ -177,7 +178,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 
 func callGetDashboardPermissions(sc *scenarioContext) {
 	sc.handlerFunc = GetDashboardPermissionList
-	sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 }
 
 func callUpdateDashboardPermissions(sc *scenarioContext) {

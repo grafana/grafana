@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -73,7 +74,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Viewer", func() {
 			role := m.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -87,7 +88,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -101,7 +102,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -110,7 +111,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -119,12 +120,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -133,7 +134,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Editor", func() {
 			role := m.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -147,7 +148,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -161,7 +162,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -170,7 +171,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -179,12 +180,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
@@ -246,9 +247,9 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Viewer and has no permissions for this dashboard", func() {
 			role := m.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
 					So(getDashboardQueries[0].Slug, ShouldEqual, "child-dash")
@@ -259,9 +260,9 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
 					So(getDashboardQueries[0].Uid, ShouldEqual, "abcdefghi")
@@ -272,7 +273,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -281,7 +282,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -290,12 +291,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -304,9 +305,9 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Editor and has no permissions for this dashboard", func() {
 			role := m.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
 					So(getDashboardQueries[0].Slug, ShouldEqual, "child-dash")
@@ -317,9 +318,9 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
-				sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+				sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
 					So(getDashboardQueries[0].Uid, ShouldEqual, "abcdefghi")
@@ -330,7 +331,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -339,7 +340,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -348,12 +349,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -371,7 +372,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -385,7 +386,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -399,7 +400,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -408,7 +409,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -417,12 +418,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
@@ -441,7 +442,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -455,7 +456,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -469,7 +470,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -478,7 +479,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -500,7 +501,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -514,7 +515,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -528,7 +529,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -537,7 +538,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
@@ -546,12 +547,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
@@ -569,7 +570,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -582,7 +583,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -595,7 +596,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -604,7 +605,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				CallDeleteDashboardByUID(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
@@ -613,12 +614,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				})
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				CallGetDashboardVersion(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -649,7 +650,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		role := m.ROLE_EDITOR
 
-		loggedInUserScenarioWithRole("When calling DELETE on", deleteMethod, "/api/dashboards/db/dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole("When calling DELETE on", http.MethodDelete, "/api/dashboards/db/dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 			CallDeleteDashboard(sc)
 
 			Convey("Should result in 412 Precondition failed", func() {
@@ -913,7 +914,7 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 
 func CallGetDashboard(sc *scenarioContext) {
 	sc.handlerFunc = GetDashboard
-	sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {
@@ -923,7 +924,7 @@ func CallGetDashboardVersion(sc *scenarioContext) {
 	})
 
 	sc.handlerFunc = GetDashboardVersion
-	sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 }
 
 func CallGetDashboardVersions(sc *scenarioContext) {
@@ -933,7 +934,7 @@ func CallGetDashboardVersions(sc *scenarioContext) {
 	})
 
 	sc.handlerFunc = GetDashboardVersions
-	sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 }
 
 func CallDeleteDashboard(sc *scenarioContext) {
@@ -942,7 +943,7 @@ func CallDeleteDashboard(sc *scenarioContext) {
 	})
 
 	sc.handlerFunc = DeleteDashboard
-	sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 }
 
 func CallDeleteDashboardByUID(sc *scenarioContext) {
@@ -951,7 +952,7 @@ func CallDeleteDashboardByUID(sc *scenarioContext) {
 	})
 
 	sc.handlerFunc = DeleteDashboardByUID
-	sc.fakeReqWithParams(deleteMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodDelete, sc.url, map[string]string{}).exec()
 }
 
 func CallPostDashboard(sc *scenarioContext) {

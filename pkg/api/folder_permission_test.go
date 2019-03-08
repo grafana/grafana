@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -23,7 +24,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			origNewFolderService := dashboards.NewFolderService
 			mockFolderService(mock)
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 404)
 			})
@@ -59,7 +60,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			origNewFolderService := dashboards.NewFolderService
 			mockFolderService(mock)
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -106,7 +107,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			origNewFolderService := dashboards.NewFolderService
 			mockFolderService(mock)
 
-			loggedInUserScenarioWithRole("When calling GET on", getMethod, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole("When calling GET on", http.MethodGet, "/api/folders/uid/permissions", "/api/folders/:uid/permissions", m.ROLE_ADMIN, func(sc *scenarioContext) {
 				callGetFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
@@ -209,7 +210,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 
 func callGetFolderPermissions(sc *scenarioContext) {
 	sc.handlerFunc = GetFolderPermissionList
-	sc.fakeReqWithParams(getMethod, sc.url, map[string]string{}).exec()
+	sc.fakeReqWithParams(http.MethodGet, sc.url, map[string]string{}).exec()
 }
 
 func callUpdateFolderPermissions(sc *scenarioContext) {

@@ -33,11 +33,6 @@ import (
 	macaron "gopkg.in/macaron.v1"
 )
 
-const (
-	getMethod    = "GET"
-	deleteMethod = "DELETE"
-)
-
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "HTTPServer",
@@ -248,7 +243,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	if ctx.Req.Method != getMethod || ctx.Req.URL.Path != "/metrics" {
+	if ctx.Req.Method != http.MethodGet || ctx.Req.URL.Path != "/metrics" {
 		return
 	}
 
