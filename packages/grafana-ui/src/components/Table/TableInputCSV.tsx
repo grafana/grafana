@@ -3,7 +3,7 @@ import debounce from 'lodash/debounce';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 import { TableData, Column } from '../../types/data';
 
-// Subset of all parse configs
+// Subset of all parse options
 export interface ParseConfig {
   delimiter?: string; // default: ","
   newline?: string; // default: "\r\n"
@@ -12,7 +12,7 @@ export interface ParseConfig {
   comments?: boolean | string; // default: false
 }
 
-interface ParseResults {
+export interface ParseResults {
   table: TableData;
   meta: ParseMeta;
   errors: ParseError[];
@@ -106,8 +106,9 @@ export function parseCSV(text: string, config?: ParseConfig): ParseResults {
 
 interface Props {
   config?: ParseConfig;
-  width: number;
-  height: number;
+  width: number | string;
+  height: number | string;
+  onTableParsed: (results: ParseResults) => void;
 }
 
 interface State {
@@ -127,37 +128,39 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   readCSV = debounce(() => {
     const results = parseCSV(this.state.text, this.props.config);
     this.setState({ results });
-    console.log('GOT:', results);
   }, 150);
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     if (this.state.text !== prevState.text || this.props.config !== prevProps.config) {
       this.readCSV();
     }
+    if (this.state.results !== prevState.results) {
+      this.props.onTableParsed(this.state.results);
+    }
   }
 
   handleChange = (event: any) => {
     this.setState({ text: event.target.value });
-  };
-  handleBlur = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
-    //  console.log('BLUR', event);
   };
 
   render() {
     const { width, height } = this.props;
     const { table, errors } = this.state.results;
 
+    let clazz = 'fa fa-check-circle';
+    errors.forEach(error => {
+      if (error.type === 'warning') {
+        clazz = 'fa fa-exclamation-triangle';
+      } else {
+        clazz = 'fa fa-times-circle';
+      }
+    });
+
     return (
-      <div
-        className={'gf-table-input-wrap'}
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-        }}
-      >
-        <textarea value={this.state.text} onChange={this.handleChange} onBlur={this.handleBlur} />
+      <div className="gf-table-input-csv" style={{ width, height }}>
+        <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.handleChange} />
         <footer>
-          BAR: / ROWS:{table.rows.length} / COLS:{table.columns.length} / {JSON.stringify(errors)}
+          Rows:{table.rows.length}, Columns:{table.columns.length} <i className={clazz} />
         </footer>
       </div>
     );

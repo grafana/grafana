@@ -1,17 +1,18 @@
-.gf-table-input-wrap {
-  width: 100%;
+.gf-table-input-csv {
+  position: relative;
 }
 
-.gf-table-input-wrap textarea {
+.gf-table-input-csv textarea {
   height: 100%;
   width: 100%;
   resize: none;
 }
 
-.gf-table-input-wrap footer {
+.gf-table-input-csv footer {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  border: 2px solid #222;
+  border: 1px solid #222;
   background: #ccc;
+  padding: 4px 10px;
 }
