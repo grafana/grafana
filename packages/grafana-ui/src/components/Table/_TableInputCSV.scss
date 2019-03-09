@@ -1,0 +1,17 @@
+.gf-table-input-wrap {
+  width: 100%;
+}
+
+.gf-table-input-wrap textarea {
+  height: 100%;
+  width: 100%;
+  resize: none;
+}
+
+.gf-table-input-wrap footer {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  border: 2px solid #222;
+  background: #ccc;
+}

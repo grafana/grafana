@@ -18,6 +18,35 @@ interface ParseResults {
   errors: ParseError[];
 }
 
+// This mutates the table structure!
+export function checkAndFix(table: TableData): number {
+  let cols = table.columns.length;
+  let different = 0;
+  table.rows.forEach(row => {
+    if (cols !== row.length) {
+      different++;
+      cols = Math.max(cols, row.length);
+    }
+  });
+  if (different > 0) {
+    if (cols !== table.columns.length) {
+      const diff = cols - table.columns.length;
+      for (let i = 0; i < diff; i++) {
+        table.columns.push({
+          text: 'Column ' + table.columns.length,
+        });
+      }
+    }
+    table.rows.forEach(row => {
+      const diff = cols - row.length;
+      for (let i = 0; i < diff; i++) {
+        row.push(null);
+      }
+    });
+  }
+  return different;
+}
+
 export function parseCSV(text: string, config?: ParseConfig): ParseResults {
   const results = Papa.parse(text, { ...config, dynamicTyping: true, skipEmptyLines: true });
 
@@ -44,47 +73,32 @@ export function parseCSV(text: string, config?: ParseConfig): ParseResults {
     };
   }
 
-  let same = true;
-  let cols = data[0].length;
-  data.forEach(row => {
-    if (cols !== row.length) {
-      same = false;
-      cols = Math.max(cols, row.length);
-    }
-  });
+  const first = results.data.shift();
+  const table = {
+    columns: first.map((v: any, index: number) => {
+      if (!v) {
+        v = 'Column ' + (index + 1);
+      }
+      return {
+        text: v.toString().trim(),
+      } as Column;
+    }),
+    rows: results.data,
+    type: 'table',
+    columnMap: {},
+  } as TableData;
 
-  // Use a second pass to update the sizes
-  if (!same) {
+  const changed = checkAndFix(table);
+  if (changed > 0) {
     errors.push({
       type: 'warning', // A generalization of the error
-      message: 'not all rows have the same width',
+      message: 'not all rows have the same width. Changed:' + changed,
       code: 'width',
       row: 0,
     });
-    // Add null values to the end of all short arrays
-    data.forEach(row => {
-      const diff = cols - row.length;
-      for (let i = 0; i < diff; i++) {
-        row.push(null);
-      }
-    });
   }
-
-  const first = results.data.shift();
   return {
-    table: {
-      columns: first.map((v: any, index: number) => {
-        if (!v) {
-          v = 'Column ' + (index + 1);
-        }
-        return {
-          text: v.toString().trim(),
-        } as Column;
-      }),
-      rows: results.data,
-      type: 'table',
-      columnMap: {},
-    } as TableData,
+    table,
     meta,
     errors,
   };
@@ -92,6 +106,8 @@ export function parseCSV(text: string, config?: ParseConfig): ParseResults {
 
 interface Props {
   config?: ParseConfig;
+  width: number;
+  height: number;
 }
 
 interface State {
@@ -128,14 +144,21 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   };
 
   render() {
+    const { width, height } = this.props;
     const { table, errors } = this.state.results;
 
     return (
-      <div>
+      <div
+        className={'gf-table-input-wrap'}
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+        }}
+      >
         <textarea value={this.state.text} onChange={this.handleChange} onBlur={this.handleBlur} />
-        <div>
+        <footer>
           BAR: / ROWS:{table.rows.length} / COLS:{table.columns.length} / {JSON.stringify(errors)}
-        </div>
+        </footer>
       </div>
     );
   }
