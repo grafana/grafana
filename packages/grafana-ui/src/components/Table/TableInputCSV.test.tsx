@@ -9,11 +9,9 @@ describe('TableInputCSV', () => {
     const tree = renderer
       .create(
         <TableInputCSV
-          text="a,b,c\n1,2,3"
-          width={100}
-          height={100}
+          text={'a,b,c\n1,2,3'}
           onTableParsed={(table: TableData, text: string) => {
-            console.log('Table:', table, 'from:', text);
+            // console.log('Table:', table, 'from:', text);
           }}
         />
       )

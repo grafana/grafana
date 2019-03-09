@@ -2,11 +2,10 @@ import React from 'react';
 import debounce from 'lodash/debounce';
 import { ParseConfig, parseCSV, ParseDetails } from '../../utils/processTableData';
 import { TableData } from '../../types/data';
+import { AutoSizer } from 'react-virtualized';
 
 interface Props {
   config?: ParseConfig;
-  width: number | string;
-  height: number | string;
   text: string;
   onTableParsed: (table: TableData, text: string) => void;
 }
@@ -17,6 +16,9 @@ interface State {
   details: ParseDetails;
 }
 
+/**
+ * Expects the container div to have size set and will fill it 100%
+ */
 class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -54,24 +56,38 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     }
   }
 
+  handleFooterClicked = (event: any) => {
+    console.log('Errors', this.state);
+    const message = this.state.details
+      .errors!.map(err => {
+        return err.message;
+      })
+      .join('\n');
+    alert('CSV Parsing Errors:\n' + message);
+  };
+
   handleChange = (event: any) => {
     this.setState({ text: event.target.value });
   };
 
   render() {
-    const { width, height } = this.props;
     const { table, details } = this.state;
 
     const hasErrors = details.errors && details.errors.length > 0;
+    const footerClassNames = hasErrors ? 'gf-table-input-csv-err' : '';
 
     return (
-      <div className="gf-table-input-csv" style={{ width, height }}>
-        <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.handleChange} />
-        <footer>
-          Rows:{table.rows.length}, Columns:{table.columns.length}
-          {hasErrors ? <i className="fa fa-exclamation-triangle" /> : <i className="fa fa-check-circle" />}
-        </footer>
-      </div>
+      <AutoSizer>
+        {({ height, width }) => (
+          <div className="gf-table-input-csv" style={{ width, height }}>
+            <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.handleChange} />
+            <footer onClick={this.handleFooterClicked} className={footerClassNames}>
+              Rows:{table.rows.length}, Columns:{table.columns.length} &nbsp;
+              {hasErrors ? <i className="fa fa-exclamation-triangle" /> : <i className="fa fa-check-circle" />}
+            </footer>
+          </div>
+        )}
+      </AutoSizer>
     );
   }
 }
