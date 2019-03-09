@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`processTableData basic processing should read header and two rows 1`] = `
+Object {
+  "errors": Array [],
+  "meta": Object {
+    "aborted": false,
+    "cursor": 17,
+    "delimiter": ",",
+    "linebreak": "
+",
+    "truncated": false,
+  },
+  "table": Object {
+    "columnMap": Object {},
+    "columns": Array [
+      Object {
+        "text": "a",
+      },
+      Object {
+        "text": "b",
+      },
+      Object {
+        "text": "c",
+      },
+    ],
+    "rows": Array [
+      Array [
+        1,
+        2,
+        3,
+      ],
+      Array [
+        4,
+        5,
+        6,
+      ],
+    ],
+    "type": "table",
+  },
+}
+`;

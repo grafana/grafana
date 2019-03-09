@@ -1,7 +1,8 @@
 import React from 'react';
 
 import renderer from 'react-test-renderer';
-import TableInputCSV, { ParseResults } from './TableInputCSV';
+import TableInputCSV from './TableInputCSV';
+import { ParseResults } from '../../utils/processTableData';
 
 describe('TableInputCSV', () => {
   it('renders correctly', () => {
