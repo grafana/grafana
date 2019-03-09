@@ -1,40 +1,10 @@
-import React, { FunctionComponent } from 'react';
+// import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { Table } from './Table';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars } from '../../types/index';
-
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { AutoSizer } from 'react-virtualized';
-
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100vh',
-      }}
-    >
-      <AutoSizer>
-        {({ width, height }) => (
-          <div
-            style={{
-              width: `${width}px`,
-              height: `${height}px`,
-              border: '1px solid red',
-            }}
-          >
-            <div>
-              Need to pass {width}/{height} to the table?
-            </div>
-            {children}
-          </div>
-        )}
-      </AutoSizer>
-    </div>
-  );
-};
+import { ScopedVars, TableData } from '../../types/index';
+import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 
 const replaceVariables = (value: any, scopedVars: ScopedVars | undefined) => {
   // if (scopedVars) {
@@ -47,24 +17,49 @@ const replaceVariables = (value: any, scopedVars: ScopedVars | undefined) => {
 };
 
 storiesOf('UI - Alpha/Table', module)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
   .add('basic', () => {
-    return renderComponentWithTheme(Table, {
+    return withFullSizeStory(Table, {
       styles: [],
       data: simpleTable,
       replaceVariables,
       showHeader: true,
-      width: 500,
-      height: 300,
     });
   })
   .add('Test Configuration', () => {
-    return renderComponentWithTheme(Table, {
+    return withFullSizeStory(Table, {
       styles: migratedTestStyles,
       data: migratedTestTable,
       replaceVariables,
       showHeader: true,
-      width: 500,
-      height: 300,
+    });
+  })
+  .add('Lots of cells', () => {
+    const data = {
+      columns: [],
+      rows: [],
+      type: 'table',
+      columnMap: {},
+    } as TableData;
+    for (let i = 0; i < 20; i++) {
+      data.columns.push({
+        text: 'Column ' + i,
+      });
+    }
+    for (let r = 0; r < 500; r++) {
+      const row = [];
+      for (let i = 0; i < 20; i++) {
+        row.push(r + i);
+      }
+      data.rows.push(row);
+    }
+    console.log('DATA:', data);
+
+    return withFullSizeStory(Table, {
+      styles: simpleTable,
+      data,
+      replaceVariables,
+      showHeader: true,
+      fixedColumnCount: 1,
+      fixedRowCount: 1,
     });
   });

@@ -1,22 +1,19 @@
 // Libraries
 import _ from 'lodash';
-import React, { Component, CSSProperties, ReactNode } from 'react';
+import React, { Component, ReactNode } from 'react';
 import {
-  Table as RVTable,
   SortDirectionType,
   SortIndicator,
-  Column as RVColumn,
-  TableHeaderProps,
-  TableCellProps,
+  MultiGrid,
+  CellMeasurerCache,
+  CellMeasurer,
+  GridCellProps,
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
 import { sortTableData } from '../../utils/processTimeSeries';
 
-import moment from 'moment';
-
-import { getValueFormat, TableData, getColorFromHexRgbOrName, InterpolateFunction, Column } from '@grafana/ui';
-import { Index } from 'react-virtualized';
+import { TableData, InterpolateFunction } from '@grafana/ui';
 import { ColumnStyle } from './Table';
 
 // APP Imports!!!
@@ -27,7 +24,7 @@ export interface ColumnStyle {
   pattern?: string;
 
   alias?: string;
-  colorMode?: string;
+  colorMode?: 'cell' | 'value';
   colors?: any[];
   decimals?: number;
   thresholds?: any[];
@@ -61,6 +58,8 @@ interface ColumnInfo {
 interface Props extends Themeable {
   data?: TableData;
   showHeader: boolean;
+  fixedColumnCount: number;
+  fixedRowCount: number;
   styles: ColumnStyle[];
   replaceVariables: InterpolateFunction;
   width: number;
@@ -78,8 +77,12 @@ export class Table extends Component<Props, State> {
   columns: ColumnInfo[] = [];
   colorState: any;
 
+  _cache: CellMeasurerCache;
+
   static defaultProps = {
     showHeader: true,
+    fixedRowCount: 1,
+    fixedColumnCount: 0,
   };
 
   constructor(props: Props) {
@@ -88,6 +91,11 @@ export class Table extends Component<Props, State> {
     this.state = {
       data: props.data,
     };
+
+    this._cache = new CellMeasurerCache({
+      defaultHeight: 30,
+      defaultWidth: 150,
+    });
 
     this.initRenderer();
   }
@@ -109,314 +117,17 @@ export class Table extends Component<Props, State> {
     }
   }
 
-  initRenderer() {
-    const { styles } = this.props;
-    const { data } = this.state;
-    this.colorState = {};
-    if (!data || !data.columns) {
-      this.columns = [];
-      return;
-    }
-    this.columns = data.columns.map((col, index) => {
-      let title = col.text;
-      let style; // ColumnStyle
-
-      // Find the style based on the text
-      for (let i = 0; i < styles.length; i++) {
-        const s = styles[i];
-        const regex = 'XXX'; //kbn.stringToJsRegex(s.pattern);
-        if (title.match(regex)) {
-          style = s;
-          if (s.alias) {
-            title = title.replace(regex, s.alias);
-          }
-          break;
-        }
-      }
-
-      return {
-        header: title,
-        accessor: col.text, // unique?
-        style: style,
-        formatter: this.createColumnFormatter(col, style),
-      };
-    });
-  }
-
-  //----------------------------------------------------------------------
-  // renderer.ts copy (taken from angular version!!!)
-  //----------------------------------------------------------------------
-
-  getColorForValue(value: any, style: ColumnStyle) {
-    if (!style.thresholds || !style.colors) {
-      return null;
-    }
-    const { theme } = this.props;
-
-    for (let i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
-        return getColorFromHexRgbOrName(style.colors[i], theme.type);
-      }
-    }
-    return getColorFromHexRgbOrName(_.first(style.colors), theme.type);
-  }
-
-  defaultCellFormatter(v: any, style?: ColumnStyle): string {
-    if (v === null || v === void 0 || v === undefined) {
-      return '';
-    }
-
-    if (_.isArray(v)) {
-      v = v.join(', ');
-    }
-
-    return v; // react will sanitize
-  }
-
-  createColumnFormatter(schema: Column, style?: ColumnStyle): CellFormatter {
-    if (!style) {
-      return this.defaultCellFormatter;
-    }
-
-    if (style.type === 'hidden') {
-      return v => {
-        return undefined;
-      };
-    }
-
-    if (style.type === 'date') {
-      return v => {
-        if (v === undefined || v === null) {
-          return '-';
-        }
-
-        if (_.isArray(v)) {
-          v = v[0];
-        }
-        let date = moment(v);
-        if (this.props.isUTC) {
-          date = date.utc();
-        }
-        return date.format(style.dateFormat);
-      };
-    }
-
-    if (style.type === 'string') {
-      return v => {
-        if (_.isArray(v)) {
-          v = v.join(', ');
-        }
-
-        const mappingType = style.mappingType || 0;
-
-        if (mappingType === 1 && style.valueMaps) {
-          for (let i = 0; i < style.valueMaps.length; i++) {
-            const map = style.valueMaps[i];
-
-            if (v === null) {
-              if (map.value === 'null') {
-                return map.text;
-              }
-              continue;
-            }
-
-            // Allow both numeric and string values to be mapped
-            if ((!_.isString(v) && Number(map.value) === Number(v)) || map.value === v) {
-              this.setColorState(v, style);
-              return this.defaultCellFormatter(map.text, style);
-            }
-          }
-        }
-
-        if (mappingType === 2 && style.rangeMaps) {
-          for (let i = 0; i < style.rangeMaps.length; i++) {
-            const map = style.rangeMaps[i];
-
-            if (v === null) {
-              if (map.from === 'null' && map.to === 'null') {
-                return map.text;
-              }
-              continue;
-            }
-
-            if (Number(map.from) <= Number(v) && Number(map.to) >= Number(v)) {
-              this.setColorState(v, style);
-              return this.defaultCellFormatter(map.text, style);
-            }
-          }
-        }
-
-        if (v === null || v === void 0) {
-          return '-';
-        }
-
-        this.setColorState(v, style);
-        return this.defaultCellFormatter(v, style);
-      };
-    }
-
-    if (style.type === 'number') {
-      const valueFormatter = getValueFormat(style.unit || schema.unit || 'none');
-
-      return v => {
-        if (v === null || v === void 0) {
-          return '-';
-        }
-
-        if (_.isString(v) || _.isArray(v)) {
-          return this.defaultCellFormatter(v, style);
-        }
-
-        this.setColorState(v, style);
-        return valueFormatter(v, style.decimals, null);
-      };
-    }
-
-    return value => {
-      return this.defaultCellFormatter(value, style);
-    };
-  }
-
-  setColorState(value: any, style: ColumnStyle) {
-    if (!style.colorMode) {
-      return;
-    }
-
-    if (value === null || value === void 0 || _.isArray(value)) {
-      return;
-    }
-
-    if (_.isNaN(value)) {
-      return;
-    }
-    const numericValue = Number(value);
-    this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
-  }
-
-  renderRowVariables(rowIndex: number) {
-    const scopedVars: any = {};
-    const row = this.rowGetter({ index: rowIndex });
-    for (let i = 0; i < row.length; i++) {
-      scopedVars[`__cell_${i}`] = { value: row[i] };
-    }
-    return scopedVars;
-  }
-
-  renderCell(columnIndex: number, rowIndex: number, value: any): ReactNode {
-    const column = this.columns[columnIndex];
-    if (column.formatter) {
-      value = column.formatter(value, column.style);
-    }
-
-    const style: CSSProperties = {};
-    const cellClasses = [];
-    let cellClass = '';
-
-    if (this.colorState.cell) {
-      style.backgroundColor = this.colorState.cell;
-      style.color = 'white';
-      this.colorState.cell = null;
-    } else if (this.colorState.value) {
-      style.color = this.colorState.value;
-      this.colorState.value = null;
-    }
-
-    if (value === undefined) {
-      style.display = 'none';
-      column.hidden = true;
-    } else {
-      column.hidden = false;
-    }
-
-    if (column.style && column.style.preserveFormat) {
-      cellClasses.push('table-panel-cell-pre');
-    }
-
-    let columnHtml: JSX.Element;
-    if (column.style && column.style.link) {
-      // Render cell as link
-      const { replaceVariables } = this.props;
-      const scopedVars = this.renderRowVariables(rowIndex);
-      scopedVars['__cell'] = { value: value };
-
-      const cellLink = replaceVariables(column.style.linkUrl, scopedVars, encodeURIComponent);
-      const cellLinkTooltip = replaceVariables(column.style.linkTooltip, scopedVars);
-      const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
-
-      cellClasses.push('table-panel-cell-link');
-      columnHtml = (
-        <a
-          href={cellLink}
-          target={cellTarget}
-          data-link-tooltip
-          data-original-title={cellLinkTooltip}
-          data-placement="right"
-        >
-          {value}
-        </a>
-      );
-    } else {
-      columnHtml = <span>{value}</span>;
-    }
-
-    let filterLink: JSX.Element | null = null;
-    if (column.filterable) {
-      cellClasses.push('table-panel-cell-filterable');
-      filterLink = (
-        <span>
-          <a
-            className="table-panel-filter-link"
-            data-link-tooltip
-            data-original-title="Filter out value"
-            data-placement="bottom"
-            data-row={rowIndex}
-            data-column={columnIndex}
-            data-operator="!="
-          >
-            <i className="fa fa-search-minus" />
-          </a>
-          <a
-            className="table-panel-filter-link"
-            data-link-tooltip
-            data-original-title="Filter for value"
-            data-placement="bottom"
-            data-row={rowIndex}
-            data-column={columnIndex}
-            data-operator="="
-          >
-            <i className="fa fa-search-plus" />
-          </a>
-        </span>
-      );
-    }
-
-    if (cellClasses.length) {
-      cellClass = cellClasses.join(' ');
-    }
-
-    style.width = '100%';
-    style.height = '100%';
-    columnHtml = (
-      <div className={cellClass} style={style}>
-        {columnHtml}
-        {filterLink}
-      </div>
-    );
-    return columnHtml;
-  }
+  initRenderer() {}
 
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
 
-  rowGetter = ({ index }: Index) => {
-    return this.state.data!.rows[index];
-  };
-
-  doSort = (info: any) => {
-    let dir = info.sortDirection;
-    let sort = info.sortBy;
-    if (sort !== this.state.sortBy) {
+  doSort = (columnIndex: number) => {
+    let sort: any = this.state.sortBy;
+    let dir = this.state.sortDirection;
+    if (sort !== columnIndex) {
       dir = 'DESC';
+      sort = columnIndex;
     } else if (dir === 'DESC') {
       dir = 'ASC';
     } else {
@@ -425,58 +136,107 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  headerRenderer = (header: TableHeaderProps): ReactNode => {
-    const dataKey = header.dataKey as any; // types say string, but it is number!
+  handelClick = (rowIndex: number, columnIndex: number) => {
+    const { showHeader } = this.props;
+    const { data } = this.state;
+    const realRowIndex = rowIndex - (showHeader ? 1 : 0);
+    if (realRowIndex < 0) {
+      this.doSort(columnIndex);
+    } else {
+      const row = data!.rows[realRowIndex];
+      const value = row[columnIndex];
+      console.log('CLICK', rowIndex, columnIndex, value);
+    }
+  };
+
+  headerRenderer = (columnIndex: number): ReactNode => {
     const { data, sortBy, sortDirection } = this.state;
-    const col = data!.columns[dataKey];
+    const col = data!.columns[columnIndex];
+    const sorting = sortBy === columnIndex;
 
     return (
       <div>
-        {col.text} {sortBy === dataKey && <SortIndicator sortDirection={sortDirection} />}
+        {col.text}{' '}
+        {sorting && (
+          <span>
+            {sortDirection}
+            <SortIndicator sortDirection={sortDirection} />
+          </span>
+        )}
       </div>
     );
   };
 
-  cellRenderer = (cell: TableCellProps) => {
-    const { columnIndex, rowIndex } = cell;
-    const row = this.state.data!.rows[rowIndex];
-    const val = row[columnIndex];
-    return this.renderCell(columnIndex, rowIndex, val);
+  cellRenderer = (props: GridCellProps): React.ReactNode => {
+    const { rowIndex, columnIndex, key, parent, style } = props;
+    const { showHeader } = this.props;
+    const { data } = this.state;
+    if (!data) {
+      return <div>?</div>;
+    }
+
+    const realRowIndex = rowIndex - (showHeader ? 1 : 0);
+
+    let classNames = 'gf-table-cell';
+    let content = null;
+
+    if (realRowIndex < 0) {
+      content = this.headerRenderer(columnIndex);
+      classNames = 'gf-table-header';
+    } else {
+      const row = data.rows[realRowIndex];
+      const value = row[columnIndex];
+      content = (
+        <div>
+          {rowIndex}/{columnIndex}: {value}
+        </div>
+      );
+    }
+
+    return (
+      <CellMeasurer cache={this._cache} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
+        <div
+          onClick={() => this.handelClick(rowIndex, columnIndex)}
+          className={classNames}
+          style={{
+            ...style,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {content}
+        </div>
+      </CellMeasurer>
+    );
   };
 
   render() {
-    const { width, height, showHeader } = this.props;
-    const { data } = this.props;
+    const { data, showHeader, width, height, fixedColumnCount, fixedRowCount } = this.props;
     if (!data) {
       return <div>NO Data</div>;
     }
 
     return (
-      <RVTable
-        disableHeader={!showHeader}
-        headerHeight={30}
-        height={height}
-        overscanRowCount={10}
-        rowHeight={30}
-        rowGetter={this.rowGetter}
-        rowCount={data.rows.length}
-        sort={this.doSort}
+      <MultiGrid
+        {
+          ...this.state /** Force MultiGrid to update when any property updates */
+        }
+        columnCount={data.columns.length}
+        rowCount={data.rows.length + (showHeader ? 1 : 0)}
+        overscanColumnCount={2}
+        overscanRowCount={2}
+        columnWidth={this._cache.columnWidth}
+        deferredMeasurementCache={this._cache}
+        cellRenderer={this.cellRenderer}
+        rowHeight={this._cache.rowHeight}
         width={width}
-      >
-        {data.columns.map((col, index) => {
-          return (
-            <RVColumn
-              key={index}
-              dataKey={index}
-              headerRenderer={this.headerRenderer}
-              cellRenderer={this.cellRenderer}
-              width={150}
-              minWidth={50}
-              flexGrow={1}
-            />
-          );
-        })}
-      </RVTable>
+        height={height}
+        fixedColumnCount={fixedColumnCount}
+        fixedRowCount={fixedRowCount}
+        classNameTopLeftGrid="gf-table-fixed-row-and-column"
+        classNameTopRightGrid="gf-table-fixed-row"
+        classNameBottomLeftGrid="gf-table-fixed-column"
+        classNameBottomRightGrid="gf-table-normal-cell"
+      />
     );
   }
 }

@@ -3,9 +3,9 @@ import _ from 'lodash';
 import { getColorDefinitionByName } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui/src/types';
 import { getTheme } from '../../themes';
-import Table from './Table';
 
 import { migratedTestTable, migratedTestStyles } from './examples';
+import TableXXXX from './TableXXXX';
 
 // TODO: this is commented out with *x* describe!
 // Essentially all the elements need to replace the <td> with <div>
@@ -28,7 +28,7 @@ xdescribe('when rendering table', () => {
     };
 
     const table = migratedTestTable;
-    const renderer = new Table({
+    const renderer = new TableXXXX({
       styles: migratedTestStyles,
       data: migratedTestTable,
       replaceVariables,
