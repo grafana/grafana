@@ -2,17 +2,18 @@ import React from 'react';
 
 import renderer from 'react-test-renderer';
 import TableInputCSV from './TableInputCSV';
-import { ParseResults } from '../../utils/processTableData';
+import { TableData } from '../../types/data';
 
 describe('TableInputCSV', () => {
   it('renders correctly', () => {
     const tree = renderer
       .create(
         <TableInputCSV
+          text="a,b,c\n1,2,3"
           width={100}
           height={100}
-          onTableParsed={(results: ParseResults) => {
-            console.log('GOT', results);
+          onTableParsed={(table: TableData, text: string) => {
+            console.log('Table:', table, 'from:', text);
           }}
         />
       )

@@ -1,39 +1,56 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { ParseConfig, ParseResults, parseCSV } from '../../utils/processTableData';
+import { ParseConfig, parseCSV, ParseDetails } from '../../utils/processTableData';
+import { TableData } from '../../types/data';
 
 interface Props {
   config?: ParseConfig;
   width: number | string;
   height: number | string;
-  onTableParsed: (results: ParseResults) => void;
+  text: string;
+  onTableParsed: (table: TableData, text: string) => void;
 }
 
 interface State {
   text: string;
-  results: ParseResults;
+  table: TableData;
+  details: ParseDetails;
 }
 
 class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+
+    // Shoud this happen in onComponentMounted?
+    const { text, config, onTableParsed } = props;
+    const details = {};
+    const table = parseCSV(text, config, details);
     this.state = {
-      text: '',
-      results: parseCSV('', this.props.config),
+      text,
+      table,
+      details,
     };
+    onTableParsed(table, text);
   }
 
   readCSV = debounce(() => {
-    const results = parseCSV(this.state.text, this.props.config);
-    this.setState({ results });
+    const details = {};
+    const table = parseCSV(this.state.text, this.props.config, details);
+    this.setState({ table, details });
   }, 150);
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    if (this.state.text !== prevState.text || this.props.config !== prevProps.config) {
+    const { text } = this.state;
+    if (text !== prevState.text || this.props.config !== prevProps.config) {
       this.readCSV();
     }
-    if (this.state.results !== prevState.results) {
-      this.props.onTableParsed(this.state.results);
+    // If the props text has changed, replace our local version
+    if (this.props.text !== prevProps.text && this.props.text !== text) {
+      this.setState({ text: this.props.text });
+    }
+
+    if (this.state.table !== prevState.table) {
+      this.props.onTableParsed(this.state.table, this.state.text);
     }
   }
 
@@ -43,9 +60,9 @@ class TableInputCSV extends React.PureComponent<Props, State> {
 
   render() {
     const { width, height } = this.props;
-    const { table, errors } = this.state.results;
+    const { table, details } = this.state;
 
-    const hasErrors = errors.length > 0;
+    const hasErrors = details.errors && details.errors.length > 0;
 
     return (
       <div className="gf-table-input-csv" style={{ width, height }}>

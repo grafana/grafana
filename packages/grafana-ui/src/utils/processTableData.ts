@@ -12,10 +12,9 @@ export interface ParseConfig {
   comments?: boolean | string; // default: false
 }
 
-export interface ParseResults {
-  table: TableData;
-  meta: ParseMeta;
-  errors: ParseError[];
+export interface ParseDetails {
+  meta?: ParseMeta;
+  errors?: ParseError[];
 }
 
 /**
@@ -84,12 +83,26 @@ function makeColumns(values: any[]): Column[] {
   });
 }
 
-export function parseCSV(text: string, config?: ParseConfig): ParseResults {
+/**
+ * Convert text into a valid TableData object
+ *
+ * @param text
+ * @param config
+ * @param details, if exists the result will be filled with parse details
+ */
+export function parseCSV(text: string, config?: ParseConfig, details?: ParseDetails): TableData {
   const results = Papa.parse(text, { ...config, dynamicTyping: true, skipEmptyLines: true });
   const { data, meta, errors } = results;
+
+  // Fill the parse details fro debugging
+  if (details) {
+    details.errors = errors;
+    details.meta = meta;
+  }
+
   if (!data || data.length < 1) {
-    if (!text) {
-      // Show a more reasonable warning on empty input text
+    // Show a more reasonable warning on empty input text
+    if (details && !text) {
       errors.length = 0;
       errors.push({
         code: 'empty',
@@ -97,16 +110,13 @@ export function parseCSV(text: string, config?: ParseConfig): ParseResults {
         type: 'warning',
         row: 0,
       });
+      details.errors = errors;
     }
     return {
-      table: {
-        columns: [],
-        rows: [],
-        type: 'table',
-        columnMap: {},
-      },
-      meta,
-      errors,
+      columns: [],
+      rows: [],
+      type: 'table',
+      columnMap: {},
     };
   }
 
@@ -114,14 +124,10 @@ export function parseCSV(text: string, config?: ParseConfig): ParseResults {
   const headerIsNotFirstLine = config && config.headerIsFirstLine === false;
   const header = headerIsNotFirstLine ? [] : results.data.shift();
 
-  return {
-    table: matchRowSizes({
-      columns: makeColumns(header),
-      rows: results.data,
-      type: 'table',
-      columnMap: {},
-    }),
-    meta,
-    errors,
-  };
+  return matchRowSizes({
+    columns: makeColumns(header),
+    rows: results.data,
+    type: 'table',
+    columnMap: {},
+  });
 }
