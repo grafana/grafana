@@ -70,11 +70,11 @@
 		<div class="gf-form-inline" ng-if="ctrl.panel.xaxis.mode === 'histogram'">
 			<div class="gf-form">
 				<label class="gf-form-label width-6">X-Min</label>
-				<input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.min" ng-change="ctrl.render()" ng-model-onblur>
+				<input type="number" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.min" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 			<div class="gf-form">
 				<label class="gf-form-label width-6">X-Max</label>
-				<input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.max" ng-change="ctrl.render()" ng-model-onblur>
+				<input type="number" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.max" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 		</div>
 
