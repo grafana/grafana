@@ -84,17 +84,17 @@ function makeColumns(values: any[]): Column[] {
 }
 
 /**
- * Convert text into a valid TableData object
+ * Convert CSV text into a valid TableData object
  *
  * @param text
  * @param config
- * @param details, if exists the result will be filled with parse details
+ * @param details, if exists the result will be filled with debugging details
  */
 export function parseCSV(text: string, config?: ParseConfig, details?: ParseDetails): TableData {
   const results = Papa.parse(text, { ...config, dynamicTyping: true, skipEmptyLines: true });
   const { data, meta, errors } = results;
 
-  // Fill the parse details fro debugging
+  // Fill the parse details for debugging
   if (details) {
     details.errors = errors;
     details.meta = meta;
