@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TableInputCSV renders correctly 1`] = `
+<div>
+  <textarea
+    onBlur={[Function]}
+    onChange={[Function]}
+    value=""
+  />
+</div>
+`;

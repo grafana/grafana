@@ -53,7 +53,7 @@ export interface TimeSeriesVMs {
   length: number;
 }
 
-interface Column {
+export interface Column {
   text: string;
   title?: string;
   type?: string;
