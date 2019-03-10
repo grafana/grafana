@@ -72,6 +72,8 @@ export class Table extends Component<Props, State> {
     const dataChanged = data !== prevProps.data;
     const configsChanged = showHeader !== prevProps.showHeader;
 
+    console.log('TABLE', this.props.theme);
+
     // Reset the size cache
     if (dataChanged || configsChanged) {
       this.measurer.clearAll();

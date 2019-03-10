@@ -1,9 +1,10 @@
 // import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { Table } from './Table';
+import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, TableData } from '../../types/index';
+import { ScopedVars, TableData, GrafanaThemeType } from '../../types/index';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -48,10 +49,11 @@ storiesOf('Alpha/Table', module)
       fixedRowCount,
       fixedColumnCount,
       showHeader,
+      theme: getTheme(GrafanaThemeType.Light),
     });
   })
   .add('variable size', () => {
-    const columnCount = number('Column Count', 10, { min: 2, max: 50, step: 1, range: false });
+    const columnCount = number('Column Count', 20, { min: 2, max: 50, step: 1, range: false });
     const rowCount = number('Row Count', 20, { min: 0, max: 100, step: 1, range: false });
 
     const showHeader = boolean('Show Header', true);
@@ -65,6 +67,7 @@ storiesOf('Alpha/Table', module)
       fixedRowCount,
       fixedColumnCount,
       showHeader,
+      theme: getTheme(GrafanaThemeType.Light),
     });
   })
   .add('Old tests configuration', () => {
@@ -73,5 +76,6 @@ storiesOf('Alpha/Table', module)
       data: migratedTestTable,
       replaceVariables,
       showHeader: true,
+      theme: getTheme(GrafanaThemeType.Light),
     });
   });

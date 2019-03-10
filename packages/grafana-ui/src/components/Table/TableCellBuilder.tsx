@@ -86,8 +86,6 @@ export function getCellBuilder(schema: Column, style: ColumnStyle | null, props:
   }
 
   if (style.type === 'date') {
-    console.log('MAKE DATE Column', schema, style);
-
     return new CellBuilderWithStyle(
       (v: any) => {
         if (v === undefined || v === null) {
@@ -160,6 +158,7 @@ class CellBuilderWithStyle {
     private fmt?: ValueFormatter
   ) {
     //
+    console.log('COLUMN', column.text, theme);
   }
 
   getColorForValue = (value: any): string | null => {
