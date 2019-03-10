@@ -13,6 +13,8 @@ interface Options {
   nullValueMode: NullValueMode;
 }
 
+// NOTE -- this should be refactored into a TableData utility file.
+// I left it as is so the merge changes are more clear.
 export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Options): TimeSeriesVMs {
   const vmSeries = data.map((item, index) => {
     if (!isNumber(xColumn)) {
