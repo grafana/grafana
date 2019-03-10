@@ -8,7 +8,7 @@ import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { UseState } from '../../utils/storybook/UseState';
 
 const BasicGreen = getColorDefinitionByName('green');
-const BasicBlue = getColorDefinitionByName('blue');
+const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
 const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
@@ -41,7 +41,7 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
     'Selected color',
     {
       Green: BasicGreen.variants.dark,
-      Red: BasicBlue.variants.dark,
+      Red: BasicRed.variants.dark,
       'Light blue': LightBlue.variants.dark,
     },
     'red'

@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
-import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType } from '@grafana/ui';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export class TableRenderer {
@@ -36,7 +35,7 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        const regex = kbn.stringToJsRegex(style.pattern);
+        const regex = stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 
