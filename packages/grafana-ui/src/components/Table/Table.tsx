@@ -15,6 +15,7 @@ import { sortTableData } from '../../utils/processTimeSeries';
 
 import { TableData, InterpolateFunction } from '@grafana/ui';
 import { TableCellBuilder, ColumnStyle, getCellBuilder, TableCellBuilderOptions } from './TableCellBuilder';
+import { stringToJsRegex } from '../../utils/index';
 
 interface ColumnInfo {
   index: number;
@@ -90,6 +91,8 @@ export class Table extends Component<Props, State> {
 
   initColumns(props: Props): ColumnInfo[] {
     const { styles, data } = props;
+    console.log('STYLES', styles);
+
     return data.columns.map((col, index) => {
       let title = col.text;
       let style: ColumnStyle | null = null; // ColumnStyle
@@ -97,7 +100,7 @@ export class Table extends Component<Props, State> {
       // Find the style based on the text
       for (let i = 0; i < styles.length; i++) {
         const s = styles[i];
-        const regex = 'XXX'; //kbn.stringToJsRegex(s.pattern);
+        const regex = stringToJsRegex(s.pattern);
         if (title.match(regex)) {
           style = s;
           if (s.alias) {
@@ -170,14 +173,22 @@ export class Table extends Component<Props, State> {
     const { rowIndex, columnIndex, key, parent } = props;
     const { showHeader } = this.props;
     const { data } = this.state;
+
     const column = this.columns[columnIndex];
     if (!column) {
-      return <div>XXX</div>; // NOT SURE HOW/WHY THIS HAPPENS!
+      // NOT SURE HOW/WHY THIS HAPPENS!
+      // Without it it will crash in storybook when you cycle up/down the # of columns
+      // this cell is never visible in the output?
+      return (
+        <div key={key} style={props.style}>
+          XXXXX
+        </div>
+      );
     }
 
     const realRowIndex = rowIndex - (showHeader ? 1 : 0);
     const isHeader = realRowIndex < 0;
-    const row = isHeader ? (data.columns as any[]) : data.rows[realRowIndex];
+    const row = isHeader ? data.columns : data.rows[realRowIndex];
     const value = row[columnIndex];
     const builder = isHeader ? this.headerBuilder : column.builder;
 

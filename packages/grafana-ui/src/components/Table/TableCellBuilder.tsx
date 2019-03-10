@@ -41,12 +41,9 @@ export const simpleCellBuilder: TableCellBuilder = (cell: TableCellBuilderOption
 //
 // ***************************************************************************
 
-// APP Imports!!!
-// import kbn from 'app/core/utils/kbn';
-
 // Made to match the existing (untyped) settings in the angular table
 export interface ColumnStyle {
-  pattern?: string;
+  pattern: string;
 
   alias?: string;
   colorMode?: 'cell' | 'value';
@@ -89,6 +86,8 @@ export function getCellBuilder(schema: Column, style: ColumnStyle | null, props:
   }
 
   if (style.type === 'date') {
+    console.log('MAKE DATE Column', schema, style);
+
     return new CellBuilderWithStyle(
       (v: any) => {
         if (v === undefined || v === null) {
