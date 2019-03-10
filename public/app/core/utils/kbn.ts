@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getValueFormat, getValueFormatterIndex, getValueFormats } from '@grafana/ui';
+import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex } from '@grafana/ui';
 
 const kbn: any = {};
 
@@ -228,18 +228,10 @@ kbn.slugifyForUrl = str => {
     .replace(/ +/g, '-');
 };
 
+/** deprecated since 6.1, use grafana/ui */
 kbn.stringToJsRegex = str => {
-  if (str[0] !== '/') {
-    return new RegExp('^' + str + '$');
-  }
-
-  const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?)$'));
-
-  if (!match) {
-    throw new Error(`'${str}' is not a valid regular expression.`);
-  }
-
-  return new RegExp(match[1], match[2]);
+  console.warn('Migrate stringToJsRegex to grafana/ui, ');
+  return stringToJsRegex(str);
 };
 
 kbn.toFixed = (value, decimals) => {

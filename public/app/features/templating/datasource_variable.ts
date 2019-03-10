@@ -1,5 +1,5 @@
-import kbn from 'app/core/utils/kbn';
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
+import { stringToJsRegex } from '@grafana/ui';
 
 export class DatasourceVariable implements Variable {
   regex: any;
@@ -47,7 +47,7 @@ export class DatasourceVariable implements Variable {
 
     if (this.regex) {
       regex = this.templateSrv.replace(this.regex, null, 'regex');
-      regex = kbn.stringToJsRegex(regex);
+      regex = stringToJsRegex(regex);
     }
 
     for (let i = 0; i < sources.length; i++) {
