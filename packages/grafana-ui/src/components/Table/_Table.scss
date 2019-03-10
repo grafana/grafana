@@ -41,7 +41,6 @@
 }
 
 .ReactVirtualized__Table__sortableHeaderIconContainer {
-  display: flex;
   align-items: center;
 }
 .ReactVirtualized__Table__sortableHeaderIcon {
@@ -72,4 +71,8 @@
 
   border-right: 2px solid $body-bg;
   border-bottom: 2px solid $body-bg;
+}
+
+.gf-table-fixed-column {
+  border-right: 1px solid #ccc;
 }

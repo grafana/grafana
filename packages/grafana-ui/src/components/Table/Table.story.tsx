@@ -18,11 +18,28 @@ const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
   return value;
 };
 
-storiesOf('UI/Table', module)
+export function makeDummyTable(columnCount: number, rowCount: number): TableData {
+  const A = 'A'.charCodeAt(0);
+  return {
+    columns: Array.from(new Array(columnCount), (x, i) => {
+      return {
+        text: String.fromCharCode(A + i),
+      };
+    }),
+    rows: Array.from(new Array(rowCount), (x, rowId) => {
+      const suffix = (rowId + 1).toString();
+      return Array.from(new Array(columnCount), (x, colId) => String.fromCharCode(A + colId) + suffix);
+    }),
+    type: 'table',
+    columnMap: {},
+  };
+}
+
+storiesOf('Alpha/Table', module)
   .add('basic', () => {
     const showHeader = boolean('Show Header', true);
-    const fixedRowCount = number('Fixed Rows', 1);
-    const fixedColumnCount = number('Fixed Columns', 1);
+    const fixedRowCount = number('Fixed Rows', 1, { min: 0, max: 50, step: 1, range: false });
+    const fixedColumnCount = number('Fixed Columns', 1, { min: 0, max: 50, step: 1, range: false });
 
     return withFullSizeStory(Table, {
       styles: [],
@@ -33,41 +50,28 @@ storiesOf('UI/Table', module)
       showHeader,
     });
   })
-  .add('Test Configuration', () => {
+  .add('variable size', () => {
+    const columnCount = number('Column Count', 10, { min: 2, max: 50, step: 1, range: false });
+    const rowCount = number('Row Count', 20, { min: 0, max: 100, step: 1, range: false });
+
+    const showHeader = boolean('Show Header', true);
+    const fixedRowCount = number('Fixed Rows', 1, { min: 0, max: 50, step: 1, range: false });
+    const fixedColumnCount = number('Fixed Columns', 1, { min: 0, max: 50, step: 1, range: false });
+
+    return withFullSizeStory(Table, {
+      styles: [],
+      data: makeDummyTable(columnCount, rowCount),
+      replaceVariables,
+      fixedRowCount,
+      fixedColumnCount,
+      showHeader,
+    });
+  })
+  .add('Old tests configuration', () => {
     return withFullSizeStory(Table, {
       styles: migratedTestStyles,
       data: migratedTestTable,
       replaceVariables,
       showHeader: true,
-    });
-  })
-  .add('Lots of cells', () => {
-    const data = {
-      columns: [],
-      rows: [],
-      type: 'table',
-      columnMap: {},
-    } as TableData;
-    for (let i = 0; i < 20; i++) {
-      data.columns.push({
-        text: 'Column ' + i,
-      });
-    }
-    for (let r = 0; r < 500; r++) {
-      const row = [];
-      for (let i = 0; i < 20; i++) {
-        row.push(r + i);
-      }
-      data.rows.push(row);
-    }
-    console.log('DATA:', data);
-
-    return withFullSizeStory(Table, {
-      styles: simpleTable,
-      data,
-      replaceVariables,
-      showHeader: true,
-      fixedColumnCount: 1,
-      fixedRowCount: 1,
     });
   });

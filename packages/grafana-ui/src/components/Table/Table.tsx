@@ -43,6 +43,7 @@ interface State {
 export class Table extends Component<Props, State> {
   columns: ColumnInfo[];
   measurer: CellMeasurerCache;
+  scrollToTop = false;
 
   static defaultProps = {
     showHeader: true,
@@ -65,12 +66,13 @@ export class Table extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { data, styles } = this.props;
+    const { data, styles, showHeader } = this.props;
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
+    const configsChanged = showHeader !== prevProps.showHeader;
 
     // Reset the size cache
-    if (dataChanged) {
+    if (dataChanged || configsChanged) {
       this.measurer.clearAll();
     }
 
@@ -81,8 +83,8 @@ export class Table extends Component<Props, State> {
 
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
-      const sorted = data ? sortTableData(data, sortBy, sortDirection === 'DESC') : data;
-      this.setState({ data: sorted });
+      this.scrollToTop = true;
+      this.setState({ data: sortTableData(data, sortBy, sortDirection === 'DESC') });
     }
   }
 
@@ -137,7 +139,7 @@ export class Table extends Component<Props, State> {
     if (realRowIndex < 0) {
       this.doSort(columnIndex);
     } else {
-      const row = data!.rows[realRowIndex];
+      const row = data.rows[realRowIndex];
       const value = row[columnIndex];
       console.log('CLICK', rowIndex, columnIndex, value);
     }
@@ -147,18 +149,19 @@ export class Table extends Component<Props, State> {
     const { data, sortBy, sortDirection } = this.state;
     const { columnIndex, rowIndex, style } = cell.props;
 
-    const col = data!.columns[columnIndex];
+    let col = data.columns[columnIndex];
     const sorting = sortBy === columnIndex;
+    if (!col) {
+      // NOT SURE Why this happens sometimes
+      col = {
+        text: '??' + columnIndex + '???',
+      };
+    }
 
     return (
       <div className="gf-table-header" style={style} onClick={() => this.handleCellClick(rowIndex, columnIndex)}>
         {col.text}
-        {sorting && (
-          <span>
-            {sortDirection}
-            <SortIndicator sortDirection={sortDirection} />
-          </span>
-        )}
+        {sorting && <SortIndicator sortDirection={sortDirection} />}
       </div>
     );
   };
@@ -167,15 +170,16 @@ export class Table extends Component<Props, State> {
     const { rowIndex, columnIndex, key, parent } = props;
     const { showHeader } = this.props;
     const { data } = this.state;
-    if (!data) {
-      return <div>??</div>;
+    const column = this.columns[columnIndex];
+    if (!column) {
+      return <div>XXX</div>; // NOT SURE HOW/WHY THIS HAPPENS!
     }
 
     const realRowIndex = rowIndex - (showHeader ? 1 : 0);
     const isHeader = realRowIndex < 0;
     const row = isHeader ? (data.columns as any[]) : data.rows[realRowIndex];
     const value = row[columnIndex];
-    const builder = isHeader ? this.headerBuilder : this.columns[columnIndex].builder;
+    const builder = isHeader ? this.headerBuilder : column.builder;
 
     return (
       <CellMeasurer cache={this.measurer} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
@@ -185,9 +189,18 @@ export class Table extends Component<Props, State> {
   };
 
   render() {
-    const { data, showHeader, width, height, fixedColumnCount, fixedRowCount } = this.props;
-    if (!data) {
-      return <div>NO Data</div>;
+    const { data, showHeader, width, height } = this.props;
+
+    const columnCount = data.columns.length;
+    const rowCount = data.rows.length + (showHeader ? 1 : 0);
+
+    const fixedColumnCount = Math.min(this.props.fixedColumnCount, columnCount);
+    const fixedRowCount = Math.min(this.props.fixedRowCount, rowCount);
+
+    // Usually called after a sort or the data changes
+    const scrollToRow = this.scrollToTop ? 1 : -1;
+    if (this.scrollToTop) {
+      this.scrollToTop = false;
     }
 
     return (
@@ -195,8 +208,12 @@ export class Table extends Component<Props, State> {
         {
           ...this.state /** Force MultiGrid to update when data changes */
         }
-        columnCount={data.columns.length}
-        rowCount={data.rows.length + (showHeader ? 1 : 0)}
+        {
+          ...this.props /** Force MultiGrid to update when data changes */
+        }
+        scrollToRow={scrollToRow}
+        columnCount={columnCount}
+        rowCount={rowCount}
         overscanColumnCount={2}
         overscanRowCount={2}
         columnWidth={this.measurer.columnWidth}
