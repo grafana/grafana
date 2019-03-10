@@ -1,5 +1,5 @@
 import { TableData } from '../../types/data';
-import { ColumnStyle } from './Table';
+import { ColumnStyle } from './TableCellBuilder';
 
 import { getColorDefinitionByName } from '@grafana/ui';
 

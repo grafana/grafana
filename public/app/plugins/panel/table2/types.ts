@@ -1,4 +1,4 @@
-import { ColumnStyle } from '@grafana/ui/src/components/Table/Table';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export interface Options {
   showHeader: boolean;

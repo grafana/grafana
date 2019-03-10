@@ -2,7 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType } from '@grafana/ui';
-import { ColumnStyle } from '@grafana/ui/src/components/Table/Table';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export class TableRenderer {
   formatters: any[];

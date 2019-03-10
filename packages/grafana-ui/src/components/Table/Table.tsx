@@ -1,6 +1,6 @@
 // Libraries
 import _ from 'lodash';
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactElement } from 'react';
 import {
   SortDirectionType,
   SortIndicator,
@@ -14,49 +14,16 @@ import { Themeable } from '../../types/theme';
 import { sortTableData } from '../../utils/processTimeSeries';
 
 import { TableData, InterpolateFunction } from '@grafana/ui';
-import { ColumnStyle } from './Table';
-
-// APP Imports!!!
-// import kbn from 'app/core/utils/kbn';
-
-// Made to match the existing (untyped) settings in the angular table
-export interface ColumnStyle {
-  pattern?: string;
-
-  alias?: string;
-  colorMode?: 'cell' | 'value';
-  colors?: any[];
-  decimals?: number;
-  thresholds?: any[];
-  type?: 'date' | 'number' | 'string' | 'hidden';
-  unit?: string;
-  dateFormat?: string;
-  sanitize?: boolean; // not used in react
-  mappingType?: any;
-  valueMaps?: any;
-  rangeMaps?: any;
-
-  link?: any;
-  linkUrl?: any;
-  linkTooltip?: any;
-  linkTargetBlank?: boolean;
-
-  preserveFormat?: boolean;
-}
-
-type CellFormatter = (v: any, style?: ColumnStyle) => ReactNode;
+import { TableCellBuilder, ColumnStyle, getCellBuilder, TableCellBuilderOptions } from './TableCellBuilder';
 
 interface ColumnInfo {
+  index: number;
   header: string;
-  accessor: string; // the field name
-  style?: ColumnStyle;
-  hidden?: boolean;
-  formatter: CellFormatter;
-  filterable?: boolean;
+  builder: TableCellBuilder;
 }
 
-interface Props extends Themeable {
-  data?: TableData;
+export interface Props extends Themeable {
+  data: TableData;
   showHeader: boolean;
   fixedColumnCount: number;
   fixedRowCount: number;
@@ -70,14 +37,12 @@ interface Props extends Themeable {
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data?: TableData;
+  data: TableData;
 }
 
 export class Table extends Component<Props, State> {
-  columns: ColumnInfo[] = [];
-  colorState: any;
-
-  _cache: CellMeasurerCache;
+  columns: ColumnInfo[];
+  measurer: CellMeasurerCache;
 
   static defaultProps = {
     showHeader: true,
@@ -92,12 +57,11 @@ export class Table extends Component<Props, State> {
       data: props.data,
     };
 
-    this._cache = new CellMeasurerCache({
+    this.columns = this.initColumns(props);
+    this.measurer = new CellMeasurerCache({
       defaultHeight: 30,
       defaultWidth: 150,
     });
-
-    this.initRenderer();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -105,9 +69,14 @@ export class Table extends Component<Props, State> {
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
 
+    // Reset the size cache
+    if (dataChanged) {
+      this.measurer.clearAll();
+    }
+
     // Update the renderer if options change
     if (dataChanged || styles !== prevProps.styles) {
-      this.initRenderer();
+      this.columns = this.initColumns(this.props);
     }
 
     // Update the data when data or sort changes
@@ -117,7 +86,32 @@ export class Table extends Component<Props, State> {
     }
   }
 
-  initRenderer() {}
+  initColumns(props: Props): ColumnInfo[] {
+    const { styles, data } = props;
+    return data.columns.map((col, index) => {
+      let title = col.text;
+      let style: ColumnStyle | null = null; // ColumnStyle
+
+      // Find the style based on the text
+      for (let i = 0; i < styles.length; i++) {
+        const s = styles[i];
+        const regex = 'XXX'; //kbn.stringToJsRegex(s.pattern);
+        if (title.match(regex)) {
+          style = s;
+          if (s.alias) {
+            title = title.replace(regex, s.alias);
+          }
+          break;
+        }
+      }
+
+      return {
+        index,
+        header: title,
+        builder: getCellBuilder(col, style, this.props),
+      };
+    });
+  }
 
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
@@ -136,7 +130,7 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  handelClick = (rowIndex: number, columnIndex: number) => {
+  handleCellClick = (rowIndex: number, columnIndex: number) => {
     const { showHeader } = this.props;
     const { data } = this.state;
     const realRowIndex = rowIndex - (showHeader ? 1 : 0);
@@ -149,14 +143,16 @@ export class Table extends Component<Props, State> {
     }
   };
 
-  headerRenderer = (columnIndex: number): ReactNode => {
+  headerBuilder = (cell: TableCellBuilderOptions): ReactElement<'div'> => {
     const { data, sortBy, sortDirection } = this.state;
+    const { columnIndex, rowIndex, style } = cell.props;
+
     const col = data!.columns[columnIndex];
     const sorting = sortBy === columnIndex;
 
     return (
-      <div>
-        {col.text}{' '}
+      <div className="gf-table-header" style={style} onClick={() => this.handleCellClick(rowIndex, columnIndex)}>
+        {col.text}
         {sorting && (
           <span>
             {sortDirection}
@@ -168,43 +164,22 @@ export class Table extends Component<Props, State> {
   };
 
   cellRenderer = (props: GridCellProps): React.ReactNode => {
-    const { rowIndex, columnIndex, key, parent, style } = props;
+    const { rowIndex, columnIndex, key, parent } = props;
     const { showHeader } = this.props;
     const { data } = this.state;
     if (!data) {
-      return <div>?</div>;
+      return <div>??</div>;
     }
 
     const realRowIndex = rowIndex - (showHeader ? 1 : 0);
-
-    let classNames = 'gf-table-cell';
-    let content = null;
-
-    if (realRowIndex < 0) {
-      content = this.headerRenderer(columnIndex);
-      classNames = 'gf-table-header';
-    } else {
-      const row = data.rows[realRowIndex];
-      const value = row[columnIndex];
-      content = (
-        <div>
-          {rowIndex}/{columnIndex}: {value}
-        </div>
-      );
-    }
+    const isHeader = realRowIndex < 0;
+    const row = isHeader ? (data.columns as any[]) : data.rows[realRowIndex];
+    const value = row[columnIndex];
+    const builder = isHeader ? this.headerBuilder : this.columns[columnIndex].builder;
 
     return (
-      <CellMeasurer cache={this._cache} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
-        <div
-          onClick={() => this.handelClick(rowIndex, columnIndex)}
-          className={classNames}
-          style={{
-            ...style,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {content}
-        </div>
+      <CellMeasurer cache={this.measurer} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
+        {builder({ value, row, table: this, props })}
       </CellMeasurer>
     );
   };
@@ -218,16 +193,16 @@ export class Table extends Component<Props, State> {
     return (
       <MultiGrid
         {
-          ...this.state /** Force MultiGrid to update when any property updates */
+          ...this.state /** Force MultiGrid to update when data changes */
         }
         columnCount={data.columns.length}
         rowCount={data.rows.length + (showHeader ? 1 : 0)}
         overscanColumnCount={2}
         overscanRowCount={2}
-        columnWidth={this._cache.columnWidth}
-        deferredMeasurementCache={this._cache}
+        columnWidth={this.measurer.columnWidth}
+        deferredMeasurementCache={this.measurer}
         cellRenderer={this.cellRenderer}
-        rowHeight={this._cache.rowHeight}
+        rowHeight={this.measurer.rowHeight}
         width={width}
         height={height}
         fixedColumnCount={fixedColumnCount}

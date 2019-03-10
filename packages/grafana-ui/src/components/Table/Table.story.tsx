@@ -5,24 +5,32 @@ import { Table } from './Table';
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
 import { ScopedVars, TableData } from '../../types/index';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
+import { number, boolean } from '@storybook/addon-knobs';
 
-const replaceVariables = (value: any, scopedVars: ScopedVars | undefined) => {
-  // if (scopedVars) {
-  //   // For testing variables replacement in link
-  //   _.each(scopedVars, (val, key) => {
-  //     value = value.replace('$' + key, val.value);
-  //   });
-  // }
+const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
+  if (scopedVars) {
+    // For testing variables replacement in link
+    for (const key in scopedVars) {
+      const val = scopedVars[key];
+      value = value.replace('$' + key, val.value);
+    }
+  }
   return value;
 };
 
-storiesOf('UI - Alpha/Table', module)
+storiesOf('UI/Table', module)
   .add('basic', () => {
+    const showHeader = boolean('Show Header', true);
+    const fixedRowCount = number('Fixed Rows', 1);
+    const fixedColumnCount = number('Fixed Columns', 1);
+
     return withFullSizeStory(Table, {
       styles: [],
       data: simpleTable,
       replaceVariables,
-      showHeader: true,
+      fixedRowCount,
+      fixedColumnCount,
+      showHeader,
     });
   })
   .add('Test Configuration', () => {
