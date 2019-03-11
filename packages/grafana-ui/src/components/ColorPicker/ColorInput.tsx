@@ -12,7 +12,10 @@ interface ColorInputProps extends ColorPickerProps {
   style?: React.CSSProperties;
 }
 
-class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
+/**
+ * @description Blash
+ */
+export class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
   constructor(props: ColorInputProps) {
     super(props);
     this.state = {
@@ -39,6 +42,13 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
     this.props.onChange(color);
   };
 
+  /**
+   *
+   * @param test Test parameter whatever
+   */
+  handleWhatever(test: string) {
+    return test + 'sds';
+  }
   handleChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const newColor = tinycolor(event.currentTarget.value);
 
@@ -91,4 +101,4 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
   }
 }
 
-export default ColorInput;
+// export default ColorInput;

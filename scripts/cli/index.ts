@@ -6,6 +6,7 @@ import { buildTask } from './tasks/grafanaui.build';
 import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { metadataGenerationTask } from './tasks/docs.metadata';
 
 program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
 
@@ -26,6 +27,13 @@ program
   .description('Builds @grafana/ui package to packages/grafana-ui/dist')
   .action(async cmd => {
     await execTask(buildTask)();
+  });
+
+program
+  .command('gui:docsMetadata')
+  .description('Prepares dosc metadata')
+  .action(async cmd => {
+    await execTask(metadataGenerationTask)();
   });
 
 program

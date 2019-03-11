@@ -1,12 +1,16 @@
 'use strict';
 
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+// const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = function(options) {
   return {
     test: /\.scss$/,
     use: [
-      MiniCssExtractPlugin.loader,
+      // MiniCssExtractPlugin.loader,
+      // TODO: Bring this back ^^
+      {
+        loader: 'style-loader/useable',
+      },
       {
         loader: 'css-loader',
         options: {
@@ -26,7 +30,8 @@ module.exports = function(options) {
       {
         loader: 'sass-loader',
         options: {
-          sourceMap: options.sourceMap
+          sourceMap: options.sourceMap,
+          includePaths: [`${__dirname}/../../public/sass`],
         },
       },
     ],

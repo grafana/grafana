@@ -73,9 +73,9 @@ module.exports = {
       }
     }
   },
-  plugins: [
-    new ForkTsCheckerWebpackPlugin({
-      checkSyntacticErrors: true,
-    }),
-  ]
+    plugins: [
+      new ForkTsCheckerWebpackPlugin({
+        checkSyntacticErrors: true,
+      }),
+    ]
 };

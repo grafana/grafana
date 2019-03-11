@@ -1,9 +1,11 @@
 // DEPENDENCIES
-@import '../../node_modules/react-table/react-table.css';
+@import '~react-table/react-table.css';
 
 // VENDOR
-@import '../vendor/css/timepicker.css';
-@import '../vendor/css/rc-cascader.scss';
+// @import '../vendor/css/timepicker.css';
+// @import '../vendor/css/rc-cascader.scss';
+
+// TODO Uncomment after figuring this out^^
 
 // MIXINS
 @import 'mixins/mixins';
