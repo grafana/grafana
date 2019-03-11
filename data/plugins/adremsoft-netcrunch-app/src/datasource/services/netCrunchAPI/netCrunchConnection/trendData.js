@@ -38,6 +38,10 @@ const NETCRUNCH_TREND_DATA_CONST = {
   QUERY_RESULT_ORDER: ['avg', 'min', 'max', 'avail', 'delta', 'equal']
 };
 
+function asArray(data) {
+  return Array.isArray(data) ? data : [data];
+}
+
 function NetCrunchTrendData(netCrunchConnection) {
   const
     PERIOD_TYPE = NETCRUNCH_TREND_DATA_CONST.PERIOD_TYPE,
@@ -65,7 +69,7 @@ function NetCrunchTrendData(netCrunchConnection) {
     if (maxDataPoints != null) {
       const maxDataPointsInt = parseInt(maxDataPoints, 10);
       if ((!isNaN(maxDataPoints)) &&
-          (maxDataPoints >= MAX_SAMPLE_COUNT.MIN) && (maxDataPoints <= MAX_SAMPLE_COUNT.MAX)) {
+        (maxDataPoints >= MAX_SAMPLE_COUNT.MIN) && (maxDataPoints <= MAX_SAMPLE_COUNT.MAX)) {
         result = maxDataPointsInt;
       }
     }
@@ -210,7 +214,7 @@ function NetCrunchTrendData(netCrunchConnection) {
     const convertedData = Object.create(null);
     let resultSeries;
 
-    resultType = resultType.ResultMask[0];
+    resultType = resultType.ResultMask;
     // eslint-disable-next-line
     resultSeries = QUERY_RESULT_ORDER.filter(seriesType => (resultType.indexOf(QUERY_RESULT_MASKS[seriesType]) >= 0));
     resultSeries.forEach((seriesName) => {
@@ -218,13 +222,7 @@ function NetCrunchTrendData(netCrunchConnection) {
     });
 
     result.trend.forEach((data) => {
-      if (Array.isArray(data) === true) {
-        data.forEach((value, $index) => {
-          convertedData[resultSeries[$index]].push(value);
-        });
-      } else {
-        convertedData[resultSeries[0]].push(data);
-      }
+      asArray(data).forEach((value, $index) => convertedData[resultSeries[$index]].push(value));
     });
 
     if (result.distr != null) {
@@ -261,7 +259,7 @@ function NetCrunchTrendData(netCrunchConnection) {
   }
 
   function getCounterTrendData(nodeID, counter, dateFrom, dateTo, periodType = PERIOD_TYPE.tpHours,
-                               periodInterval = 1, resultType) {      // eslint-disable-line
+                               periodInterval = 1, resultType = null) {      // eslint-disable-line
 
     // resultType possible values are:
     //    [ tqrAvg, tqrMin, tqrMax, tqrAvail, tqrDelta, tqrEqual, tqrDistr ]
@@ -272,16 +270,17 @@ function NetCrunchTrendData(netCrunchConnection) {
     }
 
     resultType = (resultType == null) ? prepareResultMask({ avg: true }) : prepareResultMask(resultType);
-    if (resultType.ResultMask[0].length === 0) {
+    if (resultType.ResultMask.length === 0) {
       resultType = prepareResultMask({ avg: true });
     }
 
-    return netCrunchConnection.queryTrendData(nodeID.toString(), counter, periodType, periodInterval,
-                                              dateFrom, dateTo,
-                                              resultType,
-                                              null, // day mask just no mask
-                                              null, // value for equal checking
-                                              null)
+    return netCrunchConnection
+      .queryTrendData(nodeID.toString(), counter, periodType, periodInterval,
+                      dateFrom, dateTo,
+                      resultType,
+                      null, // day mask just no mask
+                      null, // value for equal checking
+                      null)
       .then((data) => {       // eslint-disable-line
         return {
           domain: calculateTimeDomain(dateFrom, periodType, periodInterval, data.trend.length),
@@ -302,8 +301,8 @@ function NetCrunchTrendData(netCrunchConnection) {
     period = period || calculateChartDataInterval(dateStart, dateEnd, maxSampleCount);
 
     result.period = period;
-    result.data = getCounterTrendData(nodeID, counterName, dateStart, dateEnd, period.periodType,
-                                      period.periodInterval, resultType);
+    result.data = getCounterTrendData(nodeID, counterName, dateStart, dateEnd, period.periodType, period.periodInterval,
+      resultType);
     return result;
   }
 
