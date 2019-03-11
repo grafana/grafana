@@ -193,6 +193,22 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
   return vmSeries;
 }
 
+function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
+  return {
+    columns: [
+      {
+        text: timeSeries.target || 'Value',
+        unit: timeSeries.unit,
+      },
+      {
+        text: 'Time',
+        type: 'time',
+      },
+    ],
+    rows: timeSeries.datapoints,
+  };
+}
+
 export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
 
 export const toTableData = (results?: any[]): TableData[] => {
@@ -207,20 +223,7 @@ export const toTableData = (results?: any[]): TableData[] => {
         return data as TableData;
       }
       if (data.hasOwnProperty('datapoints')) {
-        const ts = data as TimeSeries;
-        return {
-          columns: [
-            {
-              text: ts.target || 'Value',
-              unit: ts.unit,
-            },
-            {
-              text: 'Time',
-              type: 'time',
-            },
-          ],
-          rows: ts.datapoints,
-        } as TableData;
+        return convertTimeSeriesToTableData(data);
       }
       // TODO, try to convert JSON to table?
       console.warn('Can not convert', data);

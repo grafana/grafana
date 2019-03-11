@@ -1,15 +1,18 @@
 import _ from 'lodash';
 import { Column, TableData } from '@grafana/ui';
 
-// This class mutates and uses the extra column fields
-interface ColumnEX extends Column {
+/**
+ * Extends the standard Column class with variables that get
+ * mutated in the angular table panel.
+ */
+interface AngularTableColumn extends Column {
   title?: string;
   sort?: boolean;
   desc?: boolean;
 }
 
 export default class TableModel implements TableData {
-  columns: ColumnEX[];
+  columns: AngularTableColumn[];
   rows: any[];
   type: string;
   columnMap: any;
