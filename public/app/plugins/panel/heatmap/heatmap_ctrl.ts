@@ -231,7 +231,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     tsBuckets = _.map(this.series, 'label');
     const yBucketBound = this.panel.yBucketBound;
-    if ((panelDatasource === 'prometheus' && yBucketBound !== 'lower') || yBucketBound === 'upper') {
+    if (
+      (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
+      yBucketBound === 'upper'
+    ) {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
     } else {
