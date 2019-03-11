@@ -9,30 +9,50 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { PanelProps, NullValueMode, BasicGaugeColor } from '@grafana/ui/src/types';
+import { DisplayValue, getValueProcessor } from '@grafana/ui/src/utils/valueProcessor';
 
 interface Props extends PanelProps<GaugeOptions> {}
 interface State {
-  value: TimeSeriesValue;
+  value: DisplayValue;
 }
 
 export class GaugePanel extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
+
+    if (props.options.valueOptions) {
+      console.warn('TODO!! how do we best migration options?');
+    }
+
     this.state = {
-      value: this.findValue(props),
+      value: this.findDisplayValue(props),
     };
   }
 
   componentDidUpdate(prevProps: Props) {
     if (this.props.panelData !== prevProps.panelData) {
-      this.setState({ value: this.findValue(this.props) });
+      this.setState({ value: this.findDisplayValue(this.props) });
     }
+  }
+
+  findDisplayValue(props: Props): DisplayValue {
+    const { replaceVariables, options } = this.props;
+    const { displayOptions } = options;
+
+    const prefix = replaceVariables(displayOptions.prefix);
+    const suffix = replaceVariables(displayOptions.suffix);
+    return getValueProcessor({
+      color: BasicGaugeColor.Red, // The default color
+      ...displayOptions,
+      prefix,
+      suffix,
+      // ??? theme:getTheme(GrafanaThemeType.Dark), !! how do I get it here???
+    })(this.findValue(props));
   }
 
   findValue(props: Props): number | null {
     const { panelData, options } = props;
-    const { valueOptions } = options;
 
     if (panelData.timeSeries) {
       const vmSeries = processTimeSeries({
@@ -41,7 +61,7 @@ export class GaugePanel extends Component<Props, State> {
       });
 
       if (vmSeries[0]) {
-        return vmSeries[0].stats[valueOptions.stat];
+        return vmSeries[0].stats[options.stat];
       }
     } else if (panelData.tableData) {
       return panelData.tableData.rows[0].find(prop => prop > 0);
@@ -50,12 +70,9 @@ export class GaugePanel extends Component<Props, State> {
   }
 
   render() {
-    const { width, height, replaceVariables, options } = this.props;
-    const { valueOptions } = options;
+    const { width, height, options } = this.props;
     const { value } = this.state;
 
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
     return (
       <ThemeContext.Consumer>
         {theme => (
@@ -63,12 +80,7 @@ export class GaugePanel extends Component<Props, State> {
             value={value}
             width={width}
             height={height}
-            prefix={prefix}
-            suffix={suffix}
-            unit={valueOptions.unit}
-            decimals={valueOptions.decimals}
             thresholds={options.thresholds}
-            valueMappings={options.valueMappings}
             showThresholdLabels={options.showThresholdLabels}
             showThresholdMarkers={options.showThresholdMarkers}
             minValue={options.minValue}

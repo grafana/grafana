@@ -2,10 +2,10 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, Select, UnitPicker } from '@grafana/ui';
+import { FormLabel, PanelOptionsGroup, Select } from '@grafana/ui';
 
 // Types
-import { SingleStatValueOptions } from './types';
+import { GaugeOptions } from './types';
 
 const statOptions = [
   { value: 'min', label: 'Min' },
@@ -24,41 +24,18 @@ const statOptions = [
 const labelWidth = 6;
 
 export interface Props {
-  options: SingleStatValueOptions;
-  onChange: (valueOptions: SingleStatValueOptions) => void;
+  options: GaugeOptions;
+  onChange: (options: GaugeOptions) => void;
 }
 
 export class SingleStatValueEditor extends PureComponent<Props> {
-  onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
   onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
 
-  onDecimalChange = event => {
-    if (!isNaN(event.target.value)) {
-      this.props.onChange({
-        ...this.props.options,
-        decimals: parseInt(event.target.value, 10),
-      });
-    } else {
-      this.props.onChange({
-        ...this.props.options,
-        decimals: null,
-      });
-    }
-  };
-
-  onPrefixChange = event => this.props.onChange({ ...this.props.options, prefix: event.target.value });
-  onSuffixChange = event => this.props.onChange({ ...this.props.options, suffix: event.target.value });
-
   render() {
-    const { stat, unit, decimals, prefix, suffix } = this.props.options;
-
-    let decimalsString = '';
-    if (Number.isFinite(decimals)) {
-      decimalsString = decimals.toString();
-    }
+    const { stat } = this.props.options;
 
     return (
-      <PanelOptionsGroup title="Value">
+      <PanelOptionsGroup title="Show Value">
         <div className="gf-form">
           <FormLabel width={labelWidth}>Stat</FormLabel>
           <Select
@@ -68,20 +45,6 @@ export class SingleStatValueEditor extends PureComponent<Props> {
             value={statOptions.find(option => option.value === stat)}
           />
         </div>
-        <div className="gf-form">
-          <FormLabel width={labelWidth}>Unit</FormLabel>
-          <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
-        </div>
-        <FormField
-          label="Decimals"
-          labelWidth={labelWidth}
-          placeholder="auto"
-          onChange={this.onDecimalChange}
-          value={decimalsString}
-          type="number"
-        />
-        <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
-        <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
       </PanelOptionsGroup>
     );
   }

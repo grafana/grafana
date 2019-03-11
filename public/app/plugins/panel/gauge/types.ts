@@ -1,15 +1,22 @@
 import { Threshold, ValueMapping } from '@grafana/ui';
+import { DisplayValueOptions } from '@grafana/ui/src/utils/valueProcessor';
 
 export interface GaugeOptions {
-  valueMappings: ValueMapping[];
   maxValue: number;
   minValue: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
+
+  stat: string;
+  displayOptions: DisplayValueOptions;
+
+  // TODO: migrate to DisplayValueOptions
+  thresholds?: Threshold[];
+  valueMappings?: ValueMapping[];
+  valueOptions?: SingleStatValueOptions;
 }
 
+/** Deprecated -- migrate to  */
 export interface SingleStatValueOptions {
   unit: string;
   suffix: string;
@@ -23,13 +30,14 @@ export const defaults: GaugeOptions = {
   maxValue: 100,
   showThresholdMarkers: true,
   showThresholdLabels: false,
-  valueOptions: {
+
+  stat: 'avg',
+  displayOptions: {
     prefix: '',
     suffix: '',
     decimals: null,
-    stat: 'avg',
     unit: 'none',
+    mappings: [],
+    thresholds: [],
   },
-  valueMappings: [],
-  thresholds: [],
 };

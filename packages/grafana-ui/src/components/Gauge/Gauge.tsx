@@ -1,28 +1,20 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { getMappedValue } from '../../utils/valueMappings';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { Themeable, GrafanaThemeType } from '../../types/theme';
-import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
-import { getValueFormat } from '../../utils/valueFormats/valueFormats';
-
-type TimeSeriesValue = string | number | null;
+import { Threshold, BasicGaugeColor } from '../../types/panel';
+import { DisplayValue } from '../../utils/valueProcessor';
 
 export interface Props extends Themeable {
-  decimals?: number | null;
+  width: number;
   height: number;
-  valueMappings: ValueMapping[];
   maxValue: number;
   minValue: number;
-  prefix: string;
   thresholds: Threshold[];
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
-  stat: string;
-  suffix: string;
-  unit: string;
-  width: number;
-  value: number;
+
+  value: DisplayValue;
 }
 
 const FONT_SCALE = 1;
@@ -32,15 +24,10 @@ export class Gauge extends PureComponent<Props> {
 
   static defaultProps = {
     maxValue: 100,
-    valueMappings: [],
     minValue: 0,
-    prefix: '',
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    suffix: '',
     thresholds: [],
-    unit: 'none',
-    stat: 'avg',
     theme: GrafanaThemeType.Dark,
   };
 
@@ -50,49 +37,6 @@ export class Gauge extends PureComponent<Props> {
 
   componentDidUpdate() {
     this.draw();
-  }
-
-  formatValue(value: TimeSeriesValue) {
-    const { decimals, valueMappings, prefix, suffix, unit } = this.props;
-
-    if (isNaN(value as number)) {
-      return value;
-    }
-
-    if (valueMappings.length > 0) {
-      const valueMappedValue = getMappedValue(valueMappings, value);
-      if (valueMappedValue) {
-        return `${prefix && prefix + ' '}${valueMappedValue.text}${suffix && ' ' + suffix}`;
-      }
-    }
-
-    const formatFunc = getValueFormat(unit);
-    const formattedValue = formatFunc(value as number, decimals);
-    const handleNoValueValue = formattedValue || 'no value';
-
-    return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
-  }
-
-  getFontColor(value: TimeSeriesValue) {
-    const { thresholds, theme } = this.props;
-
-    if (thresholds.length === 1) {
-      return getColorFromHexRgbOrName(thresholds[0].color, theme.type);
-    }
-
-    const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
-    if (atThreshold) {
-      return getColorFromHexRgbOrName(atThreshold.color, theme.type);
-    }
-
-    const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
-
-    if (belowThreshold.length > 0) {
-      const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
-      return getColorFromHexRgbOrName(nearestThreshold.color, theme.type);
-    }
-
-    return BasicGaugeColor.Red;
   }
 
   getFormattedThresholds() {
@@ -123,15 +67,13 @@ export class Gauge extends PureComponent<Props> {
   draw() {
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
-    const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize =
-      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
+    const fontSize = Math.min(dimension / 5, 100) * this.getFontScale(value.text.length);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options = {
@@ -160,9 +102,9 @@ export class Gauge extends PureComponent<Props> {
             width: thresholdMarkersWidth,
           },
           value: {
-            color: this.getFontColor(value),
+            color: value.color ? value.color : BasicGaugeColor.Red,
             formatter: () => {
-              return formattedValue;
+              return value.text;
             },
             font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
           },
@@ -171,7 +113,8 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
-    const plotSeries = { data: [[0, value]] };
+    const numeric = value.numeric !== null ? value.numeric : 0;
+    const plotSeries = { data: [[0, numeric]] };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);
