@@ -40,6 +40,10 @@ export class DatasourceSrv {
   }
 
   loadDatasource(name: string): Promise<DataSourceApi> {
+    // if there are multiple datasources provided, just use the first one
+    const re = /{([^,}]+).*/;
+    name = name.replace(re, '$1');
+
     const dsConfig = config.datasources[name];
     if (!dsConfig) {
       return this.$q.reject({ message: 'Datasource named ' + name + ' was not found' });
