@@ -109,6 +109,7 @@ var (
 	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
+	PasswordHint            string
 	DefaultTheme            string
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
@@ -656,6 +657,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
+	PasswordHint = users.Key("password_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
 	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
