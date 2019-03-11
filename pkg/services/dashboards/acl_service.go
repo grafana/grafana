@@ -18,7 +18,7 @@ type AclService struct {
 	log log.Logger
 }
 
-func (as *AclService) MakeUserAdmin(orgId int64, userId int64, dashboardId int64) error {
+func (as *AclService) MakeUserAdmin(orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
@@ -31,22 +31,27 @@ func (as *AclService) MakeUserAdmin(orgId int64, userId int64, dashboardId int64
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
-		{
-			OrgId:       orgId,
-			DashboardId: dashboardId,
-			Role:        &rtEditor,
-			Permission:  models.PERMISSION_EDIT,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-		{
-			OrgId:       orgId,
-			DashboardId: dashboardId,
-			Role:        &rtViewer,
-			Permission:  models.PERMISSION_VIEW,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
+	}
+
+	if setViewAndEditPermissions {
+		items = append(items,
+			&models.DashboardAcl{
+				OrgId:       orgId,
+				DashboardId: dashboardId,
+				Role:        &rtEditor,
+				Permission:  models.PERMISSION_EDIT,
+				Created:     time.Now(),
+				Updated:     time.Now(),
+			},
+			&models.DashboardAcl{
+				OrgId:       orgId,
+				DashboardId: dashboardId,
+				Role:        &rtViewer,
+				Permission:  models.PERMISSION_VIEW,
+				Created:     time.Now(),
+				Updated:     time.Now(),
+			},
+		)
 	}
 
 	aclCmd := &models.UpdateDashboardAclCommand{
