@@ -1,0 +1,4 @@
+deployments:
+  default:
+    dockerimage: grafana/grafana
+    port_forwarding: 80:3000
