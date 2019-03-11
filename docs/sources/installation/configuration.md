@@ -162,9 +162,9 @@ executed with working directory set to the installation path.
 
 ### enable_gzip
 
-Set this option to `true` to enable HTTP compression, this can improve 
-transfer speed and bandwidth utilization. It is recommended that most 
-users set it to `true`. By default it is set to `false` for compatibility 
+Set this option to `true` to enable HTTP compression, this can improve
+transfer speed and bandwidth utilization. It is recommended that most
+users set it to `true`. By default it is set to `false` for compatibility
 reasons.
 
 ### cert_file
@@ -341,6 +341,14 @@ options are `Admin` and `Editor`. e.g. :
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
+
+### login_hint
+
+Text used as placeholder text on login page for login/username input.
+
+### password_hint
+
+Text used as placeholder text on login page for password input.
 
 <hr>
 
