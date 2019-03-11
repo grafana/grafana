@@ -96,6 +96,10 @@ func GetAlertNotificationsWithUidToSend(query *m.GetAlertNotificationsWithUidToS
 										alert_notification.settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
+										alert_notification.disable_alerting_message,
+										alert_notification.disable_no_data_message,
+										alert_notification.disable_unknown_message,
+										alert_notification.disable_pending_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -139,6 +143,10 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 										alert_notification.settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
+										alert_notification.disable_alerting_message,
+										alert_notification.disable_no_data_message,
+										alert_notification.disable_unknown_message,
+										alert_notification.disable_pending_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -188,6 +196,10 @@ func getAlertNotificationWithUidInternal(query *m.GetAlertNotificationsWithUidQu
 										alert_notification.settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
+										alert_notification.disable_alerting_message,
+										alert_notification.disable_no_data_message,
+										alert_notification.disable_unknown_message,
+										alert_notification.disable_pending_message,
 										alert_notification.send_reminder,
 										alert_notification.frequency
 										FROM alert_notification
@@ -254,17 +266,21 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			Uid:                   cmd.Uid,
-			OrgId:                 cmd.OrgId,
-			Name:                  cmd.Name,
-			Type:                  cmd.Type,
-			Settings:              cmd.Settings,
-			SendReminder:          cmd.SendReminder,
-			DisableResolveMessage: cmd.DisableResolveMessage,
-			Frequency:             frequency,
-			Created:               time.Now(),
-			Updated:               time.Now(),
-			IsDefault:             cmd.IsDefault,
+			Uid:                    cmd.Uid,
+			OrgId:                  cmd.OrgId,
+			Name:                   cmd.Name,
+			Type:                   cmd.Type,
+			Settings:               cmd.Settings,
+			SendReminder:           cmd.SendReminder,
+			DisableResolveMessage:  cmd.DisableResolveMessage,
+			DisableAlertingMessage: cmd.DisableAlertingMessage,
+			DisableNoDataMessage:   cmd.DisableNoDataMessage,
+			DisableUnknownMessage:  cmd.DisableUnknownMessage,
+			DisablePendingMessage:  cmd.DisablePendingMessage,
+			Frequency:              frequency,
+			Created:                time.Now(),
+			Updated:                time.Now(),
+			IsDefault:              cmd.IsDefault,
 		}
 
 		if _, err = sess.MustCols("send_reminder").Insert(alertNotification); err != nil {
@@ -317,6 +333,10 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.IsDefault = cmd.IsDefault
 		current.SendReminder = cmd.SendReminder
 		current.DisableResolveMessage = cmd.DisableResolveMessage
+		current.DisableAlertingMessage = cmd.DisableAlertingMessage
+		current.DisableNoDataMessage = cmd.DisableNoDataMessage
+		current.DisableUnknownMessage = cmd.DisableUnknownMessage
+		current.DisablePendingMessage = cmd.DisablePendingMessage
 
 		if cmd.Uid != "" {
 			current.Uid = cmd.Uid
@@ -335,7 +355,15 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			current.Frequency = frequency
 		}
 
-		sess.UseBool("is_default", "send_reminder", "disable_resolve_message")
+		sess.UseBool(
+			"is_default",
+			"send_reminder",
+			"disable_resolve_message",
+			"disable_alerting_message",
+			"disable_no_data_message",
+			"disable_unknown_message",
+			"disable_pending_message",
+		)
 
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
@@ -371,7 +399,11 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 		Name:                  cmd.Name,
 		Type:                  cmd.Type,
 		SendReminder:          cmd.SendReminder,
-		DisableResolveMessage: cmd.DisableResolveMessage,
+		DisableResolveMessage:  cmd.DisableResolveMessage,
+		DisableAlertingMessage: cmd.DisableAlertingMessage,
+		DisableNoDataMessage:   cmd.DisableNoDataMessage,
+		DisableUnknownMessage:  cmd.DisableUnknownMessage,
+		DisablePendingMessage:  cmd.DisablePendingMessage,
 		Frequency:             cmd.Frequency,
 		IsDefault:             cmd.IsDefault,
 		Settings:              cmd.Settings,

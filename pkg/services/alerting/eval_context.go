@@ -62,6 +62,11 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#36a64f",
 			Text:  "OK",
 		}
+	case models.AlertStatePending:
+		return &StateDescription{
+			Color: "#FF6600",
+			Text:  "Pending",
+		}
 	case models.AlertStateNoData:
 		return &StateDescription{
 			Color: "#888888",

@@ -88,6 +88,18 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Add column disable_resolve_message", NewAddColumnMigration(alert_notification, &Column{
 		Name: "disable_resolve_message", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+	mg.AddMigration("Add column disable_alerting_message", NewAddColumnMigration(alert_notification, &Column{
+		Name: "disable_alerting_message", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add column disable_no_data_message", NewAddColumnMigration(alert_notification, &Column{
+		Name: "disable_no_data_message", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add column disable_unknown_message", NewAddColumnMigration(alert_notification, &Column{
+		Name: "disable_unknown_message", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add column disable_pending_message", NewAddColumnMigration(alert_notification, &Column{
+		Name: "disable_pending_message", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 

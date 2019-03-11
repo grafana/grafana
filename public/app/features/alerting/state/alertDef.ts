@@ -55,7 +55,12 @@ const noDataModes = [
   { text: 'Ok', value: 'ok' },
 ];
 
-const executionErrorModes = [{ text: 'Alerting', value: 'alerting' }, { text: 'Keep Last State', value: 'keep_state' }];
+const executionErrorModes = [
+  { text: 'Alerting', value: 'alerting' },
+  { text: 'Unknown', value: 'unknown' },
+  { text: 'Keep Last State', value: 'keep_state' },
+  { text: 'Ok', value: 'ok' },
+];
 
 function createReducerPart(model: any) {
   const def = new QueryPartDef({ type: model.type, defaultParams: [] });

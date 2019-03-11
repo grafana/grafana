@@ -20,16 +20,20 @@ type deleteNotificationConfig struct {
 }
 
 type notificationFromConfig struct {
-	Uid                   string
-	OrgId                 int64
-	OrgName               string
-	Name                  string
-	Type                  string
-	SendReminder          bool
-	DisableResolveMessage bool
-	Frequency             string
-	IsDefault             bool
-	Settings              map[string]interface{}
+	Uid                    string
+	OrgId                  int64
+	OrgName                string
+	Name                   string
+	Type                   string
+	SendReminder           bool
+	DisableResolveMessage  bool
+	DisableAlertingMessage bool
+	DisableNoDataMessage   bool
+	DisableUnknownMessage  bool
+	DisablePendingMessage  bool
+	Frequency              string
+	IsDefault              bool
+	Settings               map[string]interface{}
 }
 
 // notificationsAsConfigV0 is mapping for zero version configs. This is mapped to its normalised version.
@@ -46,16 +50,20 @@ type deleteNotificationConfigV0 struct {
 }
 
 type notificationFromConfigV0 struct {
-	Uid                   values.StringValue `json:"uid" yaml:"uid"`
-	OrgId                 values.Int64Value  `json:"org_id" yaml:"org_id"`
-	OrgName               values.StringValue `json:"org_name" yaml:"org_name"`
-	Name                  values.StringValue `json:"name" yaml:"name"`
-	Type                  values.StringValue `json:"type" yaml:"type"`
-	SendReminder          values.BoolValue   `json:"send_reminder" yaml:"send_reminder"`
-	DisableResolveMessage values.BoolValue   `json:"disable_resolve_message" yaml:"disable_resolve_message"`
-	Frequency             values.StringValue `json:"frequency" yaml:"frequency"`
-	IsDefault             values.BoolValue   `json:"is_default" yaml:"is_default"`
-	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
+	Uid                    values.StringValue `json:"uid" yaml:"uid"`
+	OrgId                  values.Int64Value  `json:"org_id" yaml:"org_id"`
+	OrgName                values.StringValue `json:"org_name" yaml:"org_name"`
+	Name                   values.StringValue `json:"name" yaml:"name"`
+	Type                   values.StringValue `json:"type" yaml:"type"`
+	SendReminder           values.BoolValue   `json:"send_reminder" yaml:"send_reminder"`
+	DisableResolveMessage  values.BoolValue   `json:"disable_resolve_message" yaml:"disable_resolve_message"`
+	DisableAlertingMessage values.BoolValue   `json:"disable_alerting_message" yaml:"disable_alerting_message"`
+	DisableNoDataMessage   values.BoolValue   `json:"disable_no_data_message" yaml:"disable_no_data_message"`
+	DisableUnknownMessage  values.BoolValue   `json:"disable_unknown_message" yaml:"disable_unknown_message"`
+	DisablePendingMessage  values.BoolValue   `json:"disable_pending_message" yaml:"disable_pending_message"`
+	Frequency              values.StringValue `json:"frequency" yaml:"frequency"`
+	IsDefault              values.BoolValue   `json:"is_default" yaml:"is_default"`
+	Settings               values.JSONValue   `json:"settings" yaml:"settings"`
 }
 
 func (notification notificationFromConfig) SettingsToJson() *simplejson.Json {
@@ -78,16 +86,20 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			Uid:                   notification.Uid.Value(),
-			OrgId:                 notification.OrgId.Value(),
-			OrgName:               notification.OrgName.Value(),
-			Name:                  notification.Name.Value(),
-			Type:                  notification.Type.Value(),
-			IsDefault:             notification.IsDefault.Value(),
-			Settings:              notification.Settings.Value(),
-			DisableResolveMessage: notification.DisableResolveMessage.Value(),
-			Frequency:             notification.Frequency.Value(),
-			SendReminder:          notification.SendReminder.Value(),
+			Uid:                    notification.Uid.Value(),
+			OrgId:                  notification.OrgId.Value(),
+			OrgName:                notification.OrgName.Value(),
+			Name:                   notification.Name.Value(),
+			Type:                   notification.Type.Value(),
+			IsDefault:              notification.IsDefault.Value(),
+			Settings:               notification.Settings.Value(),
+			DisableResolveMessage:  notification.DisableResolveMessage.Value(),
+			DisableAlertingMessage: notification.DisableAlertingMessage.Value(),
+			DisableNoDataMessage:   notification.DisableNoDataMessage.Value(),
+			DisablePendingMessage:  notification.DisablePendingMessage.Value(),
+			DisableUnknownMessage:  notification.DisableUnknownMessage.Value(),
+			Frequency:              notification.Frequency.Value(),
+			SendReminder:           notification.SendReminder.Value(),
 		})
 	}
 

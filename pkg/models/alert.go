@@ -24,11 +24,13 @@ const (
 const (
 	NoDataSetOK       NoDataOption = "ok"
 	NoDataSetNoData   NoDataOption = "no_data"
-	NoDataKeepState   NoDataOption = "keep_state"
 	NoDataSetAlerting NoDataOption = "alerting"
+	NoDataKeepState   NoDataOption = "keep_state"
 )
 
 const (
+	ExecutionErrorSetOK       ExecutionErrorOption = "ok"
+	ExecutionErrorSetUnknown  ExecutionErrorOption = "unknown"
 	ExecutionErrorSetAlerting ExecutionErrorOption = "alerting"
 	ExecutionErrorKeepState   ExecutionErrorOption = "keep_state"
 )
@@ -48,7 +50,11 @@ func (s AlertStateType) IsValid() bool {
 }
 
 func (s NoDataOption) IsValid() bool {
-	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataKeepState || s == NoDataSetOK
+	return s == NoDataSetOK ||
+		s == NoDataSetNoData ||
+		s == NoDataSetAlerting ||
+		s == NoDataKeepState
+
 }
 
 func (s NoDataOption) ToAlertState() AlertStateType {
@@ -56,7 +62,10 @@ func (s NoDataOption) ToAlertState() AlertStateType {
 }
 
 func (s ExecutionErrorOption) IsValid() bool {
-	return s == ExecutionErrorSetAlerting || s == ExecutionErrorKeepState
+	return s == ExecutionErrorSetOK ||
+		s == ExecutionErrorSetUnknown ||
+		s == ExecutionErrorSetAlerting ||
+		s == ExecutionErrorKeepState
 }
 
 func (s ExecutionErrorOption) ToAlertState() AlertStateType {

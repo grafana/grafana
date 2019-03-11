@@ -37,7 +37,35 @@
           label="Disable Resolve Message"
           label-class="width-14"
           checked="ctrl.model.disableResolveMessage"
-          tooltip="Disable the resolve message [OK] that is sent when alerting state returns to false">
+          tooltip="Disable the resolve message [OK] that is sent when alert state returns to OK">
+      </gf-form-switch>
+      <gf-form-switch
+        class="gf-form"
+        label="Disable Alerting Message"
+        label-class="width-14"
+        checked="ctrl.model.disableAlertingMessage"
+        tooltip="Disable the alert message [ALERT] that is sent when alert state becomes Alerting">
+      </gf-form-switch>
+      <gf-form-switch
+        class="gf-form"
+        label="Disable No Data Message"
+        label-class="width-14"
+        checked="ctrl.model.disableNoDataMessage"
+        tooltip="Disable the alert message [NO DATA] that is sent when alert state becomes NoData">
+      </gf-form-switch>
+      <gf-form-switch
+        class="gf-form"
+        label="Disable Unknown Message"
+        label-class="width-14"
+        checked="ctrl.model.disableUnknownMessage"
+        tooltip="Disable the alert message [UNKNOWN] that is sent when alert state becomes Unknown">
+      </gf-form-switch>
+      <gf-form-switch
+        class="gf-form"
+        label="Disable Pending Message"
+        label-class="width-14"
+        checked="ctrl.model.disablePendingMessage"
+        tooltip="Disable the alert message [PENDING] that is sent when alert state becomes Pending">
       </gf-form-switch>
       <gf-form-switch
           class="gf-form"
