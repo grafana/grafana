@@ -39,7 +39,7 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
     this.props.onChange(color);
   };
 
-  handleChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     const newColor = tinycolor(event.currentTarget.value);
 
     this.setState({
@@ -51,7 +51,7 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
     }
   };
 
-  handleBlur = () => {
+  onBlur = () => {
     const newColor = tinycolor(this.state.value);
 
     if (!newColor.isValid()) {
@@ -84,7 +84,7 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
             flexGrow: 1,
           }}
         >
-          <input className="gf-form-input" value={value} onChange={this.handleChange} onBlur={this.handleBlur} />
+          <input className="gf-form-input" value={value} onChange={this.onChange} onBlur={this.onBlur} />
         </div>
       </div>
     );
