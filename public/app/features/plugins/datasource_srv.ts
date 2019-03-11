@@ -26,6 +26,7 @@ export class DatasourceSrv {
       return this.get(config.defaultDatasource);
     }
 
+    // Interpolation here is to support template variable in data source selection
     name = this.templateSrv.replace(name, scopedVars, (value, variable) => {
       if (Array.isArray(value)) {
         return value[0];
