@@ -28,7 +28,6 @@ export class ContextSrv {
   isSignedIn: any;
   isGrafanaAdmin: any;
   isEditor: any;
-  sidemenu = true;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
 
