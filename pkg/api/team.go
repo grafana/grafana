@@ -38,12 +38,12 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 }
 
 // PUT /api/teams/:teamId
-func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
+func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
 	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
-		return Error(403, "User not allowed to update team", err)
+		return Error(403, "Not allowed to update team", err)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -58,11 +58,19 @@ func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Respo
 
 // DELETE /api/teams/:teamId
 func DeleteTeamByID(c *m.ReqContext) Response {
-	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}); err != nil {
+	orgId := c.OrgId
+	teamId := c.ParamsInt64(":teamId")
+	user := c.SignedInUser
+
+	if err := teams.CanUpdateTeam(orgId, teamId, user); err != nil {
+		return Error(403, "Not allowed to delete team", err)
+	}
+
+	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Failed to delete Team. ID not found", nil)
 		}
-		return Error(500, "Failed to update Team", err)
+		return Error(500, "Failed to delete Team", err)
 	}
 	return Success("Team deleted")
 }
