@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/teams"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,8 +31,15 @@ func GetTeamMembers(c *m.ReqContext) Response {
 
 // POST /api/teams/:teamId/members
 func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
-	cmd.TeamId = c.ParamsInt64(":teamId")
-	cmd.OrgId = c.OrgId
+	teamId := c.ParamsInt64(":teamId")
+	orgId := c.OrgId
+
+	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+		return Error(403, "Not allowed to add team member", err)
+	}
+
+	cmd.TeamId = teamId
+	cmd.OrgId = orgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNotFound {
@@ -52,9 +60,16 @@ func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
 
 // PUT /:teamId/members/:userId
 func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
-	cmd.TeamId = c.ParamsInt64(":teamId")
+	teamId := c.ParamsInt64(":teamId")
+	orgId := c.OrgId
+
+	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+		return Error(403, "Not allowed to update team member", err)
+	}
+
+	cmd.TeamId = teamId
 	cmd.UserId = c.ParamsInt64(":userId")
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = orgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamMemberNotFound {
@@ -67,7 +82,15 @@ func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
 
 // DELETE /api/teams/:teamId/members/:userId
 func RemoveTeamMember(c *m.ReqContext) Response {
-	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId"), UserId: c.ParamsInt64(":userId")}); err != nil {
+	orgId := c.OrgId
+	teamId := c.ParamsInt64(":teamId")
+	userId := c.ParamsInt64(":userId")
+
+	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+		return Error(403, "Not allowed to remove team member", err)
+	}
+
+	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}
