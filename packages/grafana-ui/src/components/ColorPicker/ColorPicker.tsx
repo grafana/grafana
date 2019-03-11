@@ -6,6 +6,7 @@ import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { withTheme } from '../../themes/ThemeContext';
+import { ColorPickerTrigger } from './ColorPickerTrigger';
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
@@ -51,21 +52,12 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     onMouseLeave: hidePopper,
                   })
                 ) : (
-                  <div
+                  <ColorPickerTrigger
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    className="sp-replacer sp-light"
-                  >
-                    <div className="sp-preview">
-                      <div
-                        className="sp-preview-inner"
-                        style={{
-                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme.type),
-                        }}
-                      />
-                    </div>
-                  </div>
+                    color={getColorFromHexRgbOrName(this.props.color || '#000000', theme.type)}
+                  />
                 )}
               </>
             );
