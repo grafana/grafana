@@ -92,10 +92,8 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 // DeleteTeam will delete a team, its member and any permissions connected to the team
 func DeleteTeam(cmd *m.DeleteTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if teamExists, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
+		if _, err := teamExists(cmd.OrgId, cmd.Id, sess); err != nil {
 			return err
-		} else if !teamExists {
-			return m.ErrTeamNotFound
 		}
 
 		deletes := []string{
@@ -118,7 +116,7 @@ func teamExists(orgId int64, teamId int64, sess *DBSession) (bool, error) {
 	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgId, teamId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, nil
+		return false, m.ErrTeamNotFound
 	}
 
 	return true, nil
@@ -238,10 +236,8 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 			return m.ErrTeamMemberAlreadyAdded
 		}
 
-		if teamExists, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
-		} else if !teamExists {
-			return m.ErrTeamNotFound
 		}
 
 		entity := m.TeamMember{
@@ -285,10 +281,8 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 // RemoveTeamMember removes a member from a team
 func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if teamExists, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
-		} else if !teamExists {
-			return m.ErrTeamNotFound
 		}
 
 		var rawSql = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"

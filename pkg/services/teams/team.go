@@ -18,8 +18,6 @@ func CanUpdateTeam(orgId int64, teamId int64, user *m.SignedInUser) error {
 		OrgId:  orgId,
 		TeamId: teamId,
 		UserId: user.UserId,
-		// TODO: do we need to do something special about external users
-		// External: false,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
