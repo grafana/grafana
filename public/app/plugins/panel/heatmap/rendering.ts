@@ -379,6 +379,12 @@ export class HeatmapRenderer {
     const posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
+    if (this.panel.yBucketBound === 'middle' && tickValues && tickValues.length) {
+      // Shift Y axis labels to the middle of bucket
+      const tickShift = 0 - this.chartHeight / (tickValues.length - 1) / 2;
+      this.heatmap.selectAll('.axis-y text').attr('transform', 'translate(' + 0 + ',' + tickShift + ')');
+    }
+
     // Remove vertical line in the right of axis labels (called domain in d3)
     this.heatmap
       .select('.axis-y')
