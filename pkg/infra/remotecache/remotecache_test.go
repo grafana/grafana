@@ -34,7 +34,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *
 		t.Fatalf("failed to init client for test. error: %v", err)
 	}
 
-	return dc.Client
+	return dc.client
 }
 
 func TestCachedBasedOnConfig(t *testing.T) {

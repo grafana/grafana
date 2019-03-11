@@ -31,7 +31,7 @@ type CacheStorage interface {
 	// Get reads object from Cache
 	Get(key string) (interface{}, error)
 
-	// Set sets an object into the cache
+	// Set sets an object into the cache. if `expire` is set to zero it never expires.
 	Set(key string, value interface{}, expire time.Duration) error
 
 	// Delete object from cache
@@ -41,16 +41,28 @@ type CacheStorage interface {
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
 	log      log.Logger
-	Client   CacheStorage
+	client   CacheStorage
 	SQLStore *sqlstore.SqlStore `inject:""`
 	Cfg      *setting.Cfg       `inject:""`
+}
+
+func (ds *RemoteCache) Get(key string) (interface{}, error) {
+	return ds.client.Get(key)
+}
+
+func (ds *RemoteCache) Set(key string, value interface{}, expire time.Duration) error {
+	return ds.client.Set(key, value, expire)
+}
+
+func (ds *RemoteCache) Delete(key string) error {
+	return ds.client.Delete(key)
 }
 
 // Init initializes the service
 func (ds *RemoteCache) Init() error {
 	ds.log = log.New("cache.remote")
 
-	ds.Client = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
+	ds.client = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
 
 	return nil
 }
@@ -58,7 +70,7 @@ func (ds *RemoteCache) Init() error {
 // Run start the backend processes for cache clients
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	//create new interface if more clients need GC jobs
-	backgroundjob, ok := ds.Client.(registry.BackgroundService)
+	backgroundjob, ok := ds.client.(registry.BackgroundService)
 	if ok {
 		return backgroundjob.Run(ctx)
 	}
