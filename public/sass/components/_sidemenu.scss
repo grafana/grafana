@@ -167,7 +167,7 @@
   font-size: $font-size-sm;
   color: $text-color-weak;
   border-bottom: 1px solid $dropdownDividerBottom;
-  margin-bottom: 0.25rem;
+  margin-bottom: $space-xs;
   white-space: nowrap;
 }
 
@@ -192,7 +192,7 @@ li.sidemenu-org-switcher {
   display: flex;
   align-items: center;
   > i.fa.fa-random {
-    margin-right: 4px;
+    margin-right: $space-xs;
     top: 1px;
   }
 }
@@ -285,8 +285,8 @@ li.sidemenu-org-switcher {
       position: unset;
       width: 100%;
       float: none;
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-top: $space-s;
+      margin-bottom: $space-s;
 
       > li > a {
         padding-left: 15px;

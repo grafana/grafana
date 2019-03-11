@@ -41,7 +41,7 @@
   font-size: $font-size-h3;
   padding-right: 60px;
   white-space: nowrap;
-  margin-bottom: $spacer;
+  margin-bottom: $space-m;
 
   i {
     font-size: 25px;
@@ -53,7 +53,7 @@
 
 .dashboard-settings__header {
   font-size: $font-size-h3;
-  margin-bottom: $spacer * 2;
+  margin-bottom: $space-xl;
 }
 
 .dashboard-settings__subheader {
@@ -89,13 +89,13 @@
   flex-direction: column;
   height: 100%;
   flex-grow: 1;
-  margin: $spacer * 3 $spacer * 2 0 0;
+  margin: 40px $space-xl 0 0;
 
   button {
-    margin-bottom: 10px;
+    margin-bottom: $space-s;
   }
 }
 
 .dashboard-settings__json-save-button {
-  margin-top: $spacer;
+  margin-top: $space-m;
 }

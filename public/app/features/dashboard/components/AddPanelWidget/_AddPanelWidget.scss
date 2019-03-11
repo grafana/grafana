@@ -20,7 +20,7 @@
 
   .gicon {
     font-size: 30px;
-    margin-right: $spacer;
+    margin-right: $space-m;
   }
 
   &:hover {
@@ -32,16 +32,16 @@
 .add-panel-widget__title {
   font-size: $font-size-md;
   font-weight: $font-weight-semi-bold;
-  margin-right: $spacer * 2;
+  margin-right: $space-xl;
 }
 
 .add-panel-widget__link {
-  margin: 0 8px;
+  margin: 0 $space-s;
   width: 154px;
 }
 
 .add-panel-widget__icon {
-  margin-bottom: 8px;
+  margin-bottom: $space-s;
 
   .gicon {
     color: white;
@@ -62,7 +62,7 @@
 
 .add-panel-widget__create {
   display: inherit;
-  margin-bottom: 24px;
+  margin-bottom: $space-l;
   // this is to have the big button appear centered
   margin-top: 55px;
 }
@@ -72,7 +72,7 @@
 }
 
 .add-panel-widget__action {
-  margin: 0 4px;
+  margin: 0 $space-xs;
 }
 
 .add-panel-widget__btn-container {
