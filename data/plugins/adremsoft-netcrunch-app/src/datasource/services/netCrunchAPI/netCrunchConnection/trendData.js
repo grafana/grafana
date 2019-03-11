@@ -265,7 +265,7 @@ function NetCrunchTrendData(netCrunchConnection) {
 
     // resultType possible values are:
     //    [ tqrAvg, tqrMin, tqrMax, tqrAvail, tqrDelta, tqrEqual, tqrDistr ]
-    // Default tqrAvg is used : {ResultMask : [['tqrAvg']]}
+    // Default tqrAvg is used : {ResultMask : ['tqrAvg']}
 
     if ((nodeID == null) || (counter == null)) {
       return Promise.resolve(null);
