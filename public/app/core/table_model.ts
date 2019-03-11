@@ -5,14 +5,14 @@ import { Column, TableData } from '@grafana/ui';
  * Extends the standard Column class with variables that get
  * mutated in the angular table panel.
  */
-interface AngularTableColumn extends Column {
+interface MutableColumn extends Column {
   title?: string;
   sort?: boolean;
   desc?: boolean;
 }
 
 export default class TableModel implements TableData {
-  columns: AngularTableColumn[];
+  columns: MutableColumn[];
   rows: any[];
   type: string;
   columnMap: any;
