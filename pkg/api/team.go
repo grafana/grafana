@@ -42,7 +42,7 @@ func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Respo
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser, hs.Cfg.EditorsCanOwn); err != nil {
+	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return Error(403, "User not allowed to update team", err)
 	}
 

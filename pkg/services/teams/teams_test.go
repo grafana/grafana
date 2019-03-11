@@ -33,7 +33,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, true)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
@@ -50,7 +50,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, true)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor)
 				So(err, ShouldBeNil)
 			})
 		})
@@ -72,23 +72,15 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanUpdateTeam(testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor, true)
+				err := CanUpdateTeam(testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
 		})
 
 		Convey("Given an org admin and a team", func() {
 			Convey("Should be able to update the team", func() {
-				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &admin, true)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &admin)
 				So(err, ShouldBeNil)
-			})
-		})
-
-		Convey("Given that the editorsCanOwn feature toggle is disabled", func() {
-			Convey("Editors should not be able to update teams", func() {
-				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, false)
-
-				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
 	})

@@ -155,7 +155,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), Wrap(hs.CreateTeam))
-			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), Wrap(UpdateTeam))
+			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), Wrap(hs.UpdateTeam))
 			teamsRoute.Delete("/:teamId", Wrap(DeleteTeamByID))
 			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(AddTeamMember))
