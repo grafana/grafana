@@ -23,7 +23,6 @@ func canUpdateTeam(orgId int64, teamId int64, user *m.SignedInUser) error {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		// TODO: look into how we want to do logging
 		return err
 	}
 
