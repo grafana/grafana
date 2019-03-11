@@ -11,8 +11,6 @@ function exit_if_fail {
 }
 
 echo "running redis and memcache tests"
-#set -e
-#time for d in $(go list ./pkg/...); do
+
 time exit_if_fail go test -tags=redis ./pkg/infra/remotecache/...
 time exit_if_fail go test -tags=memcached ./pkg/infra/remotecache/...
-#done

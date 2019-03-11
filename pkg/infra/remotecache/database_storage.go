@@ -47,24 +47,24 @@ func (dc *databaseCache) internalRunGC() {
 }
 
 func (dc *databaseCache) Get(key string) (interface{}, error) {
-	cacheHits := []CacheData{}
-	sess := dc.SQLStore.NewSession()
-	defer sess.Close()
-	err := sess.Where("cache_key= ?", key).Find(&cacheHits)
+	cacheHit := CacheData{}
+	session := dc.SQLStore.NewSession()
+	defer session.Close()
+
+	exist, err := session.Where("cache_key= ?", key).Get(&cacheHit)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if len(cacheHits) == 0 {
+	if !exist {
 		return nil, ErrCacheItemNotFound
 	}
 
-	cacheHit := cacheHits[0]
 	if cacheHit.Expires > 0 {
 		existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
 		if existedButExpired {
-			dc.Delete(key)
+			_ = dc.Delete(key) //ignore this error since we will return `ErrCacheItemNotFound` anyway
 			return nil, ErrCacheItemNotFound
 		}
 	}
@@ -99,9 +99,11 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 
 	// insert or update depending on if item already exist
 	if has {
-		_, err = session.Exec(`UPDATE cache_data SET data=?, created=?, expire=? WHERE cache_key='?'`, data, getTime().Unix(), expiresAtEpoch, key)
+		sql := `UPDATE cache_data SET data=?, created=?, expire=? WHERE cache_key='?'`
+		_, err = session.Exec(sql, data, getTime().Unix(), expiresAtEpoch, key)
 	} else {
-		_, err = session.Exec(`INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`, key, data, getTime().Unix(), expiresAtEpoch)
+		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
+		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresAtEpoch)
 	}
 
 	return err
@@ -120,5 +122,3 @@ type CacheData struct {
 	Expires   int64
 	CreatedAt int64
 }
-
-// func (cd CacheData) TableName() string { return "cache_data" }
