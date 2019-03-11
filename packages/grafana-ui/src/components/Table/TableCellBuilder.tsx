@@ -11,6 +11,7 @@ import { InterpolateFunction } from '../../types/panel';
 
 export interface TableCellBuilderOptions {
   value: any;
+  column?: Column;
   row?: any[];
   table?: Table;
   className?: string;

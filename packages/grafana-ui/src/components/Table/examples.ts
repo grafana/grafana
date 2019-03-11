@@ -163,5 +163,5 @@ export const migratedTestStyles: ColumnStyle[] = [
 export const simpleTable = {
   type: 'table',
   columns: [{ text: 'First' }, { text: 'Second' }, { text: 'Third' }],
-  rows: [[10, 23, 35], [11, 22, 31], [12, 21, 34]],
-} as TableData;
+  rows: [[701, 205, 305], [702, 206, 301], [703, 207, 304]],
+};

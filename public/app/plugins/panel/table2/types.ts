@@ -2,11 +2,18 @@ import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export interface Options {
   showHeader: boolean;
+  fixedHeader: boolean;
+  fixedColumns: number;
+  rotate: boolean;
+
   styles: ColumnStyle[];
 }
 
 export const defaults: Options = {
   showHeader: true,
+  fixedHeader: true,
+  fixedColumns: 0,
+  rotate: false,
   styles: [
     {
       type: 'date',

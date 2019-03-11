@@ -14,21 +14,24 @@ import { Themeable } from '../../types/theme';
 import { sortTableData } from '../../utils/processTimeSeries';
 
 import { TableData, InterpolateFunction } from '@grafana/ui';
-import { TableCellBuilder, ColumnStyle, getCellBuilder, TableCellBuilderOptions } from './TableCellBuilder';
+import {
+  TableCellBuilder,
+  ColumnStyle,
+  getCellBuilder,
+  TableCellBuilderOptions,
+  simpleCellBuilder,
+} from './TableCellBuilder';
 import { stringToJsRegex } from '../../utils/index';
-
-interface ColumnInfo {
-  index: number;
-  header: string;
-  builder: TableCellBuilder;
-}
 
 export interface Props extends Themeable {
   data: TableData;
+
   showHeader: boolean;
-  fixedColumnCount: number;
-  fixedRowCount: number;
+  fixedHeader: boolean;
+  fixedColumns: number;
+  rotate: boolean;
   styles: ColumnStyle[];
+
   replaceVariables: InterpolateFunction;
   width: number;
   height: number;
@@ -41,15 +44,26 @@ interface State {
   data: TableData;
 }
 
+interface ColumnRenderInfo {
+  header: string;
+  builder: TableCellBuilder;
+}
+
+interface DataIndex {
+  column: number;
+  row: number; // -1 is the header!
+}
+
 export class Table extends Component<Props, State> {
-  columns: ColumnInfo[];
+  renderer: ColumnRenderInfo[];
   measurer: CellMeasurerCache;
   scrollToTop = false;
 
   static defaultProps = {
     showHeader: true,
-    fixedRowCount: 1,
-    fixedColumnCount: 0,
+    fixedHeader: true,
+    fixedColumns: 0,
+    rotate: false,
   };
 
   constructor(props: Props) {
@@ -59,7 +73,7 @@ export class Table extends Component<Props, State> {
       data: props.data,
     };
 
-    this.columns = this.initColumns(props);
+    this.renderer = this.initColumns(props);
     this.measurer = new CellMeasurerCache({
       defaultHeight: 30,
       defaultWidth: 150,
@@ -70,9 +84,11 @@ export class Table extends Component<Props, State> {
     const { data, styles, showHeader } = this.props;
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
-    const configsChanged = showHeader !== prevProps.showHeader;
-
-    console.log('TABLE', this.props.theme);
+    const configsChanged =
+      showHeader !== prevProps.showHeader ||
+      this.props.rotate !== prevProps.rotate ||
+      this.props.fixedColumns !== prevProps.fixedColumns ||
+      this.props.fixedHeader !== prevProps.fixedHeader;
 
     // Reset the size cache
     if (dataChanged || configsChanged) {
@@ -80,8 +96,9 @@ export class Table extends Component<Props, State> {
     }
 
     // Update the renderer if options change
+    // We only *need* do to this if the header values changes, but this does every data update
     if (dataChanged || styles !== prevProps.styles) {
-      this.columns = this.initColumns(this.props);
+      this.renderer = this.initColumns(this.props);
     }
 
     // Update the data when data or sort changes
@@ -91,9 +108,9 @@ export class Table extends Component<Props, State> {
     }
   }
 
-  initColumns(props: Props): ColumnInfo[] {
+  /** Given the configuration, setup how each column gets rendered */
+  initColumns(props: Props): ColumnRenderInfo[] {
     const { styles, data } = props;
-    console.log('STYLES', styles);
 
     return data.columns.map((col, index) => {
       let title = col.text;
@@ -113,7 +130,6 @@ export class Table extends Component<Props, State> {
       }
 
       return {
-        index,
         header: title,
         builder: getCellBuilder(col, style, this.props),
       };
@@ -137,27 +153,37 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  handleCellClick = (rowIndex: number, columnIndex: number) => {
-    const { showHeader } = this.props;
-    const { data } = this.state;
-    const realRowIndex = rowIndex - (showHeader ? 1 : 0);
-    if (realRowIndex < 0) {
-      this.doSort(columnIndex);
+  /** Converts the grid coordinates to TableData coordinates */
+  getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
+    const { showHeader, rotate } = this.props;
+    const rowOffset = showHeader ? -1 : 0;
+
+    if (rotate) {
+      return { column: rowIndex, row: columnIndex + rowOffset };
     } else {
-      const row = data.rows[realRowIndex];
-      const value = row[columnIndex];
-      console.log('CLICK', rowIndex, columnIndex, value);
+      return { column: columnIndex, row: rowIndex + rowOffset };
+    }
+  };
+
+  handleCellClick = (rowIndex: number, columnIndex: number) => {
+    const { row, column } = this.getCellRef(rowIndex, columnIndex);
+    if (row < 0) {
+      this.doSort(column);
+    } else {
+      const values = this.state.data.rows[row];
+      const value = values[column];
+      console.log('CLICK', value, row);
     }
   };
 
   headerBuilder = (cell: TableCellBuilderOptions): ReactElement<'div'> => {
     const { data, sortBy, sortDirection } = this.state;
     const { columnIndex, rowIndex, style } = cell.props;
+    const { column } = this.getCellRef(rowIndex, columnIndex);
 
-    let col = data.columns[columnIndex];
-    const sorting = sortBy === columnIndex;
+    let col = data.columns[column];
+    const sorting = sortBy === column;
     if (!col) {
-      // NOT SURE Why this happens sometimes
       col = {
         text: '??' + columnIndex + '???',
       };
@@ -171,47 +197,60 @@ export class Table extends Component<Props, State> {
     );
   };
 
+  getTableCellBuilder = (column: number): TableCellBuilder => {
+    const render = this.renderer[column];
+    if (render && render.builder) {
+      return render.builder;
+    }
+    return simpleCellBuilder; // the default
+  };
+
   cellRenderer = (props: GridCellProps): React.ReactNode => {
     const { rowIndex, columnIndex, key, parent } = props;
-    const { showHeader } = this.props;
+    const { row, column } = this.getCellRef(rowIndex, columnIndex);
     const { data } = this.state;
 
-    const column = this.columns[columnIndex];
-    if (!column) {
-      // NOT SURE HOW/WHY THIS HAPPENS!
-      // Without it it will crash in storybook when you cycle up/down the # of columns
-      // this cell is never visible in the output?
-      return (
-        <div key={key} style={props.style}>
-          XXXXX
-        </div>
-      );
-    }
-
-    const realRowIndex = rowIndex - (showHeader ? 1 : 0);
-    const isHeader = realRowIndex < 0;
-    const row = isHeader ? data.columns : data.rows[realRowIndex];
-    const value = row[columnIndex];
-    const builder = isHeader ? this.headerBuilder : column.builder;
+    const isHeader = row < 0;
+    const rowData = isHeader ? data.columns : data.rows[row];
+    const value = rowData ? rowData[column] : `[${columnIndex}:${rowIndex}]`;
+    const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
 
     return (
       <CellMeasurer cache={this.measurer} columnIndex={columnIndex} key={key} parent={parent} rowIndex={rowIndex}>
-        {builder({ value, row, table: this, props })}
+        {builder({
+          value,
+          row: rowData,
+          column: data.columns[column],
+          table: this,
+          props,
+        })}
       </CellMeasurer>
     );
   };
 
   render() {
-    const { data, showHeader, width, height } = this.props;
+    const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
+    const { data } = this.state;
 
-    const columnCount = data.columns.length;
-    const rowCount = data.rows.length + (showHeader ? 1 : 0);
+    let columnCount = data.columns.length;
+    let rowCount = data.rows.length + (showHeader ? 1 : 0);
 
-    const fixedColumnCount = Math.min(this.props.fixedColumnCount, columnCount);
-    const fixedRowCount = Math.min(this.props.fixedRowCount, rowCount);
+    let fixedColumnCount = Math.min(fixedColumns, columnCount);
+    let fixedRowCount = showHeader && fixedHeader ? 1 : 0;
 
-    // Usually called after a sort or the data changes
-    const scrollToRow = this.scrollToTop ? 1 : -1;
+    if (rotate) {
+      const temp = columnCount;
+      columnCount = rowCount;
+      rowCount = temp;
+
+      fixedRowCount = 0;
+      fixedColumnCount = Math.min(fixedColumns, rowCount) + (showHeader && fixedHeader ? 1 : 0);
+    }
+
+    // Called after sort or the data changes
+    const scroll = this.scrollToTop ? 1 : -1;
+    const scrollToRow = rotate ? -1 : scroll;
+    const scrollToColumn = rotate ? scroll : -1;
     if (this.scrollToTop) {
       this.scrollToTop = false;
     }
@@ -226,9 +265,10 @@ export class Table extends Component<Props, State> {
         }
         scrollToRow={scrollToRow}
         columnCount={columnCount}
+        scrollToColumn={scrollToColumn}
         rowCount={rowCount}
-        overscanColumnCount={2}
-        overscanRowCount={2}
+        overscanColumnCount={8}
+        overscanRowCount={8}
         columnWidth={this.measurer.columnWidth}
         deferredMeasurementCache={this.measurer}
         cellRenderer={this.cellRenderer}
