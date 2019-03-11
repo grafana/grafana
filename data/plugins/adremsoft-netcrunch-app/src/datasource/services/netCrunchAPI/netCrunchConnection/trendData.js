@@ -269,12 +269,6 @@ function NetCrunchTrendData(netCrunchConnection) {
       return Promise.resolve(null);
     }
 
-    console.log('>> getCounterData >>', resultType );
-
-    if (Array.isArray(resultType)) {
-      resultType = resultType[0];
-    }
-
     resultType = (resultType == null) ? prepareResultMask({ avg: true }) : prepareResultMask(resultType);
     if (resultType.ResultMask.length === 0) {
       resultType = prepareResultMask({ avg: true });
