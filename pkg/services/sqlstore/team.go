@@ -149,6 +149,10 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 	params := make([]interface{}, 0)
 
 	sql.WriteString(getTeamSelectSqlBase())
+	if query.UserIdFilter > 0 {
+		sql.WriteString(`INNER JOIN team_member on team.id = team_member.team_id AND team_member.user_id = ?`)
+		params = append(params, query.UserIdFilter)
+	}
 	sql.WriteString(` WHERE team.org_id = ?`)
 
 	params = append(params, query.OrgId)

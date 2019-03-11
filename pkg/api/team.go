@@ -86,12 +86,18 @@ func SearchTeams(c *m.ReqContext) Response {
 		page = 1
 	}
 
+	var userIdFilter int64
+	if c.QueryBool("showMine") {
+		userIdFilter = c.SignedInUser.UserId
+	}
+
 	query := m.SearchTeamsQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Name:  c.Query("name"),
-		Page:  page,
-		Limit: perPage,
+		OrgId:        c.OrgId,
+		Query:        c.Query("query"),
+		Name:         c.Query("name"),
+		UserIdFilter: userIdFilter,
+		Page:         page,
+		Limit:        perPage,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
