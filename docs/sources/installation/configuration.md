@@ -162,9 +162,9 @@ executed with working directory set to the installation path.
 
 ### enable_gzip
 
-Set this option to `true` to enable HTTP compression, this can improve 
-transfer speed and bandwidth utilization. It is recommended that most 
-users set it to `true`. By default it is set to `false` for compatibility 
+Set this option to `true` to enable HTTP compression, this can improve
+transfer speed and bandwidth utilization. It is recommended that most
+users set it to `true`. By default it is set to `false` for compatibility
 reasons.
 
 ### cert_file
@@ -179,7 +179,6 @@ Path to the certificate key file (if `protocol` is set to `https`).
 
 Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
-<hr />
 
 <hr />
 
@@ -262,6 +261,19 @@ Set to `true` to log the sql calls and execution times.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to private.
 
+<hr />
+
+## [remote_cache]
+
+### type
+
+Either `redis`, `memcached` or `database` default is `database`
+
+### connstr
+
+The remote cache connection string. Leave empty when using `database` since it will use the primary database.
+Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+Memcache example: `127.0.0.1:11211`
 
 <hr />
 
