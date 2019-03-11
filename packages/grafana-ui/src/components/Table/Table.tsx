@@ -165,7 +165,7 @@ export class Table extends Component<Props, State> {
     }
   };
 
-  handleCellClick = (rowIndex: number, columnIndex: number) => {
+  onCellClick = (rowIndex: number, columnIndex: number) => {
     const { row, column } = this.getCellRef(rowIndex, columnIndex);
     if (row < 0) {
       this.doSort(column);
@@ -190,7 +190,7 @@ export class Table extends Component<Props, State> {
     }
 
     return (
-      <div className="gf-table-header" style={style} onClick={() => this.handleCellClick(rowIndex, columnIndex)}>
+      <div className="gf-table-header" style={style} onClick={() => this.onCellClick(rowIndex, columnIndex)}>
         {col.text}
         {sorting && <SortIndicator sortDirection={sortDirection} />}
       </div>
