@@ -11,57 +11,43 @@ import (
 func TestUpdateTeam(t *testing.T) {
 	Convey("Updating a team", t, func() {
 		bus.ClearBusHandlers()
+
+		admin := m.SignedInUser{
+			UserId:  1,
+			OrgId:   1,
+			OrgRole: m.ROLE_ADMIN,
+		}
+		editor := m.SignedInUser{
+			UserId:  2,
+			OrgId:   1,
+			OrgRole: m.ROLE_EDITOR,
+		}
+		testTeam := m.Team{
+			Id:    1,
+			OrgId: 1,
+		}
+
+		updateTeamCmd := m.UpdateTeamCommand{
+			Id:    testTeam.Id,
+			OrgId: testTeam.OrgId,
+		}
+
 		Convey("Given an editor and a team he isn't a member of", func() {
-			editor := m.SignedInUser{
-				UserId:  1,
-				OrgId:   1,
-				OrgRole: m.ROLE_EDITOR,
-			}
-
 			Convey("Should not be able to update the team", func() {
-				cmd := m.UpdateTeamCommand{
-					Id:    1,
-					OrgId: editor.OrgId,
-				}
-
-				bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-					return errors.New("Editor not allowed to update team.")
-				})
+				shouldNotUpdateTeam()
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{}
 					return nil
 				})
 
-				err := UpdateTeam(&editor, &cmd)
-
+				err := UpdateTeam(&editor, &updateTeamCmd)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
 
 		Convey("Given an editor and a team he is a member of", func() {
-			editor := m.SignedInUser{
-				UserId:  1,
-				OrgId:   1,
-				OrgRole: m.ROLE_EDITOR,
-			}
-
-			testTeam := m.Team{
-				Id:    1,
-				OrgId: 1,
-			}
-
 			Convey("Should be able to update the team", func() {
-				cmd := m.UpdateTeamCommand{
-					Id:    testTeam.Id,
-					OrgId: testTeam.OrgId,
-				}
-
-				teamUpdated := false
-
-				bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-					teamUpdated = true
-					return nil
-				})
+				teamUpdatedCallback := updateTeamCalled()
 
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
@@ -73,38 +59,29 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := UpdateTeam(&editor, &cmd)
-
-				So(teamUpdated, ShouldBeTrue)
+				err := UpdateTeam(&editor, &updateTeamCmd)
+				So(teamUpdatedCallback(), ShouldBeTrue)
 				So(err, ShouldBeNil)
 			})
 		})
 
 		Convey("Given an editor and a team in another org", func() {
-			editor := m.SignedInUser{
-				UserId:  1,
-				OrgId:   1,
-				OrgRole: m.ROLE_EDITOR,
-			}
-
-			testTeam := m.Team{
+			testTeamOtherOrg := m.Team{
 				Id:    1,
 				OrgId: 2,
 			}
 
 			Convey("Shouldn't be able to update the team", func() {
 				cmd := m.UpdateTeamCommand{
-					Id:    testTeam.Id,
-					OrgId: testTeam.OrgId,
+					Id:    testTeamOtherOrg.Id,
+					OrgId: testTeamOtherOrg.OrgId,
 				}
 
-				bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-					return errors.New("Can't update a team in a different org.")
-				})
+				shouldNotUpdateTeam()
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
-						OrgId:      testTeam.OrgId,
-						TeamId:     testTeam.Id,
+						OrgId:      testTeamOtherOrg.OrgId,
+						TeamId:     testTeamOtherOrg.Id,
 						UserId:     editor.UserId,
 						Permission: int64(m.PERMISSION_ADMIN),
 					}}
@@ -112,41 +89,35 @@ func TestUpdateTeam(t *testing.T) {
 				})
 
 				err := UpdateTeam(&editor, &cmd)
-
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
 		})
 
 		Convey("Given an org admin and a team", func() {
-			editor := m.SignedInUser{
-				UserId:  1,
-				OrgId:   1,
-				OrgRole: m.ROLE_ADMIN,
-			}
-
-			testTeam := m.Team{
-				Id:    1,
-				OrgId: 1,
-			}
-
 			Convey("Should be able to update the team", func() {
-				cmd := m.UpdateTeamCommand{
-					Id:    testTeam.Id,
-					OrgId: testTeam.OrgId,
-				}
+				teamUpdatedCallback := updateTeamCalled()
+				err := UpdateTeam(&admin, &updateTeamCmd)
 
-				teamUpdated := false
-
-				bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-					teamUpdated = true
-					return nil
-				})
-
-				err := UpdateTeam(&editor, &cmd)
-
-				So(teamUpdated, ShouldBeTrue)
+				So(teamUpdatedCallback(), ShouldBeTrue)
 				So(err, ShouldBeNil)
 			})
 		})
 	})
+}
+
+func updateTeamCalled() func() bool {
+	wasCalled := false
+	bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
+		wasCalled = true
+		return nil
+	})
+
+	return func() bool { return wasCalled }
+}
+
+func shouldNotUpdateTeam() {
+	bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
+		return errors.New("UpdateTeamCommand not expected.")
+	})
+
 }
