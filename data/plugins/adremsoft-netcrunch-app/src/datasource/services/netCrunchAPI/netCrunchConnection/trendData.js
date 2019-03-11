@@ -187,7 +187,7 @@ function NetCrunchTrendData(netCrunchConnection) {
 
     resultMask = resultMask.map(seriesKey => QUERY_RESULT_MASKS[seriesKey]);
 
-    return { ResultMask: [resultMask] };
+    return { ResultMask: resultMask };
   }
 
   function calculateTimeDomain(dateFrom, periodType, periodInterval, intervalCount) {
