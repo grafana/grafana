@@ -61,11 +61,12 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
-	Query string
-	Name  string
-	Limit int
-	Page  int
-	OrgId int64
+	Query        string
+	Name         string
+	Limit        int
+	Page         int
+	OrgId        int64
+	UserIdFilter int64
 
 	Result SearchTeamQueryResult
 }

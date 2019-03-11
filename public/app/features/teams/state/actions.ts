@@ -1,8 +1,9 @@
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { StoreState, Team, TeamGroup, TeamMember } from 'app/types';
+import { OrgRole, StoreState, Team, TeamGroup, TeamMember } from 'app/types';
 import { updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
+import { contextSrv } from '../../../core/services/context_srv';
 
 export enum ActionTypes {
   LoadTeams = 'LOAD_TEAMS',
@@ -85,7 +86,8 @@ export const setSearchQuery = (searchQuery: string): SetSearchQueryAction => ({
 
 export function loadTeams(): ThunkResult<void> {
   return async dispatch => {
-    const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1 });
+    const showMine = contextSrv.user.orgRole === OrgRole.Editor;
+    const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1, showMine });
     dispatch(teamsLoaded(response.teams));
   };
 }
