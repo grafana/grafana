@@ -1,11 +1,11 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { ParseConfig, parseCSV, ParseDetails } from '../../utils/processTableData';
+import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processTableData';
 import { TableData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
 
 interface Props {
-  config?: ParseConfig;
+  options?: TableParseOptions;
   text: string;
   onTableParsed: (table: TableData, text: string) => void;
 }
@@ -13,7 +13,7 @@ interface Props {
 interface State {
   text: string;
   table: TableData;
-  details: ParseDetails;
+  details: TableParseDetails;
 }
 
 /**
@@ -24,9 +24,9 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     super(props);
 
     // Shoud this happen in onComponentMounted?
-    const { text, config, onTableParsed } = props;
+    const { text, options, onTableParsed } = props;
     const details = {};
-    const table = parseCSV(text, config, details);
+    const table = parseCSV(text, options, details);
     this.state = {
       text,
       table,
@@ -37,13 +37,13 @@ class TableInputCSV extends React.PureComponent<Props, State> {
 
   readCSV = debounce(() => {
     const details = {};
-    const table = parseCSV(this.state.text, this.props.config, details);
+    const table = parseCSV(this.state.text, this.props.options, details);
     this.setState({ table, details });
   }, 150);
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     const { text } = this.state;
-    if (text !== prevState.text || this.props.config !== prevProps.config) {
+    if (text !== prevState.text || this.props.options !== prevProps.options) {
       this.readCSV();
     }
     // If the props text has changed, replace our local version
@@ -56,7 +56,7 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     }
   }
 
-  handleFooterClicked = (event: any) => {
+  onFooterClicked = (event: any) => {
     console.log('Errors', this.state);
     const message = this.state.details
       .errors!.map(err => {
@@ -66,7 +66,7 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     alert('CSV Parsing Errors:\n' + message);
   };
 
-  handleChange = (event: any) => {
+  onTextChange = (event: any) => {
     this.setState({ text: event.target.value });
   };
 
@@ -80,8 +80,8 @@ class TableInputCSV extends React.PureComponent<Props, State> {
       <AutoSizer>
         {({ height, width }) => (
           <div className="gf-table-input-csv" style={{ width, height }}>
-            <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.handleChange} />
-            <footer onClick={this.handleFooterClicked} className={footerClassNames}>
+            <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
+            <footer onClick={this.onFooterClicked} className={footerClassNames}>
               Rows:{table.rows.length}, Columns:{table.columns.length} &nbsp;
               {hasErrors ? <i className="fa fa-exclamation-triangle" /> : <i className="fa fa-check-circle" />}
             </footer>

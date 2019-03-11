@@ -3,7 +3,7 @@ import { TableData, Column } from '../types/index';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Subset of all parse options
-export interface ParseConfig {
+export interface TableParseOptions {
   headerIsFirstLine?: boolean; // Not a papa-parse option
   delimiter?: string; // default: ","
   newline?: string; // default: "\r\n"
@@ -12,7 +12,7 @@ export interface ParseConfig {
   comments?: boolean | string; // default: false
 }
 
-export interface ParseDetails {
+export interface TableParseDetails {
   meta?: ParseMeta;
   errors?: ParseError[];
 }
@@ -87,11 +87,11 @@ function makeColumns(values: any[]): Column[] {
  * Convert CSV text into a valid TableData object
  *
  * @param text
- * @param config
+ * @param options
  * @param details, if exists the result will be filled with debugging details
  */
-export function parseCSV(text: string, config?: ParseConfig, details?: ParseDetails): TableData {
-  const results = Papa.parse(text, { ...config, dynamicTyping: true, skipEmptyLines: true });
+export function parseCSV(text: string, options?: TableParseOptions, details?: TableParseDetails): TableData {
+  const results = Papa.parse(text, { ...options, dynamicTyping: true, skipEmptyLines: true });
   const { data, meta, errors } = results;
 
   // Fill the parse details for debugging
@@ -121,7 +121,7 @@ export function parseCSV(text: string, config?: ParseConfig, details?: ParseDeta
   }
 
   // Assume the first line is the header unless the config says its not
-  const headerIsNotFirstLine = config && config.headerIsFirstLine === false;
+  const headerIsNotFirstLine = options && options.headerIsFirstLine === false;
   const header = headerIsNotFirstLine ? [] : results.data.shift();
 
   return matchRowSizes({
