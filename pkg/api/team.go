@@ -38,11 +38,11 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 }
 
 // PUT /api/teams/:teamId
-func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
+func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser, hs.Cfg.EditorsCanOwn); err != nil {
 		return Error(403, "User not allowed to update team", err)
 	}
 

@@ -3,7 +3,6 @@ package teams
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
@@ -27,28 +26,20 @@ func TestUpdateTeam(t *testing.T) {
 			OrgId: 1,
 		}
 
-		updateTeamCmd := m.UpdateTeamCommand{
-			Id:    testTeam.Id,
-			OrgId: testTeam.OrgId,
-		}
-
 		Convey("Given an editor and a team he isn't a member of", func() {
 			Convey("Should not be able to update the team", func() {
-				shouldNotUpdateTeam()
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{}
 					return nil
 				})
 
-				err := CanUpdateTeam(&editor, &updateTeamCmd)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, true)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
 
 		Convey("Given an editor and a team he is an admin in", func() {
 			Convey("Should be able to update the team", func() {
-				teamUpdatedCallback := updateTeamCalled()
-
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
@@ -59,8 +50,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanUpdateTeam(&editor, &updateTeamCmd)
-				So(teamUpdatedCallback(), ShouldBeTrue)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, true)
 				So(err, ShouldBeNil)
 			})
 		})
@@ -72,12 +62,6 @@ func TestUpdateTeam(t *testing.T) {
 			}
 
 			Convey("Shouldn't be able to update the team", func() {
-				cmd := m.UpdateTeamCommand{
-					Id:    testTeamOtherOrg.Id,
-					OrgId: testTeamOtherOrg.OrgId,
-				}
-
-				shouldNotUpdateTeam()
 				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
@@ -88,42 +72,24 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanUpdateTeam(&editor, &cmd)
+				err := CanUpdateTeam(testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor, true)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
 		})
 
 		Convey("Given an org admin and a team", func() {
 			Convey("Should be able to update the team", func() {
-				teamUpdatedCallback := updateTeamCalled()
-				err := CanUpdateTeam(&admin, &updateTeamCmd)
-
-				So(teamUpdatedCallback(), ShouldBeTrue)
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &admin, true)
 				So(err, ShouldBeNil)
 			})
 		})
+
 		Convey("Given that the editorsCanOwn feature toggle is disabled", func() {
+			Convey("Editors should not be able to update teams", func() {
+				err := CanUpdateTeam(testTeam.OrgId, testTeam.Id, &editor, false)
 
-			Convey("Given an editor and a team he is an admin", func() {
-
+				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
 	})
-}
-
-func updateTeamCalled() func() bool {
-	wasCalled := false
-	bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-		wasCalled = true
-		return nil
-	})
-
-	return func() bool { return wasCalled }
-}
-
-func shouldNotUpdateTeam() {
-	bus.AddHandler("test", func(cmd *m.UpdateTeamCommand) error {
-		return errors.New("UpdateTeamCommand not expected.")
-	})
-
 }
