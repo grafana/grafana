@@ -43,10 +43,12 @@ const theme: GrafanaThemeCommons = {
     xl: '1200px',
   },
   spacing: {
-    xs: '0',
-    s: '3px',
-    m: '14px',
-    l: '21px',
+    d: '14px',
+    xs: '4px',
+    s: '8px',
+    m: '16px',
+    l: '24px',
+    xl: '32px',
     gutter: '30px',
   },
   border: {

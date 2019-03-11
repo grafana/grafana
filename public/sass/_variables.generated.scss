@@ -20,6 +20,10 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-xs: 4px !default;
+$space-s: 8px !default;
+$space-m: 16px !default;
+$space-xl: 32px !default;
 $spacer: 14px !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
