@@ -131,5 +131,12 @@ func GetTeamPreferences(c *m.ReqContext) Response {
 
 // PUT /api/teams/:teamId/preferences
 func UpdateTeamPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
-	return updatePreferencesFor(c.OrgId, 0, c.ParamsInt64(":teamId"), &dtoCmd)
+	teamId := c.ParamsInt64(":teamId")
+	orgId := c.OrgId
+
+	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+		return Error(403, "Not allowed to update team preferences.", err)
+	}
+
+	return updatePreferencesFor(orgId, 0, teamId, &dtoCmd)
 }
