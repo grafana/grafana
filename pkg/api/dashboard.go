@@ -281,7 +281,8 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		aclService := dashboards.NewAclService()
 		err := aclService.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id)
 		if err != nil {
-			hs.log.Error("Could not make user admin", "error", err)
+			hs.log.Error("Could not make user admin", "dashboard", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
+			return Error(500, "Failed to make user admin of dashboard", err)
 		}
 	}
 
