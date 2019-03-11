@@ -621,8 +621,8 @@ export class HeatmapRenderer {
       w = this.cardWidth;
     }
 
-    // Card width should be MIN_CARD_SIZE at least
-    w = Math.max(w, MIN_CARD_SIZE);
+    // Card width should be MIN_CARD_SIZE at least, but cut cards shouldn't be displayed
+    w = w > 0 ? Math.max(w, MIN_CARD_SIZE) : 0;
     return w;
   }
 
