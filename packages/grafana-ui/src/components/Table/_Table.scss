@@ -66,6 +66,8 @@
 .gf-table-cell {
   padding: 3px 10px;
 
+  background: $page-gradient;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 
@@ -74,5 +76,5 @@
 }
 
 .gf-table-fixed-column {
-  border-right: 1px solid #ccc;
+  border-right: 1px solid #CCC;
 }

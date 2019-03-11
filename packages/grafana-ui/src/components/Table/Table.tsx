@@ -212,7 +212,7 @@ export class Table extends Component<Props, State> {
 
     const isHeader = row < 0;
     const rowData = isHeader ? data.columns : data.rows[row];
-    const value = rowData ? rowData[column] : `[${columnIndex}:${rowIndex}]`;
+    const value = rowData ? rowData[column] : '';
     const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
 
     return (
@@ -277,10 +277,8 @@ export class Table extends Component<Props, State> {
         height={height}
         fixedColumnCount={fixedColumnCount}
         fixedRowCount={fixedRowCount}
-        classNameTopLeftGrid="gf-table-fixed-row-and-column"
-        classNameTopRightGrid="gf-table-fixed-row"
+        classNameTopLeftGrid="gf-table-fixed-column"
         classNameBottomLeftGrid="gf-table-fixed-column"
-        classNameBottomRightGrid="gf-table-normal-cell"
       />
     );
   }
