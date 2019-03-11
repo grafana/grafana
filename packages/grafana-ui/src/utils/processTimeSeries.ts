@@ -4,7 +4,7 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
-import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData, TimeSeries } from '../types';
+import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../types';
 
 interface Options {
   data: TableData[];
@@ -13,7 +13,7 @@ interface Options {
   nullValueMode: NullValueMode;
 }
 
-// NOTE -- this should be refactored into a TableData utility file.
+// NOTE: this should move to processTableData.ts
 // I left it as is so the merge changes are more clear.
 export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Options): TimeSeriesVMs {
   const vmSeries = data.map((item, index) => {
@@ -192,41 +192,3 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
 
   return vmSeries;
 }
-
-function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
-  return {
-    columns: [
-      {
-        text: timeSeries.target || 'Value',
-        unit: timeSeries.unit,
-      },
-      {
-        text: 'Time',
-        type: 'time',
-      },
-    ],
-    rows: timeSeries.datapoints,
-  };
-}
-
-export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
-
-export const toTableData = (results?: any[]): TableData[] => {
-  if (!results) {
-    return [];
-  }
-
-  return results
-    .filter(d => !!d)
-    .map(data => {
-      if (data.hasOwnProperty('columns')) {
-        return data as TableData;
-      }
-      if (data.hasOwnProperty('datapoints')) {
-        return convertTimeSeriesToTableData(data);
-      }
-      // TODO, try to convert JSON to table?
-      console.warn('Can not convert', data);
-      throw new Error('Unsupported data format');
-    });
-};
