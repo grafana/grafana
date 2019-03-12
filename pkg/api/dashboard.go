@@ -277,7 +277,7 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		return Error(500, "Failed to save dashboard", err)
 	}
 
-	if hs.Cfg.EditorsCanOwn && newDashboard {
+	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		aclService := dashboards.NewAclService()
 		inFolder := cmd.FolderId > 0
 		err := aclService.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)

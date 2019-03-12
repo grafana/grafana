@@ -93,7 +93,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        <WithFeatureToggle featureToggle={config.editorsCanOwn}>
+        <WithFeatureToggle featureToggle={config.editorsCanAdmin}>
           <td>
             <div className="gf-form">
               <Select
@@ -161,7 +161,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
-                <WithFeatureToggle featureToggle={config.editorsCanOwn}>
+                <WithFeatureToggle featureToggle={config.editorsCanAdmin}>
                   <th>Permission</th>
                 </WithFeatureToggle>
                 {syncEnabled && <th />}

@@ -327,7 +327,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanOwn {
+	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
 		cfgNode := &dtos.NavLink{
 			Id:       "cfg",
 			Text:     "Configuration",

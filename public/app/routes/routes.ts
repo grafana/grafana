@@ -207,7 +207,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
       resolve: {
-        roles: () => (config.editorsCanOwn ? ['Editor', 'Admin'] : ['Admin']),
+        roles: () => (config.editorsCanAdmin ? ['Editor', 'Admin'] : ['Admin']),
         component: () => TeamPages,
       },
     })
