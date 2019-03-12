@@ -1,8 +1,29 @@
 import { parseCSV } from './processTableData';
-import { reduceTableData } from './tableReducer';
+import { reduceTableData, getTableReducers, TableReducerID } from './tableReducer';
 
 describe('Table Reducer', () => {
   const basicTable = parseCSV('a,b,c\n10,20,30\n20,30,40');
+
+  it('should load all standard stats', () => {
+    const names = [
+      TableReducerID.sum,
+      TableReducerID.max,
+      TableReducerID.min,
+    //  TableReducerID.logmin,
+      TableReducerID.mean,
+      TableReducerID.last,
+      TableReducerID.first,
+      TableReducerID.count,
+      TableReducerID.range,
+      TableReducerID.diff,
+    // TableReducerID.allIsZero,
+    // TableReducerID.allIsNull,
+    ];
+    const reducers = getTableReducers(names);
+    reducers.forEach( (reducer, index) => {
+      expect(reducer ? reducer.value : '<missing>').toEqual(names[index]);
+    });
+  });
 
   it('should calculate stats', () => {
     const reduced = reduceTableData(basicTable, {
