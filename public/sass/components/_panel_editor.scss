@@ -21,7 +21,7 @@
 }
 
 .panel-editor-container__editor {
-  margin-top: $space-l;
+  margin-top: $space-lg;
   display: flex;
   flex-direction: row;
   flex: 1 1 0;
@@ -80,7 +80,7 @@
   }
 
   .submenu-controls {
-    padding: 0 $dashboard-padding $space-s $dashboard-padding;
+    padding: 0 $dashboard-padding $space-sm $dashboard-padding;
   }
 
   .panel-editor-container__panel {
