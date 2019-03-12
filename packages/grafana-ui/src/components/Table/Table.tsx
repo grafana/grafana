@@ -11,7 +11,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortTableData } from '../../utils/processTimeSeries';
+import { sortTableData } from '../../utils/processTableData';
 
 import { TableData, InterpolateFunction } from '@grafana/ui';
 import {

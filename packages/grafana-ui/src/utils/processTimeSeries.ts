@@ -4,7 +4,7 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
-import { TimeSeries, TableData, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
+import { TimeSeries, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
 
 interface Options {
   timeSeries: TimeSeries[];
@@ -172,25 +172,4 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
   });
 
   return vmSeries;
-}
-
-export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {
-  if (isNumber(sortIndex)) {
-    const copy = {
-      ...data,
-      rows: [...data.rows].sort((a, b) => {
-        a = a[sortIndex];
-        b = b[sortIndex];
-        // Sort null or undefined separately from comparable values
-        return +(a == null) - +(b == null) || +(a > b) || -(a < b);
-      }),
-    };
-
-    if (reverse) {
-      copy.rows.reverse();
-    }
-
-    return copy;
-  }
-  return data;
 }
