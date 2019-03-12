@@ -32,6 +32,7 @@ export class AxesEditorCtrl {
       Auto: 'auto',
       Upper: 'upper',
       Lower: 'lower',
+      Middle: 'middle',
     };
   }
 

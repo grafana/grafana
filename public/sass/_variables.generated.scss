@@ -20,6 +20,12 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-xxs: 2px !default;
+$space-xs: 4px !default;
+$space-sm: 8px !default;
+$space-md: 16px !default;
+$space-lg: 24px !default;
+$space-xl: 32px !default;
 $spacer: 14px !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
@@ -109,7 +115,6 @@ $font-size-h4: 18px !default;
 $font-size-h5: 16px !default;
 $font-size-h6: 14px !default;
 
-$headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-font-weight: 400 !default;
 $headings-line-height: 1.1 !default;
@@ -163,7 +168,6 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
@@ -210,8 +214,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$panel-margin: 10px;
-$dashboard-padding: $panel-margin * 2;
+$dashboard-padding: 10px * 2;
 $panel-horizontal-padding: 10;
 $panel-vertical-padding: 5;
 $panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
@@ -246,8 +249,3 @@ $external-services: (
     icon: '',
   ),
 ) !default;
-
-:export {
-  panelhorizontalpadding: $panel-horizontal-padding;
-  panelverticalpadding: $panel-vertical-padding;
-}

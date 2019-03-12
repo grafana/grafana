@@ -17,7 +17,13 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$spacer: ${theme.spacing.m} !default;
+$space-xxs: ${theme.spacing.xxs} !default;
+$space-xs: ${theme.spacing.xs} !default;
+$space-sm: ${theme.spacing.sm} !default;
+$space-md: ${theme.spacing.md} !default;
+$space-lg: ${theme.spacing.lg} !default;
+$space-xl: ${theme.spacing.xl} !default;
+$spacer: ${theme.spacing.d} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -46,7 +52,7 @@ $spacers: (
     ),
   ),
 ) !default;
-$border-width: ${theme.border.width.s} !default;
+$border-width: ${theme.border.width.sm} !default;
 
 // Grid breakpoints
 //
@@ -55,9 +61,9 @@ $border-width: ${theme.border.width.s} !default;
 
 $grid-breakpoints: (
   xs: ${theme.breakpoints.xs},
-  sm: ${theme.breakpoints.s},
-  md: ${theme.breakpoints.m},
-  lg: ${theme.breakpoints.l},
+  sm: ${theme.breakpoints.sm},
+  md: ${theme.breakpoints.md},
+  lg: ${theme.breakpoints.lg},
   xl: ${theme.breakpoints.xl},
 ) !default;
 
@@ -91,12 +97,12 @@ $font-family-base: $font-family-sans-serif !default;
 $font-size-root: ${theme.typography.size.root} !default;
 $font-size-base: ${theme.typography.size.base} !default;
 
-$font-size-lg: ${theme.typography.size.l} !default;
-$font-size-md: ${theme.typography.size.m} !default;
-$font-size-sm: ${theme.typography.size.s} !default;
+$font-size-lg: ${theme.typography.size.lg} !default;
+$font-size-md: ${theme.typography.size.md} !default;
+$font-size-sm: ${theme.typography.size.sm} !default;
 $font-size-xs: ${theme.typography.size.xs} !default;
 
-$line-height-base: ${theme.typography.lineHeight.l} !default;
+$line-height-base: ${theme.typography.lineHeight.lg} !default;
 $font-weight-semi-bold: ${theme.typography.weight.semibold};
 
 $font-size-h1: ${theme.typography.heading.h1} !default;
@@ -106,10 +112,9 @@ $font-size-h4: ${theme.typography.heading.h4} !default;
 $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
-$headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-font-weight: ${theme.typography.weight.normal} !default;
-$headings-line-height: ${theme.typography.lineHeight.s} !default;
+$headings-line-height: ${theme.typography.lineHeight.sm} !default;
 
 $hr-border-width: $border-width !default;
 $dt-font-weight: bold !default;
@@ -160,7 +165,6 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
@@ -207,8 +211,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$panel-margin: 10px;
-$dashboard-padding: $panel-margin * 2;
+$dashboard-padding: 10px * 2;
 $panel-horizontal-padding: 10;
 $panel-vertical-padding: 5;
 $panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
@@ -243,9 +246,4 @@ $external-services: (
     icon: '',
   ),
 ) !default;
-
-:export {
-  panelhorizontalpadding: $panel-horizontal-padding;
-  panelverticalpadding: $panel-vertical-padding;
-}
 `;
