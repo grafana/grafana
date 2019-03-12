@@ -81,7 +81,7 @@ func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
 }
 
 // DELETE /api/teams/:teamId/members/:userId
-func RemoveTeamMember(c *m.ReqContext) Response {
+func (hs *HTTPServer) RemoveTeamMember(c *m.ReqContext) Response {
 	orgId := c.OrgId
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
@@ -90,7 +90,12 @@ func RemoveTeamMember(c *m.ReqContext) Response {
 		return Error(403, "Not allowed to remove team member", err)
 	}
 
-	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId}); err != nil {
+	protectLastAdmin := false
+	if c.OrgRole == m.ROLE_EDITOR {
+		protectLastAdmin = true
+	}
+
+	if err := bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}

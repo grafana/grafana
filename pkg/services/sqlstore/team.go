@@ -285,6 +285,18 @@ func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 			return err
 		}
 
+		if cmd.ProtectLastAdmin {
+			lastAdmin, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+			if err != nil {
+				return err
+			}
+
+			if lastAdmin {
+				return m.ErrLastTeamAdmin
+			}
+
+		}
+
 		var rawSql = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
 		res, err := sess.Exec(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
@@ -297,6 +309,29 @@ func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 
 		return err
 	})
+}
+
+func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool, error) {
+	rawSql := "SELECT user_id FROM team_member WHERE org_id=? and team_id=? and permission=?"
+	userIds := []*int64{}
+	err := sess.SQL(rawSql, orgId, teamId, m.PERMISSION_ADMIN).Find(&userIds)
+	if err != nil {
+		return false, err
+	}
+
+	isAdmin := false
+	for _, adminId := range userIds {
+		if userId == *adminId {
+			isAdmin = true
+			break
+		}
+	}
+
+	if isAdmin && len(userIds) == 1 {
+		return true, nil
+	}
+
+	return false, err
 }
 
 // GetTeamMembers return a list of members for the specified team
