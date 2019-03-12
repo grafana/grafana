@@ -4,6 +4,7 @@ import coreModule from 'app/core/core_module';
 import store from 'app/core/store';
 
 export class User {
+  id: number;
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;

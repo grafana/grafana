@@ -4,7 +4,7 @@ import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { DeleteButton, Select, SelectOptionItem } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User, teamsPermissionLevels } from 'app/types';
+import { TeamMember, User, teamsPermissionLevels, TeamPermissionLevel, OrgRole } from 'app/types';
 import {
   loadTeamMembers,
   addTeamMember,
@@ -16,6 +16,7 @@ import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   members: TeamMember[];
@@ -26,6 +27,7 @@ export interface Props {
   setSearchMemberQuery: typeof setSearchMemberQuery;
   updateTeamMember: typeof updateTeamMember;
   syncEnabled: boolean;
+  editorsCanAdmin?: boolean;
 }
 
 export interface State {
@@ -37,6 +39,7 @@ export class TeamMembers extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
+    this.renderPermissionsSelect = this.renderPermissionsSelect.bind(this);
   }
 
   componentDidMount() {
@@ -85,6 +88,35 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.updateTeamMember(updatedTeamMember);
   };
 
+  renderPermissionsSelect(member: TeamMember) {
+    const { members, editorsCanAdmin } = this.props;
+    const userInMembers = members.find(m => m.userId === contextSrv.user.id);
+    const isUserTeamAdmin =
+      contextSrv.isGrafanaAdmin || contextSrv.hasRole(OrgRole.Admin)
+        ? true
+        : userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
+    const value = teamsPermissionLevels.find(dp => dp.value === member.permission);
+
+    return (
+      <WithFeatureToggle featureToggle={editorsCanAdmin}>
+        <td>
+          <div className="gf-form">
+            {isUserTeamAdmin && (
+              <Select
+                isSearchable={false}
+                options={teamsPermissionLevels}
+                onChange={item => this.onPermissionChange(item, member)}
+                className="gf-form-select-box__control--menu-right"
+                value={value}
+              />
+            )}
+            {!isUserTeamAdmin && <span>{value.label}</span>}
+          </div>
+        </td>
+      </WithFeatureToggle>
+    );
+  }
+
   renderMember(member: TeamMember, syncEnabled: boolean) {
     return (
       <tr key={member.userId}>
@@ -93,19 +125,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        <WithFeatureToggle featureToggle={config.editorsCanAdmin}>
-          <td>
-            <div className="gf-form">
-              <Select
-                isSearchable={false}
-                options={teamsPermissionLevels}
-                onChange={item => this.onPermissionChange(item, member)}
-                className="gf-form-select-box__control--menu-right"
-                value={teamsPermissionLevels.find(dp => dp.value === member.permission)}
-              />
-            </div>
-          </td>
-        </WithFeatureToggle>
+        {this.renderPermissionsSelect(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
           <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
@@ -116,7 +136,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
   render() {
     const { isAdding } = this.state;
-    const { searchMemberQuery, members, syncEnabled } = this.props;
+    const { searchMemberQuery, members, syncEnabled, editorsCanAdmin } = this.props;
     return (
       <div>
         <div className="page-action-bar">
@@ -161,7 +181,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
-                <WithFeatureToggle featureToggle={config.editorsCanAdmin}>
+                <WithFeatureToggle featureToggle={editorsCanAdmin}>
                   <th>Permission</th>
                 </WithFeatureToggle>
                 {syncEnabled && <th />}
@@ -180,6 +200,7 @@ function mapStateToProps(state) {
   return {
     members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 

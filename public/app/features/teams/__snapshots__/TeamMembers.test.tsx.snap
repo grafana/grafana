@@ -201,41 +201,9 @@ exports[`Render should render team members 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -271,41 +239,9 @@ exports[`Render should render team members 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -341,41 +277,9 @@ exports[`Render should render team members 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -411,41 +315,9 @@ exports[`Render should render team members 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -481,41 +353,9 @@ exports[`Render should render team members 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -644,41 +484,9 @@ exports[`Render should render team members when sync enabled 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -730,41 +538,9 @@ exports[`Render should render team members when sync enabled 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -816,41 +592,9 @@ exports[`Render should render team members when sync enabled 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -902,41 +646,9 @@ exports[`Render should render team members when sync enabled 1`] = `
               <div
                 className="gf-form"
               >
-                <Select
-                  autoFocus={false}
-                  backspaceRemovesValue={true}
-                  className="gf-form-select-box__control--menu-right"
-                  isClearable={false}
-                  isDisabled={false}
-                  isLoading={false}
-                  isMulti={false}
-                  isSearchable={false}
-                  maxMenuHeight={300}
-                  onChange={[Function]}
-                  openMenuOnFocus={false}
-                  options={
-                    Array [
-                      Object {
-                        "description": "Is team member",
-                        "label": "Member",
-                        "value": 0,
-                      },
-                      Object {
-                        "description": "Can add/remove permissions and delete team.",
-                        "label": "Admin",
-                        "value": 4,
-                      },
-                    ]
-                  }
-                  value={
-                    Object {
-                      "description": "Is team member",
-                      "label": "Member",
-                      "value": 0,
-                    }
-                  }
-                  width={null}
-                />
+                <span>
+                  Member
+                </span>
               </div>
             </td>
           </Component>
@@ -988,6 +700,152 @@ exports[`Render should render team members when sync enabled 1`] = `
               <div
                 className="gf-form"
               >
+                <span>
+                  Member
+                </span>
+              </div>
+            </td>
+          </Component>
+          <td>
+            <TagBadge
+              count={0}
+              key="label 1"
+              label="label 1"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+            <TagBadge
+              count={0}
+              key="label 2"
+              label="label 2"
+              onClick={[Function]}
+              removeIcon={false}
+            />
+          </td>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render permissions select if user is Grafana Admin 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-primary pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      Add member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add team member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <Component
+            featureToggle={true}
+          >
+            <th>
+              Permission
+            </th>
+          </Component>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-1
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
                 <Select
                   autoFocus={false}
                   backspaceRemovesValue={true}
@@ -1026,22 +884,1170 @@ exports[`Render should render team members when sync enabled 1`] = `
               </div>
             </td>
           </Component>
-          <td>
-            <TagBadge
-              count={0}
-              key="label 1"
-              label="label 1"
-              onClick={[Function]}
-              removeIcon={false}
-            />
-            <TagBadge
-              count={0}
-              key="label 2"
-              label="label 2"
-              onClick={[Function]}
-              removeIcon={false}
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
             />
           </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-2
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-3
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-4
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-5
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render permissions select if user is Org Admin 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-primary pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      Add member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add team member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <Component
+            featureToggle={true}
+          >
+            <th>
+              Permission
+            </th>
+          </Component>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-1
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-2
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-3
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-4
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-5
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render permissions select if user is team admin 1`] = `
+<div>
+  <div
+    className="page-action-bar"
+  >
+    <div
+      className="gf-form gf-form--grow"
+    >
+      <ForwardRef
+        inputClassName="gf-form-input"
+        labelClassName="gf-form--has-input-icon gf-form--grow"
+        onChange={[Function]}
+        placeholder="Search members"
+        value=""
+      />
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+    <button
+      className="btn btn-primary pull-right"
+      disabled={false}
+      onClick={[Function]}
+    >
+      Add member
+    </button>
+  </div>
+  <Component
+    in={false}
+  >
+    <div
+      className="cta-form"
+    >
+      <button
+        className="cta-form__close btn btn-transparent"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+      <h5>
+        Add team member
+      </h5>
+      <div
+        className="gf-form-inline"
+      >
+        <UserPicker
+          className="min-width-30"
+          onSelected={[Function]}
+        />
+      </div>
+    </div>
+  </Component>
+  <div
+    className="admin-list-table"
+  >
+    <table
+      className="filter-table filter-table--hover form-inline"
+    >
+      <thead>
+        <tr>
+          <th />
+          <th>
+            Name
+          </th>
+          <th>
+            Email
+          </th>
+          <Component
+            featureToggle={true}
+          >
+            <th>
+              Permission
+            </th>
+          </Component>
+          <th
+            style={
+              Object {
+                "width": "1%",
+              }
+            }
+          />
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="1"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-1
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Can add/remove permissions and delete team.",
+                      "label": "Admin",
+                      "value": 4,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="2"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-2
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="3"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-3
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="4"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-4
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
+          <td
+            className="text-right"
+          >
+            <DeleteButton
+              onConfirm={[Function]}
+            />
+          </td>
+        </tr>
+        <tr
+          key="5"
+        >
+          <td
+            className="width-4 text-center"
+          >
+            <img
+              className="filter-table__avatar"
+              src="some/url/"
+            />
+          </td>
+          <td>
+            testUser-5
+          </td>
+          <td>
+            test@test.com
+          </td>
+          <Component
+            featureToggle={true}
+          >
+            <td>
+              <div
+                className="gf-form"
+              >
+                <Select
+                  autoFocus={false}
+                  backspaceRemovesValue={true}
+                  className="gf-form-select-box__control--menu-right"
+                  isClearable={false}
+                  isDisabled={false}
+                  isLoading={false}
+                  isMulti={false}
+                  isSearchable={false}
+                  maxMenuHeight={300}
+                  onChange={[Function]}
+                  openMenuOnFocus={false}
+                  options={
+                    Array [
+                      Object {
+                        "description": "Is team member",
+                        "label": "Member",
+                        "value": 0,
+                      },
+                      Object {
+                        "description": "Can add/remove permissions and delete team.",
+                        "label": "Admin",
+                        "value": 4,
+                      },
+                    ]
+                  }
+                  value={
+                    Object {
+                      "description": "Is team member",
+                      "label": "Member",
+                      "value": 0,
+                    }
+                  }
+                  width={null}
+                />
+              </div>
+            </td>
+          </Component>
           <td
             className="text-right"
           >
