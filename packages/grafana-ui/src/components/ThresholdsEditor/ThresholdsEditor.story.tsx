@@ -24,7 +24,7 @@ ThresholdsEditorStories.add('with text', () => {
     <ThresholdsEditor
       thresholds={[{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 50, color: 'red' }]}
       onChange={action('Thresholds changed')}
-      withText={true}
+      enableText={true}
     />
   );
 });

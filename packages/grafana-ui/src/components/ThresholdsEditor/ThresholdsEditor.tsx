@@ -13,7 +13,7 @@ import { Threshold } from '../../types';
 export interface Props {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
-  withText?: boolean;
+  enableText?: boolean;
 }
 
 interface State {
@@ -165,7 +165,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   renderInput = (threshold: Threshold) => {
-    const { withText } = this.props;
+    const { enableText } = this.props;
 
     return (
       <div className="thresholds-row-input-inner">
@@ -179,7 +179,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         </div>
         {threshold.index === 0 && (
           <div className="thresholds-row-input-inner-value">
-            {withText && <input className="width-7" type="text" placeholder="Text" />}
+            {enableText && <input className="width-7" type="text" placeholder="Text" />}
             <input className="width-4" type="text" value="Base" readOnly />
           </div>
         )}
@@ -195,7 +195,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 readOnly={threshold.index === 0}
                 className="width-7"
               />
-              {withText && (
+              {enableText && (
                 <input type="text" className="width-7" style={{ borderLeft: '1px solid #dde4ed' }} placeholder="Text" />
               )}
             </div>
