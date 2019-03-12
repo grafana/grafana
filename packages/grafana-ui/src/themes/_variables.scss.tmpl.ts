@@ -18,9 +18,9 @@ $enable-hover-media-query: false !default;
 // variables. Mostly focused on spacing.
 
 $space-xs: ${theme.spacing.xs} !default;
-$space-s: ${theme.spacing.s} !default;
-$space-m: ${theme.spacing.m} !default;
-$space-l: ${theme.spacing.l} !default;
+$space-sm: ${theme.spacing.s} !default;
+$space-md: ${theme.spacing.m} !default;
+$space-lg: ${theme.spacing.l} !default;
 $space-xl: ${theme.spacing.xl} !default;
 $spacer: ${theme.spacing.d} !default;
 $spacer-x: $spacer !default;
