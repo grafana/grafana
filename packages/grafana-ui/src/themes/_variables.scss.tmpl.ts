@@ -111,7 +111,6 @@ $font-size-h4: ${theme.typography.heading.h4} !default;
 $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
-$headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-font-weight: ${theme.typography.weight.normal} !default;
 $headings-line-height: ${theme.typography.lineHeight.s} !default;
