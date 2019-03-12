@@ -53,7 +53,7 @@
     "expect.js": "~0.2.0",
     "expose-loader": "^0.7.3",
     "file-loader": "^1.1.11",
-    "fork-ts-checker-webpack-plugin": "^0.4.9",
+    "fork-ts-checker-webpack-plugin": "^1.0.0",
     "gaze": "^1.1.2",
     "glob": "~7.0.0",
     "grunt": "1.0.1",
