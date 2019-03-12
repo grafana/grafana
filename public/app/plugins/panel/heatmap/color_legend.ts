@@ -11,6 +11,8 @@ const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
 const LEGEND_TICK_SIZE = 0;
 const LEGEND_VALUE_MARGIN = 0;
+const LEGEND_PADDING_LEFT = 10;
+const LEGEND_SEGMENT_WIDTH = 10;
 
 /**
  * Color legend for heatmap editor.
@@ -95,27 +97,27 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  let rangeStep = 1;
-  if (rangeTo - rangeFrom > legendWidth) {
-    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
-  }
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
   const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
   legend
+    .append('g')
+    .attr('class', 'legend-color-bar')
+    .attr('transform', 'translate(' + LEGEND_PADDING_LEFT + ',0)')
     .selectAll('.heatmap-color-legend-rect')
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => d * widthFactor)
+    .attr('x', d => Math.round(d * widthFactor))
     .attr('y', 0)
-    .attr('width', rangeStep * widthFactor + 1) // Overlap rectangles to prevent gaps
+    .attr('width', Math.round(rangeStep * widthFactor + 1)) // Overlap rectangles to prevent gaps
     .attr('height', legendHeight)
     .attr('stroke-width', 0)
     .attr('fill', d => colorScale(d));
 
-  drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
+  drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange);
 }
 
 function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue) {
@@ -126,31 +128,31 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   const legendHeight = legendElem.attr('height');
 
-  let rangeStep = 1;
-  if (rangeTo - rangeFrom > legendWidth) {
-    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
-  }
+  const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
   const valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
   const opacityScale = getOpacityScale(options, maxValue, minValue);
   legend
+    .append('g')
+    .attr('class', 'legend-color-bar')
+    .attr('transform', 'translate(' + LEGEND_PADDING_LEFT + ',0)')
     .selectAll('.heatmap-opacity-legend-rect')
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => d * widthFactor)
+    .attr('x', d => Math.round(d * widthFactor))
     .attr('y', 0)
-    .attr('width', rangeStep * widthFactor)
+    .attr('width', Math.round(rangeStep * widthFactor))
     .attr('height', legendHeight)
     .attr('stroke-width', 0)
     .attr('fill', options.cardColor)
     .style('opacity', d => opacityScale(d));
 
-  drawLegendValues(elem, opacityScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
+  drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange);
 }
 
-function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth) {
+function drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWidth, valuesRange) {
   const legendElem = $(elem).find('svg');
   const legend = d3.select(legendElem.get(0));
 
@@ -171,7 +173,7 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
 
   const colorRect = legendElem.find(':first-child');
   const posY = getSvgElemHeight(legendElem) + LEGEND_VALUE_MARGIN;
-  const posX = getSvgElemX(colorRect);
+  const posX = getSvgElemX(colorRect) + LEGEND_PADDING_LEFT;
 
   d3.select(legendElem.get(0))
     .append('g')

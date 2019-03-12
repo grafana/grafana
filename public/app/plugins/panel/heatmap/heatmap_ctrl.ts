@@ -34,6 +34,7 @@ const panelDefaults = {
   },
   dataFormat: 'timeseries',
   yBucketBound: 'auto',
+  reverseYBuckets: false,
   xAxis: {
     show: true,
   },
@@ -109,7 +110,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: any;
+  series: any[];
   timeSrv: any;
   dataWarning: any;
   decimals: number;
@@ -147,7 +148,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   onRender() {
-    if (!this.range) {
+    if (!this.range || !this.series) {
       return;
     }
 
@@ -226,13 +227,20 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       this.series.sort(sortSeriesByLabel);
     }
 
+    if (this.panel.reverseYBuckets) {
+      this.series.reverse();
+    }
+
     // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
-    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as X axis labels.
+    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as Y axis labels.
     bucketsData = histogramToHeatmap(this.series);
 
     tsBuckets = _.map(this.series, 'label');
     const yBucketBound = this.panel.yBucketBound;
-    if ((panelDatasource === 'prometheus' && yBucketBound !== 'lower') || yBucketBound === 'upper') {
+    if (
+      (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
+      yBucketBound === 'upper'
+    ) {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
     } else {
