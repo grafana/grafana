@@ -22,13 +22,12 @@ const FONT_SCALE = 1;
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
-  static defaultProps = {
+  static defaultProps: Partial<Props> = {
     maxValue: 100,
     minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
     thresholds: [],
-    theme: GrafanaThemeType.Dark,
   };
 
   componentDidMount() {
@@ -76,7 +75,7 @@ export class Gauge extends PureComponent<Props> {
     const fontSize = Math.min(dimension / 5, 100) * this.getFontScale(value.text.length);
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const options = {
+    const options: any = {
       series: {
         gauges: {
           gauge: {

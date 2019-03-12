@@ -14,7 +14,7 @@ coreModule.directive('giveFocus', () => {
         }
         setTimeout(() => {
           element.focus();
-          const domEl = element[0];
+          const domEl: any = element[0];
           if (domEl.setSelectionRange) {
             const pos = element.val().length * 2;
             domEl.setSelectionRange(pos, pos);
