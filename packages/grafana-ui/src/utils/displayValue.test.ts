@@ -1,7 +1,7 @@
-import { getValueProcessor, getColorFromThreshold, ValueProcessor, DisplayValue } from './valueProcessor';
+import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, DisplayValue } from './displayValue';
 import { MappingType, ValueMapping } from '../types/panel';
 
-function assertSame(input: any, processorss: ValueProcessor[], match: DisplayValue) {
+function assertSame(input: any, processorss: DisplayProcessor[], match: DisplayValue) {
   processorss.forEach(processor => {
     const value = processor(input);
     expect(value.text).toEqual(match.text);
@@ -15,13 +15,13 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getValueProcessor(),
+    getDisplayProcessor(),
 
     // Add a simple option that is not used (uses a different base class)
-    getValueProcessor({ color: '#FFF' }),
+    getDisplayProcessor({ color: '#FFF' }),
 
     // Add a simple option that is not used (uses a different base class)
-    getValueProcessor({ unit: 'locale' }),
+    getDisplayProcessor({ unit: 'locale' }),
   ];
 
   it('support null', () => {
@@ -75,7 +75,7 @@ describe('Process simple display values', () => {
 
 describe('Processor with more configs', () => {
   it('support prefix & suffix', () => {
-    const processor = getValueProcessor({
+    const processor = getDisplayProcessor({
       prefix: 'AA_',
       suffix: '_ZZ',
     });
@@ -113,7 +113,7 @@ describe('Format value', () => {
   it('should return if value isNaN', () => {
     const valueMappings: ValueMapping[] = [];
     const value = 'N/A';
-    const instance = getValueProcessor({ mappings: valueMappings });
+    const instance = getDisplayProcessor({ mappings: valueMappings });
 
     const result = instance(value);
 
@@ -124,7 +124,7 @@ describe('Format value', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '6';
 
-    const instance = getValueProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
 
     const result = instance(value);
 
@@ -137,7 +137,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
-    const instance = getValueProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
 
     const result = instance(value);
 
@@ -150,7 +150,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
-    const instance = getValueProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
 
     expect(instance(value).text).toEqual('1-20');
   });

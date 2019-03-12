@@ -9,8 +9,7 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, BasicGaugeColor } from '@grafana/ui/src/types';
-import { DisplayValue, getValueProcessor } from '@grafana/ui/src/utils/valueProcessor';
+import { PanelProps, NullValueMode, BasicGaugeColor, DisplayValue, getDisplayProcessor } from '@grafana/ui';
 
 interface Props extends PanelProps<GaugeOptions> {}
 interface State {
@@ -42,7 +41,7 @@ export class GaugePanel extends Component<Props, State> {
 
     const prefix = replaceVariables(display.prefix);
     const suffix = replaceVariables(display.suffix);
-    return getValueProcessor({
+    return getDisplayProcessor({
       color: BasicGaugeColor.Red, // The default color
       ...display,
       prefix,

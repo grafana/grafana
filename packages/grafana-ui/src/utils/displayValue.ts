@@ -4,18 +4,19 @@ import { getValueFormat, DecimalCount } from './valueFormats/valueFormats';
 import { getMappedValue } from './valueMappings';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
+import moment from 'moment';
 
 export interface DisplayValue {
-  text: string; // How the value should be displayed
-  numeric: number; // Use isNaN to check if it actually is a number
-  color?: string; // suggested color
+  text: string; // Show in the UI
+  numeric: number; // Use isNaN to check if it is a real number
+  color?: string; // color based on configs or Threshold
 }
 
 export interface DisplayValueOptions {
   unit?: string;
   decimals?: DecimalCount;
   scaledDecimals?: DecimalCount;
-  isUtc?: boolean;
+  dateFormat?: string; // If set try to convert numbers to date
 
   color?: string;
   mappings?: ValueMapping[];
@@ -23,13 +24,17 @@ export interface DisplayValueOptions {
   prefix?: string;
   suffix?: string;
 
+  // Alternative to empty string
   noValue?: string;
+
+  // Context
+  isUtc?: boolean;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
-export type ValueProcessor = (value: any) => DisplayValue;
+export type DisplayProcessor = (value: any) => DisplayValue;
 
-export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor {
+export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
     const formatFunc = getValueFormat(options.unit || 'none');
     return (value: any) => {
@@ -48,6 +53,14 @@ export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor
           if (!isNaN(v)) {
             numeric = v;
           }
+          shouldFormat = false;
+        }
+      }
+
+      if (options.dateFormat) {
+        const date = toMoment(value, numeric, options.dateFormat);
+        if (date.isValid()) {
+          text = date.format(options.dateFormat);
           shouldFormat = false;
         }
       }
@@ -74,6 +87,20 @@ export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor
     };
   }
   return toStringProcessor;
+}
+
+function toMoment(value: any, numeric: number, format: string): moment.Moment {
+  if (!isNaN(numeric)) {
+    const v = moment(numeric);
+    if (v.isValid()) {
+      return v;
+    }
+  }
+  const v = moment(value, format);
+  if (v.isValid) {
+    return v;
+  }
+  return moment(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

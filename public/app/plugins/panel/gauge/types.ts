@@ -1,5 +1,4 @@
-import { Threshold, ValueMapping } from '@grafana/ui';
-import { DisplayValueOptions } from '@grafana/ui/src/utils/valueProcessor';
+import { Threshold, ValueMapping, DisplayValueOptions } from '@grafana/ui';
 
 export interface GaugeOptions {
   maxValue: number;

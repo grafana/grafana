@@ -3,7 +3,7 @@ import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { Themeable, GrafanaThemeType } from '../../types/theme';
 import { Threshold, BasicGaugeColor } from '../../types/panel';
-import { DisplayValue } from '../../utils/valueProcessor';
+import { DisplayValue } from '../../utils';
 
 export interface Props extends Themeable {
   width: number;

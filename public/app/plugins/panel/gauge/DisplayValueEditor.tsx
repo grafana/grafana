@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { FormField, FormLabel, PanelOptionsGroup, UnitPicker } from '@grafana/ui';
 
 // Types
-import { DisplayValueOptions } from '@grafana/ui/src/utils/valueProcessor';
+import { DisplayValueOptions } from '@grafana/ui';
 
 const labelWidth = 6;
 

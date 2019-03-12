@@ -12,7 +12,7 @@ import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEd
 import { GaugeOptionsBox } from './GaugeOptionsBox';
 import { GaugeOptions } from './types';
 import { DisplayValueEditor } from './DisplayValueEditor';
-import { DisplayValueOptions } from '@grafana/ui/src/utils/valueProcessor';
+import { DisplayValueOptions } from '@grafana/ui';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onDisplayOptionsChanged = (displayOptions: DisplayValueOptions) =>
