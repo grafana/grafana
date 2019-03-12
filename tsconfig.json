@@ -23,6 +23,7 @@
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
     "noImplicitAny": false,
+    "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
