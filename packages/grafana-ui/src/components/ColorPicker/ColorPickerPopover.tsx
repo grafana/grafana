@@ -60,7 +60,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     changeHandler(getColorFromHexRgbOrName(color, theme.type));
   };
 
-  handleTabChange = (tab: PickerType | keyof T) => {
+  onTabChange = (tab: PickerType | keyof T) => {
     return () => this.setState({ activePicker: tab });
   };
 
@@ -104,7 +104,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
       <>
         {Object.keys(customPickers).map(key => {
           return (
-            <div className={this.getTabClassName(key)} onClick={this.handleTabChange(key)} key={key}>
+            <div className={this.getTabClassName(key)} onClick={this.onTabChange(key)} key={key}>
               {customPickers[key].name}
             </div>
           );
@@ -119,10 +119,10 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     return (
       <div className={`ColorPickerPopover ColorPickerPopover--${colorPickerTheme}`}>
         <div className="ColorPickerPopover__tabs">
-          <div className={this.getTabClassName('palette')} onClick={this.handleTabChange('palette')}>
+          <div className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
             Colors
           </div>
-          <div className={this.getTabClassName('spectrum')} onClick={this.handleTabChange('spectrum')}>
+          <div className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
             Custom
           </div>
           {this.renderCustomPickerTabs()}

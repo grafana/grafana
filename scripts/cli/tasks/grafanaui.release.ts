@@ -9,10 +9,10 @@ import { savePackage, buildTask } from './grafanaui.build';
 import { TaskRunner, Task } from './task';
 
 type VersionBumpType = 'prerelease' | 'patch' | 'minor' | 'major';
-
 interface ReleaseTaskOptions {
   publishToNpm: boolean;
   usePackageJsonVersion: boolean;
+  createVersionCommit: boolean;
 }
 
 const promptBumpType = async () => {
@@ -62,6 +62,12 @@ const promptConfirm = async (message?: string) => {
   ]);
 };
 
+// Since Grafana core depends on @grafana/ui highly, we run full check before release
+const runChecksAndTests = async () =>
+  useSpinner<void>(`Running checks and tests`, async () => {
+    await execa('npm', ['run', 'test']);
+  })();
+
 const bumpVersion = (version: string) =>
   useSpinner<void>(`Saving version ${version} to package.json`, async () => {
     changeCwdToGrafanaUi();
@@ -94,8 +100,21 @@ const ensureMasterBranch = async () => {
   }
 };
 
-const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm, usePackageJsonVersion }) => {
+const prepareVersionCommitAndPush = async (version: string) =>
+  useSpinner<void>('Commiting and pushing @grafana/ui version update', async () => {
+    await execa.stdout('git', ['commit', '-a', '-m', `Upgrade @grafana/ui version to v${version}`]);
+    await execa.stdout('git', ['push']);
+  })();
+
+const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
+  publishToNpm,
+  usePackageJsonVersion,
+  createVersionCommit,
+}) => {
+  await runChecksAndTests();
   if (publishToNpm) {
+    // TODO: Ensure release branch
+    // When need to update this when we star keeping @grafana/ui releases in sync with core
     await ensureMasterBranch();
   }
 
@@ -145,10 +164,15 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({ publishToNpm,
     await bumpVersion(nextVersion);
   }
 
+  if (createVersionCommit) {
+    await prepareVersionCommitAndPush(nextVersion);
+  }
+
   if (publishToNpm) {
     await publishPackage(pkg.name, nextVersion);
     console.log(chalk.green(`\nVersion ${nextVersion} of ${pkg.name} succesfully released!`));
-    console.log(chalk.yellow(`\nUpdated @grafana/ui/package.json with version bump created - COMMIT THIS FILE!`));
+    console.log(chalk.yellow(`\nUpdated @grafana/ui/package.json with version bump created.`));
+
     process.exit();
   } else {
     console.log(
