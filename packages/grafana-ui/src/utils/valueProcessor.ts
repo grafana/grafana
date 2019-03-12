@@ -53,7 +53,7 @@ export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor
       }
 
       if (!isNaN(numeric)) {
-        if (shouldFormat) {
+        if (shouldFormat && !_.isBoolean(value)) {
           text = formatFunc(numeric, options.decimals, options.scaledDecimals, options.isUtc);
         }
         if (thresholds && thresholds.length > 0) {

@@ -1,62 +1,86 @@
 import { getValueProcessor, getColorFromThreshold, ValueProcessor, DisplayValue } from './valueProcessor';
 import { MappingType, ValueMapping } from '../types/panel';
 
-function assertSame(input: any, processor: ValueProcessor, match: DisplayValue) {
-  const value = processor(input);
-  expect(value.text).toEqual(match.text);
-  if (match.hasOwnProperty('numeric')) {
-    expect(value.numeric).toEqual(match.numeric);
-  }
+function assertSame(input: any, processorss: ValueProcessor[], match: DisplayValue) {
+  processorss.forEach(processor => {
+    const value = processor(input);
+    expect(value.text).toEqual(match.text);
+    if (match.hasOwnProperty('numeric')) {
+      expect(value.numeric).toEqual(match.numeric);
+    }
+  });
 }
 
 describe('Process simple display values', () => {
-  const processor = getValueProcessor();
+  // Don't test float values here since the decimal formatting changes
+  const processors = [
+    // Without options, this shortcuts to a much easier implementation
+    getValueProcessor(),
+
+    // Add a simple option that is not used (uses a different base class)
+    getValueProcessor({ color: '#FFF' }),
+
+    // Add a simple option that is not used (uses a different base class)
+    getValueProcessor({ unit: 'locale' }),
+  ];
 
   it('support null', () => {
-    assertSame(null, processor, { text: '', numeric: NaN });
+    assertSame(null, processors, { text: '', numeric: NaN });
   });
 
   it('support undefined', () => {
-    assertSame(undefined, processor, { text: '', numeric: NaN });
+    assertSame(undefined, processors, { text: '', numeric: NaN });
   });
 
   it('support NaN', () => {
-    assertSame(NaN, processor, { text: 'NaN', numeric: NaN });
-  });
-  it('Simple Float', () => {
-    assertSame(1.23456, processor, { text: '1.23456', numeric: 1.23456 });
+    assertSame(NaN, processors, { text: 'NaN', numeric: NaN });
   });
 
   it('Integer', () => {
-    assertSame(3, processor, { text: '3', numeric: 3 });
+    assertSame(3, processors, { text: '3', numeric: 3 });
   });
 
   it('Text', () => {
-    assertSame('3', processor, { text: '3', numeric: 3 });
+    assertSame('3', processors, { text: '3', numeric: 3 });
   });
 
   it('Simple String', () => {
-    assertSame('hello', processor, { text: 'hello', numeric: NaN });
+    assertSame('hello', processors, { text: 'hello', numeric: NaN });
   });
 
   it('empty array', () => {
-    assertSame([], processor, { text: '', numeric: NaN });
+    assertSame([], processors, { text: '', numeric: NaN });
   });
+
   it('array of text', () => {
-    assertSame(['a', 'b', 'c'], processor, { text: 'a,b,c', numeric: NaN });
+    assertSame(['a', 'b', 'c'], processors, { text: 'a,b,c', numeric: NaN });
   });
+
   it('array of numbers', () => {
-    assertSame([1, 2, 3], processor, { text: '1,2,3', numeric: NaN });
+    assertSame([1, 2, 3], processors, { text: '1,2,3', numeric: NaN });
   });
+
   it('empty object', () => {
-    assertSame({}, processor, { text: '[object Object]', numeric: NaN });
+    assertSame({}, processors, { text: '[object Object]', numeric: NaN });
   });
 
   it('boolean true', () => {
-    assertSame(true, processor, { text: 'true', numeric: 1 });
+    assertSame(true, processors, { text: 'true', numeric: 1 });
   });
+
   it('boolean false', () => {
-    assertSame(false, processor, { text: 'false', numeric: 0 });
+    assertSame(false, processors, { text: 'false', numeric: 0 });
+  });
+});
+
+describe('Processor with more configs', () => {
+  it('support prefix & suffix', () => {
+    const processor = getValueProcessor({
+      prefix: 'AA_',
+      suffix: '_ZZ',
+    });
+
+    expect(processor('XXX').text).toEqual('AA_XXX_ZZ');
   });
 });
 
