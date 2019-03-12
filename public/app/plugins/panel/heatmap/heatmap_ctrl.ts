@@ -55,6 +55,7 @@ const panelDefaults = {
     showHistogram: false,
   },
   highlightCards: true,
+  hideZeroBuckets: false,
 };
 
 const colorModes = ['opacity', 'spectrum'];
@@ -204,7 +205,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
-    const { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
 
     this.data = {
       buckets: bucketsData,
@@ -246,7 +247,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
 
-    const { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
 
     this.data = {
       buckets: bucketsData,
