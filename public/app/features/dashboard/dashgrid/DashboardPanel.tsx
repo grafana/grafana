@@ -91,6 +91,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
         this.setState({ plugin, angularPanel: null });
       }
+
+      // Clean the options when switching plugins
+      // ??? is there a better way that will make sure to call componentDidUpdate ???
+      // The panel constructor may have already run
+      const { reactPanel } = plugin.exports;
+      if (reactPanel && reactPanel.optionsValidator) {
+        panel.options = reactPanel.optionsValidator(panel);
+      }
     }
   }
 
@@ -98,8 +106,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin(this.props.panel.type);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (!this.element || this.state.angularPanel) {
+      const { plugin } = this.state;
+      if (plugin && plugin !== prevState.plugin) {
+        console.log('PLUGIN Changed', plugin);
+      }
       return;
     }
 

@@ -26,9 +26,18 @@ export interface PanelEditorProps<T = any> {
   onOptionsChange: (options: T) => void;
 }
 
+/**
+ * Checks the existing model before the component is loaded
+ * This is useful for fixing options as configuration changes
+ * The object passed in is the panel model.... but not typed
+ * since that is not in grafana ui
+ */
+export type PanelOptionsValidator<T = any> = (panelModel: any) => T;
+
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
+  optionsValidator?: PanelOptionsValidator<TOptions>;
   defaults?: TOptions;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
@@ -37,6 +46,10 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     this.editor = editor;
+  }
+
+  setOptionsValidator(validator: PanelOptionsValidator<TOptions>) {
+    this.optionsValidator = validator;
   }
 
   setDefaults(defaults: TOptions) {
