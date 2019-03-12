@@ -1,7 +1,7 @@
 .layout-selector {
   @include clearfix();
 
-  margin-left: $space-m;
+  margin-left: $space-md;
   text-align: right;
 
   button {
@@ -9,7 +9,7 @@
     color: $text-color-weak;
     box-shadow: $card-shadow;
     border: none;
-    padding: $space-s;
+    padding: $space-sm;
     line-height: 1;
     font-size: 130%;
     float: right;
@@ -50,7 +50,7 @@
   height: 100%;
   background: $card-background;
   box-shadow: $card-shadow;
-  padding: $space-m;
+  padding: $space-md;
   border-radius: 4px;
 
   &:hover {
@@ -58,7 +58,7 @@
   }
 
   .label-tag {
-    margin-left: $space-s;
+    margin-left: $space-sm;
     font-size: 11px;
     padding: 2px 6px;
   }
@@ -81,7 +81,7 @@
 }
 
 .card-item-header {
-  margin-bottom: $space-m;
+  margin-bottom: $space-md;
 }
 
 .card-item-type {
@@ -103,7 +103,7 @@
 }
 
 .card-item-label {
-  margin-left: $space-s;
+  margin-left: $space-sm;
 }
 
 .card-item-sub-name {
@@ -116,7 +116,7 @@
 .card-item-sub-name--header {
   color: $text-color-weak;
   text-transform: uppercase;
-  margin-bottom: $space-m;
+  margin-bottom: $space-md;
   font-size: $font-size-sm;
   font-weight: bold;
 }
@@ -129,7 +129,7 @@
   .card-item-notice {
     font-size: $font-size-sm;
     display: inline-block;
-    margin-left: $space-m;
+    margin-left: $space-md;
   }
 
   .card-item-header-action {
@@ -138,7 +138,7 @@
 
   .card-item-wrapper {
     width: 100%;
-    padding: 0 $space-m $space-m 0;
+    padding: 0 $space-md $space-md 0;
   }
 
   .card-item-wrapper--clickable {
@@ -146,7 +146,7 @@
   }
 
   .card-item-figure {
-    margin: 0 $space-m $space-m 0;
+    margin: 0 $space-md $space-md 0;
     height: 6rem;
 
     img {
@@ -205,7 +205,7 @@
   }
 
   .card-item-figure {
-    margin: 0 $space-m 0 0;
+    margin: 0 $space-md 0 0;
     img {
       width: 48px;
     }

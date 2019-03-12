@@ -41,7 +41,7 @@
   font-size: $font-size-h3;
   padding-right: 60px;
   white-space: nowrap;
-  margin-bottom: $space-m;
+  margin-bottom: $space-md;
 
   i {
     font-size: 25px;
@@ -92,10 +92,10 @@
   margin: 40px $space-xl 0 0;
 
   button {
-    margin-bottom: $space-s;
+    margin-bottom: $space-sm;
   }
 }
 
 .dashboard-settings__json-save-button {
-  margin-top: $space-m;
+  margin-top: $space-md;
 }
