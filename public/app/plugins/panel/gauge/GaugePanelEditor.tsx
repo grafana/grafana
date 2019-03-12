@@ -10,37 +10,32 @@ import {
 
 import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { GaugeOptionsBox } from './GaugeOptionsBox';
-import { GaugeOptions, SingleStatValueOptions } from './types';
+import { GaugeOptions } from './types';
 import { DisplayValueEditor } from './DisplayValueEditor';
 import { DisplayValueOptions } from '@grafana/ui/src/utils/valueProcessor';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
+  onDisplayOptionsChanged = (displayOptions: DisplayValueOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
+      display: displayOptions,
+    });
+
+  onThresholdsChanged = (thresholds: Threshold[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.display,
       thresholds,
     });
 
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
-    });
-
-  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueOptions,
-    });
-
-  onDisplayOptionsChanged = (displayOptions: DisplayValueOptions) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      displayOptions,
+    this.onDisplayOptionsChanged({
+      ...this.props.options.display,
+      mappings: valueMappings,
     });
 
   render() {
     const { onOptionsChange, options } = this.props;
+    const { display } = options;
 
     return (
       <>
@@ -48,12 +43,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           {/* This just sets the 'stats', that should be moved to somethign more general */}
           <SingleStatValueEditor onChange={onOptionsChange} options={options} />
 
-          <DisplayValueEditor onChange={this.onDisplayOptionsChanged} options={options.displayOptions} />
+          <DisplayValueEditor onChange={this.onDisplayOptionsChanged} options={display} />
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={display.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={display.mappings} />
       </>
     );
   }

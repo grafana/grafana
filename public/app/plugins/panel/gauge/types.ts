@@ -8,7 +8,7 @@ export interface GaugeOptions {
   showThresholdMarkers: boolean;
 
   stat: string;
-  displayOptions: DisplayValueOptions;
+  display: DisplayValueOptions;
 
   // TODO: migrate to DisplayValueOptions
   thresholds?: Threshold[];
@@ -32,7 +32,7 @@ export const defaults: GaugeOptions = {
   showThresholdLabels: false,
 
   stat: 'avg',
-  displayOptions: {
+  display: {
     prefix: '',
     suffix: '',
     decimals: null,

@@ -38,13 +38,13 @@ export class GaugePanel extends Component<Props, State> {
 
   findDisplayValue(props: Props): DisplayValue {
     const { replaceVariables, options } = this.props;
-    const { displayOptions } = options;
+    const { display } = options;
 
-    const prefix = replaceVariables(displayOptions.prefix);
-    const suffix = replaceVariables(displayOptions.suffix);
+    const prefix = replaceVariables(display.prefix);
+    const suffix = replaceVariables(display.suffix);
     return getValueProcessor({
       color: BasicGaugeColor.Red, // The default color
-      ...displayOptions,
+      ...display,
       prefix,
       suffix,
       // ??? theme:getTheme(GrafanaThemeType.Dark), !! how do I get it here???
@@ -72,6 +72,7 @@ export class GaugePanel extends Component<Props, State> {
   render() {
     const { width, height, options } = this.props;
     const { value } = this.state;
+    const { display } = options;
 
     return (
       <ThemeContext.Consumer>
@@ -80,7 +81,7 @@ export class GaugePanel extends Component<Props, State> {
             value={value}
             width={width}
             height={height}
-            thresholds={options.thresholds}
+            thresholds={display.thresholds}
             showThresholdLabels={options.showThresholdLabels}
             showThresholdMarkers={options.showThresholdMarkers}
             minValue={options.minValue}
