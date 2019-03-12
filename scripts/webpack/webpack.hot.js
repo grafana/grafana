@@ -98,7 +98,7 @@ module.exports = merge(common, {
   },
 
   plugins: [
-    new CleanWebpackPlugin('../public/build', { allowExternal: true }),
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),

@@ -52,7 +52,7 @@ module.exports = merge(common, {
   },
 
   plugins: [
-    new CleanWebpackPlugin('../../public/build', { allowExternal: true }),
+    new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: "grafana.[name].[hash].css"
     }),
