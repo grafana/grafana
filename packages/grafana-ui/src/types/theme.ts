@@ -8,9 +8,9 @@ export interface GrafanaThemeCommons {
   // TODO: not sure if should be a part of theme
   breakpoints: {
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
     xl: string;
   };
   typography: {
@@ -22,9 +22,9 @@ export interface GrafanaThemeCommons {
       root: string;
       base: string;
       xs: string;
-      s: string;
-      m: string;
-      l: string;
+      sm: string;
+      md: string;
+      lg: string;
     };
     weight: {
       light: number;
@@ -33,9 +33,9 @@ export interface GrafanaThemeCommons {
     };
     lineHeight: {
       xs: number; //1
-      s: number; //1.1
-      m: number; // 4/3
-      l: number; // 1.5
+      sm: number; //1.1
+      md: number; // 4/3
+      lg: number; // 1.5
     };
     // TODO: Refactor to use size instead of custom defs
     heading: {
@@ -48,20 +48,23 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    d: string;
+    xxs: string;
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
     gutter: string;
   };
   border: {
     radius: {
       xs: string;
-      s: string;
-      m: string;
+      sm: string;
+      md: string;
     };
     width: {
-      s: string;
+      sm: string;
     };
   };
 }

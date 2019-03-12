@@ -19,7 +19,7 @@ coreModule.directive('colorLegend', () => {
   return {
     restrict: 'E',
     template: '<div class="heatmap-color-legend"><svg width="16.5rem" height="24px"></svg></div>',
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem, attrs) => {
       const ctrl = scope.ctrl;
       const panel = scope.ctrl.panel;
 
@@ -55,7 +55,7 @@ coreModule.directive('heatmapLegend', () => {
   return {
     restrict: 'E',
     template: `<div class="heatmap-color-legend"><svg width="${LEGEND_WIDTH_PX}px" height="${LEGEND_HEIGHT_PX}px"></svg></div>`,
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem, attrs) => {
       const ctrl = scope.ctrl;
       const panel = scope.ctrl.panel;
 
