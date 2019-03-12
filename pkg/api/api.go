@@ -160,7 +160,7 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
 			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(AddTeamMember))
 			teamsRoute.Put("/:teamId/members/:userId", bind(m.UpdateTeamMemberCommand{}), Wrap(UpdateTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", Wrap(RemoveTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", Wrap(hs.RemoveTeamMember))
 			teamsRoute.Get("/:teamId/preferences", Wrap(GetTeamPreferences))
 			teamsRoute.Put("/:teamId/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateTeamPreferences))
 		}, reqAdminOrEditorCanAdmin)

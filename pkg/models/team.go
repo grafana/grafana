@@ -10,6 +10,7 @@ var (
 	ErrTeamNotFound                         = errors.New("Team not found")
 	ErrTeamNameTaken                        = errors.New("Team name is taken")
 	ErrTeamMemberNotFound                   = errors.New("Team member not found")
+	ErrLastTeamAdmin                        = errors.New("Not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("User not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("User not allowed to update team in another org")
 )
