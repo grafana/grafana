@@ -17,7 +17,7 @@ type TeamMember struct {
 	TeamId     int64
 	UserId     int64
 	External   bool
-	Permission int64
+	Permission PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -27,18 +27,18 @@ type TeamMember struct {
 // COMMANDS
 
 type AddTeamMemberCommand struct {
-	UserId     int64 `json:"userId" binding:"Required"`
-	OrgId      int64 `json:"-"`
-	TeamId     int64 `json:"-"`
-	External   bool  `json:"-"`
-	Permission int64 `json:"-"`
+	UserId     int64          `json:"userId" binding:"Required"`
+	OrgId      int64          `json:"-"`
+	TeamId     int64          `json:"-"`
+	External   bool           `json:"-"`
+	Permission PermissionType `json:"-"`
 }
 
 type UpdateTeamMemberCommand struct {
-	UserId     int64 `json:"-"`
-	OrgId      int64 `json:"-"`
-	TeamId     int64 `json:"-"`
-	Permission int64 `json:"permission"`
+	UserId     int64          `json:"-"`
+	OrgId      int64          `json:"-"`
+	TeamId     int64          `json:"-"`
+	Permission PermissionType `json:"permission"`
 }
 
 type RemoveTeamMemberCommand struct {

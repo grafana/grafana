@@ -23,7 +23,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 			UserId:     c.SignedInUser.UserId,
 			OrgId:      cmd.OrgId,
 			TeamId:     cmd.Result.Id,
-			Permission: int64(m.PERMISSION_ADMIN),
+			Permission: m.PERMISSION_ADMIN,
 		}
 
 		if err := bus.Dispatch(&addMemberCmd); err != nil {

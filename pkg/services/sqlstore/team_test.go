@@ -91,7 +91,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					UserId:     userId,
 					OrgId:      testOrgId,
 					TeamId:     team.Id,
-					Permission: int64(m.PERMISSION_ADMIN),
+					Permission: m.PERMISSION_ADMIN,
 				})
 
 				So(err, ShouldBeNil)
@@ -107,7 +107,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					UserId:     1,
 					OrgId:      testOrgId,
 					TeamId:     group1.Result.Id,
-					Permission: int64(m.PERMISSION_ADMIN),
+					Permission: m.PERMISSION_ADMIN,
 				})
 
 				So(err, ShouldEqual, m.ErrTeamMemberNotFound)
@@ -153,7 +153,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("When ProtectLastAdmin is set to true", func() {
-				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], Permission: int64(m.PERMISSION_ADMIN)})
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], Permission: m.PERMISSION_ADMIN})
 				So(err, ShouldBeNil)
 
 				Convey("A user should not be able to remove the last admin", func() {
@@ -162,7 +162,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				Convey("A user should be able to remove an admin if there are other admins", func() {
-					err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[1], Permission: int64(m.PERMISSION_ADMIN)})
+					err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[1], Permission: m.PERMISSION_ADMIN})
 					err = RemoveTeamMember(&m.RemoveTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], ProtectLastAdmin: true})
 					So(err, ShouldEqual, nil)
 				})
