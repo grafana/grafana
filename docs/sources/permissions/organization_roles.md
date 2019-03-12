@@ -28,6 +28,9 @@ Can do everything scoped to the organization. For example:
 - Can create and modify dashboards & alert rules. This can be disabled on specific folders and dashboards.
 - **Cannot** create or edit data sources nor invite new users.
 
+This role can be tweaked via Grafana server setting [editors_can_admin]({{< relref "installation/configuration.md#editors_can_admin" >}}). If you set this to true users
+with **Editor** can also administrate dashboards, folders and teams they create. Useful for enabling self organizing teams.
+
 ## Viewer Role
 
 - View any dashboard. This can be disabled on specific folders and dashboards.
