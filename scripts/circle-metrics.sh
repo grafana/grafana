@@ -21,3 +21,10 @@ curl \
    -u ci:$CIRCLE_STATS_PWD \
    -X POST https://stats.grafana.org/metric-receiver
 
+curl https://6371:$GRAFANA_MISC_STATS_API_KEY@graphite-us-central1.grafana.net/metrics \
+  -H 'Content-type: application/json' \
+  -d '[
+      {"name":"grafana.ci-code.noImplicitAny", "interval":60, "value": '$ERROR_COUNT', "mtype": "gauge", "time": '$(date +%s)'},
+      {"name":"grafana.ci-code.directives", "interval":60, "value": '$DIRECTIVES', "mtype": "gauge", "time": '$(date +%s)'},
+      {"name":"grafana.ci-code.controllers", "interval":60, "value": '$CONTROLLERS', "mtype": "gauge", "time": '$(date +%s)'}
+   ]'
