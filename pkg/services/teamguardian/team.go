@@ -1,11 +1,11 @@
-package teams
+package teamguardian
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func CanUpdateTeam(orgId int64, teamId int64, user *m.SignedInUser) error {
+func CanAdmin(orgId int64, teamId int64, user *m.SignedInUser) error {
 	if user.OrgRole == m.ROLE_ADMIN {
 		return nil
 	}

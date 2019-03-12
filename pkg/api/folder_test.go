@@ -142,12 +142,9 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		cfg := setting.NewCfg()
-		cfg.EditorsCanAdmin = true
-
 		hs := HTTPServer{
 			Bus: bus.GetBus(),
-			Cfg: cfg,
+			Cfg: setting.NewCfg(),
 		}
 
 		sc := setupScenarioContext(url)

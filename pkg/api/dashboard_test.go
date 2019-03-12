@@ -1028,6 +1028,7 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
 			Bus: bus.GetBus(),
 		}
 

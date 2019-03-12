@@ -115,6 +115,6 @@ export const teamsPermissionLevels: TeamPermissionInfo[] = [
   {
     value: TeamPermissionLevel.Admin,
     label: 'Admin',
-    description: 'Can add/remove permissions and delete team.',
+    description: 'Can add/remove permissions, members and delete team.',
   },
 ];
