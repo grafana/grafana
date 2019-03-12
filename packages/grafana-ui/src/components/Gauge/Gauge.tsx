@@ -113,8 +113,7 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
-    const numeric = value.numeric !== null ? value.numeric : 0;
-    const plotSeries = { data: [[0, numeric]] };
+    const plotSeries = { data: [[0, value.numeric]] }; // May be NaN
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);

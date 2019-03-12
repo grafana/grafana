@@ -1,36 +1,62 @@
-import { getValueProcessor, getColorFromThreshold } from './valueProcessor';
-import { getTheme } from '../themes/index';
-import { GrafanaThemeType } from '../types/theme';
+import { getValueProcessor, getColorFromThreshold, ValueProcessor, DisplayValue } from './valueProcessor';
 import { MappingType, ValueMapping } from '../types/panel';
 
-describe('Process values', () => {
-  const basicConversions = [
-    { value: null, text: '' },
-    { value: undefined, text: '' },
-    { value: 1.23, text: '1.23' },
-    { value: 1, text: '1' },
-    { value: 'hello', text: 'hello' },
-    { value: {}, text: '[object Object]' },
-    { value: [], text: '' },
-    { value: [1, 2, 3], text: '1,2,3' },
-    { value: ['a', 'b', 'c'], text: 'a,b,c' },
-  ];
+function assertSame(input: any, processor: ValueProcessor, match: DisplayValue) {
+  const value = processor(input);
+  expect(value.text).toEqual(match.text);
+  if (match.hasOwnProperty('numeric')) {
+    expect(value.numeric).toEqual(match.numeric);
+  }
+}
 
-  it('should return return a string for any input value', () => {
-    const processor = getValueProcessor();
-    basicConversions.forEach(item => {
-      expect(processor(item.value).text).toBe(item.text);
-    });
+describe('Process simple display values', () => {
+  const processor = getValueProcessor();
+
+  it('support null', () => {
+    assertSame(null, processor, { text: '', numeric: NaN });
   });
 
-  it('should add a suffix to any value', () => {
-    const processor = getValueProcessor({
-      prefix: 'xxx',
-      theme: getTheme(GrafanaThemeType.Dark),
-    });
-    basicConversions.forEach(item => {
-      expect(processor(item.value).text).toBe('xxx' + item.text);
-    });
+  it('support undefined', () => {
+    assertSame(undefined, processor, { text: '', numeric: NaN });
+  });
+
+  it('support NaN', () => {
+    assertSame(NaN, processor, { text: 'NaN', numeric: NaN });
+  });
+  it('Simple Float', () => {
+    assertSame(1.23456, processor, { text: '1.23456', numeric: 1.23456 });
+  });
+
+  it('Integer', () => {
+    assertSame(3, processor, { text: '3', numeric: 3 });
+  });
+
+  it('Text', () => {
+    assertSame('3', processor, { text: '3', numeric: 3 });
+  });
+
+  it('Simple String', () => {
+    assertSame('hello', processor, { text: 'hello', numeric: NaN });
+  });
+
+  it('empty array', () => {
+    assertSame([], processor, { text: '', numeric: NaN });
+  });
+  it('array of text', () => {
+    assertSame(['a', 'b', 'c'], processor, { text: 'a,b,c', numeric: NaN });
+  });
+  it('array of numbers', () => {
+    assertSame([1, 2, 3], processor, { text: '1,2,3', numeric: NaN });
+  });
+  it('empty object', () => {
+    assertSame({}, processor, { text: '[object Object]', numeric: NaN });
+  });
+
+  it('boolean true', () => {
+    assertSame(true, processor, { text: 'true', numeric: 1 });
+  });
+  it('boolean false', () => {
+    assertSame(false, processor, { text: 'false', numeric: 0 });
   });
 });
 

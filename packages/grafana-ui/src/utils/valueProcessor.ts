@@ -7,7 +7,7 @@ import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 export interface DisplayValue {
   text: string; // How the value should be displayed
-  numeric?: number; // the value as a number
+  numeric: number; // Use isNaN to check if it actually is a number
   color?: string; // suggested color
 }
 
@@ -37,18 +37,25 @@ export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor
       let color = options.color;
 
       let text = _.toString(value);
-      const numeric = _.toNumber(value);
+      let numeric = toNumber(value);
 
+      let shouldFormat = true;
       if (mappings && mappings.length > 0) {
         const mappedValue = getMappedValue(mappings, value);
         if (mappedValue) {
           text = mappedValue.text;
-          // TODO? convert the mapped value back to a number?
+          const v = toNumber(text);
+          if (!isNaN(v)) {
+            numeric = v;
+          }
+          shouldFormat = false;
         }
       }
 
-      if (_.isNumber(numeric)) {
-        text = formatFunc(numeric, options.decimals, options.scaledDecimals, options.isUtc);
+      if (!isNaN(numeric)) {
+        if (shouldFormat) {
+          text = formatFunc(numeric, options.decimals, options.scaledDecimals, options.isUtc);
+        }
         if (thresholds && thresholds.length > 0) {
           color = getColorFromThreshold(numeric, thresholds, theme);
         }
@@ -69,8 +76,22 @@ export function getValueProcessor(options?: DisplayValueOptions): ValueProcessor
   return toStringProcessor;
 }
 
+/** Will return any value as a number or NaN */
+function toNumber(value: any): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (value === null || value === undefined || Array.isArray(value)) {
+    return NaN; // lodash calls them 0
+  }
+  if (typeof value === 'boolean') {
+    return value ? 1 : 0;
+  }
+  return _.toNumber(value);
+}
+
 function toStringProcessor(value: any): DisplayValue {
-  return { text: _.toString(value), numeric: _.toNumber(value) };
+  return { text: _.toString(value), numeric: toNumber(value) };
 }
 
 export function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {
