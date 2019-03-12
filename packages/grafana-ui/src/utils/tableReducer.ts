@@ -4,12 +4,7 @@ import isNumber from 'lodash/isNumber';
 import { TableData, NullValueMode } from '../types/index';
 
 /** Reduce each column in a table to a single value */
-export type TableReducer = (
-  data: TableData,
-  columnIndexes: number[],
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-) => any[];
+type TableReducer = (data: TableData, columnIndexes: number[], ignoreNulls: boolean, nullAsZero: boolean) => any[];
 
 /** Information about the reducing(stats) functions */
 export interface TableReducerInfo {
@@ -33,6 +28,26 @@ export interface TableReducerOptions {
 }
 
 export function reduceTableData(data: TableData, options: TableReducerOptions): TableData[] {
+  const indexes = verifyColumns(data, options);
+  const columns = indexes.map(v => data.columns[v]);
+
+  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
+  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
+
+  // Return early for empty tables
+  if (!data.rows || data.rows.length < 1) {
+    const val = nullAsZero ? 0 : null;
+    const rows = [indexes.map(v => val)];
+    return options.stats.map(stat => {
+      return {
+        columns,
+        rows,
+        type: 'table',
+        columnMap: {},
+      };
+    });
+  }
+
   if (registry == null) {
     registry = new Map<string, TableReducerInfo>();
     reducers.forEach(calc => {
@@ -42,12 +57,6 @@ export function reduceTableData(data: TableData, options: TableReducerOptions): 
       }
     });
   }
-
-  const indexes = verifyColumns(data, options);
-  const columns = indexes.map(v => data.columns[v]);
-
-  const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
-  const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
 
   const queue = options.stats.map(key => {
     const c = registry!.get(key);
@@ -128,8 +137,15 @@ const reducers: TableReducerInfo[] = [
   { key: 'min', name: 'Min', description: 'Minimum Value', standard: true },
   { key: 'max', name: 'Max', description: 'Maximum Value', standard: true },
   { key: 'mean', name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
-  { key: 'first', name: 'First', description: 'First Value', standard: true },
-  { key: 'last', name: 'Last', description: 'Last Value (current)', standard: true, alias: 'current' },
+  { key: 'first', name: 'First', description: 'First Value', standard: true, reducer: getFirstRow },
+  {
+    key: 'last',
+    name: 'Last',
+    description: 'Last Value (current)',
+    standard: true,
+    alias: 'current',
+    reducer: getLastRow,
+  },
   { key: 'count', name: 'Count', description: 'Value Count', standard: true },
   { key: 'range', name: 'Range', description: 'Difference between minimum and maximum values', standard: true },
   { key: 'diff', name: 'Difference', description: 'Difference between first and last values', standard: true },
@@ -234,4 +250,14 @@ function standardStatsReducer(
   }
 
   return column;
+}
+
+function getFirstRow(data: TableData, columnIndexes: number[], ignoreNulls: boolean, nullAsZero: boolean): any[] {
+  const row = data.rows[0];
+  return columnIndexes.map(idx => row[idx]);
+}
+
+function getLastRow(data: TableData, columnIndexes: number[], ignoreNulls: boolean, nullAsZero: boolean): any[] {
+  const row = data.rows[data.rows.length - 1];
+  return columnIndexes.map(idx => row[idx]);
 }
