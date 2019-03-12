@@ -48,10 +48,12 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    d: string;
     xs: string;
     s: string;
     m: string;
     l: string;
+    xl: string;
     gutter: string;
   };
   border: {
