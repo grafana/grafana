@@ -25,20 +25,13 @@
   }
 }
 
-.sidemenu-open {
-  .explore-toolbar-header {
-    padding: 0;
-    margin-left: 0;
-  }
-}
-
 .explore-toolbar {
   background: inherit;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-start;
   height: auto;
-  padding: 0px $dashboard-padding 0 25px;
+  padding: 0 $dashboard-padding;
   border-bottom: 1px solid #0000;
   transition-duration: 0.35s;
   transition-timing-function: ease-in-out;
@@ -134,20 +127,6 @@
 }
 
 @media only screen and (max-width: 803px) {
-  .sidemenu-open {
-    .explore-toolbar-header-title {
-      .navbar-page-btn {
-        margin-left: 0;
-      }
-    }
-  }
-
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      margin-left: $dashboard-padding;
-    }
-  }
-
   .btn-title {
     display: none;
   }
@@ -161,14 +140,6 @@
 }
 
 @media only screen and (max-width: 544px) {
-  .sidemenu-open {
-    .explore-toolbar-header-title {
-      .navbar-page-btn {
-        margin-left: $dashboard-padding;
-      }
-    }
-  }
-
   .explore-toolbar-header-title {
     .navbar-page-btn {
       margin-left: $dashboard-padding;

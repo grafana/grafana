@@ -16,6 +16,14 @@
   .sidemenu__close {
     display: none;
   }
+
+  @include media-breakpoint-up(sm) {
+    background: $side-menu-bg;
+    height: auto;
+    box-shadow: $side-menu-shadow;
+    position: relative;
+    z-index: $zindex-sidemenu;
+  }
 }
 
 // body class that hides sidemenu
@@ -25,32 +33,22 @@
   }
 }
 
-@include media-breakpoint-up(sm) {
-  .sidemenu-open {
-    .sidemenu {
-      background: $side-menu-bg;
-      height: auto;
-      box-shadow: $side-menu-shadow;
-      position: relative;
-      z-index: $zindex-sidemenu;
-    }
-
-    .sidemenu__top,
-    .sidemenu__bottom {
-      display: block;
-    }
-  }
-}
-
 .sidemenu__top {
   padding-top: 3rem;
   flex-grow: 1;
-  display: none;
 }
 
 .sidemenu__bottom {
   padding-bottom: $spacer;
+}
+
+.sidemenu__top,
+.sidemenu__bottom {
   display: none;
+
+  @include media-breakpoint-up(sm) {
+    display: block;
+  }
 }
 
 .sidemenu-item {
