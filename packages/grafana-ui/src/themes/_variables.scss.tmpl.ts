@@ -246,9 +246,4 @@ $external-services: (
     icon: '',
   ),
 ) !default;
-
-:export {
-  panelhorizontalpadding: $panel-horizontal-padding;
-  panelverticalpadding: $panel-vertical-padding;
-}
 `;

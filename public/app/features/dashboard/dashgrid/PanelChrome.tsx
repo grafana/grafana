@@ -14,6 +14,7 @@ import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary'
 import { applyPanelTimeOverrides, snapshotDataToPanelData } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
+import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
@@ -21,7 +22,6 @@ import { PanelPlugin } from 'app/types';
 import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
-import variables from 'sass/_variables.generated.scss';
 import templateSrv from 'app/features/templating/template_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -160,8 +160,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           panelData={panelData}
           timeRange={timeRange}
           options={panel.getOptions(plugin.exports.reactPanel.defaults)}
-          width={width - 2 * variables.panelhorizontalpadding}
-          height={height - PANEL_HEADER_HEIGHT - variables.panelverticalpadding}
+          width={width - 2 * config.theme.panelPadding.horizontal}
+          height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
           replaceVariables={this.replaceVariables}
         />
