@@ -3,6 +3,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 export class User {
+  id: number;
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
