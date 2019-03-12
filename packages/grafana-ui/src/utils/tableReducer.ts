@@ -3,22 +3,44 @@ import isNumber from 'lodash/isNumber';
 
 import { TableData, NullValueMode } from '../types/index';
 
-/** Reduce each column in a table to a single value */
-type TableReducer = (data: TableData, columnIndexes: number[], ignoreNulls: boolean, nullAsZero: boolean) => any[];
+export enum TableReducerID {
+  sum = 'sum',
+  max = 'max',
+  min = 'min',
+  logmin = 'logmin',
+  mean = 'mean',
+  last = 'last',
+  first = 'first',
+  count = 'count',
+  range = 'range',
+  diff = 'diff',
 
-/** Information about the reducing(stats) functions */
+  allIsZero = 'allIsZero',
+  allIsNull = 'allIsNull',
+}
+
+/** Information about the reducing(stats) functions  */
 export interface TableReducerInfo {
-  key: string;
-  name: string;
+  value: string; // The ID - value maps directly to select component
+  label: string; // The name - label
   description: string;
+  alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
+
+  // Internal details
+  emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
   reducer?: TableReducer;
-  alias?: string; // optional secondary key.  'avg' vs 'mean'
 }
 
 /** Get a list of the known reducing functions */
-export function getTableReducers(): TableReducerInfo[] {
-  return reducers;
+export function getTableReducers(ids?: string[]): TableReducerInfo[] {
+  if (!hasBuiltIndex) {
+    getById(TableReducerID.sum); // Force the registry to load
+  }
+  if (ids === null || ids === undefined) {
+    return listOfReducers;
+  }
+  return ids.map(id => getById(id));
 }
 
 export interface TableReducerOptions {
@@ -34,39 +56,22 @@ export function reduceTableData(data: TableData, options: TableReducerOptions): 
   const ignoreNulls = options.nullValueMode === NullValueMode.Ignore;
   const nullAsZero = options.nullValueMode === NullValueMode.AsZero;
 
+  const queue = getTableReducers(options.stats);
+
   // Return early for empty tables
+  // This lets the concrete implementations assume at least one row
   if (!data.rows || data.rows.length < 1) {
-    const val = nullAsZero ? 0 : null;
-    const rows = [indexes.map(v => val)];
-    return options.stats.map(stat => {
+    return queue.map(stat => {
       return {
         columns,
-        rows,
+        rows: [indexes.map(v => stat.emptyInputResult)],
         type: 'table',
         columnMap: {},
       };
     });
   }
 
-  if (registry == null) {
-    registry = new Map<string, TableReducerInfo>();
-    reducers.forEach(calc => {
-      registry!.set(calc.key, calc);
-      if (calc.alias) {
-        registry!.set(calc.alias, calc);
-      }
-    });
-  }
-
-  const queue = options.stats.map(key => {
-    const c = registry!.get(key);
-    if (!c) {
-      throw new Error('Unknown stats calculator: ' + key);
-    }
-    return c;
-  });
-
-  // Avoid the standard calculator if possible
+  // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reducer) {
     return [
       {
@@ -82,7 +87,7 @@ export function reduceTableData(data: TableData, options: TableReducerOptions): 
   const standard = standardStatsReducer(data, indexes, ignoreNulls, nullAsZero);
   return queue.map(calc => {
     const values = calc.standard
-      ? standard.map((s: any) => s[calc.key])
+      ? standard.map((s: any) => s[calc.value])
       : calc.reducer!(data, indexes, ignoreNulls, nullAsZero);
     return {
       columns,
@@ -98,6 +103,70 @@ export function reduceTableData(data: TableData, options: TableReducerOptions): 
 //  No Exported symbols below here.
 //
 // ------------------------------------------------------------------------------
+
+type TableReducer = (data: TableData, columnIndexes: number[], ignoreNulls: boolean, nullAsZero: boolean) => any[];
+
+// private registry of all reducers
+interface TableReducerIndex {
+  [id: string]: TableReducerInfo;
+}
+const listOfReducers: TableReducerInfo[] = [];
+const index: TableReducerIndex = {};
+let hasBuiltIndex = false;
+
+function getById(id: string): TableReducerInfo {
+  if (!hasBuiltIndex) {
+    [
+      {
+        value: TableReducerID.last,
+        label: 'Last',
+        description: 'Last Value (current)',
+        standard: true,
+        alias: 'current',
+        reducer: getLastRow,
+      },
+      { value: TableReducerID.first, label: 'First', description: 'First Value', standard: true, reducer: getFirstRow },
+      { value: TableReducerID.min, label: 'Min', description: 'Minimum Value', standard: true },
+      { value: TableReducerID.max, label: 'Max', description: 'Maximum Value', standard: true },
+      { value: TableReducerID.mean, label: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
+      {
+        value: TableReducerID.sum,
+        label: 'Total',
+        description: 'The sum of all values',
+        standard: true,
+        alias: 'total',
+      },
+      { value: TableReducerID.count, label: 'Count', description: 'Value Count', standard: true },
+      {
+        value: TableReducerID.range,
+        label: 'Range',
+        description: 'Difference between minimum and maximum values',
+        standard: true,
+      },
+      {
+        value: TableReducerID.diff,
+        label: 'Difference',
+        description: 'Difference between first and last values',
+        standard: true,
+      },
+    ].forEach(calc => {
+      const { value, alias } = calc;
+      if (index.hasOwnProperty(value)) {
+        console.warn('Duplicate Reducer', value, calc, index);
+      }
+      index[value] = calc;
+      if (alias) {
+        if (index.hasOwnProperty(alias)) {
+          console.warn('Duplicate Reducer (alias)', alias, calc, index);
+        }
+        index[alias] = calc;
+      }
+      listOfReducers.push(calc);
+    });
+    hasBuiltIndex = true;
+  }
+  return index[id];
+}
 
 /**
  * This will return an array of valid indexes and throw an error if invalid request
@@ -131,27 +200,6 @@ interface StandardStats {
   allIsZero: boolean;
   allIsNull: boolean;
 }
-
-const reducers: TableReducerInfo[] = [
-  { key: 'sum', alias: 'total', name: 'Total', description: 'The sum of all values', standard: true },
-  { key: 'min', name: 'Min', description: 'Minimum Value', standard: true },
-  { key: 'max', name: 'Max', description: 'Maximum Value', standard: true },
-  { key: 'mean', name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
-  { key: 'first', name: 'First', description: 'First Value', standard: true, reducer: getFirstRow },
-  {
-    key: 'last',
-    name: 'Last',
-    description: 'Last Value (current)',
-    standard: true,
-    alias: 'current',
-    reducer: getLastRow,
-  },
-  { key: 'count', name: 'Count', description: 'Value Count', standard: true },
-  { key: 'range', name: 'Range', description: 'Difference between minimum and maximum values', standard: true },
-  { key: 'diff', name: 'Difference', description: 'Difference between first and last values', standard: true },
-];
-
-let registry: Map<string, TableReducerInfo> | null = null;
 
 function standardStatsReducer(
   data: TableData,

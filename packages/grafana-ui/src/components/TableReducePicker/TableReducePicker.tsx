@@ -8,14 +8,38 @@ import { getTableReducers } from '../../utils/tableReducer';
 import { SelectOptionItem } from '../Select/Select';
 
 interface Props {
+  placeholder?: string;
   onChange: (reducers: string[]) => void;
   reducers: string[];
   width?: number;
+  allowMultiple?: boolean;
+  defaultReducer?: string;
 }
 
 export class TableReducePicker extends PureComponent<Props> {
   static defaultProps = {
     width: 12,
+    allowMultiple: false,
+  };
+
+  componentDidMount() {
+    console.log('MOUNT!', this);
+    this.checkInput();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    console.log('UPDATE', this);
+    this.checkInput();
+  }
+
+  checkInput = () => {
+    const { reducers, allowMultiple, defaultReducer, onChange } = this.props;
+    if (!allowMultiple && reducers.length > 1) {
+      onChange(reducers.slice(0, 1));
+    }
+    if (defaultReducer && reducers.length < 1) {
+      onChange([defaultReducer]);
+    }
   };
 
   onSelectionChange = (item: SelectOptionItem) => {
@@ -28,28 +52,18 @@ export class TableReducePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { width, reducers } = this.props;
+    const { width, reducers, allowMultiple, defaultReducer, placeholder } = this.props;
+    const current = getTableReducers(reducers);
 
-    const allReducers = getTableReducers();
-
-    // Need to transform the data structure to work well with Select
-    const reducerOptions = allReducers.map(info => {
-      return {
-        label: info.name,
-        value: info.key,
-        description: info.description,
-      };
-    });
-
-    const current = reducerOptions.filter(options => reducers.includes(options.value));
     return (
       <Select
         width={width}
         value={current}
-        isMulti={true}
+        isClearable={!defaultReducer}
+        isMulti={allowMultiple}
         isSearchable={true}
-        options={reducerOptions}
-        placeholder="Choose"
+        options={getTableReducers()}
+        placeholder={placeholder}
         onChange={this.onSelectionChange}
       />
     );
