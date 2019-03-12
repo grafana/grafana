@@ -43,7 +43,7 @@
     "chalk": "^2.4.2",
     "clean-webpack-plugin": "^0.1.19",
     "concurrently": "^4.1.0",
-    "css-loader": "^0.28.7",
+    "css-loader": "^2.1.1",
     "enzyme": "^3.6.0",
     "enzyme-adapter-react-16": "^1.5.0",
     "enzyme-to-json": "^3.3.4",
