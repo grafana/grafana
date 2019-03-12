@@ -1,4 +1,4 @@
-import React, { forwardRef, Ref } from 'react';
+import React, { forwardRef } from 'react';
 
 interface ColorPickerTriggerProps {
   onClick: () => void;
@@ -8,7 +8,7 @@ interface ColorPickerTriggerProps {
 
 export const ColorPickerTrigger = forwardRef(function ColorPickerTrigger(
   props: ColorPickerTriggerProps,
-  ref: Ref<HTMLDivElement>
+  ref: React.Ref<HTMLDivElement>
 ) {
   return (
     <div

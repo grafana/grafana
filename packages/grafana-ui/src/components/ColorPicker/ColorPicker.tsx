@@ -1,4 +1,5 @@
 import React, { Component, createRef } from 'react';
+import { omit } from 'lodash';
 import { PopperController } from '../Tooltip/PopperController';
 import { Popper } from '../Tooltip/Popper';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
@@ -8,13 +9,19 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 import { withTheme } from '../../themes/ThemeContext';
 import { ColorPickerTrigger } from './ColorPickerTrigger';
 
+type ColorPickerTriggerRenderer = (props: {
+  ref: React.RefObject<any>;
+  showColorPicker: () => void;
+  hideColorPicker: () => void;
+}) => React.ReactNode;
+
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
   displayName = 'ColorPicker'
 ) => {
-  return class ColorPicker extends Component<T, any> {
+  return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }, any> {
     static displayName = displayName;
-    pickerTriggerRef = createRef<HTMLDivElement>();
+    pickerTriggerRef = createRef<any>();
 
     onColorChange = (color: string) => {
       const { onColorChange, onChange } = this.props;
@@ -24,11 +31,11 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     };
 
     render() {
+      const { theme, children } = this.props;
       const popoverElement = React.createElement(popover, {
-        ...this.props,
+        ...omit(this.props, 'children'),
         onChange: this.onColorChange,
       });
-      const { theme, children } = this.props;
 
       return (
         <PopperController content={popoverElement} hideAfter={300}>
@@ -46,10 +53,10 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                 )}
 
                 {children ? (
-                  React.cloneElement(children as JSX.Element, {
+                  (children as ColorPickerTriggerRenderer)({
                     ref: this.pickerTriggerRef,
-                    onClick: showPopper,
-                    onMouseLeave: hidePopper,
+                    showColorPicker: showPopper,
+                    hideColorPicker: hidePopper,
                   })
                 ) : (
                   <ColorPickerTrigger
