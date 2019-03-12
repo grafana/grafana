@@ -973,7 +973,7 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 		defer bus.ClearBusHandlers()
 
 		cfg := setting.NewCfg()
-		cfg.EditorsCanOwn = false
+		cfg.EditorsCanAdmin = false
 
 		hs := HTTPServer{
 			Bus: bus.GetBus(),

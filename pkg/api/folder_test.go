@@ -143,7 +143,7 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 		defer bus.ClearBusHandlers()
 
 		cfg := setting.NewCfg()
-		cfg.EditorsCanOwn = true
+		cfg.EditorsCanAdmin = true
 
 		hs := HTTPServer{
 			Bus: bus.GetBus(),

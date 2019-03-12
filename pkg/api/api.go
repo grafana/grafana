@@ -14,7 +14,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqAdminOrEditorCanAdmin := middleware.EditorCanAdmin(hs.Cfg.EditorsCanOwn)
+	reqAdminOrEditorCanAdmin := middleware.EditorCanAdmin(hs.Cfg.EditorsCanAdmin)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
