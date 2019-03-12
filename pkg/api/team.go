@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/teams"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,7 +42,7 @@ func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teams.CanUpdateTeam(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to update team", err)
 	}
 
@@ -62,7 +62,7 @@ func DeleteTeamByID(c *m.ReqContext) Response {
 	teamId := c.ParamsInt64(":teamId")
 	user := c.SignedInUser
 
-	if err := teams.CanUpdateTeam(orgId, teamId, user); err != nil {
+	if err := teamguardian.CanAdmin(orgId, teamId, user); err != nil {
 		return Error(403, "Not allowed to delete team", err)
 	}
 
@@ -132,7 +132,14 @@ func GetTeamByID(c *m.ReqContext) Response {
 
 // GET /api/teams/:teamId/preferences
 func GetTeamPreferences(c *m.ReqContext) Response {
-	return getPreferencesFor(c.OrgId, 0, c.ParamsInt64(":teamId"))
+	teamId := c.ParamsInt64(":teamId")
+	orgId := c.OrgId
+
+	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
+		return Error(403, "Not allowed to view team preferences.", err)
+	}
+
+	return getPreferencesFor(orgId, 0, teamId)
 }
 
 // PUT /api/teams/:teamId/preferences
@@ -140,7 +147,7 @@ func UpdateTeamPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to update team preferences.", err)
 	}
 

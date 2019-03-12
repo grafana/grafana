@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/teams"
+	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,7 +34,7 @@ func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to add team member", err)
 	}
 
@@ -63,7 +63,7 @@ func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to update team member", err)
 	}
 
@@ -86,7 +86,7 @@ func RemoveTeamMember(c *m.ReqContext) Response {
 	teamId := c.ParamsInt64(":teamId")
 	userId := c.ParamsInt64(":userId")
 
-	if err := teams.CanUpdateTeam(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to remove team member", err)
 	}
 
