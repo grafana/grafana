@@ -17,6 +17,7 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-xxs: ${theme.spacing.xxs} !default;
 $space-xs: ${theme.spacing.xs} !default;
 $space-sm: ${theme.spacing.s} !default;
 $space-md: ${theme.spacing.m} !default;
@@ -111,7 +112,6 @@ $font-size-h4: ${theme.typography.heading.h4} !default;
 $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
-$headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-font-weight: ${theme.typography.weight.normal} !default;
 $headings-line-height: ${theme.typography.lineHeight.s} !default;
@@ -165,7 +165,6 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;

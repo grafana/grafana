@@ -49,6 +49,7 @@ export interface GrafanaThemeCommons {
   };
   spacing: {
     d: string;
+    xxs: string;
     xs: string;
     s: string;
     m: string;
