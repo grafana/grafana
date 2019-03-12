@@ -866,7 +866,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -936,7 +936,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1006,7 +1006,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1076,7 +1076,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1146,7 +1146,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1154,7 +1154,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                   }
                   value={
                     Object {
-                      "description": "Can add/remove permissions and delete team.",
+                      "description": "Can add/remove permissions, members and delete team.",
                       "label": "Admin",
                       "value": 4,
                     }
@@ -1308,7 +1308,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1378,7 +1378,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1448,7 +1448,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1518,7 +1518,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1588,7 +1588,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1596,7 +1596,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                   }
                   value={
                     Object {
-                      "description": "Can add/remove permissions and delete team.",
+                      "description": "Can add/remove permissions, members and delete team.",
                       "label": "Admin",
                       "value": 4,
                     }
@@ -1750,7 +1750,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1758,7 +1758,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                   }
                   value={
                     Object {
-                      "description": "Can add/remove permissions and delete team.",
+                      "description": "Can add/remove permissions, members and delete team.",
                       "label": "Admin",
                       "value": 4,
                     }
@@ -1820,7 +1820,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1890,7 +1890,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -1960,7 +1960,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
@@ -2030,7 +2030,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
                         "value": 0,
                       },
                       Object {
-                        "description": "Can add/remove permissions and delete team.",
+                        "description": "Can add/remove permissions, members and delete team.",
                         "label": "Admin",
                         "value": 4,
                       },
