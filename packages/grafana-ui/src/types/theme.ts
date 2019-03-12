@@ -66,6 +66,10 @@ export interface GrafanaThemeCommons {
       s: string;
     };
   };
+  panelPadding: {
+    horizontal: number;
+    vertical: number;
+  };
 }
 
 export interface GrafanaTheme extends GrafanaThemeCommons {

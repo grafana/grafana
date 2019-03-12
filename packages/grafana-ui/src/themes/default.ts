@@ -61,6 +61,10 @@ const theme: GrafanaThemeCommons = {
       s: '1px',
     },
   },
+  panelPadding: {
+    horizontal: 10,
+    vertical: 5,
+  },
 };
 
 export default theme;
