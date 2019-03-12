@@ -13,6 +13,9 @@ import { Threshold } from '../../types';
 export interface Props {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
+  /**
+   * @enableText enable ability to add text to a threshold.
+   */
   enableText?: boolean;
 }
 
