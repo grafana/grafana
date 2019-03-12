@@ -17,6 +17,7 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-xxs: ${theme.spacing.xxs} !default;
 $space-xs: ${theme.spacing.xs} !default;
 $space-sm: ${theme.spacing.s} !default;
 $space-md: ${theme.spacing.m} !default;
@@ -164,7 +165,6 @@ $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 
-$gf-form-margin: 3px;
 $gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
