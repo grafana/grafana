@@ -197,7 +197,7 @@
 }
 
 .explore-panel {
-  margin-top: $space-s;
+  margin-top: $space-sm;
 }
 
 .explore-panel__body {
@@ -216,20 +216,20 @@
 
 .explore-panel__header-label {
   font-weight: 500;
-  margin-right: $space-s;
+  margin-right: $space-sm;
   font-size: $font-size-h6;
   box-shadow: $text-shadow-faint;
 }
 
 .explore-panel__header-buttons {
-  margin-right: $space-s;
+  margin-right: $space-sm;
   font-size: $font-size-lg;
   line-height: $font-size-h6;
 }
 
 .time-series-disclaimer {
   width: 300px;
-  margin: $space-s auto;
+  margin: $space-sm auto;
   padding: 10px 0;
   border-radius: $border-radius;
   text-align: center;
@@ -407,7 +407,7 @@
 .ReactTable .-pagination {
   border-top: none;
   box-shadow: none;
-  margin-top: $space-s;
+  margin-top: $space-sm;
 }
 .ReactTable .-pagination .-btn {
   color: $blue;
@@ -448,7 +448,7 @@
 // TODO Experimental
 
 .cheat-sheet-item {
-  margin: $space-l 0;
+  margin: $space-lg 0;
   width: 50%;
 }
 

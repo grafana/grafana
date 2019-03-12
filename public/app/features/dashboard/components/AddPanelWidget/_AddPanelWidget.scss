@@ -20,7 +20,7 @@
 
   .gicon {
     font-size: 30px;
-    margin-right: $space-m;
+    margin-right: $space-md;
   }
 
   &:hover {
@@ -36,12 +36,12 @@
 }
 
 .add-panel-widget__link {
-  margin: 0 $space-s;
+  margin: 0 $space-sm;
   width: 154px;
 }
 
 .add-panel-widget__icon {
-  margin-bottom: $space-s;
+  margin-bottom: $space-sm;
 
   .gicon {
     color: white;
@@ -62,7 +62,7 @@
 
 .add-panel-widget__create {
   display: inherit;
-  margin-bottom: $space-l;
+  margin-bottom: $space-lg;
   // this is to have the big button appear centered
   margin-top: 55px;
 }
