@@ -114,12 +114,12 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
 
-				invalidPermissionLevel := 1337
+				invalidPermissionLevel := m.PERMISSION_EDIT
 				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
 					UserId:     userID,
 					OrgId:      testOrgId,
 					TeamId:     team.Id,
-					Permission: int64(invalidPermissionLevel),
+					Permission: invalidPermissionLevel,
 				})
 
 				So(err, ShouldBeNil)

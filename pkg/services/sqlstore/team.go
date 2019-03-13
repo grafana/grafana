@@ -271,7 +271,7 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 			return m.ErrTeamMemberNotFound
 		}
 
-		if cmd.Permission != int64(m.PERMISSION_ADMIN) {
+		if cmd.Permission != m.PERMISSION_ADMIN {
 			cmd.Permission = 0
 		}
 
