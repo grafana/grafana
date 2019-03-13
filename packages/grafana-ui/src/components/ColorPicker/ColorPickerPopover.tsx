@@ -17,9 +17,6 @@ export interface ColorPickerProps extends Themeable {
    * @description Testing
    */
   onColorChange?: ColorPickerChangeHandler;
-  /**
-   * @description Some shit
-   */
   enableNamedColors?: boolean;
   children?: JSX.Element;
 }

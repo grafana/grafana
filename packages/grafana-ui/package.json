@@ -14,7 +14,8 @@
     "storybook": "start-storybook -p 9001 -c .storybook -s ../../public",
     "clean": "rimraf ./dist ./compiled",
     "build": "rollup -c rollup.config.ts",
-    "docs:dev": "webpack-dev-server --config ./docs/webpack.config.js"
+    "docs:dev": "webpack-dev-server --progress --config ./docs/webpack.config.dev.js",
+    "docs:buildProd": "webpack --progress --mode production --config ./docs/webpack.config.prod.js"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

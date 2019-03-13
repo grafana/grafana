@@ -84,3 +84,6 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+/packages/grafana-ui/docs/metadata.json
+/packages/grafana-ui/docs/public/index.html
+/packages/grafana-ui/docs/build

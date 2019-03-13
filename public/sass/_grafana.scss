@@ -2,10 +2,8 @@
 @import '~react-table/react-table.css';
 
 // VENDOR
-// @import '../vendor/css/timepicker.css';
-// @import '../vendor/css/rc-cascader.scss';
-
-// TODO Uncomment after figuring this out^^
+@import '../vendor/css/timepicker';
+@import '../vendor/css/rc-cascader';
 
 // MIXINS
 @import 'mixins/mixins';

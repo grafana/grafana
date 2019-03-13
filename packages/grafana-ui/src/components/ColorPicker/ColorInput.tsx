@@ -9,11 +9,14 @@ interface ColorInputState {
 }
 
 interface ColorInputProps extends ColorPickerProps {
+  /**
+   * @description Testing description
+   */
   style?: React.CSSProperties;
 }
 
 /**
- * @description Blash
+ * @description Testring component description
  */
 export class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
   constructor(props: ColorInputProps) {
@@ -100,5 +103,3 @@ export class ColorInput extends React.PureComponent<ColorInputProps, ColorInputS
     );
   }
 }
-
-// export default ColorInput;

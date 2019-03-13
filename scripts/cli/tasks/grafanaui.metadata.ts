@@ -1,12 +1,12 @@
 import { Task, TaskRunner } from './task';
 import glob from 'glob';
 import fs from 'fs';
-import { performance, PerformanceObserver } from 'perf_hooks';
 import path from 'path';
 import omitBy from 'lodash/omitBy';
 import { withCustomConfig, FileParser, ComponentDoc, PropItem } from 'react-docgen-typescript';
 import metadataParser from 'markdown-yaml-metadata-parser';
 import * as ts from 'typescript';
+import chokidar from 'chokidar';
 
 interface ComponentMetadata {
   category: string;
@@ -15,8 +15,8 @@ interface ComponentMetadata {
 }
 interface ComponentDocs {
   name: string;
-  docs?: string; // MD
-  path?: string; // Component path -> relative to WAT?!
+  docs?: string;
+  path?: string;
   meta: ComponentMetadata;
 }
 interface DocsMetadata {
@@ -25,12 +25,6 @@ interface DocsMetadata {
   components: ComponentDocs[];
   guidelines?: string;
 }
-
-const obs = new PerformanceObserver(items => {
-  console.log(items.getEntries()[0].name, items.getEntries()[0].duration);
-  performance.clearMarks();
-});
-obs.observe({ entryTypes: ['measure'] });
 
 const findComponentMarkdownPath = (mdFilePaths: string[], componentName: string) => {
   const result = mdFilePaths.filter(mdPath => {
@@ -82,24 +76,20 @@ const isExternalProp = (propDoc: PropItem) => {
 
 const cleanupComponentPropTypes = (doc: ComponentDoc[]) => {
   return doc.map(d => {
-    if (d.displayName === 'SelectOption') {
-      debugger;
-    }
     return {
       ...d,
       props: omitBy(d.props, isExternalProp),
     };
   });
 };
-const metadataGenerationTaskRunner: TaskRunner<void> = async () => {
-  const docs: DocsMetadata = {} as DocsMetadata;
 
+const generateMetadata = (resolve?: () => void) => {
+  const docs: DocsMetadata = {} as DocsMetadata;
   const readme = fs.readFileSync('packages/grafana-ui/README.md', 'utf8');
   const changelog = fs.readFileSync('packages/grafana-ui/CHANGELOG.md', 'utf8');
   docs.readme = readme;
   docs.changelog = changelog;
   docs.components = [];
-
   // Load components markdown files
   const markdownFiles = glob.sync('packages/grafana-ui/src/components/**/*.md');
 
@@ -114,25 +104,19 @@ const metadataGenerationTaskRunner: TaskRunner<void> = async () => {
     const componentDocs: ComponentDocs = {} as ComponentDocs;
     const componentName = path.parse(component).name;
 
-    performance.mark('tsparse');
     const componentPropTypes = cleanupComponentPropTypes(tsParser.parseWithProgramProvider(component, () => tsProgram));
-
-    performance.mark('tsparse-end');
-    performance.measure('Parsing TS', 'tsparse', 'tsparse-end');
 
     const mdFile = findComponentMarkdownPath(markdownFiles, componentName);
 
     componentDocs.name = componentName;
     componentDocs.meta = {
-      // TODO: Cleanup props that does not belong to @grafana/ui
-      // i.e. properties from react types
       props: componentPropTypes,
     } as ComponentMetadata;
 
     if (!mdFile) {
-      console.log(`${componentName} is missing docs!`);
+      // console.log(`${componentName} is missing docs!`);
     } else {
-      console.log(`${componentName} reading docs...`);
+      // console.log(`${componentName} reading docs...`);
       const componentMd = fs.readFileSync(mdFile, 'utf8');
 
       // @ts-ignore
@@ -147,14 +131,34 @@ const metadataGenerationTaskRunner: TaskRunner<void> = async () => {
     return componentDocs;
   });
 
-  debugger;
-
   fs.writeFile(`${process.cwd()}/packages/grafana-ui/docs/metadata.json`, JSON.stringify(docs, null, 2), err => {
     if (err) {
       console.error(err);
       return;
     }
-    console.log('File has been created');
+    if (resolve) {
+      resolve();
+    }
+  });
+};
+
+const metadataGenerationTaskRunner: TaskRunner<void> = async () => {
+  return new Promise((resolve, reject) => {
+    try {
+      generateMetadata(resolve);
+    } catch (e) {
+      reject(e);
+      process.exit(1);
+    }
+  }).then(() => {
+    const watcher = chokidar.watch('packages/grafana-ui/**/*.md', {
+      ignored: ['packages/grafana-ui/node_modules'],
+    });
+
+    watcher.on('change', path => {
+      console.log(path, 'has changed, regenerating metadata');
+      generateMetadata();
+    });
   });
 };
 

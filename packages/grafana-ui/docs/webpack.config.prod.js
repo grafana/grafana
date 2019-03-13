@@ -1,41 +1,32 @@
+
 'use strict';
 const common = require('../../../scripts/webpack/webpack.common.js');
 const path = require('path');
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
-// console.log(__dirname)
 module.exports = {
   ...common,
-  devtool: "cheap-module-source-map",
+  devtool: 'cheap-module-source-map',
   mode: 'development',
   entry: {
     app: path.resolve(__dirname, 'index.tsx'),
   },
   output: {
-    path: path.resolve(__dirname, './public'),
+    path: path.resolve(__dirname, './build/dist'),
     filename: '[name].[hash].js',
+    publicPath: '/dist',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json', '.svg'],
-    alias: {
-    },
+    alias: {},
     modules: [
       path.resolve(__dirname),
       path.resolve('node_modules'),
       path.resolve('../../node_modules'),
       path.resolve('../../public/sass'),
-
     ],
-  },
-  devServer: {
-    contentBase: path.resolve(process.cwd(), 'public/'),
-    disableHostCheck: true,
-    port: 9000,
-    historyApiFallback: true,
   },
   module: {
     rules: [
@@ -44,13 +35,13 @@ module.exports = {
         use: [
           {
             loader: 'expose-loader',
-            query: 'jQuery'
+            query: 'jQuery',
           },
           {
             loader: 'expose-loader',
-            query: '$'
-          }
-        ]
+            query: '$',
+          },
+        ],
       },
       {
         test: /\.tsx?$/,
@@ -61,8 +52,8 @@ module.exports = {
           options: {
             emitErrors: true,
             typeCheck: false,
-          }
-        }
+          },
+        },
       },
       {
         test: /\.tsx?$/,
@@ -70,24 +61,32 @@ module.exports = {
         use: {
           loader: 'ts-loader',
           options: {
-            transpileOnly: true
+            transpileOnly: true,
           },
         },
       },
-      require('../../../scripts/webpack/sass.rule.js')({ sourceMap: false, minimize: false, preserveUrl: false }),
-      {
-        test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-        loader: 'file-loader'
-      },
-    ]
+      require('../../../scripts/webpack/sass.rule.js')({
+        sourceMap: true,
+        minimize: false,
+        preserveUrl: false,
+        lazy: true,
+      }),
+    ],
   },
   plugins: [
+    new CopyPlugin([
+      { from: path.resolve(__dirname,'./public/fonts'), to: path.resolve(__dirname,'./build/fonts') },
+      { from: path.resolve(__dirname,'./public/img/'), to: path.resolve(__dirname,'./build/img') },
+    ]),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'public/index.html'),
-      inject: true
+      filename: path.resolve(__dirname, './build/index.html'),
+      template: path.resolve(__dirname, './index.html'),
+      inject: true,
+      base:'dist'
     }),
-    new MiniCssExtractPlugin({
-      filename: "grafana.[name].[hash].css"
+    new ForkTsCheckerWebpackPlugin({
+      checkSyntacticErrors: true,
+      tsconfig: path.resolve(__dirname, '../tsconfig.json'),
     }),
-  ]
-}
+  ],
+};

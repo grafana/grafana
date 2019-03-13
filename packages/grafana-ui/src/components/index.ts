@@ -17,6 +17,7 @@ export { FormField } from './FormField/FormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorInput } from './ColorPicker/ColorInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { Graph } from './Graph/Graph';

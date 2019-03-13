@@ -1,0 +1,3107 @@
+{
+  "readme": "# Grafana UI components library\n\n@grafana/ui is a collection of components used by [Grafana](https://github.com/grafana/grafana)\n\nOur goal is to deliver Grafana's common UI elements for plugins developers and contributors.\n\nSee [package source](https://github.com/grafana/grafana/tree/master/packages/grafana-ui) for more details.\n\n## Installation\n\n`yarn add @grafana/ui`\n\n`npm install @grafana/ui`\n\n## Versioning\nTo limit the confusion related to @grafana/ui and Grafana versioning we decided to keep the major version in sync between those two.\nThis means, that first version of @grafana/ui is taged with 6.0.0-alpha.0 to keep version in sync with Grafana 6.0 release.\n",
+  "changelog": "# 6.0.0-alpha.0 (2019-02-22)\nVersion update to 6.0.0 to keep @grafana/ui version in sync with [Grafana](https://github.com/grafana/grafana)\n\n# 1.0.0-alpha.0 (2019-02-21)\nFirst public release\n\n",
+  "components": [
+    {
+      "name": "ColorInput",
+      "meta": {
+        "props": [
+          {
+            "description": "@description Blash",
+            "displayName": "ColorInput",
+            "methods": [],
+            "props": {
+              "style": {
+                "defaultValue": null,
+                "description": "",
+                "name": "style",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/ColorPicker/ColorInput.tsx",
+                  "name": "ColorInputProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "CSSProperties | undefined"
+                }
+              },
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ],
+        "title": "ColorInput",
+        "description": "Component for inputing color name/hex/rgb/a value",
+        "category": "ui"
+      },
+      "docs": "\n# Title\n## Subtitle\n```tsx\n  <DeleteButton onClick={() => {}}>Click me!</DeleteButton>\n```\n"
+    },
+    {
+      "name": "ColorPalette",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ColorPalette",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/ColorPicker/ColorPalette.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onColorSelect": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onColorSelect",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/ColorPicker/ColorPalette.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(c: string) => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ColorPicker",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ColorPicker",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "customPickers": {
+                "defaultValue": null,
+                "description": "",
+                "name": "customPickers",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "CustomPickersDescriptor | undefined"
+                }
+              },
+              "updatePopperPosition": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updatePopperPosition",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "PopperContentProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          },
+          {
+            "description": "",
+            "displayName": "SeriesColorPicker",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "updatePopperPosition": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updatePopperPosition",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "PopperContentProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "yaxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "yaxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "onToggleAxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onToggleAxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ColorPickerPopover",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ColorPickerPopover",
+            "methods": [],
+            "props": {
+              "customPickers": {
+                "defaultValue": null,
+                "description": "",
+                "name": "customPickers",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "T | undefined"
+                }
+              },
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              },
+              "updatePopperPosition": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updatePopperPosition",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "PopperContentProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NamedColorsGroup",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ColorSwatch",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "ColorSwatchProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "label": {
+                "defaultValue": null,
+                "description": "",
+                "name": "label",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "ColorSwatchProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "variant": {
+                "defaultValue": null,
+                "description": "",
+                "name": "variant",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "ColorSwatchProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorSwatchVariant | undefined"
+                }
+              },
+              "isSelected": {
+                "defaultValue": null,
+                "description": "",
+                "name": "isSelected",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "ColorSwatchProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          },
+          {
+            "description": "",
+            "displayName": "NamedColorsGroup",
+            "methods": [],
+            "props": {
+              "colors": {
+                "defaultValue": null,
+                "description": "",
+                "name": "colors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "NamedColorsGroupProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorDefinition[]"
+                }
+              },
+              "selectedColor": {
+                "defaultValue": null,
+                "description": "",
+                "name": "selectedColor",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "NamedColorsGroupProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "onColorSelect": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onColorSelect",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "NamedColorsGroupProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorChangeHandler"
+                }
+              },
+              "key": {
+                "defaultValue": null,
+                "description": "",
+                "name": "key",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsGroup.tsx",
+                  "name": "NamedColorsGroupProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NamedColorsPalette",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "NamedColorsPalette",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.tsx",
+                  "name": "NamedColorsPaletteProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "\"blue\" | \"green\" | \"orange\" | \"purple\" | \"red\" | \"yellow\" | \"dark-green\" | \"semi-dark-green\" | \"light-green\" | \"super-light-green\" | \"dark-yellow\" | \"semi-dark-yellow\" | \"light-yellow\" | ... 17 more ... | undefined"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.tsx",
+                  "name": "NamedColorsPaletteProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "(colorName: string) => void"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeriesColorPickerPopover",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "SeriesColorPickerPopover",
+            "methods": [],
+            "props": {
+              "yaxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "yaxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "onToggleAxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onToggleAxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              },
+              "updatePopperPosition": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updatePopperPosition",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "PopperContentProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          },
+          {
+            "description": "",
+            "displayName": "AxisSelector",
+            "methods": [],
+            "props": {
+              "yaxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "yaxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "AxisSelectorProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "onToggleAxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onToggleAxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "AxisSelectorProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          },
+          {
+            "description": "",
+            "displayName": "SeriesColorPickerPopoverWithTheme",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "ColorPickerChangeHandler"
+                }
+              },
+              "onColorChange": {
+                "defaultValue": null,
+                "description": "@deprecated Use onChange instead\n@description Testing",
+                "name": "onColorChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "ColorPickerChangeHandler | undefined"
+                }
+              },
+              "enableNamedColors": {
+                "defaultValue": null,
+                "description": "@description Some shit",
+                "name": "enableNamedColors",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx",
+                  "name": "ColorPickerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "updatePopperPosition": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updatePopperPosition",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "PopperContentProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "yaxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "yaxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "onToggleAxis": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onToggleAxis",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SeriesColorPickerPopover.tsx",
+                  "name": "SeriesColorPickerPopoverProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SpectrumPalette",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "SpectrumPalette",
+            "methods": [],
+            "props": {
+              "color": {
+                "defaultValue": null,
+                "description": "",
+                "name": "color",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.tsx",
+                  "name": "SpectrumPaletteProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.tsx",
+                  "name": "SpectrumPaletteProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "(color: string) => void"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SpectrumPalettePointer",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "SpectrumPalettePointer",
+            "methods": [],
+            "props": {
+              "direction": {
+                "defaultValue": null,
+                "description": "",
+                "name": "direction",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ColorPicker/SpectrumPalettePointer.tsx",
+                  "name": "SpectrumPalettePointerProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CustomScrollbar",
+      "meta": {
+        "props": [
+          {
+            "description": "Wraps component into <Scrollbars> component from `react-custom-scrollbars`",
+            "displayName": "CustomScrollbar",
+            "methods": [],
+            "props": {
+              "className": {
+                "defaultValue": null,
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "autoHide": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "autoHide",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "autoHideTimeout": {
+                "defaultValue": {
+                  "value": "200"
+                },
+                "description": "",
+                "name": "autoHideTimeout",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "autoHideDuration": {
+                "defaultValue": {
+                  "value": "200"
+                },
+                "description": "",
+                "name": "autoHideDuration",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "autoHeightMax": {
+                "defaultValue": {
+                  "value": "100%"
+                },
+                "description": "",
+                "name": "autoHeightMax",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "hideTracksWhenNotNeeded": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "hideTracksWhenNotNeeded",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "renderTrackHorizontal": {
+                "defaultValue": null,
+                "description": "",
+                "name": "renderTrackHorizontal",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "FunctionComponent<any> | undefined"
+                }
+              },
+              "renderTrackVertical": {
+                "defaultValue": null,
+                "description": "",
+                "name": "renderTrackVertical",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "FunctionComponent<any> | undefined"
+                }
+              },
+              "scrollTop": {
+                "defaultValue": null,
+                "description": "",
+                "name": "scrollTop",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "setScrollTop": {
+                "defaultValue": null,
+                "description": "",
+                "name": "setScrollTop",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(event: any) => void"
+                }
+              },
+              "autoHeightMin": {
+                "defaultValue": {
+                  "value": "0"
+                },
+                "description": "",
+                "name": "autoHeightMin",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | number | undefined"
+                }
+              },
+              "updateAfterMountMs": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updateAfterMountMs",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeleteButton",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "DeleteButton",
+            "methods": [],
+            "props": {
+              "onConfirm": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onConfirm",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/DeleteButton/DeleteButton.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "() => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "EmptySearchResult",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "EmptySearchResult",
+            "methods": [],
+            "props": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "FormField",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "FormField",
+            "methods": [],
+            "props": {
+              "label": {
+                "defaultValue": null,
+                "description": "",
+                "name": "label",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/FormField/FormField.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "labelWidth": {
+                "defaultValue": null,
+                "description": "",
+                "name": "labelWidth",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/FormField/FormField.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "inputWidth": {
+                "defaultValue": null,
+                "description": "",
+                "name": "inputWidth",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/FormField/FormField.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "FormLabel",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "FormLabel",
+            "methods": [],
+            "props": {
+              "className": {
+                "defaultValue": null,
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "htmlFor": {
+                "defaultValue": null,
+                "description": "",
+                "name": "htmlFor",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "isFocused": {
+                "defaultValue": null,
+                "description": "",
+                "name": "isFocused",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "isInvalid": {
+                "defaultValue": null,
+                "description": "",
+                "name": "isInvalid",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "tooltip": {
+                "defaultValue": null,
+                "description": "",
+                "name": "tooltip",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "width": {
+                "defaultValue": null,
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/FormLabel/FormLabel.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Gauge",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Gauge",
+            "methods": [],
+            "props": {
+              "decimals": {
+                "defaultValue": null,
+                "description": "",
+                "name": "decimals",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | null | undefined"
+                }
+              },
+              "height": {
+                "defaultValue": null,
+                "description": "",
+                "name": "height",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "valueMappings": {
+                "defaultValue": null,
+                "description": "",
+                "name": "valueMappings",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "ValueMapping[]"
+                }
+              },
+              "maxValue": {
+                "defaultValue": {
+                  "value": "100"
+                },
+                "description": "",
+                "name": "maxValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "minValue": {
+                "defaultValue": {
+                  "value": "0"
+                },
+                "description": "",
+                "name": "minValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "prefix": {
+                "defaultValue": {
+                  "value": ""
+                },
+                "description": "",
+                "name": "prefix",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "thresholds": {
+                "defaultValue": null,
+                "description": "",
+                "name": "thresholds",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "Threshold[]"
+                }
+              },
+              "showThresholdMarkers": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "showThresholdMarkers",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "showThresholdLabels": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "showThresholdLabels",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "stat": {
+                "defaultValue": {
+                  "value": "avg"
+                },
+                "description": "",
+                "name": "stat",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "suffix": {
+                "defaultValue": {
+                  "value": ""
+                },
+                "description": "",
+                "name": "suffix",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "unit": {
+                "defaultValue": {
+                  "value": "none"
+                },
+                "description": "",
+                "name": "unit",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "width": {
+                "defaultValue": null,
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "value": {
+                "defaultValue": null,
+                "description": "",
+                "name": "value",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Gauge/Gauge.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "theme": {
+                "defaultValue": {
+                  "value": "GrafanaThemeType.Dark"
+                },
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/types/theme.ts",
+                  "name": "Themeable"
+                },
+                "required": true,
+                "type": {
+                  "name": "GrafanaTheme"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Graph",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Graph",
+            "methods": [],
+            "props": {
+              "timeSeries": {
+                "defaultValue": null,
+                "description": "",
+                "name": "timeSeries",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "TimeSeriesVMs"
+                }
+              },
+              "timeRange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "timeRange",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "TimeRange"
+                }
+              },
+              "showLines": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "showLines",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "showPoints": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "showPoints",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "showBars": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "showBars",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "width": {
+                "defaultValue": null,
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              },
+              "height": {
+                "defaultValue": null,
+                "description": "",
+                "name": "height",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Graph/Graph.tsx",
+                  "name": "GraphProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "number"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoadingPlaceholder",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "LoadingPlaceholder",
+            "methods": [],
+            "props": {
+              "text": {
+                "defaultValue": null,
+                "description": "",
+                "name": "text",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/LoadingPlaceholder/LoadingPlaceholder.tsx",
+                  "name": "LoadingPlaceholderProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PanelOptionsGrid",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "PanelOptionsGrid",
+            "methods": [],
+            "props": {
+              "cols": {
+                "defaultValue": null,
+                "description": "",
+                "name": "cols",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/PanelOptionsGrid/PanelOptionsGrid.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PanelOptionsGroup",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "PanelOptionsGroup",
+            "methods": [],
+            "props": {
+              "title": {
+                "defaultValue": null,
+                "description": "",
+                "name": "title",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/PanelOptionsGroup/PanelOptionsGroup.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "onClose": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onClose",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/PanelOptionsGroup/PanelOptionsGroup.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "onAdd": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onAdd",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/PanelOptionsGroup/PanelOptionsGroup.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Portal",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Portal",
+            "methods": [],
+            "props": {
+              "className": {
+                "defaultValue": null,
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Portal/Portal.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "root": {
+                "defaultValue": null,
+                "description": "",
+                "name": "root",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Portal/Portal.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "HTMLElement | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "IndicatorsContainer",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "IndicatorsContainer",
+            "methods": [],
+            "props": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "NoOptionsMessage",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "NoOptionsMessage",
+            "methods": [],
+            "props": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "Select",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "MenuList",
+            "methods": [],
+            "props": {}
+          },
+          {
+            "description": "",
+            "displayName": "AsyncSelect",
+            "methods": [],
+            "props": {
+              "defaultValue": {
+                "defaultValue": null,
+                "description": "",
+                "name": "defaultValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "any"
+                }
+              },
+              "getOptionLabel": {
+                "defaultValue": null,
+                "description": "",
+                "name": "getOptionLabel",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "((item: SelectOptionItem) => string) | undefined"
+                }
+              },
+              "getOptionValue": {
+                "defaultValue": null,
+                "description": "",
+                "name": "getOptionValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "((item: SelectOptionItem) => string) | undefined"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "(item: SelectOptionItem) => void | {}"
+                }
+              },
+              "placeholder": {
+                "defaultValue": null,
+                "description": "",
+                "name": "placeholder",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "width": {
+                "defaultValue": {
+                  "value": "null"
+                },
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "value": {
+                "defaultValue": null,
+                "description": "",
+                "name": "value",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "SelectOptionItem | undefined"
+                }
+              },
+              "className": {
+                "defaultValue": {
+                  "value": ""
+                },
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "isDisabled": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isDisabled",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "isSearchable": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "isSearchable",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "isClearable": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isClearable",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "autoFocus": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "autoFocus",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "openMenuOnFocus": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "openMenuOnFocus",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "onBlur": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onBlur",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "maxMenuHeight": {
+                "defaultValue": {
+                  "value": "300"
+                },
+                "description": "",
+                "name": "maxMenuHeight",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "isLoading": {
+                "defaultValue": null,
+                "description": "",
+                "name": "isLoading",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "noOptionsMessage": {
+                "defaultValue": null,
+                "description": "",
+                "name": "noOptionsMessage",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => string) | undefined"
+                }
+              },
+              "isMulti": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isMulti",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "backspaceRemovesValue": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "backspaceRemovesValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "defaultOptions": {
+                "defaultValue": null,
+                "description": "",
+                "name": "defaultOptions",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "AsyncProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "loadOptions": {
+                "defaultValue": null,
+                "description": "",
+                "name": "loadOptions",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "AsyncProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "(query: string) => Promise<SelectOptionItem[]>"
+                }
+              },
+              "loadingMessage": {
+                "defaultValue": null,
+                "description": "",
+                "name": "loadingMessage",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "AsyncProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => string) | undefined"
+                }
+              }
+            }
+          },
+          {
+            "description": "",
+            "displayName": "Select",
+            "methods": [],
+            "props": {
+              "defaultValue": {
+                "defaultValue": null,
+                "description": "",
+                "name": "defaultValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "any"
+                }
+              },
+              "getOptionLabel": {
+                "defaultValue": null,
+                "description": "",
+                "name": "getOptionLabel",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "((item: SelectOptionItem) => string) | undefined"
+                }
+              },
+              "getOptionValue": {
+                "defaultValue": null,
+                "description": "",
+                "name": "getOptionValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "((item: SelectOptionItem) => string) | undefined"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "(item: SelectOptionItem) => void | {}"
+                }
+              },
+              "placeholder": {
+                "defaultValue": null,
+                "description": "",
+                "name": "placeholder",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "width": {
+                "defaultValue": {
+                  "value": "null"
+                },
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "value": {
+                "defaultValue": null,
+                "description": "",
+                "name": "value",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "SelectOptionItem | undefined"
+                }
+              },
+              "className": {
+                "defaultValue": {
+                  "value": ""
+                },
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "isDisabled": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isDisabled",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "isSearchable": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "isSearchable",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "isClearable": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isClearable",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "autoFocus": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "autoFocus",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "openMenuOnFocus": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "openMenuOnFocus",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "onBlur": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onBlur",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => void) | undefined"
+                }
+              },
+              "maxMenuHeight": {
+                "defaultValue": {
+                  "value": "300"
+                },
+                "description": "",
+                "name": "maxMenuHeight",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              },
+              "isLoading": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isLoading",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "noOptionsMessage": {
+                "defaultValue": null,
+                "description": "",
+                "name": "noOptionsMessage",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "(() => string) | undefined"
+                }
+              },
+              "isMulti": {
+                "defaultValue": {
+                  "value": "false"
+                },
+                "description": "",
+                "name": "isMulti",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "backspaceRemovesValue": {
+                "defaultValue": {
+                  "value": "true"
+                },
+                "description": "",
+                "name": "backspaceRemovesValue",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "CommonProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "options": {
+                "defaultValue": null,
+                "description": "",
+                "name": "options",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/Select/Select.tsx",
+                  "name": "SelectProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "SelectOptionItem[]"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SelectOption",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "SingleValue",
+            "methods": [],
+            "props": {}
+          },
+          {
+            "description": "",
+            "displayName": "SelectOption",
+            "methods": [],
+            "props": {
+              "data": {
+                "defaultValue": null,
+                "description": "",
+                "name": "data",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Select/SelectOption.tsx",
+                  "name": "ExtendedOptionProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "{ description?: string | undefined; imgUrl?: string | undefined; }"
+                }
+              },
+              "children": {
+                "defaultValue": null,
+                "description": "The children to be rendered.",
+                "name": "children",
+                "required": true,
+                "type": {
+                  "name": "ReactNode"
+                }
+              },
+              "innerRef": {
+                "defaultValue": null,
+                "description": "Inner ref to DOM Node",
+                "name": "innerRef",
+                "required": true,
+                "type": {
+                  "name": "Ref<any>"
+                }
+              },
+              "innerProps": {
+                "defaultValue": null,
+                "description": "props passed to the wrapping element for the group.",
+                "name": "innerProps",
+                "required": true,
+                "type": {
+                  "name": "InnerProps"
+                }
+              },
+              "label": {
+                "defaultValue": null,
+                "description": "",
+                "name": "label",
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "type": {
+                "defaultValue": null,
+                "description": "",
+                "name": "type",
+                "required": true,
+                "type": {
+                  "name": "\"option\""
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SelectOptionGroup",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "SelectOptionGroup",
+            "methods": [],
+            "props": {
+              "children": {
+                "defaultValue": null,
+                "description": "The children to be rendered.",
+                "name": "children",
+                "required": true,
+                "type": {
+                  "name": "ReactNode"
+                }
+              },
+              "data": {
+                "defaultValue": null,
+                "description": "",
+                "name": "data",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Select/SelectOptionGroup.tsx",
+                  "name": "ExtendedGroupProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "{ label: string; expanded: boolean; options: any[]; }"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Switch",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Switch",
+            "methods": [],
+            "props": {
+              "label": {
+                "defaultValue": null,
+                "description": "",
+                "name": "label",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "string"
+                }
+              },
+              "checked": {
+                "defaultValue": null,
+                "description": "",
+                "name": "checked",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "className": {
+                "defaultValue": null,
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "labelClass": {
+                "defaultValue": null,
+                "description": "",
+                "name": "labelClass",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "switchClass": {
+                "defaultValue": null,
+                "description": "",
+                "name": "switchClass",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "transparent": {
+                "defaultValue": null,
+                "description": "",
+                "name": "transparent",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Switch/Switch.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(event?: SyntheticEvent<HTMLInputElement> | undefined) => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ThresholdsEditor",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ThresholdsEditor",
+            "methods": [],
+            "props": {
+              "thresholds": {
+                "defaultValue": null,
+                "description": "",
+                "name": "thresholds",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/ThresholdsEditor/ThresholdsEditor.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "Threshold[]"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "packages/grafana-ui/src/components/ThresholdsEditor/ThresholdsEditor.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(thresholds: Threshold[]) => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Popper",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Popper",
+            "methods": [],
+            "props": {
+              "show": {
+                "defaultValue": null,
+                "description": "",
+                "name": "show",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "boolean"
+                }
+              },
+              "placement": {
+                "defaultValue": null,
+                "description": "",
+                "name": "placement",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "\"auto-start\" | \"auto\" | \"auto-end\" | \"top-start\" | \"top\" | \"top-end\" | \"right-start\" | \"right\" | \"right-end\" | \"bottom-end\" | \"bottom\" | \"bottom-start\" | \"left-end\" | \"left\" | \"left-start\" | undefined"
+                }
+              },
+              "content": {
+                "defaultValue": null,
+                "description": "",
+                "name": "content",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "PopperContent<any>"
+                }
+              },
+              "referenceElement": {
+                "defaultValue": null,
+                "description": "",
+                "name": "referenceElement",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "ReferenceObject"
+                }
+              },
+              "wrapperClassName": {
+                "defaultValue": null,
+                "description": "",
+                "name": "wrapperClassName",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "renderArrow": {
+                "defaultValue": null,
+                "description": "",
+                "name": "renderArrow",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Popper.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "RenderPopperArrowFn | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PopperController",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "PopperController",
+            "methods": [],
+            "props": {
+              "placement": {
+                "defaultValue": null,
+                "description": "",
+                "name": "placement",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "\"auto-start\" | \"auto\" | \"auto-end\" | \"top-start\" | \"top\" | \"top-end\" | \"right-start\" | \"right\" | \"right-end\" | \"bottom-end\" | \"bottom\" | \"bottom-start\" | \"left-end\" | \"left\" | \"left-start\" | undefined"
+                }
+              },
+              "content": {
+                "defaultValue": null,
+                "description": "",
+                "name": "content",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "PopperContent<any>"
+                }
+              },
+              "className": {
+                "defaultValue": null,
+                "description": "",
+                "name": "className",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "hideAfter": {
+                "defaultValue": null,
+                "description": "",
+                "name": "hideAfter",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tooltip",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "Tooltip",
+            "methods": [],
+            "props": {
+              "theme": {
+                "defaultValue": null,
+                "description": "",
+                "name": "theme",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/Tooltip.tsx",
+                  "name": "TooltipProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "\"info\" | \"error\" | undefined"
+                }
+              },
+              "show": {
+                "defaultValue": null,
+                "description": "",
+                "name": "show",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "UsingPopperProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "boolean | undefined"
+                }
+              },
+              "placement": {
+                "defaultValue": null,
+                "description": "",
+                "name": "placement",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "UsingPopperProps"
+                },
+                "required": false,
+                "type": {
+                  "name": "\"auto-start\" | \"auto\" | \"auto-end\" | \"top-start\" | \"top\" | \"top-end\" | \"right-start\" | \"right\" | \"right-end\" | \"bottom-end\" | \"bottom\" | \"bottom-start\" | \"left-end\" | \"left\" | \"left-start\" | undefined"
+                }
+              },
+              "content": {
+                "defaultValue": null,
+                "description": "",
+                "name": "content",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/Tooltip/PopperController.tsx",
+                  "name": "UsingPopperProps"
+                },
+                "required": true,
+                "type": {
+                  "name": "PopperContent<any>"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnitPicker",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "UnitPicker",
+            "methods": [],
+            "props": {
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/UnitPicker/UnitPicker.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(item: any) => void"
+                }
+              },
+              "defaultValue": {
+                "defaultValue": null,
+                "description": "",
+                "name": "defaultValue",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/UnitPicker/UnitPicker.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "string | undefined"
+                }
+              },
+              "width": {
+                "defaultValue": {
+                  "value": "12"
+                },
+                "description": "",
+                "name": "width",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/UnitPicker/UnitPicker.tsx",
+                  "name": "Props"
+                },
+                "required": false,
+                "type": {
+                  "name": "number | undefined"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MappingRow",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "MappingRow",
+            "methods": [],
+            "props": {
+              "valueMapping": {
+                "defaultValue": null,
+                "description": "",
+                "name": "valueMapping",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ValueMappingsEditor/MappingRow.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "ValueMapping"
+                }
+              },
+              "updateValueMapping": {
+                "defaultValue": null,
+                "description": "",
+                "name": "updateValueMapping",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ValueMappingsEditor/MappingRow.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(valueMapping: ValueMapping) => void"
+                }
+              },
+              "removeValueMapping": {
+                "defaultValue": null,
+                "description": "",
+                "name": "removeValueMapping",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ValueMappingsEditor/MappingRow.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "() => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValueMappingsEditor",
+      "meta": {
+        "props": [
+          {
+            "description": "",
+            "displayName": "ValueMappingsEditor",
+            "methods": [],
+            "props": {
+              "valueMappings": {
+                "defaultValue": null,
+                "description": "",
+                "name": "valueMappings",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ValueMappingsEditor/ValueMappingsEditor.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "ValueMapping[]"
+                }
+              },
+              "onChange": {
+                "defaultValue": null,
+                "description": "",
+                "name": "onChange",
+                "parent": {
+                  "fileName": "grafana/grafana/packages/grafana-ui/src/components/ValueMappingsEditor/ValueMappingsEditor.tsx",
+                  "name": "Props"
+                },
+                "required": true,
+                "type": {
+                  "name": "(valueMappings: ValueMapping[]) => void"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

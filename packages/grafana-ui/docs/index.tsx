@@ -1,13 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
+import App from './src/App';
 // @ts-ignore
 import metadata from './metadata.json';
-import App from './src/App';
+// @ts-ignore
+import darkTheme from './public/sass/dark.scss';
+// @ts-ignore
+import lightTheme from './public/sass/light.scss';
 
-import dark from './src/dark.scss';
-import light from './src/light.scss';
+lightTheme.use();
 
-console.log(dark, light);
+const handleThemeChange = (theme: string) => {
+  if (theme !== 'light') {
+    lightTheme.unuse();
+    darkTheme.use();
+  } else {
+    darkTheme.unuse();
+    lightTheme.use();
+  }
+};
 
-ReactDOM.render(<App docsMetadata={metadata} />, document.getElementById('root'));
+ReactDOM.render(<App docsMetadata={metadata} onThemeChange={handleThemeChange} />, document.getElementById('root'));
