@@ -87,7 +87,7 @@
     "node-sass": "^4.11.0",
     "npm": "^6.9.0",
     "optimize-css-assets-webpack-plugin": "^5.0.1",
-    "ora": "^3.1.0",
+    "ora": "^3.2.0",
     "phantomjs-prebuilt": "^2.1.15",
     "postcss-browser-reporter": "^0.5.0",
     "postcss-loader": "^3.0.0",
