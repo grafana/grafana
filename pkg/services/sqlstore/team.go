@@ -283,7 +283,7 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 
 		}
 
-		if cmd.Permission != m.PERMISSION_ADMIN {
+		if cmd.Permission != m.PERMISSION_ADMIN { // make sure we don't get invalid permission levels in store
 			cmd.Permission = 0
 		}
 
