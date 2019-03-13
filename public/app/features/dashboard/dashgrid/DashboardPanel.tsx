@@ -76,34 +76,32 @@ export class DashboardPanel extends PureComponent<Props, State> {
       // unmount angular panel
       this.cleanUpAngularPanel();
 
-      if (panel.type !== pluginId) {
-        this.props.panel.changeType(pluginId, fromAngularPanel);
-      }
-
-      if (plugin.exports) {
-        this.validateOptions(plugin, panel);
-        this.setState({ plugin, angularPanel: null });
-      } else {
+      if (!plugin.exports) {
         try {
           plugin.exports = await importPluginModule(plugin.module);
-          this.validateOptions(plugin, panel);
         } catch (e) {
           plugin = getPanelPluginNotFound(pluginId);
         }
-
-        this.setState({ plugin, angularPanel: null });
       }
+
+      if (panel.type !== pluginId) {
+        if (fromAngularPanel) {
+          // for angular panels only we need to remove all events and let angular panels do some cleanup
+          panel.destroy();
+
+          this.props.panel.changeType(pluginId);
+        } else {
+          const { reactPanel } = plugin.exports;
+          panel.changeType(pluginId, reactPanel.preserveOptions);
+          if (reactPanel && reactPanel.optionsValidator) {
+            panel.options = reactPanel.optionsValidator(panel);
+          }
+        }
+      }
+
+      this.setState({ plugin, angularPanel: null });
     }
   }
-
-  // This is called before the plugin is added to the three,
-  // it allows plugins to update options before loading
-  validateOptions = (plugin: PanelPlugin, panel: PanelModel) => {
-    const { reactPanel } = plugin.exports;
-    if (reactPanel && reactPanel.optionsValidator) {
-      panel.options = reactPanel.optionsValidator(panel);
-    }
-  };
 
   componentDidMount() {
     this.loadPlugin(this.props.panel.type);

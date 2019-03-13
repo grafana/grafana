@@ -31,5 +31,5 @@ export const defaults: GaugeOptions = {
     unit: 'none',
   },
   valueMappings: [],
-  thresholds: [],
+  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
 };

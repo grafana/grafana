@@ -1,6 +1,9 @@
-import { TableData, Column } from '../types/index';
-
+// Libraries
+import isNumber from 'lodash/isNumber';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
+
+// Types
+import { TableData, Column } from '../types';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -130,4 +133,25 @@ export function parseCSV(text: string, options?: TableParseOptions, details?: Ta
     type: 'table',
     columnMap: {},
   });
+}
+
+export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {
+  if (isNumber(sortIndex)) {
+    const copy = {
+      ...data,
+      rows: [...data.rows].sort((a, b) => {
+        a = a[sortIndex];
+        b = b[sortIndex];
+        // Sort null or undefined separately from comparable values
+        return +(a == null) - +(b == null) || +(a > b) || -(a < b);
+      }),
+    };
+
+    if (reverse) {
+      copy.rows.reverse();
+    }
+
+    return copy;
+  }
+  return data;
 }

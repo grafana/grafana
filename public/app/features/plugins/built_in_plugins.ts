@@ -23,9 +23,11 @@ import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
+import * as table2Panel from 'app/plugins/panel/table2/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 
 const builtInPlugins = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -53,9 +55,11 @@ const builtInPlugins = {
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
   'app/plugins/panel/table/module': tablePanel,
+  'app/plugins/panel/table2/module': table2Panel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
+  'app/plugins/panel/bargauge/module': barGaugePanel,
 };
 
 export default builtInPlugins;

@@ -28,7 +28,7 @@ export interface GrafanaThemeCommons {
     };
     weight: {
       light: number;
-      normal: number;
+      regular: number;
       semibold: number;
     };
     lineHeight: {
@@ -59,9 +59,9 @@ export interface GrafanaThemeCommons {
   };
   border: {
     radius: {
-      xs: string;
       sm: string;
       md: string;
+      lg: string;
     };
     width: {
       sm: string;
