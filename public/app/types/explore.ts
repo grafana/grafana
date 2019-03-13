@@ -4,6 +4,7 @@ import {
   RawTimeRange,
   TimeRange,
   DataQuery,
+  DataQueryResponseData,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
@@ -322,7 +323,11 @@ export interface QueryTransaction {
 
 export type RangeScanner = () => RawTimeRange;
 
-export type ResultGetter = (result: any, transaction: QueryTransaction, allTransactions: QueryTransaction[]) => any;
+export type ResultGetter = (
+  result: DataQueryResponseData,
+  transaction: QueryTransaction,
+  allTransactions: QueryTransaction[]
+) => any;
 
 export interface TextMatch {
   text: string;

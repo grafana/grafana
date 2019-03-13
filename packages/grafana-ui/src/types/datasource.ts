@@ -3,8 +3,10 @@ import { PluginMeta } from './plugin';
 import { TableData, TimeSeries } from './data';
 
 export interface DataQueryResponse {
-  data: TimeSeries[] | [TableData] | any;
+  data: DataQueryResponseData;
 }
+
+export type DataQueryResponseData = TimeSeries[] | [TableData] | any;
 
 export interface DataQuery {
   /**
