@@ -49,7 +49,7 @@ export class BarGaugePanel extends PureComponent<Props> {
 
     return (
       <VizRepeater height={height} width={width} values={values} orientation={options.orientation}>
-        {({ vizHeight, vizWidth, valueInfo }) => this.renderBarGauge(valueInfo.value, vizWidth, vizHeight)}
+        {({ vizHeight, vizWidth, value }) => this.renderBarGauge(value, vizWidth, vizHeight)}
       </VizRepeater>
     );
   }

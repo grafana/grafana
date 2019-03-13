@@ -52,7 +52,7 @@ export class GaugePanel extends PureComponent<Props> {
 
     return (
       <VizRepeater height={height} width={width} values={values} orientation={VizOrientation.Auto}>
-        {({ vizHeight, vizWidth, valueInfo }) => this.renderGauge(valueInfo.value, vizWidth, vizHeight)}
+        {({ vizHeight, vizWidth, value }) => this.renderGauge(value, vizWidth, vizHeight)}
       </VizRepeater>
     );
   }
