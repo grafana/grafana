@@ -68,7 +68,7 @@
 }
 
 .thresholds-row-input-inner-value > input {
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   width: 150px;
   border-top: 1px solid $input-label-border-color;
@@ -96,7 +96,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   width: 42px;
   background-color: $input-label-bg;
