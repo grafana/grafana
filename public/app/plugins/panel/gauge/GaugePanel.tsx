@@ -2,7 +2,6 @@
 import React from 'react';
 
 // Services & Utils
-import { PanelProps } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
@@ -14,14 +13,6 @@ import { DisplayValue } from '@grafana/ui/src/utils/displayValue';
 import { SingleStatPanel } from './SingleStatPanel';
 
 export class GaugePanel extends SingleStatPanel<GaugeOptions> {
-  constructor(props: PanelProps<GaugeOptions>) {
-    super(props);
-
-    // if (props.options.valueOptions) {
-    //   console.warn('TODO!! how do we best migration options?');
-    // }
-  }
-
   renderStat(value: DisplayValue, width: number, height: number) {
     const { options } = this.props;
     const { display } = options;
