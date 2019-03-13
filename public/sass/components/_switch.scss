@@ -94,6 +94,7 @@ input:checked + .gf-form-switch__slider::before {
     opacity: 0;
     width: 0;
     height: 0;
+    appearance: none;
   }
 
   &--transparent {
