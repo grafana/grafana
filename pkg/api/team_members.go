@@ -67,6 +67,10 @@ func UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCommand) Response {
 		return Error(403, "Not allowed to update team member", err)
 	}
 
+	if c.OrgRole != m.ROLE_ADMIN {
+		cmd.ProtectLastAdmin = true
+	}
+
 	cmd.TeamId = teamId
 	cmd.UserId = c.ParamsInt64(":userId")
 	cmd.OrgId = orgId
@@ -91,7 +95,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *m.ReqContext) Response {
 	}
 
 	protectLastAdmin := false
-	if c.OrgRole == m.ROLE_EDITOR {
+	if c.OrgRole != m.ROLE_ADMIN {
 		protectLastAdmin = true
 	}
 

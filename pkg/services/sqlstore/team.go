@@ -271,6 +271,18 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 			return m.ErrTeamMemberNotFound
 		}
 
+		if cmd.ProtectLastAdmin {
+			lastAdmin, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+			if err != nil {
+				return err
+			}
+
+			if lastAdmin {
+				return m.ErrLastTeamAdmin
+			}
+
+		}
+
 		if cmd.Permission != m.PERMISSION_ADMIN {
 			cmd.Permission = 0
 		}
