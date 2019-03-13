@@ -137,11 +137,8 @@ function getById(id: string): TableReducerInfo {
         standard: true,
         alias: 'total',
       },
-      { value: TableReducerID.count, 
-        label: 'Count', 
-        description: 'Value Count', 
-        emptyInputResult: 0,
-        standard: true },
+      { value: TableReducerID.count, label: 'Count', description: 'Value Count', emptyInputResult: 0, standard: true },
+
       {
         value: TableReducerID.range,
         label: 'Range',
