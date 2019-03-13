@@ -25,6 +25,9 @@ export interface Props extends Themeable {
   decimals?: number;
 }
 
+/*
+ * This visualization is still in POC state, needed more tests & better structure
+ */
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     maxValue: 100,

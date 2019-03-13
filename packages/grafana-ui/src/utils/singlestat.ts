@@ -6,6 +6,9 @@ export interface SingleStatProcessingOptions {
   stat: string;
 }
 
+//
+// This is a temporary thing, waiting for a better data model and maybe unification between time series & table data
+//
 export function processSingleStatPanelData(options: SingleStatProcessingOptions): SingleStatValueInfo[] {
   const { panelData, stat } = options;
 
