@@ -16,7 +16,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Subscription Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.subscriptionId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.subscriptionId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Subscriptions -> Choose subscription -> Overview -> Subscription ID.</p>
         <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
@@ -27,7 +27,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Tenant Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.tenantId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.tenantId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> Properties -> Directory ID.</p>
         <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
@@ -38,7 +38,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Client Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.clientId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.clientId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> App Registrations -> Choose your app ->
           Application ID.</p>
@@ -50,7 +50,7 @@
   <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.clientSecret">
     <div class="gf-form">
       <span class="gf-form-label width-9">Client Secret</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.secureJsonData.clientSecret" placeholder=""></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.clientSecret" placeholder=""></input>
       <info-popover mode="right-absolute">
         <p>To create a new key, log in to Azure Portal, navigate to Azure Active Directory -> App Registrations ->
           Choose your
@@ -83,7 +83,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Subscription Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.logAnalyticsSubscriptionId"
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsSubscriptionId"
         placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Subscriptions -> Choose subscription -> Overview -> Subscription ID.</p>
@@ -95,7 +95,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Tenant Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.logAnalyticsTenantId"
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsTenantId"
         placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> Properties -> Directory ID.</p>
@@ -107,7 +107,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Client Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.logAnalyticsClientId"
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsClientId"
         placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> App Registrations -> Choose your app ->
@@ -121,7 +121,7 @@
   <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.logAnalyticsClientSecret">
     <div class="gf-form">
       <span class="gf-form-label width-9">Client Secret</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.secureJsonData.logAnalyticsClientSecret"
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.logAnalyticsClientSecret"
         placeholder="" />
       <info-popover mode="right-absolute">
         <p>To create a new key, log in to Azure Portal, navigate to Azure Active Directory -> App Registrations ->
@@ -168,7 +168,7 @@
   <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.appInsightsApiKey">
     <div class="gf-form">
       <span class="gf-form-label width-9">API Key</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.secureJsonData.appInsightsApiKey"
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.appInsightsApiKey"
         placeholder="" />
       <info-popover mode="right-absolute">
         <p>Section 2 of the Quickstart guide shows where to find/create the API Key:</p>
@@ -185,7 +185,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Application Id</span>
-      <input class="gf-form-input width-30" type="text" ng-model="ctrl.current.jsonData.appInsightsAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.appInsightsAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></input>
       <info-popover mode="right-absolute">
         <p>Section 2 of the Quickstart guide shows where to find the Application ID:</p>
         <a target="_blank" href="https://dev.applicationinsights.io/quickstart/">**Click here to open the Application

@@ -15,7 +15,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     static displayName = displayName;
     pickerTriggerRef = createRef<HTMLDivElement>();
 
-    handleColorChange = (color: string) => {
+    onColorChange = (color: string) => {
       const { onColorChange, onChange } = this.props;
       const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
 
@@ -25,7 +25,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     render() {
       const popoverElement = React.createElement(popover, {
         ...this.props,
-        onChange: this.handleColorChange,
+        onChange: this.onColorChange,
       });
       const { theme, children } = this.props;
 

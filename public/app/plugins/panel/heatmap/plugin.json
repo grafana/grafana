@@ -18,7 +18,6 @@
     "links": [
       { "name": "Brendan Gregg - Heatmaps", "url": "http://www.brendangregg.com/heatmaps.html" },
       { "name": "Brendan Gregg - Latency Heatmaps", "url": " http://www.brendangregg.com/HeatMaps/latency.html" }
-    ],
-    "version": "5.0.0"
+    ]
   }
 }
