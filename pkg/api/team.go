@@ -11,6 +11,11 @@ import (
 // POST /api/teams
 func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
+
+	if c.OrgRole == m.ROLE_VIEWER {
+		return Error(403, "Not allowed to create team.", nil)
+	}
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(409, "Team name taken", err)

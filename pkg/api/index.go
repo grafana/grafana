@@ -327,7 +327,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		})
 	}
 
-	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
+	if (c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_VIEWER) && hs.Cfg.EditorsCanAdmin {
 		cfgNode := &dtos.NavLink{
 			Id:       "cfg",
 			Text:     "Configuration",
@@ -341,13 +341,6 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 					Description: "Manage org groups",
 					Icon:        "gicon gicon-team",
 					Url:         setting.AppSubUrl + "/org/teams",
-				},
-				{
-					Text:        "Plugins",
-					Id:          "plugins",
-					Description: "View and configure plugins",
-					Icon:        "gicon gicon-plugins",
-					Url:         setting.AppSubUrl + "/plugins",
 				},
 			},
 		}
