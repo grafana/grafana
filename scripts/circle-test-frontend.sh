@@ -19,8 +19,8 @@ exit_if_fail npm run prettier:check
 end=$(date +%s)
 seconds=$((end - start))
 
-# if [ "${CIRCLE_BRANCH}" == "master" ]; then
-  exit_if_fail ./scripts/ci-frontend-metrics.sh
-  exit_if_fail ./scripts/ci-metrics-publisher.sh grafana.ci-performance.frontend-tests=$seconds
-# fi
+if [ "${CIRCLE_BRANCH}" == "master" ]; then
+	exit_if_fail ./scripts/ci-frontend-metrics.sh
+	exit_if_fail ./scripts/ci-metrics-publisher.sh grafana.ci-performance.frontend-tests=$seconds
+fi
 
