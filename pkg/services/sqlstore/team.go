@@ -271,7 +271,10 @@ func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 			return m.ErrTeamMemberNotFound
 		}
 
-		// TODO: check to make sure that permission is a legal value
+		if cmd.Permission != int64(m.PERMISSION_ADMIN) {
+			cmd.Permission = 0
+		}
+
 		member.Permission = cmd.Permission
 		_, err = sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId).Update(member)
 

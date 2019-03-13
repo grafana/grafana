@@ -102,6 +102,34 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(qAfterUpdate.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
 			})
 
+			Convey("Should default to member permission level when updating a user with invalid permission level", func() {
+				userID := userIds[0]
+				team := group1.Result
+				addMemberCmd := m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team.Id, UserId: userID}
+				err = AddTeamMember(&addMemberCmd)
+				So(err, ShouldBeNil)
+
+				qBeforeUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qBeforeUpdate)
+				So(err, ShouldBeNil)
+				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+
+				invalidPermissionLevel := 1337
+				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
+					UserId:     userID,
+					OrgId:      testOrgId,
+					TeamId:     team.Id,
+					Permission: int64(invalidPermissionLevel),
+				})
+
+				So(err, ShouldBeNil)
+
+				qAfterUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qAfterUpdate)
+				So(err, ShouldBeNil)
+				So(qAfterUpdate.Result[0].Permission, ShouldEqual, 0)
+			})
+
 			Convey("Shouldn't be able to update a user not in the team.", func() {
 				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
 					UserId:     1,
