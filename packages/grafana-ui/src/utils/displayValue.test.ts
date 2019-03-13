@@ -40,7 +40,7 @@ describe('Process simple display values', () => {
     assertSame(3, processors, { text: '3', numeric: 3 });
   });
 
-  it('Text', () => {
+  it('Text to number', () => {
     assertSame('3', processors, { text: '3', numeric: 3 });
   });
 
