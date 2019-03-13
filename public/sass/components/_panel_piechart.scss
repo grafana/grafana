@@ -21,12 +21,10 @@
     color: #d8d9da;
     opacity: 0;
     position: absolute;
-    width: 300px;
 
     .piechart-tooltip-time {
       text-align: center;
       position: relative;
-      top: -3px;
       padding: 0.2rem;
       font-weight: bold;
       color: #d8d9da;
@@ -34,7 +32,7 @@
       .piechart-tooltip-value {
         display: table-cell;
         font-weight: bold;
-        padding-left: 15px;
+        padding: 15px;
         text-align: right;
       }
     }
