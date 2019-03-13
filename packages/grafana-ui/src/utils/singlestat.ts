@@ -15,7 +15,7 @@ export function processSingleStatPanelData(options: SingleStatProcessingOptions)
   const timeSeries = processTimeSeries({
     data,
     xColumn: 0,
-    yColumn: 0,
+    yColumn: 1,
     nullValueMode: NullValueMode.Null,
   });
 

@@ -1,6 +1,6 @@
 // Libraries
-import Papa, { ParseError, ParseMeta } from 'papaparse';
 import isNumber from 'lodash/isNumber';
+import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
 import { TableData, Column, TimeSeries } from '../types';
