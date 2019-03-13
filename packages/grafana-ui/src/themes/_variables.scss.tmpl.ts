@@ -17,7 +17,13 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-$spacer: 1rem !default;
+$space-xxs: ${theme.spacing.xxs} !default;
+$space-xs: ${theme.spacing.xs} !default;
+$space-sm: ${theme.spacing.sm} !default;
+$space-md: ${theme.spacing.md} !default;
+$space-lg: ${theme.spacing.lg} !default;
+$space-xl: ${theme.spacing.xl} !default;
+$spacer: ${theme.spacing.d} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
 $spacers: (
@@ -46,7 +52,6 @@ $spacers: (
     ),
   ),
 ) !default;
-$border-width: 1px !default;
 
 // Grid breakpoints
 //
@@ -54,11 +59,11 @@ $border-width: 1px !default;
 // adapting to different screen sizes, for use in media queries.
 
 $grid-breakpoints: (
-  xs: 0,
-  sm: 544px,
-  md: 768px,
-  lg: 992px,
-  xl: 1200px,
+  xs: ${theme.breakpoints.xs},
+  sm: ${theme.breakpoints.sm},
+  md: ${theme.breakpoints.md},
+  lg: ${theme.breakpoints.lg},
+  xl: ${theme.breakpoints.xl},
 ) !default;
 
 // Grid containers
@@ -77,72 +82,51 @@ $container-max-widths: (
 // Set the number of columns and specify the width of the gutters.
 
 $grid-columns: 12 !default;
-$grid-gutter-width: 30px !default;
-
-$enable-flex: true;
+$grid-gutter-width: ${theme.spacing.gutter} !default;
 
 // Typography
 // -------------------------
 
-$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
-$font-family-serif: Georgia, 'Times New Roman', Times, serif;
-$font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
-$font-family-base: $font-family-sans-serif !default;
+$font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
+$font-family-monospace: ${theme.typography.fontFamily.monospace};
 
-$font-size-root: 14px !default;
-$font-size-base: 13px !default;
+$font-size-root: ${theme.typography.size.root} !default;
+$font-size-base: ${theme.typography.size.base} !default;
 
-$font-size-lg: 18px !default;
-$font-size-md: 14px !default;
-$font-size-sm: 12px !default;
-$font-size-xs: 10px !default;
+$font-size-lg: ${theme.typography.size.lg} !default;
+$font-size-md: ${theme.typography.size.md} !default;
+$font-size-sm: ${theme.typography.size.sm} !default;
+$font-size-xs: ${theme.typography.size.xs} !default;
 
-$line-height-base: 1.5 !default;
-$font-weight-semi-bold: 500;
+$line-height-base: ${theme.typography.lineHeight.lg} !default;
 
-$font-size-h1: 2rem !default;
-$font-size-h2: 1.75rem !default;
-$font-size-h3: 1.5rem !default;
-$font-size-h4: 1.3rem !default;
-$font-size-h5: 1.2rem !default;
-$font-size-h6: 1rem !default;
+$font-weight-regular: ${theme.typography.weight.regular} !default;
+$font-weight-semi-bold: ${theme.typography.weight.semibold} !default;
 
-$display1-size: 6rem !default;
-$display2-size: 5.5rem !default;
-$display3-size: 4.5rem !default;
-$display4-size: 3.5rem !default;
+$font-size-h1: ${theme.typography.heading.h1} !default;
+$font-size-h2: ${theme.typography.heading.h2} !default;
+$font-size-h3: ${theme.typography.heading.h3} !default;
+$font-size-h4: ${theme.typography.heading.h4} !default;
+$font-size-h5: ${theme.typography.heading.h5} !default;
+$font-size-h6: ${theme.typography.heading.h6} !default;
 
-$display1-weight: 400 !default;
-$display2-weight: 400 !default;
-$display3-weight: 400 !default;
-$display4-weight: 400 !default;
-
-$lead-font-size: 1.25rem !default;
-$lead-font-weight: 300 !default;
-
-$headings-margin-bottom: ($spacer / 2) !default;
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-$headings-font-weight: 400 !default;
-$headings-line-height: 1.1 !default;
-
-$hr-border-width: $border-width !default;
-$dt-font-weight: bold !default;
+$headings-line-height: ${theme.typography.lineHeight.sm} !default;
 
 // Components
 //
 // Define common padding and border radius sizes and more.
 
-$line-height-lg: (4 / 3) !default;
-$line-height-sm: 1.5 !default;
+$border-width: ${theme.border.width.sm} !default;
 
-$border-radius: 3px !default;
-$border-radius-lg: 5px !default;
-$border-radius-sm: 2px !default;
+$border-radius: ${theme.border.radius.md} !default;
+$border-radius-lg: ${theme.border.radius.lg}!default;
+$border-radius-sm: ${theme.border.radius.sm} !default;
 
 // Page
 
-$page-sidebar-width: 11rem;
-$page-sidebar-margin: 4rem;
+$page-sidebar-width: 154px;
+$page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
@@ -160,22 +144,16 @@ $input-padding-x: 10px !default;
 $input-padding-y: 8px !default;
 $input-line-height: 18px !default;
 
-$input-btn-border-width: 1px;
 $input-border-radius: 0 $border-radius $border-radius 0 !default;
 $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-y-sm: 4px !default;
-
 $input-padding-x-lg: 20px !default;
 $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
-
-$gf-form-margin: 0.2rem;
-$gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
 
@@ -199,13 +177,13 @@ $zindex-typeahead: 1060;
 // Buttons
 //
 
-$btn-padding-x: 1rem !default;
-$btn-padding-y: 0.7rem !default;
+$btn-padding-x: 14px !default;
+$btn-padding-y: 10px !default;
 $btn-line-height: 1 !default;
-$btn-font-weight: 500 !default;
+$btn-font-weight: ${theme.typography.weight.semibold} !default;
 
-$btn-padding-x-sm: 0.5rem !default;
-$btn-padding-y-sm: 0.25rem !default;
+$btn-padding-x-sm: 7px !default;
+$btn-padding-y-sm: 4px !default;
 
 $btn-padding-x-lg: 21px !default;
 $btn-padding-y-lg: 11px !default;
@@ -213,7 +191,6 @@ $btn-padding-y-lg: 11px !default;
 $btn-padding-x-xl: 21px !default;
 $btn-padding-y-xl: 11px !default;
 
-$btn-border-radius: 2px;
 
 $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 
@@ -221,8 +198,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$panel-margin: 10px;
-$dashboard-padding: $panel-margin * 2;
+$dashboard-padding: 10px * 2;
 $panel-horizontal-padding: 10;
 $panel-vertical-padding: 5;
 $panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
@@ -257,9 +233,4 @@ $external-services: (
     icon: '',
   ),
 ) !default;
-
-:export {
-  panelhorizontalpadding: $panel-horizontal-padding;
-  panelverticalpadding: $panel-vertical-padding;
-}
 `;

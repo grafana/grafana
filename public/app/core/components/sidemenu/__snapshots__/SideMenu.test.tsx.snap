@@ -2,16 +2,16 @@
 
 exports[`Render should render component 1`] = `
 Array [
-  <div
+  <a
     className="sidemenu__logo"
+    href="/"
     key="logo"
-    onClick={[Function]}
   >
     <img
       alt="Grafana"
       src="public/img/grafana_icon.svg"
     />
-  </div>,
+  </a>,
   <div
     className="sidemenu__logo_small_breakpoint"
     key="hamburger"
