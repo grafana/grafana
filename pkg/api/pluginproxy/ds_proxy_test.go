@@ -417,8 +417,7 @@ func TestDSRouteRule(t *testing.T) {
 				Type: "custom-datasource",
 				Url:  "http://host/root/",
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"oauthPassThru":         true,
-					"oauthPassThruProvider": "oauth_generic_oauth",
+					"oauthPassThru": true,
 				}),
 			}
 
