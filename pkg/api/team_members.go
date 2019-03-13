@@ -31,15 +31,12 @@ func GetTeamMembers(c *m.ReqContext) Response {
 
 // POST /api/teams/:teamId/members
 func AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
-	teamId := c.ParamsInt64(":teamId")
-	orgId := c.OrgId
+	cmd.OrgId = c.OrgId
+	cmd.TeamId = c.ParamsInt64(":teamId")
 
-	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to add team member", err)
 	}
-
-	cmd.TeamId = teamId
-	cmd.OrgId = orgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNotFound {
