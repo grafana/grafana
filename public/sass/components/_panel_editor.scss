@@ -21,7 +21,7 @@
 }
 
 .panel-editor-container__editor {
-  margin-top: $panel-margin*2;
+  margin-top: $space-lg;
   display: flex;
   flex-direction: row;
   flex: 1 1 0;
@@ -80,11 +80,15 @@
   }
 
   .submenu-controls {
-    padding: 0 $dashboard-padding $panel-margin $dashboard-padding;
+    padding: 0 $dashboard-padding $space-sm $dashboard-padding;
   }
 
   .panel-editor-container__panel {
     margin: 0 $dashboard-padding;
+  }
+
+  .search-container {
+    left: 0 !important;
   }
 }
 
@@ -119,7 +123,6 @@
 }
 
 .viz-picker {
-  padding: 0px 20px;
   position: relative;
 }
 
@@ -146,15 +149,16 @@
   padding-bottom: 6px;
   transition: transform 1 ease;
 
-  &--current {
-    box-shadow: 0 0 6px $orange;
-    border: 1px solid $orange;
-  }
-
   &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;
     background: $panel-editor-viz-item-bg-hover;
     border: $panel-editor-viz-item-border-hover;
+  }
+
+  &--current {
+    box-shadow: 0 0 6px $orange !important;
+    border: 1px solid $orange !important;
+    background: $panel-editor-viz-item-bg !important;
   }
 }
 
@@ -230,4 +234,3 @@
   position: relative;
   min-width: 200px;
 }
-

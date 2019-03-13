@@ -8,6 +8,6 @@
     "tslint": "echo \"Nothing to do\"",
     "typecheck": "echo \"Nothing to do\""
   },
-  "author": "",
-  "license": "ISC"
+  "author": "Grafana Labs",
+  "license": "Apache-2.0"
 }

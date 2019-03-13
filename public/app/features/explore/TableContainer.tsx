@@ -21,7 +21,7 @@ interface TableContainerProps {
 
 export class TableContainer extends PureComponent<TableContainerProps> {
   onClickTableButton = () => {
-    this.props.toggleTable(this.props.exploreId);
+    this.props.toggleTable(this.props.exploreId, this.props.showingTable);
   };
 
   render() {
@@ -51,4 +51,9 @@ const mapDispatchToProps = {
   toggleTable,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TableContainer)
+);

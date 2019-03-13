@@ -8,7 +8,7 @@ Docker
 
 ## Run
 
-Run load test for 15 minutes:
+Run load test for 15 minutes using 2 virtual users and targeting http://localhost:3000.
 
 ```bash
 $ ./run.sh
@@ -18,6 +18,18 @@ Run load test for custom duration:
 
 ```bash
 $ ./run.sh -d 10s
+```
+
+Run load test for custom target url:
+
+```bash
+$ ./run.sh -u http://grafana.loc
+```
+
+Run load test for 10 virtual users:
+
+```bash
+$ ./run.sh -v 10
 ```
 
 Example output:

@@ -8,6 +8,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
 import TimePicker from './TimePicker';
+import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 
 enum IconSide {
   left = 'left',
@@ -79,6 +80,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     this.props.runQuery(this.props.exploreId);
   };
 
+  onCloseTimePicker = () => {
+    this.props.timepickerRef.current.setState({ isOpen: false });
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -97,19 +102,17 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
           <div className="explore-toolbar-header">
             <div className="explore-toolbar-header-title">
               {exploreId === 'left' && (
-                <a className="navbar-page-btn">
-                  <i className="fa fa-rocket fa-fw" />
+                <span className="navbar-page-btn">
+                  <i className="gicon gicon-explore" />
                   Explore
-                </a>
+                </span>
               )}
             </div>
-            <div className="explore-toolbar-header-close">
-              {exploreId === 'right' && (
-                <a onClick={this.props.closeSplit}>
-                  <i className="fa fa-times fa-fw" />
-                </a>
-              )}
-            </div>
+            {exploreId === 'right' && (
+              <a className="explore-toolbar-header-close" onClick={this.props.closeSplit}>
+                <i className="fa fa-times fa-fw" />
+              </a>
+            )}
           </div>
         </div>
         <div className="explore-toolbar-item">
@@ -137,7 +140,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
-              <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+              <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
+                <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+              </ClickOutsideWrapper>
             </div>
             <div className="explore-toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
@@ -149,7 +154,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 splitted,
                 title: 'Run Query',
                 onClick: this.onRunQuery,
-                buttonClassName: 'navbar-button--primary',
+                buttonClassName: 'navbar-button--secondary',
                 iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
                 iconSide: IconSide.right,
               })}
@@ -188,4 +193,9 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
 };
 
-export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
+export const ExploreToolbar = hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UnConnectedExploreToolbar)
+);

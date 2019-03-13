@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
+// Pages
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -20,7 +21,11 @@ import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards'
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
+import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import config from 'app/core/config';
+
+// Types
+import { DashboardRouteInfo } from 'app/types';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -28,32 +33,55 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Home,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      routeInfo: DashboardRouteInfo.Normal,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/dashboard/:type/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
+    })
+    .when('/dashboard/new', {
+      template: '<react-container />',
+      pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.New,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d-solo/:uid/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
@@ -61,15 +89,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/dashboard-solo/:type/:slug', {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
-    })
-    .when('/dashboard/new', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'NewDashboardCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
     })
     .when('/dashboard/import', {
       templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
@@ -128,8 +152,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/explore', {

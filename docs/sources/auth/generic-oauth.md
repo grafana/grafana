@@ -113,7 +113,7 @@ allowed_organizations =
     allowed_organizations =
     ```
 
-### Set up OAuth2 with Auth0
+## Set up OAuth2 with Auth0
 
 1.  Create a new Client in Auth0
     - Name: Grafana
@@ -139,7 +139,7 @@ allowed_organizations =
     api_url = https://<domain>/userinfo
     ```
 
-### Set up OAuth2 with Azure Active Directory
+## Set up OAuth2 with Azure Active Directory
 
 1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
 
@@ -211,14 +211,16 @@ allowed_organizations =
 
 ## Set up OAuth2 with non-compliant providers
 
+> Only available in Grafana v6.0 and above.
+
 Some OAuth2 providers might not support `client_id` and `client_secret` passed via Basic Authentication HTTP header, which
 results in `invalid_client` error. To allow Grafana to authenticate via these type of providers, the client identifiers must be
 send via POST body, which can be enabled via the following settings:
 
-    ```bash
-    [auth.generic_oauth]
-    send_client_credentials_via_post = true
-    ```
+```bash
+[auth.generic_oauth]
+send_client_credentials_via_post = true
+```
 
 <hr>
 

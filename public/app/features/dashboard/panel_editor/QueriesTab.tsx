@@ -133,9 +133,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     return (
       <>
         <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
-        <div className="flex-grow" />
+        <div className="flex-grow-1" />
         {!isAddingMixed && (
-          <button className="btn navbar-button navbar-button--primary" onClick={this.onAddQueryClick}>
+          <button className="btn navbar-button" onClick={this.onAddQueryClick}>
             Add Query
           </button>
         )}
@@ -176,7 +176,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { currentDS, scrollTop } = this.state;
 
     const queryInspector: EditorToolbarView = {
@@ -205,6 +205,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 dataSourceValue={query.datasource || panel.datasource}
                 key={query.refId}
                 panel={panel}
+                dashboard={dashboard}
                 query={query}
                 onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}

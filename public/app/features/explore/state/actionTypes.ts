@@ -1,6 +1,13 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi } from '@grafana/ui/src/types';
+import {
+  RawTimeRange,
+  TimeRange,
+  DataQuery,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryFixAction,
+} from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
@@ -8,234 +15,29 @@ import {
   RangeScanner,
   ResultType,
   QueryTransaction,
+  ExploreUIState,
 } from 'app/types/explore';
+import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import { LogLevel } from 'app/core/logs_model';
 
+/**  Higher order actions
+ *
+ */
 export enum ActionTypes {
-  AddQueryRow = 'explore/ADD_QUERY_ROW',
-  ChangeDatasource = 'explore/CHANGE_DATASOURCE',
-  ChangeQuery = 'explore/CHANGE_QUERY',
-  ChangeSize = 'explore/CHANGE_SIZE',
-  ChangeTime = 'explore/CHANGE_TIME',
-  ClearQueries = 'explore/CLEAR_QUERIES',
-  HighlightLogsExpression = 'explore/HIGHLIGHT_LOGS_EXPRESSION',
-  InitializeExplore = 'explore/INITIALIZE_EXPLORE',
   InitializeExploreSplit = 'explore/INITIALIZE_EXPLORE_SPLIT',
-  LoadDatasourceFailure = 'explore/LOAD_DATASOURCE_FAILURE',
-  LoadDatasourceMissing = 'explore/LOAD_DATASOURCE_MISSING',
-  LoadDatasourcePending = 'explore/LOAD_DATASOURCE_PENDING',
-  LoadDatasourceSuccess = 'explore/LOAD_DATASOURCE_SUCCESS',
-  ModifyQueries = 'explore/MODIFY_QUERIES',
-  QueryTransactionFailure = 'explore/QUERY_TRANSACTION_FAILURE',
-  QueryTransactionStart = 'explore/QUERY_TRANSACTION_START',
-  QueryTransactionSuccess = 'explore/QUERY_TRANSACTION_SUCCESS',
-  RemoveQueryRow = 'explore/REMOVE_QUERY_ROW',
-  RunQueries = 'explore/RUN_QUERIES',
-  RunQueriesEmpty = 'explore/RUN_QUERIES_EMPTY',
-  ScanRange = 'explore/SCAN_RANGE',
-  ScanStart = 'explore/SCAN_START',
-  ScanStop = 'explore/SCAN_STOP',
-  SetQueries = 'explore/SET_QUERIES',
   SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
-  StateSave = 'explore/STATE_SAVE',
-  ToggleGraph = 'explore/TOGGLE_GRAPH',
-  ToggleLogs = 'explore/TOGGLE_LOGS',
-  ToggleTable = 'explore/TOGGLE_TABLE',
-  UpdateDatasourceInstance = 'explore/UPDATE_DATASOURCE_INSTANCE',
   ResetExplore = 'explore/RESET_EXPLORE',
-  QueriesImported = 'explore/QueriesImported',
-}
-
-export interface AddQueryRowAction {
-  type: ActionTypes.AddQueryRow;
-  payload: {
-    exploreId: ExploreId;
-    index: number;
-    query: DataQuery;
-  };
-}
-
-export interface ChangeQueryAction {
-  type: ActionTypes.ChangeQuery;
-  payload: {
-    exploreId: ExploreId;
-    query: DataQuery;
-    index: number;
-    override: boolean;
-  };
-}
-
-export interface ChangeSizeAction {
-  type: ActionTypes.ChangeSize;
-  payload: {
-    exploreId: ExploreId;
-    width: number;
-    height: number;
-  };
-}
-
-export interface ChangeTimeAction {
-  type: ActionTypes.ChangeTime;
-  payload: {
-    exploreId: ExploreId;
-    range: TimeRange;
-  };
-}
-
-export interface ClearQueriesAction {
-  type: ActionTypes.ClearQueries;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface HighlightLogsExpressionAction {
-  type: ActionTypes.HighlightLogsExpression;
-  payload: {
-    exploreId: ExploreId;
-    expressions: string[];
-  };
-}
-
-export interface InitializeExploreAction {
-  type: ActionTypes.InitializeExplore;
-  payload: {
-    exploreId: ExploreId;
-    containerWidth: number;
-    eventBridge: Emitter;
-    exploreDatasources: DataSourceSelectItem[];
-    queries: DataQuery[];
-    range: RawTimeRange;
-  };
 }
 
 export interface InitializeExploreSplitAction {
   type: ActionTypes.InitializeExploreSplit;
-}
-
-export interface LoadDatasourceFailureAction {
-  type: ActionTypes.LoadDatasourceFailure;
-  payload: {
-    exploreId: ExploreId;
-    error: string;
-  };
-}
-
-export interface LoadDatasourcePendingAction {
-  type: ActionTypes.LoadDatasourcePending;
-  payload: {
-    exploreId: ExploreId;
-    requestedDatasourceName: string;
-  };
-}
-
-export interface LoadDatasourceMissingAction {
-  type: ActionTypes.LoadDatasourceMissing;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface LoadDatasourceSuccessAction {
-  type: ActionTypes.LoadDatasourceSuccess;
-  payload: {
-    exploreId: ExploreId;
-    StartPage?: any;
-    datasourceInstance: any;
-    history: HistoryItem[];
-    logsHighlighterExpressions?: any[];
-    showingStartPage: boolean;
-    supportsGraph: boolean;
-    supportsLogs: boolean;
-    supportsTable: boolean;
-  };
-}
-
-export interface ModifyQueriesAction {
-  type: ActionTypes.ModifyQueries;
-  payload: {
-    exploreId: ExploreId;
-    modification: any;
-    index: number;
-    modifier: (queries: DataQuery[], modification: any) => DataQuery[];
-  };
-}
-
-export interface QueryTransactionFailureAction {
-  type: ActionTypes.QueryTransactionFailure;
-  payload: {
-    exploreId: ExploreId;
-    queryTransactions: QueryTransaction[];
-  };
-}
-
-export interface QueryTransactionStartAction {
-  type: ActionTypes.QueryTransactionStart;
-  payload: {
-    exploreId: ExploreId;
-    resultType: ResultType;
-    rowIndex: number;
-    transaction: QueryTransaction;
-  };
-}
-
-export interface QueryTransactionSuccessAction {
-  type: ActionTypes.QueryTransactionSuccess;
-  payload: {
-    exploreId: ExploreId;
-    history: HistoryItem[];
-    queryTransactions: QueryTransaction[];
-  };
-}
-
-export interface RemoveQueryRowAction {
-  type: ActionTypes.RemoveQueryRow;
-  payload: {
-    exploreId: ExploreId;
-    index: number;
-  };
-}
-
-export interface RunQueriesEmptyAction {
-  type: ActionTypes.RunQueriesEmpty;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface ScanStartAction {
-  type: ActionTypes.ScanStart;
-  payload: {
-    exploreId: ExploreId;
-    scanner: RangeScanner;
-  };
-}
-
-export interface ScanRangeAction {
-  type: ActionTypes.ScanRange;
-  payload: {
-    exploreId: ExploreId;
-    range: RawTimeRange;
-  };
-}
-
-export interface ScanStopAction {
-  type: ActionTypes.ScanStop;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface SetQueriesAction {
-  type: ActionTypes.SetQueries;
-  payload: {
-    exploreId: ExploreId;
-    queries: DataQuery[];
-  };
+  payload: {};
 }
 
 export interface SplitCloseAction {
   type: ActionTypes.SplitClose;
+  payload: {};
 }
 
 export interface SplitOpenAction {
@@ -245,80 +47,402 @@ export interface SplitOpenAction {
   };
 }
 
-export interface StateSaveAction {
-  type: ActionTypes.StateSave;
-}
-
-export interface ToggleTableAction {
-  type: ActionTypes.ToggleTable;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface ToggleGraphAction {
-  type: ActionTypes.ToggleGraph;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface ToggleLogsAction {
-  type: ActionTypes.ToggleLogs;
-  payload: {
-    exploreId: ExploreId;
-  };
-}
-
-export interface UpdateDatasourceInstanceAction {
-  type: ActionTypes.UpdateDatasourceInstance;
-  payload: {
-    exploreId: ExploreId;
-    datasourceInstance: DataSourceApi;
-  };
-}
-
 export interface ResetExploreAction {
   type: ActionTypes.ResetExplore;
   payload: {};
 }
 
-export interface QueriesImported {
-  type: ActionTypes.QueriesImported;
-  payload: {
-    exploreId: ExploreId;
-    queries: DataQuery[];
-  };
+/**  Lower order actions
+ *
+ */
+export interface AddQueryRowPayload {
+  exploreId: ExploreId;
+  index: number;
+  query: DataQuery;
 }
 
-export type Action =
-  | AddQueryRowAction
-  | ChangeQueryAction
-  | ChangeSizeAction
-  | ChangeTimeAction
-  | ClearQueriesAction
-  | HighlightLogsExpressionAction
-  | InitializeExploreAction
+export interface ChangeQueryPayload {
+  exploreId: ExploreId;
+  query: DataQuery;
+  index: number;
+  override: boolean;
+}
+
+export interface ChangeSizePayload {
+  exploreId: ExploreId;
+  width: number;
+  height: number;
+}
+
+export interface ChangeTimePayload {
+  exploreId: ExploreId;
+  range: TimeRange;
+}
+
+export interface ClearQueriesPayload {
+  exploreId: ExploreId;
+}
+
+export interface HighlightLogsExpressionPayload {
+  exploreId: ExploreId;
+  expressions: string[];
+}
+
+export interface InitializeExplorePayload {
+  exploreId: ExploreId;
+  containerWidth: number;
+  eventBridge: Emitter;
+  exploreDatasources: DataSourceSelectItem[];
+  queries: DataQuery[];
+  range: RawTimeRange;
+  ui: ExploreUIState;
+}
+
+export interface LoadDatasourceFailurePayload {
+  exploreId: ExploreId;
+  error: string;
+}
+
+export interface LoadDatasourceMissingPayload {
+  exploreId: ExploreId;
+}
+
+export interface LoadDatasourcePendingPayload {
+  exploreId: ExploreId;
+  requestedDatasourceName: string;
+}
+
+export interface LoadDatasourceSuccessPayload {
+  exploreId: ExploreId;
+  StartPage?: any;
+  datasourceInstance: any;
+  history: HistoryItem[];
+  logsHighlighterExpressions?: any[];
+  showingStartPage: boolean;
+  supportsGraph: boolean;
+  supportsLogs: boolean;
+  supportsTable: boolean;
+}
+
+export interface ModifyQueriesPayload {
+  exploreId: ExploreId;
+  modification: QueryFixAction;
+  index: number;
+  modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
+}
+
+export interface QueryTransactionFailurePayload {
+  exploreId: ExploreId;
+  queryTransactions: QueryTransaction[];
+}
+
+export interface QueryTransactionStartPayload {
+  exploreId: ExploreId;
+  resultType: ResultType;
+  rowIndex: number;
+  transaction: QueryTransaction;
+}
+
+export interface QueryTransactionSuccessPayload {
+  exploreId: ExploreId;
+  history: HistoryItem[];
+  queryTransactions: QueryTransaction[];
+}
+
+export interface RemoveQueryRowPayload {
+  exploreId: ExploreId;
+  index: number;
+}
+
+export interface RunQueriesEmptyPayload {
+  exploreId: ExploreId;
+}
+
+export interface ScanStartPayload {
+  exploreId: ExploreId;
+  scanner: RangeScanner;
+}
+
+export interface ScanRangePayload {
+  exploreId: ExploreId;
+  range: RawTimeRange;
+}
+
+export interface ScanStopPayload {
+  exploreId: ExploreId;
+}
+
+export interface SetQueriesPayload {
+  exploreId: ExploreId;
+  queries: DataQuery[];
+}
+
+export interface SplitOpenPayload {
+  itemState: ExploreItemState;
+}
+
+export interface ToggleTablePayload {
+  exploreId: ExploreId;
+}
+
+export interface ToggleGraphPayload {
+  exploreId: ExploreId;
+}
+
+export interface ToggleLogsPayload {
+  exploreId: ExploreId;
+}
+
+export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
+  exploreId: ExploreId;
+}
+
+export interface UpdateDatasourceInstancePayload {
+  exploreId: ExploreId;
+  datasourceInstance: DataSourceApi;
+}
+
+export interface ToggleLogLevelPayload {
+  exploreId: ExploreId;
+  hiddenLogLevels: Set<LogLevel>;
+}
+
+export interface QueriesImportedPayload {
+  exploreId: ExploreId;
+  queries: DataQuery[];
+}
+
+/**
+ * Adds a query row after the row with the given index.
+ */
+export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explore/ADD_QUERY_ROW').create();
+
+/**
+ * Loads a new datasource identified by the given name.
+ */
+export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
+
+/**
+ * Query change handler for the query row with the given index.
+ * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
+ */
+export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explore/CHANGE_QUERY').create();
+
+/**
+ * Keep track of the Explore container size, in particular the width.
+ * The width will be used to calculate graph intervals (number of datapoints).
+ */
+export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
+
+/**
+ * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ */
+export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
+
+/**
+ * Clear all queries and results.
+ */
+export const clearQueriesAction = actionCreatorFactory<ClearQueriesPayload>('explore/CLEAR_QUERIES').create();
+
+/**
+ * Highlight expressions in the log results
+ */
+export const highlightLogsExpressionAction = actionCreatorFactory<HighlightLogsExpressionPayload>(
+  'explore/HIGHLIGHT_LOGS_EXPRESSION'
+).create();
+
+/**
+ * Initialize Explore state with state from the URL and the React component.
+ * Call this only on components for with the Explore state has not been initialized.
+ */
+export const initializeExploreAction = actionCreatorFactory<InitializeExplorePayload>(
+  'explore/INITIALIZE_EXPLORE'
+).create();
+
+/**
+ * Initialize the wrapper split state
+ */
+export const initializeExploreSplitAction = noPayloadActionCreatorFactory('explore/INITIALIZE_EXPLORE_SPLIT').create();
+
+/**
+ * Display an error that happened during the selection of a datasource
+ */
+export const loadDatasourceFailureAction = actionCreatorFactory<LoadDatasourceFailurePayload>(
+  'explore/LOAD_DATASOURCE_FAILURE'
+).create();
+
+/**
+ * Display an error when no datasources have been configured
+ */
+export const loadDatasourceMissingAction = actionCreatorFactory<LoadDatasourceMissingPayload>(
+  'explore/LOAD_DATASOURCE_MISSING'
+).create();
+
+/**
+ * Start the async process of loading a datasource to display a loading indicator
+ */
+export const loadDatasourcePendingAction = actionCreatorFactory<LoadDatasourcePendingPayload>(
+  'explore/LOAD_DATASOURCE_PENDING'
+).create();
+
+/**
+ * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
+ * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
+ * e.g., Prometheus -> Loki queries.
+ */
+export const loadDatasourceSuccessAction = actionCreatorFactory<LoadDatasourceSuccessPayload>(
+  'explore/LOAD_DATASOURCE_SUCCESS'
+).create();
+
+/**
+ * Action to modify a query given a datasource-specific modifier action.
+ * @param exploreId Explore area
+ * @param modification Action object with a type, e.g., ADD_FILTER
+ * @param index Optional query row index. If omitted, the modification is applied to all query rows.
+ * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
+ */
+export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('explore/MODIFY_QUERIES').create();
+
+/**
+ * Mark a query transaction as failed with an error extracted from the query response.
+ * The transaction will be marked as `done`.
+ */
+export const queryTransactionFailureAction = actionCreatorFactory<QueryTransactionFailurePayload>(
+  'explore/QUERY_TRANSACTION_FAILURE'
+).create();
+
+/**
+ * Start a query transaction for the given result type.
+ * @param exploreId Explore area
+ * @param transaction Query options and `done` status.
+ * @param resultType Associate the transaction with a result viewer, e.g., Graph
+ * @param rowIndex Index is used to associate latency for this transaction with a query row
+ */
+export const queryTransactionStartAction = actionCreatorFactory<QueryTransactionStartPayload>(
+  'explore/QUERY_TRANSACTION_START'
+).create();
+
+/**
+ * Complete a query transaction, mark the transaction as `done` and store query state in URL.
+ * If the transaction was started by a scanner, it keeps on scanning for more results.
+ * Side-effect: the query is stored in localStorage.
+ * @param exploreId Explore area
+ * @param transactionId ID
+ * @param result Response from `datasourceInstance.query()`
+ * @param latency Duration between request and response
+ * @param queries Queries from all query rows
+ * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
+ */
+export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransactionSuccessPayload>(
+  'explore/QUERY_TRANSACTION_SUCCESS'
+).create();
+
+/**
+ * Remove query row of the given index, as well as associated query results.
+ */
+export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
+export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
+export const runQueriesEmptyAction = actionCreatorFactory<RunQueriesEmptyPayload>('explore/RUN_QUERIES_EMPTY').create();
+
+/**
+ * Start a scan for more results using the given scanner.
+ * @param exploreId Explore area
+ * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
+ */
+export const scanStartAction = actionCreatorFactory<ScanStartPayload>('explore/SCAN_START').create();
+export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
+
+/**
+ * Stop any scanning for more results.
+ */
+export const scanStopAction = actionCreatorFactory<ScanStopPayload>('explore/SCAN_STOP').create();
+
+/**
+ * Reset queries to the given queries. Any modifications will be discarded.
+ * Use this action for clicks on query examples. Triggers a query run.
+ */
+export const setQueriesAction = actionCreatorFactory<SetQueriesPayload>('explore/SET_QUERIES').create();
+
+/**
+ * Close the split view and save URL state.
+ */
+export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLOSE').create();
+
+/**
+ * Open the split view and copy the left state to be the right state.
+ * The right state is automatically initialized.
+ * The copy keeps all query modifications but wipes the query results.
+ */
+export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
+export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
+
+/**
+ * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
+ */
+export const updateUIStateAction = actionCreatorFactory<UpdateUIStatePayload>('explore/UPDATE_UI_STATE').create();
+
+/**
+ * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
+ */
+export const toggleTableAction = actionCreatorFactory<ToggleTablePayload>('explore/TOGGLE_TABLE').create();
+
+/**
+ * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
+ */
+export const toggleGraphAction = actionCreatorFactory<ToggleGraphPayload>('explore/TOGGLE_GRAPH').create();
+
+/**
+ * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
+ */
+export const toggleLogsAction = actionCreatorFactory<ToggleLogsPayload>('explore/TOGGLE_LOGS').create();
+
+/**
+ * Updates datasource instance before datasouce loading has started
+ */
+export const updateDatasourceInstanceAction = actionCreatorFactory<UpdateDatasourceInstancePayload>(
+  'explore/UPDATE_DATASOURCE_INSTANCE'
+).create();
+
+export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>('explore/TOGGLE_LOG_LEVEL').create();
+
+/**
+ * Resets state for explore.
+ */
+export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
+export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
+
+export type HigherOrderAction =
   | InitializeExploreSplitAction
-  | LoadDatasourceFailureAction
-  | LoadDatasourceMissingAction
-  | LoadDatasourcePendingAction
-  | LoadDatasourceSuccessAction
-  | ModifyQueriesAction
-  | QueryTransactionFailureAction
-  | QueryTransactionStartAction
-  | QueryTransactionSuccessAction
-  | RemoveQueryRowAction
-  | RunQueriesEmptyAction
-  | ScanRangeAction
-  | ScanStartAction
-  | ScanStopAction
-  | SetQueriesAction
   | SplitCloseAction
   | SplitOpenAction
-  | ToggleGraphAction
-  | ToggleLogsAction
-  | ToggleTableAction
-  | UpdateDatasourceInstanceAction
   | ResetExploreAction
-  | QueriesImported;
+  | ActionOf<any>;
+
+export type Action =
+  | ActionOf<AddQueryRowPayload>
+  | ActionOf<ChangeQueryPayload>
+  | ActionOf<ChangeSizePayload>
+  | ActionOf<ChangeTimePayload>
+  | ActionOf<ClearQueriesPayload>
+  | ActionOf<HighlightLogsExpressionPayload>
+  | ActionOf<InitializeExplorePayload>
+  | ActionOf<LoadDatasourceFailurePayload>
+  | ActionOf<LoadDatasourceMissingPayload>
+  | ActionOf<LoadDatasourcePendingPayload>
+  | ActionOf<LoadDatasourceSuccessPayload>
+  | ActionOf<ModifyQueriesPayload>
+  | ActionOf<QueryTransactionFailurePayload>
+  | ActionOf<QueryTransactionStartPayload>
+  | ActionOf<QueryTransactionSuccessPayload>
+  | ActionOf<RemoveQueryRowPayload>
+  | ActionOf<RunQueriesEmptyPayload>
+  | ActionOf<ScanStartPayload>
+  | ActionOf<ScanRangePayload>
+  | ActionOf<SetQueriesPayload>
+  | ActionOf<SplitOpenPayload>
+  | ActionOf<ToggleTablePayload>
+  | ActionOf<ToggleGraphPayload>
+  | ActionOf<ToggleLogsPayload>
+  | ActionOf<UpdateDatasourceInstancePayload>
+  | ActionOf<QueriesImportedPayload>
+  | ActionOf<ToggleLogLevelPayload>;

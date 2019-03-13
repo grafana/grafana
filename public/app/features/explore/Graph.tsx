@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import { withSize } from 'react-sizeme';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
@@ -76,11 +75,11 @@ const FLOT_OPTIONS = {
 
 interface GraphProps {
   data: any[];
-  height?: string; // e.g., '200px'
+  height?: number;
+  width?: number;
   id?: string;
   range: RawTimeRange;
   split?: boolean;
-  size?: { width: number; height: number };
   userOptions?: any;
   onChangeTime?: (range: RawTimeRange) => void;
   onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
@@ -122,7 +121,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       prevProps.range !== this.props.range ||
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
-      (prevProps.size && prevProps.size.width !== this.props.size.width) ||
+      prevProps.width !== this.props.width ||
       !equal(prevState.hiddenSeries, this.state.hiddenSeries)
     ) {
       this.draw();
@@ -144,8 +143,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   getDynamicOptions() {
-    const { range, size } = this.props;
-    const ticks = (size.width || 0) / 100;
+    const { range, width } = this.props;
+    const ticks = (width || 0) / 100;
     let { from, to } = range;
     if (!moment.isMoment(from)) {
       from = dateMath.parse(from, false);
@@ -218,11 +217,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     let series = [{ data: [[0, 0]] }];
 
     if (data && data.length > 0) {
-      series = data.filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias)).map((ts: TimeSeries) => ({
-        color: ts.color,
-        label: ts.label,
-        data: ts.getFlotPairs('null'),
-      }));
+      series = data
+        .filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias))
+        .map((ts: TimeSeries) => ({
+          color: ts.color,
+          label: ts.label,
+          data: ts.getFlotPairs('null'),
+        }));
     }
 
     this.dynamicOptions = this.getDynamicOptions();
@@ -237,23 +238,21 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   render() {
-    const { height = '100px', id = 'graph' } = this.props;
+    const { height = 100, id = 'graph' } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
 
     return (
       <>
-        {this.props.data &&
-          this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
-          !this.state.showAllTimeSeries && (
-            <div className="time-series-disclaimer">
-              <i className="fa fa-fw fa-warning disclaimer-icon" />
-              {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-              <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
-                this.props.data.length
-              }`}</span>
-            </div>
-          )}
+        {this.props.data && this.props.data.length > MAX_NUMBER_OF_TIME_SERIES && !this.state.showAllTimeSeries && (
+          <div className="time-series-disclaimer">
+            <i className="fa fa-fw fa-warning disclaimer-icon" />
+            {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
+            <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
+              this.props.data.length
+            }`}</span>
+          </div>
+        )}
         <div id={id} className="explore-graph" style={{ height }} />
         <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
       </>
@@ -261,4 +260,4 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 }
 
-export default withSize()(Graph);
+export default Graph;

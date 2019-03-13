@@ -57,7 +57,7 @@ $path-position: $marker-size-half - ($path-height / 2);
     z-index: 1;
     top: $path-position;
     bottom: $path-position;
-    right: - $marker-size-half;
+    right: -$marker-size-half;
     width: 100%;
     height: $path-height;
     border-top: 2px solid $progress-color-grey-light;
@@ -117,8 +117,8 @@ $path-position: $marker-size-half - ($path-height / 2);
 }
 
 .progress-step-cta {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $border-radius-sm);
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   display: none;
 }
 

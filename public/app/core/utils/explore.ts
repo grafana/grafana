@@ -11,7 +11,7 @@ import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery } from '@grafana/ui/src/types';
+import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -20,11 +20,20 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
+  ResultGetter,
 } from 'app/types/explore';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
+};
+
+export const DEFAULT_UI_STATE = {
+  showingTable: true,
+  showingGraph: true,
+  showingLogs: true,
+  dedupStrategy: LogsDedupStrategy.none,
 };
 
 const MAX_HISTORY_ITEMS = 100;
@@ -145,9 +154,14 @@ export function buildQueryTransaction(
   };
 }
 
-export const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
+
+const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('expr');
+const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
+  let uiState = DEFAULT_UI_STATE;
+
   if (initial) {
     try {
       const parsed = JSON.parse(decodeURI(initial));
@@ -160,20 +174,49 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
           to: parsed[1],
         };
         const datasource = parsed[2];
-        const queries = parsed.slice(3);
-        return { datasource, queries, range };
+        let queries = [];
+
+        parsed.slice(3).forEach(segment => {
+          if (isMetricSegment(segment)) {
+            queries = [...queries, segment];
+          }
+
+          if (isUISegment(segment)) {
+            uiState = {
+              showingGraph: segment.ui[0],
+              showingLogs: segment.ui[1],
+              showingTable: segment.ui[2],
+              dedupStrategy: segment.ui[3],
+            };
+          }
+        });
+
+        return { datasource, queries, range, ui: uiState };
       }
       return parsed;
     } catch (e) {
       console.error(e);
     }
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE };
+  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: uiState };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
   if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+    return JSON.stringify([
+      urlState.range.from,
+      urlState.range.to,
+      urlState.datasource,
+      ...urlState.queries,
+      {
+        ui: [
+          !!urlState.ui.showingGraph,
+          !!urlState.ui.showingLogs,
+          !!urlState.ui.showingTable,
+          urlState.ui.dedupStrategy,
+        ],
+      },
+    ]);
   }
   return JSON.stringify(urlState);
 }
@@ -259,11 +302,24 @@ export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: 
   return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
 }
 
-export function makeTimeSeriesList(dataList) {
-  return dataList.map((seriesData, index) => {
+export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
+  // Prevent multiple Graph transactions to have the same colors
+  let colorIndexOffset = 0;
+  for (const other of allTransactions) {
+    // Only need to consider transactions that came before the current one
+    if (other === transaction) {
+      break;
+    }
+    // Count timeseries of previous query results
+    if (other.resultType === 'Graph' && other.done) {
+      colorIndexOffset += other.result.length;
+    }
+  }
+
+  return dataList.map((seriesData, index: number) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
-    const colorIndex = index % colors.length;
+    const colorIndex = (colorIndexOffset + index) % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
@@ -275,7 +331,7 @@ export function makeTimeSeriesList(dataList) {
 
     return series;
   });
-}
+};
 
 /**
  * Update the query history. Side-effect: store history in local storage
@@ -304,3 +360,12 @@ export function clearHistory(datasourceId: string) {
   const historyKey = `grafana.explore.history.${datasourceId}`;
   store.delete(historyKey);
 }
+
+export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourceApi): string[] => {
+  const queryKeys = queries.reduce((newQueryKeys, query, index) => {
+    const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
+    return newQueryKeys.concat(`${primaryKey}-${index}`);
+  }, []);
+
+  return queryKeys;
+};

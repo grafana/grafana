@@ -13,6 +13,10 @@ gf-form-switch[disabled] {
   }
 }
 
+.gf-form-switch-container-react {
+  display: flex;
+}
+
 .gf-form-switch-container {
   display: flex;
   cursor: pointer;
@@ -22,7 +26,7 @@ gf-form-switch[disabled] {
   display: flex;
   position: relative;
   width: 60px;
-  height: $gf-form-input-height;
+  height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
@@ -78,7 +82,7 @@ input:checked + .gf-form-switch__slider::before {
   position: relative;
   display: flex;
   width: 50px;
-  height: $gf-form-input-height;
+  height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;

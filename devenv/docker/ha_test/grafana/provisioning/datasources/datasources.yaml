@@ -9,3 +9,8 @@ datasources:
       timeInterval: 10s
       queryTimeout: 30s
       httpMethod: POST
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100

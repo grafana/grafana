@@ -1,9 +1,9 @@
 import React, { FunctionComponent } from 'react';
 
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorPickerProps } from './ColorPicker';
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopperContentProps } from '../Tooltip/PopperController';
 import { Switch } from '../Switch/Switch';
+import { withTheme } from '../../themes/ThemeContext';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperContentProps {
   yaxis?: number;
@@ -12,7 +12,6 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopperC
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
-
   return (
     <ColorPickerPopover
       {...colorPickerProps}
@@ -69,8 +68,8 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
   }
 
   render() {
-    const leftButtonClass = this.state.yaxis === 1 ? 'btn-success' : 'btn-inverse';
-    const rightButtonClass = this.state.yaxis === 2 ? 'btn-success' : 'btn-inverse';
+    const leftButtonClass = this.state.yaxis === 1 ? 'btn-primary' : 'btn-inverse';
+    const rightButtonClass = this.state.yaxis === 2 ? 'btn-primary' : 'btn-inverse';
 
     return (
       <div className="p-b-1">
@@ -85,3 +84,6 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
     );
   }
 }
+
+// This component is to enable SeriecColorPickerPopover usage via series-color-picker-popover directive
+export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);

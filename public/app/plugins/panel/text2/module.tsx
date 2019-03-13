@@ -1,14 +1,10 @@
-import React, { PureComponent } from 'react';
-import { PanelProps } from '@grafana/ui';
+import { ReactPanelPlugin } from '@grafana/ui';
 
-export class Text2 extends PureComponent<PanelProps> {
-  constructor(props) {
-    super(props);
-  }
+import { TextPanelEditor } from './TextPanelEditor';
+import { TextPanel } from './TextPanel';
+import { TextOptions, defaults } from './types';
 
-  render() {
-    return <h2>Text Panel!</h2>;
-  }
-}
+export const reactPanel = new ReactPanelPlugin<TextOptions>(TextPanel);
 
-export { Text2 as Panel };
+reactPanel.setEditor(TextPanelEditor);
+reactPanel.setDefaults(defaults);

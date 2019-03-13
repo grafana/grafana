@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionsProps } from './panel';
-import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint } from './datasource';
+import { ReactPanelPlugin } from './panel';
+import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
@@ -41,6 +41,12 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   pluginExports?: PluginExports;
 }
 
+export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
+  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+  getHighlighterExpression?(query: TQuery): string;
+  languageProvider?: any;
+}
+
 export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
   query: TQuery;
@@ -48,21 +54,34 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   onChange: (value: TQuery) => void;
 }
 
+export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
+  datasource: DSType;
+  query: TQuery;
+  error?: string | JSX.Element;
+  hint?: QueryHint;
+  history: any[];
+  onExecuteQuery?: () => void;
+  onQueryChange?: (value: TQuery) => void;
+  onExecuteHint?: (action: QueryFixAction) => void;
+}
+
+export interface ExploreStartPageProps {
+  onClickExample: (query: DataQuery) => void;
+}
+
 export interface PluginExports {
   Datasource?: DataSourceApi;
   QueryCtrl?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi,DataQuery>>;
+  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, DataQuery>>;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
-  ExploreQueryField?: any;
-  ExploreStartPage?: any;
+  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
+  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
 
   // Panel plugin
   PanelCtrl?: any;
-  Panel?: ComponentClass<PanelProps>;
-  PanelOptions?: ComponentClass<PanelOptionsProps>;
-  PanelDefaults?: any;
+  reactPanel: ReactPanelPlugin;
 }
 
 export interface PluginMeta {
@@ -114,5 +133,3 @@ export interface PluginMetaInfo {
   updated: string;
   version: string;
 }
-
-

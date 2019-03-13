@@ -21,7 +21,7 @@
 }
 
 .thresholds-row-add-button {
-  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, $text-color);
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, #fff);
 
   align-self: center;
   margin-right: 5px;
@@ -34,7 +34,7 @@
   cursor: pointer;
 
   &:hover {
-    color: $text-color-strong;
+    color: $white;
   }
 }
 
@@ -43,7 +43,7 @@
 }
 
 .thresholds-row-input {
-  margin-top: 49px;
+  margin-top: 44px;
   margin-left: 2px;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .thresholds-row-input-inner-value > input {
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   width: 150px;
   border-top: 1px solid $input-label-border-color;
@@ -86,7 +86,6 @@
 
 .thresholds-row-input-inner-color-colorpicker {
   border-radius: 10px;
-  overflow: hidden;
   display: flex;
   align-items: center;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
@@ -96,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   width: 42px;
   background-color: $input-label-bg;

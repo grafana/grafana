@@ -3,8 +3,10 @@ import { PluginMeta } from './plugin';
 import { TableData, TimeSeries } from './data';
 
 export interface DataQueryResponse {
-  data: TimeSeries[] | [TableData] | any;
+  data: DataQueryResponseData;
 }
+
+export type DataQueryResponseData = TimeSeries[] | [TableData] | any;
 
 export interface DataQuery {
   /**
@@ -29,6 +31,26 @@ export interface DataQuery {
   datasource?: string | null;
 }
 
+export interface DataQueryError {
+  data?: {
+    message?: string;
+    error?: string;
+  };
+  message?: string;
+  status?: string;
+  statusText?: string;
+}
+
+export interface ScopedVar {
+  text: any;
+  value: any;
+  [key: string]: any;
+}
+
+export interface ScopedVars {
+  [key: string]: ScopedVar;
+}
+
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
@@ -40,7 +62,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
-  scopedVars: object;
+  scopedVars: ScopedVars;
 }
 
 export interface QueryFix {

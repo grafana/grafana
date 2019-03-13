@@ -1,8 +1,6 @@
 // Library
 import React, { Component } from 'react';
-import { Tooltip } from '@grafana/ui';
 
-import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 // Services
 import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
@@ -11,14 +9,14 @@ import kbn from 'app/core/utils/kbn';
 import {
   DataQueryOptions,
   DataQueryResponse,
+  DataQueryError,
   LoadingState,
   PanelData,
   TableData,
   TimeRange,
   TimeSeries,
+  ScopedVars,
 } from '@grafana/ui';
-
-const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 interface RenderProps {
   loading: LoadingState;
@@ -28,7 +26,7 @@ interface RenderProps {
 export interface Props {
   datasource: string | null;
   queries: any[];
-  panelId?: number;
+  panelId: number;
   dashboardId?: number;
   isVisible?: boolean;
   timeRange?: TimeRange;
@@ -36,21 +34,22 @@ export interface Props {
   refreshCounter: number;
   minInterval?: string;
   maxDataPoints?: number;
+  scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
+  onError: (message: string, error: DataQueryError) => void;
 }
 
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
-  errorMessage: string;
   response: DataQueryResponse;
+  panelData: PanelData;
 }
 
 export class DataPanel extends Component<Props, State> {
   static defaultProps = {
     isVisible: true,
-    panelId: 1,
     dashboardId: 1,
   };
 
@@ -62,10 +61,10 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
-      errorMessage: '',
       response: {
         data: [],
       },
+      panelData: {},
       isFirstLoad: true,
     };
   }
@@ -100,7 +99,9 @@ export class DataPanel extends Component<Props, State> {
       timeRange,
       widthPixels,
       maxDataPoints,
+      scopedVars,
       onDataResponse,
+      onError,
     } = this.props;
 
     if (!isVisible) {
@@ -112,10 +113,10 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading, errorMessage: '' });
+    this.setState({ loading: LoadingState.Loading });
 
     try {
-      const ds = await this.dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource, scopedVars);
 
       // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;
@@ -131,7 +132,7 @@ export class DataPanel extends Component<Props, State> {
         intervalMs: intervalRes.intervalMs,
         targets: queries,
         maxDataPoints: maxDataPoints || widthPixels,
-        scopedVars: {},
+        scopedVars: scopedVars || {},
         cacheTimeout: null,
       };
 
@@ -148,27 +149,30 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
+        panelData: this.getPanelData(resp),
         isFirstLoad: false,
       });
     } catch (err) {
-      console.log('Loading error', err);
-      this.onError('Request Error');
+      console.log('DataPanel error', err);
+
+      let message = 'Query error';
+
+      if (err.message) {
+        message = err.message;
+      } else if (err.data && err.data.message) {
+        message = err.data.message;
+      } else if (err.data && err.data.error) {
+        message = err.data.error;
+      } else if (err.status) {
+        message = `Query error: ${err.status} ${err.statusText}`;
+      }
+
+      onError(message, err);
+      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
     }
   };
 
-  onError = (errorMessage: string) => {
-    if (this.state.loading !== LoadingState.Error || this.state.errorMessage !== errorMessage) {
-      this.setState({
-        loading: LoadingState.Error,
-        isFirstLoad: false,
-        errorMessage: errorMessage,
-      });
-    }
-  };
-
-  getPanelData = () => {
-    const { response } = this.state;
-
+  getPanelData(response: DataQueryResponse) {
     if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
       return {
         tableData: response.data[0] as TableData,
@@ -180,16 +184,15 @@ export class DataPanel extends Component<Props, State> {
       timeSeries: response.data as TimeSeries[],
       tableData: null,
     };
-  };
+  }
 
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad } = this.state;
+    const { loading, isFirstLoad, panelData } = this.state;
 
-    const panelData = this.getPanelData();
-
-    if (isFirstLoad && loading === LoadingState.Loading) {
-      return this.renderLoadingStates();
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+      return this.renderLoadingState();
     }
 
     if (!queries.length) {
@@ -202,46 +205,17 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingStates()}
-        <ErrorBoundary>
-          {({ error, errorInfo }) => {
-            if (errorInfo) {
-              this.onError(error.message || DEFAULT_PLUGIN_ERROR);
-              return null;
-            }
-            return (
-              <>
-                {this.props.children({
-                  loading,
-                  panelData,
-                })}
-              </>
-            );
-          }}
-        </ErrorBoundary>
+        {loading === LoadingState.Loading && this.renderLoadingState()}
+        {this.props.children({ loading, panelData })}
       </>
     );
   }
 
-  private renderLoadingStates(): JSX.Element {
-    const { loading, errorMessage } = this.state;
-    if (loading === LoadingState.Loading) {
-      return (
-        <div className="panel-loading">
-          <i className="fa fa-spinner fa-spin" />
-        </div>
-      );
-    } else if (loading === LoadingState.Error) {
-      return (
-        <Tooltip content={errorMessage} placement="bottom-start" theme="error">
-          <div className="panel-info-corner panel-info-corner--error">
-            <i className="fa" />
-            <span className="panel-info-corner-inner" />
-          </div>
-        </Tooltip>
-      );
-    }
-
-    return null;
+  private renderLoadingState(): JSX.Element {
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
   }
 }

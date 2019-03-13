@@ -14,7 +14,7 @@ interface QueryEditorProps {
   datasource: any;
   error?: string | JSX.Element;
   onExecuteQuery?: () => void;
-  onQueryChange?: (value: DataQuery, override?: boolean) => void;
+  onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;
   exploreEvents: Emitter;
   range: RawTimeRange;
@@ -40,20 +40,20 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         datasource,
         target,
         refresh: () => {
-          this.props.onQueryChange(target, false);
+          this.props.onQueryChange(target);
           this.props.onExecuteQuery();
         },
-        events: exploreEvents,
-        panel: {
-          datasource,
-          targets: [target],
+        onQueryChange: () => {
+          this.props.onQueryChange(target);
         },
+        events: exploreEvents,
+        panel: { datasource, targets: [target] },
         dashboard: {},
       },
     };
 
     this.component = loader.load(this.element, scopeProps, template);
-    this.props.onQueryChange(target, false);
+    this.props.onQueryChange(target);
   }
 
   componentWillUnmount() {

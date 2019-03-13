@@ -113,6 +113,34 @@ describe('dedupLogRows()', () => {
       },
     ]);
   });
+
+  test('should return to non-deduped state on same log result', () => {
+    const logs = {
+      rows: [
+        {
+          entry: 'INFO 123',
+        },
+        {
+          entry: 'WARN 123',
+        },
+        {
+          entry: 'WARN 123',
+        },
+      ],
+    };
+    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.exact).rows).toEqual([
+      {
+        duplicates: 0,
+        entry: 'INFO 123',
+      },
+      {
+        duplicates: 1,
+        entry: 'WARN 123',
+      },
+    ]);
+
+    expect(dedupLogRows(logs as LogsModel, LogsDedupStrategy.none).rows).toEqual(logs.rows);
+  });
 });
 
 describe('calculateFieldStats()', () => {

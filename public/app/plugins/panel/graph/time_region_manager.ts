@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
 import moment from 'moment';
-import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
+import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
 
 type TimeRegionColorDefinition = {
   fill: string;
@@ -43,7 +43,7 @@ export function getColorModes() {
   });
 }
 
-function getColor(timeRegion, theme: GrafanaTheme): TimeRegionColorDefinition {
+function getColor(timeRegion, theme: GrafanaThemeType): TimeRegionColorDefinition {
   if (Object.keys(colorModes).indexOf(timeRegion.colorMode) === -1) {
     timeRegion.colorMode = 'red';
   }
@@ -58,7 +58,7 @@ function getColor(timeRegion, theme: GrafanaTheme): TimeRegionColorDefinition {
   const colorMode = colorModes[timeRegion.colorMode];
 
   if (colorMode.themeDependent === true) {
-    return theme === GrafanaTheme.Light ? colorMode.lightColor : colorMode.darkColor;
+    return theme === GrafanaThemeType.Light ? colorMode.lightColor : colorMode.darkColor;
   }
 
   return {
@@ -71,7 +71,7 @@ export class TimeRegionManager {
   plot: any;
   timeRegions: any;
 
-  constructor(private panelCtrl, private theme: GrafanaTheme = GrafanaTheme.Dark) {}
+  constructor(private panelCtrl, private theme: GrafanaThemeType = GrafanaThemeType.Dark) {}
 
   draw(plot) {
     this.timeRegions = this.panelCtrl.panel.timeRegions;

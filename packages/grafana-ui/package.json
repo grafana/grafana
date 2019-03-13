@@ -1,15 +1,22 @@
 {
   "name": "@grafana/ui",
-  "version": "1.0.0",
-  "description": "",
+  "version": "6.0.1-alpha.0",
+  "description": "Grafana Components Library",
+  "keywords": [
+    "typescript",
+    "react",
+    "react-component"
+  ],
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public"
+    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public",
+    "clean": "rimraf ./dist ./compiled",
+    "build": "rollup -c rollup.config.ts"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "dependencies": {
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "^2.14.0",
@@ -17,6 +24,7 @@
     "jquery": "^3.2.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
+    "papaparse": "^4.6.3",
     "react": "^16.6.3",
     "react-color": "^2.17.0",
     "react-custom-scrollbars": "^4.2.1",
@@ -39,6 +47,7 @@
     "@types/jquery": "^1.10.35",
     "@types/lodash": "^4.14.119",
     "@types/node": "^10.12.18",
+    "@types/papaparse": "^4.5.9",
     "@types/react": "^16.7.6",
     "@types/react-custom-scrollbars": "^4.0.5",
     "@types/react-test-renderer": "^16.0.3",
@@ -53,6 +62,13 @@
     "react-docgen-typescript-loader": "^3.0.0",
     "react-docgen-typescript-webpack-plugin": "^1.1.0",
     "react-test-renderer": "^16.7.0",
+    "rollup": "^1.1.2",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-node-resolve": "^4.0.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-terser": "^4.0.4",
+    "rollup-plugin-typescript2": "^0.19.2",
+    "rollup-plugin-visualizer": "^0.9.2",
     "typescript": "^3.2.2"
   },
   "resolutions": {

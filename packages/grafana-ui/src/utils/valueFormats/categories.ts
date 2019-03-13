@@ -125,7 +125,7 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Data (Metric)',
     formats: [
-      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('d') },
+      { name: 'bits', id: 'decbits', fn: decimalSIPrefix('b') },
       { name: 'bytes', id: 'decbytes', fn: decimalSIPrefix('B') },
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
@@ -137,7 +137,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
-      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('B/s') },
+      { name: 'bytes/sec', id: 'Bps', fn: decimalSIPrefix('Bs') },
       { name: 'kilobytes/sec', id: 'KBs', fn: decimalSIPrefix('Bs', 1) },
       { name: 'kilobits/sec', id: 'Kbits', fn: decimalSIPrefix('bps', 1) },
       { name: 'megabytes/sec', id: 'MBs', fn: decimalSIPrefix('Bs', 2) },
@@ -191,6 +191,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('l/h') },
       { name: 'Litre/min (l/min)', id: 'flowlpm', fn: toFixedUnit('l/min') },
       { name: 'milliLitre/min (mL/min)', id: 'flowmlpm', fn: toFixedUnit('mL/min') },
+      { name: 'Lux (lx)', id: 'lux', fn: toFixedUnit('lux') },
     ],
   },
   {
@@ -306,7 +307,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilometers/hour (km/h)', id: 'velocitykmh', fn: toFixedUnit('km/h') },
       { name: 'miles/hour (mph)', id: 'velocitymph', fn: toFixedUnit('mph') },
       { name: 'knot (kn)', id: 'velocityknot', fn: toFixedUnit('kn') },
-    ]
+    ],
   },
   {
     name: 'Volume',
@@ -318,5 +319,5 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'cubic decimetre', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
     ],
-  }
+  },
 ];

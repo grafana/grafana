@@ -232,6 +232,14 @@ export default class CloudWatchDatasource {
     });
   }
 
+  getResourceARNs(region, resourceType, tags) {
+    return this.doMetricQueryRequest('resource_arns', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      resourceType: this.templateSrv.replace(resourceType),
+      tags: tags,
+    });
+  }
+
   metricFindQuery(query) {
     let region;
     let namespace;
@@ -291,6 +299,14 @@ export default class CloudWatchDatasource {
       const targetAttributeName = ec2InstanceAttributeQuery[2];
       filterJson = JSON.parse(this.templateSrv.replace(ec2InstanceAttributeQuery[3]));
       return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
+    }
+
+    const resourceARNsQuery = query.match(/^resource_arns\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+    if (resourceARNsQuery) {
+      region = resourceARNsQuery[1];
+      const resourceType = resourceARNsQuery[2];
+      const tagsJSON = JSON.parse(this.templateSrv.replace(resourceARNsQuery[3]));
+      return this.getResourceARNs(region, resourceType, tagsJSON);
     }
 
     return this.$q.when([]);

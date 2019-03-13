@@ -3,8 +3,7 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
-import { DataQuery, TimeSeries } from '@grafana/ui';
+import { DataQuery, TimeSeries, Threshold, ScopedVars } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -47,8 +46,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   timeFrom: true,
   timeShift: true,
   hideTimeOverride: true,
-  maxDataPoints: true,
-  interval: true,
   description: true,
   links: true,
   fullscreen: true,
@@ -74,7 +71,7 @@ export class PanelModel {
   type: string;
   title: string;
   alert?: any;
-  scopedVars?: any;
+  scopedVars?: ScopedVars;
   repeat?: string;
   repeatIteration?: number;
   repeatPanelId?: number;
@@ -92,6 +89,9 @@ export class PanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
+  options: {
+    [key: string]: any;
+  };
 
   maxDataPoints?: number;
   interval?: string;
@@ -105,9 +105,8 @@ export class PanelModel {
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
-
-  // cache props between plugins
   cachedPluginOptions?: any;
+  legend?: { show: boolean };
 
   constructor(model) {
     this.events = new Emitter();
@@ -121,6 +120,8 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
     // queries must have refId
     this.ensureQueryIds();
+
+    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -133,19 +134,26 @@ export class PanelModel {
     }
   }
 
+  restoreInfintyForThresholds() {
+    if (this.options && this.options.thresholds) {
+      this.options.thresholds = this.options.thresholds.map((threshold: Threshold) => {
+        // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
+        if (threshold.index === 0 && threshold.value === null) {
+          return { ...threshold, value: -Infinity };
+        }
+
+        return threshold;
+      });
+    }
+  }
+
   getOptions(panelDefaults) {
-    return _.defaultsDeep(this[this.getOptionsKey()] || {}, panelDefaults);
+    return _.defaultsDeep(this.options || {}, panelDefaults);
   }
 
   updateOptions(options: object) {
-    const update: any = {};
-    update[this.getOptionsKey()] = options;
-    Object.assign(this, update);
+    this.options = options;
     this.render();
-  }
-
-  private getOptionsKey() {
-    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
@@ -221,10 +229,6 @@ export class PanelModel {
     }, {});
   }
 
-  private saveCurrentPanelOptions() {
-    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
-  }
-
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
@@ -233,24 +237,28 @@ export class PanelModel {
     });
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.saveCurrentPanelOptions();
+  changeType(pluginId: string, preserveOptions?: any) {
+    const oldOptions: any = this.getOptionsToRemember();
+    const oldPluginId = this.type;
+
     this.type = pluginId;
 
-    // for angular panels only we need to remove all events and let angular panels do some cleanup
-    if (fromAngularPanel) {
-      this.destroy();
-
-      for (const key of _.keys(this)) {
-        if (mustKeepProps[key]) {
-          continue;
-        }
-
-        delete this[key];
+    // remove panel type specific  options
+    for (const key of _.keys(this)) {
+      if (mustKeepProps[key]) {
+        continue;
       }
+
+      delete this[key];
     }
 
+    this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
+
+    if (preserveOptions && oldOptions) {
+      this.options = this.options || {};
+      Object.assign(this.options, preserveOptions(oldPluginId, oldOptions.options));
+    }
   }
 
   addQuery(query?: Partial<DataQuery>) {

@@ -1,3 +1,4 @@
+import ansicolor from 'vendor/ansicolor/ansicolor';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -11,6 +12,7 @@ import {
   LogsStreamLabels,
   LogsMetaKind,
 } from 'app/core/logs_model';
+import { hasAnsiCodes } from 'app/core/utils/text';
 import { DEFAULT_MAX_LINES } from './datasource';
 
 /**
@@ -21,7 +23,7 @@ import { DEFAULT_MAX_LINES } from './datasource';
  */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
-    return LogLevel.unkown;
+    return LogLevel.unknown;
   }
   let level: LogLevel;
   Object.keys(LogLevel).forEach(key => {
@@ -33,7 +35,7 @@ export function getLogLevel(line: string): LogLevel {
     }
   });
   if (!level) {
-    level = LogLevel.unkown;
+    level = LogLevel.unknown;
   }
   return level;
 }
@@ -125,6 +127,7 @@ export function processEntry(
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(line);
+  const hasAnsi = hasAnsiCodes(line);
 
   return {
     key,
@@ -133,7 +136,9 @@ export function processEntry(
     timeEpochMs,
     timeLocal,
     uniqueLabels,
-    entry: line,
+    hasAnsi,
+    entry: hasAnsi ? ansicolor.strip(line) : line,
+    raw: line,
     labels: parsedLabels,
     searchWords: search ? [search] : [],
     timestamp: ts,

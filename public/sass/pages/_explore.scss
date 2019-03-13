@@ -25,26 +25,13 @@
   }
 }
 
-.sidemenu-open {
-  .explore-toolbar-header {
-    padding: 0;
-    margin-left: 0;
-  }
-
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      padding-left: 0;
-    }
-  }
-}
-
 .explore-toolbar {
   background: inherit;
   display: flex;
   flex-flow: row wrap;
   justify-content: flex-start;
   height: auto;
-  padding: 0px $dashboard-padding;
+  padding: 0 $dashboard-padding;
   border-bottom: 1px solid #0000;
   transition-duration: 0.35s;
   transition-timing-function: ease-in-out;
@@ -79,7 +66,7 @@
   min-height: 55px;
   line-height: 55px;
   justify-content: space-between;
-  margin-left: $panel-margin * 3;
+  margin-left: $space-xl;
 }
 
 .explore-toolbar-header {
@@ -87,22 +74,9 @@
   align-items: center;
 }
 
-.explore-toolbar-header-title {
-  color: darken($link-color, 5%);
-
-  .navbar-page-btn {
-    padding-left: $dashboard-padding;
-  }
-
-  .fa {
-    font-size: 100%;
-    opacity: 0.75;
-    margin-right: 0.5em;
-  }
-}
-
 .explore-toolbar-header-close {
   margin-left: auto;
+  color: $text-color-weak;
 }
 
 .explore-toolbar-content {
@@ -153,22 +127,6 @@
 }
 
 @media only screen and (max-width: 803px) {
-  .sidemenu-open {
-    .explore-toolbar-header-title {
-      .navbar-page-btn {
-        padding-left: 0;
-        margin-left: 0;
-      }
-    }
-  }
-
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      padding-left: 0;
-      margin-left: $dashboard-padding;
-    }
-  }
-
   .btn-title {
     display: none;
   }
@@ -182,18 +140,8 @@
 }
 
 @media only screen and (max-width: 544px) {
-  .sidemenu-open {
-    .explore-toolbar-header-title {
-      .navbar-page-btn {
-        padding-left: 0;
-        margin-left: $dashboard-padding;
-      }
-    }
-  }
-
   .explore-toolbar-header-title {
     .navbar-page-btn {
-      padding-left: 0;
       margin-left: $dashboard-padding;
     }
   }
@@ -220,7 +168,7 @@
 }
 
 .explore-panel {
-  margin-top: $panel-margin;
+  margin-top: $space-sm;
 }
 
 .explore-panel__body {
@@ -239,24 +187,20 @@
 
 .explore-panel__header-label {
   font-weight: 500;
-  margin-right: $panel-margin;
+  margin-right: $space-sm;
   font-size: $font-size-h6;
   box-shadow: $text-shadow-faint;
 }
 
 .explore-panel__header-buttons {
-  margin-right: $panel-margin;
+  margin-right: $space-sm;
   font-size: $font-size-lg;
   line-height: $font-size-h6;
 }
 
-.result-options {
-  margin: 2 * $panel-margin 0;
-}
-
 .time-series-disclaimer {
   width: 300px;
-  margin: $panel-margin auto;
+  margin: $space-sm auto;
   padding: 10px 0;
   border-radius: $border-radius;
   text-align: center;
@@ -264,7 +208,7 @@
 
   .disclaimer-icon {
     color: $yellow;
-    margin-right: $panel-margin/2;
+    margin-right: $space-xs;
   }
 
   .show-all-time-series {
@@ -291,7 +235,7 @@
   position: relative;
   overflow: hidden;
   background: none;
-  margin: $panel-margin / 2;
+  margin: $space-xs;
 }
 
 .explore-panel__loader--active:after {
@@ -434,7 +378,7 @@
 .ReactTable .-pagination {
   border-top: none;
   box-shadow: none;
-  margin-top: $panel-margin;
+  margin-top: $space-sm;
 }
 .ReactTable .-pagination .-btn {
   color: $blue;
@@ -475,7 +419,7 @@
 // TODO Experimental
 
 .cheat-sheet-item {
-  margin: 2*$panel-margin 0;
+  margin: $space-lg 0;
   width: 50%;
 }
 
@@ -484,6 +428,6 @@
 }
 
 .cheat-sheet-item__expression {
-  margin: $panel-margin/2 0;
+  margin: $space-xs 0;
   cursor: pointer;
 }

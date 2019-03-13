@@ -3,11 +3,12 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -126,7 +127,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
-		Timeout:         alertTimeout / 2,
+		Timeout:         time.Duration(float64(alertTimeout) * 0.9),
 		OrgId:           context.Rule.OrgId,
 		OrgRole:         m.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
@@ -137,7 +138,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgId, context.Rule.PanelId)
 
 	result, err := n.renderService.Render(context.Ctx, renderOpts)
 	if err != nil {

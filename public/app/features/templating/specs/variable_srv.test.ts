@@ -47,14 +47,7 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv(
-          ctx.$rootScope,
-          $q,
-          ctx.$location,
-          ctx.$injector,
-          ctx.templateSrv,
-          ctx.timeSrv
-        );
+        ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {

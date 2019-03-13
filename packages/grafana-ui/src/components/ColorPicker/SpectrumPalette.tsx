@@ -13,7 +13,7 @@ export interface SpectrumPaletteProps extends Themeable {
   onChange: (color: string) => void;
 }
 
-const renderPointer = (theme?: GrafanaTheme) => (props: SpectrumPalettePointerProps) => (
+const renderPointer = (theme: GrafanaTheme) => (props: SpectrumPalettePointerProps) => (
   <SpectrumPalettePointer {...props} theme={theme} />
 );
 
@@ -92,7 +92,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
         }}
         theme={theme}
       />
-      <ColorInput color={color} onChange={onChange} style={{ marginTop: '16px' }} />
+      <ColorInput theme={theme} color={color} onChange={onChange} style={{ marginTop: '16px' }} />
     </div>
   );
 };

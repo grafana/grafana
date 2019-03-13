@@ -7,7 +7,7 @@ import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
-import { GrafanaTheme, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
+import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -379,6 +379,12 @@ export class HeatmapRenderer {
     const posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
+    if (this.panel.yBucketBound === 'middle' && tickValues && tickValues.length) {
+      // Shift Y axis labels to the middle of bucket
+      const tickShift = 0 - this.chartHeight / (tickValues.length - 1) / 2;
+      this.heatmap.selectAll('.axis-y text').attr('transform', 'translate(' + 0 + ',' + tickShift + ')');
+    }
+
     // Remove vertical line in the right of axis labels (called domain in d3)
     this.heatmap
       .select('.axis-y')
@@ -518,14 +524,16 @@ export class HeatmapRenderer {
     }
 
     const cardsData = this.data.cards;
-    const maxValueAuto = this.data.cardStats.max;
-    const maxValue = this.panel.color.max || maxValueAuto;
-    const minValue = this.panel.color.min || 0;
+    const cardStats = this.data.cardStats;
+    const maxValueAuto = cardStats.max;
+    const minValueAuto = Math.min(cardStats.min, 0);
+    const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
+    const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
     const colorScheme = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
-    this.opacityScale = getOpacityScale(this.panel.color, maxValue);
+    this.opacityScale = getOpacityScale(this.panel.color, maxValue, minValue);
     this.setCardSize();
 
     let cards = this.heatmap.selectAll('.heatmap-card').data(cardsData);
@@ -570,8 +578,7 @@ export class HeatmapRenderer {
   }
 
   resetCardHighLight(event) {
-    d3
-      .select(event.target)
+    d3.select(event.target)
       .style('fill', this.tooltip.originalFillColor)
       .style('stroke', this.tooltip.originalFillColor)
       .style('stroke-width', 0);
@@ -616,8 +623,8 @@ export class HeatmapRenderer {
       w = this.cardWidth;
     }
 
-    // Card width should be MIN_CARD_SIZE at least
-    w = Math.max(w, MIN_CARD_SIZE);
+    // Card width should be MIN_CARD_SIZE at least, but cut cards shouldn't be displayed
+    w = w > 0 ? Math.max(w, MIN_CARD_SIZE) : 0;
     return w;
   }
 
@@ -663,7 +670,7 @@ export class HeatmapRenderer {
     if (this.panel.color.mode === 'opacity') {
       return getColorFromHexRgbOrName(
         this.panel.color.cardColor,
-        contextSrv.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark
+        contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
       );
     } else {
       return this.colorScale(d.count);

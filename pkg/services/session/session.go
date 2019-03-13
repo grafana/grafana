@@ -19,7 +19,7 @@ const (
 
 var sessionManager *ms.Manager
 var sessionOptions *ms.Options
-var StartSessionGC func()
+var StartSessionGC func() = func() {}
 var GetSessionCount func() int
 var sessionLogger = log.New("session")
 var sessionConnMaxLifetime int64

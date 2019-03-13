@@ -16,23 +16,25 @@ const template = `
 	<form name="ctrl.saveForm" class="modal-content" novalidate>
 		<div class="p-t-2">
 			<div class="gf-form">
-				<label class="gf-form-label width-7">New name</label>
+				<label class="gf-form-label width-8">New name</label>
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
-      <div class="gf-form">
-        <folder-picker initial-folder-id="ctrl.folderId"
+      <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
                        enter-folder-creation="ctrl.onEnterFolderCreation()"
                        exit-folder-creation="ctrl.onExitFolderCreation()"
                        enable-create-new="true"
-                       label-class="width-7"
+                       label-class="width-8"
                        dashboard-id="ctrl.clone.id">
-        </folder-picker>
+      </folder-picker>
+      <div class="gf-form-inline">
+        <gf-form-switch class="gf-form" label="Copy tags" label-class="width-8" checked="ctrl.copyTags">
+        </gf-form-switch>
       </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.save()" ng-disabled="!ctrl.isValidFolderSelection">Save</button>
+			<button type="submit" class="btn btn-primary" ng-click="ctrl.save()" ng-disabled="!ctrl.isValidFolderSelection">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>
@@ -44,6 +46,7 @@ export class SaveDashboardAsModalCtrl {
   folderId: any;
   dismiss: () => void;
   isValidFolderSelection = true;
+  copyTags: boolean;
 
   /** @ngInject */
   constructor(private dashboardSrv) {
@@ -55,6 +58,7 @@ export class SaveDashboardAsModalCtrl {
     this.clone.editable = true;
     this.clone.hideControls = false;
     this.folderId = dashboard.meta.folderId;
+    this.copyTags = false;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
@@ -71,6 +75,10 @@ export class SaveDashboardAsModalCtrl {
   }
 
   save() {
+    if (!this.copyTags) {
+      this.clone.tags = [];
+    }
+
     return this.dashboardSrv.save(this.clone, { folderId: this.folderId }).then(this.dismiss);
   }
 

@@ -179,8 +179,7 @@
       <p>
         1. This could be caused by your reverse proxy settings.<br /><br />
         2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath<br /> <br />
-        3. If you have a local dev build make sure you build frontend using: npm run dev, npm run watch, or npm run
-        build<br /> <br />
+        3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn build<br /> <br />
         4. Sometimes restarting grafana-server can help<br />
       </p>
     </div>
@@ -189,10 +188,10 @@
   <grafana-app class="grafana-app" ng-cloak>
     <sidemenu class="sidemenu"></sidemenu>
     <app-notifications-list class="page-alert-list"></app-notifications-list>
-
+    <dashboard-search></dashboard-search>
 
     <div class="main-view">
-      <div class="scroll-canvas" page-scrollbar>
+      <div class="scroll-canvas">
         <div ng-view></div>
 
         <footer class="footer">

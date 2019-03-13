@@ -57,7 +57,7 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-yarn watch
+yarn start
 ```
 
 ## Running Grafana Locally
@@ -83,7 +83,7 @@ go get github.com/Unknwon/bra
 bra run
 ```
 
-You'll also need to run `yarn watch` to watch for changes to the front-end (typescript, html, sass)
+You'll also need to run `yarn start` to watch for changes to the front-end (typescript, html, sass)
 
 ### Running tests
 

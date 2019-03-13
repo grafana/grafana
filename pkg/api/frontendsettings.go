@@ -145,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"info":         panel.Info,
 			"hideFromList": panel.HideFromList,
 			"sort":         getPanelSort(panel.Id),
+			"dataFormats":  panel.DataFormats,
 		}
 	}
 
@@ -166,6 +167,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
 		"viewersCanEdit":             setting.ViewersCanEdit,
+		"editorsCanOwn":              hs.Cfg.EditorsCanOwn,
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
@@ -190,16 +192,18 @@ func getPanelSort(id string) int {
 		sort = 2
 	case "gauge":
 		sort = 3
-	case "table":
+	case "bargauge":
 		sort = 4
-	case "text":
+	case "table":
 		sort = 5
-	case "heatmap":
+	case "text":
 		sort = 6
-	case "alertlist":
+	case "heatmap":
 		sort = 7
-	case "dashlist":
+	case "alertlist":
 		sort = 8
+	case "dashlist":
+		sort = 9
 	}
 	return sort
 }

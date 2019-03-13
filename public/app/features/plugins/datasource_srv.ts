@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { importPluginModule } from './plugin_loader';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem  } from '@grafana/ui/src/types';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui/src/types';
 
 export class DatasourceSrv {
   datasources: { [name: string]: DataSourceApi };
@@ -21,12 +21,18 @@ export class DatasourceSrv {
     this.datasources = {};
   }
 
-  get(name?: string): Promise<DataSourceApi> {
+  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
 
-    name = this.templateSrv.replace(name);
+    // Interpolation here is to support template variable in data source selection
+    name = this.templateSrv.replace(name, scopedVars, (value, variable) => {
+      if (Array.isArray(value)) {
+        return value[0];
+      }
+      return value;
+    });
 
     if (name === 'default') {
       return this.get(config.defaultDatasource);

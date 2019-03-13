@@ -16,7 +16,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
-	quota := middleware.Quota
+	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
 	r := hs.RouteRegister
@@ -33,17 +33,17 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/profile/", reqSignedIn, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
-	r.Get("/org/", reqSignedIn, hs.Index)
-	r.Get("/org/new", reqSignedIn, hs.Index)
-	r.Get("/datasources/", reqSignedIn, hs.Index)
-	r.Get("/datasources/new", reqSignedIn, hs.Index)
-	r.Get("/datasources/edit/*", reqSignedIn, hs.Index)
-	r.Get("/org/users", reqSignedIn, hs.Index)
-	r.Get("/org/users/new", reqSignedIn, hs.Index)
-	r.Get("/org/users/invite", reqSignedIn, hs.Index)
-	r.Get("/org/teams", reqSignedIn, hs.Index)
-	r.Get("/org/teams/*", reqSignedIn, hs.Index)
-	r.Get("/org/apikeys/", reqSignedIn, hs.Index)
+	r.Get("/org/", reqOrgAdmin, hs.Index)
+	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
+	r.Get("/datasources/", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
+	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
+	r.Get("/org/users", reqOrgAdmin, hs.Index)
+	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
+	r.Get("/org/users/invite", reqOrgAdmin, hs.Index)
+	r.Get("/org/teams", reqOrgAdmin, hs.Index)
+	r.Get("/org/teams/*", reqOrgAdmin, hs.Index)
+	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
@@ -73,12 +73,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 
-	r.Get("/explore", reqEditorRole, hs.Index)
+	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
-	r.Get("/alerting/", reqSignedIn, hs.Index)
-	r.Get("/alerting/*", reqSignedIn, hs.Index)
+	r.Get("/alerting/", reqEditorRole, hs.Index)
+	r.Get("/alerting/*", reqEditorRole, hs.Index)
 
 	// sign up
 	r.Get("/signup", hs.Index)
@@ -108,8 +108,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots-delete/:deleteKey", Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
-	// api renew session based on remember cookie
-	r.Get("/api/login/ping", quota("session"), hs.LoginAPIPing)
+	// api renew session based on cookie
+	r.Get("/api/login/ping", quota("session"), Wrap(hs.LoginAPIPing))
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -286,7 +286,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
-			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), Wrap(PostDashboard))
+			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", Wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), Wrap(ImportDashboard))
@@ -294,7 +294,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", Wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", Wrap(GetDashboardVersion))
-				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(RestoreDashboardVersion))
+				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", Wrap(GetDashboardPermissionList))
@@ -354,6 +354,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), Wrap(PostAnnotation))
 			annotationsRoute.Delete("/:annotationId", Wrap(DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), Wrap(UpdateAnnotation))
+			annotationsRoute.Patch("/:annotationId", bind(dtos.PatchAnnotationsCmd{}), Wrap(PatchAnnotation))
 			annotationsRoute.Delete("/region/:regionId", Wrap(DeleteAnnotationRegion))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), Wrap(PostGraphiteAnnotation))
 		})

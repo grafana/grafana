@@ -1,9 +1,8 @@
 .navbar {
   position: relative;
-  padding-left: 40px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
-  padding-right: 20px;
+  padding: 0 20px 0 50px;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
@@ -41,18 +40,13 @@
 
 .panel-in-fullscreen {
   .navbar {
-    padding-left: 15px;
+    padding-left: 20px;
   }
 
   .navbar-button--add-panel,
   .navbar-button--star,
-  .navbar-button--tv,
-  .navbar-page-btn .fa-caret-down {
+  .navbar-button--tv {
     display: none;
-  }
-
-  .navbar-buttons--close {
-    display: flex;
   }
 }
 
@@ -62,15 +56,14 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: darken($link-color, 5%);
+  color: $headings-color;
   font-size: $font-size-lg;
-  padding-left: 1rem;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 60%;
-    padding-left: 0.2rem;
+    padding-left: 6px;
   }
 
   &--search {
@@ -78,13 +71,12 @@
   }
 
   .gicon {
+    top: -2px;
     position: relative;
-    top: -1px;
-    font-size: 19px;
+    font-size: 17px;
     line-height: 8px;
     opacity: 0.75;
-    margin-right: 8px;
-    // icon hidden on smaller screens
+    margin-right: 10px;
     display: none;
   }
 
@@ -102,7 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-right: $spacer;
+  margin-left: 10px;
 
   &--close {
     display: none;
@@ -121,14 +113,15 @@
 .navbar-button {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
 
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px 11px;
   line-height: 16px;
   height: 30px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
-  margin-right: 3px;
+  margin-left: 3px;
   white-space: nowrap;
 
   .gicon {
@@ -157,26 +150,48 @@
     }
   }
 
-  &--primary {
+  &--secondary {
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 }
 
 @include media-breakpoint-up(sm) {
   .navbar {
-    padding-left: 50px;
-  }
-
-  .sidemenu-open {
-    .navbar {
-      padding-left: 15px;
-      margin-left: 0;
-    }
+    padding-left: 20px;
+    margin-left: 0;
   }
 
   .navbar-page-btn {
     .gicon {
       display: inline-block;
     }
+  }
+}
+
+.navbar-edit {
+  display: flex;
+  height: $navbarHeight;
+  align-items: center;
+  padding-right: 13px;
+}
+
+.navbar-edit__back-btn {
+  background: transparent;
+  border: 2px solid $text-color;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  transition: transform 0.1s ease 0.1s;
+  color: $text-color;
+
+  i {
+    font-size: $font-size-lg;
+    position: relative;
+    top: 2px;
+  }
+
+  &:hover {
+    color: $text-color-strong;
+    border-color: $text-color-strong;
   }
 }

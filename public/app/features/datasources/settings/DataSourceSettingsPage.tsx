@@ -64,10 +64,24 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     await loadDataSource(pageId);
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const { dataSource } = this.props;
+
+    if (prevProps.dataSource !== dataSource) {
+      this.setState({ dataSource });
+    }
+  }
+
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
 
     await this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
+
+    this.testDataSource();
+  };
+
+  onTest = async (evt: React.FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
 
     this.testDataSource();
   };
@@ -89,9 +103,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   };
 
   onModelChange = (dataSource: DataSourceSettings) => {
-    this.setState({
-      dataSource: dataSource,
-    });
+    this.setState({ dataSource });
   };
 
   isReadOnly() {
@@ -180,7 +192,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && <div className="page-container page-body">
+          {this.hasDataSource && (
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
@@ -201,7 +213,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   />
                 )}
 
-                <div className="gf-form-group section">
+                <div className="gf-form-group">
                   {testingMessage && (
                     <div className={`alert-${testingStatus} alert`}>
                       <div className="alert-icon">
@@ -222,10 +234,11 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   onSubmit={event => this.onSubmit(event)}
                   isReadOnly={this.isReadOnly()}
                   onDelete={this.onDelete}
+                  onTest={event => this.onTest(event)}
                 />
               </form>
             </div>
-          </div>}
+          )}
         </Page.Contents>
       </Page>
     );
@@ -252,4 +265,9 @@ const mapDispatchToProps = {
   setIsDefault,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceSettingsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(DataSourceSettingsPage)
+);

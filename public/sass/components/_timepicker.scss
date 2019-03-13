@@ -10,6 +10,10 @@
 .gf-timepicker-nav-btn {
   text-overflow: ellipsis;
   overflow: hidden;
+
+  .fa-clock-o {
+    margin-right: 4px;
+  }
 }
 
 .gf-timepicker-dropdown {
@@ -48,7 +52,6 @@
 }
 
 .gf-timepicker-utc {
-  background-color: $tight-form-func-bg;
   color: $orange;
   font-size: 75%;
   padding: 3px;

@@ -2,9 +2,12 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
+// Components
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
+
 // Types
-import { PanelProps } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { PanelPlugin, AppNotificationSeverity } from 'app/types';
+import { PanelProps, ReactPanelPlugin } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
@@ -19,15 +22,13 @@ class PanelPluginNotFound extends PureComponent<Props> {
     const style = {
       display: 'flex',
       alignItems: 'center',
-      textAlign: 'center' as 'center',
+      justifyContent: 'center',
       height: '100%',
     };
 
     return (
       <div style={style}>
-        <div className="alert alert-error" style={{ margin: '0 auto' }}>
-          Panel plugin with id {this.props.pluginId} could not be found
-        </div>
+        <AlertBox severity={AppNotificationSeverity.Error} title={`Panel plugin not found: ${this.props.pluginId}`} />
       </div>
     );
   }
@@ -46,6 +47,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     sort: 100,
     module: '',
     baseUrl: '',
+    dataFormats: [],
     info: {
       author: {
         name: '',
@@ -62,7 +64,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     },
 
     exports: {
-      Panel: NotFound,
+      reactPanel: new ReactPanelPlugin(NotFound),
     },
   };
 }

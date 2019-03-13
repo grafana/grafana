@@ -12,9 +12,7 @@ weight = -11
 
 # What's New in Grafana v6.0
 
-This update to Grafana introduces a new way of exploring your data, support for log data and tons of other features.
-
-Grafana v6.0 is out in **Beta**, [Download Now!](https://grafana.com/grafana/download/beta)
+This update to Grafana introduces a new way of exploring your data, support for log data, and tons of other features.
 
 The main highlights are:
 
@@ -27,23 +25,24 @@ The main highlights are:
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
+- [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy and improves security.
 
 ## Explore
 
 {{< docs-imagebox img="/img/docs/v60/explore_prometheus.png" max-width="800px" class="docs-image--right" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query & metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exporation with the panel queries as a starting point.
+Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query and metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exporation with the panel queries as a starting point.
 
 For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
 
 **Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars
-of observability - metrics and logs. Explore works with every datasource but for Prometheus we have customized the
+of observability—metrics and logs. Explore works with every datasource but for Prometheus we have customized the
 query editor and the experience to provide the best possible exploration UX.
 
 ### Explore and Prometheus
 
 Explore features a new [Prometheus query editor](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
-integrations with the Explore table view for easy label filtering and useful query hints that can automatically apply
+integrations with the Explore table view for easy label filtering, and useful query hints that can automatically apply
 functions to your query. There is also integration between Prometheus and Grafana Loki (see more about Loki below) that
 enabled jumping between metrics query and logs query with preserved label filters.
 
@@ -79,8 +78,8 @@ for other log sources to Explore and the next planned integration is Elasticsear
 ## New Panel Editor
 
 Grafana v6.0 has a completely redesigned UX around editing panels. You can now resize the visualization area if you want
-more space for queries & options and vice versa. You can now also change visualization (panel type) from within the new
-panel edit mode. No need to add a new panel to try out different visualizations! Checkout the
+more space for queries/options and vice versa. You can now also change visualization (panel type) from within the new
+panel edit mode. No need to add a new panel to try out different visualizations! Check out the
 video below to see the new Panel Editor in action.
 
 <div class="medium-6 columns">
@@ -95,7 +94,7 @@ video below to see the new Panel Editor in action.
 ### Gauge Panel
 
 We have created a new separate Gauge panel as we felt having this visualization be a hidden option in the Singlestat panel
-was not ideal. When it supports 100% of the Singlestat Gauge features we plan to add a migration so all
+was not ideal. When it supports 100% of the Singlestat Gauge features, we plan to add a migration so all
 singlestats that use it become Gauge panels instead. This new panel contains a new **Threshold** editor that we will
 continue to refine and start using in other panels.
 
@@ -106,53 +105,71 @@ continue to refine and start using in other panels.
 ### React Panels & Query Editors
 
 A major part of all the work that has gone into Grafana v6.0 has been on the migration to React. This investment
-is part of the future proofing of Grafana and it's code base and ecosystem. Starting in v6.0 **Panels** and **Data
+is part of the future-proofing of Grafana's code base and ecosystem. Starting in v6.0 **Panels** and **Data
 source** plugins can be written in React using our published `@grafana/ui` sdk library. More information on this
-will be shared closer to or just after release.
+will be shared soon.
 
 {{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 <br />
 
-### Google Stackdriver Datasource
+## Google Stackdriver Datasource
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
 To get started read the guide: [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/).
 
-### Azure Monitor Datasource
+## Azure Monitor Datasource
 
-One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon Cloudwatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource will get alerting support for the official 6.0 release.
+One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon CloudWatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource is able to get alerting support, in the 6.0 release alerting is supported for the Azure Monitor service, with the rest to follow.
 
 The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
-### Provisioning support for alert notifiers
+Please read [Using Azure Monitor in Grafana documentation](/features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
 
-Grafana now added support for provisioning alert notifiers from configuration files. Allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. Same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers that exists in the instance.
+## Provisioning support for alert notifiers
 
-### Auth and session token improvements
+Grafana now has support for provisioning alert notifiers from configuration files, allowing operators to provision notifiers without using the UI or the API. A new field called `uid` has been introduced which is a string identifier that the administrator can set themselves. This is the same kind of identifier used for dashboards since v5.0. This feature makes it possible to use the same notifier configuration in multiple environments and refer to notifiers in dashboard json by a string identifier instead of the numeric id which depends on insert order and how many notifiers exist in the instance.
 
-The previous session storage implementation in Grafana was causing problems in larger HA setups due to too many write requests to the database. The remember me token also have several security issues which is why we decided to rewrite auth middleware in Grafana and remove the session storage since most operations using the session storage could be rewritten to use cookies or data already made available earlier in the request.
-If you are using `Auth proxy` for authentication the session storage will still be used but our goal is to remove this ASAP as well.
+## Easier to deploy & improved security
 
-This release will force all users to log in again since their previous token is not valid anymore.
+Grafana 6.0 removes the need to configure and set up additional storage for [user sessions](/tutorials/ha_setup/#user-sessions). This should make it easier to deploy and operate Grafana in a
+high availability setup and/or if you're using a stateless user session store like Redis, Memcache, Postgres or MySQL.
 
-### Named Colors
+Instead of user sessions, we've implemented a solution based on short-lived tokens that are rotated frequently. This also replaces the old "remember me cookie"
+solution, which allowed a user to be logged in between browser sessions and which have been subject to several security holes throughout the years.
+Read more about the short-lived token solution and how to configure it [here](/auth/overview/#login-and-short-lived-tokens).
+
+> Please note that due to these changes, all users will be required to login upon next visit after upgrade.
+
+Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
+
+* Cookies are per default using the [SameSite](/installation/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+* Script tags in text panels are per default [disabled](/installation/configuration/#disable-sanitize-html) to protect against XSS attacks
+
+> If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
+but our goal is to remove this requirement in the near future.
+
+## Named Colors
 
 {{< docs-imagebox img="/img/docs/v60/named_colors.png" max-width="400px" class="docs-image--right" caption="Named Colors" >}}
 
 We have updated the color picker to show named colors and primary colors. We hope this will improve accessibility and
-helps making colors more consistent across dashboards. We hope to do more in this color picker in the future, like show
+helps making colors more consistent across dashboards. We hope to do more in this color picker in the future, like showing
 colors used in the dashboard.
 
 Named colors also enables Grafana to adapt colors to the current theme.
 
 <div class="clearfix"></div>
 
-### Other features
+## Other features
 
-- The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per bucket computations like the difference or ratio between two metrics.
+- The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per-bucket computations like the difference or ratio between two metrics.
 - Support for Google Hangouts Chat alert notifications
 - New built in template variables for the current time range in `$__from` and `$__to`
+
+## Upgrading
+
+See [upgrade notes](/installation/upgrading/#upgrading-to-v6-0).
 
 ## Changelog
 

@@ -57,9 +57,7 @@ export class PluginListPage extends PureComponent<Props> {
               setSearchQuery={query => setPluginsSearchQuery(query)}
               linkButton={linkButton}
             />
-            {hasFetched && plugins && (
-              plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />
-            )}
+            {hasFetched && plugins && (plugins && <PluginList plugins={plugins} layoutMode={layoutMode} />)}
           </>
         </Page.Contents>
       </Page>
@@ -83,4 +81,9 @@ const mapDispatchToProps = {
   setPluginsSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(PluginListPage)
+);

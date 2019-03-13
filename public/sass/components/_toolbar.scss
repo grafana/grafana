@@ -4,7 +4,6 @@
   align-items: center;
   padding: 3px 20px 3px 20px;
   position: relative;
-  z-index: 1;
   flex: 0 0 auto;
   background: $toolbar-bg;
   border-radius: 3px;
@@ -28,7 +27,7 @@
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
-  height: $gf-form-input-height;
+  height: $input-height;
   border: $input-border;
   border-radius: $input-border-radius;
   display: flex;

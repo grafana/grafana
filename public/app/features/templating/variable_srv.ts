@@ -18,18 +18,18 @@ export class VariableSrv {
   variables: any[];
 
   /** @ngInject */
-  constructor(private $rootScope,
-              private $q,
-              private $location,
-              private $injector,
-              private templateSrv: TemplateSrv,
-              private timeSrv: TimeSrv) {
-    $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
-  }
+  constructor(
+    private $q,
+    private $location,
+    private $injector,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {}
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
     this.dashboard.events.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
+    this.dashboard.events.on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this));
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
@@ -54,15 +54,17 @@ export class VariableSrv {
 
   onTimeRangeUpdated(timeRange: TimeRange) {
     this.templateSrv.updateTimeRange(timeRange);
-    const promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
-      const previousOptions = variable.options.slice();
+    const promises = this.variables
+      .filter(variable => variable.refresh === 2)
+      .map(variable => {
+        const previousOptions = variable.options.slice();
 
-      return variable.updateOptions().then(() => {
-        if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
-          this.$rootScope.$emit('template-variable-value-updated');
-        }
+        return variable.updateOptions().then(() => {
+          if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+            this.dashboard.templateVariableValueUpdated();
+          }
+        });
       });
-    });
 
     return this.$q.all(promises).then(() => {
       this.dashboard.startRefresh();
@@ -144,7 +146,7 @@ export class VariableSrv {
 
     return this.$q.all(promises).then(() => {
       if (emitChangeEvents) {
-        this.$rootScope.appEvent('template-variable-value-updated');
+        this.dashboard.templateVariableValueUpdated();
         this.dashboard.startRefresh();
       }
     });

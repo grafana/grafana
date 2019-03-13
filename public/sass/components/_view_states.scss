@@ -29,6 +29,21 @@
 .view-mode--tv {
   @extend .view-mode--inactive;
 
+  .sidemenu {
+    position: fixed;
+    background-color: transparent;
+    box-shadow: none;
+
+    .sidemenu__top,
+    .sidemenu__bottom {
+      display: none;
+    }
+  }
+
+  .navbar {
+    padding-left: $side-menu-width;
+  }
+
   .submenu-controls {
     display: none;
   }
@@ -50,4 +65,3 @@
     display: none;
   }
 }
-

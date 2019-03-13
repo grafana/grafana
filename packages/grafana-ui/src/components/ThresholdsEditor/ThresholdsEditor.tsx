@@ -1,11 +1,12 @@
-import React, { PureComponent } from 'react';
-import { Threshold, Themeable } from '../../types';
-import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import React, { PureComponent, ChangeEvent } from 'react';
+import { Threshold } from '../../types';
+import { ColorPicker } from '..';
+import { PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 
-export interface Props extends Themeable {
+export interface Props {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
 }
@@ -54,16 +55,16 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const value = afterThresholdValue - (afterThresholdValue - beforeThresholdValue) / 2;
 
     // Set a color
-    const color = colors.filter(c => newThresholds.some(t => t.color === c) === false)[0];
+    const color = colors.filter(c => !newThresholds.some(t => t.color === c))[1];
 
     this.setState(
       {
         thresholds: this.sortThresholds([
           ...newThresholds,
           {
+            color,
             index,
             value: value as number,
-            color,
           },
         ]),
       },
@@ -94,14 +95,15 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     );
   };
 
-  onChangeThresholdValue = (event: any, threshold: Threshold) => {
+  onChangeThresholdValue = (event: ChangeEvent<HTMLInputElement>, threshold: Threshold) => {
     if (threshold.index === 0) {
       return;
     }
 
     const { thresholds } = this.state;
-    const parsedValue = parseInt(event.target.value, 10);
-    const value = isNaN(parsedValue) ? null : parsedValue;
+    const cleanValue = event.target.value.replace(/,/g, '.');
+    const parsedValue = parseFloat(cleanValue);
+    const value = isNaN(parsedValue) ? '' : parsedValue;
 
     const newThresholds = thresholds.map(t => {
       if (t === threshold && t.index !== 0) {
@@ -136,10 +138,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   onBlur = () => {
     this.setState(prevState => {
       const sortThresholds = this.sortThresholds([...prevState.thresholds]);
-      let index = sortThresholds.length - 1;
+      let index = 0;
       sortThresholds.forEach(t => {
-        t.index = index--;
+        t.index = index++;
       });
+
       return { thresholds: sortThresholds };
     });
 
@@ -152,12 +155,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   sortThresholds = (thresholds: Threshold[]) => {
     return thresholds.sort((t1, t2) => {
-      return t2.value - t1.value;
+      return t1.value - t2.value;
     });
   };
 
   renderInput = (threshold: Threshold) => {
-    const value = threshold.index === 0 ? 'Base' : threshold.value;
     return (
       <div className="thresholds-row-input-inner">
         <span className="thresholds-row-input-inner-arrow" />
@@ -168,19 +170,27 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             </div>
           )}
         </div>
-        <div className="thresholds-row-input-inner-value">
-          <input
-            type="text"
-            onChange={event => this.onChangeThresholdValue(event, threshold)}
-            value={value}
-            onBlur={this.onBlur}
-            readOnly={threshold.index === 0}
-          />
-        </div>
-        {threshold.index > 0 && (
-          <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
-            <i className="fa fa-times" />
+        {threshold.index === 0 && (
+          <div className="thresholds-row-input-inner-value">
+            <input type="text" value="Base" readOnly />
           </div>
+        )}
+        {threshold.index > 0 && (
+          <>
+            <div className="thresholds-row-input-inner-value">
+              <input
+                type="number"
+                step="0.0001"
+                onChange={event => this.onChangeThresholdValue(event, threshold)}
+                value={threshold.value}
+                onBlur={this.onBlur}
+                readOnly={threshold.index === 0}
+              />
+            </div>
+            <div className="thresholds-row-input-inner-remove" onClick={() => this.onRemoveThreshold(threshold)}>
+              <i className="fa fa-times" />
+            </div>
+          </>
         )}
       </div>
     );
@@ -188,27 +198,37 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   render() {
     const { thresholds } = this.state;
-    const { theme } = this.props;
-
     return (
-      <PanelOptionsGroup title="Thresholds">
-        <div className="thresholds">
-          {thresholds.map((threshold, index) => {
-            return (
-              <div className="thresholds-row" key={`${threshold.index}-${index}`}>
-                <div className="thresholds-row-add-button" onClick={() => this.onAddThreshold(threshold.index + 1)}>
-                  <i className="fa fa-plus" />
-                </div>
-                <div
-                  className="thresholds-row-color-indicator"
-                  style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme) }}
-                />
-                <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
+      <ThemeContext.Consumer>
+        {theme => {
+          return (
+            <PanelOptionsGroup title="Thresholds">
+              <div className="thresholds">
+                {thresholds
+                  .slice(0)
+                  .reverse()
+                  .map((threshold, index) => {
+                    return (
+                      <div className="thresholds-row" key={`${threshold.index}-${index}`}>
+                        <div
+                          className="thresholds-row-add-button"
+                          onClick={() => this.onAddThreshold(threshold.index + 1)}
+                        >
+                          <i className="fa fa-plus" />
+                        </div>
+                        <div
+                          className="thresholds-row-color-indicator"
+                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
+                        />
+                        <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
+                      </div>
+                    );
+                  })}
               </div>
-            );
-          })}
-        </div>
-      </PanelOptionsGroup>
+            </PanelOptionsGroup>
+          );
+        }}
+      </ThemeContext.Consumer>
     );
   }
 }

@@ -75,7 +75,7 @@ export class TeamSettings extends React.Component<Props, State> {
           </div>
 
           <div className="gf-form-button-row">
-            <button type="submit" className="btn btn-success">
+            <button type="submit" className="btn btn-primary">
               Update
             </button>
           </div>
@@ -98,4 +98,7 @@ const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamSettings);

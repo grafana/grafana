@@ -2,17 +2,18 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorDefinitionByName } from '../../utils/namedColorsPalette';
-import { withKnobs, select } from '@storybook/addon-knobs';
+import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { UseState } from '../../utils/storybook/UseState';
 
 const BasicGreen = getColorDefinitionByName('green');
-const BasicBlue = getColorDefinitionByName('blue');
+const BasicRed = getColorDefinitionByName('red');
 const LightBlue = getColorDefinitionByName('light-blue');
 
 const NamedColorsPaletteStories = storiesOf('UI/ColorPicker/Palettes/NamedColorsPalette', module);
 
-NamedColorsPaletteStories.addDecorator(withKnobs).addDecorator(withCenteredStory);
+NamedColorsPaletteStories.addDecorator(withCenteredStory);
 
 NamedColorsPaletteStories.add('Named colors swatch - support for named colors', () => {
   const selectedColor = select(
@@ -28,7 +29,10 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
   return (
     <UseState initialState={selectedColor}>
       {(selectedColor, updateSelectedColor) => {
-        return <NamedColorsPalette color={selectedColor} onChange={updateSelectedColor} />;
+        return renderComponentWithTheme(NamedColorsPalette, {
+          color: selectedColor,
+          onChange: updateSelectedColor,
+        });
       }}
     </UseState>
   );
@@ -37,7 +41,7 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
     'Selected color',
     {
       Green: BasicGreen.variants.dark,
-      Red: BasicBlue.variants.dark,
+      Red: BasicRed.variants.dark,
       'Light blue': LightBlue.variants.dark,
     },
     'red'
@@ -45,7 +49,10 @@ NamedColorsPaletteStories.add('Named colors swatch - support for named colors', 
   return (
     <UseState initialState={selectedColor}>
       {(selectedColor, updateSelectedColor) => {
-        return <NamedColorsPalette color={getColorName(selectedColor)} onChange={updateSelectedColor} />;
+        return renderComponentWithTheme(NamedColorsPalette, {
+          color: getColorName(selectedColor),
+          onChange: updateSelectedColor,
+        });
       }}
     </UseState>
   );

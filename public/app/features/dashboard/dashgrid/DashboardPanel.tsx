@@ -68,7 +68,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     // handle plugin loading & changing of plugin type
     if (!this.state.plugin || this.state.plugin.id !== pluginId) {
-      const plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
+      let plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
 
       // remember if this is from an angular panel
       const fromAngularPanel = this.state.angularPanel != null;
@@ -76,16 +76,26 @@ export class DashboardPanel extends PureComponent<Props, State> {
       // unmount angular panel
       this.cleanUpAngularPanel();
 
-      if (panel.type !== pluginId) {
-        this.props.panel.changeType(pluginId, fromAngularPanel);
+      if (!plugin.exports) {
+        try {
+          plugin.exports = await importPluginModule(plugin.module);
+        } catch (e) {
+          plugin = getPanelPluginNotFound(pluginId);
+        }
       }
 
-      if (plugin.exports) {
-        this.setState({ plugin: plugin, angularPanel: null });
-      } else {
-        plugin.exports = await importPluginModule(plugin.module);
-        this.setState({ plugin: plugin, angularPanel: null });
+      if (panel.type !== pluginId) {
+        if (fromAngularPanel) {
+          // for angular panels only we need to remove all events and let angular panels do some cleanup
+          panel.destroy();
+
+          this.props.panel.changeType(pluginId);
+        } else {
+          panel.changeType(pluginId, plugin.exports.reactPanel.preserveOptions);
+        }
       }
+
+      this.setState({ plugin, angularPanel: null });
     }
   }
 
@@ -126,10 +136,10 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} />;
+    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isFullscreen={isFullscreen} />;
   }
 
   renderAngularPanel() {
@@ -168,7 +178,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.exports.Panel && this.renderReactPanel()}
+              {plugin.exports.reactPanel && this.renderReactPanel()}
               {plugin.exports.PanelCtrl && this.renderAngularPanel()}
             </div>
           )}

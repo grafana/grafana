@@ -1,24 +1,17 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { DeleteButton } from '@grafana/ui';
-
-const CenteredStory: FunctionComponent<{}> = ({ children }) => {
-  return (
-    <div
-      style={{
-        height: '100vh  ',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+import { DeleteButton } from './DeleteButton';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { action } from '@storybook/addon-actions';
 
 storiesOf('UI/DeleteButton', module)
-  .addDecorator(story => <CenteredStory>{story()}</CenteredStory>)
+  .addDecorator(withCenteredStory)
   .add('default', () => {
-    return <DeleteButton onConfirm={() => {}} />;
+    return (
+      <DeleteButton
+        onConfirm={() => {
+          action('Delete Confirmed')('delete!');
+        }}
+      />
+    );
   });

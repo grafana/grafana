@@ -1,12 +1,20 @@
+// Libraries
 import React from 'react';
 import _ from 'lodash';
+
+// Utils
 import config from 'app/core/config';
-import { PanelModel } from '../../state/PanelModel';
-import { DashboardModel } from '../../state/DashboardModel';
 import store from 'app/core/store';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { updateLocation } from 'app/core/actions';
+
+// Store
 import { store as reduxStore } from 'app/store/store';
+import { updateLocation } from 'app/core/actions';
+
+// Types
+import { PanelModel } from '../../state';
+import { DashboardModel } from '../../state';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LocationUpdate } from 'app/types';
 
 export interface Props {
   panel: PanelModel;
@@ -46,6 +54,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
         copiedPanels.push(pluginCopy);
       }
     }
+
     return _.sortBy(copiedPanels, 'sort');
   }
 
@@ -54,28 +63,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
   }
 
-  copyButton(panel) {
-    return (
-      <button className="btn-inverse btn" onClick={() => this.onPasteCopiedPanel(panel)} title={panel.name}>
-        Paste copied Panel
-      </button>
-    );
-  }
-
-  moveToEdit(panel) {
-    reduxStore.dispatch(
-      updateLocation({
-        query: {
-          panelId: panel.id,
-          edit: true,
-          fullscreen: true,
-        },
-        partial: true,
-      })
-    );
-  }
-
-  onCreateNewPanel = () => {
+  onCreateNewPanel = (tab = 'queries') => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
@@ -88,7 +76,21 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.addPanel(newPanel);
     dashboard.removePanel(this.props.panel);
 
-    this.moveToEdit(newPanel);
+    const location: LocationUpdate = {
+      query: {
+        panelId: newPanel.id,
+        edit: true,
+        fullscreen: true,
+      },
+      partial: true,
+    };
+
+    if (tab === 'visualization') {
+      location.query.tab = 'visualization';
+      location.query.openVizPicker = true;
+    }
+
+    reduxStore.dispatch(updateLocation(location));
   };
 
   onPasteCopiedPanel = panelPluginInfo => {
@@ -98,7 +100,12 @@ export class AddPanelWidget extends React.Component<Props, State> {
     const newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
-      gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      gridPos: {
+        x: gridPos.x,
+        y: gridPos.y,
+        w: panelPluginInfo.defaults.gridPos.w,
+        h: panelPluginInfo.defaults.gridPos.h,
+      },
     };
 
     // apply panel template / defaults
@@ -125,30 +132,52 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.removePanel(this.props.panel);
   };
 
-  render() {
-    let addCopyButton;
+  renderOptionLink = (icon, text, onClick) => {
+    return (
+      <div>
+        <a href="#" onClick={onClick} className="add-panel-widget__link btn btn-inverse">
+          <div className="add-panel-widget__icon">
+            <i className={`gicon gicon-${icon}`} />
+          </div>
+          <span>{text}</span>
+        </a>
+      </div>
+    );
+  };
 
-    if (this.state.copiedPanelPlugins.length === 1) {
-      addCopyButton = this.copyButton(this.state.copiedPanelPlugins[0]);
-    }
+  render() {
+    const { copiedPanelPlugins } = this.state;
 
     return (
       <div className="panel-container add-panel-widget-container">
         <div className="add-panel-widget">
           <div className="add-panel-widget__header grid-drag-handle">
             <i className="gicon gicon-add-panel" />
+            <span className="add-panel-widget__title">New Panel</span>
             <button className="add-panel-widget__close" onClick={this.handleCloseAddPanel}>
               <i className="fa fa-close" />
             </button>
           </div>
           <div className="add-panel-widget__btn-container">
-            <button className="btn-success btn btn-large" onClick={this.onCreateNewPanel}>
-              Edit Panel
-            </button>
-            {addCopyButton}
-            <button className="btn-inverse btn" onClick={this.onCreateNewRow}>
-              Add Row
-            </button>
+            <div className="add-panel-widget__create">
+              {this.renderOptionLink('queries', 'Add Query', this.onCreateNewPanel)}
+              {this.renderOptionLink('visualization', 'Choose Visualization', () =>
+                this.onCreateNewPanel('visualization')
+              )}
+            </div>
+            <div className="add-panel-widget__actions">
+              <button className="btn btn-inverse add-panel-widget__action" onClick={this.onCreateNewRow}>
+                Convert to row
+              </button>
+              {copiedPanelPlugins.length === 1 && (
+                <button
+                  className="btn btn-inverse add-panel-widget__action"
+                  onClick={() => this.onPasteCopiedPanel(copiedPanelPlugins[0])}
+                >
+                  Paste copied panel
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,24 +1,75 @@
 import coreModule from 'app/core/core_module';
-import { DashboardModel } from '../state/DashboardModel';
+import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
+import { DashboardModel } from '../state/DashboardModel';
+import { removePanel } from '../utils/panel';
 
 export class DashboardSrv {
-  dash: any;
+  dashboard: DashboardModel;
 
   /** @ngInject */
-  constructor(private backendSrv, private $rootScope, private $location) {}
+  constructor(private backendSrv, private $rootScope, private $location) {
+    appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
+    appEvents.on('panel-change-view', this.onPanelChangeView);
+    appEvents.on('remove-panel', this.onRemovePanel);
+  }
 
   create(dashboard, meta) {
     return new DashboardModel(dashboard, meta);
   }
 
-  setCurrent(dashboard) {
-    this.dash = dashboard;
+  setCurrent(dashboard: DashboardModel) {
+    this.dashboard = dashboard;
   }
 
-  getCurrent() {
-    return this.dash;
+  getCurrent(): DashboardModel {
+    return this.dashboard;
   }
+
+  onRemovePanel = (panelId: number) => {
+    const dashboard = this.getCurrent();
+    removePanel(dashboard, dashboard.getPanelById(panelId), true);
+  };
+
+  onPanelChangeView = options => {
+    const urlParams = this.$location.search();
+
+    // handle toggle logic
+    if (options.fullscreen === urlParams.fullscreen) {
+      // I hate using these truthy converters (!!) but in this case
+      // I think it's appropriate. edit can be null/false/undefined and
+      // here i want all of those to compare the same
+      if (!!options.edit === !!urlParams.edit) {
+        delete urlParams.fullscreen;
+        delete urlParams.edit;
+        delete urlParams.panelId;
+        delete urlParams.tab;
+        this.$location.search(urlParams);
+        return;
+      }
+    }
+
+    if (options.fullscreen) {
+      urlParams.fullscreen = true;
+    } else {
+      delete urlParams.fullscreen;
+    }
+
+    if (options.edit) {
+      urlParams.edit = true;
+    } else {
+      delete urlParams.edit;
+      delete urlParams.tab;
+    }
+
+    if (options.panelId || options.panelId === 0) {
+      urlParams.panelId = options.panelId;
+    } else {
+      delete urlParams.panelId;
+    }
+
+    this.$location.search(urlParams);
+  };
 
   handleSaveDashboardError(clone, options, err) {
     options = options || {};
@@ -75,10 +126,10 @@ export class DashboardSrv {
   }
 
   postSave(clone, data) {
-    this.dash.version = data.version;
+    this.dashboard.version = data.version;
 
     // important that these happens before location redirect below
-    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('dashboard-saved', this.dashboard);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
     const newUrl = locationUtil.stripBaseFromUrl(data.url);
@@ -88,12 +139,12 @@ export class DashboardSrv {
       this.$location.url(newUrl).replace();
     }
 
-    return this.dash;
+    return this.dashboard;
   }
 
   save(clone, options) {
     options = options || {};
-    options.folderId = options.folderId >= 0 ? options.folderId : this.dash.meta.folderId || clone.folderId;
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)
@@ -103,26 +154,26 @@ export class DashboardSrv {
 
   saveDashboard(options?, clone?) {
     if (clone) {
-      this.setCurrent(this.create(clone, this.dash.meta));
+      this.setCurrent(this.create(clone, this.dashboard.meta));
     }
 
-    if (this.dash.meta.provisioned) {
+    if (this.dashboard.meta.provisioned) {
       return this.showDashboardProvisionedModal();
     }
 
-    if (!this.dash.meta.canSave && options.makeEditable !== true) {
+    if (!this.dashboard.meta.canSave && options.makeEditable !== true) {
       return Promise.resolve();
     }
 
-    if (this.dash.title === 'New dashboard') {
+    if (this.dashboard.title === 'New dashboard') {
       return this.showSaveAsModal();
     }
 
-    if (this.dash.version > 0) {
+    if (this.dashboard.version > 0) {
       return this.showSaveModal();
     }
 
-    return this.save(this.dash.getSaveModelClone(), options);
+    return this.save(this.dashboard.getSaveModelClone(), options);
   }
 
   saveJSONDashboard(json: string) {
@@ -163,8 +214,8 @@ export class DashboardSrv {
     }
 
     return promise.then(res => {
-      if (this.dash && this.dash.id === dashboardId) {
-        this.dash.meta.isStarred = res;
+      if (this.dashboard && this.dashboard.id === dashboardId) {
+        this.dashboard.meta.isStarred = res;
       }
       return res;
     });

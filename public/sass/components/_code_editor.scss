@@ -7,10 +7,10 @@
   &.ace_editor {
     @include font-family-monospace();
     font-size: 1rem;
-    min-height: 2.6rem;
+    min-height: 3.6rem; // Include space for horizontal scrollbar
 
     @include border-radius($input-border-radius-sm);
-    border: $input-btn-border-width solid $input-border-color;
+    border: $border-width solid $input-border-color;
   }
 
   .ace_content {

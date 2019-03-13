@@ -7,13 +7,12 @@
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
+<!---
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
+-->
 
 ## Installation
-Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
-the latest release.
-
-If you have any problems please read the [troubleshooting guide](http://docs.grafana.org/installation/troubleshooting/).
+Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
 
 ## Documentation & Support
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
@@ -70,15 +69,15 @@ $GOPATH/bin/bra run
 Rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 
 ```bash
-yarn watch
+yarn start
 ```
 
 Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
 
 ```bash
-yarn start
+yarn start:hot
 # OR set a theme
-env GRAFANA_THEME=light yarn start
+env GRAFANA_THEME=light yarn start:hot
 ```
 
 *Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.*
@@ -153,7 +152,7 @@ GRAFANA_TEST_DB=postgres go test ./pkg/...
 
 If you have any ideas for improvement or have found a bug, do not hesitate to open an issue.
 And if you have time, clone this repo and submit a pull request to help me make Grafana
-the kickass metrics & devops dashboard we all dream about! 
+the kickass metrics & devops dashboard we all dream about!
 
 Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 

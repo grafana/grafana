@@ -242,10 +242,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.POSTGRES:
-		host, port, err := util.SplitIPPort(ss.dbCfg.Host, "5432")
-		if err != nil {
-			return "", err
-		}
+		host, port := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 		if ss.dbCfg.Pwd == "" {
 			ss.dbCfg.Pwd = "''"
 		}

@@ -1,14 +1,15 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 
-import { ValueMapping, Threshold, BasicGaugeColor, GrafanaTheme } from '../../types';
+import { ValueMapping, Threshold, GrafanaThemeType } from '../../types';
 import { getMappedValue } from '../../utils/valueMappings';
-import { getColorFromHexRgbOrName, getValueFormat } from '../../utils';
+import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
+import { Themeable } from '../../index';
 
-type TimeSeriesValue = string | number | null;
+type GaugeValue = string | number | null;
 
-export interface Props {
-  decimals: number;
+export interface Props extends Themeable {
+  decimals?: number | null;
   height: number;
   valueMappings: ValueMapping[];
   maxValue: number;
@@ -22,7 +23,6 @@ export interface Props {
   unit: string;
   width: number;
   value: number;
-  theme?: GrafanaTheme;
 }
 
 const FONT_SCALE = 1;
@@ -30,7 +30,7 @@ const FONT_SCALE = 1;
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
-  static defaultProps = {
+  static defaultProps: Partial<Props> = {
     maxValue: 100,
     valueMappings: [],
     minValue: 0,
@@ -41,7 +41,6 @@ export class Gauge extends PureComponent<Props> {
     thresholds: [],
     unit: 'none',
     stat: 'avg',
-    theme: GrafanaTheme.Dark,
   };
 
   componentDidMount() {
@@ -52,7 +51,7 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  formatValue(value: TimeSeriesValue) {
+  formatValue(value: GaugeValue) {
     const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
     if (isNaN(value as number)) {
@@ -73,52 +72,41 @@ export class Gauge extends PureComponent<Props> {
     return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
   }
 
-  getFontColor(value: TimeSeriesValue) {
+  getFontColor(value: GaugeValue): string {
     const { thresholds, theme } = this.props;
 
-    if (thresholds.length === 1) {
-      return getColorFromHexRgbOrName(thresholds[0].color, theme);
+    const activeThreshold = getThresholdForValue(thresholds, value);
+
+    if (activeThreshold !== null) {
+      return getColorFromHexRgbOrName(activeThreshold.color, theme.type);
     }
 
-    const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
-    if (atThreshold) {
-      return getColorFromHexRgbOrName(atThreshold.color, theme);
-    }
-
-    const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
-
-    if (belowThreshold.length > 0) {
-      const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
-      return getColorFromHexRgbOrName(nearestThreshold.color, theme);
-    }
-
-    return BasicGaugeColor.Red;
+    return '';
   }
 
   getFormattedThresholds() {
     const { maxValue, minValue, thresholds, theme } = this.props;
 
-    const thresholdsSortedByIndex = [...thresholds].sort((t1, t2) => t1.index - t2.index);
-    const lastThreshold = thresholdsSortedByIndex[thresholdsSortedByIndex.length - 1];
+    const lastThreshold = thresholds[thresholds.length - 1];
 
     return [
-      ...thresholdsSortedByIndex.map(threshold => {
+      ...thresholds.map(threshold => {
         if (threshold.index === 0) {
-          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme) };
+          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
-        const previousThreshold = thresholdsSortedByIndex[threshold.index - 1];
-        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme) };
+        const previousThreshold = thresholds[threshold.index - 1];
+        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
-      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme) },
+      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
     ];
   }
 
   getFontScale(length: number): number {
     if (length > 12) {
-      return FONT_SCALE - length * 5 / 120;
+      return FONT_SCALE - (length * 5) / 110;
     }
-    return FONT_SCALE - length * 5 / 105;
+    return FONT_SCALE - (length * 5) / 100;
   }
 
   draw() {
@@ -126,7 +114,8 @@ export class Gauge extends PureComponent<Props> {
 
     const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
-    const backgroundColor = theme === GrafanaTheme.Light ? 'rgb(230,230,230)' : 'rgb(38,38,38)';
+    const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
+
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
@@ -134,7 +123,7 @@ export class Gauge extends PureComponent<Props> {
       Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const options = {
+    const options: any = {
       series: {
         gauges: {
           gauge: {
@@ -184,19 +173,15 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel">
-        <div
-          style={{
-            height: `${height * 0.9}px`,
-            width: `${Math.min(width, height * 1.3)}px`,
-            top: '10px',
-            margin: 'auto',
-          }}
-          ref={element => (this.canvasElement = element)}
-        />
-      </div>
+      <div
+        style={{
+          height: `${Math.min(height, width * 1.3)}px`,
+          width: `${Math.min(width, height * 1.3)}px`,
+          top: '10px',
+          margin: 'auto',
+        }}
+        ref={element => (this.canvasElement = element)}
+      />
     );
   }
 }
-
-export default Gauge;

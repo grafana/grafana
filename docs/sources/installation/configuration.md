@@ -160,6 +160,13 @@ The path to the directory where the front end files (HTML, JS, and CSS
 files). Default to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
+### enable_gzip
+
+Set this option to `true` to enable HTTP compression, this can improve
+transfer speed and bandwidth utilization. It is recommended that most
+users set it to `true`. By default it is set to `false` for compatibility
+reasons.
+
 ### cert_file
 
 Path to the certificate file (if `protocol` is set to `https`).
@@ -287,6 +294,14 @@ Default is `false`.
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
 
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+
 <hr />
 
 ## [users]
@@ -326,6 +341,14 @@ options are `Admin` and `Editor`. e.g. :
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
+
+### login_hint
+
+Text used as placeholder text on login page for login/username input.
+
+### password_hint
+
+Text used as placeholder text on login page for password input.
 
 <hr>
 
@@ -393,9 +416,7 @@ Analytics ID here. By default this feature is disabled.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of Grafana and installed plugins. Check is used
-in some UI views to notify that a Grafana or plugin update exists. This option does not cause any auto updates, nor
-send any sensitive information.
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 
@@ -588,7 +609,7 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
 
-# concurrent_render_limit
+### concurrent_render_limit
 
 > Available in 5.3  and above
 

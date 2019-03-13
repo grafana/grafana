@@ -4,7 +4,7 @@ import Cascader from 'rc-cascader';
 import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
-import { TypeaheadOutput } from 'app/types/explore';
+import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
@@ -13,6 +13,7 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -37,15 +38,17 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   const metricsOptions = _.chain(metrics)
     .filter(metric => !ruleRegex.test(metric))
     .groupBy(metric => metric.split(delimiter)[0])
-    .map((metricsForPrefix: string[], prefix: string): CascaderOption => {
-      const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-      const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
-      return {
-        children,
-        label: prefix,
-        value: prefix,
-      };
-    })
+    .map(
+      (metricsForPrefix: string[], prefix: string): CascaderOption => {
+        const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
+        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => ({ label: m, value: m }));
+        return {
+          children,
+          label: prefix,
+          value: prefix,
+        };
+      }
+    )
     .sortBy('label')
     .value();
 
@@ -86,15 +89,8 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps {
-  datasource: any;
-  error?: string | JSX.Element;
-  initialQuery: PromQuery;
-  hint?: any;
-  history?: any[];
-  onClickHintFix?: (action: any) => void;
-  onPressEnter?: () => void;
-  onQueryChange?: (value: PromQuery, override?: boolean) => void;
+interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
+  history: HistoryItem[];
 }
 
 interface PromQueryFieldState {
@@ -116,7 +112,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onPressEnter }),
+      RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
         onlyIn: node => node.type === 'code_block',
         getSyntax: node => 'promql',
@@ -174,20 +170,21 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { initialQuery, onQueryChange } = this.props;
+    const { query, onQueryChange, onExecuteQuery } = this.props;
     if (onQueryChange) {
-      const query: PromQuery = {
-        ...initialQuery,
-        expr: value,
-      };
-      onQueryChange(query, override);
+      const nextQuery: PromQuery = { ...query, expr: value };
+      onQueryChange(nextQuery);
+
+      if (override && onExecuteQuery) {
+        onExecuteQuery();
+      }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onClickHintFix } = this.props;
-    if (onClickHintFix && hint && hint.fix) {
-      onClickHintFix(hint.fix.action);
+    const { hint, onExecuteHint } = this.props;
+    if (onExecuteHint && hint && hint.fix) {
+      onExecuteHint(hint.fix.action);
     }
   };
 
@@ -242,29 +239,30 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, initialQuery } = this.props;
+    const { error, hint, query } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
 
     return (
       <>
-        <div className="gf-form-inline">
-          <div className="gf-form">
+        <div className="gf-form-inline gf-form-inline--nowrap">
+          <div className="gf-form flex-shrink-0">
             <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
               <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>
             </Cascader>
           </div>
-          <div className="gf-form gf-form--grow">
+          <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              initialQuery={initialQuery.expr}
+              initialQuery={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
-              onValueChanged={this.onChangeQuery}
+              onQueryChange={this.onChangeQuery}
+              onExecuteQuery={this.props.onExecuteQuery}
               placeholder="Enter a PromQL query"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}

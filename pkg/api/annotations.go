@@ -210,6 +210,65 @@ func UpdateAnnotation(c *m.ReqContext, cmd dtos.UpdateAnnotationsCmd) Response {
 	return Success("Annotation updated")
 }
 
+func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
+	annotationID := c.ParamsInt64(":annotationId")
+
+	repo := annotations.GetRepository()
+
+	if resp := canSave(c, repo, annotationID); resp != nil {
+		return resp
+	}
+
+	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
+
+	if err != nil || len(items) == 0 {
+		return Error(404, "Could not find annotation to update", err)
+	}
+
+	existing := annotations.Item{
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		Id:       annotationID,
+		Epoch:    items[0].Time,
+		Text:     items[0].Text,
+		Tags:     items[0].Tags,
+		RegionId: items[0].RegionId,
+	}
+
+	if cmd.Tags != nil {
+		existing.Tags = cmd.Tags
+	}
+
+	if cmd.Text != "" && cmd.Text != existing.Text {
+		existing.Text = cmd.Text
+	}
+
+	if cmd.Time > 0 && cmd.Time != existing.Epoch {
+		existing.Epoch = cmd.Time
+	}
+
+	if err := repo.Update(&existing); err != nil {
+		return Error(500, "Failed to update annotation", err)
+	}
+
+	// Update region end time if provided
+	if existing.RegionId != 0 && cmd.TimeEnd > 0 {
+		itemRight := existing
+		itemRight.RegionId = existing.Id
+		itemRight.Epoch = cmd.TimeEnd
+
+		// We don't know id of region right event, so set it to 0 and find then using query like
+		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
+		itemRight.Id = 0
+
+		if err := repo.Update(&itemRight); err != nil {
+			return Error(500, "Failed to update annotation for region end time", err)
+		}
+	}
+
+	return Success("Annotation patched")
+}
+
 func DeleteAnnotations(c *m.ReqContext, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 

@@ -43,5 +43,5 @@ export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel)
 }
 
 export const getTitleFromNavModel = (navModel: NavModel) => {
-  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : '' }`;
+  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
 };

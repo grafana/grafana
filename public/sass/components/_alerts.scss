@@ -6,8 +6,8 @@
 // -------------------------
 
 .alert {
-  padding: 1.25rem 2rem 1.25rem 1.5rem;
-  margin-bottom: $panel-margin / 2;
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
   background: $alert-error-bg;
   position: relative;
@@ -16,6 +16,7 @@
   border-radius: $border-radius;
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 // Alternate styles
@@ -62,7 +63,6 @@
 
 .alert-title {
   font-weight: $font-weight-semi-bold;
-  padding-bottom: 2px;
 }
 
 .alert-icon {

@@ -13,6 +13,7 @@ import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton } from '@grafana/ui';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -59,8 +60,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     this.props.deleteApiKey(key.id);
   }
 
-  onSearchQueryChange = evt => {
-    this.props.setSearchQuery(evt.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   onToggleAdding = () => {
@@ -107,7 +108,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   renderEmptyList() {
     const { isAdding } = this.state;
     return (
-      <div className="page-container page-body">
+      <>
         {!isAdding && (
           <EmptyListCTA
             model={{
@@ -124,7 +125,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           />
         )}
         {this.renderAddApiKeyForm()}
-      </div>
+      </>
     );
   }
 
@@ -169,7 +170,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form">
-                <button className="btn gf-form-btn btn-success">Add</button>
+                <button className="btn gf-form-btn btn-primary">Add</button>
               </div>
             </div>
           </form>
@@ -183,24 +184,21 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     const { apiKeys, searchQuery } = this.props;
 
     return (
-      <div className="page-container page-body">
+      <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search keys"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search keys"
+              value={searchQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add API Key
+          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+            Add API key
           </button>
         </div>
 
@@ -231,7 +229,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             </tbody>
           ) : null}
         </table>
-      </div>
+      </>
     );
   }
 
@@ -241,13 +239,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
-          {hasFetched && (
-            apiKeysCount > 0 ? (
-              this.renderApiKeyList()
-            ) : (
-              this.renderEmptyList()
-            )
-          )}
+          {hasFetched && (apiKeysCount > 0 ? this.renderApiKeyList() : this.renderEmptyList())}
         </Page.Contents>
       </Page>
     );
@@ -271,4 +263,9 @@ const mapDispatchToProps = {
   addApiKey,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ApiKeysPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(ApiKeysPage)
+);
