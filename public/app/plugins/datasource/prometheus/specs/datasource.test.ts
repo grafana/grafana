@@ -351,7 +351,7 @@ const timeSrv = {
 };
 
 describe('PrometheusDatasource', () => {
-  describe('When querying prometheus with one target using query editor target spec', async () => {
+  describe('When querying prometheus with one target using query editor target spec', () => {
     let results;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
