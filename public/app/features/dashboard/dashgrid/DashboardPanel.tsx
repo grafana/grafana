@@ -96,7 +96,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  // This is be called before the plugin constructor, so the initial properties are valid
+  // This is called before the plugin is added to the three,
+  // it allows plugins to update options before loading
   validateOptions = (plugin: PanelPlugin, panel: PanelModel) => {
     const { reactPanel } = plugin.exports;
     if (reactPanel && reactPanel.optionsValidator) {

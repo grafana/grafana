@@ -27,10 +27,15 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
- * Checks the existing model before the component is loaded
- * This is useful for fixing options as configuration changes
- * The object passed in is the panel model.... but not typed
- * since that is not in grafana ui
+ * This function is called with the full panelModel before
+ * the pluginPanel is constructed.  This gives you an opportunity
+ * to validate the panel settings before the panel loads.
+ *
+ * @param panelModel the whole panel object.  including the configuration
+ * saved for other panels
+ *
+ * @returns the validated panel options that will be passed into the
+ * panel constructor
  */
 export type PanelOptionsValidator<T = any> = (panelModel: any) => T;
 
