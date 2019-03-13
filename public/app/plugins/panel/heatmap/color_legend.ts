@@ -69,10 +69,11 @@ coreModule.directive('heatmapLegend', () => {
       function render() {
         clearLegend(elem);
         if (!_.isEmpty(ctrl.data) && !_.isEmpty(ctrl.data.cards)) {
-          const rangeFrom = 0;
-          const rangeTo = ctrl.data.cardStats.max;
-          const maxValue = panel.color.max || rangeTo;
-          const minValue = panel.color.min || 0;
+          const cardStats = ctrl.data.cardStats;
+          const rangeFrom = _.isNil(panel.color.min) ? Math.min(cardStats.min, 0) : panel.color.min;
+          const rangeTo = _.isNil(panel.color.max) ? cardStats.max : panel.color.max;
+          const maxValue = cardStats.max;
+          const minValue = cardStats.min;
 
           if (panel.color.mode === 'spectrum') {
             const colorScheme = _.find(ctrl.colorSchemes, {
@@ -110,7 +111,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => Math.round(d * widthFactor))
+    .attr('x', d => Math.round((d - rangeFrom) * widthFactor))
     .attr('y', 0)
     .attr('width', Math.round(rangeStep * widthFactor + 1)) // Overlap rectangles to prevent gaps
     .attr('height', legendHeight)
@@ -141,7 +142,7 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
     .data(valuesRange)
     .enter()
     .append('rect')
-    .attr('x', d => Math.round(d * widthFactor))
+    .attr('x', d => Math.round((d - rangeFrom) * widthFactor))
     .attr('y', 0)
     .attr('width', Math.round(rangeStep * widthFactor))
     .attr('height', legendHeight)
@@ -162,10 +163,10 @@ function drawLegendValues(elem, rangeFrom, rangeTo, maxValue, minValue, legendWi
 
   const legendValueScale = d3
     .scaleLinear()
-    .domain([0, rangeTo])
+    .domain([rangeFrom, rangeTo])
     .range([0, legendWidth]);
 
-  const ticks = buildLegendTicks(0, rangeTo, maxValue, minValue);
+  const ticks = buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue);
   const xAxis = d3
     .axisBottom(legendValueScale)
     .tickValues(ticks)
@@ -286,11 +287,12 @@ function getSvgElemHeight(elem) {
 function buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue) {
   const range = rangeTo - rangeFrom;
   const tickStepSize = tickStep(rangeFrom, rangeTo, 3);
-  const ticksNum = Math.round(range / tickStepSize);
+  const ticksNum = Math.ceil(range / tickStepSize);
+  const firstTick = getFirstCloseTick(rangeFrom, tickStepSize);
   let ticks = [];
 
   for (let i = 0; i < ticksNum; i++) {
-    const current = tickStepSize * i;
+    const current = firstTick + tickStepSize * i;
     // Add user-defined min and max if it had been set
     if (isValueCloseTo(minValue, current, tickStepSize)) {
       ticks.push(minValue);
@@ -304,7 +306,7 @@ function buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue) {
     } else if (maxValue < current) {
       ticks.push(maxValue);
     }
-    ticks.push(tickStepSize * i);
+    ticks.push(current);
   }
   if (!isValueCloseTo(maxValue, rangeTo, tickStepSize)) {
     ticks.push(maxValue);
@@ -317,4 +319,11 @@ function buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue) {
 function isValueCloseTo(val, valueTo, step) {
   const diff = Math.abs(val - valueTo);
   return diff < step * 0.3;
+}
+
+function getFirstCloseTick(minValue, step) {
+  if (minValue < 0) {
+    return Math.floor(minValue / step) * step;
+  }
+  return 0;
 }
