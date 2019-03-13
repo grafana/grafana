@@ -88,17 +88,7 @@
 			  checked="current.jsonData.tlsSkipVerify" switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 		<div class="gf-form-inline">
-			<gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="Forward OAuth Identity" label-class="width-13" tooltip="Forward the user's upstream OAuth identity to the datasource (Their access token gets passed along)." label-class="width-10" checked="current.jsonData.oauthPassThru" switch-class="max-width-6"></gf-form-switch>
-		</div>
-	</div>
-
-	<div class="gf-form-group" ng-if="current.jsonData.oauthPassThru">
-		<h6>OAuth Identity Forwarding Details</h6>
-		<div class="gf-form max-width-30">
-			<span class="gf-form-label width-10">OAuth Source</span>
-			<div class="gf-form-select-wrapper max-width-24">
-				<select class="gf-form-input" ng-model="current.jsonData.oauthPassThruProvider" ng-options="f.key as f.value for f in oauthProviders"></select>
-			</div>
+			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="Forward OAuth Identity" label-class="width-13" tooltip="Forward the user's upstream OAuth identity to the datasource (Their access token gets passed along)." checked="current.jsonData.oauthPassThru" switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 	</div>
 

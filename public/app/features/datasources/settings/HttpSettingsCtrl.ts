@@ -20,13 +20,6 @@ coreModule.directive('datasourceHttpSettings', () => {
         $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
-        $scope.oauthProviders = [
-          { key: 'oauth_google', value: 'Google OAuth' },
-          { key: 'oauth_gitlab', value: 'GitLab OAuth' },
-          { key: 'oauth_generic_oauth', value: 'Generic OAuth' },
-          { key: 'oauth_grafana_com', value: 'Grafana OAuth' },
-          { key: 'oauth_github', value: 'GitHub OAuth' },
-        ];
       },
     },
   };
