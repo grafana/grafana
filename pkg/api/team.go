@@ -81,7 +81,7 @@ func DeleteTeamByID(c *m.ReqContext) Response {
 }
 
 // GET /api/teams/search
-func SearchTeams(c *m.ReqContext) Response {
+func (hs *HTTPServer) SearchTeams(c *m.ReqContext) Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -92,7 +92,7 @@ func SearchTeams(c *m.ReqContext) Response {
 	}
 
 	var userIdFilter int64
-	if c.QueryBool("showMine") {
+	if hs.Cfg.EditorsCanAdmin && c.OrgRole != m.ROLE_ADMIN {
 		userIdFilter = c.SignedInUser.UserId
 	}
 

@@ -168,7 +168,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Get("/:teamId", Wrap(GetTeamByID))
-			teamsRoute.Get("/search", Wrap(SearchTeams))
+			teamsRoute.Get("/search", Wrap(hs.SearchTeams))
 		})
 
 		// org information available to all users.
