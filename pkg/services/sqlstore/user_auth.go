@@ -115,7 +115,7 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 
 func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 	userAuth := &m.UserAuth{
-		UserId:     query.UserId, // TODO this doesn't have an index in the db
+		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
 		AuthId:     query.AuthId,
 	}
