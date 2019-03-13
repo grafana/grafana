@@ -1,23 +1,23 @@
 import React, { PureComponent } from 'react';
-import { SingleStatValueInfo, VizOrientation } from '../../types';
+import { VizOrientation } from '../../types';
 
-interface RenderProps {
+interface RenderProps<T> {
   vizWidth: number;
   vizHeight: number;
-  valueInfo: SingleStatValueInfo;
+  value: T;
 }
 
-interface Props {
-  children: (renderProps: RenderProps) => JSX.Element | JSX.Element[];
+interface Props<T> {
+  children: (renderProps: RenderProps<T>) => JSX.Element | JSX.Element[];
   height: number;
   width: number;
-  values: SingleStatValueInfo[];
+  values: T[];
   orientation: VizOrientation;
 }
 
 const SPACE_BETWEEN = 10;
 
-export class VizRepeater extends PureComponent<Props> {
+export class VizRepeater<T> extends PureComponent<Props<T>> {
   getOrientation(): VizOrientation {
     const { orientation, width, height } = this.props;
 
@@ -64,10 +64,10 @@ export class VizRepeater extends PureComponent<Props> {
 
     return (
       <div style={repeaterStyle}>
-        {values.map((valueInfo, index) => {
+        {values.map((value, index) => {
           return (
             <div key={index} style={itemStyles}>
-              {children({ vizHeight, vizWidth, valueInfo })}
+              {children({ vizHeight, vizWidth, value })}
             </div>
           );
         })}

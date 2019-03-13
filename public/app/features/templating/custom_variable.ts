@@ -40,7 +40,7 @@ export class CustomVariable implements Variable {
   updateOptions() {
     // extract options in comma separated string (use backslash to escape wanted commas)
     this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
-      text = text.replace('\\,', ',');
+      text = text.replace(/\\,/g, ',');
       return { text: text.trim(), value: text.trim() };
     });
 
