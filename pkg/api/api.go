@@ -14,7 +14,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqAdminOrEditorCanAdmin := middleware.EditorCanAdmin(hs.Cfg.EditorsCanAdmin)
+	reqAdminOrCanAdmin := middleware.AdminOrCanAdmin(hs.Cfg.EditorsCanAdmin)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
@@ -42,8 +42,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/users", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", reqOrgAdmin, hs.Index)
-	r.Get("/org/teams", reqAdminOrEditorCanAdmin, hs.Index)
-	r.Get("/org/teams/*", reqAdminOrEditorCanAdmin, hs.Index)
+	r.Get("/org/teams", reqAdminOrCanAdmin, hs.Index)
+	r.Get("/org/teams/*", reqAdminOrCanAdmin, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
@@ -163,7 +163,7 @@ func (hs *HTTPServer) registerRoutes() {
 			teamsRoute.Delete("/:teamId/members/:userId", Wrap(hs.RemoveTeamMember))
 			teamsRoute.Get("/:teamId/preferences", Wrap(GetTeamPreferences))
 			teamsRoute.Put("/:teamId/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateTeamPreferences))
-		}, reqAdminOrEditorCanAdmin)
+		}, reqAdminOrCanAdmin)
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
