@@ -23,12 +23,10 @@ export class TableReducePicker extends PureComponent<Props> {
   };
 
   componentDidMount() {
-    console.log('MOUNT!', this);
     this.checkInput();
   }
 
   componentDidUpdate(prevProps: Props) {
-    console.log('UPDATE', this);
     this.checkInput();
   }
 

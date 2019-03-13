@@ -9,18 +9,18 @@ describe('Table Reducer', () => {
       TableReducerID.sum,
       TableReducerID.max,
       TableReducerID.min,
-    //  TableReducerID.logmin,
+      //  TableReducerID.logmin,
       TableReducerID.mean,
       TableReducerID.last,
       TableReducerID.first,
       TableReducerID.count,
       TableReducerID.range,
       TableReducerID.diff,
-    // TableReducerID.allIsZero,
-    // TableReducerID.allIsNull,
+      // TableReducerID.allIsZero,
+      // TableReducerID.allIsNull,
     ];
     const reducers = getTableReducers(names);
-    reducers.forEach( (reducer, index) => {
+    reducers.forEach((reducer, index) => {
       expect(reducer ? reducer.value : '<missing>').toEqual(names[index]);
     });
   });
@@ -65,6 +65,7 @@ describe('Table Reducer', () => {
       columnIndexes: [0, 1],
       stats: ['mean'],
     });
+
     expect(reduced.length).toBe(1);
     expect(reduced[0].rows[0]).toEqual([15, 25]);
   });
