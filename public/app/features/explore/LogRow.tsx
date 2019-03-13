@@ -5,7 +5,7 @@ import classnames from 'classnames';
 
 import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
-import { findHighlightChunksInText, hasAnsiCodes } from 'app/core/utils/text';
+import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 
@@ -130,13 +130,13 @@ export class LogRow extends PureComponent<Props, State> {
       parsedFieldHighlights,
       showFieldStats,
     } = this.state;
+    const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0;
+    const needsHighlighter = highlights && highlights.length > 0 && highlights[0].length > 0;
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
-    const containsAnsiCodes = hasAnsiCodes(row.entry);
 
     return (
       <div className="logs-row">
@@ -150,7 +150,7 @@ export class LogRow extends PureComponent<Props, State> {
           </div>
         )}
         {showLocalTime && (
-          <div className="logs-row__time" title={`${row.timestamp} (${row.timeFromNow})`}>
+          <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
             {row.timeLocal}
           </div>
         )}
@@ -160,25 +160,25 @@ export class LogRow extends PureComponent<Props, State> {
           </div>
         )}
         <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
-          {containsAnsiCodes && <LogMessageAnsi value={row.entry} />}
-          {!containsAnsiCodes && parsed && (
+          {parsed && (
             <Highlighter
               autoEscape
               highlightTag={FieldHighlight(this.onClickHighlight)}
-              textToHighlight={row.entry}
+              textToHighlight={entry}
               searchWords={parsedFieldHighlights}
               highlightClassName="logs-row__field-highlight"
             />
           )}
-          {!containsAnsiCodes && !parsed && needsHighlighter && (
+          {!parsed && needsHighlighter && (
             <Highlighter
-              textToHighlight={row.entry}
+              textToHighlight={entry}
               searchWords={highlights}
               findChunks={findHighlightChunksInText}
               highlightClassName={highlightClassName}
             />
           )}
-          {!containsAnsiCodes && !parsed && !needsHighlighter && row.entry}
+          {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
+          {!hasAnsi && !parsed && !needsHighlighter && entry}
           {showFieldStats && (
             <div className="logs-row__stats">
               <LogLabelStats

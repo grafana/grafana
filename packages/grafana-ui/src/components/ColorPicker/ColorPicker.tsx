@@ -1,32 +1,11 @@
 import React, { Component, createRef } from 'react';
 import { PopperController } from '../Tooltip/PopperController';
 import { Popper } from '../Tooltip/Popper';
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { Themeable } from '../../types';
+import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-import propDeprecationWarning from '../../utils/propDeprecationWarning';
+
 import { withTheme } from '../../themes/ThemeContext';
-type ColorPickerChangeHandler = (color: string) => void;
-
-export interface ColorPickerProps extends Themeable {
-  color: string;
-  onChange: ColorPickerChangeHandler;
-
-  /**
-   * @deprecated Use onChange instead
-   */
-  onColorChange?: ColorPickerChangeHandler;
-  enableNamedColors?: boolean;
-  children?: JSX.Element;
-}
-
-export const warnAboutColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
-  const { onColorChange } = props;
-  if (onColorChange) {
-    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
-  }
-};
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
@@ -36,7 +15,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     static displayName = displayName;
     pickerTriggerRef = createRef<HTMLDivElement>();
 
-    handleColorChange = (color: string) => {
+    onColorChange = (color: string) => {
       const { onColorChange, onChange } = this.props;
       const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
 
@@ -46,7 +25,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     render() {
       const popoverElement = React.createElement(popover, {
         ...this.props,
-        onChange: this.handleColorChange,
+        onChange: this.onColorChange,
       });
       const { theme, children } = this.props;
 

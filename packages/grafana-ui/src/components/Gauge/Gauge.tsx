@@ -123,7 +123,7 @@ export class Gauge extends PureComponent<Props> {
       Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    const options = {
+    const options: any = {
       series: {
         gauges: {
           gauge: {

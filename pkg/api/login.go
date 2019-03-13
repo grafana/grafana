@@ -7,9 +7,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,6 +36,7 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
+	viewData.Settings["passwordHint"] = setting.PasswordHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {

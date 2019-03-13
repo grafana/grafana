@@ -75,26 +75,21 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body, mode: KioskUrlValue, sidemenuOpen: boolean) {
+function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
   body.removeClass('view-mode--tv');
   body.removeClass('view-mode--kiosk');
   body.removeClass('view-mode--inactive');
 
   switch (mode) {
     case 'tv': {
-      body.removeClass('sidemenu-open');
       body.addClass('view-mode--tv');
       break;
     }
     // 1 & true for legacy states
     case '1':
     case true: {
-      body.removeClass('sidemenu-open');
       body.addClass('view-mode--kiosk');
       break;
-    }
-    default: {
-      body.toggleClass('sidemenu-open', sidemenuOpen);
     }
   }
 }
@@ -105,21 +100,12 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      let sidemenuOpen;
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
-
-      sidemenuOpen = scope.contextSrv.sidemenu;
-      body.toggleClass('sidemenu-open', sidemenuOpen);
-
-      appEvents.on('toggle-sidemenu', () => {
-        sidemenuOpen = scope.contextSrv.sidemenu;
-        body.toggleClass('sidemenu-open');
-      });
 
       appEvents.on('toggle-sidemenu-mobile', () => {
         body.toggleClass('sidemenu-open--xs');
@@ -163,7 +149,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
-        setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
+        setViewModeBodyClass(body, data.params.kiosk);
 
         // close all drops
         for (const drop of Drop.drops) {
@@ -174,8 +160,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', options => {
-        const search = $location.search();
+      appEvents.on('toggle-kiosk-mode', (options: { exit?: boolean }) => {
+        const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
           search.kiosk = '1';
@@ -197,8 +183,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }
         }
 
-        $location.search(search);
-        setViewModeBodyClass(body, search.kiosk, sidemenuOpen);
+        $timeout(() => $location.search(search));
+        setViewModeBodyClass(body, search.kiosk);
       });
 
       // handle in active view state class
@@ -218,7 +204,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('view-mode--inactive');
-          body.removeClass('sidemenu-open');
         }
       }
 
@@ -227,7 +212,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (!activeUser) {
           activeUser = true;
           body.removeClass('view-mode--inactive');
-          body.toggleClass('sidemenu-open', sidemenuOpen);
         }
       }
 

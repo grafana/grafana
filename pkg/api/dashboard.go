@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -488,6 +488,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.Resto
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	saveCmd.FolderId = dash.FolderId
 
 	return hs.PostDashboard(c, saveCmd)
 }

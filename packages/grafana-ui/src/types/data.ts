@@ -50,7 +50,7 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export type TimeSeriesVMs = TimeSeriesVM[];
 
-interface Column {
+export interface Column {
   text: string;
   title?: string;
   type?: string;

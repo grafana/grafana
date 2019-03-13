@@ -1,8 +1,9 @@
 import { ComponentClass } from 'react';
 import { TimeSeries, LoadingState, TableData } from './data';
 import { TimeRange } from './time';
+import { ScopedVars } from './datasource';
 
-export type InterpolateFunction = (value: string, format?: string | Function) => string;
+export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
   panelData: PanelData;
@@ -12,7 +13,7 @@ export interface PanelProps<T = any> {
   renderCounter: number;
   width: number;
   height: number;
-  onInterpolate: InterpolateFunction;
+  replaceVariables: InterpolateFunction;
 }
 
 export interface PanelData {
@@ -22,7 +23,7 @@ export interface PanelData {
 
 export interface PanelEditorProps<T = any> {
   options: T;
-  onChange: (options: T) => void;
+  onOptionsChange: (options: T) => void;
 }
 
 export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;

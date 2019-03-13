@@ -6,25 +6,25 @@ export enum GrafanaThemeType {
 export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
-  brakpoints: {
+  breakpoints: {
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
     xl: string;
   };
   typography: {
     fontFamily: {
       sansSerif: string;
-      serif: string;
       monospace: string;
     };
     size: {
+      root: string;
       base: string;
       xs: string;
-      s: string;
-      m: string;
-      l: string;
+      sm: string;
+      md: string;
+      lg: string;
     };
     weight: {
       light: number;
@@ -33,9 +33,9 @@ export interface GrafanaThemeCommons {
     };
     lineHeight: {
       xs: number; //1
-      s: number; //1.1
-      m: number; // 4/3
-      l: number; // 1.5
+      sm: number; //1.1
+      md: number; // 4/3
+      lg: number; // 1.5
     };
     // TODO: Refactor to use size instead of custom defs
     heading: {
@@ -48,18 +48,28 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    d: string;
+    xxs: string;
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
     gutter: string;
   };
   border: {
     radius: {
       xs: string;
-      s: string;
-      m: string;
+      sm: string;
+      md: string;
     };
+    width: {
+      sm: string;
+    };
+  };
+  panelPadding: {
+    horizontal: number;
+    vertical: number;
   };
 }
 
@@ -113,25 +123,33 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     queryPurple: string;
     queryKeyword: string;
     queryOrange: string;
+    brandPrimary: string;
+    brandSuccess: string;
+    brandWarning: string;
+    brandDanger: string;
 
     // Status colors
     online: string;
     warn: string;
     critical: string;
 
+    // Link colors
+    link: string;
+    linkDisabled: string;
+    linkHover: string;
+    linkExternal: string;
+
+    // Text colors
+    body: string;
+    text: string;
+    textStrong: string;
+    textWeak: string;
+    textFaint: string;
+    textEmphasis: string;
+
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;
-    bodyColor: string;
-    textColor: string;
-    textColorStrong: string;
-    textColorWeak: string;
-    textColorFaint: string;
-    textColorEmphasis: string;
-    linkColor: string;
-    linkColorDisabled: string;
-    linkColorHover: string;
-    linkColorExternal: string;
     headingColor: string;
   };
 }

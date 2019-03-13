@@ -379,6 +379,24 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     });
   }
 
+  getTagKeys(options) {
+    const url = '/api/v1/labels';
+    return this.metadataRequest(url).then(result => {
+      return _.map(result.data.data, value => {
+        return { text: value };
+      });
+    });
+  }
+
+  getTagValues(options) {
+    const url = '/api/v1/label/' + options.key + '/values';
+    return this.metadataRequest(url).then(result => {
+      return _.map(result.data.data, value => {
+        return { text: value };
+      });
+    });
+  }
+
   testDatasource() {
     const now = new Date().getTime();
     return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
@@ -396,6 +414,10 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
       const expandedQueries = queries.map(query => ({
         ...query,
         expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+
+        // null out values we don't support in Explore yet
+        legendFormat: null,
+        step: null,
       }));
       state = {
         ...state,

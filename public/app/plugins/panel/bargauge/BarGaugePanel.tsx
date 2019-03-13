@@ -16,10 +16,11 @@ interface Props extends PanelProps<BarGaugeOptions> {}
 
 export class BarGaugePanel extends PureComponent<Props> {
   renderBarGauge(value, width, height) {
-    const { onInterpolate, options } = this.props;
+    const { replaceVariables, options } = this.props;
     const { valueOptions } = options;
-    const prefix = onInterpolate(valueOptions.prefix);
-    const suffix = onInterpolate(valueOptions.suffix);
+
+    const prefix = replaceVariables(valueOptions.prefix);
+    const suffix = replaceVariables(valueOptions.suffix);
 
     return (
       <BarGauge

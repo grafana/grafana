@@ -6,7 +6,7 @@ $column-horizontal-spacing: 10px;
   padding: $panel-padding;
   padding-top: 10px;
   border-radius: $border-radius;
-  margin: 2 * $panel-margin 0 $panel-margin;
+  margin: $space-md 0 $space-sm;
   border: $panel-border;
   flex-direction: column;
 }
@@ -63,6 +63,7 @@ $column-horizontal-spacing: 10px;
   font-size: $font-size-sm;
   display: table;
   table-layout: fixed;
+  width: 100%;
 }
 
 .logs-row {
@@ -83,16 +84,22 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__time {
   white-space: nowrap;
+  width: 19em;
+}
+
+.logs-row__localtime {
+  white-space: nowrap;
+  width: 12.5em;
 }
 
 .logs-row__labels {
-  max-width: 20%;
+  width: 20%;
   line-height: 1.2;
+  position: relative;
 }
 
 .logs-row__message {
   word-break: break-all;
-  min-width: 80%;
 }
 
 .logs-row__match-highlight {
@@ -112,6 +119,7 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__level {
   position: relative;
+  width: 10px;
 
   &::after {
     content: '';
@@ -165,6 +173,7 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__duplicates {
   text-align: right;
+  width: 4.5em;
 }
 
 .logs-row__field-highlight {
@@ -193,15 +202,20 @@ $column-horizontal-spacing: 10px;
   }
 }
 
+.logs-labels {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .logs-label {
-  display: inline-block;
+  display: flex;
   padding: 0 2px;
   background-color: $btn-inverse-bg;
   border-radius: $border-radius;
   margin: 0 4px 2px 0;
   text-overflow: ellipsis;
   white-space: nowrap;
-  position: relative;
+  overflow: hidden;
 }
 
 .logs-label__icon {
@@ -209,6 +223,13 @@ $column-horizontal-spacing: 10px;
   padding: 0 2px;
   cursor: pointer;
   margin-left: 2px;
+}
+
+.logs-label__value {
+  display: inline-block;
+  max-width: 20em;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .logs-label__stats {

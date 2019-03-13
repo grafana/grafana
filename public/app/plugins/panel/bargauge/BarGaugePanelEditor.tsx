@@ -12,26 +12,26 @@ import { SingleStatValueOptions } from '../gauge/types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.props.onChange({
+    this.props.onOptionsChange({
       ...this.props.options,
       thresholds,
     });
 
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onChange({
+    this.props.onOptionsChange({
       ...this.props.options,
       valueMappings,
     });
 
   onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
-    this.props.onChange({
+    this.props.onOptionsChange({
       ...this.props.options,
       valueOptions,
     });
 
-  onMinValueChange = ({ target }) => this.props.onChange({ ...this.props.options, minValue: target.value });
-  onMaxValueChange = ({ target }) => this.props.onChange({ ...this.props.options, maxValue: target.value });
-  onOrientationChange = ({ value }) => this.props.onChange({ ...this.props.options, orientation: value });
+  onMinValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, minValue: target.value });
+  onMaxValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, maxValue: target.value });
+  onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
 
   render() {
     const { options } = this.props;
