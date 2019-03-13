@@ -220,14 +220,15 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if proxy.ds.JsonData != nil && proxy.ds.JsonData.Get("oauthPassThru").MustBool() {
-			provider := proxy.ds.JsonData.Get("oauthPassThruProvider").MustString()
+			cmd := &m.GetAuthInfoQuery{UserId: proxy.ctx.UserId}
+			if err := bus.Dispatch(cmd); err != nil {
+				logger.Error("Error feching oauth information for user", "error", err)
+			}
+
+			provider := cmd.Result.AuthModule
 			connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 			if !ok {
 				logger.Error("Failed to find oauth provider with given name", "provider", provider)
-			}
-			cmd := &m.GetAuthInfoQuery{UserId: proxy.ctx.UserId, AuthModule: provider}
-			if err := bus.Dispatch(cmd); err != nil {
-				logger.Error("Error feching oauth information for user", "error", err)
 			}
 
 			// TokenSource handles refreshing the token if it has expired
