@@ -56,7 +56,7 @@ module.exports = merge(common, {
               plugins: [
                 [require('@rtsao/plugin-proposal-class-properties'), { loose: true }],
                 'angularjs-annotate',
-                'syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
                 'react-hot-loader/babel',
               ],
               presets: [
