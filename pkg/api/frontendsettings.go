@@ -192,16 +192,18 @@ func getPanelSort(id string) int {
 		sort = 2
 	case "gauge":
 		sort = 3
-	case "table":
+	case "bargauge":
 		sort = 4
-	case "text":
+	case "table":
 		sort = 5
-	case "heatmap":
+	case "text":
 		sort = 6
-	case "alertlist":
+	case "heatmap":
 		sort = 7
-	case "dashlist":
+	case "alertlist":
 		sort = 8
+	case "dashlist":
+		sort = 9
 	}
 	return sort
 }

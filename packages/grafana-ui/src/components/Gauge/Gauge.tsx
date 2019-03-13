@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { getMappedValue } from '../../utils/valueMappings';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { Themeable, GrafanaThemeType } from '../../types/theme';
-import { ValueMapping, Threshold, BasicGaugeColor } from '../../types/panel';
-import { getValueFormat } from '../../utils/valueFormats/valueFormats';
 
-type TimeSeriesValue = string | number | null;
+import { ValueMapping, Threshold, GrafanaThemeType } from '../../types';
+import { getMappedValue } from '../../utils/valueMappings';
+import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
+import { Themeable } from '../../index';
+
+type GaugeValue = string | number | null;
 
 export interface Props extends Themeable {
   decimals?: number | null;
@@ -51,7 +51,7 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  formatValue(value: TimeSeriesValue) {
+  formatValue(value: GaugeValue) {
     const { decimals, valueMappings, prefix, suffix, unit } = this.props;
 
     if (isNaN(value as number)) {
@@ -72,26 +72,16 @@ export class Gauge extends PureComponent<Props> {
     return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
   }
 
-  getFontColor(value: TimeSeriesValue) {
+  getFontColor(value: GaugeValue): string {
     const { thresholds, theme } = this.props;
 
-    if (thresholds.length === 1) {
-      return getColorFromHexRgbOrName(thresholds[0].color, theme.type);
+    const activeThreshold = getThresholdForValue(thresholds, value);
+
+    if (activeThreshold !== null) {
+      return getColorFromHexRgbOrName(activeThreshold.color, theme.type);
     }
 
-    const atThreshold = thresholds.filter(threshold => (value as number) === threshold.value)[0];
-    if (atThreshold) {
-      return getColorFromHexRgbOrName(atThreshold.color, theme.type);
-    }
-
-    const belowThreshold = thresholds.filter(threshold => (value as number) > threshold.value);
-
-    if (belowThreshold.length > 0) {
-      const nearestThreshold = belowThreshold.sort((t1, t2) => t2.value - t1.value)[0];
-      return getColorFromHexRgbOrName(nearestThreshold.color, theme.type);
-    }
-
-    return BasicGaugeColor.Red;
+    return '';
   }
 
   getFormattedThresholds() {
@@ -183,19 +173,15 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel">
-        <div
-          style={{
-            height: `${height * 0.9}px`,
-            width: `${Math.min(width, height * 1.3)}px`,
-            top: '10px',
-            margin: 'auto',
-          }}
-          ref={element => (this.canvasElement = element)}
-        />
-      </div>
+      <div
+        style={{
+          height: `${Math.min(height, width * 1.3)}px`,
+          width: `${Math.min(width, height * 1.3)}px`,
+          top: '10px',
+          margin: 'auto',
+        }}
+        ref={element => (this.canvasElement = element)}
+      />
     );
   }
 }
-
-export default Gauge;

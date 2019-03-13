@@ -20,6 +20,7 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
+  ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 
@@ -301,11 +302,24 @@ export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: 
   return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
 }
 
-export function makeTimeSeriesList(dataList) {
-  return dataList.map((seriesData, index) => {
+export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
+  // Prevent multiple Graph transactions to have the same colors
+  let colorIndexOffset = 0;
+  for (const other of allTransactions) {
+    // Only need to consider transactions that came before the current one
+    if (other === transaction) {
+      break;
+    }
+    // Count timeseries of previous query results
+    if (other.resultType === 'Graph' && other.done) {
+      colorIndexOffset += other.result.length;
+    }
+  }
+
+  return dataList.map((seriesData, index: number) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
-    const colorIndex = index % colors.length;
+    const colorIndex = (colorIndexOffset + index) % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
@@ -317,7 +331,7 @@ export function makeTimeSeriesList(dataList) {
 
     return series;
   });
-}
+};
 
 /**
  * Update the query history. Side-effect: store history in local storage

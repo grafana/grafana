@@ -52,7 +52,6 @@ $spacers: (
     ),
   ),
 ) !default;
-$border-width: ${theme.border.width.sm} !default;
 
 // Grid breakpoints
 //
@@ -83,16 +82,13 @@ $container-max-widths: (
 // Set the number of columns and specify the width of the gutters.
 
 $grid-columns: 12 !default;
-$grid-gutter-width: 30px !default;
-
-$enable-flex: true;
+$grid-gutter-width: ${theme.spacing.gutter} !default;
 
 // Typography
 // -------------------------
 
 $font-family-sans-serif: ${theme.typography.fontFamily.sansSerif};
 $font-family-monospace: ${theme.typography.fontFamily.monospace};
-$font-family-base: $font-family-sans-serif !default;
 
 $font-size-root: ${theme.typography.size.root} !default;
 $font-size-base: ${theme.typography.size.base} !default;
@@ -103,7 +99,9 @@ $font-size-sm: ${theme.typography.size.sm} !default;
 $font-size-xs: ${theme.typography.size.xs} !default;
 
 $line-height-base: ${theme.typography.lineHeight.lg} !default;
-$font-weight-semi-bold: ${theme.typography.weight.semibold};
+
+$font-weight-regular: ${theme.typography.weight.regular} !default;
+$font-weight-semi-bold: ${theme.typography.weight.semibold} !default;
 
 $font-size-h1: ${theme.typography.heading.h1} !default;
 $font-size-h2: ${theme.typography.heading.h2} !default;
@@ -113,22 +111,17 @@ $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
 $headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-$headings-font-weight: ${theme.typography.weight.normal} !default;
 $headings-line-height: ${theme.typography.lineHeight.sm} !default;
-
-$hr-border-width: $border-width !default;
-$dt-font-weight: bold !default;
 
 // Components
 //
 // Define common padding and border radius sizes and more.
 
-$line-height-lg: (4 / 3) !default;
-$line-height-sm: 1.5 !default;
+$border-width: ${theme.border.width.sm} !default;
 
-$border-radius: 3px !default;
-$border-radius-lg: 5px !default;
-$border-radius-sm: 2px !default;
+$border-radius: ${theme.border.radius.md} !default;
+$border-radius-lg: ${theme.border.radius.lg}!default;
+$border-radius-sm: ${theme.border.radius.sm} !default;
 
 // Page
 
@@ -151,21 +144,16 @@ $input-padding-x: 10px !default;
 $input-padding-y: 8px !default;
 $input-line-height: 18px !default;
 
-$input-btn-border-width: 1px;
 $input-border-radius: 0 $border-radius $border-radius 0 !default;
 $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-y-sm: 4px !default;
-
 $input-padding-x-lg: 20px !default;
 $input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
-
-$gf-form-input-height: 35px;
 
 $cursor-disabled: not-allowed !default;
 
@@ -203,7 +191,6 @@ $btn-padding-y-lg: 11px !default;
 $btn-padding-x-xl: 21px !default;
 $btn-padding-y-xl: 11px !default;
 
-$btn-border-radius: 2px;
 
 $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 

@@ -25,7 +25,7 @@ const theme: GrafanaThemeCommons = {
     },
     weight: {
       light: 300,
-      normal: 400,
+      regular: 400,
       semibold: 500,
     },
     lineHeight: {
@@ -54,9 +54,9 @@ const theme: GrafanaThemeCommons = {
   },
   border: {
     radius: {
-      xs: '2px',
-      sm: '3px',
-      md: '5px',
+      sm: '2px',
+      md: '3px',
+      lg: '5px',
     },
     width: {
       sm: '1px',
