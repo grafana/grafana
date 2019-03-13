@@ -35,7 +35,7 @@
     "@types/react-virtualized": "^9.18.12",
     "angular-mocks": "1.6.6",
     "autoprefixer": "^9.4.10",
-    "axios": "^0.17.1",
+    "axios": "^0.18.0",
     "babel-core": "^7.0.0-bridge",
     "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.4",
