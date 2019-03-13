@@ -16,7 +16,7 @@
   cursor: pointer;
   border: none;
 
-  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
+  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $border-radius-sm);
 
   &,
   &:active,
@@ -53,7 +53,7 @@
 // --------------------------------------------------
 // XLarge
 .btn-xlarge {
-  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $btn-border-radius);
+  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $border-radius-sm);
   font-weight: normal;
   padding-bottom: $btn-padding-y-xl - 3;
   .gicon {
@@ -64,16 +64,16 @@
 
 // Large
 .btn-large {
-  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
 }
 
 .btn-small {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $border-radius-sm);
 }
 
 .btn-mini {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $border-radius-sm);
 }
 
 .btn-link {

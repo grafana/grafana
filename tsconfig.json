@@ -23,6 +23,7 @@
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
     "noImplicitAny": false,
+    "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
@@ -32,5 +33,5 @@
       "sass": ["sass"]
     }
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts"]
+  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

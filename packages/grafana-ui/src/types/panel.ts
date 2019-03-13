@@ -1,8 +1,9 @@
 import { ComponentClass } from 'react';
 import { TimeSeries, LoadingState, TableData } from './data';
 import { TimeRange } from './time';
+import { ScopedVars } from './datasource';
 
-export type InterpolateFunction = (value: string, format?: string | Function) => string;
+export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
   panelData: PanelData;
@@ -25,10 +26,13 @@ export interface PanelEditorProps<T = any> {
   onOptionsChange: (options: T) => void;
 }
 
+export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+  preserveOptions?: PreservePanelOptionsHandler<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -40,6 +44,10 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+  }
+
+  setPreserveOptionsHandler(handler: PreservePanelOptionsHandler<TOptions>) {
+    this.preserveOptions = handler;
   }
 }
 
@@ -55,17 +63,6 @@ export interface PanelMenuItem {
   onClick?: () => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
-}
-
-export interface Threshold {
-  index: number;
-  value: number;
-  color: string;
-}
-
-export enum BasicGaugeColor {
-  Green = '#299c46',
-  Red = '#d44a3a',
 }
 
 export enum MappingType {
@@ -89,4 +86,10 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export enum VizOrientation {
+  Auto = 'auto',
+  Vertical = 'vertical',
+  Horizontal = 'horizontal',
 }

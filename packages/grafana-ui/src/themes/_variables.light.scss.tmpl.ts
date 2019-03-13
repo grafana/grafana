@@ -46,34 +46,34 @@ $orange: ${theme.colors.orange};
 $purple: ${theme.colors.purple};
 $variable: ${theme.colors.variable};
 
-$brand-primary: $orange;
-$brand-success: $green-base;
-$brand-warning: $orange;
-$brand-danger: $red-base;
+$brand-primary: ${theme.colors.brandPrimary};
+$brand-success: ${theme.colors.brandSuccess};
+$brand-warning: ${theme.colors.brandWarning};
+$brand-danger: ${theme.colors.brandDanger};
 
-$query-red: $red-base;
-$query-green: $green-base;
-$query-purple: $purple;
-$query-orange: $orange;
-$query-keyword: $blue-base;
+$query-red: ${theme.colors.queryRed};
+$query-green: ${theme.colors.queryGreen};
+$query-purple: ${theme.colors.queryPurple};
+$query-orange: ${theme.colors.orange};
+$query-keyword: ${theme.colors.queryKeyword};
 
 // Status colors
 // -------------------------
-$online: $green-shade;
-$warn: #f79520;
-$critical: $red-shade;
+$online: ${theme.colors.online};
+$warn: ${theme.colors.warn};
+$critical: ${theme.colors.critical};
 
 // Scaffolding
 // -------------------------
 $body-bg: ${theme.colors.bodyBg};
 $page-bg: ${theme.colors.pageBg};
 
-$body-color: $gray-1;
-$text-color: $gray-1;
-$text-color-strong: $dark-1;
-$text-color-weak: $gray-2;
-$text-color-faint: $gray-4;
-$text-color-emphasis: $dark-2;
+$body-color: ${theme.colors.body};
+$text-color: ${theme.colors.text};
+$text-color-strong: ${theme.colors.textStrong};
+$text-color-weak: ${theme.colors.textWeak};
+$text-color-faint: ${theme.colors.textFaint};
+$text-color-emphasis: ${theme.colors.textEmphasis};
 
 $text-shadow-faint: none;
 
@@ -85,14 +85,14 @@ $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
-$link-color: $gray-1;
-$link-color-disabled: lighten($link-color, 30%);
-$link-hover-color: darken($link-color, 20%);
-$external-link-color: $blue-shade;
+$link-color: ${theme.colors.link};
+$link-color-disabled: ${theme.colors.linkDisabled};
+$link-hover-color: ${theme.colors.linkHover};
+$external-link-color: ${theme.colors.linkExternal};
 
 // Typography
 // -------------------------
-$headings-color: $text-color;
+$headings-color: ${theme.colors.headingColor};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 

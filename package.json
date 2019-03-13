@@ -17,6 +17,7 @@
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
     "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
+    "@types/angular": "^1.6.6",
     "@types/chalk": "^2.2.0",
     "@types/classnames": "^2.2.6",
     "@types/commander": "^2.12.2",
@@ -123,10 +124,10 @@
   },
   "scripts": {
     "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
-    "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme",
-    "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot --theme",
-    "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --hot",
-    "watch": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --theme -d watch,start",
+    "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --watchTheme",
+    "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot --watchTheme",
+    "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot",
+    "watch": "yarn start -d watch,start core:start --watchTheme ",
     "build": "grunt build",
     "test": "grunt test",
     "tslint": "tslint -c tslint.json --project tsconfig.json",
@@ -136,8 +137,11 @@
     "storybook": "cd packages/grafana-ui && yarn storybook",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
-    "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --build",
-    "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts --release"
+    "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
+    "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
+    "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
+    "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p --createVersionCommit",
+    "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts"
   },
   "husky": {
     "hooks": {
@@ -169,7 +173,6 @@
     "angular-native-dragdrop": "1.2.2",
     "angular-route": "1.6.6",
     "angular-sanitize": "1.6.6",
-    "ansicolor": "1.1.78",
     "baron": "^3.0.3",
     "brace": "^0.10.0",
     "classnames": "^2.2.6",

@@ -2,62 +2,58 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { processSingleStatPanelData } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
-import { Gauge } from '@grafana/ui';
+import { Gauge, VizRepeater } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { PanelProps, VizOrientation } from '@grafana/ui/src/types';
 
 interface Props extends PanelProps<GaugeOptions> {}
 
 export class GaugePanel extends PureComponent<Props> {
-  render() {
-    const { panelData, width, height, replaceVariables, options } = this.props;
+  renderGauge(value, width, height) {
+    const { replaceVariables, options } = this.props;
     const { valueOptions } = options;
 
     const prefix = replaceVariables(valueOptions.prefix);
     const suffix = replaceVariables(valueOptions.suffix);
-    let value: TimeSeriesValue;
-
-    if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      if (vmSeries[0]) {
-        value = vmSeries[0].stats[valueOptions.stat];
-      } else {
-        value = null;
-      }
-    } else if (panelData.tableData) {
-      value = panelData.tableData.rows[0].find(prop => prop > 0);
-    }
 
     return (
-      <ThemeContext.Consumer>
-        {theme => (
-          <Gauge
-            value={value}
-            width={width}
-            height={height}
-            prefix={prefix}
-            suffix={suffix}
-            unit={valueOptions.unit}
-            decimals={valueOptions.decimals}
-            thresholds={options.thresholds}
-            valueMappings={options.valueMappings}
-            showThresholdLabels={options.showThresholdLabels}
-            showThresholdMarkers={options.showThresholdMarkers}
-            minValue={options.minValue}
-            maxValue={options.maxValue}
-            theme={theme}
-          />
-        )}
-      </ThemeContext.Consumer>
+      <Gauge
+        value={value}
+        width={width}
+        height={height}
+        prefix={prefix}
+        suffix={suffix}
+        unit={valueOptions.unit}
+        decimals={valueOptions.decimals}
+        thresholds={options.thresholds}
+        valueMappings={options.valueMappings}
+        showThresholdLabels={options.showThresholdLabels}
+        showThresholdMarkers={options.showThresholdMarkers}
+        minValue={options.minValue}
+        maxValue={options.maxValue}
+        theme={config.theme}
+      />
+    );
+  }
+
+  render() {
+    const { panelData, options, height, width } = this.props;
+
+    const values = processSingleStatPanelData({
+      panelData: panelData,
+      stat: options.valueOptions.stat,
+    });
+
+    return (
+      <VizRepeater height={height} width={width} values={values} orientation={VizOrientation.Auto}>
+        {({ vizHeight, vizWidth, valueInfo }) => this.renderGauge(valueInfo.value, vizWidth, vizHeight)}
+      </VizRepeater>
     );
   }
 }

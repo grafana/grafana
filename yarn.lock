@@ -1514,6 +1514,11 @@
     react-input-autosize "^2.2.1"
     react-transition-group "^2.2.1"
 
+"@types/angular@^1.6.6":
+  version "1.6.54"
+  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.54.tgz#f9d5a03e4da7b021a6dabe5d63e899ed4567a5bd"
+  integrity sha512-xA1FuozWXeRQ7FClUbvk8ePL+dydBeDoCWRPFTHU5+8uvVtIIfLGiHA8CMkwsbddFCYnTDVbLxG85a/HBx7LtA==
+
 "@types/chalk@^2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@types/chalk/-/chalk-2.2.0.tgz#b7f6e446f4511029ee8e3f43075fb5b73fbaa0ba"
@@ -1864,6 +1869,13 @@
   version "8.10.40"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.40.tgz#4314888d5cd537945d73e9ce165c04cc550144a4"
   integrity sha512-RRSjdwz63kS4u7edIwJUn8NqKLLQ6LyqF/X4+4jp38MBT3Vwetewi2N4dgJEshLbDwNgOJXNYoOwzVZUSSLhkQ==
+
+"@types/papaparse@^4.5.9":
+  version "4.5.9"
+  resolved "https://registry.yarnpkg.com/@types/papaparse/-/papaparse-4.5.9.tgz#ff887bd362f57cd0c87320d2de38ac232bb55e81"
+  integrity sha512-8Pmxp2IEd/y58tOIsiZkCbAkcKI7InYVpwZFVKJyweCVnqnVahKXVjfSo6gvxUVykQsJvtWB+s6Kc60znVfQVw==
+  dependencies:
+    "@types/node" "*"
 
 "@types/prop-types@*":
   version "15.5.8"
@@ -2753,11 +2765,6 @@ ansi-styles@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-1.0.0.tgz#cb102df1c56f5123eab8b67cd7b98027a0279178"
   integrity sha1-yxAt8cVvUSPquLZ817mAJ6AnkXg=
-
-ansicolor@1.1.78:
-  version "1.1.78"
-  resolved "https://registry.yarnpkg.com/ansicolor/-/ansicolor-1.1.78.tgz#4c1f1dbef81ff3e1292e6f95b4bfb8ba51212db9"
-  integrity sha512-mdNo/iRwUyb4Z0L8AthEV4BZ3TlSWr6YakKtItA48ufGBzYYtTVp+gX6bkweKTfs7wGpUepOz+qHrTPqfBus2Q==
 
 ansicolors@~0.3.2:
   version "0.3.2"
@@ -13203,6 +13210,11 @@ pako@~1.0.5:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.8.tgz#6844890aab9c635af868ad5fecc62e8acbba3ea4"
   integrity sha512-6i0HVbUfcKaTv+EG8ZTr75az7GFXcLYk9UyLEg7Notv/Ma+z/UG3TCoz6GiNeOrn1E/e63I0X/Hpw18jHOTUnA==
+
+papaparse@^4.6.3:
+  version "4.6.3"
+  resolved "https://registry.yarnpkg.com/papaparse/-/papaparse-4.6.3.tgz#742e5eaaa97fa6c7e1358d2934d8f18f44aee781"
+  integrity sha512-LRq7BrHC2kHPBYSD50aKuw/B/dGcg29omyJbKWY3KsYUZU69RKwaBHu13jGmCYBtOc4odsLCrFyk6imfyNubJQ==
 
 parallel-transform@^1.1.0:
   version "1.1.0"

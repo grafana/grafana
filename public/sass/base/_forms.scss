@@ -37,7 +37,7 @@ input,
 button,
 select,
 textarea {
-  font-family: $font-family-base; // And only set font-family here for those that need it (note the missing label element)
+  font-family: $font-family-sans-serif; // And only set font-family here for those that need it (note the missing label element)
 }
 
 // Identify controls by their labels
