@@ -70,7 +70,7 @@ html {
 
 body {
   // Make the `body` use the `font-size-root`
-  font-family: $font-family-base;
+  font-family: $font-family-sans-serif;
   font-size: $font-size-base;
   line-height: $line-height-base;
   // Go easy on the eyes and use something other than `#000` for text
@@ -145,7 +145,7 @@ ul ol {
 }
 
 dt {
-  font-weight: $dt-font-weight;
+  font-weight: $font-weight-semi-bold;
 }
 
 dd {

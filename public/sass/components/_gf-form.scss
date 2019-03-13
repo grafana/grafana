@@ -105,9 +105,9 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
-  height: $gf-form-input-height;
+  height: $input-height;
 
-  border: $input-btn-border-width solid $input-label-border-color;
+  border: $border-width solid $input-label-border-color;
   border-right: none;
   border-radius: $label-border-radius;
 
@@ -127,7 +127,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--btn {
-    border-right: $input-btn-border-width solid $input-label-border-color;
+    border-right: $border-width solid $input-label-border-color;
     border-radius: $border-radius;
 
     &:hover {
@@ -154,7 +154,7 @@ $input-border: 1px solid $input-border-color;
   flex-grow: 1;
   margin: 0;
   margin-right: $space-xs;
-  border: $input-btn-border-width solid transparent;
+  border: $border-width solid transparent;
   border-left: none;
   @include border-radius($label-border-radius-sm);
 }
@@ -166,7 +166,7 @@ $input-border: 1px solid $input-border-color;
 .gf-form-input {
   display: block;
   width: 100%;
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   font-size: $font-size-md;
   line-height: $input-line-height;

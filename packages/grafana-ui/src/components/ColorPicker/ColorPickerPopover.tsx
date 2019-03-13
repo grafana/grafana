@@ -17,8 +17,8 @@ export interface ColorPickerProps extends Themeable {
    */
   onColorChange?: ColorPickerChangeHandler;
   enableNamedColors?: boolean;
-  children?: JSX.Element;
 }
+
 export interface Props<T> extends ColorPickerProps, PopperContentProps {
   customPickers?: T;
 }

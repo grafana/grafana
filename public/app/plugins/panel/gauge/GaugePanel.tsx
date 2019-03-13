@@ -1,94 +1,43 @@
 // Libraries
-import React, { Component } from 'react';
+import React from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { PanelProps } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
 import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, BasicGaugeColor, DisplayValue, getDisplayProcessor } from '@grafana/ui';
+import { DisplayValue } from '@grafana/ui/src/utils/displayValue';
+import { SingleStatPanel } from './SingleStatPanel';
 
-interface Props extends PanelProps<GaugeOptions> {}
-interface State {
-  value: DisplayValue;
-}
-
-export class GaugePanel extends Component<Props, State> {
-  constructor(props: Props) {
+export class GaugePanel extends SingleStatPanel<GaugeOptions> {
+  constructor(props: PanelProps<GaugeOptions>) {
     super(props);
 
-    if (props.options.valueOptions) {
-      console.warn('TODO!! how do we best migration options?');
-    }
-
-    this.state = {
-      value: this.findDisplayValue(props),
-    };
+    // if (props.options.valueOptions) {
+    //   console.warn('TODO!! how do we best migration options?');
+    // }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.panelData !== prevProps.panelData) {
-      this.setState({ value: this.findDisplayValue(this.props) });
-    }
-  }
-
-  findDisplayValue(props: Props): DisplayValue {
-    const { replaceVariables, options } = this.props;
-    const { display } = options;
-
-    const prefix = replaceVariables(display.prefix);
-    const suffix = replaceVariables(display.suffix);
-    return getDisplayProcessor({
-      color: BasicGaugeColor.Red, // The default color
-      ...display,
-      prefix,
-      suffix,
-      // ??? theme:getTheme(GrafanaThemeType.Dark), !! how do I get it here???
-    })(this.findValue(props));
-  }
-
-  findValue(props: Props): number | null {
-    const { panelData, options } = props;
-
-    if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      if (vmSeries[0]) {
-        return vmSeries[0].stats[options.stat];
-      }
-    } else if (panelData.tableData) {
-      return panelData.tableData.rows[0].find(prop => prop > 0);
-    }
-    return null;
-  }
-
-  render() {
-    const { width, height, options } = this.props;
-    const { value } = this.state;
+  renderStat(value: DisplayValue, width: number, height: number) {
+    const { options } = this.props;
     const { display } = options;
 
     return (
-      <ThemeContext.Consumer>
-        {theme => (
-          <Gauge
-            value={value}
-            width={width}
-            height={height}
-            thresholds={display.thresholds}
-            showThresholdLabels={options.showThresholdLabels}
-            showThresholdMarkers={options.showThresholdMarkers}
-            minValue={options.minValue}
-            maxValue={options.maxValue}
-            theme={theme}
-          />
-        )}
-      </ThemeContext.Consumer>
+      <Gauge
+        value={value}
+        width={width}
+        height={height}
+        thresholds={display.thresholds}
+        showThresholdLabels={options.showThresholdLabels}
+        showThresholdMarkers={options.showThresholdMarkers}
+        minValue={options.minValue}
+        maxValue={options.maxValue}
+        theme={config.theme}
+      />
     );
   }
 }

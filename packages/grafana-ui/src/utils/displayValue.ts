@@ -1,8 +1,8 @@
-import { ValueMapping, Threshold } from '../types/panel';
+import { ValueMapping, Threshold } from '../types';
 import _ from 'lodash';
 import { getValueFormat, DecimalCount } from './valueFormats/valueFormats';
 import { getMappedValue } from './valueMappings';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 import moment from 'moment';
 

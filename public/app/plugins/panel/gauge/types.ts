@@ -1,27 +1,15 @@
-import { Threshold, ValueMapping, DisplayValueOptions } from '@grafana/ui';
+import { SingleStatOptions } from '@grafana/ui';
 
-export interface GaugeOptions {
+export interface GaugeOptions extends SingleStatOptions {
   maxValue: number;
   minValue: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
 
-  stat: string;
-  display: DisplayValueOptions;
-
   // TODO: migrate to DisplayValueOptions
-  thresholds?: Threshold[];
-  valueMappings?: ValueMapping[];
-  valueOptions?: SingleStatValueOptions;
-}
-
-/** Deprecated -- migrate to  */
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
+  // thresholds?: Threshold[];
+  // valueMappings?: ValueMapping[];
+  // valueOptions?: SingleStatValueOptions;
 }
 
 export const defaults: GaugeOptions = {
@@ -37,6 +25,6 @@ export const defaults: GaugeOptions = {
     decimals: null,
     unit: 'none',
     mappings: [],
-    thresholds: [],
+    thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   },
 };

@@ -524,14 +524,16 @@ export class HeatmapRenderer {
     }
 
     const cardsData = this.data.cards;
-    const maxValueAuto = this.data.cardStats.max;
-    const maxValue = this.panel.color.max || maxValueAuto;
-    const minValue = this.panel.color.min || 0;
+    const cardStats = this.data.cardStats;
+    const maxValueAuto = cardStats.max;
+    const minValueAuto = Math.min(cardStats.min, 0);
+    const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
+    const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
     const colorScheme = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
-    this.opacityScale = getOpacityScale(this.panel.color, maxValue);
+    this.opacityScale = getOpacityScale(this.panel.color, maxValue, minValue);
     this.setCardSize();
 
     let cards = this.heatmap.selectAll('.heatmap-card').data(cardsData);

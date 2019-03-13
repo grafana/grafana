@@ -1,19 +1,19 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { Themeable, GrafanaThemeType } from '../../types/theme';
-import { Threshold, BasicGaugeColor } from '../../types/panel';
-import { DisplayValue } from '../../utils';
+
+import { Threshold, GrafanaThemeType } from '../../types';
+import { getColorFromHexRgbOrName } from '../../utils';
+import { Themeable } from '../../index';
+import { DisplayValue } from '../../utils/displayValue';
 
 export interface Props extends Themeable {
-  width: number;
   height: number;
   maxValue: number;
   minValue: number;
   thresholds: Threshold[];
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
-
+  width: number;
   value: DisplayValue;
 }
 
@@ -72,7 +72,7 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 5, 100) * this.getFontScale(value.text.length);
+    const fontSize = Math.min(dimension / 5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options: any = {
@@ -101,7 +101,7 @@ export class Gauge extends PureComponent<Props> {
             width: thresholdMarkersWidth,
           },
           value: {
-            color: value.color ? value.color : BasicGaugeColor.Red,
+            color: value.color,
             formatter: () => {
               return value.text;
             },
@@ -112,7 +112,7 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
-    const plotSeries = { data: [[0, value.numeric]] }; // May be NaN
+    const plotSeries = { data: [[0, value]] };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);
@@ -125,19 +125,15 @@ export class Gauge extends PureComponent<Props> {
     const { height, width } = this.props;
 
     return (
-      <div className="singlestat-panel">
-        <div
-          style={{
-            height: `${height * 0.9}px`,
-            width: `${Math.min(width, height * 1.3)}px`,
-            top: '10px',
-            margin: 'auto',
-          }}
-          ref={element => (this.canvasElement = element)}
-        />
-      </div>
+      <div
+        style={{
+          height: `${Math.min(height, width * 1.3)}px`,
+          width: `${Math.min(width, height * 1.3)}px`,
+          top: '10px',
+          margin: 'auto',
+        }}
+        ref={element => (this.canvasElement = element)}
+      />
     );
   }
 }
-
-export default Gauge;
