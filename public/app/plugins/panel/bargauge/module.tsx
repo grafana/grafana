@@ -8,8 +8,10 @@ export const reactPanel = new ReactPanelPlugin<BarGaugeOptions>(BarGaugePanel);
 
 reactPanel.setEditor(BarGaugePanelEditor);
 reactPanel.setDefaults(defaults);
-reactPanel.setPanelTypeChangedHook((options: BarGaugeOptions, prevPluginId: string, prevOptions: any) => {
-  if (prevOptions.valueOptions) {
+reactPanel.setPanelTypeChangedHook((options: BarGaugeOptions, prevPluginId?: string, prevOptions?: any) => {
+  console.log('BAR Gauge', options, prevPluginId, prevOptions);
+
+  if (prevOptions && prevOptions.valueOptions) {
     options.valueOptions = prevOptions.valueOptions;
     options.thresholds = prevOptions.thresholds;
     options.maxValue = prevOptions.maxValue;

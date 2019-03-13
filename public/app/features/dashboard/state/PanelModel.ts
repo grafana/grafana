@@ -257,7 +257,10 @@ export class PanelModel {
 
     // Callback that can validate and migrate any existing settings
     if (hook) {
-      Object.assign(this.options, hook(this.options || {}, oldPluginId, oldOptions.options));
+      this.options = this.options || {};
+      const old = oldOptions ? oldOptions.options : null;
+
+      Object.assign(this.options, hook(this.options, oldPluginId, old));
     }
   }
 
