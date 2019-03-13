@@ -66,6 +66,11 @@
   min-height: 55px;
   line-height: 55px;
   justify-content: space-between;
+  margin-left: $space-xl;
+}
+
+.explore-toolbar-header {
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -163,7 +168,7 @@
 }
 
 .explore-panel {
-  margin-top: $panel-margin;
+  margin-top: $space-sm;
 }
 
 .explore-panel__body {
@@ -182,24 +187,20 @@
 
 .explore-panel__header-label {
   font-weight: 500;
-  margin-right: $panel-margin;
+  margin-right: $space-sm;
   font-size: $font-size-h6;
   box-shadow: $text-shadow-faint;
 }
 
 .explore-panel__header-buttons {
-  margin-right: $panel-margin;
+  margin-right: $space-sm;
   font-size: $font-size-lg;
   line-height: $font-size-h6;
 }
 
-.result-options {
-  margin: 2 * $panel-margin 0;
-}
-
 .time-series-disclaimer {
   width: 300px;
-  margin: $panel-margin auto;
+  margin: $space-sm auto;
   padding: 10px 0;
   border-radius: $border-radius;
   text-align: center;
@@ -207,7 +208,7 @@
 
   .disclaimer-icon {
     color: $yellow;
-    margin-right: $panel-margin/2;
+    margin-right: $space-xs;
   }
 
   .show-all-time-series {
@@ -234,7 +235,7 @@
   position: relative;
   overflow: hidden;
   background: none;
-  margin: $panel-margin / 2;
+  margin: $space-xs;
 }
 
 .explore-panel__loader--active:after {
@@ -377,7 +378,7 @@
 .ReactTable .-pagination {
   border-top: none;
   box-shadow: none;
-  margin-top: $panel-margin;
+  margin-top: $space-sm;
 }
 .ReactTable .-pagination .-btn {
   color: $blue;
@@ -418,7 +419,7 @@
 // TODO Experimental
 
 .cheat-sheet-item {
-  margin: 2 * $panel-margin 0;
+  margin: $space-lg 0;
   width: 50%;
 }
 
@@ -427,6 +428,6 @@
 }
 
 .cheat-sheet-item__expression {
-  margin: $panel-margin/2 0;
+  margin: $space-xs 0;
   cursor: pointer;
 }

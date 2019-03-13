@@ -1,6 +1,9 @@
-import { TableData, Column, TimeSeries } from '../types/index';
-
+// Libraries
 import Papa, { ParseError, ParseMeta } from 'papaparse';
+import isNumber from 'lodash/isNumber';
+
+// Types
+import { TableData, Column, TimeSeries } from '../types';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -163,3 +166,24 @@ export const toTableData = (results?: any[]): TableData[] => {
       throw new Error('Unsupported data format');
     });
 };
+
+export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {
+  if (isNumber(sortIndex)) {
+    const copy = {
+      ...data,
+      rows: [...data.rows].sort((a, b) => {
+        a = a[sortIndex];
+        b = b[sortIndex];
+        // Sort null or undefined separately from comparable values
+        return +(a == null) - +(b == null) || +(a > b) || -(a < b);
+      }),
+    };
+
+    if (reverse) {
+      copy.rows.reverse();
+    }
+
+    return copy;
+  }
+  return data;
+}

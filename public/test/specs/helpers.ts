@@ -123,6 +123,7 @@ export function ServiceTestContext(this: any) {
   };
 
   this.createService = name => {
+    // @ts-ignore
     return angularMocks.inject(($q, $rootScope, $httpBackend, $injector, $location, $timeout) => {
       self.$q = $q;
       self.$rootScope = $rootScope;
@@ -145,7 +146,7 @@ export function DashboardViewStateStub(this: any) {
 export function TimeSrvStub(this: any) {
   this.init = () => {};
   this.time = { from: 'now-1h', to: 'now' };
-  this.timeRange = function(parse) {
+  this.timeRange = function(parse: boolean) {
     if (parse === false) {
       return this.time;
     }
@@ -155,11 +156,7 @@ export function TimeSrvStub(this: any) {
     };
   };
 
-  this.replace = target => {
-    return target;
-  };
-
-  this.setTime = function(time) {
+  this.setTime = function(time: any) {
     this.time = time;
   };
 }
@@ -174,11 +171,11 @@ export function TemplateSrvStub(this: any) {
   this.variables = [];
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
-  this.replace = function(text) {
+  this.replace = function(text: string) {
     return _.template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
-  this.getAdhocFilters = () => {
+  this.getAdhocFilters = (): any => {
     return [];
   };
   this.fillVariableValuesForUrl = () => {};
@@ -187,10 +184,10 @@ export function TemplateSrvStub(this: any) {
     return false;
   };
   this.variableInitialized = () => {};
-  this.highlightVariablesAsHtml = str => {
+  this.highlightVariablesAsHtml = (str: string) => {
     return str;
   };
-  this.setGrafanaVariable = function(name, value) {
+  this.setGrafanaVariable = function(name: string, value: string) {
     this.data[name] = value;
   };
 }

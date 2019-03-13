@@ -114,7 +114,7 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const ds = await this.dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource, scopedVars);
 
       // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;

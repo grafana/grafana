@@ -1,5 +1,5 @@
 .add-data-source-header {
-  margin-bottom: $spacer * 2;
+  margin-bottom: $space-xl;
   padding-top: $spacer;
   text-align: center;
 }
@@ -7,7 +7,7 @@
 .add-data-source-search {
   display: flex;
   justify-content: center;
-  margin-bottom: $panel-margin * 2;
+  margin-bottom: $space-lg;
 }
 
 .add-data-source-grid {
@@ -41,6 +41,6 @@
 }
 
 .add-data-source-grid-item-logo {
-  margin: 0 15px;
+  margin: 0 $space-md;
   width: 55px;
 }

@@ -48,7 +48,7 @@ const colorCodes = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan'
 
 /*  ------------------------------------------------------------------------ */
 
-const clean = obj => {
+const clean = (obj: any) => {
   for (const k in obj) {
     if (!obj[k]) {
       delete obj[k];
@@ -60,11 +60,11 @@ const clean = obj => {
 /*  ------------------------------------------------------------------------ */
 
 class Color {
-  background: string;
+  background: boolean;
   name: string;
   brightness: number;
 
-  constructor(background?, name?, brightness?) {
+  constructor(background?: boolean, name?: string, brightness?: number) {
     this.background = background;
     this.name = name;
     this.brightness = brightness;
@@ -82,18 +82,21 @@ class Color {
     });
   }
 
-  defaultBrightness(value) {
+  defaultBrightness(value: number) {
     return new Color(this.background, this.name, this.brightness || value);
   }
 
-  css(inverted) {
+  css(inverted: boolean) {
     const color = inverted ? this.inverse : this;
 
+    // @ts-ignore
     const rgbName = (color.brightness === Code.bright && asBright[color.name]) || color.name;
 
-    const prop = color.background ? 'background:' : 'color:',
-      rgb = Colors.rgb[rgbName],
-      alpha = this.brightness === Code.dim ? 0.5 : 1;
+    const prop = color.background ? 'background:' : 'color:';
+
+    // @ts-ignore
+    const rgb = Colors.rgb[rgbName];
+    const alpha = this.brightness === Code.dim ? 0.5 : 1;
 
     return rgb
       ? prop + 'rgba(' + [...rgb, alpha].join(',') + ');'
@@ -117,17 +120,19 @@ class Code {
 
   value: number;
 
-  constructor(n?) {
+  constructor(n?: string | number) {
     if (n !== undefined) {
       this.value = Number(n);
     }
   }
 
   get type() {
+    // @ts-ignore
     return types[Math.floor(this.value / 10)];
   }
 
   get subtype() {
+    // @ts-ignore
     return subtypes[this.type][this.value % 10];
   }
 
@@ -135,7 +140,7 @@ class Code {
     return this.value ? '\u001b[' + this.value + 'm' : '';
   }
 
-  static str(x) {
+  static str(x: string | number) {
     return new Code(x).str;
   }
 
@@ -146,16 +151,17 @@ class Code {
 
 /*  ------------------------------------------------------------------------ */
 
-const replaceAll = (str, a, b) => str.split(a).join(b);
+const replaceAll = (str: string, a: string, b: string) => str.split(a).join(b);
 
 /*  ANSI brightness codes do not overlap, e.g. "{bright}{dim}foo" will be rendered bright (not dim).
     So we fix it by adding brightness canceling before each brightness code, so the former example gets
     converted to "{noBrightness}{bright}{noBrightness}{dim}foo" – this way it gets rendered as expected.
  */
 
-const denormalizeBrightness = s => s.replace(/(\u001b\[(1|2)m)/g, '\u001b[22m$1');
-const normalizeBrightness = s => s.replace(/\u001b\[22m(\u001b\[(1|2)m)/g, '$1');
+const denormalizeBrightness = (s: string) => s.replace(/(\u001b\[(1|2)m)/g, '\u001b[22m$1');
+const normalizeBrightness = (s: string) => s.replace(/\u001b\[22m(\u001b\[(1|2)m)/g, '$1');
 
+// @ts-ignore
 const wrap = (x, openCode, closeCode) => {
   const open = Code.str(openCode),
     close = Code.str(closeCode);
@@ -168,7 +174,7 @@ const wrap = (x, openCode, closeCode) => {
 
 /*  ------------------------------------------------------------------------ */
 
-const camel = (a, b) => a + b.charAt(0).toUpperCase() + b.slice(1);
+const camel = (a: string, b: string) => a + b.charAt(0).toUpperCase() + b.slice(1);
 
 const stringWrappingMethods = (() =>
   [
@@ -216,10 +222,12 @@ const stringWrappingMethods = (() =>
 
 /*  ------------------------------------------------------------------------ */
 
+// @ts-ignore
 const assignStringWrappingAPI = (target, wrapBefore = target) =>
   stringWrappingMethods.reduce(
     (memo, [k, open, close]) =>
       O.defineProperty(memo, k, {
+        // @ts-ignore
         get: () => assignStringWrappingAPI(str => wrapBefore(wrap(str, open, close))),
       }),
 
@@ -232,7 +240,7 @@ const TEXT = 0,
   BRACKET = 1,
   CODE = 2;
 
-function rawParse(s) {
+function rawParse(s: string) {
   let state = TEXT,
     buffer = '',
     text = '',
@@ -333,7 +341,7 @@ export default class Colors {
   /**
    * @param {string} s a string containing ANSI escape codes.
    */
-  constructor(s?) {
+  constructor(s?: string) {
     this.spans = s ? rawParse(s) : [];
   }
 
@@ -342,7 +350,10 @@ export default class Colors {
   }
 
   get parsed() {
-    let color, bgColor, brightness, styles;
+    let styles: Set<string>;
+    let brightness: number;
+    let color: Color;
+    let bgColor: Color;
 
     function reset() {
       (color = new Color()),
@@ -431,6 +442,7 @@ export default class Colors {
       if (!(k in String.prototype)) {
         O.defineProperty(String.prototype, k, {
           get: function() {
+            // @ts-ignore
             return Colors[k](this);
           },
         });
@@ -444,7 +456,7 @@ export default class Colors {
    * @desc parses a string containing ANSI escape codes
    * @return {Colors} parsed representation.
    */
-  static parse(s) {
+  static parse(s: string) {
     return new Colors(s).parsed;
   }
 
@@ -453,7 +465,7 @@ export default class Colors {
    * @param {string} s a string containing ANSI escape codes.
    * @return {string} clean string.
    */
-  static strip(s) {
+  static strip(s: string) {
     return s.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]/g, ''); // hope V8 caches the regexp
   }
 
@@ -468,4 +480,4 @@ export default class Colors {
 
 /*  ------------------------------------------------------------------------ */
 
-assignStringWrappingAPI(Colors, str => str);
+assignStringWrappingAPI(Colors, (str: string) => str);

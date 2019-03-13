@@ -48,10 +48,7 @@ export enum NullValueMode {
 }
 
 /** View model projection of many time series */
-export interface TimeSeriesVMs {
-  [index: number]: TimeSeriesVM;
-  length: number;
-}
+export type TimeSeriesVMs = TimeSeriesVM[];
 
 export interface Column {
   text: string; // name
@@ -63,4 +60,13 @@ export interface Column {
 export interface TableData {
   columns: Column[];
   rows: any[];
+}
+
+export type SingleStatValue = number | string | null;
+
+/*
+ * So we can add meta info like tags & series name
+ */
+export interface SingleStatValueInfo {
+  value: SingleStatValue;
 }

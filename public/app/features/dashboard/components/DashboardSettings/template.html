@@ -16,9 +16,6 @@
 		<button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs">
 			Save As...
 		</button>
-		<button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
-			Delete
-		</button>
 	</div>
 </aside>
 
@@ -70,6 +67,11 @@
 			<select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
 		</div>
 	</div>
+	<div class="gf-form-button-row">
+	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
+		  Delete Dashboard
+	  </button>
+  </div>
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">
