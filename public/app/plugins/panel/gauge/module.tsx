@@ -8,9 +8,7 @@ export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
 
 reactPanel.setEditor(GaugePanelEditor);
 reactPanel.setDefaults(defaults);
-reactPanel.setPreserveOptionsHandler((pluginId: string, prevOptions: any) => {
-  const options: Partial<GaugeOptions> = {};
-
+reactPanel.setPanelTypeChangedHook((options: GaugeOptions, prevPluginId: string, prevOptions: any) => {
   if (prevOptions.valueOptions) {
     options.valueOptions = prevOptions.valueOptions;
     options.thresholds = prevOptions.thresholds;

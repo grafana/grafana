@@ -92,10 +92,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
           this.props.panel.changeType(pluginId);
         } else {
           const { reactPanel } = plugin.exports;
-          panel.changeType(pluginId, reactPanel.preserveOptions);
-          if (reactPanel && reactPanel.optionsValidator) {
-            panel.options = reactPanel.optionsValidator(panel);
-          }
+          panel.changeType(pluginId, reactPanel.panelTypeChangedHook);
         }
       }
 

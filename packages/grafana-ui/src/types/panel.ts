@@ -27,26 +27,20 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
- * This function is called with the full panelModel before
- * the pluginPanel is constructed.  This gives you an opportunity
- * to validate the panel settings before the panel loads.
- *
- * @param panelModel the whole panel object.  including the configuration
- * saved for other panels
- *
- * @returns the validated panel options that will be passed into the
- * panel constructor
+ * Called before a panel is initalized
  */
-export type PanelOptionsValidator<T = any> = (panelModel: any) => T;
-
-export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+export type PanelTypeChangedHook<TOptions = any> = (
+  options: TOptions,
+  prevPluginId?: string,
+  prevOptions?: any
+) => TOptions;
 
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
-  optionsValidator?: PanelOptionsValidator<TOptions>;
   defaults?: TOptions;
-  preserveOptions?: PreservePanelOptionsHandler<TOptions>;
+
+  panelTypeChangedHook?: PanelTypeChangedHook<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -56,16 +50,16 @@ export class ReactPanelPlugin<TOptions = any> {
     this.editor = editor;
   }
 
-  setOptionsValidator(validator: PanelOptionsValidator<TOptions>) {
-    this.optionsValidator = validator;
-  }
-
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
   }
 
-  setPreserveOptionsHandler(handler: PreservePanelOptionsHandler<TOptions>) {
-    this.preserveOptions = handler;
+  /**
+   * Called when the visualization changes.
+   * Lets you keep whatever settings made sense in the previous panel
+   */
+  setPanelTypeChangedHook(v: PanelTypeChangedHook<TOptions>) {
+    this.panelTypeChangedHook = v;
   }
 }
 

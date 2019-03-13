@@ -8,9 +8,7 @@ export const reactPanel = new ReactPanelPlugin<BarGaugeOptions>(BarGaugePanel);
 
 reactPanel.setEditor(BarGaugePanelEditor);
 reactPanel.setDefaults(defaults);
-reactPanel.setPreserveOptionsHandler((pluginId: string, prevOptions: any) => {
-  const options: Partial<BarGaugeOptions> = {};
-
+reactPanel.setPanelTypeChangedHook((options: BarGaugeOptions, prevPluginId: string, prevOptions: any) => {
   if (prevOptions.valueOptions) {
     options.valueOptions = prevOptions.valueOptions;
     options.thresholds = prevOptions.thresholds;

@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeSeries, Threshold, ScopedVars } from '@grafana/ui';
+import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -237,7 +237,7 @@ export class PanelModel {
     });
   }
 
-  changeType(pluginId: string, preserveOptions?: any) {
+  changeType(pluginId: string, hook?: PanelTypeChangedHook) {
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
 
@@ -255,9 +255,9 @@ export class PanelModel {
     this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
 
-    if (preserveOptions && oldOptions) {
-      this.options = this.options || {};
-      Object.assign(this.options, preserveOptions(oldPluginId, oldOptions.options));
+    // Callback that can validate and migrate any existing settings
+    if (hook) {
+      Object.assign(this.options, hook(this.options || {}, oldPluginId, oldOptions.options));
     }
   }
 
