@@ -163,12 +163,18 @@ export class DashboardPage extends PureComponent<Props, State> {
         fullscreenPanel: null,
         scrollTop: this.state.rememberScrollTop,
       },
-      () => {
-        dashboard.render();
-      }
+      this.triggerPanelsRendering.bind(this)
     );
 
     this.setPanelFullscreenClass(false);
+  }
+
+  triggerPanelsRendering() {
+    try {
+      this.props.dashboard.render();
+    } catch (err) {
+      this.props.notifyApp(createErrorNotification(`Panel rendering error`, err));
+    }
   }
 
   handleFullscreenPanelNotFound(urlPanelId: string) {
