@@ -1,15 +1,15 @@
 import { ReactPanelPlugin } from '@grafana/ui';
 
-import { GaugePanelEditor } from './GaugePanelEditor';
-import { GaugePanel } from './GaugePanel';
-import { GaugeOptions, defaults } from './types';
+import { BarGaugePanel } from './BarGaugePanel';
+import { BarGaugePanelEditor } from './BarGaugePanelEditor';
+import { BarGaugeOptions, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
+export const reactPanel = new ReactPanelPlugin<BarGaugeOptions>(BarGaugePanel);
 
-reactPanel.setEditor(GaugePanelEditor);
+reactPanel.setEditor(BarGaugePanelEditor);
 reactPanel.setDefaults(defaults);
 reactPanel.setPreserveOptionsHandler((pluginId: string, prevOptions: any) => {
-  const options: Partial<GaugeOptions> = {};
+  const options: Partial<BarGaugeOptions> = {};
 
   if (prevOptions.valueOptions) {
     options.valueOptions = prevOptions.valueOptions;
