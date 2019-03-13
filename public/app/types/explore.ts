@@ -11,7 +11,7 @@ import {
   ExploreStartPageProps,
 } from '@grafana/ui';
 
-import { Emitter } from 'app/core/core';
+import { Emitter, TimeSeries } from 'app/core/core';
 import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
@@ -327,7 +327,7 @@ export type ResultGetter = (
   result: DataQueryResponseData,
   transaction: QueryTransaction,
   allTransactions: QueryTransaction[]
-) => any;
+) => TimeSeries;
 
 export interface TextMatch {
   text: string;
