@@ -25,7 +25,7 @@ export const getMockTeam = (): Team => {
   };
 };
 
-export const getMockTeamMembers = (amount: number): TeamMember[] => {
+export const getMockTeamMembers = (amount: number, teamAdminId: number): TeamMember[] => {
   const teamMembers: TeamMember[] = [];
 
   for (let i = 1; i <= amount; i++) {
@@ -36,7 +36,7 @@ export const getMockTeamMembers = (amount: number): TeamMember[] => {
       email: 'test@test.com',
       login: `testUser-${i}`,
       labels: ['label 1', 'label 2'],
-      permission: TeamPermissionLevel.Member,
+      permission: i === teamAdminId ? TeamPermissionLevel.Admin : TeamPermissionLevel.Member,
     });
   }
 

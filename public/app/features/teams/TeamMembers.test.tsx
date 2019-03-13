@@ -6,15 +6,16 @@ import { getMockTeamMember, getMockTeamMembers } from './__mocks__/teamMocks';
 import { SelectOptionItem } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
+const signedInUserId = 1;
+const originalContextSrv = contextSrv;
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     isGrafanaAdmin: false,
     hasRole: role => false,
-    user: { id: 1 },
+    user: { id: signedInUserId },
   },
 }));
-
-const originalContextSrv = contextSrv;
 
 interface SetupProps {
   propOverrides?: object;
@@ -64,7 +65,7 @@ describe('Render', () => {
   it('should render team members', () => {
     const { wrapper } = setup({
       propOverrides: {
-        members: getMockTeamMembers(5),
+        members: getMockTeamMembers(5, 5),
       },
     });
 
@@ -74,7 +75,7 @@ describe('Render', () => {
   it('should render team members when sync enabled', () => {
     const { wrapper } = setup({
       propOverrides: {
-        members: getMockTeamMembers(5),
+        members: getMockTeamMembers(5, 5),
         syncEnabled: true,
       },
     });
@@ -84,8 +85,7 @@ describe('Render', () => {
 
   describe('when feature toggle editorsCanAdmin is turned on', () => {
     it('should render permissions select if user is Grafana Admin', () => {
-      const members = getMockTeamMembers(5);
-      members[4].permission = TeamPermissionLevel.Admin;
+      const members = getMockTeamMembers(5, 5);
       const { wrapper } = setup({
         propOverrides: { members, editorsCanAdmin: true },
         isGrafanaAdmin: true,
@@ -96,8 +96,7 @@ describe('Render', () => {
     });
 
     it('should render permissions select if user is Org Admin', () => {
-      const members = getMockTeamMembers(5);
-      members[4].permission = TeamPermissionLevel.Admin;
+      const members = getMockTeamMembers(5, 5);
       const { wrapper } = setup({
         propOverrides: { members, editorsCanAdmin: true },
         isGrafanaAdmin: false,
@@ -108,10 +107,23 @@ describe('Render', () => {
     });
 
     it('should render permissions select if user is team admin', () => {
-      const members = getMockTeamMembers(5);
-      members[0].permission = TeamPermissionLevel.Admin;
+      const members = getMockTeamMembers(5, signedInUserId);
       const { wrapper } = setup({
         propOverrides: { members, editorsCanAdmin: true },
+        isGrafanaAdmin: false,
+        isOrgAdmin: false,
+      });
+
+      expect(wrapper).toMatchSnapshot();
+    });
+
+    it('should render span and disable buttons if user is team member', () => {
+      const members = getMockTeamMembers(5, 5);
+      const { wrapper } = setup({
+        propOverrides: {
+          members,
+          editorsCanAdmin: true,
+        },
         isGrafanaAdmin: false,
         isOrgAdmin: false,
       });

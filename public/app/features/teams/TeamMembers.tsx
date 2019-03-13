@@ -39,7 +39,7 @@ export class TeamMembers extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
-    this.renderPermissionsSelect = this.renderPermissionsSelect.bind(this);
+    this.renderPermissions = this.renderPermissions.bind(this);
   }
 
   componentDidMount() {
@@ -88,13 +88,19 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.updateTeamMember(updatedTeamMember);
   };
 
-  renderPermissionsSelect(member: TeamMember) {
+  private isSignedInUserTeamAdmin = () => {
     const { members, editorsCanAdmin } = this.props;
     const userInMembers = members.find(m => m.userId === contextSrv.user.id);
-    const isUserTeamAdmin =
-      contextSrv.isGrafanaAdmin || contextSrv.hasRole(OrgRole.Admin)
-        ? true
-        : userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
+    const isAdmin = contextSrv.isGrafanaAdmin || contextSrv.hasRole(OrgRole.Admin);
+    const userIsTeamAdmin = userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
+    const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
+
+    return isSignedInUserTeamAdmin || !editorsCanAdmin;
+  };
+
+  renderPermissions(member: TeamMember) {
+    const { editorsCanAdmin } = this.props;
+    const isUserTeamAdmin = this.isSignedInUserTeamAdmin();
     const value = teamsPermissionLevels.find(dp => dp.value === member.permission);
 
     return (
@@ -125,10 +131,10 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
-        {this.renderPermissionsSelect(member)}
+        {this.renderPermissions(member)}
         {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
+          <DeleteButton onConfirm={() => this.onRemoveMember(member)} disabled={!this.isSignedInUserTeamAdmin()} />
         </td>
       </tr>
     );
@@ -152,7 +158,11 @@ export class TeamMembers extends PureComponent<Props, State> {
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+          <button
+            className="btn btn-primary pull-right"
+            onClick={this.onToggleAdding}
+            disabled={isAdding || !this.isSignedInUserTeamAdmin()}
+          >
             Add member
           </button>
         </div>

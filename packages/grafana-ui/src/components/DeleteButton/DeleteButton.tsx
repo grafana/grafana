@@ -2,6 +2,7 @@ import React, { PureComponent, SyntheticEvent } from 'react';
 
 interface Props {
   onConfirm(): void;
+  disabled?: boolean;
 }
 
 interface State {
@@ -33,25 +34,22 @@ export class DeleteButton extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onConfirm } = this.props;
-    let showConfirm;
-    let showDeleteButton;
-
-    if (this.state.showConfirm) {
-      showConfirm = 'show';
-      showDeleteButton = 'hide';
-    } else {
-      showConfirm = 'hide';
-      showDeleteButton = 'show';
-    }
+    const { onConfirm, disabled } = this.props;
+    const showConfirmClass = this.state.showConfirm ? 'show' : 'hide';
+    const showDeleteButtonClass = this.state.showConfirm ? 'hide' : 'show';
+    const disabledClass = disabled ? 'disabled btn-inverse' : '';
+    const onClick = disabled ? () => {} : this.onClickDelete;
 
     return (
       <span className="delete-button-container">
-        <a className={'delete-button ' + showDeleteButton + ' btn btn-danger btn-small'} onClick={this.onClickDelete}>
+        <a
+          className={`delete-button ${showDeleteButtonClass} btn btn-danger btn-small ${disabledClass}`}
+          onClick={onClick}
+        >
           <i className="fa fa-remove" />
         </a>
         <span className="confirm-delete-container">
-          <span className={'confirm-delete ' + showConfirm}>
+          <span className={`confirm-delete ${showConfirmClass}`}>
             <a className="btn btn-small" onClick={this.onClickCancel}>
               Cancel
             </a>

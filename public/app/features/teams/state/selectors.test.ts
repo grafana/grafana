@@ -40,7 +40,7 @@ describe('Team selectors', () => {
   });
 
   describe('Get members', () => {
-    const mockTeamMembers = getMockTeamMembers(5);
+    const mockTeamMembers = getMockTeamMembers(5, 5);
 
     it('should return team members', () => {
       const mockState: TeamState = {
