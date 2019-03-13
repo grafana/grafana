@@ -25,7 +25,7 @@ func CanAdmin(orgId int64, teamId int64, user *m.SignedInUser) error {
 	}
 
 	for _, member := range cmd.Result {
-		if member.UserId == user.UserId && member.Permission == int64(m.PERMISSION_ADMIN) {
+		if member.UserId == user.UserId && member.Permission == m.PERMISSION_ADMIN {
 			return nil
 		}
 	}

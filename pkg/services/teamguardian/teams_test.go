@@ -45,7 +45,7 @@ func TestUpdateTeam(t *testing.T) {
 						OrgId:      testTeam.OrgId,
 						TeamId:     testTeam.Id,
 						UserId:     editor.UserId,
-						Permission: int64(m.PERMISSION_ADMIN),
+						Permission: m.PERMISSION_ADMIN,
 					}}
 					return nil
 				})
@@ -67,7 +67,7 @@ func TestUpdateTeam(t *testing.T) {
 						OrgId:      testTeamOtherOrg.OrgId,
 						TeamId:     testTeamOtherOrg.Id,
 						UserId:     editor.UserId,
-						Permission: int64(m.PERMISSION_ADMIN),
+						Permission: m.PERMISSION_ADMIN,
 					}}
 					return nil
 				})
