@@ -119,7 +119,7 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 		AuthModule: query.AuthModule,
 		AuthId:     query.AuthId,
 	}
-	has, err := x.Get(userAuth)
+	has, err := x.Desc("created").Get(userAuth)
 	if err != nil {
 		return err
 	}

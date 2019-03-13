@@ -169,5 +169,37 @@ func TestUserAuth(t *testing.T) {
 			So(getAuthQuery.Result.OAuthTokenType, ShouldEqual, token.TokenType)
 
 		})
+
+		Convey("Always return the most recently used auth_module", func() {
+			// Find a user to set tokens on
+			login := "loginuser0"
+
+			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
+			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
+			err = GetUserByAuthInfo(query)
+
+			So(err, ShouldBeNil)
+			So(query.Result.Login, ShouldEqual, login)
+
+			// Add a second auth module for this user
+			// resolution of `Created` column is 1sec, so we need a delay
+			time.Sleep(time.Second)
+			query = &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+			err = GetUserByAuthInfo(query)
+
+			So(err, ShouldBeNil)
+			So(query.Result.Login, ShouldEqual, login)
+
+			// Get the latest entry by not supply an authmodule or authid
+			getAuthQuery := &m.GetAuthInfoQuery{
+				UserId: query.Result.Id,
+			}
+
+			err = GetAuthInfo(getAuthQuery)
+
+			So(err, ShouldBeNil)
+			So(getAuthQuery.Result.AuthModule, ShouldEqual, "test2")
+
+		})
 	})
 }
