@@ -46,12 +46,6 @@ describe('Render', () => {
 
     expect(wrapper).toMatchSnapshot();
   });
-
-  it('should render team members when sync enabled', () => {
-    const { wrapper } = setup({ members: getMockTeamMembers(5, 5), syncEnabled: true });
-
-    expect(wrapper).toMatchSnapshot();
-  });
 });
 
 describe('Functions', () => {
