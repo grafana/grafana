@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 // Types
 import { SingleStatOptions } from './types';
@@ -8,9 +8,17 @@ import { SingleStatBase } from './SingleStatBase';
 
 export class SingleStatPanel extends SingleStatBase<SingleStatOptions> {
   renderStat(value: DisplayValue, width: number, height: number) {
+    const style: CSSProperties = {};
+    style.margin = '0 auto';
+    style.fontSize = '250%';
+    style.textAlign = 'center';
+    if (value.color) {
+      style.color = value.color;
+    }
+
     return (
       <div style={{ width, height }}>
-        <b>{value.text}</b>
+        <div style={style}>{value.text}</div>
       </div>
     );
   }
