@@ -172,7 +172,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		if proxy.cfg.SendUserHeader {
+		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
 			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
 		}
 

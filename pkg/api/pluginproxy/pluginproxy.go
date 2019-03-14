@@ -80,7 +80,7 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 
 		req.Header.Add("X-Grafana-Context", string(ctxJson))
 
-		if cfg.SendUserHeader {
+		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
 			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
 		}
 

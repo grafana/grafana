@@ -417,6 +417,19 @@ func TestDSRouteRule(t *testing.T) {
 				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
 			})
 		})
+
+		Convey("When SendUserHeader config is enabled but user is anonymous", func() {
+			req := getDatasourceProxiedRequest(
+				&m.ReqContext{
+					SignedInUser: &m.SignedInUser{IsAnonymous: true},
+				},
+				&setting.Cfg{SendUserHeader: true},
+			)
+			Convey("Should not add header with username", func() {
+				// Get will return empty string even if header is not set
+				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
+			})
+		})
 	})
 }
 

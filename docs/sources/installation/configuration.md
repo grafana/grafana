@@ -423,7 +423,7 @@ How long the data proxy should wait before timing out default is 30 (seconds)
 
 ### send_user_header
 
-If enabled data proxy will add X-Grafana-User header with username into the request, default is false.
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
 
 <hr />
 
