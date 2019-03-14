@@ -31,7 +31,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *m.ReqContext) {
 	// macaron does not include trailing slashes when resolving a wildcard path
 	proxyPath := ensureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
 
-	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath)
+	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	proxy.HandleRequest()
 }
 
