@@ -10,12 +10,12 @@ import { BarGauge, VizRepeater } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps, SingleStatValueInfo } from '@grafana/ui/src/types';
 
 interface Props extends PanelProps<BarGaugeOptions> {}
 
 export class BarGaugePanel extends PureComponent<Props> {
-  renderBarGauge(value, width, height) {
+  renderBarGauge(value: SingleStatValueInfo, width, height) {
     const { replaceVariables, options } = this.props;
     const { valueOptions } = options;
 
@@ -24,7 +24,7 @@ export class BarGaugePanel extends PureComponent<Props> {
 
     return (
       <BarGauge
-        value={value}
+        value={value.value as number | null}
         width={width}
         height={height}
         prefix={prefix}
@@ -49,7 +49,7 @@ export class BarGaugePanel extends PureComponent<Props> {
 
     return (
       <VizRepeater height={height} width={width} values={values} orientation={options.orientation}>
-        {({ vizHeight, vizWidth, valueInfo }) => this.renderBarGauge(valueInfo.value, vizWidth, vizHeight)}
+        {({ vizHeight, vizWidth, value }) => this.renderBarGauge(value, vizWidth, vizHeight)}
       </VizRepeater>
     );
   }
