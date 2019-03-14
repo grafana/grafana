@@ -9,6 +9,7 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
       avatarUrl: 'some/url/',
       email: `test-${i}@test.com`,
       memberCount: i,
+      permission: TeamPermissionLevel.Member,
     });
   }
 
@@ -22,6 +23,7 @@ export const getMockTeam = (): Team => {
     avatarUrl: 'some/url/',
     email: 'test@test.com',
     memberCount: 1,
+    permission: TeamPermissionLevel.Member,
   };
 };
 

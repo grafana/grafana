@@ -23,13 +23,25 @@ func init() {
 	bus.AddHandler("sql", GetTeamMembers)
 }
 
+func getTeamSearchSqlBase() string {
+	return `SELECT
+		team.id as id,
+		team.org_id,
+		team.name as name,
+		team.email as email,
+		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count,
+		team_member.permission
+		FROM team as team
+		INNER JOIN team_member on team.id = team_member.team_id AND team_member.user_id = ? `
+}
+
 func getTeamSelectSqlBase() string {
 	return `SELECT
 		team.id as id,
 		team.org_id,
 		team.name as name,
 		team.email as email,
-		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count
+		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count 
 		FROM team as team `
 }
 
@@ -146,10 +158,11 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(getTeamSelectSqlBase())
 	if query.UserIdFilter > 0 {
-		sql.WriteString(`INNER JOIN team_member on team.id = team_member.team_id AND team_member.user_id = ?`)
+		sql.WriteString(getTeamSearchSqlBase())
 		params = append(params, query.UserIdFilter)
+	} else {
+		sql.WriteString(getTeamSelectSqlBase())
 	}
 	sql.WriteString(` WHERE team.org_id = ?`)
 

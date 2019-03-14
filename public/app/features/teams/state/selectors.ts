@@ -37,10 +37,24 @@ export interface Config {
 }
 
 export const isSignedInUserTeamAdmin = (config: Config): boolean => {
-  const userInMembers = config.members.find(m => m.userId === config.signedInUser.id);
-  const isAdmin = config.signedInUser.isGrafanaAdmin || config.signedInUser.orgRole === OrgRole.Admin;
-  const userIsTeamAdmin = userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
+  const { members, signedInUser, editorsCanAdmin } = config;
+  const userInMembers = members.find(m => m.userId === signedInUser.id);
+  const permission = userInMembers ? userInMembers.permission : TeamPermissionLevel.Member;
+
+  return isPermissionTeamAdmin({ permission, signedInUser, editorsCanAdmin });
+};
+
+export interface PermissionConfig {
+  permission: TeamPermissionLevel;
+  editorsCanAdmin: boolean;
+  signedInUser: User;
+}
+
+export const isPermissionTeamAdmin = (config: PermissionConfig): boolean => {
+  const { permission, signedInUser, editorsCanAdmin } = config;
+  const isAdmin = signedInUser.isGrafanaAdmin || signedInUser.orgRole === OrgRole.Admin;
+  const userIsTeamAdmin = permission === TeamPermissionLevel.Admin;
   const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
 
-  return isSignedInUserTeamAdmin || !config.editorsCanAdmin;
+  return isSignedInUserTeamAdmin || !editorsCanAdmin;
 };

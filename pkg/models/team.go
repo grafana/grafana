@@ -73,12 +73,13 @@ type SearchTeamsQuery struct {
 }
 
 type TeamDTO struct {
-	Id          int64  `json:"id"`
-	OrgId       int64  `json:"orgId"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	AvatarUrl   string `json:"avatarUrl"`
-	MemberCount int64  `json:"memberCount"`
+	Id          int64          `json:"id"`
+	OrgId       int64          `json:"orgId"`
+	Name        string         `json:"name"`
+	Email       string         `json:"email"`
+	AvatarUrl   string         `json:"avatarUrl"`
+	MemberCount int64          `json:"memberCount"`
+	Permission  PermissionType `json:"permission"`
 }
 
 type SearchTeamQueryResult struct {
