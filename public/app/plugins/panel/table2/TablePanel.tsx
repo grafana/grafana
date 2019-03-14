@@ -2,9 +2,10 @@
 import React, { Component } from 'react';
 
 // Types
-import { PanelProps, ThemeContext } from '@grafana/ui';
+import { PanelProps } from '@grafana/ui';
 import { Options } from './types';
-import Table from '@grafana/ui/src/components/Table/Table';
+import { Table, Tables } from '@grafana/ui/src/components/Table';
+import { config } from 'app/core/config';
 
 interface Props extends PanelProps<Options> {}
 
@@ -15,15 +16,17 @@ export class TablePanel extends Component<Props> {
 
   render() {
     const { panelData, options } = this.props;
+    const { showToolbar } = options;
 
     if (!panelData || !panelData.tableData) {
       return <div>No Table Data...</div>;
     }
 
-    return (
-      <ThemeContext.Consumer>
-        {theme => <Table {...this.props} {...options} theme={theme} data={panelData.tableData} />}
-      </ThemeContext.Consumer>
-    );
+    if (showToolbar) {
+      const tables = [panelData.tableData];
+      return <Tables {...this.props} {...options} theme={config.theme} data={tables} />;
+    }
+
+    return <Table {...this.props} {...options} theme={config.theme} data={panelData.tableData} />;
   }
 }

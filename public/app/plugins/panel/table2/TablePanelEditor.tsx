@@ -19,12 +19,16 @@ export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.props.onOptionsChange({ ...this.props.options, rotate: !this.props.options.rotate });
   };
 
+  onToggleShowToolbar = () => {
+    this.props.onOptionsChange({ ...this.props.options, showToolbar: !this.props.options.showToolbar });
+  };
+
   onFixedColumnsChange = ({ target }) => {
     this.props.onOptionsChange({ ...this.props.options, fixedColumns: target.value });
   };
 
   render() {
-    const { showHeader, fixedHeader, rotate, fixedColumns } = this.props.options;
+    const { showHeader, fixedHeader, rotate, fixedColumns, showToolbar } = this.props.options;
 
     return (
       <div>
@@ -48,6 +52,7 @@ export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
             onChange={this.onFixedColumnsChange}
             value={fixedColumns}
           />
+          <Switch label="Toolbar" labelClass="width-8" checked={showToolbar} onChange={this.onToggleShowToolbar} />
         </div>
       </div>
     );

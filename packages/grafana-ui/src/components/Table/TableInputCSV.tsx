@@ -19,7 +19,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-class TableInputCSV extends React.PureComponent<Props, State> {
+export class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -91,5 +91,3 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     );
   }
 }
-
-export default TableInputCSV;

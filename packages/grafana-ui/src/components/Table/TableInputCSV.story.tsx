@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { storiesOf } from '@storybook/react';
-import TableInputCSV from './TableInputCSV';
+import { TableInputCSV } from './TableInputCSV';
 import { action } from '@storybook/addon-actions';
 import { TableData } from '../../types/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';

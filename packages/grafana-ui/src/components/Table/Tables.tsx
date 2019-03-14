@@ -24,7 +24,7 @@ export class Tables extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      selected: 1,
+      selected: 0,
     };
   }
 
@@ -35,7 +35,7 @@ export class Tables extends Component<Props, State> {
       if (selected >= data.length) {
         this.setState({ selected: data.length - 1 });
       }
-    } else if (selected != 0) {
+    } else if (selected !== 0) {
       this.setState({ selected: 0 });
     }
   }
@@ -46,23 +46,24 @@ export class Tables extends Component<Props, State> {
 
   render() {
     const { data, width, height } = this.props;
-    const { selected } = this.state;
-    const table = data[selected];
+    let { selected } = this.state;
+    let table = data[selected];
 
-    if (!table) {
-      return <div>No Data</div>;
+    if (!table && selected >= data.length) {
+      selected = 0;
+      table = data[selected];
     }
-    if (data.length == 1) {
-      return <Table {...this.props} data={table} />;
-    }
+
+    // TODO, help please :)
+    // How do I get the table on top and a toolbar on the bottom?
+    //  ... css wizardry no doubt!
 
     return (
       <div className="gf-tables" style={{ width, height }}>
         <div className="gf-tables-table">
-          HELLO
-          {false && (
-            <AutoSizer disableWidth>{({ height }) => <Table {...this.props} data={table} height={height} />}</AutoSizer>
-          )}
+          <AutoSizer disableWidth>
+            {({ height }) => <Table {...this.props} data={table} height={height - 50} />}
+          </AutoSizer>
         </div>
         <div className="gf-tables-toolbar">
           <ul>
