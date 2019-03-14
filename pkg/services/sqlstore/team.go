@@ -259,28 +259,21 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		rawSql := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
-
 		var member m.TeamMember
 		exists, err := sess.SQL(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId).Get(&member)
 
 		if err != nil {
 			return err
 		}
-
 		if !exists {
 			return m.ErrTeamMemberNotFound
 		}
 
 		if cmd.ProtectLastAdmin {
-			lastAdmin, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+			_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
 			if err != nil {
 				return err
 			}
-
-			if lastAdmin {
-				return m.ErrLastTeamAdmin
-			}
-
 		}
 
 		if cmd.Permission != m.PERMISSION_ADMIN { // make sure we don't get invalid permission levels in store
@@ -302,15 +295,10 @@ func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 		}
 
 		if cmd.ProtectLastAdmin {
-			lastAdmin, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
+			_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
 			if err != nil {
 				return err
 			}
-
-			if lastAdmin {
-				return m.ErrLastTeamAdmin
-			}
-
 		}
 
 		var rawSql = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
@@ -344,7 +332,7 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 	}
 
 	if isAdmin && len(userIds) == 1 {
-		return true, nil
+		return true, m.ErrLastTeamAdmin
 	}
 
 	return false, err
