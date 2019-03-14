@@ -411,6 +411,22 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 <hr />
 
+## [dataproxy]
+
+### logging
+
+This enables data proxy logging, default is false.
+
+### timeout
+
+How long the data proxy should wait before timing out default is 30 (seconds)
+
+### send_user_header
+
+If enabled data proxy will add X-Grafana-User header with username into the request, default is false.
+
+<hr />
+
 ## [analytics]
 
 ### reporting_enabled
