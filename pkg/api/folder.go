@@ -62,8 +62,7 @@ func (hs *HTTPServer) CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) R
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
-		aclService := dashboards.NewAclService()
-		if err := aclService.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, cmd.Result.Id, true); err != nil {
+		if err := dashboards.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, cmd.Result.Id, true); err != nil {
 			hs.log.Error("Could not make user admin", "folder", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
 			return Error(500, "Failed to make user admin of folder", err)
 		}
