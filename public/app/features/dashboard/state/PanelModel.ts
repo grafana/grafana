@@ -5,6 +5,7 @@ import _ from 'lodash';
 import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
+import { getNextQueryLetter } from '../../../core/utils/query';
 
 export interface GridPos {
   x: number;
@@ -128,7 +129,7 @@ export class PanelModel {
     if (this.targets) {
       for (const query of this.targets) {
         if (!query.refId) {
-          query.refId = this.getNextQueryLetter();
+          query.refId = getNextQueryLetter(this.targets);
         }
       }
     }
@@ -266,18 +267,8 @@ export class PanelModel {
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    query.refId = this.getNextQueryLetter();
+    query.refId = getNextQueryLetter(this.targets);
     this.targets.push(query as DataQuery);
-  }
-
-  getNextQueryLetter(): string {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(this.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   changeQuery(query: DataQuery, index: number) {
