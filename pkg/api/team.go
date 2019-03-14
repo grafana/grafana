@@ -16,7 +16,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 		return Error(403, "Not allowed to create team.", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(409, "Team name taken", err)
 		}
@@ -31,7 +31,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 			Permission: m.PERMISSION_ADMIN,
 		}
 
-		if err := bus.Dispatch(&addMemberCmd); err != nil {
+		if err := hs.Bus.Dispatch(&addMemberCmd); err != nil {
 			c.Logger.Error("Could not add creator to team.", "error", err)
 		}
 	}
