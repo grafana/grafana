@@ -91,3 +91,5 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
     );
   }
 }
+
+export default TableInputCSV;
