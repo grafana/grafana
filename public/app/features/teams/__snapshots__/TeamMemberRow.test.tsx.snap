@@ -1,5 +1,56 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Render should render team members when sync enabled 1`] = `
+<tr
+  key="1"
+>
+  <td
+    className="width-4 text-center"
+  >
+    <img
+      className="filter-table__avatar"
+      src="some/url/"
+    />
+  </td>
+  <td>
+    testUser
+  </td>
+  <td>
+    test@test.com
+  </td>
+  <Component
+    featureToggle={false}
+  >
+    <td>
+      <div
+        className="gf-form"
+      >
+        <span>
+          Member
+        </span>
+      </div>
+    </td>
+  </Component>
+  <td>
+    <TagBadge
+      count={0}
+      key="LDAP"
+      label="LDAP"
+      onClick={[Function]}
+      removeIcon={false}
+    />
+  </td>
+  <td
+    className="text-right"
+  >
+    <DeleteButton
+      disabled={true}
+      onConfirm={[Function]}
+    />
+  </td>
+</tr>
+`;
+
 exports[`Render when feature toggle editorsCanAdmin is turned off should not render permissions 1`] = `
 <tr
   key="1"

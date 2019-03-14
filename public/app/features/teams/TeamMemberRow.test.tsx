@@ -27,6 +27,14 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
+  it('should render team members when sync enabled', () => {
+    const member = getMockTeamMember();
+    member.labels = ['LDAP'];
+    const { wrapper } = setup({ member, syncEnabled: true });
+
+    expect(wrapper).toMatchSnapshot();
+  });
+
   describe('when feature toggle editorsCanAdmin is turned on', () => {
     it('should render permissions select if user is team admin', () => {
       const { wrapper } = setup({ editorsCanAdmin: true, signedInUserIsTeamAdmin: true });
