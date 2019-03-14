@@ -11,5 +11,6 @@ import (
 func TestRedisCacheStorage(t *testing.T) {
 
 	opts := &setting.RemoteCacheOptions{Name: "redis", ConnStr: "localhost:6379"}
-	runTestsForClient(t, createTestClient(t, opts, nil))
+	client := createTestClient(t, opts, nil)
+	runTestsForClient(t, client)
 }

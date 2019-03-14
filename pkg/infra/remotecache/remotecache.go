@@ -16,7 +16,11 @@ import (
 )
 
 var (
+	// ErrCacheItemNotFound is returned if cache does not exist
 	ErrCacheItemNotFound = errors.New("cache item not found")
+
+	// ErrInvalidCacheType is returned if the type is invalid
+	ErrInvalidCacheType = errors.New("invalid remote cache name")
 )
 
 func init() {
@@ -61,10 +65,9 @@ func (ds *RemoteCache) Delete(key string) error {
 // Init initializes the service
 func (ds *RemoteCache) Init() error {
 	ds.log = log.New("cache.remote")
-
-	ds.client = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
-
-	return nil
+	var err error
+	ds.client, err = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
+	return err
 }
 
 // Run start the backend processes for cache clients
@@ -79,16 +82,20 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) CacheStorage {
+func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) (CacheStorage, error) {
 	if opts.Name == "redis" {
-		return newRedisStorage(opts)
+		return newRedisStorage(opts), nil
 	}
 
 	if opts.Name == "memcached" {
-		return newMemcachedStorage(opts)
+		return newMemcachedStorage(opts), nil
 	}
 
-	return newDatabaseCache(sqlstore)
+	if opts.Name == "database" {
+		return newDatabaseCache(sqlstore), nil
+	}
+
+	return nil, ErrInvalidCacheType
 }
 
 // Register records a type, identified by a value for that type, under its

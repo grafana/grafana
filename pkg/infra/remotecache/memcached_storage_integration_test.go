@@ -10,5 +10,6 @@ import (
 
 func TestMemcachedCacheStorage(t *testing.T) {
 	opts := &setting.RemoteCacheOptions{Name: "memcached", ConnStr: "localhost:11211"}
-	runTestsForClient(t, createTestClient(t, opts, nil))
+	client := createTestClient(t, opts, nil)
+	runTestsForClient(t, client)
 }

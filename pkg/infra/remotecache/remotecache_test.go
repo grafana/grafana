@@ -45,8 +45,12 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	})
 
 	client := createTestClient(t, cfg.RemoteCacheOptions, sqlstore.InitTestDB(t))
-
 	runTestsForClient(t, client)
+}
+
+func TestInvalidCacheTypeReturnsError(t *testing.T) {
+	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil)
+	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
 func runTestsForClient(t *testing.T, client CacheStorage) {
