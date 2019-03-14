@@ -37,13 +37,14 @@ type DataSourceProxy struct {
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
+	cfg       *setting.Cfg
 }
 
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
 	targetURL, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
@@ -52,6 +53,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+		cfg:       cfg,
 	}
 }
 
@@ -171,6 +173,10 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Del("X-DS-Authorization")
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", dsAuth)
+		}
+
+		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
+			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
 		}
 
 		// clear cookie header, except for whitelisted cookies
