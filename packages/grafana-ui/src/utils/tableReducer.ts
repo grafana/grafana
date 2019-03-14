@@ -14,6 +14,8 @@ export enum TableReducerID {
   count = 'count',
   range = 'range',
   diff = 'diff',
+  delta = 'delta',
+  step = 'step',
 
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
@@ -32,15 +34,24 @@ export interface TableReducerInfo {
   reducer?: TableReducer;
 }
 
-/** Get a list of the known reducing functions */
-export function getTableReducers(ids?: string[]): TableReducerInfo[] {
-  if (!hasBuiltIndex) {
-    getById(TableReducerID.sum); // Force the registry to load
-  }
+/**
+ * Get a list of the known reducing functions
+ * @param ids list of reducer names or null to get all of them
+ * @param notFound optional error object that will be filled with the names on unknown reducers
+ */
+export function getTableReducers(ids?: string[], notFound?: string[]): TableReducerInfo[] {
   if (ids === null || ids === undefined) {
     return listOfReducers;
   }
-  return ids.map(id => getById(id));
+  return ids.reduce((list, id) => {
+    const reducer = getById(id);
+    if (reducer) {
+      list.push(reducer);
+    } else if (notFound && id) {
+      notFound.push(id);
+    }
+    return list;
+  }, new Array<TableReducerInfo>());
 }
 
 export interface TableReducerOptions {
@@ -114,7 +125,7 @@ const listOfReducers: TableReducerInfo[] = [];
 const index: TableReducerIndex = {};
 let hasBuiltIndex = false;
 
-function getById(id: string): TableReducerInfo {
+function getById(id: string): TableReducerInfo | undefined {
   if (!hasBuiltIndex) {
     [
       {
@@ -145,9 +156,27 @@ function getById(id: string): TableReducerInfo {
         standard: true,
       },
       {
+        value: TableReducerID.delta,
+        label: 'Delta',
+        description: 'Cumulative change in value', // HELP! not totally sure what this does
+        standard: true,
+      },
+      {
+        value: TableReducerID.step,
+        label: 'Step',
+        description: 'Minimum interval between values',
+        standard: true,
+      },
+      {
         value: TableReducerID.diff,
         label: 'Difference',
         description: 'Difference between first and last values',
+        standard: true,
+      },
+      {
+        value: TableReducerID.logmin,
+        label: 'Min (above zero)',
+        description: 'Used for log min scale',
         standard: true,
       },
     ].forEach(calc => {
@@ -197,7 +226,8 @@ interface StandardStats {
   nonNullCount: number;
   range: number | null;
   diff: number | null;
-
+  delta: number | null;
+  step: number | null;
   allIsZero: boolean;
   allIsNull: boolean;
 }
@@ -223,7 +253,12 @@ function standardStatsReducer(
       allIsZero: false,
       range: null,
       diff: null,
-    } as StandardStats;
+      delta: 0,
+      step: 0,
+
+      // Just used for calcutations -- not exposed as a reducer
+      previousDeltaUp: true,
+    };
   });
 
   for (let i = 0; i < data.rows.length; i++) {
@@ -240,40 +275,66 @@ function standardStatsReducer(
         }
       }
 
-      if (stats.first === null) {
-        stats.first = currentValue;
-      }
-
       if (currentValue !== null) {
         stats.last = currentValue;
 
+        const isFirst = stats.first === null;
+        if (isFirst) {
+          stats.first = currentValue;
+        }
+
         if (isNumber(currentValue)) {
-          stats.sum! += currentValue;
+          stats.sum += currentValue;
           stats.allIsNull = false;
           stats.nonNullCount++;
-        }
 
-        if (currentValue > stats.max!) {
-          stats.max = currentValue;
-        }
+          if (!isFirst) {
+            const step = currentValue - stats.last!;
+            if (stats.step > step) {
+              stats.step = step; // the minimum interval
+            }
 
-        if (currentValue < stats.min!) {
-          stats.min = currentValue;
-        }
+            if (stats.last! > currentValue) {
+              // counter reset
+              stats.previousDeltaUp = false;
+              if (i === data.rows.length - 1) {
+                // reset on last
+                stats.delta += currentValue;
+              }
+            } else {
+              if (stats.previousDeltaUp) {
+                stats.delta += step; // normal increment
+              } else {
+                stats.delta += currentValue; // account for counter reset
+              }
+              stats.previousDeltaUp = true;
+            }
+          }
 
-        if (currentValue < stats.logmin && currentValue > 0) {
-          stats.logmin = currentValue;
+          if (currentValue > stats.max) {
+            stats.max = currentValue;
+          }
+
+          if (currentValue < stats.min) {
+            stats.min = currentValue;
+          }
+
+          if (currentValue < stats.logmin && currentValue > 0) {
+            stats.logmin = currentValue;
+          }
         }
 
         if (currentValue !== 0) {
           stats.allIsZero = false;
         }
+
+        stats.last = currentValue;
       }
     }
   }
 
   for (let x = 0; x < column.length; x++) {
-    const stats = column[x];
+    const stats = column[x] as StandardStats;
 
     if (stats.max === -Number.MAX_VALUE) {
       stats.max = null;

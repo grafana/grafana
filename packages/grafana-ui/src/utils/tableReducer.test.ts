@@ -9,20 +9,32 @@ describe('Table Reducer', () => {
       TableReducerID.sum,
       TableReducerID.max,
       TableReducerID.min,
-      //  TableReducerID.logmin,
+      TableReducerID.logmin,
       TableReducerID.mean,
       TableReducerID.last,
       TableReducerID.first,
       TableReducerID.count,
       TableReducerID.range,
       TableReducerID.diff,
+      TableReducerID.step,
+      TableReducerID.delta,
       // TableReducerID.allIsZero,
       // TableReducerID.allIsNull,
     ];
-    const reducers = getTableReducers(names);
+    const notFound: string[] = [];
+    const reducers = getTableReducers(names, notFound);
     reducers.forEach((reducer, index) => {
       expect(reducer ? reducer.value : '<missing>').toEqual(names[index]);
     });
+    expect(notFound.length).toBe(0);
+  });
+
+  it('should fail to load unknown reducers', () => {
+    const names = ['not a reducer', TableReducerID.max, TableReducerID.min, 'also not a reducer'];
+    const notFound: string[] = [];
+    const reducers = getTableReducers(names, notFound);
+    expect(reducers.length).toBe(2);
+    expect(notFound.length).toBe(2);
   });
 
   it('should calculate stats', () => {

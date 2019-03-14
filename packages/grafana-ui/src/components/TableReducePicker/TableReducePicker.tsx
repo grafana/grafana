@@ -32,9 +32,22 @@ export class TableReducePicker extends PureComponent<Props> {
 
   checkInput = () => {
     const { reducers, allowMultiple, defaultReducer, onChange } = this.props;
-    if (!allowMultiple && reducers.length > 1) {
-      onChange(reducers.slice(0, 1));
+
+    // Check that the selected reducers are all real
+    const notFound: string[] = [];
+    const current = getTableReducers(reducers, notFound);
+    if (notFound.length > 0) {
+      console.warn('Unknown reducers', notFound, reducers);
+      onChange(current.map(reducer => reducer.value));
     }
+
+    // Make sure there is only one
+    if (!allowMultiple && reducers.length > 1) {
+      console.warn('Removing extra reducers', reducers);
+      onChange([reducers[0]]);
+    }
+
+    // Set the reducer from callback
     if (defaultReducer && reducers.length < 1) {
       onChange([defaultReducer]);
     }
