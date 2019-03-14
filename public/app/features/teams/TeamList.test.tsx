@@ -1,8 +1,9 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamList } from './TeamList';
-import { NavModel, Team } from '../../types';
+import { NavModel, Team, OrgRole } from '../../types';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
+import { User } from 'app/core/services/context_srv';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -21,6 +22,11 @@ const setup = (propOverrides?: object) => {
     searchQuery: '',
     teamsCount: 0,
     hasFetched: false,
+    editorsCanAdmin: false,
+    signedInUser: {
+      id: 1,
+      orgRole: OrgRole.Viewer,
+    } as User,
   };
 
   Object.assign(props, propOverrides);
@@ -48,6 +54,42 @@ describe('Render', () => {
     });
 
     expect(wrapper).toMatchSnapshot();
+  });
+
+  describe('when feature toggle editorsCanAdmin is turned on', () => {
+    describe('and signedin user is not viewer', () => {
+      it('should enable the new team button', () => {
+        const { wrapper } = setup({
+          teams: getMultipleMockTeams(1),
+          teamsCount: 1,
+          hasFetched: true,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: 1,
+            orgRole: OrgRole.Editor,
+          } as User,
+        });
+
+        expect(wrapper).toMatchSnapshot();
+      });
+    });
+
+    describe('and signedin user is a viewer', () => {
+      it('should disable the new team button', () => {
+        const { wrapper } = setup({
+          teams: getMultipleMockTeams(1),
+          teamsCount: 1,
+          hasFetched: true,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: 1,
+            orgRole: OrgRole.Viewer,
+          } as User,
+        });
+
+        expect(wrapper).toMatchSnapshot();
+      });
+    });
   });
 });
 
