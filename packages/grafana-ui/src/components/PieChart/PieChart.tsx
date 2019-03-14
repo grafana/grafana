@@ -50,6 +50,10 @@ export class PieChart extends PureComponent<Props> {
   draw() {
     const { datapoints, pieType, strokeWidth } = this.props;
 
+    if (datapoints.length === 0) {
+      return;
+    }
+
     const data = datapoints.map(datapoint => datapoint.value);
     const names = datapoints.map(datapoint => datapoint.name);
     const colors = datapoints.map(datapoint => datapoint.color);
@@ -102,31 +106,41 @@ export class PieChart extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width } = this.props;
+    const { height, width, datapoints } = this.props;
 
-    return (
-      <div className="piechart-panel">
-        <div
-          ref={element => (this.containerElement = element)}
-          className="piechart-container"
-          style={{
-            height: `${height * 0.9}px`,
-            width: `${Math.min(width, height * 1.3)}px`,
-          }}
-        >
-          <svg ref={element => (this.svgElement = element)} />
-        </div>
-        <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
-          <div className="piechart-tooltip-time">
-            <div
-              id="tooltip-value"
-              className="piechart-tooltip-value"
-              ref={element => (this.tooltipValueElement = element)}
-            />
+    if (datapoints.length > 0) {
+      return (
+        <div className="piechart-panel">
+          <div
+            ref={element => (this.containerElement = element)}
+            className="piechart-container"
+            style={{
+              height: `${height * 0.9}px`,
+              width: `${Math.min(width, height * 1.3)}px`,
+            }}
+          >
+            <svg ref={element => (this.svgElement = element)} />
+          </div>
+          <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
+            <div className="piechart-tooltip-time">
+              <div
+                id="tooltip-value"
+                className="piechart-tooltip-value"
+                ref={element => (this.tooltipValueElement = element)}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      return (
+        <div className="piechart-panel">
+          <div className="datapoints-warning">
+            <span className="small">No data points</span>
+          </div>
+        </div>
+      );
+    }
   }
 }
 
