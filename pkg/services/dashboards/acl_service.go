@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func MakeUserAdmin(orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
+func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
