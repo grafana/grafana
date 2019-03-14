@@ -96,8 +96,7 @@ export class PieChart extends PureComponent<Props> {
       })
       .on('mousemove', () => {
         select(this.tooltipElement)
-          // TODO: right position
-          .style('top', `${event.pageY}px`)
+          .style('top', `${event.pageY - height / 2}px`)
           .style('left', `${event.pageX}px`);
       })
       .on('mouseout', () => {
