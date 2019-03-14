@@ -43,15 +43,15 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 }
 
 // PUT /api/teams/:teamId
-func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
+func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":teamId")
 
-	if err := teamguardian.CanAdmin(cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(hs.Bus, cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to update team", err)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(400, "Team name taken", err)
 		}
@@ -62,16 +62,16 @@ func UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Response {
 }
 
 // DELETE /api/teams/:teamId
-func DeleteTeamByID(c *m.ReqContext) Response {
+func (hs *HTTPServer) DeleteTeamByID(c *m.ReqContext) Response {
 	orgId := c.OrgId
 	teamId := c.ParamsInt64(":teamId")
 	user := c.SignedInUser
 
-	if err := teamguardian.CanAdmin(orgId, teamId, user); err != nil {
+	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, user); err != nil {
 		return Error(403, "Not allowed to delete team", err)
 	}
 
-	if err := bus.Dispatch(&m.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.Bus.Dispatch(&m.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -136,11 +136,11 @@ func GetTeamByID(c *m.ReqContext) Response {
 }
 
 // GET /api/teams/:teamId/preferences
-func GetTeamPreferences(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetTeamPreferences(c *m.ReqContext) Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to view team preferences.", err)
 	}
 
@@ -148,11 +148,11 @@ func GetTeamPreferences(c *m.ReqContext) Response {
 }
 
 // PUT /api/teams/:teamId/preferences
-func UpdateTeamPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
+func (hs *HTTPServer) UpdateTeamPreferences(c *m.ReqContext, dtoCmd dtos.UpdatePrefsCmd) Response {
 	teamId := c.ParamsInt64(":teamId")
 	orgId := c.OrgId
 
-	if err := teamguardian.CanAdmin(orgId, teamId, c.SignedInUser); err != nil {
+	if err := teamguardian.CanAdmin(hs.Bus, orgId, teamId, c.SignedInUser); err != nil {
 		return Error(403, "Not allowed to update team preferences.", err)
 	}
 

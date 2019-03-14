@@ -33,7 +33,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeam)
 			})
 		})
@@ -50,7 +50,7 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(testTeam.OrgId, testTeam.Id, &editor)
+				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &editor)
 				So(err, ShouldBeNil)
 			})
 		})
@@ -72,14 +72,14 @@ func TestUpdateTeam(t *testing.T) {
 					return nil
 				})
 
-				err := CanAdmin(testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
+				err := CanAdmin(bus.GetBus(), testTeamOtherOrg.OrgId, testTeamOtherOrg.Id, &editor)
 				So(err, ShouldEqual, m.ErrNotAllowedToUpdateTeamInDifferentOrg)
 			})
 		})
 
 		Convey("Given an org admin and a team", func() {
 			Convey("Should be able to update the team", func() {
-				err := CanAdmin(testTeam.OrgId, testTeam.Id, &admin)
+				err := CanAdmin(bus.GetBus(), testTeam.OrgId, testTeam.Id, &admin)
 				So(err, ShouldBeNil)
 			})
 		})

@@ -5,7 +5,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func CanAdmin(orgId int64, teamId int64, user *m.SignedInUser) error {
+func CanAdmin(bus bus.Bus, orgId int64, teamId int64, user *m.SignedInUser) error {
 	if user.OrgRole == m.ROLE_ADMIN {
 		return nil
 	}
