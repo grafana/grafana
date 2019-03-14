@@ -175,7 +175,7 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
-			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
+			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
 			err = GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
@@ -200,6 +200,23 @@ func TestUserAuth(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(getAuthQuery.Result.AuthModule, ShouldEqual, "test2")
 
+			// "log in" again with the first auth module
+			// resolution of `Created` column is 1sec, so we need a delay
+			time.Sleep(time.Second)
+			updateAuthCmd := &m.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
+			err = UpdateAuthInfo(updateAuthCmd)
+
+			So(err, ShouldBeNil)
+
+			// Get the latest entry by not supply an authmodule or authid
+			getAuthQuery = &m.GetAuthInfoQuery{
+				UserId: query.Result.Id,
+			}
+
+			err = GetAuthInfo(getAuthQuery)
+
+			So(err, ShouldBeNil)
+			So(getAuthQuery.Result.AuthModule, ShouldEqual, "test1")
 		})
 	})
 }
