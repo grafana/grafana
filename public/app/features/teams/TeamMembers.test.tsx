@@ -1,45 +1,29 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TeamMembers, Props, State } from './TeamMembers';
-import { TeamMember, TeamPermissionLevel } from '../../types';
-import { getMockTeamMember, getMockTeamMembers } from './__mocks__/teamMocks';
-import { SelectOptionItem } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { TeamMember, OrgRole } from '../../types';
+import { getMockTeamMembers } from './__mocks__/teamMocks';
+import { User } from 'app/core/services/context_srv';
 
 const signedInUserId = 1;
-const originalContextSrv = contextSrv;
 
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    isGrafanaAdmin: false,
-    hasRole: role => false,
-    user: { id: signedInUserId },
-  },
-}));
-
-interface SetupProps {
-  propOverrides?: object;
-  isGrafanaAdmin?: boolean;
-  isOrgAdmin?: boolean;
-}
-
-const setup = (setupProps: SetupProps) => {
+const setup = (propOverrides?: object) => {
   const props: Props = {
     members: [] as TeamMember[],
     searchMemberQuery: '',
     setSearchMemberQuery: jest.fn(),
     loadTeamMembers: jest.fn(),
     addTeamMember: jest.fn(),
-    removeTeamMember: jest.fn(),
-    updateTeamMember: jest.fn(),
     syncEnabled: false,
     editorsCanAdmin: false,
+    signedInUser: {
+      id: signedInUserId,
+      isGrafanaAdmin: false,
+      orgRole: OrgRole.Viewer,
+    } as User,
   };
 
-  contextSrv.isGrafanaAdmin = setupProps.isGrafanaAdmin || false;
-  contextSrv.hasRole = role => setupProps.isOrgAdmin || false;
-
-  Object.assign(props, setupProps.propOverrides);
+  Object.assign(props, propOverrides);
 
   const wrapper = shallow(<TeamMembers {...props} />);
   const instance = wrapper.instance() as TeamMembers;
@@ -51,11 +35,6 @@ const setup = (setupProps: SetupProps) => {
 };
 
 describe('Render', () => {
-  beforeEach(() => {
-    contextSrv.isGrafanaAdmin = originalContextSrv.isGrafanaAdmin;
-    contextSrv.hasRole = originalContextSrv.hasRole;
-  });
-
   it('should render component', () => {
     const { wrapper } = setup({});
 
@@ -63,73 +42,15 @@ describe('Render', () => {
   });
 
   it('should render team members', () => {
-    const { wrapper } = setup({
-      propOverrides: {
-        members: getMockTeamMembers(5, 5),
-      },
-    });
+    const { wrapper } = setup({ members: getMockTeamMembers(5, 5) });
 
     expect(wrapper).toMatchSnapshot();
   });
 
   it('should render team members when sync enabled', () => {
-    const { wrapper } = setup({
-      propOverrides: {
-        members: getMockTeamMembers(5, 5),
-        syncEnabled: true,
-      },
-    });
+    const { wrapper } = setup({ members: getMockTeamMembers(5, 5), syncEnabled: true });
 
     expect(wrapper).toMatchSnapshot();
-  });
-
-  describe('when feature toggle editorsCanAdmin is turned on', () => {
-    it('should render permissions select if user is Grafana Admin', () => {
-      const members = getMockTeamMembers(5, 5);
-      const { wrapper } = setup({
-        propOverrides: { members, editorsCanAdmin: true },
-        isGrafanaAdmin: true,
-        isOrgAdmin: false,
-      });
-
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it('should render permissions select if user is Org Admin', () => {
-      const members = getMockTeamMembers(5, 5);
-      const { wrapper } = setup({
-        propOverrides: { members, editorsCanAdmin: true },
-        isGrafanaAdmin: false,
-        isOrgAdmin: true,
-      });
-
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it('should render permissions select if user is team admin', () => {
-      const members = getMockTeamMembers(5, signedInUserId);
-      const { wrapper } = setup({
-        propOverrides: { members, editorsCanAdmin: true },
-        isGrafanaAdmin: false,
-        isOrgAdmin: false,
-      });
-
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it('should render span and disable buttons if user is team member', () => {
-      const members = getMockTeamMembers(5, 5);
-      const { wrapper } = setup({
-        propOverrides: {
-          members,
-          editorsCanAdmin: true,
-        },
-        isGrafanaAdmin: false,
-        isOrgAdmin: false,
-      });
-
-      expect(wrapper).toMatchSnapshot();
-    });
   });
 });
 
@@ -142,15 +63,6 @@ describe('Functions', () => {
 
       expect(instance.props.setSearchMemberQuery).toHaveBeenCalledWith('member');
     });
-  });
-
-  describe('on remove member', () => {
-    const { instance } = setup({});
-    const mockTeamMember = getMockTeamMember();
-
-    instance.onRemoveMember(mockTeamMember);
-
-    expect(instance.props.removeTeamMember).toHaveBeenCalledWith(1);
   });
 
   describe('on add user to team', () => {
@@ -169,23 +81,85 @@ describe('Functions', () => {
     expect(instance.props.addTeamMember).toHaveBeenCalledWith(1);
   });
 
-  describe('on update permision for user in team', () => {
-    const { instance } = setup({});
-    const permission = TeamPermissionLevel.Admin;
-    const item: SelectOptionItem = { value: permission };
-    const member: TeamMember = {
-      userId: 3,
-      teamId: 2,
-      avatarUrl: '',
-      email: 'user@user.org',
-      labels: [],
-      login: 'member',
-      permission: TeamPermissionLevel.Member,
-    };
-    const expectedTeamMemeber = { ...member, permission };
+  describe('isSignedInUserTeamAdmin', () => {
+    describe('when feature toggle editorsCanAdmin is turned off', () => {
+      it('should return true', () => {
+        const { instance } = setup({ editorsCanAdmin: false });
 
-    instance.onPermissionChange(item, member);
+        const result = instance.isSignedInUserTeamAdmin();
 
-    expect(instance.props.updateTeamMember).toHaveBeenCalledWith(expectedTeamMemeber);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('when feature toggle editorsCanAdmin is turned on', () => {
+      it('should return true if signed in user is grafanaAdmin', () => {
+        const members = getMockTeamMembers(5, 5);
+        const { instance } = setup({
+          members,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: signedInUserId,
+            isGrafanaAdmin: true,
+            orgRole: OrgRole.Viewer,
+          },
+        });
+
+        const result = instance.isSignedInUserTeamAdmin();
+
+        expect(result).toBe(true);
+      });
+
+      it('should return true if signed in user is org admin', () => {
+        const members = getMockTeamMembers(5, 5);
+        const { instance } = setup({
+          members,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: signedInUserId,
+            isGrafanaAdmin: false,
+            orgRole: OrgRole.Admin,
+          },
+        });
+
+        const result = instance.isSignedInUserTeamAdmin();
+
+        expect(result).toBe(true);
+      });
+
+      it('should return true if signed in user is team admin', () => {
+        const members = getMockTeamMembers(5, signedInUserId);
+        const { instance } = setup({
+          members,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: signedInUserId,
+            isGrafanaAdmin: false,
+            orgRole: OrgRole.Viewer,
+          },
+        });
+
+        const result = instance.isSignedInUserTeamAdmin();
+
+        expect(result).toBe(true);
+      });
+
+      it('should return false if signed in user is not grafanaAdmin, org admin or team admin', () => {
+        const members = getMockTeamMembers(5, 5);
+        const { instance } = setup({
+          members,
+          editorsCanAdmin: true,
+          signedInUser: {
+            id: signedInUserId,
+            isGrafanaAdmin: false,
+            orgRole: OrgRole.Viewer,
+          },
+        });
+
+        const result = instance.isSignedInUserTeamAdmin();
+
+        expect(result).toBe(false);
+      });
+    });
   });
 });

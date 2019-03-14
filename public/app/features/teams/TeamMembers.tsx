@@ -2,32 +2,25 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { DeleteButton, Select, SelectOptionItem } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User, teamsPermissionLevels, TeamPermissionLevel, OrgRole } from 'app/types';
-import {
-  loadTeamMembers,
-  addTeamMember,
-  removeTeamMember,
-  setSearchMemberQuery,
-  updateTeamMember,
-} from './state/actions';
+import { TeamMember, User, TeamPermissionLevel, OrgRole } from 'app/types';
+import { loadTeamMembers, addTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
+import TeamMemberRow from './TeamMemberRow';
 
 export interface Props {
   members: TeamMember[];
   searchMemberQuery: string;
   loadTeamMembers: typeof loadTeamMembers;
   addTeamMember: typeof addTeamMember;
-  removeTeamMember: typeof removeTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
-  updateTeamMember: typeof updateTeamMember;
   syncEnabled: boolean;
   editorsCanAdmin?: boolean;
+  signedInUser?: SignedInUser;
 }
 
 export interface State {
@@ -39,7 +32,6 @@ export class TeamMembers extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
-    this.renderPermissions = this.renderPermissions.bind(this);
   }
 
   componentDidMount() {
@@ -49,10 +41,6 @@ export class TeamMembers extends PureComponent<Props, State> {
   onSearchQueryChange = (value: string) => {
     this.props.setSearchMemberQuery(value);
   };
-
-  onRemoveMember(member: TeamMember) {
-    this.props.removeTeamMember(member.userId);
-  }
 
   onToggleAdding = () => {
     this.setState({ isAdding: !this.state.isAdding });
@@ -81,64 +69,15 @@ export class TeamMembers extends PureComponent<Props, State> {
     );
   }
 
-  onPermissionChange = (item: SelectOptionItem, member: TeamMember) => {
-    const permission = item.value;
-    const updatedTeamMember = { ...member, permission };
-
-    this.props.updateTeamMember(updatedTeamMember);
-  };
-
-  private isSignedInUserTeamAdmin = () => {
-    const { members, editorsCanAdmin } = this.props;
-    const userInMembers = members.find(m => m.userId === contextSrv.user.id);
-    const isAdmin = contextSrv.isGrafanaAdmin || contextSrv.hasRole(OrgRole.Admin);
+  isSignedInUserTeamAdmin = (): boolean => {
+    const { members, editorsCanAdmin, signedInUser } = this.props;
+    const userInMembers = members.find(m => m.userId === signedInUser.id);
+    const isAdmin = signedInUser.isGrafanaAdmin || signedInUser.orgRole === OrgRole.Admin;
     const userIsTeamAdmin = userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
     const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
 
     return isSignedInUserTeamAdmin || !editorsCanAdmin;
   };
-
-  renderPermissions(member: TeamMember) {
-    const { editorsCanAdmin } = this.props;
-    const isUserTeamAdmin = this.isSignedInUserTeamAdmin();
-    const value = teamsPermissionLevels.find(dp => dp.value === member.permission);
-
-    return (
-      <WithFeatureToggle featureToggle={editorsCanAdmin}>
-        <td>
-          <div className="gf-form">
-            {isUserTeamAdmin && (
-              <Select
-                isSearchable={false}
-                options={teamsPermissionLevels}
-                onChange={item => this.onPermissionChange(item, member)}
-                className="gf-form-select-box__control--menu-right"
-                value={value}
-              />
-            )}
-            {!isUserTeamAdmin && <span>{value.label}</span>}
-          </div>
-        </td>
-      </WithFeatureToggle>
-    );
-  }
-
-  renderMember(member: TeamMember, syncEnabled: boolean) {
-    return (
-      <tr key={member.userId}>
-        <td className="width-4 text-center">
-          <img className="filter-table__avatar" src={member.avatarUrl} />
-        </td>
-        <td>{member.login}</td>
-        <td>{member.email}</td>
-        {this.renderPermissions(member)}
-        {syncEnabled && this.renderLabels(member.labels)}
-        <td className="text-right">
-          <DeleteButton onConfirm={() => this.onRemoveMember(member)} disabled={!this.isSignedInUserTeamAdmin()} />
-        </td>
-      </tr>
-    );
-  }
 
   render() {
     const { isAdding } = this.state;
@@ -198,7 +137,18 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{members && members.map(member => this.renderMember(member, syncEnabled))}</tbody>
+            <tbody>
+              {members &&
+                members.map(member => (
+                  <TeamMemberRow
+                    key={member.userId}
+                    member={member}
+                    syncEnabled={syncEnabled}
+                    editorsCanAdmin={editorsCanAdmin}
+                    signedInUserIsTeamAdmin={this.isSignedInUserTeamAdmin()}
+                  />
+                ))}
+            </tbody>
           </table>
         </div>
       </div>
@@ -211,15 +161,14 @@ function mapStateToProps(state) {
     members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
 const mapDispatchToProps = {
   loadTeamMembers,
   addTeamMember,
-  removeTeamMember,
   setSearchMemberQuery,
-  updateTeamMember,
 };
 
 export default connect(
