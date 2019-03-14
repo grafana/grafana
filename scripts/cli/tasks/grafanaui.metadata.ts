@@ -2,11 +2,13 @@ import { Task, TaskRunner } from './task';
 import glob from 'glob';
 import fs from 'fs';
 import path from 'path';
+import flatten from 'lodash/flatten';
 import omitBy from 'lodash/omitBy';
 import { withCustomConfig, FileParser, ComponentDoc, PropItem } from 'react-docgen-typescript';
 import metadataParser from 'markdown-yaml-metadata-parser';
 import * as ts from 'typescript';
 import chokidar from 'chokidar';
+import { Project, SourceFile } from 'ts-morph';
 
 interface ComponentMetadata {
   category: string;
@@ -24,6 +26,7 @@ interface DocsMetadata {
   changelog: string;
   components: ComponentDocs[];
   guidelines?: string;
+  types: TypesMetadata;
 }
 
 const findComponentMarkdownPath = (mdFilePaths: string[], componentName: string) => {
@@ -83,15 +86,79 @@ const cleanupComponentPropTypes = (doc: ComponentDoc[]) => {
   });
 };
 
+interface TypeDefinition {
+  name: string;
+  definition: string;
+  sourceFileName: string;
+  sourceFilePath: string;
+  jsdoc: string;
+}
+interface TypesMetadata {
+  [key: string]: TypeDefinition[];
+}
+
+const getTypesFromSourceFile = (sourceFile: SourceFile): TypeDefinition[] => {
+  const types = sourceFile.getTypeAliases();
+  return types.map(t => {
+    return {
+      name: t.getName(),
+      definition: t
+        .getText()
+        .split('=')[1]
+        .trim(),
+      sourceFileName: sourceFile.getBaseName(),
+      sourceFilePath: sourceFile.getDirectoryPath(),
+      jsdoc: t
+        .getJsDocs()
+        .map(d => d.getInnerText())
+        .join('\n'),
+    };
+  });
+};
+
+const getTypesMetadata = (project: Project) => {
+  const typeFiles = glob.sync('packages/grafana-ui/src/types/**/*.ts');
+
+  const typeMetadata: TypeDefinition[] = flatten(
+    typeFiles
+      .map(filePath => {
+        const ast = project.getSourceFile(filePath);
+        return getTypesFromSourceFile(ast);
+      })
+      .filter(t => t.length > 0)
+  );
+
+  return typeMetadata.reduce(
+    (acc, current) => {
+      if (acc[current.sourceFileName]) {
+        acc[current.sourceFileName].push(current);
+      } else {
+        acc[current.sourceFileName] = [current];
+      }
+
+      return acc;
+    },
+    {} as TypesMetadata
+  );
+};
+
 const generateMetadata = (resolve?: () => void) => {
   const docs: DocsMetadata = {} as DocsMetadata;
   const readme = fs.readFileSync('packages/grafana-ui/README.md', 'utf8');
   const changelog = fs.readFileSync('packages/grafana-ui/CHANGELOG.md', 'utf8');
+  const markdownFiles = glob.sync('packages/grafana-ui/src/components/**/*.md');
+
+  const typeFilesProject = new Project({
+    tsConfigFilePath: `${process.cwd()}/packages/grafana-ui/tsconfig.json`,
+    addFilesFromTsConfig: false,
+  });
+  typeFilesProject.addExistingSourceFiles(`${process.cwd()}/packages/grafana-ui/src/types/*.ts`);
+
   docs.readme = readme;
   docs.changelog = changelog;
   docs.components = [];
-  // Load components markdown files
-  const markdownFiles = glob.sync('packages/grafana-ui/src/components/**/*.md');
+  docs.types = getTypesMetadata(typeFilesProject);
+  debugger;
 
   // Find components path, ignore stories and tests
   const componentFiles = glob.sync(`packages/grafana-ui/src/components/**/*.tsx`).filter(file => {

@@ -14,7 +14,6 @@ const ComponentDocsPage = ({ componentMetadata }: ComponentDocsPageProps) => {
   const { docs, meta, name } = componentMetadata;
 
   // TODO: There might be multiple components in one file, thus we need to figure out how to select the propper one
-  const componentProps = meta.props[0].props;
 
   return (
     <>
@@ -46,42 +45,51 @@ const ComponentDocsPage = ({ componentMetadata }: ComponentDocsPageProps) => {
       )}
       {!componentMetadata.docs && <h1>{name} is missing markdown file</h1>}
 
-      <h2>Properies</h2>
-      <table style={{ width: '100%' }}>
-        <thead>
-          <tr>
-            <th>
-              <b>Prop name</b>
-            </th>
-            <th>
-              <b>Type</b>
-            </th>
-            <th>
-              <b>Description</b>
-            </th>
-            <th>
-              <b>Default value</b>
-            </th>
-            <th>
-              <b>Required</b>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(componentProps).map(key => {
-            return (
-              <tr key={key}>
-                <td>{componentProps[key].name}</td>
-                <td>{componentProps[key].type.name}</td>
-                <td>{componentProps[key].description}</td>
-                <td>{JSON.stringify(componentProps[key].defaultValue)}</td>
-                <td>{componentProps[key].required ? 'true' : 'false'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
       <hr />
+      {meta.props.map((componentPropsMetadata: any) => {
+        const componentProps = componentPropsMetadata.props;
+        return (
+          <>
+            <h2>{componentPropsMetadata.displayName} props</h2>
+            <table style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>
+                    <b>Prop name</b>
+                  </th>
+                  <th>
+                    <b>Type</b>
+                  </th>
+                  <th>
+                    <b>Description</b>
+                  </th>
+                  <th>
+                    <b>Default value</b>
+                  </th>
+                  <th>
+                    <b>Required</b>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(componentProps).map(key => {
+                  return (
+                    <tr key={key}>
+                      <td>{componentProps[key].name}</td>
+                      <td>{componentProps[key].type.name}</td>
+                      <td>{componentProps[key].description}</td>
+                      <td>{JSON.stringify(componentProps[key].defaultValue)}</td>
+                      <td>{componentProps[key].required ? 'true' : 'false'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <hr />
+          </>
+        );
+      })}
+
       <div>
         <h3>debug</h3>
         <JSONTree data={componentMetadata} />

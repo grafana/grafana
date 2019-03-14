@@ -6,6 +6,8 @@ import ComponentsIndex from './ComponentsIndex';
 import Markdown from 'markdown-to-jsx';
 import Sidebar from './Sidebar';
 import ComponentDocsPage from './ComponentDocsPage';
+import TypesDocsPage from './TypesDocsPage';
+import TypesIndex from './TypesIndex';
 
 export interface ComponentDocs {
   name: string; // MD
@@ -18,11 +20,22 @@ export interface ComponentDocs {
   };
 }
 
+export interface TypeDefinition {
+  name: string;
+  definition: string;
+  sourceFileName: string;
+  sourceFilePath: string;
+}
+export interface TypesMetadata {
+  [key: string]: TypeDefinition[];
+}
+
 interface AppProps {
   docsMetadata: {
     readme: string;
     changelog: string;
     components: ComponentDocs[];
+    types: TypesMetadata;
   };
   onThemeChange: (theme: string) => void;
 }
@@ -32,7 +45,10 @@ const App = ({ docsMetadata, onThemeChange }: AppProps) => {
     <HashRouter>
       <div style={{ display: 'flex' }}>
         <Sidebar onThemeSelect={onThemeChange}>
-          <ComponentsIndex metadata={docsMetadata} />
+          <>
+            <ComponentsIndex metadata={docsMetadata} />
+            <TypesIndex typesMetadata={docsMetadata.types} />
+          </>
         </Sidebar>
 
         <div
@@ -64,6 +80,14 @@ const App = ({ docsMetadata, onThemeChange }: AppProps) => {
               render={({ match: { params } }) => {
                 const componentMetadata = docsMetadata.components.filter(c => c.name === params.component)[0];
                 return <ComponentDocsPage componentMetadata={componentMetadata} />;
+              }}
+            />
+            <Route
+              exact
+              path="/types/:sourceFile"
+              render={({ match: { params } }) => {
+                const typesMetadata = docsMetadata.types[params.sourceFile];
+                return <TypesDocsPage sourceFile={params.sourceFile} typesMetadata={typesMetadata} />;
               }}
             />
 

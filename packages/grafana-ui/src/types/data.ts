@@ -5,6 +5,9 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+/**
+ * @description Describes value of time series
+ */
 export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
