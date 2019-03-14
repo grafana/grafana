@@ -43,7 +43,6 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
         <PanelOptionsGrid>
           {/* This just sets the 'stats', that should be moved to somethign more general */}
           <SingleStatValueEditor onChange={onOptionsChange} options={options} />
-
           <DisplayValueEditor onChange={this.onDisplayOptionsChanged} options={display} />
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={display.thresholds} />

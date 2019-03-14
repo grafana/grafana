@@ -16,10 +16,6 @@ export class SingleStatPanel<T extends SingleStatOptions> extends PureComponent<
   constructor(props: PanelProps<T>) {
     super(props);
 
-    // if (props.options.valueOptions) {
-    //   console.warn('TODO!! how do we best migration options?');
-    // }
-
     this.state = {
       values: this.findDisplayValues(props),
     };
@@ -49,11 +45,7 @@ export class SingleStatPanel<T extends SingleStatOptions> extends PureComponent<
   }
 
   /**
-   * Subclasses can render this function
-   *
-   * @param value
-   * @param width
-   * @param height
+   * Subclasses will fill in appropriatly
    */
   renderStat(value: DisplayValue, width: number, height: number) {
     return <div style={{ width, height, border: '1px solid red' }}>{value.text}</div>;

@@ -5,11 +5,6 @@ export interface GaugeOptions extends SingleStatOptions {
   minValue: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
-
-  // TODO: migrate to DisplayValueOptions
-  // thresholds?: Threshold[];
-  // valueMappings?: ValueMapping[];
-  // valueOptions?: SingleStatValueOptions;
 }
 
 export const defaults: GaugeOptions = {

@@ -7,10 +7,19 @@ import { GaugeOptions, defaults } from './types';
 
 export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
 
-reactPanel.setEditor(GaugePanelEditor);
-reactPanel.setDefaults(defaults);
-reactPanel.setPreserveOptionsHandler((pluginId: string, prevOptions: any) => {
+// Bar Gauge uses the same handler
+export const gaugePreserveOptionsHandler = (pluginId: string, prevOptions: any) => {
   const options: Partial<GaugeOptions> = {};
+
+  // TODO! migrate to new settings format
+  //
+  // thresholds?: Threshold[];
+  // valueMappings?: ValueMapping[];
+  // valueOptions?: SingleStatValueOptions;
+  //
+  // if (props.options.valueOptions) {
+  //   console.warn('TODO!! how do we best migration options?');
+  // }
 
   if (prevOptions.display) {
     options.stat = prevOptions.stat;
@@ -20,4 +29,8 @@ reactPanel.setPreserveOptionsHandler((pluginId: string, prevOptions: any) => {
   }
 
   return options;
-});
+};
+
+reactPanel.setEditor(GaugePanelEditor);
+reactPanel.setDefaults(defaults);
+reactPanel.setPreserveOptionsHandler(gaugePreserveOptionsHandler);
