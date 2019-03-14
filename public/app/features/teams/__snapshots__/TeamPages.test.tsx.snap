@@ -47,3 +47,25 @@ exports[`Render should render settings and preferences page 1`] = `
   </PageContents>
 </Page>
 `;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should not render settings page if user is team member 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  />
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render settings page if user is team admin 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Connect(TeamSettings) />
+  </PageContents>
+</Page>
+`;

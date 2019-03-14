@@ -1,4 +1,5 @@
-import { Team, TeamsState, TeamState } from 'app/types';
+import { Team, TeamsState, TeamState, TeamMember, OrgRole, TeamPermissionLevel } from 'app/types';
+import { User } from 'app/core/services/context_srv';
 
 export const getSearchQuery = (state: TeamsState) => state.searchQuery;
 export const getSearchMemberQuery = (state: TeamState) => state.searchMemberQuery;
@@ -27,4 +28,19 @@ export const getTeamMembers = (state: TeamState) => {
   return state.members.filter(member => {
     return regex.test(member.login) || regex.test(member.email);
   });
+};
+
+export interface Config {
+  members: TeamMember[];
+  editorsCanAdmin: boolean;
+  signedInUser: User;
+}
+
+export const isSignedInUserTeamAdmin = (config: Config): boolean => {
+  const userInMembers = config.members.find(m => m.userId === config.signedInUser.id);
+  const isAdmin = config.signedInUser.isGrafanaAdmin || config.signedInUser.orgRole === OrgRole.Admin;
+  const userIsTeamAdmin = userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
+  const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
+
+  return isSignedInUserTeamAdmin || !config.editorsCanAdmin;
 };
