@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataQuery } from '@grafana/ui/';
 
-export const getNextQueryLetter = (queries: DataQuery[]): string => {
+export const getNextRefIdLetter = (queries: DataQuery[]): string => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   return _.find(letters, refId => {
