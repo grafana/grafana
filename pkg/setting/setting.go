@@ -241,6 +241,9 @@ type Cfg struct {
 
 	// User
 	EditorsCanOwn bool
+
+	// DistributedCache
+	RemoteCacheOptions *RemoteCacheOptions
 }
 
 type CommandLineArgs struct {
@@ -781,7 +784,18 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
 
+	cacheServer := iniFile.Section("remote_cache")
+	cfg.RemoteCacheOptions = &RemoteCacheOptions{
+		Name:    cacheServer.Key("type").MustString("database"),
+		ConnStr: cacheServer.Key("connstr").MustString(""),
+	}
+
 	return nil
+}
+
+type RemoteCacheOptions struct {
+	Name    string
+	ConnStr string
 }
 
 func (cfg *Cfg) readSessionConfig() {
