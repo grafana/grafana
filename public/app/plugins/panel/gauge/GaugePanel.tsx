@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 // Services & Utils
 import { config } from 'app/core/config';
@@ -9,11 +9,12 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { DisplayValue } from '@grafana/ui/src/utils/displayValue';
-import { SingleStatBase } from '../singlestat2/SingleStatBase';
+import { DisplayValue, PanelProps } from '@grafana/ui';
+import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
+import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
 
-export class GaugePanel extends SingleStatBase<GaugeOptions> {
-  renderStat(value: DisplayValue, width: number, height: number) {
+export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
     const { options } = this.props;
 
     return (
@@ -27,6 +28,25 @@ export class GaugePanel extends SingleStatBase<GaugeOptions> {
         minValue={options.minValue}
         maxValue={options.maxValue}
         theme={config.theme}
+      />
+    );
+  };
+
+  getProcessedValues = (): DisplayValue[] => {
+    return getSingleStatValues(this.props);
+  };
+
+  render() {
+    const { height, width, options, panelData } = this.props;
+    const { orientation } = options;
+    return (
+      <ProcessedValuesRepeater
+        getProcessedValues={this.getProcessedValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={panelData}
+        orientation={orientation}
       />
     );
   }

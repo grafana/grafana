@@ -1,19 +1,17 @@
 // Libraries
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { DisplayValue } from '@grafana/ui';
+import { DisplayValue, PanelProps, BarGauge } from '@grafana/ui';
 import { config } from 'app/core/config';
-
-// Components
-import { BarGauge } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { SingleStatBase } from '../singlestat2/SingleStatBase';
+import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
+import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
 
-export class BarGaugePanel extends SingleStatBase<BarGaugeOptions> {
-  renderStat(value: DisplayValue, width: number, height: number) {
+export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
     const { options } = this.props;
 
     return (
@@ -24,6 +22,25 @@ export class BarGaugePanel extends SingleStatBase<BarGaugeOptions> {
         orientation={options.orientation}
         thresholds={options.thresholds}
         theme={config.theme}
+      />
+    );
+  };
+
+  getProcessedValues = (): DisplayValue[] => {
+    return getSingleStatValues(this.props);
+  };
+
+  render() {
+    const { height, width, options, panelData } = this.props;
+    const { orientation } = options;
+    return (
+      <ProcessedValuesRepeater
+        getProcessedValues={this.getProcessedValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={panelData}
+        orientation={orientation}
       />
     );
   }
