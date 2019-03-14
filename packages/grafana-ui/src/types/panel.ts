@@ -30,10 +30,10 @@ export interface PanelEditorProps<T = any> {
  * Called before a panel is initalized
  */
 export type PanelTypeChangedHook<TOptions = any> = (
-  options: TOptions,
+  options: Partial<TOptions>,
   prevPluginId?: string,
   prevOptions?: any
-) => TOptions;
+) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
