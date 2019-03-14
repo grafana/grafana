@@ -27,13 +27,7 @@ func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) e
 		return err
 	}
 
-	var status *redis.StatusCmd
-	if expires == 0 {
-		status = s.c.Set(key, string(value))
-	} else {
-		status = s.c.SetEx(key, expires, string(value))
-	}
-
+	status := s.c.SetEx(key, expires, string(value))
 	return status.Err()
 }
 

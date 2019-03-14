@@ -34,7 +34,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *
 		t.Fatalf("failed to init client for test. error: %v", err)
 	}
 
-	return dc.client
+	return dc
 }
 
 func TestCachedBasedOnConfig(t *testing.T) {
@@ -56,7 +56,6 @@ func TestInvalidCacheTypeReturnsError(t *testing.T) {
 func runTestsForClient(t *testing.T, client CacheStorage) {
 	canPutGetAndDeleteCachedObjects(t, client)
 	canNotFetchExpiredItems(t, client)
-	canSetInfiniteCacheExpiration(t, client)
 }
 
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
@@ -91,22 +90,4 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	// should not be able to read that value since its expired
 	_, err = client.Get("key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
-}
-
-func canSetInfiniteCacheExpiration(t *testing.T, client CacheStorage) {
-	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
-
-	// insert cache item one day back
-	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-	err := client.Set("key1", cacheableStruct, 0)
-	assert.Equal(t, err, nil)
-
-	// should not be able to read that value since its expired
-	getTime = time.Now
-	data, err := client.Get("key1")
-	s, ok := data.(CacheableStruct)
-
-	assert.Equal(t, ok, true)
-	assert.Equal(t, s.String, "hej")
-	assert.Equal(t, s.Int64, int64(2000))
 }

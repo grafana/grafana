@@ -33,7 +33,12 @@ func (s *memcachedStorage) Set(key string, val interface{}, expires time.Duratio
 		return err
 	}
 
-	memcachedItem := newItem(key, bytes, int32(expires))
+	var expiresInSeconds int64
+	if expires != 0 {
+		expiresInSeconds = int64(expires) / int64(time.Second)
+	}
+
+	memcachedItem := newItem(key, bytes, int32(expiresInSeconds))
 	return s.c.Set(memcachedItem)
 }
 

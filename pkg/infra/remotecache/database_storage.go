@@ -92,18 +92,18 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 		return err
 	}
 
-	var expiresAtEpoch int64
+	var expiresInSeconds int64
 	if expire != 0 {
-		expiresAtEpoch = int64(expire) / int64(time.Second)
+		expiresInSeconds = int64(expire) / int64(time.Second)
 	}
 
 	// insert or update depending on if item already exist
 	if has {
 		sql := `UPDATE cache_data SET data=?, created=?, expire=? WHERE cache_key='?'`
-		_, err = session.Exec(sql, data, getTime().Unix(), expiresAtEpoch, key)
+		_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
 	} else {
 		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
-		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresAtEpoch)
+		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
 	}
 
 	return err

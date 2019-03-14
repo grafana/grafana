@@ -21,6 +21,8 @@ var (
 
 	// ErrInvalidCacheType is returned if the type is invalid
 	ErrInvalidCacheType = errors.New("invalid remote cache name")
+
+	defaultMaxCacheExpiration = time.Hour * 24
 )
 
 func init() {
@@ -35,7 +37,7 @@ type CacheStorage interface {
 	// Get reads object from Cache
 	Get(key string) (interface{}, error)
 
-	// Set sets an object into the cache. if `expire` is set to zero it never expires.
+	// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
 	Set(key string, value interface{}, expire time.Duration) error
 
 	// Delete object from cache
@@ -50,14 +52,21 @@ type RemoteCache struct {
 	Cfg      *setting.Cfg       `inject:""`
 }
 
+// Get reads object from Cache
 func (ds *RemoteCache) Get(key string) (interface{}, error) {
 	return ds.client.Get(key)
 }
 
+// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
 func (ds *RemoteCache) Set(key string, value interface{}, expire time.Duration) error {
+	if expire == 0 {
+		expire = defaultMaxCacheExpiration
+	}
+
 	return ds.client.Set(key, value, expire)
 }
 
+// Delete object from cache
 func (ds *RemoteCache) Delete(key string) error {
 	return ds.client.Delete(key)
 }
