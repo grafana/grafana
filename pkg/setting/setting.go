@@ -242,6 +242,9 @@ type Cfg struct {
 	// User
 	EditorsCanOwn bool
 
+	// Dataproxy
+	SendUserHeader bool
+
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
 }
@@ -604,6 +607,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
 	// read security settings
 	security := iniFile.Section("security")
