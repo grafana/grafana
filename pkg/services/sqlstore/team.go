@@ -255,18 +255,27 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 	})
 }
 
+func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (m.TeamMember, error) {
+	rawSql := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
+	var member m.TeamMember
+	exists, err := sess.SQL(rawSql, orgId, teamId, userId).Get(&member)
+
+	if err != nil {
+		return member, err
+	}
+	if !exists {
+		return member, m.ErrTeamMemberNotFound
+	}
+
+	return member, nil
+}
+
 // UpdateTeamMember updates a team member
 func UpdateTeamMember(cmd *m.UpdateTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		rawSql := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
-		var member m.TeamMember
-		exists, err := sess.SQL(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId).Get(&member)
-
+		member, err := getTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
 			return err
-		}
-		if !exists {
-			return m.ErrTeamMemberNotFound
 		}
 
 		if cmd.ProtectLastAdmin {
