@@ -6,7 +6,7 @@ import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { NavModel, Team, OrgRole } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
-import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
+import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
@@ -43,7 +43,10 @@ export class TeamList extends PureComponent<Props, any> {
   };
 
   renderTeam(team: Team) {
+    const { editorsCanAdmin, signedInUser } = this.props;
+    const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
+    const canDelete = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
 
     return (
       <tr key={team.id}>
@@ -62,7 +65,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirm={() => this.deleteTeam(team)} disabled={!canDelete} />
         </td>
       </tr>
     );

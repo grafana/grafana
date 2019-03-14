@@ -133,6 +133,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -183,6 +184,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -233,6 +235,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -283,6 +286,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -333,6 +337,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -458,6 +463,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                disabled={true}
                 onConfirm={[Function]}
               />
             </td>
@@ -583,6 +589,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
               className="text-right"
             >
               <DeleteButton
+                disabled={true}
                 onConfirm={[Function]}
               />
             </td>
