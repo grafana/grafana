@@ -3,9 +3,9 @@ import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User, TeamPermissionLevel, OrgRole } from 'app/types';
+import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, setSearchMemberQuery } from './state/actions';
-import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
+import { getSearchMemberQuery, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
@@ -69,19 +69,11 @@ export class TeamMembers extends PureComponent<Props, State> {
     );
   }
 
-  isSignedInUserTeamAdmin = (): boolean => {
-    const { members, editorsCanAdmin, signedInUser } = this.props;
-    const userInMembers = members.find(m => m.userId === signedInUser.id);
-    const isAdmin = signedInUser.isGrafanaAdmin || signedInUser.orgRole === OrgRole.Admin;
-    const userIsTeamAdmin = userInMembers && userInMembers.permission === TeamPermissionLevel.Admin;
-    const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
-
-    return isSignedInUserTeamAdmin || !editorsCanAdmin;
-  };
-
   render() {
     const { isAdding } = this.state;
-    const { searchMemberQuery, members, syncEnabled, editorsCanAdmin } = this.props;
+    const { searchMemberQuery, members, syncEnabled, editorsCanAdmin, signedInUser } = this.props;
+    const isTeamAdmin = isSignedInUserTeamAdmin({ members, editorsCanAdmin, signedInUser });
+
     return (
       <div>
         <div className="page-action-bar">
@@ -100,7 +92,7 @@ export class TeamMembers extends PureComponent<Props, State> {
           <button
             className="btn btn-primary pull-right"
             onClick={this.onToggleAdding}
-            disabled={isAdding || !this.isSignedInUserTeamAdmin()}
+            disabled={isAdding || !isTeamAdmin}
           >
             Add member
           </button>
@@ -145,7 +137,7 @@ export class TeamMembers extends PureComponent<Props, State> {
                     member={member}
                     syncEnabled={syncEnabled}
                     editorsCanAdmin={editorsCanAdmin}
-                    signedInUserIsTeamAdmin={this.isSignedInUserTeamAdmin()}
+                    signedInUserIsTeamAdmin={isTeamAdmin}
                   />
                 ))}
             </tbody>

@@ -7,12 +7,13 @@ import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import { NavModel, Team } from 'app/types';
+import { NavModel, Team, TeamMember } from 'app/types';
 import { loadTeam } from './state/actions';
-import { getTeam } from './state/selectors';
+import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
+import { contextSrv, User } from 'app/core/services/context_srv';
 
 export interface Props {
   team: Team;
@@ -20,6 +21,9 @@ export interface Props {
   teamId: number;
   pageName: string;
   navModel: NavModel;
+  members?: TeamMember[];
+  editorsCanAdmin?: boolean;
+  signedInUser?: User;
 }
 
 interface State {
@@ -61,7 +65,15 @@ export class TeamPages extends PureComponent<Props, State> {
     return _.includes(pages, currentPage) ? currentPage : pages[0];
   }
 
-  renderPage() {
+  hideTabsFromNonTeamAdmin = (navModel: NavModel, isSignedInUserTeamAdmin: boolean) => {
+    if (!isSignedInUserTeamAdmin && navModel.main && navModel.main.children) {
+      navModel.main.children = navModel.main.children.filter(navItem => navItem.text === 'Members');
+    }
+
+    return navModel;
+  };
+
+  renderPage(isSignedInUserTeamAdmin: boolean) {
     const { isSyncEnabled } = this.state;
     const currentPage = this.getCurrentPage();
 
@@ -70,21 +82,22 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamMembers syncEnabled={isSyncEnabled} />;
 
       case PageTypes.Settings:
-        return <TeamSettings />;
+        return isSignedInUserTeamAdmin && <TeamSettings />;
       case PageTypes.GroupSync:
-        return isSyncEnabled && <TeamGroupSync />;
+        return isSignedInUserTeamAdmin && isSyncEnabled && <TeamGroupSync />;
     }
 
     return null;
   }
 
   render() {
-    const { team, navModel } = this.props;
+    const { team, navModel, members, editorsCanAdmin, signedInUser } = this.props;
+    const isTeamAdmin = isSignedInUserTeamAdmin({ members, editorsCanAdmin, signedInUser });
 
     return (
-      <Page navModel={navModel}>
+      <Page navModel={this.hideTabsFromNonTeamAdmin(navModel, isTeamAdmin)}>
         <Page.Contents isLoading={this.state.isLoading}>
-          {team && Object.keys(team).length !== 0 && this.renderPage()}
+          {team && Object.keys(team).length !== 0 && this.renderPage(isTeamAdmin)}
         </Page.Contents>
       </Page>
     );
@@ -101,6 +114,9 @@ function mapStateToProps(state) {
     teamId: teamId,
     pageName: pageName,
     team: getTeam(state.team, teamId),
+    members: getTeamMembers(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
