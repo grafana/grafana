@@ -10,19 +10,18 @@ import { Gauge } from '@grafana/ui';
 // Types
 import { GaugeOptions } from './types';
 import { DisplayValue } from '@grafana/ui/src/utils/displayValue';
-import { SingleStatPanel } from './SingleStatPanel';
+import { SingleStatBase } from '../singlestat2/SingleStatBase';
 
-export class GaugePanel extends SingleStatPanel<GaugeOptions> {
+export class GaugePanel extends SingleStatBase<GaugeOptions> {
   renderStat(value: DisplayValue, width: number, height: number) {
     const { options } = this.props;
-    const { display } = options;
 
     return (
       <Gauge
         value={value}
         width={width}
         height={height}
-        thresholds={display.thresholds}
+        thresholds={options.thresholds}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         minValue={options.minValue}

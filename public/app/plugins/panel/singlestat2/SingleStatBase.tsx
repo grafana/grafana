@@ -1,21 +1,16 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
-import { processSingleStatPanelData, SingleStatOptions, DisplayValue, PanelProps, VizOrientation } from '@grafana/ui';
+import { processSingleStatPanelData, DisplayValue, PanelProps } from '@grafana/ui';
 import { config } from 'app/core/config';
-
-// Components
 import { VizRepeater, getDisplayProcessor } from '@grafana/ui';
+import { SingleStatBaseOptions } from './types';
 
-interface State {
+export interface State {
   values: DisplayValue[];
 }
 
-export class SingleStatPanel<T extends SingleStatOptions> extends PureComponent<PanelProps<T>, State> {
+export class SingleStatBase<T extends SingleStatBaseOptions> extends PureComponent<PanelProps<T>, State> {
   constructor(props: PanelProps<T>) {
     super(props);
-
     this.state = {
       values: this.findDisplayValues(props),
     };
@@ -29,18 +24,20 @@ export class SingleStatPanel<T extends SingleStatOptions> extends PureComponent<
 
   findDisplayValues(props: PanelProps<T>): DisplayValue[] {
     const { panelData, replaceVariables, options } = this.props;
-    const { display } = options;
-
+    const { valueOptions, valueMappings } = options;
     const processor = getDisplayProcessor({
-      ...display,
-      prefix: replaceVariables(display.prefix),
-      suffix: replaceVariables(display.suffix),
+      unit: valueOptions.unit,
+      decimals: valueOptions.decimals,
+      mappings: valueMappings,
+      thresholds: options.thresholds,
+
+      prefix: replaceVariables(valueOptions.prefix),
+      suffix: replaceVariables(valueOptions.suffix),
       theme: config.theme,
     });
-
     return processSingleStatPanelData({
       panelData: panelData,
-      stat: options.stat,
+      stat: valueOptions.stat,
     }).map(stat => processor(stat.value));
   }
 
@@ -51,17 +48,12 @@ export class SingleStatPanel<T extends SingleStatOptions> extends PureComponent<
     return <div style={{ width, height, border: '1px solid red' }}>{value.text}</div>;
   }
 
-  // Or we could add this to single stat props?
-  getOrientation(): VizOrientation {
-    return VizOrientation.Auto;
-  }
-
   render() {
-    const { height, width } = this.props;
+    const { height, width, options } = this.props;
+    const { orientation } = options;
     const { values } = this.state;
-
     return (
-      <VizRepeater height={height} width={width} values={values} orientation={this.getOrientation()}>
+      <VizRepeater height={height} width={width} values={values} orientation={orientation}>
         {({ vizHeight, vizWidth, value }) => this.renderStat(value, vizWidth, vizHeight)}
       </VizRepeater>
     );

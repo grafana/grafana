@@ -2,38 +2,31 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
-import {
-  PanelOptionsGrid,
-  PanelOptionsGroup,
-  FormField,
-  DisplayValueOptions,
-  ThresholdsEditor,
-  Threshold,
-} from '@grafana/ui';
+import { ThresholdsEditor, ValueMappingsEditor, PanelOptionsGrid, PanelOptionsGroup, FormField } from '@grafana/ui';
 
 // Types
-import { FormLabel, PanelEditorProps, Select, ValueMappingsEditor, ValueMapping } from '@grafana/ui';
+import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
 import { BarGaugeOptions, orientationOptions } from './types';
-import { DisplayValueEditor } from '../gauge/DisplayValueEditor';
+import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
+import { SingleStatValueOptions } from '../singlestat2/types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onDisplayOptionsChanged = (displayOptions: DisplayValueOptions) =>
+  onThresholdsChanged = (thresholds: Threshold[]) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      display: displayOptions,
-    });
-
-  onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.display,
       thresholds,
     });
 
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.display,
-      mappings: valueMappings,
+    this.props.onOptionsChange({
+      ...this.props.options,
+      valueMappings,
+    });
+
+  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+    this.props.onOptionsChange({
+      ...this.props.options,
+      valueOptions,
     });
 
   onMinValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, minValue: target.value });
@@ -41,17 +34,12 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
   onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
 
   render() {
-    const { onOptionsChange, options } = this.props;
-    const { display } = options;
+    const { options } = this.props;
 
     return (
       <>
         <PanelOptionsGrid>
-          {/* This just sets the 'stats', that should be moved to somethign more general */}
-          <SingleStatValueEditor onChange={onOptionsChange} options={options} />
-
-          <DisplayValueEditor onChange={this.onDisplayOptionsChanged} options={display} />
-
+          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
           <PanelOptionsGroup title="Gauge">
             <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={options.minValue} />
             <FormField label="Max value" labelWidth={8} onChange={this.onMaxValueChange} value={options.maxValue} />
@@ -66,9 +54,10 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
               />
             </div>
           </PanelOptionsGroup>
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={display.thresholds} />
-          <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={display.mappings} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
+
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
       </>
     );
   }

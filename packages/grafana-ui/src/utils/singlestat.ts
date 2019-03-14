@@ -1,15 +1,9 @@
 import { PanelData, NullValueMode, SingleStatValueInfo } from '../types';
 import { processTimeSeries } from './processTimeSeries';
-import { DisplayValueOptions } from './displayValue';
 
 export interface SingleStatProcessingOptions {
   panelData: PanelData;
   stat: string;
-}
-
-export interface SingleStatOptions {
-  stat: string;
-  display: DisplayValueOptions;
 }
 
 //

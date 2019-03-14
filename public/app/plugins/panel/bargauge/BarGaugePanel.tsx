@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Services & Utils
-import { DisplayValue, VizOrientation } from '@grafana/ui';
+import { DisplayValue } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
@@ -10,17 +10,11 @@ import { BarGauge } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { SingleStatPanel } from '../gauge/SingleStatPanel';
+import { SingleStatBase } from '../singlestat2/SingleStatBase';
 
-export class BarGaugePanel extends SingleStatPanel<BarGaugeOptions> {
-  getOrientation(): VizOrientation {
-    const { options } = this.props;
-    return options.orientation;
-  }
-
+export class BarGaugePanel extends SingleStatBase<BarGaugeOptions> {
   renderStat(value: DisplayValue, width: number, height: number) {
     const { options } = this.props;
-    const { display } = options;
 
     return (
       <BarGauge
@@ -28,7 +22,7 @@ export class BarGaugePanel extends SingleStatPanel<BarGaugeOptions> {
         width={width}
         height={height}
         orientation={options.orientation}
-        thresholds={display.thresholds}
+        thresholds={options.thresholds}
         theme={config.theme}
       />
     );

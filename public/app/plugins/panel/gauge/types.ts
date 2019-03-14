@@ -1,6 +1,7 @@
-import { SingleStatOptions } from '@grafana/ui';
+import { SingleStatBaseOptions } from '../singlestat2/types';
+import { VizOrientation } from '@grafana/ui';
 
-export interface GaugeOptions extends SingleStatOptions {
+export interface GaugeOptions extends SingleStatBaseOptions {
   maxValue: number;
   minValue: number;
   showThresholdLabels: boolean;
@@ -12,14 +13,14 @@ export const defaults: GaugeOptions = {
   maxValue: 100,
   showThresholdMarkers: true,
   showThresholdLabels: false,
-
-  stat: 'avg',
-  display: {
+  valueOptions: {
     prefix: '',
     suffix: '',
     decimals: null,
+    stat: 'avg',
     unit: 'none',
-    mappings: [],
-    thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   },
+  valueMappings: [],
+  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
+  orientation: VizOrientation.Auto,
 };
