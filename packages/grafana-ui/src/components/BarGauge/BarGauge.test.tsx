@@ -15,6 +15,7 @@ const setup = (propOverrides?: object) => {
     minValue: 0,
     prefix: '',
     suffix: '',
+    displayMode: 'simple',
     thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
     unit: 'none',
     height: 300,

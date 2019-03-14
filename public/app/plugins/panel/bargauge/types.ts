@@ -8,6 +8,7 @@ export interface BarGaugeOptions {
   valueOptions: SingleStatValueOptions;
   valueMappings: ValueMapping[];
   thresholds: Threshold[];
+  displayMode: 'simple' | 'lcd';
 }
 
 export const orientationOptions: SelectOptionItem[] = [
@@ -15,9 +16,12 @@ export const orientationOptions: SelectOptionItem[] = [
   { value: VizOrientation.Vertical, label: 'Vertical' },
 ];
 
+export const displayModes: SelectOptionItem[] = [{ value: 'simple', label: 'Simple' }, { value: 'lcd', label: 'LCD' }];
+
 export const defaults: BarGaugeOptions = {
   minValue: 0,
   maxValue: 100,
+  displayMode: 'simple',
   orientation: VizOrientation.Horizontal,
   valueOptions: {
     unit: 'none',

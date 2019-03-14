@@ -35,6 +35,7 @@ export class BarGaugePanel extends PureComponent<Props> {
         thresholds={options.thresholds}
         valueMappings={options.valueMappings}
         theme={config.theme}
+        displayMode={options.displayMode}
       />
     );
   }
