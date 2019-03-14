@@ -1,0 +1,23 @@
+
+
+.gf-tables {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.gf-tables-table {
+  border: 1px solid #FF0;
+  width:100%;
+}
+
+.gf-tables-toolbar li {
+  display:inline;
+  padding:5px;
+  cursor: pointer;
+  border: 1px solid #CCC;
+}
+
+.gf-tables-toolbar .selected {
+  background: #F00;
+}
