@@ -139,6 +139,7 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
       {
         text: 'Time',
         type: 'time',
+        unit: 'dateTimeAsIso',
       },
     ],
     rows: timeSeries.datapoints,

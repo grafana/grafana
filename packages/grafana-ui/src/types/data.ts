@@ -51,9 +51,9 @@ export enum NullValueMode {
 export type TimeSeriesVMs = TimeSeriesVM[];
 
 export interface Column {
-  text: string; // name
-  type?: 'time' | 'number' | 'string' | 'object';
-  filterable?: boolean;
+  text: string; // The column name
+  type?: 'time' | 'number' | 'string' | 'object'; // not used anywhere? can we remove?
+  filterable?: boolean; // currently only set by elasticsearch, and used in the table panel
   unit?: string;
 }
 
