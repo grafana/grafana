@@ -105,6 +105,14 @@ region = us-west-2
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
+## Metric Math
+
+You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+
+As an example, if you want to apply arithmetic operator on a metric, you can do it by giving an alias(a unique string) to the raw metric as shown below. Then you can use this alias and apply arithmetic operator to it in the Expression field of created metric.
+
+![](/img/docs/v60/cloudwatch_metric_math.png)
+
 ## Templated queries
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
