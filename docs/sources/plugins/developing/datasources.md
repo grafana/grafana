@@ -163,7 +163,7 @@ Expected result from datasource.annotationQuery:
     "title": "Cluster outage",
     "time": 1457075272576,
     "text": "Joe causes brain split",
-    "tags": "joe, cluster, failure"
+    "tags": ["joe", "cluster", "failure"]
   }
 ]
 ```
