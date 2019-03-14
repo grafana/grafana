@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const memcachedCacheType = "memcached"
+
 type memcachedStorage struct {
 	c *memcache.Client
 }

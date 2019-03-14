@@ -7,6 +7,8 @@ import (
 	redis "gopkg.in/redis.v2"
 )
 
+const redisCacheType = "redis"
+
 type redisStorage struct {
 	c *redis.Client
 }
