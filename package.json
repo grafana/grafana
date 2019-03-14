@@ -11,11 +11,11 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
-    "@babel/core": "^7.1.2",
+    "@babel/core": "^7.3.4",
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
-    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-env": "^7.3.4",
     "@babel/preset-react": "^7.0.0",
-    "@babel/preset-typescript": "^7.1.0",
+    "@babel/preset-typescript": "^7.3.3",
     "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
     "@types/angular": "^1.6.6",
     "@types/chalk": "^2.2.0",
@@ -40,7 +40,7 @@
     "babel-core": "^7.0.0-bridge",
     "babel-jest": "^24.5.0",
     "babel-loader": "^8.0.4",
-    "babel-plugin-angularjs-annotate": "^0.9.0",
+    "babel-plugin-angularjs-annotate": "^0.10.0",
     "chalk": "^2.4.2",
     "clean-webpack-plugin": "^2.0.0",
     "concurrently": "^4.1.0",
