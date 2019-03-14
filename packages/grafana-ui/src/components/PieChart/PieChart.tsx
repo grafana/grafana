@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { select, pie, arc, event } from 'd3';
+import { sum } from 'lodash';
 
 import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
@@ -58,6 +59,9 @@ export class PieChart extends PureComponent<Props> {
     const names = datapoints.map(datapoint => datapoint.name);
     const colors = datapoints.map(datapoint => datapoint.color);
 
+    const total = sum(data) || 1;
+    const percents = data.map((item: number) => (item / total) * 100);
+
     const width = this.containerElement.offsetWidth;
     const height = this.containerElement.offsetHeight;
     const radius = Math.min(width, height) / 2;
@@ -91,8 +95,7 @@ export class PieChart extends PureComponent<Props> {
       .style('stroke-width', `${strokeWidth}px`)
       .on('mouseover', (d: any, idx: any) => {
         select(this.tooltipElement).style('opacity', 1);
-        // TODO: show percents
-        select(this.tooltipValueElement).text(`${names[idx]} (${data[idx]})`);
+        select(this.tooltipValueElement).text(`${names[idx]} (${percents[idx].toFixed(2)}%)`);
       })
       .on('mousemove', () => {
         select(this.tooltipElement)
