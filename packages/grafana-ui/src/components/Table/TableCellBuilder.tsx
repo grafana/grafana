@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
-import { Table, Props } from './Table';
+import { Table, BaseTableProps } from './Table';
 import moment from 'moment';
 import { ValueFormatter } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
@@ -74,7 +74,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: Column, style: ColumnStyle | null, props: Props): TableCellBuilder {
+export function getCellBuilder(schema: Column, style: ColumnStyle | null, props: BaseTableProps): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }

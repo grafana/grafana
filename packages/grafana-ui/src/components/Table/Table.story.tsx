@@ -7,6 +7,8 @@ import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
 import { ScopedVars, TableData, GrafanaThemeType } from '../../types/index';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
+import { parseCSV } from '../../utils/processTableData';
+import Tables from './Tables';
 
 const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
   if (scopedVars) {
@@ -94,6 +96,25 @@ storiesOf('Alpha/Table', module)
       replaceVariables,
       showHeader: true,
       rotate: true,
+      theme: getTheme(GrafanaThemeType.Light),
+    });
+  })
+  .add('Multiple Tables', () => {
+    const tables = [parseCSV('A,B,C\n1,2,3\n4,5\n,7,8,9,0'), makeDummyTable(4, 20), makeDummyTable(10, 5)];
+
+    const showHeader = boolean('Show Header', true);
+    const fixedHeader = boolean('Fixed Header', true);
+    const fixedColumns = number('Fixed Columns', 0, { min: 0, max: 50, step: 1, range: false });
+    const rotate = boolean('Rotate', false);
+
+    return withFullSizeStory(Tables, {
+      styles: [],
+      data: tables,
+      replaceVariables,
+      showHeader,
+      fixedHeader,
+      fixedColumns,
+      rotate,
       theme: getTheme(GrafanaThemeType.Light),
     });
   });

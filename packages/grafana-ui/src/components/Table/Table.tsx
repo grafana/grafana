@@ -23,9 +23,7 @@ import {
 } from './TableCellBuilder';
 import { stringToJsRegex } from '../../utils/index';
 
-export interface Props extends Themeable {
-  data: TableData;
-
+export interface BaseTableProps extends Themeable {
   showHeader: boolean;
   fixedHeader: boolean;
   fixedColumns: number;
@@ -36,6 +34,10 @@ export interface Props extends Themeable {
   width: number;
   height: number;
   isUTC?: boolean;
+}
+
+interface Props extends BaseTableProps {
+  data: TableData;
 }
 
 interface State {
