@@ -15,7 +15,7 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
-		log:      log.New("distcache.database"),
+		log:      log.New("remotecache.database"),
 	}
 
 	obj := &CacheableStruct{String: "foolbar"}

@@ -31,8 +31,8 @@ func init() {
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
 // Cached items are stored as byte arrays and marshalled using "encoding/gob"
-// so any struct added to the cache needs to be registred with `distcache.Register`
-// ex `distcache.Register(CacheableStruct{})``
+// so any struct added to the cache needs to be registred with `remotecache.Register`
+// ex `remotecache.Register(CacheableStruct{})``
 type CacheStorage interface {
 	// Get reads object from Cache
 	Get(key string) (interface{}, error)

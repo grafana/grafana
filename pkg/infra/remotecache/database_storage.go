@@ -18,7 +18,7 @@ type databaseCache struct {
 func newDatabaseCache(sqlstore *sqlstore.SqlStore) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
-		log:      log.New("distcache.database"),
+		log:      log.New("remotecache.database"),
 	}
 
 	return dc
