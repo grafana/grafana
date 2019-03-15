@@ -11,8 +11,7 @@ import (
 
 func TestTestdataScenarios(t *testing.T) {
 	Convey("random walk ", t, func() {
-		scenario, exist := ScenarioRegistry["random_walk"]
-		So(exist, ShouldBeTrue)
+		scenario, _ := ScenarioRegistry["random_walk"]
 
 		Convey("Should start at the requested value", func() {
 			req := &tsdb.TsdbQuery{
@@ -33,8 +32,7 @@ func TestTestdataScenarios(t *testing.T) {
 	})
 
 	Convey("random walk table", t, func() {
-		scenario, exist := ScenarioRegistry["random_walk_table"]
-		So(exist, ShouldBeTrue)
+		scenario, _ := ScenarioRegistry["random_walk_table"]
 
 		Convey("Should return a table that looks like value/min/max", func() {
 			req := &tsdb.TsdbQuery{
