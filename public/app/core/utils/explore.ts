@@ -226,7 +226,7 @@ export function generateKey(index = 0): string {
   return `Q-${Date.now()}-${Math.random()}-${index}`;
 }
 
-export function generateEmptyQuery(queries: DataQuery[], index = 0): { refId: string; key: string } {
+export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
   return { refId: getNextRefIdLetter(queries), key: generateKey(index) };
 }
 
