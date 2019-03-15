@@ -1,8 +1,8 @@
 import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, DisplayValue } from './displayValue';
 import { MappingType, ValueMapping } from '../types/panel';
 
-function assertSame(input: any, processorss: DisplayProcessor[], match: DisplayValue) {
-  processorss.forEach(processor => {
+function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
+  processors.forEach(processor => {
     const value = processor(input);
     expect(value.text).toEqual(match.text);
     if (match.hasOwnProperty('numeric')) {
