@@ -26,6 +26,8 @@ export class ThresholdFormCtrl {
     this.panel.thresholds.push({
       value: undefined,
       colorMode: 'critical',
+      lineColor: '#000000',
+      fillColor: '#000000',
       op: 'gt',
       fill: true,
       line: true,
