@@ -2,13 +2,13 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { ThresholdsEditor, ValueMappingsEditor, PanelOptionsGrid, PanelOptionsGroup, FormField } from '@grafana/ui';
 
 // Types
 import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
 import { BarGaugeOptions, orientationOptions } from './types';
-import { SingleStatValueOptions } from '../gauge/types';
+import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
+import { SingleStatValueOptions } from '../singlestat2/types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
