@@ -107,6 +107,16 @@
   &--right-y {
     float: right;
   }
+
+  &:active {
+    background: $legend-active;
+    border-radius: 3px;
+  }
+
+  &:hover {
+    background: $legend-hover;
+    border-radius: 3px;
+  }
 }
 
 // Don't move series to the right if legend is on the right as well
@@ -217,6 +227,8 @@
 }
 
 .graph-legend-series-hidden {
+  opacity: 0.4;
+
   .graph-legend-value,
   .graph-legend-alias {
     color: $link-color-disabled;

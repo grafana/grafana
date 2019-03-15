@@ -5,17 +5,35 @@ import { TimeSeries } from 'app/core/core';
 interface LegendProps {
   data: TimeSeries[];
   hiddenSeries: Set<string>;
+  onHighlightSeries?: (series: TimeSeries) => void;
+  onUnhighlightSeries?: (series: TimeSeries) => void;
   onToggleSeries?: (series: TimeSeries, exclusive: boolean) => void;
 }
 
 interface LegendItemProps {
   hidden: boolean;
   onClickLabel?: (series: TimeSeries, event: MouseEvent) => void;
+  onHighlightSeries?: (series: TimeSeries) => void;
+  onUnhighlightSeries?: (series: TimeSeries) => void;
   series: TimeSeries;
 }
 
 class LegendItem extends PureComponent<LegendItemProps> {
   onClickLabel = e => this.props.onClickLabel(this.props.series, e);
+
+  onHighlight = (e: MouseEvent) => {
+    const { hidden, series, onHighlightSeries } = this.props;
+    if (!hidden) {
+      onHighlightSeries(series);
+    }
+  };
+
+  onUnhighlight = (e: MouseEvent) => {
+    const { hidden, series, onUnhighlightSeries } = this.props;
+    if (!hidden) {
+      onUnhighlightSeries(series);
+    }
+  };
 
   render() {
     const { hidden, series } = this.props;
@@ -23,7 +41,11 @@ class LegendItem extends PureComponent<LegendItemProps> {
       'graph-legend-series-hidden': hidden,
     });
     return (
-      <div className={`graph-legend-series ${seriesClasses}`}>
+      <div
+        className={`graph-legend-series ${seriesClasses}`}
+        onMouseOver={this.onHighlight}
+        onMouseOut={this.onUnhighlight}
+      >
         <div className="graph-legend-icon">
           <i className="fa fa-minus pointer" style={{ color: series.color }} />
         </div>
@@ -37,6 +59,8 @@ class LegendItem extends PureComponent<LegendItemProps> {
 
 export default class Legend extends PureComponent<LegendProps> {
   static defaultProps = {
+    onHighlightSeries: () => {},
+    onUnhighlightSeries: () => {},
     onToggleSeries: () => {},
   };
 
@@ -47,7 +71,7 @@ export default class Legend extends PureComponent<LegendProps> {
   };
 
   render() {
-    const { data, hiddenSeries } = this.props;
+    const { data, hiddenSeries, onHighlightSeries, onUnhighlightSeries } = this.props;
     const items = data || [];
     return (
       <div className="graph-legend ps">
@@ -57,6 +81,8 @@ export default class Legend extends PureComponent<LegendProps> {
             // Workaround to resolve conflicts since series visibility tracks the alias property
             key={`${series.id}-${i}`}
             onClickLabel={this.onClickLabel}
+            onHighlightSeries={onHighlightSeries}
+            onUnhighlightSeries={onUnhighlightSeries}
             series={series}
           />
         ))}

@@ -385,6 +385,10 @@ $panel-grid-placeholder-shadow: 0 0 4px $blue-shade;
 // logs
 $logs-color-unkown: $gray-2;
 
+// Legend
+$legend-hover: $dark-9;
+$legend-active: $dark-10;
+
 // toggle-group
 $button-toggle-group-btn-active-bg: linear-gradient(90deg, #eb7b18, #d44a3a);
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $black;

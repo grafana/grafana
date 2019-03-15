@@ -91,6 +91,7 @@ interface GraphState {
    * Consequently, all series sharing the same alias will share visibility state.
    */
   hiddenSeries: Set<string>;
+  highlightedSeries: string;
   showAllTimeSeries: boolean;
 }
 
@@ -100,6 +101,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   state = {
     hiddenSeries: new Set(),
+    highlightedSeries: null,
     showAllTimeSeries: false,
   };
 
@@ -176,6 +178,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     );
   };
 
+  onHighlightSeries = (series: TimeSeries) => {
+    this.setState({ highlightedSeries: series.alias }, this.draw);
+  };
+
+  onUnhighlightSeries = (series: TimeSeries) => {
+    this.setState({ highlightedSeries: null }, this.draw);
+  };
+
   onToggleSeries = (series: TimeSeries, exclusive: boolean) => {
     this.setState((state, props) => {
       const { data, onToggleSeries } = props;
@@ -210,8 +220,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
   draw() {
     const { userOptions = {} } = this.props;
-    const { hiddenSeries } = this.state;
+    const { hiddenSeries, highlightedSeries } = this.state;
     const data = this.getGraphData();
+    const alpha = '4D'; // 30%
 
     const $el = $(`#${this.props.id}`);
     let series = [{ data: [[0, 0]] }];
@@ -220,7 +231,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       series = data
         .filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias))
         .map((ts: TimeSeries) => ({
-          color: ts.color,
+          color: !highlightedSeries || ts.alias === highlightedSeries ? ts.color : ts.color + alpha,
           label: ts.label,
           data: ts.getFlotPairs('null'),
         }));
@@ -254,7 +265,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           </div>
         )}
         <div id={id} className="explore-graph" style={{ height }} />
-        <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
+        <Legend
+          data={data}
+          hiddenSeries={hiddenSeries}
+          onToggleSeries={this.onToggleSeries}
+          onHighlightSeries={this.onHighlightSeries}
+          onUnhighlightSeries={this.onUnhighlightSeries}
+        />
       </>
     );
   }
