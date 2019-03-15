@@ -251,7 +251,7 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 	series := newSeriesForQuery(query)
 
 	points := make(tsdb.TimeSeriesPoints, 0)
-	walker := rand.Float64() * 100
+	walker := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
 
 	for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
 		points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
