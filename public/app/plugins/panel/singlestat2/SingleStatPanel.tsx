@@ -2,14 +2,14 @@
 import React, { PureComponent, CSSProperties } from 'react';
 
 // Types
-import { SingleStatOptions } from './types';
+import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
 import { processSingleStatPanelData, DisplayValue, PanelProps } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
 
-export const getSingleStatValues = (props: PanelProps<SingleStatOptions>): DisplayValue[] => {
+export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
   const { panelData, replaceVariables, options } = props;
   const { valueOptions, valueMappings } = options;
   const processor = getDisplayProcessor({
