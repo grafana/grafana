@@ -77,6 +77,8 @@ export class Table extends Component<Props, State> {
     this.measurer = new CellMeasurerCache({
       defaultHeight: 30,
       defaultWidth: 150,
+      fixedWidth: true,
+      fixedHeight: true,
     });
   }
 
