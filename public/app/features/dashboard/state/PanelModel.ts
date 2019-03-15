@@ -125,9 +125,8 @@ export class PanelModel {
   }
 
   ensureQueryIds() {
-    if (this.targets) {
-      for (let i = 0; i < this.targets.length; i++) {
-        const query = this.targets[i];
+    if (this.targets && _.isArray(this.targets)) {
+      for (const query of this.targets) {
         if (!query.refId) {
           query.refId = this.getNextQueryLetter();
         }
