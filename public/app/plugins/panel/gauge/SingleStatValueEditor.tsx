@@ -2,8 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import UnitPicker from 'app/core/components/Select/UnitPicker';
-import { FormField, FormLabel, PanelOptionsGroup, Select } from '@grafana/ui';
+import { FormField, FormLabel, PanelOptionsGroup, Select, UnitPicker } from '@grafana/ui';
 
 // Types
 import { SingleStatValueOptions } from './types';

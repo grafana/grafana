@@ -1,14 +1,17 @@
-import React, { PureComponent } from 'react';
-import { PanelProps, ReactPanelPlugin } from '@grafana/ui';
+import { ReactPanelPlugin } from '@grafana/ui';
 
-export class Text2 extends PureComponent<PanelProps> {
-  constructor(props: PanelProps) {
-    super(props);
+import { TextPanelEditor } from './TextPanelEditor';
+import { TextPanel } from './TextPanel';
+import { TextOptions, defaults } from './types';
+
+export const reactPanel = new ReactPanelPlugin<TextOptions>(TextPanel);
+
+reactPanel.setEditor(TextPanelEditor);
+reactPanel.setDefaults(defaults);
+reactPanel.setPanelTypeChangedHook((options: TextOptions, prevPluginId: string, prevOptions: any) => {
+  if (prevPluginId === 'text') {
+    return prevOptions as TextOptions;
   }
 
-  render() {
-    return <h2>Text Panel!</h2>;
-  }
-}
-
-export const reactPanel = new ReactPanelPlugin(Text2);
+  return options;
+});

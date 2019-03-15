@@ -50,7 +50,16 @@ ColorPickerStories.add('Series color picker', () => {
             color={selectedColor}
             onChange={color => updateSelectedColor(color)}
           >
-            <div style={{ color: selectedColor, cursor: 'pointer' }}>Open color picker</div>
+            {({ ref, showColorPicker, hideColorPicker }) => (
+              <div
+                ref={ref}
+                onMouseLeave={hideColorPicker}
+                onClick={showColorPicker}
+                style={{ color: selectedColor, cursor: 'pointer' }}
+              >
+                Open color picker
+              </div>
+            )}
           </SeriesColorPicker>
         );
       }}

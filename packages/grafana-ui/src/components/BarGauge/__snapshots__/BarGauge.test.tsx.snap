@@ -1,0 +1,358 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render BarGauge with basic options should render 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "row",
+      "height": "300px",
+      "width": "300px",
+    }
+  }
+>
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.7)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    style={
+      Object {
+        "backgroundColor": "rgba(126, 178, 109, 0.15)",
+        "borderRadius": "2px",
+        "height": "300px",
+        "marginRight": "4px",
+        "width": "4px",
+      }
+    }
+  />
+  <div
+    className="bar-gauge__value"
+    style={
+      Object {
+        "color": "#7EB26D",
+        "fontSize": "27.272727272727263px",
+        "marginLeft": "8px",
+      }
+    }
+  >
+    25
+  </div>
+</div>
+`;

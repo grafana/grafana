@@ -1,8 +1,7 @@
-$gf-form-margin: 3px;
 $input-border: 1px solid $input-border-color;
 
 .gf-form {
-  margin-bottom: $gf-form-margin;
+  margin-bottom: $space-xxs;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -33,7 +32,7 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form--has-input-icon {
   position: relative;
-  margin-right: $gf-form-margin;
+  margin-right: $space-xs;
 
   .gf-form-input-icon {
     position: absolute;
@@ -82,7 +81,7 @@ $input-border: 1px solid $input-border-color;
   align-content: flex-start;
 
   .gf-form + .gf-form {
-    margin-left: $gf-form-margin;
+    margin-left: $space-xs;
   }
 
   &--nowrap {
@@ -106,9 +105,9 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
-  height: $gf-form-input-height;
+  height: $input-height;
 
-  border: $input-btn-border-width solid $input-label-border-color;
+  border: $border-width solid $input-label-border-color;
   border-right: none;
   border-radius: $label-border-radius;
 
@@ -128,7 +127,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--btn {
-    border-right: $input-btn-border-width solid $input-label-border-color;
+    border-right: $border-width solid $input-label-border-color;
     border-radius: $border-radius;
 
     &:hover {
@@ -147,15 +146,15 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-label + .gf-form-label {
-  margin-right: $gf-form-margin;
+  margin-right: $space-xs;
 }
 
 .gf-form-pre {
   display: block;
   flex-grow: 1;
   margin: 0;
-  margin-right: $gf-form-margin;
-  border: $input-btn-border-width solid transparent;
+  margin-right: $space-xs;
+  border: $border-width solid transparent;
   border-left: none;
   @include border-radius($label-border-radius-sm);
 }
@@ -167,7 +166,7 @@ $input-border: 1px solid $input-border-color;
 .gf-form-input {
   display: block;
   width: 100%;
-  height: $gf-form-input-height;
+  height: $input-height;
   padding: $input-padding-y $input-padding-x;
   font-size: $font-size-md;
   line-height: $input-line-height;
@@ -249,6 +248,10 @@ $input-border: 1px solid $input-border-color;
 
   &--plaintext {
     white-space: unset;
+  }
+
+  &--has-help-icon {
+    padding-right: $input-padding-x * 3;
   }
 }
 
@@ -332,7 +335,7 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form-btn {
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
+  margin-right: $space-xs;
   line-height: $input-line-height;
   font-size: $font-size-sm;
 
@@ -350,7 +353,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-dropdown-typeahead {
-  margin-right: $gf-form-margin;
+  //margin-right: $space-xs; ?
   position: relative;
 
   &::after {
@@ -387,7 +390,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &--header {
-    margin-bottom: $gf-form-margin;
+    margin-bottom: $space-xxs;
   }
 
   &--no-padding {

@@ -16,7 +16,6 @@
     "logos": {
       "small": "img/amazon-web-services.png",
       "large": "img/amazon-web-services.png"
-    },
-    "version": "5.0.0"
+    }
   }
 }

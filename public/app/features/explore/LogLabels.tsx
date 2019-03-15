@@ -13,8 +13,19 @@ interface Props {
 export class LogLabels extends PureComponent<Props> {
   render() {
     const { getRows, labels, onClickLabel, plain } = this.props;
-    return Object.keys(labels).map(key => (
-      <LogLabel key={key} getRows={getRows} label={key} value={labels[key]} plain={plain} onClickLabel={onClickLabel} />
-    ));
+    return (
+      <span className="logs-labels">
+        {Object.keys(labels).map(key => (
+          <LogLabel
+            key={key}
+            getRows={getRows}
+            label={key}
+            value={labels[key]}
+            plain={plain}
+            onClickLabel={onClickLabel}
+          />
+        ))}
+      </span>
+    );
   }
 }

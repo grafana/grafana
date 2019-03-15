@@ -5,19 +5,24 @@
 package builder
 
 import (
-	"errors"
 	"fmt"
 )
 
+// Update creates an update Builder
+func Update(updates ...Eq) *Builder {
+	builder := &Builder{cond: NewCond()}
+	return builder.Update(updates...)
+}
+
 func (b *Builder) updateWriteTo(w Writer) error {
-	if len(b.tableName) <= 0 {
-		return errors.New("no table indicated")
+	if len(b.from) <= 0 {
+		return ErrNoTableName
 	}
 	if len(b.updates) <= 0 {
-		return errors.New("no column to be update")
+		return ErrNoColumnToUpdate
 	}
 
-	if _, err := fmt.Fprintf(w, "UPDATE %s SET ", b.tableName); err != nil {
+	if _, err := fmt.Fprintf(w, "UPDATE %s SET ", b.from); err != nil {
 		return err
 	}
 

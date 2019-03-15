@@ -15,7 +15,7 @@ export class MysqlDatasource {
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
     this.queryModel = new MysqlQuery({});
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
   interpolateVariable = (value, variable) => {

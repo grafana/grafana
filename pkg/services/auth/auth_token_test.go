@@ -75,6 +75,47 @@ func TestUserAuthToken(t *testing.T) {
 				err = userAuthTokenService.RevokeToken(userToken)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
+
+			Convey("When creating an additional token", func() {
+				userToken2, err := userAuthTokenService.CreateToken(userID, "192.168.10.11:1234", "some user agent")
+				So(err, ShouldBeNil)
+				So(userToken2, ShouldNotBeNil)
+
+				Convey("Can get first user token", func() {
+					token, err := userAuthTokenService.GetUserToken(userID, userToken.Id)
+					So(err, ShouldBeNil)
+					So(token, ShouldNotBeNil)
+					So(token.Id, ShouldEqual, userToken.Id)
+				})
+
+				Convey("Can get second user token", func() {
+					token, err := userAuthTokenService.GetUserToken(userID, userToken2.Id)
+					So(err, ShouldBeNil)
+					So(token, ShouldNotBeNil)
+					So(token.Id, ShouldEqual, userToken2.Id)
+				})
+
+				Convey("Can get user tokens", func() {
+					tokens, err := userAuthTokenService.GetUserTokens(userID)
+					So(err, ShouldBeNil)
+					So(tokens, ShouldHaveLength, 2)
+					So(tokens[0].Id, ShouldEqual, userToken.Id)
+					So(tokens[1].Id, ShouldEqual, userToken2.Id)
+				})
+
+				Convey("Can revoke all user tokens", func() {
+					err := userAuthTokenService.RevokeAllUserTokens(userID)
+					So(err, ShouldBeNil)
+
+					model, err := ctx.getAuthTokenByID(userToken.Id)
+					So(err, ShouldBeNil)
+					So(model, ShouldBeNil)
+
+					model2, err := ctx.getAuthTokenByID(userToken2.Id)
+					So(err, ShouldBeNil)
+					So(model2, ShouldBeNil)
+				})
+			})
 		})
 
 		Convey("expires correctly", func() {

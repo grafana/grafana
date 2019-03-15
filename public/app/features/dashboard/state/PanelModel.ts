@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeSeries, Threshold, ScopedVars } from '@grafana/ui';
+import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -106,6 +106,7 @@ export class PanelModel {
   events: Emitter;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
+  legend?: { show: boolean };
 
   constructor(model) {
     this.events = new Emitter();
@@ -228,10 +229,6 @@ export class PanelModel {
     }, {});
   }
 
-  private saveCurrentPanelOptions() {
-    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
-  }
-
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
@@ -240,14 +237,11 @@ export class PanelModel {
     });
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.saveCurrentPanelOptions();
-    this.type = pluginId;
+  changeType(pluginId: string, hook?: PanelTypeChangedHook) {
+    const oldOptions: any = this.getOptionsToRemember();
+    const oldPluginId = this.type;
 
-    // for angular panels only we need to remove all events and let angular panels do some cleanup
-    if (fromAngularPanel) {
-      this.destroy();
-    }
+    this.type = pluginId;
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -258,7 +252,16 @@ export class PanelModel {
       delete this[key];
     }
 
+    this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
+
+    // Callback that can validate and migrate any existing settings
+    if (hook) {
+      this.options = this.options || {};
+      const old = oldOptions ? oldOptions.options : null;
+
+      Object.assign(this.options, hook(this.options, oldPluginId, old));
+    }
   }
 
   addQuery(query?: Partial<DataQuery>) {
