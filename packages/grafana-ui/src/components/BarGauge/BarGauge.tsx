@@ -149,7 +149,7 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 
-  getCellColor(positionValue: TimeSeriesValue): string {
+  getCellColor(positionValue: TimeSeriesValue): CellColors {
     const { thresholds, theme, value } = this.props;
     const activeThreshold = getThresholdForValue(thresholds, positionValue);
 
@@ -158,17 +158,33 @@ export class BarGauge extends PureComponent<Props> {
 
       // if we are past real value the cell is not "on"
       if (value === null || (positionValue !== null && positionValue > value)) {
-        return tinycolor(color)
-          .setAlpha(0.15)
-          .toRgbString();
+        return {
+          background: tinycolor(color)
+            .setAlpha(0.15)
+            .toRgbString(),
+          border: 'transparent',
+          isLit: false,
+        };
       } else {
-        return tinycolor(color)
-          .setAlpha(0.7)
-          .toRgbString();
+        return {
+          background: tinycolor(color)
+            .setAlpha(0.85)
+            .toRgbString(),
+          backgroundShade: tinycolor(color)
+            .setAlpha(0.55)
+            .toRgbString(),
+          border: tinycolor(color)
+            .setAlpha(0.9)
+            .toRgbString(),
+          isLit: true,
+        };
       }
     }
 
-    return 'gray';
+    return {
+      background: 'gray',
+      border: 'gray',
+    };
   }
 
   renderLcdMode(valueFormatted: string, valuePercent: number): ReactNode {
@@ -176,8 +192,8 @@ export class BarGauge extends PureComponent<Props> {
 
     const valueRange = maxValue - minValue;
     const maxSize = this.size * BAR_SIZE_RATIO;
-    const cellSpacing = 4;
-    const cellCount = 30;
+    const cellSpacing = 5;
+    const cellCount = 25;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, this.size - maxSize);
@@ -191,9 +207,11 @@ export class BarGauge extends PureComponent<Props> {
     if (orientation === VizOrientation.Horizontal) {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
+      valueStyles.marginLeft = '20px';
     } else {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
+      valueStyles.marginBottom = '20px';
     }
 
     const cells: JSX.Element[] = [];
@@ -202,18 +220,26 @@ export class BarGauge extends PureComponent<Props> {
       const currentValue = (valueRange / cellCount) * i;
       const cellColor = this.getCellColor(currentValue);
       const cellStyles: CSSProperties = {
-        backgroundColor: cellColor,
         borderRadius: '2px',
       };
+
+      if (cellColor.isLit) {
+        cellStyles.boxShadow = `0 0 4px ${cellColor.border}`;
+        // cellStyles.border = `1px solid ${cellColor.border}`;
+        // cellStyles.background = `${cellColor.backgroundShade}`;
+        cellStyles.backgroundImage = `radial-gradient(${cellColor.background} 10%, ${cellColor.backgroundShade})`;
+      } else {
+        cellStyles.backgroundColor = cellColor.background;
+      }
 
       if (orientation === VizOrientation.Horizontal) {
         cellStyles.width = `${cellSize}px`;
         cellStyles.height = `${height}px`;
-        cellStyles.marginRight = '4px';
+        cellStyles.marginRight = `${cellSpacing}px`;
       } else {
         cellStyles.height = `${cellSize}px`;
         cellStyles.width = `${width}px`;
-        cellStyles.marginTop = '4px';
+        cellStyles.marginTop = `${cellSpacing}px`;
       }
 
       cells.push(<div style={cellStyles} />);
@@ -234,4 +260,11 @@ interface BarColors {
   value: string;
   bar: string;
   border: string;
+}
+
+interface CellColors {
+  background: string;
+  backgroundShade?: string;
+  border: string;
+  isLit?: boolean;
 }
