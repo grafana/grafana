@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"encoding/json"
+	"math"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -97,6 +98,15 @@ func init() {
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return getRandomWalk(query, context)
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "random_walk_table",
+		Name: "Random Walk Table",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getRandomWalkTable(query, context)
 		},
 	})
 
@@ -264,6 +274,64 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 
 	queryRes := tsdb.NewQueryResult()
 	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
+}
+
+func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
+
+	table := tsdb.Table{
+		Columns: []tsdb.TableColumn{
+			{Text: "Time"},
+			{Text: "Value"},
+			{Text: "Min"},
+			{Text: "Max"},
+			{Text: "Info"},
+		},
+		Rows: []tsdb.RowValues{},
+	}
+
+	withNil := query.Model.Get("withNil").MustBool(false)
+	walker := query.Model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	spread := 2.5
+	var info strings.Builder
+
+	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
+		delta := rand.Float64() - 0.5
+		walker += delta
+
+		info.Reset()
+		if delta > 0 {
+			info.WriteString("up")
+		} else {
+			info.WriteString("down")
+		}
+		if math.Abs(delta) > .4 {
+			info.WriteString(" fast")
+		}
+		row := tsdb.RowValues{
+			float64(timeWalkerMs),
+			walker,
+			walker - ((rand.Float64() * spread) + 0.01), // Min
+			walker + ((rand.Float64() * spread) + 0.01), // Max
+			info.String(),
+		}
+
+		// Add some random null values
+		if withNil && rand.Float64() > 0.8 {
+			for i := 1; i < 4; i++ {
+				if rand.Float64() > .2 {
+					row[i] = nil
+				}
+			}
+		}
+
+		table.Rows = append(table.Rows, row)
+		timeWalkerMs += query.IntervalMs
+	}
+	queryRes := tsdb.NewQueryResult()
+	queryRes.Tables = append(queryRes.Tables, &table)
 	return queryRes
 }
 
