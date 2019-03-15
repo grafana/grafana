@@ -26,6 +26,11 @@ export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 
+// Table
+export { Table } from './Table/Table';
+export { Tables } from './Table/Tables';
+export { TableInputCSV } from './Table/TableInputCSV';
+
 // Visualizations
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
