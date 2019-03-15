@@ -3,6 +3,7 @@ package tsdb
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -13,15 +14,15 @@ type TsdbQueryEndpoint interface {
 
 var registry map[string]GetTsdbQueryEndpointFn
 
-type GetTsdbQueryEndpointFn func(dsInfo *models.DataSource) (TsdbQueryEndpoint, error)
+type GetTsdbQueryEndpointFn func(dsInfo *models.DataSource, cfg *setting.Cfg) (TsdbQueryEndpoint, error)
 
 func init() {
 	registry = make(map[string]GetTsdbQueryEndpointFn)
 }
 
-func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+func getTsdbQueryEndpointFor(dsInfo *models.DataSource, cfg *setting.Cfg) (TsdbQueryEndpoint, error) {
 	if fn, exists := registry[dsInfo.Type]; exists {
-		executor, err := fn(dsInfo)
+		executor, err := fn(dsInfo, cfg)
 		if err != nil {
 			return nil, err
 		}

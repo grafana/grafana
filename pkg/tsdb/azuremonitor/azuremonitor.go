@@ -3,6 +3,7 @@ package azuremonitor
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -21,7 +22,7 @@ type AzureMonitorExecutor struct {
 }
 
 // NewAzureMonitorExecutor initializes a http client
-func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewAzureMonitorExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err

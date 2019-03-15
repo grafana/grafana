@@ -24,7 +24,7 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewGraphiteExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &GraphiteExecutor{}, nil
 }
 

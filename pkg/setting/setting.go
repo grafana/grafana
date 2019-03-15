@@ -200,6 +200,8 @@ var (
 type Cfg struct {
 	Raw *ini.File
 
+	Env string
+
 	// HTTP Server Settings
 	AppUrl    string
 	AppSubUrl string
@@ -571,6 +573,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	Env = iniFile.Section("").Key("app_mode").MustString("development")
+	cfg.Env = Env
+
 	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
 	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)

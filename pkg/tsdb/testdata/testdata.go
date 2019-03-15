@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,7 +14,7 @@ type TestDataExecutor struct {
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewTestDataExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &TestDataExecutor{
 		DataSource: dsInfo,
 		log:        log.New("tsdb.testdata"),

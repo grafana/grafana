@@ -47,7 +47,7 @@ type StackdriverExecutor struct {
 }
 
 // NewStackdriverExecutor initializes a http client
-func NewStackdriverExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewStackdriverExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err

@@ -24,7 +24,7 @@ import (
 type OpenTsdbExecutor struct {
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewOpenTsdbExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 

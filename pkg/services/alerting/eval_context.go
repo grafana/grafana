@@ -31,9 +31,10 @@ type EvalContext struct {
 	PrevAlertState  m.AlertStateType
 
 	Ctx context.Context
+	Cfg *setting.Cfg
 }
 
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, cfg *setting.Cfg) *EvalContext {
 	return &EvalContext{
 		Ctx:            alertCtx,
 		StartTime:      time.Now(),
@@ -42,6 +43,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 		EvalMatches:    make([]*EvalMatch, 0),
 		log:            log.New("alerting.evalContext"),
 		PrevAlertState: rule.State,
+		Cfg:            cfg,
 	}
 }
 

@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"regexp"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewPrometheusExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,7 +19,7 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
 }
 
-func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMysqlQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
 	protocol := "tcp"
@@ -44,7 +45,9 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
-	logger.Debug("getEngine", "connection", cnnstr)
+	if cfg.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mysql",

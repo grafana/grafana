@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/setting"
 	"os/exec"
 	"path"
 	"time"
@@ -90,7 +91,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 
 	plugin := raw.(datasource.DatasourcePlugin)
 
-	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
 	})
 

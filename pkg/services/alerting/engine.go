@@ -19,6 +19,7 @@ import (
 
 type AlertingService struct {
 	RenderService rendering.Service `inject:""`
+	Cfg           *setting.Cfg      `inject:""`
 
 	execQueue chan *Job
 	//clock         clock.Clock
@@ -166,7 +167,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 
-	evalContext := NewEvalContext(alertCtx, job.Rule)
+	evalContext := NewEvalContext(alertCtx, job.Rule, e.Cfg)
 	evalContext.Ctx = alertCtx
 
 	go func() {

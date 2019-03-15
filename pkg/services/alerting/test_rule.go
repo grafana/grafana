@@ -3,6 +3,7 @@ package alerting
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -50,7 +51,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 func testAlertRule(rule *Rule) *EvalContext {
 	handler := NewEvalHandler()
 
-	context := NewEvalContext(context.Background(), rule)
+	context := NewEvalContext(context.Background(), rule, &setting.Cfg{})
 	context.IsTestRun = true
 
 	handler.Eval(context)

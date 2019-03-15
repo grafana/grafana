@@ -8,6 +8,7 @@ import (
 	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -15,11 +16,13 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("postgres", newPostgresQueryEndpoint)
 }
 
-func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newPostgresQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.postgres")
 
 	cnnstr := generateConnectionString(datasource)
-	logger.Debug("getEngine", "connection", cnnstr)
+	if cfg.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",

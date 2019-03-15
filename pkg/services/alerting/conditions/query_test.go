@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/setting"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -168,7 +169,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 	ctx.condition = condition
 
-	condition.HandleRequest = func(context context.Context, dsInfo *m.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	condition.HandleRequest = func(context context.Context, dsInfo *m.DataSource, req *tsdb.TsdbQuery, cfg *setting.Cfg) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {Series: ctx.series},

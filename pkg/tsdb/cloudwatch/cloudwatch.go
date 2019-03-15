@@ -44,7 +44,7 @@ type DatasourceInfo struct {
 	SecretKey string
 }
 
-func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewCloudWatchExecutor(dsInfo *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &CloudWatchExecutor{}, nil
 }
 

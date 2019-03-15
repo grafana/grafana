@@ -3,6 +3,7 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"strconv"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -17,14 +18,16 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
 }
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func newMssqlQueryEndpoint(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("getEngine", "connection", cnnstr)
+	if cfg.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",

@@ -23,7 +23,7 @@ type InfluxDBExecutor struct {
 	//HttpClient     *http.Client
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewInfluxDBExecutor(datasource *models.DataSource, cfg *setting.Cfg) (tsdb.TsdbQueryEndpoint, error) {
 	return &InfluxDBExecutor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
