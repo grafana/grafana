@@ -193,7 +193,7 @@ export class BarGauge extends PureComponent<Props> {
     const valueRange = maxValue - minValue;
     const maxSize = this.size * BAR_SIZE_RATIO;
     const cellSpacing = 5;
-    const cellCount = 25;
+    const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, this.size - maxSize);
