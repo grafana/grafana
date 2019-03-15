@@ -99,17 +99,51 @@ export class BarGauge extends PureComponent<Props> {
    * Return width or height depending on viz orientation
    * */
   get size() {
-    const { height, width, orientation } = this.props;
-    return orientation === VizOrientation.Horizontal ? width : height;
+    const { height, width } = this.props;
+    return this.isVertical ? height : width;
+  }
+
+  get isVertical() {
+    return this.props.orientation === VizOrientation.Vertical;
+  }
+
+  getBarGradient(maxSize: number): string {
+    const { minValue, maxValue, thresholds } = this.props;
+    const cssDirection = this.isVertical ? '0deg' : '90deg';
+    const currentValue = this.getNumericValue();
+
+    let gradient = '';
+    let lastpos = 0;
+
+    for (let i = 0; i < thresholds.length; i++) {
+      const threshold = thresholds[i];
+      const color = getColorFromHexRgbOrName(threshold.color);
+      const valuePercent = Math.min(threshold.value / (maxValue - minValue), 1);
+      const pos = valuePercent * maxSize;
+      const offset = Math.round(pos - (pos - lastpos) / 2);
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
+      } else if (currentValue < threshold.value) {
+        break;
+      } else {
+        lastpos = pos;
+        gradient += ` ${offset}px, ${color}`;
+      }
+    }
+
+    console.log(gradient);
+    return gradient + ')';
   }
 
   renderSimpleMode(valueFormatted: string, valuePercent: number): ReactNode {
-    const { height, width, orientation } = this.props;
+    const { height, width } = this.props;
 
     const maxSize = this.size * BAR_SIZE_RATIO;
     const barSize = Math.max(valuePercent * maxSize, 0);
     const colors = this.getValueColors();
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value, this.size - maxSize);
+    const spaceForText = this.isVertical ? width : this.size - maxSize;
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
@@ -117,17 +151,16 @@ export class BarGauge extends PureComponent<Props> {
       display: 'flex',
     };
 
-    const barStyles: CSSProperties = {
-      backgroundColor: colors.bar,
-    };
+    const barStyles: CSSProperties = {};
 
     // Custom styles for vertical orientation
-    if (orientation === VizOrientation.Vertical) {
+    if (this.isVertical) {
       containerStyles.flexDirection = 'column';
       containerStyles.justifyContent = 'flex-end';
       barStyles.height = `${barSize}px`;
       barStyles.width = `${width}px`;
-      barStyles.borderTop = `1px solid ${colors.border}`;
+      // barStyles.borderTop = `1px solid ${colors.border}`;
+      barStyles.background = this.getBarGradient(maxSize);
     } else {
       // Custom styles for horizontal orientation
       containerStyles.flexDirection = 'row-reverse';
@@ -136,7 +169,8 @@ export class BarGauge extends PureComponent<Props> {
       barStyles.height = `${height}px`;
       barStyles.width = `${barSize}px`;
       barStyles.marginRight = '10px';
-      barStyles.borderRight = `1px solid ${colors.border}`;
+      // barStyles.borderRight = `1px solid ${colors.border}`;
+      barStyles.background = this.getBarGradient(maxSize);
     }
 
     return (
@@ -188,7 +222,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderLcdMode(valueFormatted: string, valuePercent: number): ReactNode {
-    const { height, width, maxValue, minValue, orientation } = this.props;
+    const { height, width, maxValue, minValue } = this.props;
 
     const valueRange = maxValue - minValue;
     const maxSize = this.size * BAR_SIZE_RATIO;
@@ -196,7 +230,8 @@ export class BarGauge extends PureComponent<Props> {
     const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value, this.size - maxSize);
+    const spaceForText = this.isVertical ? width : this.size - maxSize;
+    const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
@@ -204,14 +239,14 @@ export class BarGauge extends PureComponent<Props> {
       display: 'flex',
     };
 
-    if (orientation === VizOrientation.Horizontal) {
-      containerStyles.flexDirection = 'row';
-      containerStyles.alignItems = 'center';
-      valueStyles.marginLeft = '20px';
-    } else {
+    if (this.isVertical) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
       valueStyles.marginBottom = '20px';
+    } else {
+      containerStyles.flexDirection = 'row';
+      containerStyles.alignItems = 'center';
+      valueStyles.marginLeft = '20px';
     }
 
     const cells: JSX.Element[] = [];
@@ -232,14 +267,14 @@ export class BarGauge extends PureComponent<Props> {
         cellStyles.backgroundColor = cellColor.background;
       }
 
-      if (orientation === VizOrientation.Horizontal) {
-        cellStyles.width = `${cellSize}px`;
-        cellStyles.height = `${height}px`;
-        cellStyles.marginRight = `${cellSpacing}px`;
-      } else {
+      if (this.isVertical) {
         cellStyles.height = `${cellSize}px`;
         cellStyles.width = `${width}px`;
         cellStyles.marginTop = `${cellSpacing}px`;
+      } else {
+        cellStyles.width = `${cellSize}px`;
+        cellStyles.height = `${height}px`;
+        cellStyles.marginRight = `${cellSpacing}px`;
       }
 
       cells.push(<div style={cellStyles} />);
