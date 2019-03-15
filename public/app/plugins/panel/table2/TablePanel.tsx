@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 // Types
 import { PanelProps } from '@grafana/ui';
 import { Options } from './types';
-import { Table, Tables } from '@grafana/ui/src/components/Table';
+import { Table, Tables } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 interface Props extends PanelProps<Options> {}
