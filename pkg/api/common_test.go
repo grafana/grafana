@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -94,13 +95,14 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 }
 
 type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	req            *http.Request
-	url            string
+	m                    *macaron.Macaron
+	context              *m.ReqContext
+	resp                 *httptest.ResponseRecorder
+	handlerFunc          handlerFunc
+	defaultHandler       macaron.Handler
+	req                  *http.Request
+	url                  string
+	userAuthTokenService *auth.FakeUserAuthTokenService
 }
 
 func (sc *scenarioContext) exec() {

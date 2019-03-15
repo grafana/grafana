@@ -21,13 +21,21 @@ export interface PanelEditorProps<T = any> {
   onOptionsChange: (options: T) => void;
 }
 
-export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+/**
+ * Called before a panel is initalized
+ */
+export type PanelTypeChangedHook<TOptions = any> = (
+  options: Partial<TOptions>,
+  prevPluginId?: string,
+  prevOptions?: any
+) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
-  preserveOptions?: PreservePanelOptionsHandler<TOptions>;
+
+  panelTypeChangedHook?: PanelTypeChangedHook<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -41,8 +49,12 @@ export class ReactPanelPlugin<TOptions = any> {
     this.defaults = defaults;
   }
 
-  setPreserveOptionsHandler(handler: PreservePanelOptionsHandler<TOptions>) {
-    this.preserveOptions = handler;
+  /**
+   * Called when the visualization changes.
+   * Lets you keep whatever settings made sense in the previous panel
+   */
+  setPanelTypeChangedHook(v: PanelTypeChangedHook<TOptions>) {
+    this.panelTypeChangedHook = v;
   }
 }
 
