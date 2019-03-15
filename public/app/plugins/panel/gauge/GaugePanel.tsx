@@ -2,37 +2,27 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processSingleStatPanelData } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, VizRepeater } from '@grafana/ui';
+import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, VizOrientation, SingleStatValueInfo } from '@grafana/ui/src/types';
+import { DisplayValue, PanelProps } from '@grafana/ui';
+import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
+import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
 
-interface Props extends PanelProps<GaugeOptions> {}
-
-export class GaugePanel extends PureComponent<Props> {
-  renderGauge(value: SingleStatValueInfo, width, height) {
-    const { replaceVariables, options } = this.props;
-    const { valueOptions } = options;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
+export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
 
     return (
       <Gauge
-        value={value.value as number | null}
+        value={value}
         width={width}
         height={height}
-        prefix={prefix}
-        suffix={suffix}
-        unit={valueOptions.unit}
-        decimals={valueOptions.decimals}
         thresholds={options.thresholds}
-        valueMappings={options.valueMappings}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         minValue={options.minValue}
@@ -40,20 +30,24 @@ export class GaugePanel extends PureComponent<Props> {
         theme={config.theme}
       />
     );
-  }
+  };
+
+  getProcessedValues = (): DisplayValue[] => {
+    return getSingleStatValues(this.props);
+  };
 
   render() {
-    const { data, options, height, width } = this.props;
-
-    const values = processSingleStatPanelData({
-      data,
-      stat: options.valueOptions.stat,
-    });
-
+    const { height, width, options, data } = this.props;
+    const { orientation } = options;
     return (
-      <VizRepeater height={height} width={width} values={values} orientation={VizOrientation.Auto}>
-        {({ vizHeight, vizWidth, value }) => this.renderGauge(value, vizWidth, vizHeight)}
-      </VizRepeater>
+      <ProcessedValuesRepeater
+        getProcessedValues={this.getProcessedValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={data}
+        orientation={orientation}
+      />
     );
   }
 }
