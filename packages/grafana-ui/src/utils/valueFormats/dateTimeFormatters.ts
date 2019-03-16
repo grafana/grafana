@@ -1,4 +1,4 @@
-import { toFixed, toFixedScaled, DecimalCount } from './valueFormats';
+import { toFixed, toFixedScaled, DecimalCount, ValueFormatter } from './valueFormats';
 import moment from 'moment';
 
 interface IntervalsInSeconds {
@@ -326,4 +326,11 @@ export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecima
 export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
   const time = isUtc ? moment.utc(value) : moment(value);
   return time.fromNow();
+}
+
+export function toMomentFormatter(fmt: string): ValueFormatter {
+  return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) => {
+    const time = isUtc ? moment.utc(value) : moment(value);
+    return time.format(fmt);
+  };
 }

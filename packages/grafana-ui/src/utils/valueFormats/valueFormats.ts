@@ -1,4 +1,5 @@
 import { getCategories } from './categories';
+import { toMomentFormatter } from './dateTimeFormatters';
 
 export type DecimalCount = number | null | undefined;
 
@@ -142,12 +143,37 @@ function buildFormats() {
   hasBuiltIndex = true;
 }
 
+function createValueFormat(id: string): ValueFormatter | null {
+  const idx = id.indexOf(':');
+  if (idx < 1) {
+    return null;
+  }
+  const creator = id.substring(0, idx);
+  const args = id.substring(idx + 1);
+  if (creator === 'fixed') {
+    return toFixedUnit(args);
+  }
+  if (creator === 'moment') {
+    return toMomentFormatter(args);
+  }
+
+  console.warn('Unknown Format Creator:', id);
+  return null;
+}
+
 export function getValueFormat(id: string): ValueFormatter {
   if (!hasBuiltIndex) {
     buildFormats();
   }
 
-  return index[id];
+  const v = index[id];
+  if (!v && id) {
+    const f = createValueFormat(id);
+    if (f) {
+      return (index[id] = f);
+    }
+  }
+  return v;
 }
 
 export function getValueFormatterIndex(): ValueFormatterIndex {
