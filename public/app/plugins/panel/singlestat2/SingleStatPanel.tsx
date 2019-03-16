@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
@@ -33,9 +33,8 @@ interface SingleStatDisplay {
   value: DisplayValue;
   prefix?: DisplayValue;
   suffix?: DisplayValue;
-  background?: string;
-
   sparkline?: Sparkline;
+  backgroundColor?: string;
 }
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
@@ -68,7 +67,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         delete v.value.color;
       }
       if (colorBackground) {
-        v.background = color;
+        v.backgroundColor = color;
       }
 
       if (valueOptions.prefix) {

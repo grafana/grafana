@@ -11,6 +11,7 @@ import {
 
 import { SingleStatOptions, SingleStatValueOptions } from './types';
 import { SingleStatValueEditor } from './SingleStatValueEditor';
+import { ColoringEditor } from './ColoringEditor';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
@@ -38,6 +39,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       <>
         <PanelOptionsGrid>
           <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
 

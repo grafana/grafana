@@ -26,6 +26,7 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
 
   sparkline?: Sparkline;
+  backgroundColor?: string;
 }
 
 /*
@@ -82,7 +83,7 @@ export class BigValue extends PureComponent<Props> {
   }
 
   renderText = (value?: DisplayValue, padding?: string): ReactNode => {
-    if (!value) {
+    if (!value || !value.text) {
       return null;
     }
     const css: CSSProperties = {};
@@ -99,7 +100,7 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { height, width, value, prefix, suffix, sparkline } = this.props;
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
 
     const plotCss: CSSProperties = {};
     plotCss.position = 'absolute';
@@ -120,7 +121,7 @@ export class BigValue extends PureComponent<Props> {
     }
 
     return (
-      <div className="big-value" style={{ width, height }}>
+      <div className="big-value" style={{ width, height, backgroundColor }}>
         <span className="big-value-container">
           {this.renderText(prefix, '0px 2px 0px 0px')}
           {this.renderText(value)}
