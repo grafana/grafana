@@ -15,11 +15,32 @@ export interface SingleStatValueOptions {
   decimals?: number | null;
 }
 
+export interface SparklineOptions {
+  show: boolean;
+  full: boolean; // full height
+  fillColor: string;
+  lineColor: string;
+}
+
 export interface SingleStatOptions extends SingleStatBaseOptions {
   // TODO, fill in with options from angular
+
+  colorBackground?: boolean;
+  colorValue?: boolean;
+  colorPrefix?: boolean;
+  colorPostfix?: boolean;
+
+  sparkline: SparklineOptions;
 }
 
 export const defaults: SingleStatOptions = {
+  sparkline: {
+    show: true,
+    full: false,
+    lineColor: 'rgb(31, 120, 193)',
+    fillColor: 'rgba(31, 118, 189, 0.18)',
+  },
+
   valueOptions: {
     prefix: '',
     suffix: '',
