@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent } from 'react';
 
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
@@ -69,19 +69,24 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       if (colorBackground) {
         v.backgroundColor = color;
       }
+      if (options.valueFontSize) {
+        v.value.fontSize = options.valueFontSize;
+      }
 
       if (valueOptions.prefix) {
         v.prefix = {
           text: replaceVariables(valueOptions.prefix),
-          numeric: 0,
+          numeric: NaN,
           color: colorPrefix ? color : null,
+          fontSize: options.prefixFontSize,
         };
       }
       if (valueOptions.suffix) {
         v.suffix = {
           text: replaceVariables(valueOptions.suffix),
-          numeric: 0,
+          numeric: NaN,
           color: colorPostfix ? color : null,
+          fontSize: options.postfixFontSize,
         };
       }
 

@@ -22,8 +22,11 @@ export interface SparklineOptions {
   lineColor: string;
 }
 
+// Structure copied from angular
 export interface SingleStatOptions extends SingleStatBaseOptions {
-  // TODO, fill in with options from angular
+  prefixFontSize?: string;
+  valueFontSize?: string;
+  postfixFontSize?: string;
 
   colorBackground?: boolean;
   colorValue?: boolean;

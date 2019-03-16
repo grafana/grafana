@@ -9,9 +9,11 @@ import {
   ValueMapping,
 } from '@grafana/ui';
 
-import { SingleStatOptions, SingleStatValueOptions } from './types';
+import { SingleStatOptions, SingleStatValueOptions, SparklineOptions } from './types';
 import { SingleStatValueEditor } from './SingleStatValueEditor';
 import { ColoringEditor } from './ColoringEditor';
+import { FontSizeEditor } from './FontSizeEditor';
+import { SparklineEditor } from './SparklineEditor';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
@@ -32,6 +34,12 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       valueOptions,
     });
 
+  onSparklineChanged = (sparkline: SparklineOptions) =>
+    this.props.onOptionsChange({
+      ...this.props.options,
+      sparkline,
+    });
+
   render() {
     const { options } = this.props;
 
@@ -39,7 +47,10 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       <>
         <PanelOptionsGrid>
           <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
+          <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
+
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
 
