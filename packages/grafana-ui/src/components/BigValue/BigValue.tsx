@@ -97,8 +97,6 @@ export class BigValue extends PureComponent<Props> {
       css.fontSize = value.fontSize;
     }
 
-    console.log('DISPLAY', value, css);
-
     return <span style={css}>{value.text}</span>;
   };
 
