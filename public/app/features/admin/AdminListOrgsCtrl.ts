@@ -1,9 +1,8 @@
-
 export default class AdminListOrgsCtrl {
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     $scope.init = () => {
-      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
+      $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
       $scope.getOrgs();
     };
 
@@ -31,4 +30,3 @@ export default class AdminListOrgsCtrl {
     $scope.init();
   }
 }
-

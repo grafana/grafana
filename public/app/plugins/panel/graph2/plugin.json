@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "React Graph",
   "id": "graph2",
-
   "state": "alpha",
 
   "info": {
@@ -11,9 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-text-panel.svg",
-      "large": "img/icn-text-panel.svg"
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
     }
   }
 }
-

@@ -34,13 +34,14 @@ type DataSourceProxy struct {
 	proxyPath string
 	route     *plugins.AppPluginRoute
 	plugin    *plugins.DataSourcePlugin
+	cfg       *setting.Cfg
 }
 
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
 	targetURL, _ := url.Parse(ds.Url)
 
 	return &DataSourceProxy{
@@ -49,12 +50,13 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		ctx:       ctx,
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
+		cfg:       cfg,
 	}
 }
 
 func newHTTPClient() httpClient {
 	return &http.Client{
-		Timeout:   time.Second * 30,
+		Timeout:   30 * time.Second,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
 }
@@ -139,19 +141,19 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		reqQueryVals := req.URL.Query()
 
 		if proxy.ds.Type == m.DS_INFLUXDB_08 {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.Password)
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else if proxy.ds.Type == m.DS_INFLUXDB {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.Password))
 			}
 		} else {
-			req.URL.Path = util.JoinUrlFragments(proxy.targetUrl.Path, proxy.proxyPath)
+			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
@@ -168,6 +170,10 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Del("X-DS-Authorization")
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", dsAuth)
+		}
+
+		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
+			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
 		}
 
 		// clear cookie header, except for whitelisted cookies

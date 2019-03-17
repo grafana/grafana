@@ -23,7 +23,7 @@ export default ({ children, in: inProp, maxHeight = defaultMaxHeight, style = de
   const transitionStyles = {
     exited: { maxHeight: 0 },
     entering: { maxHeight: maxHeight },
-    entered: { maxHeight: maxHeight, overflow: 'visible' },
+    entered: { maxHeight: 'unset', overflow: 'visible' },
     exiting: { maxHeight: 0 },
   };
 

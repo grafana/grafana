@@ -107,79 +107,78 @@
 }
 
 // Scrollbars
-//
+.no-overlay-scrollbar {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+  ::-webkit-scrollbar:hover {
+    height: 8px;
+  }
 
-::-webkit-scrollbar:hover {
-  height: 8px;
-}
+  ::-webkit-scrollbar-button:start:decrement,
+  ::-webkit-scrollbar-button:end:increment {
+    display: none;
+  }
+  ::-webkit-scrollbar-button:horizontal:decrement {
+    display: none;
+  }
+  ::-webkit-scrollbar-button:horizontal:increment {
+    display: none;
+  }
+  ::-webkit-scrollbar-button:vertical:decrement {
+    display: none;
+  }
+  ::-webkit-scrollbar-button:vertical:increment {
+    display: none;
+  }
+  ::-webkit-scrollbar-button:horizontal:decrement:active {
+    background-image: none;
+  }
+  ::-webkit-scrollbar-button:horizontal:increment:active {
+    background-image: none;
+  }
+  ::-webkit-scrollbar-button:vertical:decrement:active {
+    background-image: none;
+  }
+  ::-webkit-scrollbar-button:vertical:increment:active {
+    background-image: none;
+  }
+  ::-webkit-scrollbar-track-piece {
+    background-color: transparent;
+  }
 
-::-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment {
-  display: none;
-}
-::-webkit-scrollbar-button:horizontal:decrement {
-  display: none;
-}
-::-webkit-scrollbar-button:horizontal:increment {
-  display: none;
-}
-::-webkit-scrollbar-button:vertical:decrement {
-  display: none;
-}
-::-webkit-scrollbar-button:vertical:increment {
-  display: none;
-}
-::-webkit-scrollbar-button:horizontal:decrement:active {
-  background-image: none;
-}
-::-webkit-scrollbar-button:horizontal:increment:active {
-  background-image: none;
-}
-::-webkit-scrollbar-button:vertical:decrement:active {
-  background-image: none;
-}
-::-webkit-scrollbar-button:vertical:increment:active {
-  background-image: none;
-}
-::-webkit-scrollbar-track-piece {
-  background-color: transparent;
-}
+  ::-webkit-scrollbar-thumb:vertical {
+    height: 50px;
+    background: -webkit-gradient(
+      linear,
+      left top,
+      right top,
+      color-stop(0%, $scrollbarBackground),
+      color-stop(100%, $scrollbarBackground2)
+    );
+    border: 1px solid $scrollbarBorder;
+    border-top: 1px solid $scrollbarBorder;
+    border-left: 1px solid $scrollbarBorder;
+  }
 
-::-webkit-scrollbar-thumb:vertical {
-  height: 50px;
-  background: -webkit-gradient(
-    linear,
-    left top,
-    right top,
-    color-stop(0%, $scrollbarBackground),
-    color-stop(100%, $scrollbarBackground2)
-  );
-  border: 1px solid $scrollbarBorder;
-  border-top: 1px solid $scrollbarBorder;
-  border-left: 1px solid $scrollbarBorder;
-}
-
-::-webkit-scrollbar-thumb:horizontal {
-  width: 50px;
-  background: -webkit-gradient(
-    linear,
-    left top,
-    left bottom,
-    color-stop(0%, $scrollbarBackground),
-    color-stop(100%, $scrollbarBackground2)
-  );
-  border: 1px solid $scrollbarBorder;
-  border-top: 1px solid $scrollbarBorder;
-  border-left: 1px solid $scrollbarBorder;
+  ::-webkit-scrollbar-thumb:horizontal {
+    width: 50px;
+    background: -webkit-gradient(
+      linear,
+      left top,
+      left bottom,
+      color-stop(0%, $scrollbarBackground),
+      color-stop(100%, $scrollbarBackground2)
+    );
+    border: 1px solid $scrollbarBorder;
+    border-top: 1px solid $scrollbarBorder;
+    border-left: 1px solid $scrollbarBorder;
+  }
 }
 
 // Baron styles
-
 .baron {
   // display: inline-block; // this brakes phantomjs rendering (width becomes 0)
   overflow: hidden;
@@ -292,50 +291,6 @@
 
   .baron__scroller {
     padding-top: 1px;
-  }
-}
-
-// Custom styles for 'react-custom-scrollbars'
-
-.custom-scrollbars {
-  // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
-  // make scroll working it should fit outer container size (scroll appears only when inner container size is
-  // greater than outer one).
-  display: flex;
-  flex-grow: 1;
-
-  .view {
-    display: flex;
-    flex-grow: 1;
-    flex-direction: column;
-  }
-
-  .track-vertical {
-    border-radius: 3px;
-    width: 6px !important;
-
-    right: 2px;
-    bottom: 2px;
-    top: 2px;
-  }
-
-  .track-horizontal {
-    border-radius: 3px;
-    height: 6px !important;
-
-    right: 2px;
-    bottom: 2px;
-    left: 2px;
-  }
-
-  .thumb-vertical {
-    @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
-    border-radius: 6px;
-  }
-
-  .thumb-horizontal {
-    @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
-    border-radius: 6px;
   }
 }
 

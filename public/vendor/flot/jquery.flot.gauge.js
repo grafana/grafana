@@ -588,6 +588,7 @@
             if (!exists) {
                 span = $("<span></span>")
                 span.attr("id", id);
+                span.attr("class", "flot-temp-elem");
                 placeholder.append(span);
             }
 
@@ -934,16 +935,7 @@
                         }
                     },
                     values: [
-                        {
-                            value: 50,
-                            color: "lightgreen"
-                        }, {
-                            value: 80,
-                            color: "yellow"
-                        }, {
-                            value: 100,
-                            color: "red"
-                        }
+                      
                     ]
                 }
             }

@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
+import Page from 'app/core/components/Page/Page';
+import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { NavModel, Team } from '../../types';
+import { NavModel, Team } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   navModel: NavModel;
@@ -34,8 +34,8 @@ export class TeamList extends PureComponent<Props, any> {
     this.props.deleteTeam(team.id);
   };
 
-  onSearchQueryChange = event => {
-    this.props.setSearchQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchQuery(value);
   };
 
   renderTeam(team: Team) {
@@ -58,7 +58,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirm={() => this.deleteTeam(team)} />
         </td>
       </tr>
     );
@@ -87,24 +87,21 @@ export class TeamList extends PureComponent<Props, any> {
     const { teams, searchQuery } = this.props;
 
     return (
-      <div className="page-container page-body">
+      <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search teams"
-                value={searchQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search teams"
+              value={searchQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
 
-          <a className="btn btn-success" href="org/teams/new">
+          <a className="btn btn-primary" href="org/teams/new">
             New team
           </a>
         </div>
@@ -123,7 +120,7 @@ export class TeamList extends PureComponent<Props, any> {
             <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
           </table>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -141,10 +138,9 @@ export class TeamList extends PureComponent<Props, any> {
     const { hasFetched, navModel } = this.props;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        {hasFetched ? this.renderList() : <PageLoader pageName="Teams" />}
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>{hasFetched && this.renderList()}</Page.Contents>
+      </Page>
     );
   }
 }
@@ -165,4 +161,9 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamList));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TeamList)
+);

@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
 import $ from 'jquery';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
 import { getValueBucketBound } from './heatmap_data_converter';
+import { getValueFormat } from '@grafana/ui';
 
 const TOOLTIP_PADDING_X = 30;
 const TOOLTIP_PADDING_Y = 5;
@@ -114,7 +114,9 @@ export class HeatmapTooltip {
           };
 
           boundBottom = tickFormatter(yBucketIndex);
-          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
+          if (this.panel.yBucketBound !== 'middle') {
+            boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
+          }
         } else {
           // Display 0 if bucket is a special 'zero' bucket
           const bottom = yData.y ? yData.bounds.bottom : 0;
@@ -122,8 +124,9 @@ export class HeatmapTooltip {
           boundTop = bucketBoundFormatter(yData.bounds.top);
         }
         valuesNumber = countValueFormatter(yData.count);
+        const boundStr = boundTop && boundBottom ? `${boundBottom} - ${boundTop}` : boundBottom || boundTop;
         tooltipHtml += `<div>
-          bucket: <b>${boundBottom} - ${boundTop}</b> <br>
+          bucket: <b>${boundStr}</b> <br>
           count: <b>${valuesNumber}</b> <br>
         </div>`;
       } else {
@@ -205,10 +208,10 @@ export class HeatmapTooltip {
 
     let barWidth;
     if (this.panel.yAxis.logBase === 1) {
-      barWidth = Math.floor(HISTOGRAM_WIDTH / (max - min) * yBucketSize * 0.9);
+      barWidth = Math.floor((HISTOGRAM_WIDTH / (max - min)) * yBucketSize * 0.9);
     } else {
       const barNumberFactor = yBucketSize ? yBucketSize : 1;
-      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / barNumberFactor * 0.9);
+      barWidth = Math.floor((HISTOGRAM_WIDTH / ticks / barNumberFactor) * 0.9);
     }
     barWidth = Math.max(barWidth, 1);
 
@@ -268,7 +271,7 @@ export class HeatmapTooltip {
   countValueFormatter(decimals, scaledDecimals = null) {
     const format = 'short';
     return value => {
-      return kbn.valueFormats[format](value, decimals, scaledDecimals);
+      return getValueFormat(format)(value, decimals, scaledDecimals);
     };
   }
 }

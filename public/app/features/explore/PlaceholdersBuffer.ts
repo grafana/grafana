@@ -88,7 +88,7 @@ export default class PlaceholdersBuffer {
       orders.push({ index: parts.length - 1, order });
       textOffset += part.length + match.length;
     }
-    // Ensures string serialisation still works if no placeholders were parsed
+    // Ensures string serialization still works if no placeholders were parsed
     // and also accounts for the remainder of text with placeholders
     parts.push(text.slice(textOffset));
     return {

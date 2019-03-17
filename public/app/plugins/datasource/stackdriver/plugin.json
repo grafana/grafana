@@ -5,7 +5,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "state": "beta",
+  "tables": false,
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
@@ -14,8 +14,8 @@
     "description": "Google Stackdriver Datasource for Grafana",
     "version": "1.0.0",
     "logos": {
-      "small": "img/stackdriver_logo.png",
-      "large": "img/stackdriver_logo.png"
+      "small": "img/stackdriver_logo.svg",
+      "large": "img/stackdriver_logo.svg"
     },
     "author": {
       "name": "Grafana Project",

@@ -34,7 +34,7 @@
   revision = "6c6b55f8796f578c870b7e19bafb16103bc40095"
 
 [[projects]]
-  digest = "1:58294d68772aab5a8941b7d5d228eff7cccf63f895e914bc9bc38fda80471ea5"
+  digest = "1:ebe102b61c1615d2954734e3cfe1b6b06a5088c25a41055b38661d41ad7b8f27"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -46,6 +46,7 @@
     "aws/credentials",
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
     "aws/credentials/stscreds",
     "aws/csm",
     "aws/defaults",
@@ -54,13 +55,18 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/ini",
+    "internal/s3err",
     "internal/sdkio",
     "internal/sdkrand",
+    "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/ec2query",
     "private/protocol/eventstream",
     "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -69,12 +75,14 @@
     "service/cloudwatch",
     "service/ec2",
     "service/ec2/ec2iface",
+    "service/resourcegroupstaggingapi",
+    "service/resourcegroupstaggingapi/resourcegroupstaggingapiiface",
     "service/s3",
     "service/sts",
   ]
   pruneopts = "NUT"
-  revision = "fde4ded7becdeae4d26bf1212916aabba79349b4"
-  version = "v1.14.12"
+  revision = "62936e15518acb527a1a9cb4a39d96d94d0fd9a2"
+  version = "v1.16.15"
 
 [[projects]]
   branch = "master"
@@ -167,22 +175,6 @@
   version = "v1.7.0"
 
 [[projects]]
-  digest = "1:e05711632e1515319b014e8fe4cbe1d30ab024c473403f60cf0fdeb4c586a474"
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
-  version = "v1.36.0"
-
-[[projects]]
-  digest = "1:7e1c00b9959544fa1ccca7cf0407a5b29ac6d5201059c4fac6f599cb99bfd24d"
-  name = "github.com/go-ldap/ldap"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "bb7a9ca6e4fbc2129e3db588a34bc970ffe811a9"
-  version = "v2.5.1"
-
-[[projects]]
   branch = "master"
   digest = "1:682a0aca743a1a4a36697f3d7f86c0ed403c4e3a780db9935f633242855eac9c"
   name = "github.com/go-macaron/binding"
@@ -235,28 +227,28 @@
   version = "v1.7.0"
 
 [[projects]]
-  digest = "1:b9d4f09cdaaa9e7dca5ed0b501ca5519eb2168dd01fc5d174c54edfe42a7d5ed"
+  digest = "1:06d21295033f211588d0ad7ff391cc1b27e72b60cb6d4b7db0d70cffae4cf228"
   name = "github.com/go-xorm/builder"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "bad0a612f0d6277b953910822ab5dfb30dd18237"
-  version = "v0.2.0"
+  revision = "1d658d7596c25394aab557ef5b50ef35bf706384"
+  version = "v0.3.4"
 
 [[projects]]
-  digest = "1:30fb106b0cd6d64ea6fccded579c8f7d788460092f885fcc8f3edd02fc2085a4"
+  digest = "1:b26928aab0fff92592e8728c5bc9d6e404fa2017d6a8e841ae5e60a42237f6fc"
   name = "github.com/go-xorm/core"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "da1adaf7a28ca792961721a34e6e04945200c890"
-  version = "v0.5.7"
+  revision = "ccc80c1adf1f6172bbc548877f50a1163041a40a"
+  version = "v0.6.2"
 
 [[projects]]
-  digest = "1:007d1354e4f44e6a393337e7623bcf911dfe75d6ef30fb767a6a0b65d302f5ed"
+  digest = "1:407316703b32d68ccf5d39bdae57d411b6954e253e07d0fff0988a3f39861f2f"
   name = "github.com/go-xorm/xorm"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "1933dd69e294c0a26c0266637067f24dbb25770c"
-  version = "v0.6.4"
+  revision = "1f39c590c64924f358c0d89016ac9b2bb84e9125"
+  version = "v0.7.1"
 
 [[projects]]
   branch = "master"
@@ -347,11 +339,11 @@
   version = "v2.13"
 
 [[projects]]
-  digest = "1:ac6d01547ec4f7f673311b4663909269bfb8249952de3279799289467837c3cc"
+  digest = "1:1f2aebae7e7c856562355ec0198d8ca2fa222fb05e5b1b66632a1fce39631885"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "0b12d6b5"
+  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:6ddab442e52381bab82fb6c07ef3f4b565ff7ec4b8fae96d8dd4b8573a460597"
@@ -815,6 +807,14 @@
   version = "v1.36.0"
 
 [[projects]]
+  digest = "1:c847b7fea4c7e6db5281a37dffc4620cb78c1227403a79e5aa290db517657ac1"
+  name = "gopkg.in/ldap.v3"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "5c2c0f997205c29de14cb6c35996370c2c5dfab1"
+  version = "v3"
+
+[[projects]]
   digest = "1:3b0cf3a465fd07f76e5fc1a9d0783c662dac0de9fc73d713ebe162768fd87b5f"
   name = "gopkg.in/macaron.v1"
   packages = ["."]
@@ -879,6 +879,8 @@
     "github.com/aws/aws-sdk-go/service/cloudwatch",
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/aws/aws-sdk-go/service/ec2/ec2iface",
+    "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi",
+    "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/sts",
     "github.com/benbjohnson/clock",
@@ -888,7 +890,6 @@
     "github.com/denisenkom/go-mssqldb",
     "github.com/facebookgo/inject",
     "github.com/fatih/color",
-    "github.com/go-ldap/ldap",
     "github.com/go-macaron/binding",
     "github.com/go-macaron/gzip",
     "github.com/go-macaron/session",
@@ -933,6 +934,7 @@
     "golang.org/x/oauth2/jwt",
     "golang.org/x/sync/errgroup",
     "gopkg.in/ini.v1",
+    "gopkg.in/ldap.v3",
     "gopkg.in/macaron.v1",
     "gopkg.in/mail.v2",
     "gopkg.in/square/go-jose.v2",

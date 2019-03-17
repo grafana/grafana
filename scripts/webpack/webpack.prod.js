@@ -3,7 +3,6 @@
 const merge = require('webpack-merge');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const common = require('./webpack.common.js');
-const webpack = require('webpack');
 const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -48,17 +47,7 @@ module.exports = merge(common, {
       })
     ]
   },
-
   optimization: {
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          name: "vendor",
-          chunks: "all"
-        }
-      }
-    },
     minimizer: [
       new UglifyJsPlugin({
         cache: true,
@@ -68,7 +57,6 @@ module.exports = merge(common, {
       new OptimizeCSSAssetsPlugin({})
     ]
   },
-
   plugins: [
     new MiniCssExtractPlugin({
       filename: "grafana.[name].[hash].css"

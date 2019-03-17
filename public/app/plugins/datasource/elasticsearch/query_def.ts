@@ -64,6 +64,14 @@ export const metricAggTypes = [
     isPipelineAgg: true,
     minVersion: 2,
   },
+  {
+    text: 'Bucket Script',
+    value: 'bucket_script',
+    requiresField: false,
+    isPipelineAgg: true,
+    supportsMultipleBucketPaths: true,
+    minVersion: 2,
+  },
   { text: 'Raw Document', value: 'raw_document', requiresField: false },
 ];
 
@@ -128,6 +136,7 @@ export const pipelineOptions = {
     { text: 'minimize', default: false },
   ],
   derivative: [{ text: 'unit', default: undefined }],
+  bucket_script: [],
 };
 
 export const movingAvgModelSettings = {
@@ -166,6 +175,14 @@ export function isPipelineAgg(metricType) {
   if (metricType) {
     const po = pipelineOptions[metricType];
     return po !== null && po !== undefined;
+  }
+
+  return false;
+}
+
+export function isPipelineAggWithMultipleBucketPaths(metricType) {
+  if (metricType) {
+    return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
   }
 
   return false;
@@ -213,6 +230,9 @@ export function describeOrder(order) {
 
 export function describeMetric(metric) {
   const def = _.find(metricAggTypes, { value: metric.type });
+  if (!def.requiresField && !isPipelineAgg(metric.type)) {
+    return def.text;
+  }
   return def.text + ' ' + metric.field;
 }
 
@@ -236,3 +256,7 @@ export function defaultMetricAgg() {
 export function defaultBucketAgg() {
   return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
 }
+
+export const findMetricById = (metrics: any[], id: any) => {
+  return _.find(metrics, { id: id });
+};

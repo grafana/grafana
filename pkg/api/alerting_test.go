@@ -119,6 +119,12 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			So(getAlertsQuery.Limit, ShouldEqual, 5)
 			So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
 		})
+
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alert-notifications/1", "/alert-notifications/:notificationId", m.ROLE_ADMIN, func(sc *scenarioContext) {
+			sc.handlerFunc = GetAlertNotificationByID
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			So(sc.resp.Code, ShouldEqual, 404)
+		})
 	})
 }
 

@@ -1,4 +1,4 @@
-import { DataSource } from '../../../types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
 
 export const getDataSources = state => {
   const regex = new RegExp(state.searchQuery, 'i');
@@ -16,11 +16,19 @@ export const getDataSourceTypes = state => {
   });
 };
 
-export const getDataSource = (state, dataSourceId): DataSource | null => {
+export const getDataSource = (state, dataSourceId): DataSourceSettings | null => {
   if (state.dataSource.id === parseInt(dataSourceId, 10)) {
     return state.dataSource;
   }
-  return null;
+  return {} as DataSourceSettings;
+};
+
+export const getDataSourceMeta = (state, type): Plugin => {
+  if (state.dataSourceMeta.id === type) {
+    return state.dataSourceMeta;
+  }
+
+  return {} as Plugin;
 };
 
 export const getDataSourcesSearchQuery = state => state.searchQuery;

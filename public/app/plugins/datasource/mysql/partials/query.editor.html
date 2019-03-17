@@ -45,8 +45,10 @@
 
       <div class="gf-form">
         <label class="dropdown"
-                dropdown-typeahead="ctrl.selectMenu"
-                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
+                dropdown-typeahead2="ctrl.selectMenu"
+                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)"
+                button-template-class="gf-form-label query-part"
+                >
         </label>
       </div>
 
@@ -151,8 +153,9 @@ Table:
 Macros:
 - $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
 - $__timeEpoch(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
-- $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
+- $__timeFilter(column) -&gt; column BETWEEN FROM_UNIXTIME(1492750877) AND FROM_UNIXTIME(1492750877)
 - $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
+- $__unixEpochNanoFilter(column) -&gt;  column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872
 - $__timeGroup(column,'5m'[, fillvalue]) -&gt; cast(cast(UNIX_TIMESTAMP(column)/(300) as signed)*300 as signed)
      by setting fillvalue grafana will fill in missing values according to the interval
      fillvalue can be either a literal value, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet
@@ -169,10 +172,12 @@ GROUP BY 1
 ORDER BY 1
 
 Or build your own conditionals using these macros which just return the values:
-- $__timeFrom() -&gt;  '2017-04-21T05:01:17Z'
-- $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
+- $__timeFrom() -&gt; FROM_UNIXTIME(1492750877)
+- $__timeTo() -&gt;  FROM_UNIXTIME(1492750877)
 - $__unixEpochFrom() -&gt;  1492750877
 - $__unixEpochTo() -&gt;  1492750877
+- $__unixEpochNanoFrom() -&gt;  1494410783152415214
+- $__unixEpochNanoTo() -&gt;  1494497183142514872
     </pre>
   </div>
 

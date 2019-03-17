@@ -3,7 +3,7 @@
   "name": "Gauge",
   "id": "gauge",
 
-  "state": "alpha",
+  "dataFormats": ["time_series"],
 
   "info": {
     "author": {
@@ -11,8 +11,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-
+      "small": "img/icon_gauge.svg",
+      "large": "img/icon_gauge.svg"
     }
   }
 }
-

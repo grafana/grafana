@@ -19,7 +19,7 @@ func Md5Sum(reader io.Reader) (string, error) {
 	return returnMD5String, nil
 }
 
-// Md5Sum calculates the md5sum of a string
+// Md5SumString calculates the md5sum of a string
 func Md5SumString(input string) (string, error) {
 	buffer := strings.NewReader(input)
 	return Md5Sum(buffer)

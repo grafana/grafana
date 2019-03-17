@@ -3,9 +3,6 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   target: 'web',
-  stats: {
-    children: false
-  },
   entry: {
     app: './public/app/index.ts',
   },
@@ -13,7 +10,7 @@ module.exports = {
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[hash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
-    publicPath: "public/build/",
+    publicPath: 'public/build/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
@@ -25,6 +22,7 @@ module.exports = {
     ],
   },
   stats: {
+    children: false,
     warningsFilter: /export .* was not found in/
   },
   node: {
@@ -62,6 +60,18 @@ module.exports = {
         ]
       }
     ]
+  },
+  // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        commons: {
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+          name: 'vendor',
+          chunks: 'all'
+        }
+      }
+    }
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({

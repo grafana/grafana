@@ -1,11 +1,16 @@
+// Libraries
 import React, { PureComponent } from 'react';
-import classNames from 'classnames/bind';
+import classNames from 'classnames';
+
+// Components
 import DataSourcesListItem from './DataSourcesListItem';
-import { DataSource } from 'app/types';
+
+// Types
+import { DataSourceSettings } from '@grafana/ui/src/types';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 export interface Props {
-  dataSources: DataSource[];
+  dataSources: DataSourceSettings[];
   layoutMode: LayoutMode;
 }
 

@@ -60,6 +60,16 @@ describe('file_export', () => {
 
       expect(text).toBe(expectedText);
     });
+
+    it('should not modify series.datapoints', () => {
+      const expectedSeries1DataPoints = ctx.seriesList[0].datapoints.slice();
+      const expectedSeries2DataPoints = ctx.seriesList[1].datapoints.slice();
+
+      fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+
+      expect(expectedSeries1DataPoints).toEqual(ctx.seriesList[0].datapoints);
+      expect(expectedSeries2DataPoints).toEqual(ctx.seriesList[1].datapoints);
+    });
   });
 
   describe('when exporting table data to csv', () => {
@@ -73,6 +83,7 @@ describe('file_export', () => {
         ],
         rows: [
           [123, 'some_string', 1.234, true],
+          [1000, 'some_string', 1.234567891, true],
           [0o765, 'some string with " in the middle', 1e-2, false],
           [0o765, 'some string with "" in the middle', 1e-2, false],
           [0o765, 'some string with """ in the middle', 1e-2, false],
@@ -89,6 +100,7 @@ describe('file_export', () => {
       const expectedText =
         '"integer_value";"string_value";"float_value";"boolean_value"\r\n' +
         '123;"some_string";1.234;true\r\n' +
+        '1000;"some_string";1.234567891;true\r\n' +
         '501;"some string with "" in the middle";0.01;false\r\n' +
         '501;"some string with """" in the middle";0.01;false\r\n' +
         '501;"some string with """""" in the middle";0.01;false\r\n' +

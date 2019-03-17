@@ -72,6 +72,10 @@ export class ElasticQueryBuilder {
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
 
+    if (settings.offset !== '') {
+      esAgg.offset = settings.offset;
+    }
+
     if (esAgg.interval === 'auto') {
       esAgg.interval = '$__interval';
     }
@@ -185,7 +189,7 @@ export class ElasticQueryBuilder {
     target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
     target.timeField = this.timeField;
 
-    let i, nestedAggs, metric;
+    let i, j, pv, nestedAggs, metric;
     const query = {
       size: 0,
       query: {
@@ -265,10 +269,42 @@ export class ElasticQueryBuilder {
       let metricAgg = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
-        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
+        if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
+          if (metric.pipelineVariables) {
+            metricAgg = {
+              buckets_path: {},
+            };
+
+            for (j = 0; j < metric.pipelineVariables.length; j++) {
+              pv = metric.pipelineVariables[j];
+
+              if (pv.name && pv.pipelineAgg && /^\d*$/.test(pv.pipelineAgg)) {
+                const appliedAgg = queryDef.findMetricById(target.metrics, pv.pipelineAgg);
+                if (appliedAgg) {
+                  if (appliedAgg.type === 'count') {
+                    metricAgg.buckets_path[pv.name] = '_count';
+                  } else {
+                    metricAgg.buckets_path[pv.name] = pv.pipelineAgg;
+                  }
+                }
+              }
+            }
+          } else {
+            continue;
+          }
         } else {
-          continue;
+          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+            const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+            if (appliedAgg) {
+              if (appliedAgg.type === 'count') {
+                metricAgg = { buckets_path: '_count' };
+              } else {
+                metricAgg = { buckets_path: metric.pipelineAgg };
+              }
+            }
+          } else {
+            continue;
+          }
         }
       } else {
         metricAgg = { field: metric.field };

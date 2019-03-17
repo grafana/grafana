@@ -21,9 +21,9 @@
 // Search
 .search-field-wrapper {
   width: 100%;
+  height: $navbarHeight;
   display: flex;
   background-color: $navbarBackground;
-  box-shadow: $navbarShadow;
   position: relative;
 
   & > input {
@@ -77,13 +77,13 @@
 .search-filter-box {
   background: $search-filter-box-bg;
   border-radius: 2px;
-  padding: $spacer*1.5;
+  padding: $spacer * 1.5;
   min-width: 340px;
   margin-bottom: $spacer * 1.5;
 }
 
 .search-filter-box__header {
-  border-bottom: 1px solid $dark-5;
+  border-bottom: 1px solid $hr-border-color;
   margin-bottom: $spacer * 1.5;
 }
 
@@ -259,7 +259,7 @@
 
 .search-button-row {
   text-align: center;
-  padding: $spacer*2 $spacer;
+  padding: $spacer * 2 $spacer;
   background: $panel-bg;
 }
 

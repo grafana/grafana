@@ -55,7 +55,7 @@ class TypeaheadItem extends React.PureComponent<TypeaheadItemProps> {
 interface TypeaheadGroupProps {
   items: CompletionItem[];
   label: string;
-  onClickItem: (CompletionItem) => void;
+  onClickItem: (suggestion: CompletionItem) => void;
   selected: CompletionItem;
   prefix?: string;
 }

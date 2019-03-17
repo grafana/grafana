@@ -3,11 +3,13 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -53,14 +55,14 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
-	sess := x.Limit(1000, 0).Where("org_id=?", query.OrgId).Asc("name")
+	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
 func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
-	sess := x.Limit(1000, 0).Asc("name")
+	sess := x.Limit(5000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
@@ -93,6 +95,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 		if has {
 			return m.ErrDataSourceNameExists
+		}
+
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
 		}
 
 		ds := &m.DataSource{
@@ -142,6 +148,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,

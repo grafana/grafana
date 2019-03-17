@@ -4,10 +4,9 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -15,16 +14,6 @@ import (
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
 	ReqSignedIn     bool
-}
-
-func getRequestUserId(c *m.ReqContext) int64 {
-	userID := c.Session.Get(session.SESS_KEY_USERID)
-
-	if userID != nil {
-		return userID.(int64)
-	}
-
-	return 0
 }
 
 func getApiKey(c *m.ReqContext) string {
@@ -61,6 +50,12 @@ func notAuthorized(c *m.ReqContext) {
 	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, false, true)
 
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
+	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+		accessForbidden(c)
+	}
 }
 
 func RoleAuth(roles ...m.RoleType) macaron.Handler {

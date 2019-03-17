@@ -31,13 +31,15 @@ Datasource permissions allow you to restrict query access to only specific Teams
 
 ### Premium Plugins
 
-With a Grafana Enterprise licence you will get access to premium plugins, including:
+With a Grafana Enterprise license you will get access to premium plugins, including:
 
 * [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 * [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 * [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 * [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 * [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
+* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
+* [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
 
 ## Try Grafana Enterprise
 

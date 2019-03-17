@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "React Table",
+  "id": "table2",
+  "state": "alpha",
+
+  "dataFormats": ["table"],
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-table-panel.svg",
+      "large": "img/icn-table-panel.svg"
+    }
+  }
+}

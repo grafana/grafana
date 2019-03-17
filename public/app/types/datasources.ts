@@ -1,33 +1,16 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { Plugin, PluginExports, PluginMeta } from './plugins';
-
-export interface DataSource {
-  id: number;
-  orgId: number;
-  name: string;
-  typeLogoUrl: string;
-  type: string;
-  access: string;
-  url: string;
-  password: string;
-  user: string;
-  database: string;
-  basicAuth: boolean;
-  isDefault: boolean;
-  jsonData: { authType: string; defaultRegion: string };
-  readOnly: boolean;
-  meta?: PluginMeta;
-  pluginExports?: PluginExports;
-}
+import { Plugin } from './plugins';
+import { DataSourceSettings } from '@grafana/ui/src/types';
 
 export interface DataSourcesState {
-  dataSources: DataSource[];
+  dataSources: DataSourceSettings[];
   searchQuery: string;
   dataSourceTypeSearchQuery: string;
   layoutMode: LayoutMode;
   dataSourcesCount: number;
   dataSourceTypes: Plugin[];
-  dataSource: DataSource;
+  dataSource: DataSourceSettings;
   dataSourceMeta: Plugin;
   hasFetched: boolean;
+  isLoadingDataSources: boolean;
 }

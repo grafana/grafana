@@ -5,16 +5,13 @@
       <i class="gf-form-input-icon fa fa-search"></i>
     </label>
     <div class="page-action-bar__spacer"></div>
-    <a class="btn btn-success" ng-href="{{ctrl.createDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
-      <i class="fa fa-plus"></i>
-      Dashboard
+    <a class="btn btn-primary" ng-href="{{ctrl.createDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
+      New Dashboard
     </a>
-    <a class="btn btn-success" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
-      <i class="fa fa-plus"></i>
-      Folder
+    <a class="btn btn-inverse" href="dashboards/folder/new" ng-if="!ctrl.folderId && ctrl.isEditor">
+      New Folder
     </a>
-    <a class="btn btn-success" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
-      <i class="fa fa-plus"></i>
+    <a class="btn btn-inverse" href="{{ctrl.importDashboardUrl()}}" ng-if="ctrl.hasEditPermissionInFolders || ctrl.canSave">
       Import
     </a>
   </div>
@@ -64,10 +61,10 @@
 
   <div class="search-results" ng-show="ctrl.sections.length > 0">
     <div class="search-results-filter-row">
-      <gf-form-switch
+      <gf-form-checkbox
         on-change="ctrl.onSelectAllChanged()"
         checked="ctrl.selectAllChecked"
-        switch-class="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
+        switch-class="gf-form-checkbox--transparent"
       />
       <div class="search-results-filter-row__filters">
         <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">

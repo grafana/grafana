@@ -1,26 +1,24 @@
-import config from 'app/core/config';
 import _ from 'lodash';
-import $ from 'jquery';
+import Remarkable from 'remarkable';
+
+import config from 'app/core/config';
 import { profiler } from 'app/core/core';
+import { Emitter } from 'app/core/core';
+import getFactors from 'app/core/utils/factors';
 import {
   duplicatePanel,
+  removePanel,
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
-import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-const TITLE_HEIGHT = 27;
-const PANEL_BORDER = 2;
-
-import { Emitter } from 'app/core/core';
+import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
   error: any;
   dashboard: any;
-  editorTabIndex: number;
   pluginName: string;
   pluginId: string;
   editorTabs: any;
@@ -33,17 +31,18 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
-  timing: any;
   loading: boolean;
+  timing: any;
+  maxPanelsPerRowOptions: number[];
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
-    this.editorTabIndex = 0;
+    this.editorTabs = [];
     this.events = this.panel.events;
-    this.timing = {};
+    this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -60,7 +59,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    profiler.renderingCompleted(this.panel.id, this.timing);
+    profiler.renderingCompleted(this.panel.id);
   }
 
   refresh() {
@@ -92,27 +91,11 @@ export class PanelCtrl {
   }
 
   initEditMode() {
-    this.editorTabs = [];
-    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
-
-    this.editModeInitiated = true;
-    this.events.emit('init-edit-mode', null);
-
-    const urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
-    if (urlTab) {
-      this.editorTabs.forEach((tab, i) => {
-        if (tab.title.toLowerCase() === urlTab) {
-          this.editorTabIndex = i;
-        }
-      });
+    if (!this.editModeInitiated) {
+      this.editModeInitiated = true;
+      this.events.emit('init-edit-mode', null);
+      this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
-  }
-
-  changeTab(newIndex) {
-    this.editorTabIndex = newIndex;
-    const route = this.$injector.get('$route');
-    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
-    route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?, icon?) {
@@ -217,30 +200,12 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight() {
-    if (this.panel.fullscreen) {
-      const docHeight = $('.react-grid-layout').height();
-      const editHeight = Math.floor(docHeight * 0.35);
-      const fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.panel.isEditing ? editHeight : fullscreenHeight;
-    } else {
-      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
-    }
-
-    if (this.panel.soloMode) {
-      this.containerHeight = $(window).height();
-    }
-
-    // hacky solution
-    if (this.panel.isEditing && !this.editModeInitiated) {
-      this.initEditMode();
-    }
-
-    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
+  calculatePanelHeight(containerHeight) {
+    this.containerHeight = containerHeight;
+    this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
   }
 
   render(payload?) {
-    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 
@@ -249,9 +214,7 @@ export class PanelCtrl {
   }
 
   removePanel() {
-    this.publishAppEvent('panel-remove', {
-      panelId: this.panel.id,
-    });
+    removePanel(this.dashboard, this.panel, true);
   }
 
   editPanelJson() {
@@ -312,18 +275,5 @@ export class PanelCtrl {
 
     html += '</div>';
     return sanitize(html);
-  }
-
-  openInspector() {
-    const modalScope = this.$scope.$new();
-    modalScope.panel = this.panel;
-    modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({ mode: 'inspector' });
-
-    modalScope.inspector = $.extend(true, {}, this.inspector);
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/inspector.html',
-      scope: modalScope,
-    });
   }
 }

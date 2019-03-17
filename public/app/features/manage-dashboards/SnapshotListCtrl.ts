@@ -5,10 +5,14 @@ export class SnapshotListCtrl {
   snapshots: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private backendSrv, navModelSrv) {
+  constructor(private $rootScope, private backendSrv, navModelSrv, private $location) {
     this.navModel = navModelSrv.getNav('dashboards', 'snapshots', 0);
     this.backendSrv.get('/api/dashboard/snapshots').then(result => {
-      this.snapshots = result;
+      const baseUrl = this.$location.absUrl().replace($location.url(), '');
+      this.snapshots = result.map(snapshot => ({
+        ...snapshot,
+        url: snapshot.externalUrl || `${baseUrl}/dashboard/snapshot/${snapshot.key}`,
+      }));
     });
   }
 

@@ -2,15 +2,14 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Remarkable from 'remarkable';
-import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
 import { Invitee, NavModel, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
-import { loadUsers, loadInvitees, revokeInvite, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
-import { getNavModel } from '../../core/selectors/navModel';
+import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
 
 export interface Props {
@@ -25,7 +24,6 @@ export interface Props {
   setUsersSearchQuery: typeof setUsersSearchQuery;
   updateUser: typeof updateUser;
   removeUser: typeof removeUser;
-  revokeInvite: typeof revokeInvite;
 }
 
 export interface State {
@@ -79,10 +77,6 @@ export class UsersListPage extends PureComponent<Props, State> {
     });
   };
 
-  onRevokeInvite = code => {
-    this.props.revokeInvite(code);
-  };
-
   onShowInvites = () => {
     this.setState(prevState => ({
       showInvites: !prevState.showInvites,
@@ -93,7 +87,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     const { invitees, users } = this.props;
 
     if (this.state.showInvites) {
-      return <InviteesTable invitees={invitees} onRevokeInvite={code => this.onRevokeInvite(code)} />;
+      return <InviteesTable invitees={invitees} />;
     } else {
       return (
         <UsersTable
@@ -110,16 +104,17 @@ export class UsersListPage extends PureComponent<Props, State> {
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <div>
-        <PageHeader model={navModel} />
-        <div className="page-container page-body">
-          <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-          {externalUserMngInfoHtml && (
-            <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-          )}
-          {hasFetched ? this.renderTable() : <PageLoader pageName="Users" />}
-        </div>
-      </div>
+      <Page navModel={navModel}>
+        <Page.Contents isLoading={!hasFetched}>
+          <>
+            <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
+            {externalUserMngInfoHtml && (
+              <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+            )}
+            {hasFetched && this.renderTable()}
+          </>
+        </Page.Contents>
+      </Page>
     );
   }
 }
@@ -141,7 +136,11 @@ const mapDispatchToProps = {
   setUsersSearchQuery,
   updateUser,
   removeUser,
-  revokeInvite,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UsersListPage)
+);

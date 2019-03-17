@@ -83,7 +83,11 @@ or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integr
 
 Setting | Description
 ---------- | -----------
-Recipient | allows you to override the Slack recipient.
+Url | Slack incoming webhook url.
+Username | Set the username for the bot's message.
+Recipient | Allows you to override the Slack recipient.
+Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
+Icon URL | Provide a url to an image to use as the icon for the bot's message.
 Mention | make it possible to include a mention in the Slack notification sent by Grafana. Ex @here or @channel
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
@@ -136,7 +140,7 @@ In DingTalk PC Client:
 
 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-3. In the  "Robot Manage" panel, select "customised: customised robot with Webhook".
+3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
 4. In the next new panel named "robot detail", click "Add" button.
 
@@ -157,27 +161,29 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
-### All supported notifiers
+### Google Hangouts Chat
 
-Name | Type |Support images | Support reminders
------|------------ | ------ | ------ |
-Slack | `slack` | yes | yes
-Pagerduty | `pagerduty` | yes | yes
-Email | `email` | yes | yes
-Webhook | `webhook` | link | yes
-Kafka | `kafka` | no | yes
-Hipchat | `hipchat` | yes | yes
-VictorOps | `victorops` | yes | yes
-Sensu | `sensu` | yes | yes
-OpsGenie | `opsgenie` | yes | yes
-Threema | `threema` | yes | yes
-Pushover | `pushover` | no | yes
-Telegram | `telegram` | no | yes
-Line | `line` | no | yes
-Microsoft Teams | `teams` | yes | yes
-Prometheus Alertmanager | `prometheus-alertmanager` | no | no
+Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+### All supported notifier
 
+Name | Type |Support images
+-----|------------ | ------
+Slack | `slack` | yes
+Pagerduty | `pagerduty` | yes
+Email | `email` | yes
+Webhook | `webhook` | link
+Kafka | `kafka` | no
+Google Hangouts Chat | `googlechat` | yes
+Hipchat | `hipchat` | yes
+VictorOps | `victorops` | yes
+Sensu | `sensu` | yes
+OpsGenie | `opsgenie` | yes
+Threema | `threema` | yes
+Pushover | `pushover` | no
+Telegram | `telegram` | no
+Line | `line` | no
+Prometheus Alertmanager | `prometheus-alertmanager` | no
 
 # Enable images in notifications {#external-image-store}
 

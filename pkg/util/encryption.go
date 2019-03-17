@@ -11,6 +11,7 @@ import (
 
 const saltLength = 8
 
+// Decrypt decrypts a payload with a given secret.
 func Decrypt(payload []byte, secret string) ([]byte, error) {
 	salt := payload[:saltLength]
 	key := encryptionKeyToBytes(secret, string(salt))
@@ -36,6 +37,7 @@ func Decrypt(payload []byte, secret string) ([]byte, error) {
 	return payloadDst, nil
 }
 
+// Encrypt encrypts a payload with a given secret.
 func Encrypt(payload []byte, secret string) ([]byte, error) {
 	salt := GetRandomString(saltLength)
 

@@ -2,22 +2,8 @@ import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 
-export function elasticBucketAgg() {
-  return {
-    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
-    controller: 'ElasticBucketAggCtrl',
-    restrict: 'E',
-    scope: {
-      target: '=',
-      index: '=',
-      onChange: '&',
-      getFields: '&',
-    },
-  };
-}
-
 export class ElasticBucketAggCtrl {
-  /** @nginject */
+  /** @ngInject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     const bucketAggs = $scope.target.bucketAggs;
 
@@ -226,5 +212,18 @@ export class ElasticBucketAggCtrl {
   }
 }
 
+export function elasticBucketAgg() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+    controller: ElasticBucketAggCtrl,
+    restrict: 'E',
+    scope: {
+      target: '=',
+      index: '=',
+      onChange: '&',
+      getFields: '&',
+    },
+  };
+}
+
 coreModule.directive('elasticBucketAgg', elasticBucketAgg);
-coreModule.controller('ElasticBucketAggCtrl', ElasticBucketAggCtrl);

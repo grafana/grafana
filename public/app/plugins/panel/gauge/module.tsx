@@ -1,23 +1,12 @@
-import React, { PureComponent } from 'react';
-import Gauge from 'app/viz/Gauge';
-import { NullValueMode, PanelProps } from 'app/types';
-import { getTimeSeriesVMs } from 'app/viz/state/timeSeries';
+import { ReactPanelPlugin } from '@grafana/ui';
 
-export interface Options {}
+import { GaugePanelEditor } from './GaugePanelEditor';
+import { GaugePanel } from './GaugePanel';
+import { GaugeOptions, defaults } from './types';
+import { singleStatBaseOptionsCheck } from '../singlestat2/module';
 
-interface Props extends PanelProps<Options> {}
+export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
 
-export class GaugePanel extends PureComponent<Props> {
-  render() {
-    const { timeSeries } = this.props;
-
-    const vmSeries = getTimeSeriesVMs({
-      timeSeries: timeSeries,
-      nullValueMode: NullValueMode.Ignore,
-    });
-
-    return <Gauge maxValue={100} minValue={0} timeSeries={vmSeries} thresholds={[0, 100]} />;
-  }
-}
-
-export { GaugePanel as PanelComponent };
+reactPanel.setEditor(GaugePanelEditor);
+reactPanel.setDefaults(defaults);
+reactPanel.setPanelTypeChangedHook(singleStatBaseOptionsCheck);

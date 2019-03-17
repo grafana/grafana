@@ -59,10 +59,6 @@ ignored = [
   version = "1.5.0"
 
 [[constraint]]
-  name = "github.com/go-ldap/ldap"
-  version = "2.5.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/go-macaron/binding"
 
@@ -85,11 +81,15 @@ ignored = [
 
 [[constraint]]
   name = "github.com/go-xorm/core"
-  version = "=0.5.7"
+  version = "=0.6.2"
+
+[[override]]
+  name = "github.com/go-xorm/builder"
+  version = "=0.3.4"
 
 [[constraint]]
   name = "github.com/go-xorm/xorm"
-  version = "=0.6.4"
+  version = "=0.7.1"
 
 [[constraint]]
   name = "github.com/gorilla/websocket"
@@ -211,3 +211,7 @@ ignored = [
 [[constraint]]
   name = "gopkg.in/square/go-jose.v2"
   version = "2.1.9"
+
+[[constraint]]
+  name = "gopkg.in/ldap.v3"
+  version = "3.0.0"

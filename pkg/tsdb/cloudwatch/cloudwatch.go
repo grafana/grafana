@@ -21,14 +21,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 type CloudWatchExecutor struct {
 	*models.DataSource
-	ec2Svc ec2iface.EC2API
+	ec2Svc  ec2iface.EC2API
+	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 }
 
 type DatasourceInfo struct {
@@ -494,9 +496,6 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 	}
 
 	alias := model.Get("alias").MustString()
-	if alias == "" {
-		alias = "{{metric}}_{{stat}}"
-	}
 
 	returnData := model.Get("returnData").MustBool(false)
 	highResolution := model.Get("highResolution").MustBool(false)
@@ -519,7 +518,11 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 
 func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]string) string {
 	if len(query.Id) > 0 && len(query.Expression) > 0 {
-		return query.Id
+		if len(query.Alias) > 0 {
+			return query.Alias
+		} else {
+			return query.Id
+		}
 	}
 
 	data := map[string]string{}

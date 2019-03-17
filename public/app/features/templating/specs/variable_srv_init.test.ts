@@ -2,7 +2,7 @@ import '../all';
 
 import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
-import { DashboardModel } from '../../dashboard/dashboard_model';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
 
 describe('VariableSrv init', function(this: any) {
@@ -11,18 +11,20 @@ describe('VariableSrv init', function(this: any) {
       this.variables = vars;
     },
     variableInitialized: () => {},
-    updateTemplateData: () => {},
+    updateIndex: () => {},
     replace: str =>
       str.replace(this.regex, match => {
         return match;
       }),
   };
 
-  const $injector = {} as any;
-  const $rootscope = {
-    $on: () => {},
+  const timeSrv = {
+    timeRange: () => {
+      return { from: '2018-01-29', to: '2019-01-29' };
+    },
   };
 
+  const $injector = {} as any;
   let ctx = {} as any;
 
   function describeInitScenario(desc, fn) {
@@ -47,7 +49,8 @@ describe('VariableSrv init', function(this: any) {
           templateSrv,
         };
 
-        ctx.variableSrv = new VariableSrv($rootscope, $q, {}, $injector, templateSrv);
+        // @ts-ignore
+        ctx.variableSrv = new VariableSrv($q, {}, $injector, templateSrv, timeSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);
@@ -77,8 +80,8 @@ describe('VariableSrv init', function(this: any) {
           {
             name: 'apps',
             type: type,
-            current: { text: 'test', value: 'test' },
-            options: [{ text: 'test', value: 'test' }],
+            current: { text: 'Test', value: 'test' },
+            options: [{ text: 'Test', value: 'test' }],
           },
         ];
         scenario.urlParams['var-apps'] = 'new';
@@ -161,11 +164,11 @@ describe('VariableSrv init', function(this: any) {
           name: 'apps',
           type: 'query',
           multi: true,
-          current: { text: 'val1', value: 'val1' },
+          current: { text: 'Val1', value: 'val1' },
           options: [
-            { text: 'val1', value: 'val1' },
-            { text: 'val2', value: 'val2' },
-            { text: 'val3', value: 'val3', selected: true },
+            { text: 'Val1', value: 'val1' },
+            { text: 'Val2', value: 'val2' },
+            { text: 'Val3', value: 'val3', selected: true },
           ],
         },
       ];
@@ -177,7 +180,7 @@ describe('VariableSrv init', function(this: any) {
       expect(variable.current.value.length).toBe(2);
       expect(variable.current.value[0]).toBe('val2');
       expect(variable.current.value[1]).toBe('val1');
-      expect(variable.current.text).toBe('val2 + val1');
+      expect(variable.current.text).toBe('Val2 + Val1');
       expect(variable.options[0].selected).toBe(true);
       expect(variable.options[1].selected).toBe(true);
     });
@@ -187,6 +190,30 @@ describe('VariableSrv init', function(this: any) {
       expect(variable.options[2].selected).toBe(false);
     });
   });
+
+  describeInitScenario(
+    'when template variable is present in url multiple times and variables have no text',
+    scenario => {
+      scenario.setup(() => {
+        scenario.variables = [
+          {
+            name: 'apps',
+            type: 'query',
+            multi: true,
+          },
+        ];
+        scenario.urlParams['var-apps'] = ['val1', 'val2'];
+      });
+
+      it('should display concatenated values in text', () => {
+        const variable = ctx.variableSrv.variables[0];
+        expect(variable.current.value.length).toBe(2);
+        expect(variable.current.value[0]).toBe('val1');
+        expect(variable.current.value[1]).toBe('val2');
+        expect(variable.current.text).toBe('val1 + val2');
+      });
+    }
+  );
 
   describeInitScenario('when template variable is present in url multiple times using key/values', scenario => {
     scenario.setup(() => {

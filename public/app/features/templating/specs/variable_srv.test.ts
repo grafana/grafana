@@ -1,6 +1,6 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
-import { DashboardModel } from '../../dashboard/dashboard_model';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import moment from 'moment';
 import $q from 'q';
 
@@ -8,7 +8,9 @@ describe('VariableSrv', function(this: any) {
   const ctx = {
     datasourceSrv: {},
     timeSrv: {
-      timeRange: () => {},
+      timeRange: () => {
+        return { from: '2018-01-29', to: '2019-01-29' };
+      },
     },
     $rootScope: {
       $on: () => {},
@@ -21,7 +23,7 @@ describe('VariableSrv', function(this: any) {
       init: vars => {
         this.variables = vars;
       },
-      updateTemplateData: () => {},
+      updateIndex: () => {},
       replace: str =>
         str.replace(this.regex, match => {
           return match;
@@ -45,7 +47,7 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv(ctx.$rootScope, $q, ctx.$location, ctx.$injector, ctx.templateSrv);
+        ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {
@@ -493,15 +495,17 @@ describe('VariableSrv', function(this: any) {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'custom',
-        query: 'hej, hop, asd',
+        query: 'hej, hop, asd, escaped\\,var',
         name: 'test',
       };
     });
 
     it('should update options array', () => {
-      expect(scenario.variable.options.length).toBe(3);
+      expect(scenario.variable.options.length).toBe(4);
       expect(scenario.variable.options[0].text).toBe('hej');
       expect(scenario.variable.options[1].value).toBe('hop');
+      expect(scenario.variable.options[2].value).toBe('asd');
+      expect(scenario.variable.options[3].value).toBe('escaped,var');
     });
   });
 
