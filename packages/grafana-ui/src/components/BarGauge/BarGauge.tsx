@@ -23,7 +23,7 @@ export interface Props extends Themeable {
   prefix?: string;
   suffix?: string;
   decimals?: number;
-  displayMode: 'simple' | 'lcd';
+  displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -32,7 +32,7 @@ export class BarGauge extends PureComponent<Props> {
     minValue: 0,
     value: 100,
     unit: 'none',
-    displayMode: 'simple',
+    displayMode: 'basic',
     orientation: VizOrientation.Horizontal,
     thresholds: [],
     valueMappings: [],
@@ -47,10 +47,13 @@ export class BarGauge extends PureComponent<Props> {
     const formatFunc = getValueFormat(unit);
     const valueFormatted = formatFunc(numericValue, decimals);
 
-    if (displayMode === 'lcd') {
-      return this.renderLcdMode(valueFormatted, valuePercent);
-    } else {
-      return this.renderSimpleMode(valueFormatted, valuePercent);
+    switch (displayMode) {
+      case 'lcd':
+        return this.renderRetroBars(valueFormatted, valuePercent);
+      case 'basic':
+      case 'gradient':
+      default:
+        return this.renderBasicAndGradientBars(valueFormatted, valuePercent);
     }
   }
 
@@ -72,15 +75,15 @@ export class BarGauge extends PureComponent<Props> {
       return {
         value: color,
         border: color,
-        bar: tinycolor(color)
-          .setAlpha(0.3)
+        background: tinycolor(color)
+          .setAlpha(0.15)
           .toRgbString(),
       };
     }
 
     return {
       value: getColorFromHexRgbOrName('gray', theme.type),
-      bar: getColorFromHexRgbOrName('gray', theme.type),
+      background: getColorFromHexRgbOrName('gray', theme.type),
       border: getColorFromHexRgbOrName('gray', theme.type),
     };
   }
@@ -136,14 +139,15 @@ export class BarGauge extends PureComponent<Props> {
     return gradient + ')';
   }
 
-  renderSimpleMode(valueFormatted: string, valuePercent: number): ReactNode {
-    const { height, width } = this.props;
+  renderBasicAndGradientBars(valueFormatted: string, valuePercent: number): ReactNode {
+    const { height, width, displayMode } = this.props;
 
     const maxSize = this.size * BAR_SIZE_RATIO;
     const barSize = Math.max(valuePercent * maxSize, 0);
     const colors = this.getValueColors();
-    const spaceForText = this.isVertical ? width : this.size - maxSize;
+    const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
+    const isBasic = displayMode === 'basic';
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
@@ -151,26 +155,45 @@ export class BarGauge extends PureComponent<Props> {
       display: 'flex',
     };
 
-    const barStyles: CSSProperties = {};
+    const barStyles: CSSProperties = {
+      borderRadius: '3px',
+    };
 
-    // Custom styles for vertical orientation
     if (this.isVertical) {
+      // Custom styles for vertical orientation
       containerStyles.flexDirection = 'column';
       containerStyles.justifyContent = 'flex-end';
+      barStyles.transition = 'height 1s';
       barStyles.height = `${barSize}px`;
       barStyles.width = `${width}px`;
-      // barStyles.borderTop = `1px solid ${colors.border}`;
-      barStyles.background = this.getBarGradient(maxSize);
+      if (isBasic) {
+        // Basic styles
+        barStyles.background = `${colors.background}`;
+        barStyles.border = `1px solid ${colors.border}`;
+        barStyles.boxShadow = `0 0 4px ${colors.border}`;
+      } else {
+        // Gradient styles
+        barStyles.background = this.getBarGradient(maxSize);
+      }
     } else {
       // Custom styles for horizontal orientation
       containerStyles.flexDirection = 'row-reverse';
       containerStyles.justifyContent = 'flex-end';
       containerStyles.alignItems = 'center';
+      barStyles.transition = 'width 1s';
       barStyles.height = `${height}px`;
       barStyles.width = `${barSize}px`;
       barStyles.marginRight = '10px';
-      // barStyles.borderRight = `1px solid ${colors.border}`;
-      barStyles.background = this.getBarGradient(maxSize);
+
+      if (isBasic) {
+        // Basic styles
+        barStyles.background = `${colors.background}`;
+        barStyles.border = `1px solid ${colors.border}`;
+        barStyles.boxShadow = `0 0 4px ${colors.border}`;
+      } else {
+        // Gradient styles
+        barStyles.background = this.getBarGradient(maxSize);
+      }
     }
 
     return (
@@ -221,7 +244,7 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  renderLcdMode(valueFormatted: string, valuePercent: number): ReactNode {
+  renderRetroBars(valueFormatted: string, valuePercent: number): ReactNode {
     const { height, width, maxValue, minValue } = this.props;
 
     const valueRange = maxValue - minValue;
@@ -230,7 +253,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
-    const spaceForText = this.isVertical ? width : this.size - maxSize;
+    const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
     const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
 
     const containerStyles: CSSProperties = {
@@ -260,8 +283,6 @@ export class BarGauge extends PureComponent<Props> {
 
       if (cellColor.isLit) {
         cellStyles.boxShadow = `0 0 4px ${cellColor.border}`;
-        // cellStyles.border = `1px solid ${cellColor.border}`;
-        // cellStyles.background = `${cellColor.backgroundShade}`;
         cellStyles.backgroundImage = `radial-gradient(${cellColor.background} 10%, ${cellColor.backgroundShade})`;
       } else {
         cellStyles.backgroundColor = cellColor.background;
@@ -293,7 +314,7 @@ export class BarGauge extends PureComponent<Props> {
 
 interface BarColors {
   value: string;
-  bar: string;
+  background: string;
   border: string;
 }
 
