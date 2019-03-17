@@ -2,55 +2,46 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processSingleStatPanelData } from '@grafana/ui';
+import { DisplayValue, PanelProps, BarGauge } from '@grafana/ui';
 import { config } from 'app/core/config';
-
-// Components
-import { BarGauge, VizRepeater } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps, SingleStatValueInfo } from '@grafana/ui/src/types';
+import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
+import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
 
-interface Props extends PanelProps<BarGaugeOptions> {}
-
-export class BarGaugePanel extends PureComponent<Props> {
-  renderBarGauge(value: SingleStatValueInfo, width, height) {
-    const { replaceVariables, options } = this.props;
-    const { valueOptions } = options;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
+export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
 
     return (
       <BarGauge
-        value={value.value as number | null}
+        value={value}
         width={width}
         height={height}
-        prefix={prefix}
-        suffix={suffix}
         orientation={options.orientation}
-        unit={valueOptions.unit}
-        decimals={valueOptions.decimals}
         thresholds={options.thresholds}
-        valueMappings={options.valueMappings}
         theme={config.theme}
       />
     );
-  }
+  };
+
+  getProcessedValues = (): DisplayValue[] => {
+    return getSingleStatValues(this.props);
+  };
 
   render() {
-    const { panelData, options, width, height } = this.props;
-
-    const values = processSingleStatPanelData({
-      panelData: panelData,
-      stat: options.valueOptions.stat,
-    });
-
+    const { height, width, options, panelData } = this.props;
+    const { orientation } = options;
     return (
-      <VizRepeater height={height} width={width} values={values} orientation={options.orientation}>
-        {({ vizHeight, vizWidth, value }) => this.renderBarGauge(value, vizWidth, vizHeight)}
-      </VizRepeater>
+      <ProcessedValuesRepeater
+        getProcessedValues={this.getProcessedValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={panelData}
+        orientation={orientation}
+      />
     );
   }
 }

@@ -3,26 +3,21 @@ import React, { PureComponent, CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
+import { getColorFromHexRgbOrName, getThresholdForValue, DisplayValue } from '../../utils';
 
 // Types
-import { Themeable, TimeSeriesValue, Threshold, ValueMapping, VizOrientation } from '../../types';
+import { Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
 
 export interface Props extends Themeable {
   height: number;
-  unit: string;
   width: number;
   thresholds: Threshold[];
-  valueMappings: ValueMapping[];
-  value: TimeSeriesValue;
+  value: DisplayValue;
   maxValue: number;
   minValue: number;
   orientation: VizOrientation;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
 }
 
 /*
@@ -32,24 +27,18 @@ export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     maxValue: 100,
     minValue: 0,
-    value: 100,
-    unit: 'none',
+    value: {
+      text: '100',
+      numeric: 100,
+    },
     orientation: VizOrientation.Horizontal,
     thresholds: [],
-    valueMappings: [],
   };
-
-  getNumericValue(): number {
-    if (Number.isFinite(this.props.value as number)) {
-      return this.props.value as number;
-    }
-    return 0;
-  }
 
   getValueColors(): BarColors {
     const { thresholds, theme, value } = this.props;
 
-    const activeThreshold = getThresholdForValue(thresholds, value);
+    const activeThreshold = getThresholdForValue(thresholds, value.numeric);
 
     if (activeThreshold !== null) {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
@@ -78,7 +67,7 @@ export class BarGauge extends PureComponent<Props> {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
 
       // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value)) {
+      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return tinycolor(color)
           .setAlpha(0.15)
           .toRgbString();
@@ -217,18 +206,14 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   render() {
-    const { maxValue, minValue, orientation, unit, decimals } = this.props;
+    const { maxValue, minValue, orientation, value } = this.props;
 
-    const numericValue = this.getNumericValue();
-    const valuePercent = Math.min(numericValue / (maxValue - minValue), 1);
-
-    const formatFunc = getValueFormat(unit);
-    const valueFormatted = formatFunc(numericValue, decimals);
+    const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
     const vertical = orientation === 'vertical';
 
     return vertical
-      ? this.renderVerticalBar(valueFormatted, valuePercent)
-      : this.renderHorizontalLCD(valueFormatted, valuePercent);
+      ? this.renderVerticalBar(value.text, valuePercent)
+      : this.renderHorizontalLCD(value.text, valuePercent);
   }
 }
 
