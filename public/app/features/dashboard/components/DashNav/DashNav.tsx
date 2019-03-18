@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -15,11 +16,10 @@ import { Tooltip } from '@grafana/ui';
 import { updateLocation } from 'app/core/actions';
 
 // Types
+import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
+import { TimePicker } from '../TimePicker/TimePicker';
 import { DashboardModel } from '../../state';
-// import { TimePicker, RefreshPicker } from '@grafana/ui';
-// import moment from 'moment';
-// import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
-// import { TimePicker } from '../TimePicker/TimePicker';
+import { TimeRange } from '@grafana/ui/src/types';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -31,14 +31,22 @@ export interface Props {
   onAddPanel: () => void;
 }
 
-export class DashNav extends PureComponent<Props> {
+export interface State {
+  timePickerValue: TimeRange;
+}
+
+export class DashNav extends PureComponent<Props, State> {
   timePickerEl: HTMLElement;
   timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
+  timeSrv: TimeSrv = getTimeSrv();
 
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
+    this.state = {
+      timePickerValue: this.timeSrv.timeRange(),
+    };
   }
 
   componentDidMount() {
@@ -164,12 +172,37 @@ export class DashNav extends PureComponent<Props> {
     );
   }
 
+  onChangeTimePicker = (timeRange: TimeRange) => {
+    const { dashboard } = this.props;
+    const panel = dashboard.timepicker;
+    const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
+
+    const newRange = {
+      from: timeRange.raw.from,
+      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
+    };
+
+    this.timeSrv.setTime(newRange);
+    this.setState({
+      timePickerValue: timeRange,
+    });
+  };
+
   render() {
     const { dashboard, onAddPanel } = this.props;
+    const { timePickerValue } = this.state;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
-
     const snapshotUrl = snapshot && snapshot.originalUrl;
+    const TimePickerTooltipContent = (
+      <>
+        {dashboard.formatDate(timePickerValue.from)}
+        <br />
+        to
+        <br />
+        {dashboard.formatDate(timePickerValue.to)}
+      </>
+    );
 
     return (
       <div className="navbar">
@@ -259,14 +292,21 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
-        {/* <div className="navbar-buttons">
+        <div className="navbar-buttons">
           <TimePicker
             isTimezoneUtc={false}
-            value={{ from: moment(), to: moment(), raw: { from: 'now/d', to: 'now/d' } }}
-            onChange={() => {}}
-            onMoveBackward={() => {}}
-            onMoveForward={() => {}}
-            onZoom={() => {}}
+            value={this.state.timePickerValue}
+            onChange={this.onChangeTimePicker}
+            tooltipContent={TimePickerTooltipContent}
+            onMoveBackward={() => {
+              console.log('onMoveBackward');
+            }}
+            onMoveForward={() => {
+              console.log('onMoveForward');
+            }}
+            onZoom={() => {
+              console.log('onZoom');
+            }}
             selectOptions={[
               { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
               { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },
@@ -446,7 +486,7 @@ export class DashNav extends PureComponent<Props> {
             intervals={['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d']}
             initialValue={undefined}
           />
-        </div> */}
+        </div>
 
         <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
       </div>

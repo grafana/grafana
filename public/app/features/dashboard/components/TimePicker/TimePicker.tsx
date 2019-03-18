@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import { TimeRange, TimeOptions, TimeOption, SelectOptionItem, ButtonSelect } from '@grafana/ui';
-
+import { TimeRange, TimeOptions, TimeOption, SelectOptionItem, Tooltip } from '@grafana/ui';
+import { ButtonSelect } from '@grafana/ui/src/components/Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
+import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
 
 export interface Props {
   value: TimeRange;
@@ -16,6 +17,7 @@ export interface Props {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  tooltipContent: PopperContent<any>;
 }
 
 export class TimePicker extends PureComponent<Props> {
@@ -69,15 +71,20 @@ export class TimePicker extends PureComponent<Props> {
               <i className="fa fa-chevron-left" />
             </button>
           )}
-          <ButtonSelect
-            className="time-picker-button-select"
-            value={value}
-            label={rangeString}
-            options={options}
-            onChange={this.onSelectChanged}
-            components={{ Group: TimePickerOptionGroup }}
-            iconClass={'fa fa-clock-o fa-fw'}
-          />
+          <Tooltip content={this.props.tooltipContent}>
+            <div>
+              {/* Tooltip need real element */}
+              <ButtonSelect
+                className="time-picker-button-select"
+                value={value}
+                label={rangeString}
+                options={options}
+                onChange={this.onSelectChanged}
+                components={{ Group: TimePickerOptionGroup }}
+                iconClass={'fa fa-clock-o fa-fw'}
+              />
+            </div>
+          </Tooltip>
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
