@@ -5,4 +5,4 @@ export * from './plugin';
 export * from './datasource';
 export * from './theme';
 export * from './threshold';
-export * from './forms';
+export * from './input';
