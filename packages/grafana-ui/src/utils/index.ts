@@ -7,3 +7,4 @@ export * from './thresholds';
 export * from './string';
 export * from './deprecationWarning';
 export { getMappedValue } from './valueMappings';
+export * from './validate';
