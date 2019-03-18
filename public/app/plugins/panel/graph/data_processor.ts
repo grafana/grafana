@@ -4,7 +4,7 @@ import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
 export class DataProcessor {
-  constructor(private panel) {}
+  constructor(private panel, private dashboard) {}
 
   getSeriesList(options) {
     if (!options.dataList || options.dataList.length === 0) {
@@ -107,8 +107,14 @@ export class DataProcessor {
     const alias = seriesData.target;
 
     const colorIndex = index % colors.length;
+    const customColorsIndex = index % this.panel.colors.length;
+    const customDashColorsIndex = index % this.dashboard.colors.length;
 
-    const color = this.panel.aliasColors[alias] || colors[colorIndex];
+    const color =
+      this.panel.aliasColors[alias] ||
+      this.panel.colors[customColorsIndex] ||
+      this.dashboard.colors[customDashColorsIndex] ||
+      colors[colorIndex];
 
     const series = new TimeSeries({
       datapoints: datapoints,

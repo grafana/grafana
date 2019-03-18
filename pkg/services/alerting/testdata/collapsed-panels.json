@@ -64,6 +64,7 @@
         "notifications": []
       },
       "aliasColors": {},
+      "colors":[],
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -211,6 +212,7 @@
             "notifications": []
           },
           "aliasColors": {},
+          "colors":[],
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -332,6 +334,7 @@
             "notifications": []
           },
           "aliasColors": {},
+          "colors":[],
           "bars": false,
           "dashLength": 10,
           "dashes": false,
@@ -468,6 +471,7 @@
         "notifications": []
       },
       "aliasColors": {},
+      "colors": [],
       "bars": false,
       "dashLength": 10,
       "dashes": false,

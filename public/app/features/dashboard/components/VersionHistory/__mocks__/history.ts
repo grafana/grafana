@@ -75,6 +75,7 @@ export function restore(version, restoredFrom?) {
         hideControls: false,
         id: 1,
         links: [],
+        colors: [],
         restoredFrom: restoredFrom,
         rows: [
           {
@@ -83,6 +84,7 @@ export function restore(version, restoredFrom?) {
             panels: [
               {
                 aliasColors: {},
+                colors: [],
                 bars: false,
                 datasource: null,
                 fill: 1,

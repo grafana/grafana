@@ -42,7 +42,7 @@ export class DashboardModel {
   links: any;
   gnetId: any;
   panels: PanelModel[];
-
+  colors: [];
   // ------------------
   // not persisted
   // ------------------
@@ -89,6 +89,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
+    this.colors = data.colors || [];
 
     this.resetOriginalVariables();
     this.resetOriginalTime();

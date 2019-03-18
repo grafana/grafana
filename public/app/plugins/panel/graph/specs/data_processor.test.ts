@@ -5,7 +5,9 @@ describe('Graph DataProcessor', () => {
     xaxis: {},
   };
 
-  const processor = new DataProcessor(panel);
+  const dashboard: any = {};
+
+  const processor = new DataProcessor(panel, dashboard);
 
   describe('Given default xaxis options and query that returns docs', () => {
     beforeEach(() => {
