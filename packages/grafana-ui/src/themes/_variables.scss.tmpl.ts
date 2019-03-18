@@ -20,6 +20,8 @@ $enable-hover-media-query: false !default;
 $space-inset-md: ${theme.spacing.insetMd} !default;
 $space-inset-sm: ${theme.spacing.insetSm} !default;
 
+$space-inset-squish-md: ${theme.spacing.insetSquishMd} !default;
+
 $space-xxs: ${theme.spacing.xxs} !default;
 $space-xs: ${theme.spacing.xs} !default;
 $space-sm: ${theme.spacing.sm} !default;
@@ -136,12 +138,6 @@ $page-sidebar-margin: 56px;
 // -------------------------
 $link-decoration: none !default;
 $link-hover-decoration: none !default;
-
-// Tables
-//
-// Customizes the \`.table\` component with basic values, each used across all table variations.
-
-$table-cell-padding: 4px 10px !default;
 
 // Forms
 $input-line-height: 18px !default;
