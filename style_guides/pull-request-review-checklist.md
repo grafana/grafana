@@ -1,4 +1,4 @@
-# Frontend Review Checklist
+# Pull Request Review Checklist
 
 ## High level checks
 
@@ -15,19 +15,22 @@
 - [ ] The pull request contains necessary link(s) to issue(s).
 - [ ] The pull request contains commits with commit messages that are small and understandable.
 - [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
-- [ ] The pull request does not increase the number of `implicit any` errors.
-- [ ] The pull request does not contain uses of `any` or `{}` that are unexplainable.
-- [ ] The pull request does not contain large React component that could easily be split into several smaller components.
-- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
 
 ### Bug specific checks
 
 - [ ] The pull request contains only one commit if possible.
 - [ ] The pull request contains `closes: #Issue` or `fixes: #Issue` in pull request description.
 
+## Frontend specific checks
+
+- [ ] The pull request does not increase the number of `implicit any` errors.
+- [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
+- [ ] The pull request does not contain large React component that could easily be split into several smaller components.
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+
 ### Redux specific checks (skip if pull request does not contain Redux changes)
 
 - [ ] The pull request does not contain code that mutate state in reducers or thunks.
-- [ ] The pull request uses helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux.
-- [ ] The pull request uses `reducerTester` to test reducers.
+- [ ] The pull request uses helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. ([Redux framework](https://github.com/grafana/grafana/blob/master/style_guides/redux.md))
+- [ ] The pull request uses `reducerTester` to test reducers.([Redux framework](https://github.com/grafana/grafana/blob/master/style_guides/redux.md))
 - [ ] The pull request does not contain code that access reducers state slice directly, instead the code uses state selectors to access state.
