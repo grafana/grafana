@@ -19,7 +19,8 @@
   border-bottom: 1px solid $page-header-border-color;
 
   .gicon {
-    font-size: 30px;
+    width: 32px;
+    height: 32px;
     margin-right: $space-md;
   }
 
@@ -47,10 +48,10 @@
 
   .gicon {
     color: white;
-    height: 44px;
-    width: 53px;
+    height: 40px;
+    width: 48px;
     position: relative;
-    left: 5px;
+    left: 4px;
   }
 }
 

@@ -1,8 +1,8 @@
 .gicon {
   line-height: 1;
   display: inline-block;
-  width: 1.1057142857em;
-  height: 1.1057142857em;
+  width: 16px;
+  height: 16px;
   text-align: center;
   background-repeat: no-repeat;
   background-position: center;
@@ -17,11 +17,6 @@
   &:hover {
     opacity: 1;
   }
-}
-
-.mini {
-  width: 0.8em;
-  height: 0.8em;
 }
 
 .gicon-add-annotation {
