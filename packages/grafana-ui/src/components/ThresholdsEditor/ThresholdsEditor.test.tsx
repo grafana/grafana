@@ -161,7 +161,7 @@ describe('change threshold value', () => {
 });
 
 describe('on blur threshold value', () => {
-  it.only('should resort rows and update indexes', () => {
+  it('should resort rows and update indexes', () => {
     const { instance } = setup();
     const thresholds = [
       { index: 0, value: -Infinity, color: '#7EB26D' },
