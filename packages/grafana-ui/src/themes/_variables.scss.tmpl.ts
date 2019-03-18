@@ -17,12 +17,16 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-inset-md: ${theme.spacing.insetMd} !default;
+$space-inset-sm: ${theme.spacing.insetSm} !default;
+
 $space-xxs: ${theme.spacing.xxs} !default;
 $space-xs: ${theme.spacing.xs} !default;
 $space-sm: ${theme.spacing.sm} !default;
 $space-md: ${theme.spacing.md} !default;
 $space-lg: ${theme.spacing.lg} !default;
 $space-xl: ${theme.spacing.xl} !default;
+
 $spacer: ${theme.spacing.d} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
@@ -140,8 +144,6 @@ $link-hover-decoration: none !default;
 $table-cell-padding: 4px 10px !default;
 
 // Forms
-$input-padding-x: 10px !default;
-$input-padding-y: 8px !default;
 $input-line-height: 18px !default;
 
 $input-border-radius: 0 $border-radius $border-radius 0 !default;
@@ -151,7 +153,6 @@ $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
 $input-padding-x-lg: 20px !default;
-$input-padding-y-lg: 10px !default;
 
 $input-height: 35px !default;
 

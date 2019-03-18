@@ -265,7 +265,7 @@
 .dropdown-submenu > a::after {
   position: absolute;
   top: 35%;
-  right: $input-padding-x;
+  right: $space-sm;
   background-color: transparent;
   color: $text-color-weak;
   font: normal normal normal $font-size-sm/1 FontAwesome;
