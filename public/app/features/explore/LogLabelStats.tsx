@@ -11,7 +11,9 @@ function LogLabelStatsRow(logLabelStatsModel: LogLabelStatsModel) {
   return (
     <div className={className}>
       <div className="logs-stats-row__label">
-        <div className="logs-stats-row__value">{value}</div>
+        <div className="logs-stats-row__value" title={value}>
+          {value}
+        </div>
         <div className="logs-stats-row__count">{count}</div>
         <div className="logs-stats-row__percent">{percent}</div>
       </div>
