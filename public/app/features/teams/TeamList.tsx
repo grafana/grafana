@@ -92,7 +92,9 @@ export class TeamList extends PureComponent<Props, any> {
 
   renderTeamList() {
     const { teams, searchQuery, editorsCanAdmin, signedInUser } = this.props;
-    const disabledClass = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer ? ' disabled' : '';
+    const isCanAdminAndViewer = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer;
+    const disabledClass = isCanAdminAndViewer ? ' disabled' : '';
+    const newTeamHref = isCanAdminAndViewer ? '#' : 'org/teams/new';
 
     return (
       <>
@@ -109,7 +111,7 @@ export class TeamList extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className={`btn btn-primary${disabledClass}`} href="org/teams/new">
+          <a className={`btn btn-primary${disabledClass}`} href={newTeamHref}>
             New team
           </a>
         </div>
