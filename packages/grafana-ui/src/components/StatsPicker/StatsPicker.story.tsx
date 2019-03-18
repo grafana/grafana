@@ -6,6 +6,15 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { StatsPicker } from './StatsPicker';
 import { text, boolean } from '@storybook/addon-knobs';
 
+const getKnobs = () => {
+  return {
+    placeholder: text('Placeholder Text', ''),
+    defaultStat: text('Default Stat', ''),
+    allowMultiple: boolean('Allow Multiple', false),
+    initialStats: text('Initial Stats', ''),
+  };
+};
+
 interface State {
   stats: string[];
 }
@@ -19,12 +28,16 @@ export class WrapperWithState extends PureComponent<any, State> {
   }
 
   toStatsArray = (txt: string): string[] => {
+    if (!txt) {
+      return [];
+    }
     return txt.split(',').map(v => v.trim());
   };
 
   componentDidUpdate(prevProps: any) {
     const { initialReducers } = this.props;
     if (initialReducers !== prevProps.initialReducers) {
+      console.log('Changing initial reducers');
       this.setState({ stats: this.toStatsArray(initialReducers) });
     }
   }
@@ -48,13 +61,11 @@ export class WrapperWithState extends PureComponent<any, State> {
   }
 }
 
-const story = storiesOf('UI/TableReducePicker', module);
+const story = storiesOf('UI/StatsPicker', module);
 story.addDecorator(withCenteredStory);
 story.add('picker', () => {
-  const placeholder = text('Placeholder Text', '');
-  const defaultStat = text('Default Stat', '');
-  const allowMultiple = boolean('Allow Multiple', false);
-  const initialStats = text('Initial Stats', '');
+  const { placeholder, defaultStat, allowMultiple, initialStats } = getKnobs();
+
   return (
     <div>
       <WrapperWithState

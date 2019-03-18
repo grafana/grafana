@@ -42,18 +42,18 @@ export interface StatCalculatorInfo {
 
 /**
  * @param ids list of stat names or null to get all of them
- * @param notFound optional error object that will be filled with the names on unknown stats
  */
-export function getStatsCalculators(ids?: string[], notFound?: string[]): StatCalculatorInfo[] {
+export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
   if (ids === null || ids === undefined) {
+    if (!hasBuiltIndex) {
+      getById(StatID.mean);
+    }
     return listOfStats;
   }
   return ids.reduce((list, id) => {
     const stat = getById(id);
     if (stat) {
       list.push(stat);
-    } else if (notFound && id) {
-      notFound.push(id);
     }
     return list;
   }, new Array<StatCalculatorInfo>());
@@ -146,7 +146,13 @@ function getById(id: string): StatCalculatorInfo | undefined {
         standard: true,
         alias: 'total',
       },
-      { value: StatID.count, label: 'Count', description: 'Value Count', emptyInputResult: 0, standard: true },
+      {
+        value: StatID.count,
+        label: 'Count',
+        description: 'Number of values in response',
+        emptyInputResult: 0,
+        standard: true,
+      },
       {
         value: StatID.range,
         label: 'Range',
@@ -156,7 +162,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
       {
         value: StatID.delta,
         label: 'Delta',
-        description: 'Cumulative change in value', // HELP! not totally sure what this does
+        description: 'Cumulative change in value (??? help not really sure ???)',
         standard: true,
       },
       {

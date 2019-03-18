@@ -1,6 +1,8 @@
 import { parseCSV } from './processTableData';
 import { getStatsCalculators, StatID, calculateStats } from './statsCalculator';
 
+import _ from 'lodash';
+
 describe('Stats Calculators', () => {
   const basicTable = parseCSV('a,b,c\n10,20,30\n20,30,40');
 
@@ -21,20 +23,20 @@ describe('Stats Calculators', () => {
       // StatID.allIsZero,
       // StatID.allIsNull,
     ];
-    const notFound: string[] = [];
-    const stats = getStatsCalculators(names, notFound);
-    stats.forEach((stat, index) => {
-      expect(stat ? stat.value : '<missing>').toEqual(names[index]);
-    });
-    expect(notFound.length).toBe(0);
+    const stats = getStatsCalculators(names);
+    expect(stats.length).toBe(names.length);
   });
 
   it('should fail to load unknown stats', () => {
     const names = ['not a stat', StatID.max, StatID.min, 'also not a stat'];
-    const notFound: string[] = [];
-    const stats = getStatsCalculators(names, notFound);
+    const stats = getStatsCalculators(names);
     expect(stats.length).toBe(2);
+
+    const found = stats.map(v => v.value);
+    const notFound = _.difference(names, found);
     expect(notFound.length).toBe(2);
+
+    expect(notFound[0]).toBe('not a stat');
   });
 
   it('should calculate stats', () => {

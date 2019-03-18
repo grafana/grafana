@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import isArray from 'lodash/isArray';
+import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
@@ -33,12 +34,12 @@ export class StatsPicker extends PureComponent<Props> {
   checkInput = () => {
     const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
-    // Check that the selected reducers are all real
-    const notFound: string[] = [];
-    const current = getStatsCalculators(stats, notFound);
-    if (notFound.length > 0) {
-      console.warn('Unknown reducers', notFound, stats);
-      onChange(current.map(reducer => reducer.value));
+    const current = getStatsCalculators(stats);
+    if (current.length !== stats.length) {
+      const found = current.map(v => v.value);
+      const notFound = difference(stats, found);
+      console.warn('Unknown stats', notFound, stats);
+      onChange(current.map(stat => stat.value));
     }
 
     // Make sure there is only one
@@ -65,7 +66,6 @@ export class StatsPicker extends PureComponent<Props> {
   render() {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
     const current = getStatsCalculators(stats);
-
     return (
       <Select
         width={width}
