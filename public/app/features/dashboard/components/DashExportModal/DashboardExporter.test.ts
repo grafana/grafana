@@ -4,13 +4,16 @@ jest.mock('app/core/store', () => {
   };
 });
 
+// @ts-ignore
 import _ from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PanelPlugin } from 'app/types';
 
 describe('given dashboard with repeated panels', () => {
-  let dash, exported;
+  let dash: any, exported: any;
 
   beforeEach(done => {
     dash = {
@@ -89,25 +92,25 @@ describe('given dashboard with repeated panels', () => {
     config.buildInfo.version = '3.0.2';
 
     //Stubs test function calls
-    const datasourceSrvStub = { get: jest.fn(arg => getStub(arg)) };
+    const datasourceSrvStub = ({ get: jest.fn(arg => getStub(arg)) } as any) as DatasourceSrv;
 
     config.panels['graph'] = {
       id: 'graph',
       name: 'Graph',
       info: { version: '1.1.0' },
-    };
+    } as PanelPlugin;
 
     config.panels['table'] = {
       id: 'table',
       name: 'Table',
       info: { version: '1.1.1' },
-    };
+    } as PanelPlugin;
 
     config.panels['heatmap'] = {
       id: 'heatmap',
       name: 'Heatmap',
       info: { version: '1.1.2' },
-    };
+    } as PanelPlugin;
 
     dash = new DashboardModel(dash, {});
     const exporter = new DashboardExporter(datasourceSrvStub);
@@ -213,7 +216,7 @@ describe('given dashboard with repeated panels', () => {
 });
 
 // Stub responses
-const stubs = [];
+const stubs: { [key: string]: {} } = {};
 stubs['gfdb'] = {
   name: 'gfdb',
   meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
@@ -249,6 +252,6 @@ stubs['-- Grafana --'] = {
   },
 };
 
-function getStub(arg) {
+function getStub(arg: string) {
   return Promise.resolve(stubs[arg || 'gfdb']);
 }
