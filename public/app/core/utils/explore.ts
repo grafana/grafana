@@ -9,6 +9,7 @@ import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
 import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { getNextRefIdChar } from './query';
 
 // Types
 import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
@@ -23,7 +24,6 @@ import {
   ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
