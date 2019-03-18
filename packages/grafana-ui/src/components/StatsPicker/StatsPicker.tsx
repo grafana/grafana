@@ -4,19 +4,19 @@ import isArray from 'lodash/isArray';
 
 import { Select } from '../index';
 
-import { getTableReducers } from '../../utils/tableReducer';
+import { getStatsCalculators } from '../../utils/statsCalculator';
 import { SelectOptionItem } from '../Select/Select';
 
 interface Props {
   placeholder?: string;
-  onChange: (reducers: string[]) => void;
-  reducers: string[];
+  onChange: (stats: string[]) => void;
+  stats: string[];
   width?: number;
   allowMultiple?: boolean;
-  defaultReducer?: string;
+  defaultStat?: string;
 }
 
-export class TableReducePicker extends PureComponent<Props> {
+export class StatsPicker extends PureComponent<Props> {
   static defaultProps = {
     width: 12,
     allowMultiple: false,
@@ -31,25 +31,25 @@ export class TableReducePicker extends PureComponent<Props> {
   }
 
   checkInput = () => {
-    const { reducers, allowMultiple, defaultReducer, onChange } = this.props;
+    const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
     // Check that the selected reducers are all real
     const notFound: string[] = [];
-    const current = getTableReducers(reducers, notFound);
+    const current = getStatsCalculators(stats, notFound);
     if (notFound.length > 0) {
-      console.warn('Unknown reducers', notFound, reducers);
+      console.warn('Unknown reducers', notFound, stats);
       onChange(current.map(reducer => reducer.value));
     }
 
     // Make sure there is only one
-    if (!allowMultiple && reducers.length > 1) {
-      console.warn('Removing extra reducers', reducers);
-      onChange([reducers[0]]);
+    if (!allowMultiple && stats.length > 1) {
+      console.warn('Removing extra stat', stats);
+      onChange([stats[0]]);
     }
 
     // Set the reducer from callback
-    if (defaultReducer && reducers.length < 1) {
-      onChange([defaultReducer]);
+    if (defaultStat && stats.length < 1) {
+      onChange([defaultStat]);
     }
   };
 
@@ -63,17 +63,17 @@ export class TableReducePicker extends PureComponent<Props> {
   };
 
   render() {
-    const { width, reducers, allowMultiple, defaultReducer, placeholder } = this.props;
-    const current = getTableReducers(reducers);
+    const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
+    const current = getStatsCalculators(stats);
 
     return (
       <Select
         width={width}
         value={current}
-        isClearable={!defaultReducer}
+        isClearable={!defaultStat}
         isMulti={allowMultiple}
         isSearchable={true}
-        options={getTableReducers()}
+        options={getStatsCalculators()}
         placeholder={placeholder}
         onChange={this.onSelectionChange}
       />

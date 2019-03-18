@@ -3,45 +3,45 @@ import React, { PureComponent } from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TableReducePicker } from './TableReducePicker';
+import { StatsPicker } from './StatsPicker';
 import { text, boolean } from '@storybook/addon-knobs';
 
 interface State {
-  reducers: string[];
+  stats: string[];
 }
 
 export class WrapperWithState extends PureComponent<any, State> {
   constructor(props: any) {
     super(props);
     this.state = {
-      reducers: this.toReducersArray(props.initialReducers),
+      stats: this.toStatsArray(props.initialReducers),
     };
   }
 
-  toReducersArray = (txt: string): string[] => {
+  toStatsArray = (txt: string): string[] => {
     return txt.split(',').map(v => v.trim());
   };
 
   componentDidUpdate(prevProps: any) {
     const { initialReducers } = this.props;
     if (initialReducers !== prevProps.initialReducers) {
-      this.setState({ reducers: this.toReducersArray(initialReducers) });
+      this.setState({ stats: this.toStatsArray(initialReducers) });
     }
   }
 
   render() {
-    const { placeholder, defaultReducer, allowMultiple } = this.props;
-    const { reducers } = this.state;
+    const { placeholder, defaultStat, allowMultiple } = this.props;
+    const { stats } = this.state;
 
     return (
-      <TableReducePicker
+      <StatsPicker
         placeholder={placeholder}
-        defaultReducer={defaultReducer}
+        defaultStat={defaultStat}
         allowMultiple={allowMultiple}
-        reducers={reducers}
-        onChange={(reducers: string[]) => {
-          action('Picked:')(reducers);
-          this.setState({ reducers });
+        stats={stats}
+        onChange={(stats: string[]) => {
+          action('Picked:')(stats);
+          this.setState({ stats });
         }}
       />
     );
@@ -52,16 +52,16 @@ const story = storiesOf('UI/TableReducePicker', module);
 story.addDecorator(withCenteredStory);
 story.add('picker', () => {
   const placeholder = text('Placeholder Text', '');
-  const defaultReducer = text('Default Reducer', '');
+  const defaultStat = text('Default Stat', '');
   const allowMultiple = boolean('Allow Multiple', false);
-  const initialReducers = text('Initial Reducers', '');
+  const initialStats = text('Initial Stats', '');
   return (
     <div>
       <WrapperWithState
         placeholder={placeholder}
-        defaultReducer={defaultReducer}
+        defaultStat={defaultStat}
         allowMultiple={allowMultiple}
-        initialReducers={initialReducers}
+        initialStats={initialStats}
       />
     </div>
   );
