@@ -21,7 +21,9 @@ exports[`Render should render team members when sync enabled 1`] = `
   <Component
     featureToggle={false}
   >
-    <td>
+    <td
+      className="width-5 team-permissions"
+    >
       <div
         className="gf-form"
       >
@@ -72,7 +74,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <Component
     featureToggle={false}
   >
-    <td>
+    <td
+      className="width-5 team-permissions"
+    >
       <div
         className="gf-form"
       >
@@ -146,7 +150,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <Component
     featureToggle={true}
   >
-    <td>
+    <td
+      className="width-5 team-permissions"
+    >
       <div
         className="gf-form"
       >
@@ -220,7 +226,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <Component
     featureToggle={true}
   >
-    <td>
+    <td
+      className="width-5 team-permissions"
+    >
       <div
         className="gf-form"
       >

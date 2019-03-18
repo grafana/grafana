@@ -40,7 +40,7 @@ export class TeamMemberRow extends PureComponent<Props> {
 
     return (
       <WithFeatureToggle featureToggle={editorsCanAdmin}>
-        <td>
+        <td className="width-5 team-permissions">
           <div className="gf-form">
             {signedInUserIsTeamAdmin && (
               <Select

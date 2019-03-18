@@ -384,7 +384,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       />
       <a
         className="btn btn-primary disabled"
-        href="org/teams/new"
+        href="#"
       >
         New team
       </a>
