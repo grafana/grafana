@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
-import { getNextRefIdLetter } from 'app/core/utils/query';
+import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
 import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
@@ -131,7 +131,7 @@ export class PanelModel {
     if (this.targets) {
       for (const query of this.targets) {
         if (!query.refId) {
-          query.refId = getNextRefIdLetter(this.targets);
+          query.refId = getNextRefIdChar(this.targets);
         }
       }
     }
@@ -269,7 +269,7 @@ export class PanelModel {
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    query.refId = getNextRefIdLetter(this.targets);
+    query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
   }
 

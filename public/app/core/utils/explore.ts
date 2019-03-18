@@ -23,7 +23,7 @@ import {
   ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-import { getNextRefIdLetter } from './query';
+import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -227,7 +227,7 @@ export function generateKey(index = 0): string {
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
-  return { refId: getNextRefIdLetter(queries), key: generateKey(index) };
+  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
 /**
