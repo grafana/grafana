@@ -16,7 +16,7 @@ type TeamMember struct {
 	OrgId      int64
 	TeamId     int64
 	UserId     int64
-	External   bool
+	External   bool // Signals that the membership has been created by an external systems, such as LDAP
 	Permission PermissionType
 
 	Created time.Time
