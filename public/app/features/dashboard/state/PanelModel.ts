@@ -1,11 +1,13 @@
 // Libraries
 import _ from 'lodash';
 
-// Types
+// Utils
 import { Emitter } from 'app/core/utils/emitter';
+import { getNextRefIdLetter } from 'app/core/utils/query';
+
+// Types
 import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
-import { getNextRefIdLetter } from '../../../core/utils/query';
 
 export interface GridPos {
   x: number;
