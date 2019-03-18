@@ -1,9 +1,42 @@
-import config from 'app/core/config';
+// @ts-ignore
 import _ from 'lodash';
+
+import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { PanelModel } from 'app/features/dashboard/state';
+import { PanelPlugin } from 'app/types/plugins';
+
+interface Input {
+  name: string;
+  type: string;
+  label: string;
+  value: any;
+  description: string;
+}
+
+interface Requires {
+  [key: string]: {
+    type: string;
+    id: string;
+    name: string;
+    version: string;
+  };
+}
+
+interface DataSources {
+  [key: string]: {
+    name: string;
+    label: string;
+    description: string;
+    type: string;
+    pluginId: string;
+    pluginName: string;
+  };
+}
 
 export class DashboardExporter {
-  constructor(private datasourceSrv) {}
+  constructor(private datasourceSrv: DatasourceSrv) {}
 
   makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
@@ -18,19 +51,19 @@ export class DashboardExporter {
     // undo repeat cleanup
     dashboard.processRepeats();
 
-    const inputs = [];
-    const requires = {};
-    const datasources = {};
-    const promises = [];
-    const variableLookup: any = {};
+    const inputs: Input[] = [];
+    const requires: Requires = {};
+    const datasources: DataSources = {};
+    const promises: Array<Promise<void>> = [];
+    const variableLookup: { [key: string]: any } = {};
 
     for (const variable of saveModel.templating.list) {
       variableLookup[variable.name] = variable;
     }
 
-    const templateizeDatasourceUsage = obj => {
-      let datasource = obj.datasource;
-      let datasourceVariable = null;
+    const templateizeDatasourceUsage = (obj: any) => {
+      let datasource: string = obj.datasource;
+      let datasourceVariable: any = null;
 
       // ignore data source properties that contain a variable
       if (datasource && datasource.indexOf('$') === 0) {
@@ -74,7 +107,7 @@ export class DashboardExporter {
       );
     };
 
-    const processPanel = panel => {
+    const processPanel = (panel: PanelModel) => {
       if (panel.datasource !== undefined) {
         templateizeDatasourceUsage(panel);
       }
@@ -87,7 +120,7 @@ export class DashboardExporter {
         }
       }
 
-      const panelDef = config.panels[panel.type];
+      const panelDef: PanelPlugin = config.panels[panel.type];
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',
@@ -135,7 +168,7 @@ export class DashboardExporter {
 
     return Promise.all(promises)
       .then(() => {
-        _.each(datasources, (value, key) => {
+        _.each(datasources, (value: any) => {
           inputs.push(value);
         });
 
@@ -160,7 +193,7 @@ export class DashboardExporter {
         }
 
         // make inputs and requires a top thing
-        const newObj = {};
+        const newObj: { [key: string]: {} } = {};
         newObj['__inputs'] = inputs;
         newObj['__requires'] = _.sortBy(requires, ['id']);
 

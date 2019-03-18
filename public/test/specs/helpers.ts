@@ -3,6 +3,7 @@ import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelPlugin } from 'app/types';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -62,7 +63,7 @@ export function ControllerTestContext(this: any) {
         $rootScope.colors.push('#' + i);
       }
 
-      config.panels['test'] = { info: {} };
+      config.panels['test'] = { info: {} } as PanelPlugin;
       self.ctrl = $controller(
         Ctrl,
         { $scope: self.scope },
