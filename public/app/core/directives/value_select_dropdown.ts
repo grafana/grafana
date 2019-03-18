@@ -18,7 +18,7 @@ export class ValueSelectDropdownCtrl {
   onUpdated: any;
 
   /** @ngInject */
-  constructor(private $q) {}
+  constructor(private $q) { }
 
   show() {
     this.oldVariableText = this.variable.current.text;
@@ -233,12 +233,16 @@ export class ValueSelectDropdownCtrl {
 
   init() {
     this.selectedTags = this.variable.current.tags || [];
+    this.search = {
+      query: '',
+      options: []
+    };
     this.updateLinkText();
   }
 }
 
 /** @ngInject */
-export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
+export function valueSelectDropdown($compile, $window, $location, $q, $timeout, $rootScope) {
   return {
     scope: { dashboard: '=', variable: '=', onUpdated: '&' },
     templateUrl: 'public/app/partials/valueSelectDropdown.html',
@@ -249,6 +253,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
       const bodyEl = angular.element($window.document.body);
       const linkEl = elem.find('.variable-value-link');
       const inputEl = elem.find('input');
+      const originalPath = $location.path();
 
       function openDropdown() {
         inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
@@ -295,6 +300,40 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         },
         scope
       );
+
+      scope.$on('$locationChangeStart', (event, next) => {
+        if (originalPath === $location.path()) {
+          const queryParams = $location.search();
+          _.each(queryParams, (v, k) => {
+            if (k.indexOf('var-') !== 0) {
+              return;
+            }
+
+            const varName = k.slice('var-'.length);
+            if (scope.vm.variable.name !== varName) {
+              return;
+            }
+
+            scope.vm.oldVariableText = scope.vm.variable.current.text;
+            scope.vm.options = scope.vm.variable.options;
+            scope.vm.tags = _.map(scope.vm.variable.tags, value => {
+              let tag = { text: value, selected: false };
+              _.each(scope.vm.variable.current.tags, tagObj => {
+                if (tagObj.text === value) {
+                  tag = tagObj;
+                }
+              });
+              return tag;
+            });
+
+            const option = scope.vm.options.find((o) => o.text === v);
+            if (option) {
+              option.selected = true;
+              scope.vm.selectValue(option, {}, true, false);
+            }
+          });
+        }
+      });
 
       scope.vm.init();
     },
