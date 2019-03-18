@@ -152,8 +152,6 @@ $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-x-lg: 20px !default;
-
 $input-height: 35px !default;
 
 $cursor-disabled: not-allowed !default;
