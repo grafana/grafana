@@ -12,7 +12,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton, Input } from '@grafana/ui';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
@@ -143,7 +143,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             <div className="gf-form-inline">
               <div className="gf-form max-width-21">
                 <span className="gf-form-label">Key name</span>
-                <input
+                <Input
                   type="text"
                   className="gf-form-input"
                   value={newApiKey.name}
