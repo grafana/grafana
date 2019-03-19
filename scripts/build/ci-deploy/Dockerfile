@@ -10,7 +10,7 @@ FROM circleci/python:2.7-stretch
 
 USER root
 
-RUN pip install awscli && \
+RUN pip install -U awscli crcmod && \
     curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-222.0.0-linux-x86_64.tar.gz | \
       tar xvzf - -C /opt && \
     apt update && \
