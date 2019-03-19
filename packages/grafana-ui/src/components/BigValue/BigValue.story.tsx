@@ -9,7 +9,6 @@ const getKnobs = () => {
     value: text('value', 'Hello'),
     valueFontSize: number('valueFontSize', 120),
     prefix: text('prefix', ''),
-    sparkline: text('sparkline', '1,2,3,2,3,4,3,4'),
   };
 };
 
@@ -18,7 +17,7 @@ const BigValueStories = storiesOf('UI/BigValue/BigValue', module);
 BigValueStories.addDecorator(withCenteredStory);
 
 BigValueStories.add('Simple Value', () => {
-  const { value, prefix } = getKnobs();
+  const { value, prefix, valueFontSize } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
     width: 300,
@@ -26,6 +25,7 @@ BigValueStories.add('Simple Value', () => {
     value: {
       text: value,
       numeric: NaN,
+      fontSize: valueFontSize + '%',
     },
     prefix: prefix
       ? {
@@ -33,6 +33,5 @@ BigValueStories.add('Simple Value', () => {
           numeric: NaN,
         }
       : null,
-    // sparkline: [1, 2, 3, 2, 3, 3, 1, 2],
   });
 });
