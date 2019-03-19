@@ -32,8 +32,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   };
 
   render() {
-    const { height, width, options, panelData } = this.props;
-    const { orientation } = options;
+    const { height, width, options, panelData, renderCounter } = this.props;
     return (
       <ProcessedValuesRepeater
         getProcessedValues={this.getProcessedValues}
@@ -41,7 +40,8 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         width={width}
         height={height}
         source={panelData}
-        orientation={orientation}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
       />
     );
   }
