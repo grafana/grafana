@@ -1,21 +1,11 @@
-import { Threshold, ValueMapping } from '@grafana/ui';
+import { SingleStatBaseOptions } from '../singlestat2/types';
+import { VizOrientation } from '@grafana/ui';
 
-export interface GaugeOptions {
-  valueMappings: ValueMapping[];
+export interface GaugeOptions extends SingleStatBaseOptions {
   maxValue: number;
   minValue: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
-}
-
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
 }
 
 export const defaults: GaugeOptions = {
@@ -32,4 +22,5 @@ export const defaults: GaugeOptions = {
   },
   valueMappings: [],
   thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
+  orientation: VizOrientation.Auto,
 };

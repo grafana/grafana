@@ -25,6 +25,7 @@ export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
+export { Input, InputStatus } from './Input/Input';
 
 // Visualizations
 export { Gauge } from './Gauge/Gauge';

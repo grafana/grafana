@@ -127,7 +127,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { query, index } = action.payload;
 
       // Override path: queries are completely reset
-      const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(index) };
+      const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(state.queries) };
       const nextQueries = [...queries];
       nextQueries[index] = nextQuery;
 
@@ -267,7 +267,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         // Modify all queries
         nextQueries = queries.map((query, i) => ({
           ...modifier({ ...query }, modification),
-          ...generateEmptyQuery(i),
+          ...generateEmptyQuery(state.queries),
         }));
         // Discard all ongoing transactions
         nextQueryTransactions = [];
@@ -276,7 +276,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         nextQueries = queries.map((query, i) => {
           // Synchronize all queries with local query cache to ensure consistency
           // TODO still needed?
-          return i === index ? { ...modifier({ ...query }, modification), ...generateEmptyQuery(i) } : query;
+          return i === index
+            ? { ...modifier({ ...query }, modification), ...generateEmptyQuery(state.queries) }
+            : query;
         });
         nextQueryTransactions = queryTransactions
           // Consume the hint corresponding to the action

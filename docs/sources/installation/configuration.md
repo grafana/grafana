@@ -179,7 +179,6 @@ Path to the certificate key file (if `protocol` is set to `https`).
 
 Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
-<hr />
 
 <hr />
 
@@ -262,6 +261,19 @@ Set to `true` to log the sql calls and execution times.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to private.
 
+<hr />
+
+## [remote_cache]
+
+### type
+
+Either `redis`, `memcached` or `database` default is `database`
+
+### connstr
+
+The remote cache connection string. Leave empty when using `database` since it will use the primary database.
+Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+Memcache example: `127.0.0.1:11211`
 
 <hr />
 
@@ -396,6 +408,22 @@ Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
 ### session_life_time
 
 How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+
+<hr />
+
+## [dataproxy]
+
+### logging
+
+This enables data proxy logging, default is false.
+
+### timeout
+
+How long the data proxy should wait before timing out default is 30 (seconds)
+
+### send_user_header
+
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
 
 <hr />
 

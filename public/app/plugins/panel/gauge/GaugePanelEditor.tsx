@@ -9,9 +9,10 @@ import {
   ValueMapping,
 } from '@grafana/ui';
 
-import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { GaugeOptionsBox } from './GaugeOptionsBox';
-import { GaugeOptions, SingleStatValueOptions } from './types';
+import { GaugeOptions } from './types';
+import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
+import { SingleStatValueOptions } from '../singlestat2/types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>

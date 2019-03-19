@@ -1,24 +1,11 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import classNames from 'classnames';
-import { ValidationEvents, ValidationRule } from 'app/types';
-import { validate, hasValidationEvent } from 'app/core/utils/validate';
+import { validate, EventsWithValidation, hasValidationEvent } from '../../utils';
+import { ValidationEvents, ValidationRule } from '../../types';
 
 export enum InputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
-}
-
-export enum InputTypes {
-  Text = 'text',
-  Number = 'number',
-  Password = 'password',
-  Email = 'email',
-}
-
-export enum EventsWithValidation {
-  onBlur = 'onBlur',
-  onFocus = 'onFocus',
-  onChange = 'onChange',
 }
 
 interface Props extends React.HTMLProps<HTMLInputElement> {
@@ -28,7 +15,7 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
   // Override event props and append status as argument
   onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
   onFocus?: (event: React.FocusEvent<HTMLInputElement>, status?: InputStatus) => void;
-  onChange?: (event: React.FormEvent<HTMLInputElement>, status?: InputStatus) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
 }
 
 export class Input extends PureComponent<Props> {
@@ -49,24 +36,24 @@ export class Input extends PureComponent<Props> {
   }
 
   validatorAsync = (validationRules: ValidationRule[]) => {
-    return evt => {
+    return (evt: ChangeEvent<HTMLInputElement>) => {
       const errors = validate(evt.target.value, validationRules);
       this.setState(prevState => {
-        return {
-          ...prevState,
-          error: errors ? errors[0] : null,
-        };
+        return { ...prevState, error: errors ? errors[0] : null };
       });
     };
   };
 
-  populateEventPropsWithStatus = (restProps, validationEvents: ValidationEvents) => {
+  populateEventPropsWithStatus = (restProps: any, validationEvents: ValidationEvents | undefined) => {
     const inputElementProps = { ...restProps };
-    Object.keys(EventsWithValidation).forEach((eventName: EventsWithValidation) => {
-      if (hasValidationEvent(eventName, validationEvents) || restProps[eventName]) {
-        inputElementProps[eventName] = async evt => {
+    if (!validationEvents) {
+      return inputElementProps;
+    }
+    Object.keys(EventsWithValidation).forEach(eventName => {
+      if (hasValidationEvent(eventName as EventsWithValidation, validationEvents) || restProps[eventName]) {
+        inputElementProps[eventName] = async (evt: ChangeEvent<HTMLInputElement>) => {
           evt.persist(); // Needed for async. https://reactjs.org/docs/events.html#event-pooling
-          if (hasValidationEvent(eventName, validationEvents)) {
+          if (hasValidationEvent(eventName as EventsWithValidation, validationEvents)) {
             await this.validatorAsync(validationEvents[eventName]).apply(this, [evt]);
           }
           if (restProps[eventName]) {

@@ -133,6 +133,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", Wrap(GetUserPreferences))
 			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateUserPreferences))
+
+			userRoute.Get("/auth-tokens", Wrap(hs.GetUserAuthTokens))
+			userRoute.Post("/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.RevokeUserAuthToken))
 		})
 
 		// users (admin permission required)
@@ -375,6 +378,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), Wrap(PauseAllAlerts))
+
+		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
+		adminRoute.Get("/users/:id/auth-tokens", Wrap(hs.AdminGetUserAuthTokens))
+		adminRoute.Post("/users/:id/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
 	}, reqGrafanaAdmin)
 
 	// rendering

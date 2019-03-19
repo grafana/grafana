@@ -3,26 +3,21 @@ import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
+import { getColorFromHexRgbOrName, getThresholdForValue, DisplayValue } from '../../utils';
 
 // Types
-import { Themeable, TimeSeriesValue, Threshold, ValueMapping, VizOrientation } from '../../types';
+import { Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
 
 export interface Props extends Themeable {
   height: number;
-  unit: string;
   width: number;
   thresholds: Threshold[];
-  valueMappings: ValueMapping[];
-  value: TimeSeriesValue;
+  value: DisplayValue;
   maxValue: number;
   minValue: number;
   orientation: VizOrientation;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
@@ -30,44 +25,30 @@ export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     maxValue: 100,
     minValue: 0,
-    value: 100,
-    unit: 'none',
-    displayMode: 'basic',
+    value: {
+      text: '100',
+      numeric: 100,
+    },
+    displayMode: 'lcd',
     orientation: VizOrientation.Horizontal,
     thresholds: [],
-    valueMappings: [],
   };
 
   render() {
-    const { maxValue, minValue, unit, decimals, displayMode } = this.props;
-
-    const numericValue = this.getNumericValue();
-    const valuePercent = Math.min(numericValue / (maxValue - minValue), 1);
-
-    const formatFunc = getValueFormat(unit);
-    const valueFormatted = formatFunc(numericValue, decimals);
-
-    switch (displayMode) {
+    switch (this.props.displayMode) {
       case 'lcd':
-        return this.renderRetroBars(valueFormatted, valuePercent);
+        return this.renderRetroBars();
       case 'basic':
       case 'gradient':
       default:
-        return this.renderBasicAndGradientBars(valueFormatted, valuePercent);
+        return this.renderBasicAndGradientBars();
     }
-  }
-
-  getNumericValue(): number {
-    if (Number.isFinite(this.props.value as number)) {
-      return this.props.value as number;
-    }
-    return 0;
   }
 
   getValueColors(): BarColors {
     const { thresholds, theme, value } = this.props;
 
-    const activeThreshold = getThresholdForValue(thresholds, value);
+    const activeThreshold = getThresholdForValue(thresholds, value.numeric);
 
     if (activeThreshold !== null) {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
@@ -111,9 +92,8 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   getBarGradient(maxSize: number): string {
-    const { minValue, maxValue, thresholds } = this.props;
+    const { minValue, maxValue, thresholds, value } = this.props;
     const cssDirection = this.isVertical ? '0deg' : '90deg';
-    const currentValue = this.getNumericValue();
 
     let gradient = '';
     let lastpos = 0;
@@ -127,7 +107,7 @@ export class BarGauge extends PureComponent<Props> {
 
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else if (currentValue < threshold.value) {
+      } else if (value.numeric < threshold.value) {
         break;
       } else {
         lastpos = pos;
@@ -135,18 +115,18 @@ export class BarGauge extends PureComponent<Props> {
       }
     }
 
-    console.log(gradient);
     return gradient + ')';
   }
 
-  renderBasicAndGradientBars(valueFormatted: string, valuePercent: number): ReactNode {
-    const { height, width, displayMode } = this.props;
+  renderBasicAndGradientBars(): ReactNode {
+    const { height, width, displayMode, maxValue, minValue, value } = this.props;
 
+    const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
     const maxSize = this.size * BAR_SIZE_RATIO;
     const barSize = Math.max(valuePercent * maxSize, 0);
     const colors = this.getValueColors();
     const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
+    const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText);
     const isBasic = displayMode === 'basic';
 
     const containerStyles: CSSProperties = {
@@ -199,7 +179,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         <div className="bar-gauge__value" style={valueStyles}>
-          {valueFormatted}
+          {value.text}
         </div>
         <div style={barStyles} />
       </div>
@@ -214,7 +194,7 @@ export class BarGauge extends PureComponent<Props> {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
 
       // if we are past real value the cell is not "on"
-      if (value === null || (positionValue !== null && positionValue > value)) {
+      if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return {
           background: tinycolor(color)
             .setAlpha(0.15)
@@ -244,8 +224,8 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  renderRetroBars(valueFormatted: string, valuePercent: number): ReactNode {
-    const { height, width, maxValue, minValue } = this.props;
+  renderRetroBars(): ReactNode {
+    const { height, width, maxValue, minValue, value } = this.props;
 
     const valueRange = maxValue - minValue;
     const maxSize = this.size * BAR_SIZE_RATIO;
@@ -254,7 +234,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
     const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
-    const valueStyles = this.getValueStyles(valueFormatted, colors.value, spaceForText);
+    const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText);
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
@@ -305,7 +285,7 @@ export class BarGauge extends PureComponent<Props> {
       <div style={containerStyles}>
         {cells}
         <div className="bar-gauge__value" style={valueStyles}>
-          {valueFormatted}
+          {value.text}
         </div>
       </div>
     );

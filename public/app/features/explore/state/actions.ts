@@ -60,7 +60,6 @@ import {
   splitCloseAction,
   splitOpenAction,
   addQueryRowAction,
-  AddQueryRowPayload,
   toggleGraphAction,
   toggleLogsAction,
   toggleTableAction,
@@ -87,9 +86,12 @@ const updateExploreUIState = (exploreId, uiStateFragment: Partial<ExploreUIState
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): ActionOf<AddQueryRowPayload> {
-  const query = generateEmptyQuery(index + 1);
-  return addQueryRowAction({ exploreId, index, query });
+export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const query = generateEmptyQuery(getState().explore[exploreId].queries, index);
+
+    dispatch(addQueryRowAction({ exploreId, index, query }));
+  };
 }
 
 /**
@@ -126,10 +128,10 @@ export function changeQuery(
   index: number,
   override: boolean
 ): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch, getState) => {
     // Null query means reset
     if (query === null) {
-      query = { ...generateEmptyQuery(index) };
+      query = { ...generateEmptyQuery(getState().explore[exploreId].queries) };
     }
 
     dispatch(changeQueryAction({ exploreId, query, index, override }));
@@ -287,7 +289,7 @@ export function importQueries(
 
     const nextQueries = importedQueries.map((q, i) => ({
       ...q,
-      ...generateEmptyQuery(i),
+      ...generateEmptyQuery(queries),
     }));
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
@@ -629,9 +631,9 @@ export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkRes
  * Use this action for clicks on query examples. Triggers a query run.
  */
 export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch, getState) => {
     // Inject react keys into query objects
-    const queries = rawQueries.map(q => ({ ...q, ...generateEmptyQuery() }));
+    const queries = rawQueries.map(q => ({ ...q, ...generateEmptyQuery(getState().explore[exploreId].queries) }));
     dispatch(setQueriesAction({ exploreId, queries }));
     dispatch(runQueries(exploreId));
   };

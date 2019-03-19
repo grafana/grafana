@@ -13,7 +13,7 @@ export interface BuildInfo {
 
 export class Settings {
   datasources: any;
-  panels: PanelPlugin[];
+  panels: { [key: string]: PanelPlugin };
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;

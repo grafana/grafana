@@ -27,10 +27,13 @@ exports[`Render BarGauge with basic options should render 1`] = `
   <div
     style={
       Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.3)",
-        "borderRight": "1px solid #7EB26D",
+        "background": "rgba(126, 178, 109, 0.15)",
+        "border": "1px solid #7EB26D",
+        "borderRadius": "3px",
+        "boxShadow": "0 0 4px #7EB26D",
         "height": "300px",
         "marginRight": "10px",
+        "transition": "width 1s",
         "width": "60px",
       }
     }
