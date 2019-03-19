@@ -9,6 +9,8 @@ const getKnobs = () => {
     value: text('value', 'Hello'),
     valueFontSize: number('valueFontSize', 120),
     prefix: text('prefix', ''),
+    tooltip: text('tooltip', 'This is a tooltip'),
+    link: text('link', 'https://grafana.com/'),
   };
 };
 
@@ -17,7 +19,7 @@ const BigValueStories = storiesOf('UI/BigValue/BigValue', module);
 BigValueStories.addDecorator(withCenteredStory);
 
 BigValueStories.add('Simple Value', () => {
-  const { value, prefix, valueFontSize } = getKnobs();
+  const { value, prefix, valueFontSize, tooltip, link } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
     width: 300,
@@ -26,6 +28,8 @@ BigValueStories.add('Simple Value', () => {
       text: value,
       numeric: NaN,
       fontSize: valueFontSize + '%',
+      tooltip,
+      link,
     },
     prefix: prefix
       ? {

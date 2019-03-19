@@ -13,3 +13,11 @@
   font-size: 3em;
   font-weight: $font-weight-semi-bold;
 }
+
+.display-value-link {
+  border: 1px solid transparent;
+}
+
+.display-value-link:hover {
+  border: 1px solid $blue;
+}

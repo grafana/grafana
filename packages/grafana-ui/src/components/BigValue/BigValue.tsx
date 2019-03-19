@@ -7,6 +7,7 @@ import { DisplayValue, getColorFromHexRgbOrName } from '../../utils/index';
 
 // Types
 import { Themeable } from '../../types/index';
+import { DisplayValueLink } from './DisplayValueLink';
 
 export interface Sparkline {
   data: any[]; // [[number,number]]
@@ -122,15 +123,17 @@ export class BigValue extends PureComponent<Props> {
     }
 
     return (
-      <div className="big-value" style={{ width, height, backgroundColor }}>
-        <span className="big-value-container">
-          {this.renderText(prefix, '0px 2px 0px 0px')}
-          {this.renderText(value)}
-          {this.renderText(suffix)}
-        </span>
+      <DisplayValueLink value={value}>
+        <div className="big-value" style={{ width, height, backgroundColor }}>
+          <span className="big-value-container">
+            {this.renderText(prefix, '0px 2px 0px 0px')}
+            {this.renderText(value)}
+            {this.renderText(suffix)}
+          </span>
 
-        {sparkline && <div style={plotCss} ref={element => (this.canvasElement = element)} />}
-      </div>
+          {sparkline && <div style={plotCss} ref={element => (this.canvasElement = element)} />}
+        </div>
+      </DisplayValueLink>
     );
   }
 }

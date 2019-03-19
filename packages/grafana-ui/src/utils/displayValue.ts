@@ -5,12 +5,18 @@ import { getMappedValue } from './valueMappings';
 import { GrafanaTheme, GrafanaThemeType } from '../types';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 import moment from 'moment';
+import { ReactElement } from 'react';
+
+export type DisplayValueClick = () => void;
 
 export interface DisplayValue {
   text: string; // Show in the UI
   numeric: number; // Use isNaN to check if it is a real number
   color?: string; // color based on configs or Threshold
   fontSize?: string;
+  title?: string; // An optional title for this value
+  link?: string | DisplayValueClick; // URL or action
+  tooltip?: string | ReactElement<any>; // passed to Popper
 }
 
 export interface DisplayValueOptions {
