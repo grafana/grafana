@@ -58,33 +58,19 @@ module.exports = merge(common, {
     ]
   },
 
-  optimization: {
-    splitChunks: {
-      cacheGroups: {
-        manifest: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
-        },
-        vendor: {
-          chunks: "initial",
-          test: "vendor",
-          name: "vendor",
-          enforce: true
-        }
-      }
-    }
-  },
-
   plugins: [
     new CleanWebpackPlugin('../../public/build', { allowExternal: true }),
     new MiniCssExtractPlugin({
-      filename: "grafana.[name].css"
+      filename: "grafana.[name].[hash].css"
+    }),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error-template.html'),
+      inject: false,
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index.template.html'),
+      template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: 'body',
       chunks: ['manifest', 'vendor', 'app'],
     }),

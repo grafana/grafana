@@ -1,38 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Team List",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={true}
   />
-  <div
-    className="page-container page-body"
-  >
-    <EmptyListCTA
-      model={
-        Object {
-          "buttonIcon": "fa fa-plus",
-          "buttonLink": "org/teams/new",
-          "buttonTitle": " New team",
-          "proTip": "Assign folder and dashboard permissions to teams instead of users to ease administration.",
-          "proTipLink": "",
-          "proTipLinkTitle": "",
-          "proTipTarget": "_blank",
-          "title": "You haven't created any teams yet.",
-        }
-      }
-    />
-  </div>
-</div>
+</Page>
 `;
 
 exports[`Render should render teams table 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Team List",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
   >
     <div
       className="page-action-bar"
@@ -40,32 +41,22 @@ exports[`Render should render teams table 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <label
-          className="gf-form--has-input-icon gf-form--grow"
-        >
-          <input
-            className="gf-form-input"
-            onChange={[Function]}
-            placeholder="Search teams"
-            type="text"
-            value=""
-          />
-          <i
-            className="gf-form-input-icon fa fa-search"
-          />
-        </label>
+        <ForwardRef
+          inputClassName="gf-form-input"
+          labelClassName="gf-form--has-input-icon gf-form--grow"
+          onChange={[Function]}
+          placeholder="Search teams"
+          value=""
+        />
       </div>
       <div
         className="page-action-bar__spacer"
       />
       <a
-        className="btn btn-success"
+        className="btn btn-primary"
         href="org/teams/new"
       >
-        <i
-          className="fa fa-plus"
-        />
-         New team
+        New team
       </a>
     </div>
     <div
@@ -142,7 +133,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -192,7 +183,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -242,7 +233,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -292,7 +283,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
@@ -342,13 +333,13 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
-                onConfirmDelete={[Function]}
+                onConfirm={[Function]}
               />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;

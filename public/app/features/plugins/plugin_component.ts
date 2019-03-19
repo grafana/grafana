@@ -5,10 +5,8 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { importPluginModule } from './plugin_loader';
 
-import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
-
 /** @ngInject */
-function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache, $timeout) {
   function getTemplate(component) {
     if (component.template) {
       return $q.when(component.template);
@@ -69,7 +67,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    let panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    let panelCtrlPromise = Promise.resolve(null);
     if (panelInfo) {
       panelCtrlPromise = importPluginModule(panelInfo.module).then(panelModule => {
         return panelModule.PanelCtrl;
@@ -107,23 +105,17 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        const datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
-          scope.datasource = ds;
-
-          return importPluginModule(ds.meta.module).then(dsModule => {
-            return {
-              baseUrl: ds.meta.baseUrl,
-              name: 'query-ctrl-' + ds.meta.id,
-              bindings: { target: '=', panelCtrl: '=', datasource: '=' },
-              attrs: {
-                target: 'target',
-                'panel-ctrl': 'ctrl.panelCtrl',
-                datasource: 'datasource',
-              },
-              Component: dsModule.QueryCtrl,
-            };
-          });
+        const ds = scope.ctrl.datasource;
+        return $q.when({
+          baseUrl: ds.meta.baseUrl,
+          name: 'query-ctrl-' + ds.meta.id,
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
+          attrs: {
+            target: 'ctrl.target',
+            'panel-ctrl': 'ctrl',
+            datasource: 'ctrl.datasource',
+          },
+          Component: ds.pluginExports.QueryCtrl,
         });
       }
       // Annotations
@@ -144,19 +136,29 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
-        return importPluginModule(dsMeta.module).then((dsModule): any => {
-          if (!dsModule.ConfigCtrl) {
-            return { notFound: true };
-          }
+        return importPluginModule(dsMeta.module).then(
+          (dsModule): any => {
+            if (!dsModule.ConfigCtrl) {
+              return { notFound: true };
+            }
 
-          return {
-            baseUrl: dsMeta.baseUrl,
-            name: 'ds-config-' + dsMeta.id,
-            bindings: { meta: '=', current: '=' },
-            attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsModule.ConfigCtrl,
-          };
-        });
+            scope.$watch(
+              'ctrl.current',
+              () => {
+                scope.onModelChanged(scope.ctrl.current);
+              },
+              true
+            );
+
+            return {
+              baseUrl: dsMeta.baseUrl,
+              name: 'ds-config-' + dsMeta.id,
+              bindings: { meta: '=', current: '=' },
+              attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
+              Component: dsModule.ConfigCtrl,
+            };
+          }
+        );
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
@@ -207,10 +209,13 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
     // let a binding digest cycle complete before adding to dom
     setTimeout(() => {
-      elem.append(child);
       scope.$applyAsync(() => {
-        scope.$broadcast('component-did-mount');
-        scope.$broadcast('refresh');
+        elem.append(child);
+        setTimeout(() => {
+          scope.$applyAsync(() => {
+            scope.$broadcast('component-did-mount');
+          });
+        });
       });
     });
   }
@@ -245,7 +250,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
         .catch(err => {
-          $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
           console.log('Plugin component error', err);
         });
     },

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -34,11 +34,8 @@ func NewRuleReader() *DefaultRuleReader {
 func (arr *DefaultRuleReader) initReader() {
 	heartbeat := time.NewTicker(time.Second * 10)
 
-	for {
-		select {
-		case <-heartbeat.C:
-			arr.heartbeat()
-		}
+	for range heartbeat.C {
+		arr.heartbeat()
 	}
 }
 

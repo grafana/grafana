@@ -1,0 +1,17 @@
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - '2004:2004'
+      - '8083:8083'
+      - '8086:8086'
+    volumes:
+      - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+
+  fake-influxdb-data:
+    image: grafana/fake-data-gen
+    links:
+      - influxdb
+    environment:
+      FD_DATASOURCE: influxdb
+      FD_PORT: 8086

@@ -15,6 +15,14 @@ export class Edge {
   }
 
   link(inputNode: Node, outputNode: Node) {
+    if (!inputNode) {
+      throw Error('inputNode is required');
+    }
+
+    if (!outputNode) {
+      throw Error('outputNode is required');
+    }
+
     this.unlink();
     this.inputNode = inputNode;
     this.outputNode = outputNode;
@@ -152,7 +160,11 @@ export class Graph {
     for (let n = 0; n < inputArr.length; n++) {
       const i = inputArr[n];
       if (typeof i === 'string') {
-        inputNodes.push(this.getNode(i));
+        const n = this.getNode(i);
+        if (!n) {
+          throw Error(`cannot link input node named ${i} since it doesn't exist in graph`);
+        }
+        inputNodes.push(n);
       } else {
         inputNodes.push(i);
       }
@@ -161,7 +173,11 @@ export class Graph {
     for (let n = 0; n < outputArr.length; n++) {
       const i = outputArr[n];
       if (typeof i === 'string') {
-        outputNodes.push(this.getNode(i));
+        const n = this.getNode(i);
+        if (!n) {
+          throw Error(`cannot link output node named ${i} since it doesn't exist in graph`);
+        }
+        outputNodes.push(n);
       } else {
         outputNodes.push(i);
       }

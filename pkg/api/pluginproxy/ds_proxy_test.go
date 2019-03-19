@@ -81,9 +81,9 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			Convey("When matching route path", func() {
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method")
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
 				proxy.route = plugin.Routes[0]
-				proxy.applyRoute(req)
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 				Convey("should add headers and update url", func() {
 					So(req.URL.String(), ShouldEqual, "https://www.google.com/some/method")
@@ -92,9 +92,9 @@ func TestDSRouteRule(t *testing.T) {
 			})
 
 			Convey("When matching route path and has dynamic url", func() {
-				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method")
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/common/some/method", &setting.Cfg{})
 				proxy.route = plugin.Routes[3]
-				proxy.applyRoute(req)
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 				Convey("should add headers and interpolate the url", func() {
 					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method")
@@ -104,20 +104,20 @@ func TestDSRouteRule(t *testing.T) {
 
 			Convey("Validating request", func() {
 				Convey("plugin route with valid role", func() {
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method")
+					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
 					err := proxy.validateRequest()
 					So(err, ShouldBeNil)
 				})
 
 				Convey("plugin route with admin role and user is editor", func() {
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin")
+					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
 					err := proxy.validateRequest()
 					So(err, ShouldNotBeNil)
 				})
 
 				Convey("plugin route with admin role and user is admin", func() {
 					ctx.SignedInUser.OrgRole = m.ROLE_ADMIN
-					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin")
+					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
 					err := proxy.validateRequest()
 					So(err, ShouldBeNil)
 				})
@@ -186,9 +186,9 @@ func TestDSRouteRule(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					client = newFakeHTTPClient(json)
-					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
+					proxy1 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
 					proxy1.route = plugin.Routes[0]
-					proxy1.applyRoute(req)
+					ApplyRoute(proxy1.ctx.Req.Context(), req, proxy1.proxyPath, proxy1.route, proxy1.ds)
 
 					authorizationHeaderCall1 = req.Header.Get("Authorization")
 					So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
@@ -200,9 +200,9 @@ func TestDSRouteRule(t *testing.T) {
 
 						req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 						client = newFakeHTTPClient(json2)
-						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2")
+						proxy2 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken2", &setting.Cfg{})
 						proxy2.route = plugin.Routes[1]
-						proxy2.applyRoute(req)
+						ApplyRoute(proxy2.ctx.Req.Context(), req, proxy2.proxyPath, proxy2.route, proxy2.ds)
 
 						authorizationHeaderCall2 = req.Header.Get("Authorization")
 
@@ -215,9 +215,9 @@ func TestDSRouteRule(t *testing.T) {
 							req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
 
 							client = newFakeHTTPClient([]byte{})
-							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1")
+							proxy3 := NewDataSourceProxy(ds, plugin, ctx, "pathwithtoken1", &setting.Cfg{})
 							proxy3.route = plugin.Routes[0]
-							proxy3.applyRoute(req)
+							ApplyRoute(proxy3.ctx.Req.Context(), req, proxy3.proxyPath, proxy3.route, proxy3.ds)
 
 							authorizationHeaderCall3 := req.Header.Get("Authorization")
 							So(req.URL.String(), ShouldEqual, "https://api.nr1.io/some/path")
@@ -236,7 +236,7 @@ func TestDSRouteRule(t *testing.T) {
 			ds := &m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
 			ctx := &m.ReqContext{}
 
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render")
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
@@ -261,7 +261,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
 
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
@@ -291,7 +291,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
 			req := http.Request{URL: requestURL, Header: make(http.Header)}
@@ -317,7 +317,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
 			req := http.Request{URL: requestURL, Header: make(http.Header)}
@@ -329,18 +329,6 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("Should keep named cookies", func() {
 				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION_ID=test")
 			})
-		})
-
-		Convey("When interpolating string", func() {
-			data := templateData{
-				SecureJsonData: map[string]string{
-					"Test": "0asd+asd",
-				},
-			}
-
-			interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
-			So(err, ShouldBeNil)
-			So(interpolated, ShouldEqual, "0asd+asd")
 		})
 
 		Convey("When proxying a data source with custom headers specified", func() {
@@ -359,7 +347,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
 
 			requestURL, _ := url.Parse("http://grafana.com/sub")
 			req := http.Request{URL: requestURL, Header: make(http.Header)}
@@ -374,7 +362,92 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a custom datasource", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Type: "custom-datasource",
+				Url:  "http://host/root/",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+			req.Header.Add("Origin", "grafana.com")
+			req.Header.Add("Referer", "grafana.com")
+			req.Header.Add("X-Canary", "stillthere")
+			So(err, ShouldBeNil)
+
+			proxy.getDirector()(req)
+
+			Convey("Should keep user request (including trailing slash)", func() {
+				So(req.URL.String(), ShouldEqual, "http://host/root/path/to/folder/")
+			})
+
+			Convey("Origin and Referer headers should be dropped", func() {
+				So(req.Header.Get("Origin"), ShouldEqual, "")
+				So(req.Header.Get("Referer"), ShouldEqual, "")
+				So(req.Header.Get("X-Canary"), ShouldEqual, "stillthere")
+			})
+		})
+
+		Convey("When SendUserHeader config is enabled", func() {
+			req := getDatasourceProxiedRequest(
+				&m.ReqContext{
+					SignedInUser: &m.SignedInUser{
+						Login: "test_user",
+					},
+				},
+				&setting.Cfg{SendUserHeader: true},
+			)
+			Convey("Should add header with username", func() {
+				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "test_user")
+			})
+		})
+
+		Convey("When SendUserHeader config is disabled", func() {
+			req := getDatasourceProxiedRequest(
+				&m.ReqContext{
+					SignedInUser: &m.SignedInUser{
+						Login: "test_user",
+					},
+				},
+				&setting.Cfg{SendUserHeader: false},
+			)
+			Convey("Should not add header with username", func() {
+				// Get will return empty string even if header is not set
+				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
+			})
+		})
+
+		Convey("When SendUserHeader config is enabled but user is anonymous", func() {
+			req := getDatasourceProxiedRequest(
+				&m.ReqContext{
+					SignedInUser: &m.SignedInUser{IsAnonymous: true},
+				},
+				&setting.Cfg{SendUserHeader: true},
+			)
+			Convey("Should not add header with username", func() {
+				// Get will return empty string even if header is not set
+				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
+			})
+		})
 	})
+}
+
+// getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
+func getDatasourceProxiedRequest(ctx *m.ReqContext, cfg *setting.Cfg) *http.Request {
+	plugin := &plugins.DataSourcePlugin{}
+
+	ds := &m.DataSource{
+		Type: "custom",
+		Url:  "http://host/root/",
+	}
+
+	proxy := NewDataSourceProxy(ds, plugin, ctx, "", cfg)
+	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+	So(err, ShouldBeNil)
+
+	proxy.getDirector()(req)
+	return req
 }
 
 type httpClientStub struct {

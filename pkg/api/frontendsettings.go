@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -22,7 +22,20 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		orgDataSources = query.Result
+		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	datasources := make(map[string]interface{})
@@ -120,6 +133,10 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
+		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.EnableAlphaPanels {
+			continue
+		}
+
 		panels[panel.Id] = map[string]interface{}{
 			"module":       panel.Module,
 			"baseUrl":      panel.BaseUrl,
@@ -128,6 +145,7 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 			"info":         panel.Info,
 			"hideFromList": panel.HideFromList,
 			"sort":         getPanelSort(panel.Id),
+			"dataFormats":  panel.DataFormats,
 		}
 	}
 
@@ -148,6 +166,9 @@ func getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
+		"viewersCanEdit":             setting.ViewersCanEdit,
+		"editorsCanOwn":              hs.Cfg.EditorsCanOwn,
+		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
@@ -169,22 +190,26 @@ func getPanelSort(id string) int {
 		sort = 1
 	case "singlestat":
 		sort = 2
-	case "table":
+	case "gauge":
 		sort = 3
-	case "text":
+	case "bargauge":
 		sort = 4
-	case "heatmap":
+	case "table":
 		sort = 5
-	case "alertlist":
+	case "text":
 		sort = 6
-	case "dashlist":
+	case "heatmap":
 		sort = 7
+	case "alertlist":
+		sort = 8
+	case "dashlist":
+		sort = 9
 	}
 	return sort
 }
 
-func GetFrontendSettings(c *m.ReqContext) {
-	settings, err := getFrontendSettingsMap(c)
+func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
 		return

@@ -7,76 +7,111 @@
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
+<!---
 ![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
+-->
 
 ## Installation
-Head to [docs.grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
-the latest release.
-
-If you have any problems please read the [troubleshooting guide](http://docs.grafana.org/installation/troubleshooting/).
+Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
 
 ## Documentation & Support
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package yourself, or contribute - Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute - here is a guide for how to do that. You can always find
 the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.11
-- NodeJS LTS
+- Go (Latest Stable)
+  - bra [`go get github.com/Unknwon/bra`]
+- Node.js LTS
+  - yarn [`npm install -g yarn`]
 
-### Building the backend
+### Get the project
+
+**The project located in the go-path will be your working directory.**
+
 ```bash
 go get github.com/grafana/grafana
 cd $GOPATH/src/github.com/grafana/grafana
+```
+
+### Building
+
+#### The backend
+
+```bash
 go run build.go setup
 go run build.go build
 ```
 
-### Building frontend assets
+#### Frontend assets
 
-For this you need nodejs (v.6+).
+*For this you need Node.js (LTS version).*
 
-To build the assets, rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 ```bash
-npm install -g yarn
 yarn install --pure-lockfile
-yarn watch
+```
+
+### Run and rebuild on source change
+
+#### Backend
+
+To run the backend and rebuild on source change:
+
+```bash
+$GOPATH/bin/bra run
+```
+
+#### Frontend
+
+Rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
+
+```bash
+yarn start
 ```
 
 Build the assets, rebuild on file change with Hot Module Replacement (HMR), and serve them by webpack-dev-server (http://localhost:3333):
-```bash
-yarn start
-# OR set a theme
-env GRAFANA_THEME=light yarn start
-```
-Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.
 
-Run tests
+```bash
+yarn start:hot
+# OR set a theme
+env GRAFANA_THEME=light yarn start:hot
+```
+
+*Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.*
+
+Run tests and rebuild on source change:
+
 ```bash
 yarn jest
 ```
 
-### Recompile backend on source change
+**Open grafana in your browser (default: e.g. `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).**
 
-To rebuild on source change.
-```bash
-go get github.com/Unknwon/bra
-bra run
-```
+### Building a Docker image
 
-Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
+There are two different ways to build a Grafana docker image. If your machine is setup for Grafana development and you run linux/amd64 you can build just the image. Otherwise, there is the option to build Grafana completely within Docker.
 
-### Building a docker image (on linux/amd64)
+Run the image you have built using: `docker run --rm -p 3000:3000 grafana/grafana:dev`
 
-This builds a docker image from your local sources:
+#### Building on linux/amd64 (fast)
 
 1. Build the frontend `go run build.go build-frontend`
 2. Build the docker image `make build-docker-dev`
 
 The resulting image will be tagged as `grafana/grafana:dev`
+
+#### Building anywhere (slower)
+
+Choose this option to build on platforms other than linux/amd64 and/or not have to setup the Grafana development environment.
+
+1. `make build-docker-full` or `docker build -t grafana/grafana:dev .`
+
+The resulting image will be tagged as `grafana/grafana:dev`
+
+Notice: If you are using Docker for MacOS, be sure to set the memory limit to be larger than 2 GiB (at docker -> Preferences -> Advanced), otherwise `grunt build` may fail.
 
 ### Dev config
 
@@ -113,23 +148,13 @@ GRAFANA_TEST_DB=mysql go test ./pkg/...
 GRAFANA_TEST_DB=postgres go test ./pkg/...
 ```
 
-## Building custom docker image
-
-You can build a custom image using Docker, which doesn't require installing any dependencies besides docker itself.
-```bash
-git clone https://github.com/grafana/grafana
-cd grafana
-docker build -t grafana:dev .
-docker run -d --name=grafana -p 3000:3000 grafana:dev
-```
-
-Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
-
 ## Contribute
 
-If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
-And if you have time clone this repo and submit a pull request and help me make Grafana
+If you have any ideas for improvement or have found a bug, do not hesitate to open an issue.
+And if you have time, clone this repo and submit a pull request to help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
+
+Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 
 ## Plugin development
 
@@ -138,5 +163,5 @@ plugin development.
 
 ## License
 
-Grafana is distributed under Apache 2.0 License.
+Grafana is distributed under [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE.md).
 

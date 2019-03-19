@@ -3,8 +3,10 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -20,14 +22,32 @@ func init() {
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
+	protocol := "tcp"
+	if strings.HasPrefix(datasource.Url, "/") {
+		protocol = "unix"
+	}
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 		datasource.User,
 		datasource.Password,
-		"tcp",
+		protocol,
 		datasource.Url,
 		datasource.Database,
 	)
-	logger.Debug("getEngine", "connection", cnnstr)
+
+	tlsConfig, err := datasource.GetTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
+		tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
+		mysql.RegisterTLSConfig(tlsConfigString, tlsConfig)
+		cnnstr += "&tls=" + tlsConfigString
+	}
+
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mysql",

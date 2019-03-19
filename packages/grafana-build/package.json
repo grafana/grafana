@@ -1,0 +1,13 @@
+{
+  "name": "@grafana/build",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tslint": "echo \"Nothing to do\"",
+    "typecheck": "echo \"Nothing to do\""
+  },
+  "author": "Grafana Labs",
+  "license": "Apache-2.0"
+}

@@ -9,15 +9,16 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ldap.v3"
 )
 
 type ILdapConn interface {
 	Bind(username, password string) error
+	UnauthenticatedBind(username string) error
 	Search(*ldap.SearchRequest) (*ldap.SearchResult, error)
 	StartTLS(*tls.Config) error
 	Close()
@@ -185,7 +186,9 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
-			extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			}
 		}
 	}
 
@@ -216,8 +219,18 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 }
 
 func (a *ldapAuther) serverBind() error {
+	bindFn := func() error {
+		return a.conn.Bind(a.server.BindDN, a.server.BindPassword)
+	}
+
+	if a.server.BindPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(a.server.BindDN)
+		}
+	}
+
 	// bind_dn and bind_password to bind
-	if err := a.conn.Bind(a.server.BindDN, a.server.BindPassword); err != nil {
+	if err := bindFn(); err != nil {
 		a.log.Info("LDAP initial bind failed, %v", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -257,7 +270,17 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 		bindPath = fmt.Sprintf(a.server.BindDN, username)
 	}
 
-	if err := a.conn.Bind(bindPath, userPassword); err != nil {
+	bindFn := func() error {
+		return a.conn.Bind(bindPath, userPassword)
+	}
+
+	if userPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(bindPath)
+		}
+	}
+
+	if err := bindFn(); err != nil {
 		a.log.Info("Initial bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -271,24 +294,38 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	return nil
 }
 
+func appendIfNotEmpty(slice []string, values ...string) []string {
+	for _, v := range values {
+		if v != "" {
+			slice = append(slice, v)
+		}
+	}
+	return slice
+}
+
 func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	var searchResult *ldap.SearchResult
 	var err error
 
 	for _, searchBase := range a.server.SearchBaseDNs {
+		attributes := make([]string, 0)
+		inputs := a.server.Attr
+		attributes = appendIfNotEmpty(attributes,
+			inputs.Username,
+			inputs.Surname,
+			inputs.Email,
+			inputs.Name,
+			inputs.MemberOf)
+
 		searchReq := ldap.SearchRequest{
 			BaseDN:       searchBase,
 			Scope:        ldap.ScopeWholeSubtree,
 			DerefAliases: ldap.NeverDerefAliases,
-			Attributes: []string{
-				a.server.Attr.Username,
-				a.server.Attr.Surname,
-				a.server.Attr.Email,
-				a.server.Attr.Name,
-				a.server.Attr.MemberOf,
-			},
-			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
+			Attributes:   attributes,
+			Filter:       strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
+
+		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
 
 		searchResult, err = a.conn.Search(&searchReq)
 		if err != nil {
@@ -326,15 +363,19 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			a.log.Info("Searching for user's groups", "filter", filter)
 
+			// support old way of reading settings
+			groupIdAttribute := a.server.Attr.MemberOf
+			// but prefer dn attribute if default settings are used
+			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
+				groupIdAttribute = "dn"
+			}
+
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
 				Scope:        ldap.ScopeWholeSubtree,
 				DerefAliases: ldap.NeverDerefAliases,
-				Attributes: []string{
-					// Here MemberOf would be the thing that identifies the group, which is normally 'cn'
-					a.server.Attr.MemberOf,
-				},
-				Filter: filter,
+				Attributes:   []string{groupIdAttribute},
+				Filter:       filter,
 			}
 
 			groupSearchResult, err = a.conn.Search(&groupSearchReq)
@@ -344,7 +385,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					memberOf = append(memberOf, getLdapAttrN(groupIdAttribute, groupSearchResult, i))
 				}
 				break
 			}

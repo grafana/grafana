@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import SlideDown from 'app/core/components/Animations/SlideDown';
-import { UserPicker, User } from 'app/core/components/Picker/UserPicker';
-import DeleteButton from 'app/core/components/DeleteButton/DeleteButton';
-import { TeamMember } from '../../types';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { DeleteButton } from '@grafana/ui';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { TeamMember, User } from 'app/types';
 import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
 import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
   members: TeamMember[];
@@ -14,6 +16,7 @@ export interface Props {
   addTeamMember: typeof addTeamMember;
   removeTeamMember: typeof removeTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
+  syncEnabled: boolean;
 }
 
 export interface State {
@@ -31,8 +34,8 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.props.loadTeamMembers();
   }
 
-  onSearchQueryChange = event => {
-    this.props.setSearchMemberQuery(event.target.value);
+  onSearchQueryChange = (value: string) => {
+    this.props.setSearchMemberQuery(value);
   };
 
   onRemoveMember(member: TeamMember) {
@@ -52,7 +55,21 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.setState({ newTeamMember: null });
   };
 
-  renderMember(member: TeamMember) {
+  renderLabels(labels: string[]) {
+    if (!labels) {
+      return <td />;
+    }
+
+    return (
+      <td>
+        {labels.map(label => (
+          <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
+        ))}
+      </td>
+    );
+  }
+
+  renderMember(member: TeamMember, syncEnabled: boolean) {
     return (
       <tr key={member.userId}>
         <td className="width-4 text-center">
@@ -60,38 +77,34 @@ export class TeamMembers extends PureComponent<Props, State> {
         </td>
         <td>{member.login}</td>
         <td>{member.email}</td>
+        {syncEnabled && this.renderLabels(member.labels)}
         <td className="text-right">
-          <DeleteButton onConfirmDelete={() => this.onRemoveMember(member)} />
+          <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
         </td>
       </tr>
     );
   }
 
   render() {
-    const { newTeamMember, isAdding } = this.state;
-    const { searchMemberQuery, members } = this.props;
-    const newTeamMemberValue = newTeamMember && newTeamMember.id.toString();
-
+    const { isAdding } = this.state;
+    const { searchMemberQuery, members, syncEnabled } = this.props;
     return (
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <label className="gf-form--has-input-icon gf-form--grow">
-              <input
-                type="text"
-                className="gf-form-input"
-                placeholder="Search members"
-                value={searchMemberQuery}
-                onChange={this.onSearchQueryChange}
-              />
-              <i className="gf-form-input-icon fa fa-search" />
-            </label>
+            <FilterInput
+              labelClassName="gf-form--has-input-icon gf-form--grow"
+              inputClassName="gf-form-input"
+              placeholder="Search members"
+              value={searchMemberQuery}
+              onChange={this.onSearchQueryChange}
+            />
           </div>
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-success pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            <i className="fa fa-plus" /> Add a member
+          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+            Add member
           </button>
         </div>
 
@@ -100,12 +113,11 @@ export class TeamMembers extends PureComponent<Props, State> {
             <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
               <i className="fa fa-close" />
             </button>
-            <h5>Add Team Member</h5>
+            <h5>Add team member</h5>
             <div className="gf-form-inline">
-              <UserPicker onSelected={this.onUserSelected} className="width-30" value={newTeamMemberValue} />
-
+              <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
-                <button className="btn btn-success gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                <button className="btn btn-primary gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
                 </button>
               )}
@@ -120,10 +132,11 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
+                {syncEnabled && <th />}
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{members && members.map(member => this.renderMember(member))}</tbody>
+            <tbody>{members && members.map(member => this.renderMember(member, syncEnabled))}</tbody>
           </table>
         </div>
       </div>
@@ -145,4 +158,7 @@ const mapDispatchToProps = {
   setSearchMemberQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamMembers);

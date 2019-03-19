@@ -10,6 +10,31 @@ describe('Prometheus Result Transformer', () => {
     ctx.resultTransformer = new ResultTransformer(ctx.templateSrv);
   });
 
+  describe('When nothing is returned', () => {
+    test('should return empty series', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null,
+        },
+      };
+      const series = ctx.resultTransformer.transform({ data: response }, {});
+      expect(series).toEqual([]);
+    });
+    test('should return empty table', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: '',
+          result: null,
+        },
+      };
+      const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });
+      expect(table).toMatchObject([{ type: 'table', rows: [] }]);
+    });
+  });
+
   describe('When resultFormat is table', () => {
     const response = {
       status: 'success',
@@ -41,11 +66,12 @@ describe('Prometheus Result Transformer', () => {
       ]);
       expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
-        { text: '__name__' },
-        { text: 'instance' },
+        { text: '__name__', filterable: true },
+        { text: 'instance', filterable: true },
         { text: 'job' },
         { text: 'Value' },
       ]);
+      expect(table.columns[4].filterable).toBeUndefined();
     });
 
     it('should column title include refId if response count is more than 2', () => {

@@ -1,11 +1,11 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 import SideMenuDropDown from './SideMenuDropDown';
 
 export interface Props {
   link: any;
 }
 
-const TopSectionItem: SFC<Props> = props => {
+const TopSectionItem: FC<Props> = props => {
   const { link } = props;
   return (
     <div className="sidemenu-item dropdown">
@@ -15,7 +15,7 @@ const TopSectionItem: SFC<Props> = props => {
           {link.img && <img src={link.img} />}
         </span>
       </a>
-      {link.children && <SideMenuDropDown link={link} />}
+      <SideMenuDropDown link={link} />
     </div>
   );
 };

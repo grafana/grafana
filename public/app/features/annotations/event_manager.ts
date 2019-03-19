@@ -1,15 +1,17 @@
 import _ from 'lodash';
 import moment from 'moment';
 import tinycolor from 'tinycolor2';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { AnnotationEvent } from './event';
 import {
   OK_COLOR,
   ALERTING_COLOR,
   NO_DATA_COLOR,
+  PENDING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
   REGION_FILL_ALPHA,
-} from 'app/core/utils/colors';
+} from '@grafana/ui';
+
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from './event';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -68,6 +70,11 @@ export class EventManager {
       },
       $__no_data: {
         color: NO_DATA_COLOR,
+        position: 'BOTTOM',
+        markerSize: 5,
+      },
+      $__pending: {
+        color: PENDING_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },

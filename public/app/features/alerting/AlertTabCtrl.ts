@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import coreModule from 'app/core/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
@@ -8,8 +9,6 @@ import appEvents from 'app/core/app_events';
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  testing: boolean;
-  testResult: any;
   subTabIndex: number;
   conditionTypes: any;
   alert: any;
@@ -44,6 +43,7 @@ export class AlertTabCtrl {
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
+    this.panelCtrl._enableAlert = this.enable;
   }
 
   $onInit() {
@@ -113,7 +113,7 @@ export class AlertTabCtrl {
   }
 
   getNotifications() {
-    return Promise.resolve(
+    return this.$q.when(
       this.notifications.map(item => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
@@ -140,17 +140,25 @@ export class AlertTabCtrl {
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
       isDefault: false,
+      uid: model.uid,
     });
-    this.alert.notifications.push({ id: model.id });
+
+    // avoid duplicates using both id and uid to be backwards compatible.
+    if (!_.find(this.alert.notifications, n => n.id === model.id || n.uid === model.uid)) {
+      this.alert.notifications.push({ uid: model.uid });
+    }
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
     this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+    this.addNotificationSegment.fake = true;
   }
 
-  removeNotification(index) {
-    this.alert.notifications.splice(index, 1);
-    this.alertNotifications.splice(index, 1);
+  removeNotification(an) {
+    // remove notifiers refeered to by id and uid to support notifiers added
+    // before and after we added support for uid
+    _.remove(this.alert.notifications, n => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, n => n.uid === an.uid || n.id === an.id);
   }
 
   initModel() {
@@ -166,9 +174,10 @@ export class AlertTabCtrl {
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
     alert.executionErrorState = alert.executionErrorState || config.alertingErrorOrTimeout;
-    alert.frequency = alert.frequency || '60s';
+    alert.frequency = alert.frequency || '1m';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
+    alert.for = alert.for || '0m';
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -185,7 +194,14 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
-      const model = _.find(this.notifications, { id: addedNotification.id });
+      // lookup notifier type by uid
+      let model = _.find(this.notifications, { uid: addedNotification.uid });
+
+      // fallback to using id if uid is missing
+      if (!model) {
+        model = _.find(this.notifications, { id: addedNotification.id });
+      }
+
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
@@ -260,7 +276,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
+        } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
@@ -351,10 +367,11 @@ export class AlertTabCtrl {
     });
   }
 
-  enable() {
+  enable = () => {
     this.panel.alert = {};
     this.initModel();
-  }
+    this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
+  };
 
   evaluatorParamsChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);
@@ -401,21 +418,6 @@ export class AlertTabCtrl {
       },
     });
   }
-
-  test() {
-    this.testing = true;
-    this.testResult = false;
-
-    const payload = {
-      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
-      panelId: this.panelCtrl.panel.id,
-    };
-
-    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = res;
-      this.testing = false;
-    });
-  }
 }
 
 /** @ngInject */
@@ -428,3 +430,5 @@ export function alertTab() {
     controller: AlertTabCtrl,
   };
 }
+
+coreModule.directive('alertTab', alertTab);

@@ -256,7 +256,7 @@ func (j *Json) StringArray() ([]string, error) {
 
 // MustArray guarantees the return of a `[]interface{}` (with optional default)
 //
-// useful when you want to interate over array values in a succinct manner:
+// useful when you want to iterate over array values in a succinct manner:
 //		for i, v := range js.Get("results").MustArray() {
 //			fmt.Println(i, v)
 //		}
@@ -281,7 +281,7 @@ func (j *Json) MustArray(args ...[]interface{}) []interface{} {
 
 // MustMap guarantees the return of a `map[string]interface{}` (with optional default)
 //
-// useful when you want to interate over map values in a succinct manner:
+// useful when you want to iterate over map values in a succinct manner:
 //		for k, v := range js.Get("dictionary").MustMap() {
 //			fmt.Println(k, v)
 //		}
@@ -329,7 +329,7 @@ func (j *Json) MustString(args ...string) string {
 
 // MustStringArray guarantees the return of a `[]string` (with optional default)
 //
-// useful when you want to interate over array values in a succinct manner:
+// useful when you want to iterate over array values in a succinct manner:
 //		for i, s := range js.Get("results").MustStringArray() {
 //			fmt.Println(i, s)
 //		}

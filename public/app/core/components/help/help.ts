@@ -27,6 +27,7 @@ export class HelpCtrl {
         { keys: ['d', 'C'], description: 'Collapse all rows' },
         { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
         { keys: ['mod+o'], description: 'Toggle shared graph crosshair' },
+        { keys: ['d', 'l'], description: 'Toggle all panel legends' },
       ],
       'Focused Panel': [
         { keys: ['e'], description: 'Toggle panel edit view' },
@@ -34,6 +35,7 @@ export class HelpCtrl {
         { keys: ['p', 's'], description: 'Open Panel Share Modal' },
         { keys: ['p', 'd'], description: 'Duplicate Panel' },
         { keys: ['p', 'r'], description: 'Remove Panel' },
+        { keys: ['p', 'l'], description: 'Toggle panel legend' },
       ],
       'Time Range': [
         { keys: ['t', 'z'], description: 'Zoom out time range' },

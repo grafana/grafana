@@ -70,7 +70,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 		return nil, ErrTimeout
 	}
 
-	// if we didnt get a 200 response, something went wrong.
+	// if we didn't get a 200 response, something went wrong.
 	if resp.StatusCode != http.StatusOK {
 		rs.log.Error("Remote rendering request failed", "error", resp.Status)
 		return nil, fmt.Errorf("Remote rendering request failed. %d: %s", resp.StatusCode, resp.Status)
@@ -83,7 +83,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, opts Opts) (*Rend
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		// check that we didnt timeout while receiving the response.
+		// check that we didn't timeout while receiving the response.
 		if reqContext.Err() == context.DeadlineExceeded {
 			rs.log.Info("Rendering timed out")
 			return nil, ErrTimeout

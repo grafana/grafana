@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="page-action-bar"
+>
+  <div
+    className="gf-form gf-form--grow"
+  >
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
+    <div
+      className="page-action-bar__spacer"
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should render pending invites button 1`] = `
+<div
+  className="page-action-bar"
+>
+  <div
+    className="gf-form gf-form--grow"
+  >
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
+    <div
+      style={
+        Object {
+          "marginLeft": "1rem",
+        }
+      }
+    >
+      <button
+        className="btn toggle-btn active"
+        key="users"
+        onClick={[MockFunction]}
+      >
+        Users
+      </button>
+      <button
+        className="btn toggle-btn"
+        key="pending-invites"
+        onClick={[MockFunction]}
+      >
+        Pending Invites (
+        5
+        )
+      </button>
+    </div>
+    <div
+      className="page-action-bar__spacer"
+    />
+  </div>
+</div>
+`;
+
+exports[`Render should show external user management button 1`] = `
+<div
+  className="page-action-bar"
+>
+  <div
+    className="gf-form gf-form--grow"
+  >
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
+    <div
+      className="page-action-bar__spacer"
+    />
+    <a
+      className="btn btn-primary"
+      href="some/url"
+      target="_blank"
+    >
+      <i
+        className="fa fa-external-link-square"
+      />
+       
+    </a>
+  </div>
+</div>
+`;
+
+exports[`Render should show invite button 1`] = `
+<div
+  className="page-action-bar"
+>
+  <div
+    className="gf-form gf-form--grow"
+  >
+    <ForwardRef
+      inputClassName="gf-form-input width-20"
+      labelClassName="gf-form--has-input-icon"
+      onChange={[MockFunction]}
+      placeholder="Filter by name or type"
+      value=""
+    />
+    <div
+      className="page-action-bar__spacer"
+    />
+    <a
+      className="btn btn-primary"
+      href="org/users/invite"
+    >
+      <span>
+        Invite
+      </span>
+    </a>
+  </div>
+</div>
+`;

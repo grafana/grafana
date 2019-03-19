@@ -127,9 +127,12 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 ### protocol
 
-`http` or `https`
+`http`,`https` or `socket`
 
 > **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
+### socket
+Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
 
@@ -157,6 +160,13 @@ The path to the directory where the front end files (HTML, JS, and CSS
 files). Default to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
+### enable_gzip
+
+Set this option to `true` to enable HTTP compression, this can improve
+transfer speed and bandwidth utilization. It is recommended that most
+users set it to `true`. By default it is set to `false` for compatibility
+reasons.
+
 ### cert_file
 
 Path to the certificate file (if `protocol` is set to `https`).
@@ -169,7 +179,6 @@ Path to the certificate key file (if `protocol` is set to `https`).
 
 Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
-<hr />
 
 <hr />
 
@@ -247,6 +256,25 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 Set to `true` to log the sql calls and execution times.
 
+### cache_mode
+
+For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
+Defaults to private.
+
+<hr />
+
+## [remote_cache]
+
+### type
+
+Either `redis`, `memcached` or `database` default is `database`
+
+### connstr
+
+The remote cache connection string. Leave empty when using `database` since it will use the primary database.
+Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+Memcache example: `127.0.0.1:11211`
+
 <hr />
 
 ## [security]
@@ -277,6 +305,14 @@ Default is `false`.
 ### data_source_proxy_whitelist
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
 
 <hr />
 
@@ -317,6 +353,14 @@ options are `Admin` and `Editor`. e.g. :
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
+
+### login_hint
+
+Text used as placeholder text on login page for login/username input.
+
+### password_hint
+
+Text used as placeholder text on login page for password input.
 
 <hr>
 
@@ -367,6 +411,22 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 <hr />
 
+## [dataproxy]
+
+### logging
+
+This enables data proxy logging, default is false.
+
+### timeout
+
+How long the data proxy should wait before timing out default is 30 (seconds)
+
+### send_user_header
+
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
+
+<hr />
+
 ## [analytics]
 
 ### reporting_enabled
@@ -381,6 +441,10 @@ value is `true`.
 
 If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
+
+### check_for_updates
+
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 
@@ -450,6 +514,12 @@ Ex `filters = sqlstore:debug`
 
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
+
+### basic_auth_username
+If set configures the username to use for basic authentication on the metrics endpoint.
+
+### basic_auth_password
+If set configures the password to use for basic authentication on the metrics endpoint.
 
 ### interval_seconds
 
@@ -566,3 +636,22 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 > Available in 5.3  and above
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
+
+### concurrent_render_limit
+
+> Available in 5.3  and above
+
+Alert notifications can include images, but rendering many images at the same time can overload the server.
+This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
+value is `5`.
+
+## [panels]
+
+### enable_alpha
+Set to true if you want to test panels that are not yet ready for general usage.
+
+### disable_sanitize_html
+If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
+is false. This settings was introduced in Grafana v6.0.
+
+

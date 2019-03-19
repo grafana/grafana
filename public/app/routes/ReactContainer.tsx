@@ -1,33 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'mobx-react';
-import { Provider as ReduxProvider } from 'react-redux';
+import { Provider } from 'react-redux';
 
 import coreModule from 'app/core/core_module';
-import { store } from 'app/stores/store';
-import { store as reduxStore } from 'app/stores/configureStore';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
 
 function WrapInProvider(store, Component, props) {
   return (
-    <ReduxProvider store={reduxStore}>
-      <Provider {...store}>
-        <Component {...props} />
-      </Provider>
-    </ReduxProvider>
+    <Provider store={store}>
+      <Component {...props} />
+    </Provider>
   );
 }
 
 /** @ngInject */
-export function reactContainer(
-  $route,
-  $location,
-  backendSrv: BackendSrv,
-  datasourceSrv: DatasourceSrv,
-  contextSrv: ContextSrv
-) {
+export function reactContainer($route, $location, $injector, $rootScope, contextSrv: ContextSrv) {
   return {
     restrict: 'E',
     template: '',
@@ -47,14 +36,18 @@ export function reactContainer(
       }
 
       const props = {
-        backendSrv: backendSrv,
-        datasourceSrv: datasourceSrv,
-        routeParams: $route.current.params,
+        $injector: $injector,
+        $rootScope: $rootScope,
+        $scope: scope,
+        routeInfo: $route.current.$$route.routeInfo,
       };
 
-      ReactDOM.render(WrapInProvider(store, component, props), elem[0]);
+      document.body.classList.add('is-react');
+
+      ReactDOM.render(WrapInProvider(store, provideTheme(component), props), elem[0]);
 
       scope.$on('$destroy', () => {
+        document.body.classList.remove('is-react');
         ReactDOM.unmountComponentAtNode(elem[0]);
       });
     },

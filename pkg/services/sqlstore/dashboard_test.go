@@ -106,7 +106,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					if timesCalled <= 2 {
 						return savedDash.Uid
 					}
-					return util.GenerateShortUid()
+					return util.GenerateShortUID()
 				}
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
@@ -119,7 +119,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 
-				generateNewUid = util.GenerateShortUid
+				generateNewUid = util.GenerateShortUID
 			})
 
 			Convey("Should be able to create dashboard", func() {

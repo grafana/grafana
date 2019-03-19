@@ -3,7 +3,6 @@
 const merge = require('webpack-merge');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const common = require('./webpack.common.js');
-const webpack = require('webpack');
 const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -48,17 +47,7 @@ module.exports = merge(common, {
       })
     ]
   },
-
   optimization: {
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          name: "vendor",
-          chunks: "all"
-        }
-      }
-    },
     minimizer: [
       new UglifyJsPlugin({
         cache: true,
@@ -68,15 +57,19 @@ module.exports = merge(common, {
       new OptimizeCSSAssetsPlugin({})
     ]
   },
-
   plugins: [
     new MiniCssExtractPlugin({
-      filename: "grafana.[name].css"
+      filename: "grafana.[name].[hash].css"
     }),
     new ngAnnotatePlugin(),
     new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/error.html'),
+      template: path.resolve(__dirname, '../../public/views/error-template.html'),
+      inject: false,
+    }),
+    new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index.template.html'),
+      template: path.resolve(__dirname, '../../public/views/index-template.html'),
       inject: 'body',
       chunks: ['vendor', 'app'],
     }),

@@ -1,6 +1,7 @@
 package tsdb
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -41,6 +42,20 @@ func TestSqlEngine(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(sql, ShouldEqual, "select 60000 ")
+			})
+
+			Convey("interpolate __unixEpochFrom function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__unixEpochFrom()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", from.Unix()))
+			})
+
+			Convey("interpolate __unixEpochTo function", func() {
+				sql, err := Interpolate(query, timeRange, "select $__unixEpochTo()")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.Unix()))
 			})
 
 		})

@@ -43,10 +43,15 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should render settings page', () => {
+  it('should render settings and preferences page', () => {
     const { wrapper } = setup({
       team: getMockTeam(),
       pageName: 'settings',
+      preferences: {
+        homeDashboardId: 1,
+        theme: 'Default',
+        timezone: 'Default',
+      },
     });
 
     expect(wrapper).toMatchSnapshot();

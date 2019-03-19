@@ -1,8 +1,11 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -22,6 +25,8 @@ type Index struct {
 func (index *Index) XName(tableName string) string {
 	if !strings.HasPrefix(index.Name, "UQE_") &&
 		!strings.HasPrefix(index.Name, "IDX_") {
+		tableName = strings.Replace(tableName, `"`, "", -1)
+		tableName = strings.Replace(tableName, `.`, "_", -1)
 		if index.Type == UniqueType {
 			return fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
 		}
@@ -44,11 +49,16 @@ func (index *Index) Equal(dst *Index) bool {
 	if len(index.Cols) != len(dst.Cols) {
 		return false
 	}
-	sort.StringSlice(index.Cols).Sort()
-	sort.StringSlice(dst.Cols).Sort()
 
 	for i := 0; i < len(index.Cols); i++ {
-		if index.Cols[i] != dst.Cols[i] {
+		var found bool
+		for j := 0; j < len(dst.Cols); j++ {
+			if index.Cols[i] == dst.Cols[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
 			return false
 		}
 	}

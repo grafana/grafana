@@ -1,23 +1,36 @@
-import './editor_ctrl';
-
+// Libaries
 import angular from 'angular';
 import _ from 'lodash';
+
+// Components
+import './editor_ctrl';
 import coreModule from 'app/core/core_module';
+
+// Utils & Services
 import { makeRegions, dedupAnnotations } from './events_processing';
+
+// Types
+import { DashboardModel } from '../dashboard/state/DashboardModel';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
+  datasourcePromises: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
-    $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
-    $rootScope.onAppEvent('dashboard-initialized', this.clearCache.bind(this), $rootScope);
+  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {}
+
+  init(dashboard: DashboardModel) {
+    // always clearPromiseCaches when loading new dashboard
+    this.clearPromiseCaches();
+    // clear promises on refresh events
+    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
   }
 
-  clearCache() {
+  clearPromiseCaches() {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {
@@ -90,6 +103,7 @@ export class AnnotationsSrv {
 
     const range = this.timeSrv.timeRange();
     const promises = [];
+    const dsPromises = [];
 
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
@@ -99,10 +113,10 @@ export class AnnotationsSrv {
       if (annotation.snapshotData) {
         return this.translateQueryResult(annotation, annotation.snapshotData);
       }
-
+      const datasourcePromise = this.datasourceSrv.get(annotation.datasource);
+      dsPromises.push(datasourcePromise);
       promises.push(
-        this.datasourceSrv
-          .get(annotation.datasource)
+        datasourcePromise
           .then(datasource => {
             // issue query against data source
             return datasource.annotationQuery({
@@ -122,7 +136,7 @@ export class AnnotationsSrv {
           })
       );
     }
-
+    this.datasourcePromises = this.$q.all(dsPromises);
     this.globalAnnotationsPromise = this.$q.all(promises);
     return this.globalAnnotationsPromise;
   }

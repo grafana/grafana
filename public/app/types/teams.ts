@@ -12,6 +12,7 @@ export interface TeamMember {
   avatarUrl: string;
   email: string;
   login: string;
+  labels: string[];
 }
 
 export interface TeamGroup {
@@ -22,6 +23,7 @@ export interface TeamGroup {
 export interface TeamsState {
   teams: Team[];
   searchQuery: string;
+  hasFetched: boolean;
 }
 
 export interface TeamState {

@@ -7,6 +7,7 @@
   "metrics": true,
   "annotations": true,
   "alerting": true,
+  "tables": true,
 
   "queryOptions": {
     "minInterval": true
@@ -21,7 +22,6 @@
     "logos": {
       "small": "img/influxdb_logo.svg",
       "large": "img/influxdb_logo.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }

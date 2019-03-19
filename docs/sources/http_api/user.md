@@ -156,6 +156,7 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
+  "id": 1,
   "email": "user@mygraf.com",
   "name": "admin",
   "login": "admin",
@@ -196,7 +197,7 @@ Content-Type: application/json
 {"message":"User updated"}
 ```
 
-## Get Organisations for user
+## Get Organizations for user
 
 `GET /api/users/:id/orgs`
 
@@ -225,6 +226,40 @@ Content-Type: application/json
   }
 ]
 ```
+
+## Get Teams for user
+
+`GET /api/users/:id/teams`
+
+**Example Request**:
+
+```http
+GET /api/users/1/teams HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id":1,
+    "orgId":1,
+    "name":"team1",
+    "email":"",
+    "avatarUrl":"/avatar/3fcfe295eae3bcb67a49349377428a66",
+    "memberCount":1
+  }
+]
+```
+
 
 ## User
 
@@ -333,11 +368,11 @@ Content-Type: application/json
 {"message":"Active organization changed"}
 ```
 
-## Organisations of the actual User
+## Organizations of the actual User
 
 `GET /api/user/orgs`
 
-Return a list of all organisations of the current user.
+Return a list of all organizations of the current user.
 
 **Example Request**:
 
@@ -442,4 +477,76 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {"message":"Dashboard unstarred"}
+```
+
+## Auth tokens of the actual User
+
+`GET /api/user/auth-tokens`
+
+Return a list of all auth tokens (devices) that the actual user currently have logged in from.
+
+**Example Request**:
+
+```http
+GET /api/user/auth-tokens HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 361,
+    "isActive": true,
+    "clientIp": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36",
+    "createdAt": "2019-03-05T21:22:54+01:00",
+    "seenAt": "2019-03-06T19:41:06+01:00"
+  },
+  {
+    "id": 364,
+    "isActive": false,
+    "clientIp": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
+    "createdAt": "2019-03-06T19:41:19+01:00",
+    "seenAt": "2019-03-06T19:41:21+01:00"
+  }
+]
+```
+
+## Revoke an auth token of the actual User
+
+`POST /api/user/revoke-auth-token`
+
+Revokes the given auth token (device) for the actual user. User of issued auth token (device) will no longer be logged in
+and will be required to authenticate again upon next activity.
+
+**Example Request**:
+
+```http
+POST /api/user/revoke-auth-token HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "authTokenId": 364
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "User auth token revoked"
+}
 ```

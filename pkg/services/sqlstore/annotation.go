@@ -110,7 +110,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		_, err = sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
+		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
 		return err
 	})
 }
@@ -211,7 +211,12 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
             )
       `, strings.Join(keyValueFilters, " OR "))
 
-			sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			if query.MatchAny {
+				sql.WriteString(fmt.Sprintf(" AND (%s) > 0 ", tagsSubQuery))
+			} else {
+				sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			}
+
 		}
 	}
 
@@ -223,7 +228,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	items := make([]*annotations.ItemDTO, 0)
 
-	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}
 
@@ -253,11 +258,15 @@ func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 			queryParams = []interface{}{params.DashboardId, params.PanelId, params.OrgId}
 		}
 
-		if _, err := sess.Exec(annoTagSql, queryParams...); err != nil {
+		sqlOrArgs := append([]interface{}{annoTagSql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 
-		if _, err := sess.Exec(sql, queryParams...); err != nil {
+		sqlOrArgs = append([]interface{}{sql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 

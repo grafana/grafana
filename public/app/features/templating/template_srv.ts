@@ -1,5 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
+import { variableRegex } from 'app/features/templating/variable';
+import { TimeRange, ScopedVars } from '@grafana/ui/src';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -8,39 +10,53 @@ function luceneEscape(value) {
 export class TemplateSrv {
   variables: any[];
 
-  /*
-   * This regex matches 3 types of variable reference with an optional format specifier
-   * \$(\w+)                          $var1
-   * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
-   * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
-   */
-  private regex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?::(\w+))?}/g;
+  private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
+  private timeRange: TimeRange = null;
 
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
     this.builtIns['__interval_ms'] = { text: '100', value: '100' };
+    this.variables = [];
   }
 
-  init(variables) {
+  init(variables, timeRange?: TimeRange) {
     this.variables = variables;
-    this.updateTemplateData();
+    this.timeRange = timeRange;
+    this.updateIndex();
   }
 
-  updateTemplateData() {
-    this.index = {};
+  updateIndex() {
+    const existsOrEmpty = value => value || value === '';
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-
-      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
-        continue;
+    this.index = this.variables.reduce((acc, currentValue) => {
+      if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
+        acc[currentValue.name] = currentValue;
       }
+      return acc;
+    }, {});
 
-      this.index[variable.name] = variable;
+    if (this.timeRange) {
+      const from = this.timeRange.from.valueOf().toString();
+      const to = this.timeRange.to.valueOf().toString();
+
+      this.index = {
+        ...this.index,
+        ['__from']: {
+          current: { value: from, text: from },
+        },
+        ['__to']: {
+          current: { value: to, text: to },
+        },
+      };
     }
+  }
+
+  updateTimeRange(timeRange: TimeRange) {
+    this.timeRange = timeRange;
+    this.updateIndex();
   }
 
   variableInitialized(variable) {
@@ -50,18 +66,20 @@ export class TemplateSrv {
   getAdhocFilters(datasourceName) {
     let filters = [];
 
-    for (let i = 0; i < this.variables.length; i++) {
-      const variable = this.variables[i];
-      if (variable.type !== 'adhoc') {
-        continue;
-      }
+    if (this.variables) {
+      for (let i = 0; i < this.variables.length; i++) {
+        const variable = this.variables[i];
+        if (variable.type !== 'adhoc') {
+          continue;
+        }
 
-      // null is the "default" datasource
-      if (variable.datasource === null || variable.datasource === datasourceName) {
-        filters = filters.concat(variable.filters);
-      } else if (variable.datasource.indexOf('$') === 0) {
-        if (this.replace(variable.datasource) === datasourceName) {
+        // null is the "default" datasource
+        if (variable.datasource === null || variable.datasource === datasourceName) {
           filters = filters.concat(variable.filters);
+        } else if (variable.datasource.indexOf('$') === 0) {
+          if (this.replace(variable.datasource) === datasourceName) {
+            filters = filters.concat(variable.filters);
+          }
         }
       }
     }
@@ -80,6 +98,21 @@ export class TemplateSrv {
       return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
+  }
+
+  // encode string according to RFC 3986; in contrast to encodeURIComponent()
+  // also the sub-delims "!", "'", "(", ")" and "*" are encoded;
+  // unicode handling uses UTF-8 as in ECMA-262.
+  encodeURIComponentStrict(str) {
+    return encodeURIComponent(str).replace(/[!'()*]/g, c => {
+      return (
+        '%' +
+        c
+          .charCodeAt(0)
+          .toString(16)
+          .toUpperCase()
+      );
+    });
   }
 
   formatValue(value, format, variable) {
@@ -123,6 +156,16 @@ export class TemplateSrv {
         }
         return value;
       }
+      case 'json': {
+        return JSON.stringify(value);
+      }
+      case 'percentencode': {
+        // like glob, but url escaped
+        if (_.isArray(value)) {
+          return this.encodeURIComponentStrict('{' + value.join(',') + '}');
+        }
+        return this.encodeURIComponentStrict(value);
+      }
       default: {
         if (_.isArray(value)) {
           return '{' + value.join(',') + '}';
@@ -142,7 +185,8 @@ export class TemplateSrv {
     if (!match) {
       return null;
     }
-    return match[1] || match[2];
+    const variableName = match.slice(1).find(match => match !== undefined);
+    return variableName;
   }
 
   variableExists(expression) {
@@ -176,7 +220,7 @@ export class TemplateSrv {
     return values;
   }
 
-  replace(target, scopedVars?, format?) {
+  replace(target: string, scopedVars?: ScopedVars, format?: string | Function) {
     if (!target) {
       return target;
     }
@@ -242,11 +286,13 @@ export class TemplateSrv {
         return match;
       }
 
-      return this.grafanaVariables[variable.current.value] || variable.current.text;
+      const value = this.grafanaVariables[variable.current.value];
+
+      return typeof value === 'string' ? value : variable.current.text;
     });
   }
 
-  fillVariableValuesForUrl(params, scopedVars) {
+  fillVariableValuesForUrl(params, scopedVars?) {
     _.each(this.variables, variable => {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
         if (scopedVars[variable.name].skipUrlSync) {

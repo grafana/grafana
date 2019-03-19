@@ -45,8 +45,10 @@
 
       <div class="gf-form">
         <label class="dropdown"
-                dropdown-typeahead="ctrl.selectMenu"
-                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
+                dropdown-typeahead2="ctrl.selectMenu"
+                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)"
+                button-template-class="gf-form-label query-part"
+                >
         </label>
       </div>
 
@@ -138,9 +140,9 @@
     <pre class="gf-form-pre alert alert-info">Time series:
 - return column named <i>time</i> (UTC in seconds or timestamp)
 - return column(s) with numeric datatype as values
-Optional: 
-  - return column named <i>metric</i> to represent the series name. 
-  - If multiple value columns are returned the metric column is used as prefix. 
+Optional:
+  - return column named <i>metric</i> to represent the series name.
+  - If multiple value columns are returned the metric column is used as prefix.
   - If no column named metric is found the column name of the value column is used as series name
 
 Resultsets of time series queries need to be sorted by time.
@@ -153,6 +155,7 @@ Macros:
 - $__timeEpoch -&gt; extract(epoch from column) as "time"
 - $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__unixEpochFilter(column) -&gt;  column &gt;= 1492750877 AND column &lt;= 1492750877
+- $__unixEpochNanoFilter(column) -&gt;  column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872
 - $__timeGroup(column,'5m'[, fillvalue]) -&gt; (extract(epoch from column)/300)::bigint*300
      by setting fillvalue grafana will fill in missing values according to the interval
      fillvalue can be either a literal value, NULL or previous; previous will fill in the previous seen value or NULL if none has been seen yet
@@ -173,6 +176,8 @@ Or build your own conditionals using these macros which just return the values:
 - $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
 - $__unixEpochFrom() -&gt;  1492750877
 - $__unixEpochTo() -&gt;  1492750877
+- $__unixEpochNanoFrom() -&gt;  1494410783152415214
+- $__unixEpochNanoTo() -&gt;  1494497183142514872
     </pre>
   </div>
 

@@ -6,13 +6,21 @@ import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration',
+      },
+      node: {
+        text: 'Team List',
+      },
+    } as NavModel,
     teams: [] as Team[],
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
     setSearchQuery: jest.fn(),
     searchQuery: '',
     teamsCount: 0,
+    hasFetched: false,
   };
 
   Object.assign(props, propOverrides);
@@ -36,6 +44,7 @@ describe('Render', () => {
     const { wrapper } = setup({
       teams: getMultipleMockTeams(5),
       teamsCount: 5,
+      hasFetched: true,
     });
 
     expect(wrapper).toMatchSnapshot();
@@ -65,9 +74,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

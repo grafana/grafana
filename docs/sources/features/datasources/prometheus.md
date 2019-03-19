@@ -7,7 +7,7 @@ aliases = ["/datasources/prometheus"]
 [menu.docs]
 name = "Prometheus"
 parent = "datasources"
-weight = 2
+weight = 1
 +++
 
 # Using Prometheus in Grafana
@@ -68,6 +68,7 @@ provides the following functions you can use in the `Query` input field.
 
 Name | Description
 ---- | --------
+*label_names()* | Returns a list of label names.
 *label_values(label)* | Returns a list of label values for the `label` in every metric.
 *label_values(metric, label)* | Returns a list of label values for the `label` in the specified metric.
 *metrics(metric)* | Returns a list of metrics matching the specified `metric` regex.

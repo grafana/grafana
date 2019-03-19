@@ -7,18 +7,16 @@ describe('Teams selectors', () => {
     const mockTeams = getMultipleMockTeams(5);
 
     it('should return teams if no search query', () => {
-      const mockState: TeamsState = { teams: mockTeams, searchQuery: '' };
+      const mockState: TeamsState = { teams: mockTeams, searchQuery: '', hasFetched: false };
 
       const teams = getTeams(mockState);
-
       expect(teams).toEqual(mockTeams);
     });
 
     it('Should filter teams if search query', () => {
-      const mockState: TeamsState = { teams: mockTeams, searchQuery: '5' };
+      const mockState: TeamsState = { teams: mockTeams, searchQuery: '5', hasFetched: false };
 
       const teams = getTeams(mockState);
-
       expect(teams.length).toEqual(1);
     });
   });
@@ -29,10 +27,14 @@ describe('Team selectors', () => {
     const mockTeam = getMockTeam();
 
     it('should return team if matching with location team', () => {
-      const mockState: TeamState = { team: mockTeam, searchMemberQuery: '', members: [], groups: [] };
+      const mockState: TeamState = {
+        team: mockTeam,
+        searchMemberQuery: '',
+        members: [],
+        groups: [],
+      };
 
       const team = getTeam(mockState, '1');
-
       expect(team).toEqual(mockTeam);
     });
   });
@@ -49,7 +51,6 @@ describe('Team selectors', () => {
       };
 
       const members = getTeamMembers(mockState);
-
       expect(members).toEqual(mockTeamMembers);
     });
   });

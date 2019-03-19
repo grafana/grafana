@@ -31,7 +31,11 @@ export class ElasticQueryBuilder {
     queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
+      if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
+        queryNode.terms.order['_key'] = aggDef.settings.order;
+      } else {
+        queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
+      }
 
       // if metric ref, look it up and add it to this agg level
       metricRef = parseInt(aggDef.settings.orderBy, 10);
@@ -67,6 +71,10 @@ export class ElasticQueryBuilder {
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
+
+    if (settings.offset !== '') {
+      esAgg.offset = settings.offset;
+    }
 
     if (esAgg.interval === 'auto') {
       esAgg.interval = '$__interval';
@@ -177,11 +185,11 @@ export class ElasticQueryBuilder {
 
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2', settings: { interval: 'auto' } }];
+    target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
+    target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
     target.timeField = this.timeField;
 
-    let i, nestedAggs, metric;
+    let i, j, pv, nestedAggs, metric;
     const query = {
       size: 0,
       query: {
@@ -261,10 +269,42 @@ export class ElasticQueryBuilder {
       let metricAgg = null;
 
       if (queryDef.isPipelineAgg(metric.type)) {
-        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
+        if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
+          if (metric.pipelineVariables) {
+            metricAgg = {
+              buckets_path: {},
+            };
+
+            for (j = 0; j < metric.pipelineVariables.length; j++) {
+              pv = metric.pipelineVariables[j];
+
+              if (pv.name && pv.pipelineAgg && /^\d*$/.test(pv.pipelineAgg)) {
+                const appliedAgg = queryDef.findMetricById(target.metrics, pv.pipelineAgg);
+                if (appliedAgg) {
+                  if (appliedAgg.type === 'count') {
+                    metricAgg.buckets_path[pv.name] = '_count';
+                  } else {
+                    metricAgg.buckets_path[pv.name] = pv.pipelineAgg;
+                  }
+                }
+              }
+            }
+          } else {
+            continue;
+          }
         } else {
-          continue;
+          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+            const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+            if (appliedAgg) {
+              if (appliedAgg.type === 'count') {
+                metricAgg = { buckets_path: '_count' };
+              } else {
+                metricAgg = { buckets_path: metric.pipelineAgg };
+              }
+            }
+          } else {
+            continue;
+          }
         }
       } else {
         metricAgg = { field: metric.field };
@@ -318,6 +358,13 @@ export class ElasticQueryBuilder {
         },
       },
     };
+
+    if (this.esVersion >= 60) {
+      query.aggs['1'].terms.order = {
+        _key: 'asc',
+      };
+    }
+
     return query;
   }
 }

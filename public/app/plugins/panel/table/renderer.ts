@@ -1,12 +1,20 @@
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
+  constructor(
+    private panel,
+    private table,
+    private isUtc,
+    private sanitize,
+    private templateSrv,
+    private theme?: GrafanaThemeType
+  ) {
     this.initColumns();
   }
 
@@ -27,7 +35,7 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        const regex = kbn.stringToJsRegex(style.pattern);
+        const regex = stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 
@@ -43,19 +51,19 @@ export class TableRenderer {
     }
   }
 
-  getColorForValue(value, style) {
+  getColorForValue(value, style: ColumnStyle) {
     if (!style.thresholds) {
       return null;
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return style.colors[i];
+        return getColorFromHexRgbOrName(style.colors[i], this.theme);
       }
     }
-    return _.first(style.colors);
+    return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
   }
 
-  defaultCellFormatter(v, style) {
+  defaultCellFormatter(v, style: ColumnStyle) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -91,7 +99,14 @@ export class TableRenderer {
         if (_.isArray(v)) {
           v = v[0];
         }
+
+        // if is an epoch (numeric string and len > 12)
+        if (_.isString(v) && !isNaN(v) && v.length > 12) {
+          v = parseInt(v, 10);
+        }
+
         let date = moment(v);
+
         if (this.isUtc) {
           date = date.utc();
         }
@@ -154,7 +169,7 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'number') {
-      const valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
+      const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
       return v => {
         if (v === null || v === void 0) {
@@ -175,7 +190,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value, style) {
+  setColorState(value, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
@@ -211,16 +226,17 @@ export class TableRenderer {
     value = this.formatColumnValue(columnIndex, value);
 
     const column = this.table.columns[columnIndex];
-    let style = '';
+    let cellStyle = '';
+    let textStyle = '';
     const cellClasses = [];
     let cellClass = '';
 
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + '"';
+      cellStyle = ' style="background-color:' + this.colorState.cell + '"';
       cellClasses.push('table-panel-color-cell');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      style = ' style="color:' + this.colorState.value + '"';
+      textStyle = ' style="color:' + this.colorState.value + '"';
       this.colorState.value = null;
     }
     // because of the fixed table headers css only solution
@@ -232,7 +248,7 @@ export class TableRenderer {
     }
 
     if (value === undefined) {
-      style = ' style="display:none;"';
+      cellStyle = ' style="display:none;"';
       column.hidden = true;
     } else {
       column.hidden = false;
@@ -258,7 +274,7 @@ export class TableRenderer {
       cellClasses.push('table-panel-cell-link');
 
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${style}>
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${textStyle}>
           ${value}
         </a>
       `;
@@ -283,7 +299,7 @@ export class TableRenderer {
       cellClass = ' class="' + cellClasses.join(' ') + '"';
     }
 
-    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    columnHtml = '<td' + cellClass + cellStyle + textStyle + '>' + columnHtml + '</td>';
     return columnHtml;
   }
 

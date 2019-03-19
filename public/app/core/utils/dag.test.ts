@@ -104,5 +104,17 @@ describe('Directed acyclic graph', () => {
       const actual = nodeH.getOptimizedInputEdges();
       expect(actual).toHaveLength(0);
     });
+
+    it('when linking non-existing input node with existing output node should throw error', () => {
+      expect(() => {
+        dag.link('non-existing', 'A');
+      }).toThrowError("cannot link input node named non-existing since it doesn't exist in graph");
+    });
+
+    it('when linking existing input node with non-existing output node should throw error', () => {
+      expect(() => {
+        dag.link('A', 'non-existing');
+      }).toThrowError("cannot link output node named non-existing since it doesn't exist in graph");
+    });
   });
 });

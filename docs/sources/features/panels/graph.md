@@ -186,6 +186,14 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
 the graph crosses a particular threshold.
 
+### Time Regions
+
+> Only available in Grafana v5.4 and above.
+
+{{< docs-imagebox img="/img/docs/v54/graph_time_regions.png" max-width= "800px" >}}
+
+Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
+
 ## Time Range
 
 {{< docs-imagebox img="/img/docs/v51/graph-time-range.png"  max-width= "900px" >}}

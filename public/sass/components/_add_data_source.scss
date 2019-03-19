@@ -1,0 +1,46 @@
+.add-data-source-header {
+  margin-bottom: $space-xl;
+  padding-top: $spacer;
+  text-align: center;
+}
+
+.add-data-source-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: $space-lg;
+}
+
+.add-data-source-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-row-gap: 10px;
+  grid-column-gap: 10px;
+
+  @include media-breakpoint-up(md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.add-data-source-grid-item {
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: $card-background;
+  box-shadow: $card-shadow;
+  color: $text-color;
+
+  &:hover {
+    background: $card-background-hover;
+    color: $text-color-strong;
+  }
+}
+
+.add-data-source-grid-item-text {
+  font-size: $font-size-h5;
+}
+
+.add-data-source-grid-item-logo {
+  margin: 0 $space-md;
+  width: 55px;
+}

@@ -1,4 +1,4 @@
-import { Team, TeamGroup, TeamMember } from '../../../types';
+import { Team, TeamGroup, TeamMember } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
@@ -35,6 +35,7 @@ export const getMockTeamMembers = (amount: number): TeamMember[] => {
       avatarUrl: 'some/url/',
       email: 'test@test.com',
       login: `testUser-${i}`,
+      labels: ['label 1', 'label 2'],
     });
   }
 
@@ -48,6 +49,7 @@ export const getMockTeamMember = (): TeamMember => {
     avatarUrl: 'some/url/',
     email: 'test@test.com',
     login: 'testUser',
+    labels: [],
   };
 };
 

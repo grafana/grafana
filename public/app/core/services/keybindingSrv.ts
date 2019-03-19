@@ -1,13 +1,14 @@
 import $ from 'jquery';
 import _ from 'lodash';
 
-import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import { encodePathComponent } from 'app/core/utils/location_util';
+import { getExploreUrl } from 'app/core/utils/explore';
+import { store } from 'app/store/store';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -15,7 +16,14 @@ export class KeybindingSrv {
   timepickerOpen = false;
 
   /** @ngInject */
-  constructor(private $rootScope, private $location, private datasourceSrv, private timeSrv, private contextSrv) {
+  constructor(
+    private $rootScope,
+    private $location,
+    private $timeout,
+    private datasourceSrv,
+    private timeSrv,
+    private contextSrv: ContextSrv
+  ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -25,8 +33,8 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on('show-modal', () => (this.modalOpen = true));
-    $rootScope.onAppEvent('timepickerOpen', () => (this.timepickerOpen = true));
-    $rootScope.onAppEvent('timepickerClosed', () => (this.timepickerOpen = false));
+    appEvents.on('timepickerOpen', () => (this.timepickerOpen = true));
+    appEvents.on('timepickerClosed', () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -97,7 +105,7 @@ export class KeybindingSrv {
     }
 
     if (search.fullscreen) {
-      this.$rootScope.appEvent('panel-change-view', { fullscreen: false, edit: false });
+      appEvents.emit('panel-change-view', { fullscreen: false, edit: false });
       return;
     }
 
@@ -132,6 +140,10 @@ export class KeybindingSrv {
     );
   }
 
+  unbind(keyArg: string, keyType?: string) {
+    Mousetrap.unbind(keyArg, keyType);
+  }
+
   showDashEditView() {
     const search = _.extend(this.$location.search(), { editview: 'settings' });
     this.$location.search(search);
@@ -141,7 +153,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('mod+s', e => {
@@ -167,7 +179,7 @@ export class KeybindingSrv {
     // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: true,
           panelId: dashboard.meta.focusPanelId,
@@ -179,7 +191,7 @@ export class KeybindingSrv {
     // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
-        this.$rootScope.appEvent('panel-change-view', {
+        appEvents.emit('panel-change-view', {
           fullscreen: true,
           edit: null,
           panelId: dashboard.meta.focusPanelId,
@@ -189,19 +201,14 @@ export class KeybindingSrv {
     });
 
     // jump to explore if permissions allow
-    if (this.contextSrv.isEditor && config.exploreEnabled) {
+    if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          if (datasource && datasource.supportsExplore) {
-            const range = this.timeSrv.timeRangeForUrl();
-            const state = {
-              ...datasource.getExploreState(panel),
-              range,
-            };
-            const exploreState = encodePathComponent(JSON.stringify(state));
-            this.$location.url(`/explore?state=${exploreState}`);
+          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          if (url) {
+            this.$timeout(() => this.$location.url(url));
           }
         }
       });
@@ -210,9 +217,7 @@ export class KeybindingSrv {
     // delete panel
     this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
-        this.$rootScope.appEvent('panel-remove', {
-          panelId: dashboard.meta.focusPanelId,
-        });
+        appEvents.emit('remove-panel', dashboard.meta.focusPanelId);
         dashboard.meta.focusPanelId = 0;
       }
     });
@@ -234,10 +239,27 @@ export class KeybindingSrv {
         shareScope.dashboard = dashboard;
 
         appEvents.emit('show-modal', {
-          src: 'public/app/features/dashboard/partials/shareModal.html',
+          src: 'public/app/features/dashboard/components/ShareModal/template.html',
           scope: shareScope,
         });
       }
+    });
+
+    // toggle panel legend
+    this.bind('p l', () => {
+      if (dashboard.meta.focusPanelId) {
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        if (panelInfo.panel.legend) {
+          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          panelRef.legend.show = !panelRef.legend.show;
+          panelRef.render();
+        }
+      }
+    });
+
+    // toggle all panel legends
+    this.bind('d l', () => {
+      dashboard.toggleLegendsForAll();
     });
 
     // collapse all rows
@@ -255,7 +277,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      this.$rootScope.$broadcast('refresh');
+      dashboard.startRefresh();
     });
 
     this.bind('d s', () => {
@@ -273,9 +295,25 @@ export class KeybindingSrv {
     //Autofit panels
     this.bind('d a', () => {
       // this has to be a full page reload
-      window.location.href = window.location.href + '&autofitpanels';
+      const queryParams = store.getState().location.query;
+      const newUrlParam = queryParams.autofitpanels ? '' : '&autofitpanels';
+      window.location.href = window.location.href + newUrlParam;
     });
   }
 }
 
 coreModule.service('keybindingSrv', KeybindingSrv);
+
+/**
+ * Code below exports the service to react components
+ */
+
+let singletonInstance: KeybindingSrv;
+
+export function setKeybindingSrv(instance: KeybindingSrv) {
+  singletonInstance = instance;
+}
+
+export function getKeybindingSrv(): KeybindingSrv {
+  return singletonInstance;
+}

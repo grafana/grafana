@@ -1,16 +1,16 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
-// Licence MIT, Copyright (c) 2015 Mohsen Azimi
+// License MIT, Copyright (c) 2015 Mohsen Azimi
 
 /*
  * Escapes `"` characters from string
-*/
+ */
 function escapeString(str: string): string {
   return str.replace('"', '"');
 }
 
 /*
  * Determines if a value is an object
-*/
+ */
 export function isObject(value: any): boolean {
   const type = typeof value;
   return !!value && type === 'object';
@@ -20,7 +20,7 @@ export function isObject(value: any): boolean {
  * Gets constructor name of an object.
  * From http://stackoverflow.com/a/332429
  *
-*/
+ */
 export function getObjectName(object: object): string {
   if (object === undefined) {
     return '';
@@ -43,7 +43,7 @@ export function getObjectName(object: object): string {
 
 /*
  * Gets type of an object. Returns "null" for null objects
-*/
+ */
 export function getType(object: object): string {
   if (object === null) {
     return 'null';
@@ -53,7 +53,7 @@ export function getType(object: object): string {
 
 /*
  * Generates inline preview for a JavaScript object based on a value
-*/
+ */
 export function getValuePreview(object: object, value: string): string {
   const type = getType(object);
 
@@ -78,7 +78,7 @@ export function getValuePreview(object: object, value: string): string {
 
 /*
  * Generates inline preview for a JavaScript object
-*/
+ */
 let value = '';
 export function getPreview(obj: object): string {
   if (isObject(obj)) {
@@ -94,15 +94,15 @@ export function getPreview(obj: object): string {
 
 /*
  * Generates a prefixed CSS class name
-*/
+ */
 export function cssClass(className: string): string {
   return `json-formatter-${className}`;
 }
 
 /*
-  * Creates a new DOM element with given type and class
-  * TODO: move me to helpers
-*/
+ * Creates a new DOM element with given type and class
+ * TODO: move me to helpers
+ */
 export function createElement(type: string, className?: string, content?: Element | string): Element {
   const el = document.createElement(type);
   if (className) {
