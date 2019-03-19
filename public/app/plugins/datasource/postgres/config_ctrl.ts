@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { SyntheticEvent } from 'react';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -51,6 +52,18 @@ export class PostgresConfigCtrl {
   toggleTimescaleDBHelp() {
     this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
   }
+
+  onPasswordReset = (event: SyntheticEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    this.current.secureJsonFields.password = false;
+    this.current.secureJsonData = this.current.secureJsonData || {};
+    this.current.secureJsonData.password = '';
+  };
+
+  onPasswordChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    this.current.secureJsonData = this.current.secureJsonData || {};
+    this.current.secureJsonData.password = event.currentTarget.value;
+  };
 
   // the value portion is derived from postgres server_version_num/100
   postgresVersions = [

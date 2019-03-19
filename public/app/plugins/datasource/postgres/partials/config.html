@@ -17,16 +17,17 @@
 			<span class="gf-form-label width-7">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
 		</div>
-		<div class="gf-form max-width-15" ng-if="!ctrl.current.secureJsonFields.password">
-			<span class="gf-form-label width-7">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>
-    </div>
-    <div class="gf-form max-width-19" ng-if="ctrl.current.secureJsonFields.password">
-      <span class="gf-form-label width-7">Password</span>
-      <input type="text" class="gf-form-input" disabled="disabled" value="configured">
-      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.password = false">reset</a>
+    <div class="gf-form">
+      <secret-form-field
+        isConfigured="ctrl.current.secureJsonFields.password"
+        value="ctrl.current.secureJsonData.password"
+        on-reset="ctrl.onPasswordReset"
+        on-change="ctrl.onPasswordChange"
+        inputWidth="9"
+      />
     </div>
 	</div>
+
 	<div class="gf-form">
 		<label class="gf-form-label width-7">SSL Mode</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
