@@ -7,8 +7,9 @@ import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { contextSrv } from 'app/core/services/context_srv';
-import { BackendSrv, Hit } from './backend_srv';
+import { BackendSrv } from './backend_srv';
 import { Section } from '../components/manage_dashboards/manage_dashboards';
+import { DashboardSearchHit } from 'app/types/search';
 
 interface Sections {
   [key: string]: Partial<Section>;
@@ -128,7 +129,7 @@ export class SearchSrv {
     });
   }
 
-  private handleSearchResult(sections: Sections, results: Hit[]): any {
+  private handleSearchResult(sections: Sections, results: DashboardSearchHit[]): any {
     if (results.length === 0) {
       return sections;
     }

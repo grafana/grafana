@@ -3,28 +3,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-
-export enum HitType {
-  DashHitDB = 'dash-db',
-  DashHitHome = 'dash-home',
-  DashHitFolder = 'dash-folder',
-}
-
-export interface Hit {
-  id: number;
-  uid: string;
-  title: string;
-  uri: string;
-  url: string;
-  slug: string;
-  type: HitType;
-  tags: string[];
-  isStarred: boolean;
-  folderId: number;
-  folderUid: string;
-  folderTitle: string;
-  folderUrl: string;
-}
+import { DashboardSearchHit } from 'app/types/search';
 
 export class BackendSrv {
   private inFlightRequests = {};
@@ -259,7 +238,7 @@ export class BackendSrv {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
-  search(query): Promise<Hit[]> {
+  search(query): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
   }
 
