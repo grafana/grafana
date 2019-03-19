@@ -16,6 +16,7 @@ const mockSection = (overides?: object): Section => {
     items: [],
     checked: false,
     expanded: false,
+    removable: false,
     hideHeader: false,
     icon: '',
     score: 0,

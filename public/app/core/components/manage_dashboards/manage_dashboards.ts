@@ -11,7 +11,8 @@ export interface Section {
   id: number;
   uid: string;
   title: string;
-  expanded: false;
+  expanded: boolean;
+  removable: boolean;
   items: any[];
   url: string;
   icon: string;
