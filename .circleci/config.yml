@@ -322,7 +322,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -345,7 +345,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.0
+    - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
@@ -378,7 +378,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -409,7 +409,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
