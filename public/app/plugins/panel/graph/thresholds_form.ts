@@ -31,8 +31,6 @@ export class ThresholdFormCtrl {
       fill: true,
       line: true,
       yaxis: 'left',
-      fillColor: 'rgba(234,112, 112, 0.12)',
-      lineColor: 'rgba(237, 46, 24, 0.60)',
     });
     this.panelCtrl.render();
   }
