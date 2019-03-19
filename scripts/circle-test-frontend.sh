@@ -14,7 +14,7 @@ function exit_if_fail {
 start=$(date +%s)
 
 exit_if_fail npm run prettier:check
-# exit_if_fail npm run test
+exit_if_fail npm run test
 
 end=$(date +%s)
 seconds=$((end - start))

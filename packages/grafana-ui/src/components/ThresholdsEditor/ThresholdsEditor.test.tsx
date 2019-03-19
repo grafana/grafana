@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
 import { ThresholdsEditor, Props } from './ThresholdsEditor';
+import { colors } from '../../utils';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -31,7 +32,7 @@ describe('Initialization', () => {
   it('should add a base threshold if missing', () => {
     const { instance } = setup();
 
-    expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: '#7EB26D' }]);
+    expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: colors[0] }]);
   });
 });
 
@@ -41,7 +42,7 @@ describe('Add threshold', () => {
 
     instance.onAddThreshold(0);
 
-    expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: '#7EB26D' }]);
+    expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: colors[0] }]);
   });
 
   it('should add threshold', () => {
@@ -50,41 +51,41 @@ describe('Add threshold', () => {
     instance.onAddThreshold(1);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
+      { index: 0, value: -Infinity, color: colors[0] },
+      { index: 1, value: 50, color: colors[2] },
     ]);
   });
 
   it('should add another threshold above a first', () => {
     const { instance } = setup({
-      thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }, { index: 1, value: 50, color: '#EAB839' }],
+      thresholds: [{ index: 0, value: -Infinity, color: colors[0] }, { index: 1, value: 50, color: colors[2] }],
     });
 
     instance.onAddThreshold(2);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { index: 0, value: -Infinity, color: colors[0] },
+      { index: 1, value: 50, color: colors[2] },
+      { index: 2, value: 75, color: colors[3] },
     ]);
   });
 
   it('should add another threshold between first and second index', () => {
     const { instance } = setup({
       thresholds: [
-        { index: 0, value: -Infinity, color: '#7EB26D' },
-        { index: 1, value: 50, color: '#EAB839' },
-        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 0, value: -Infinity, color: colors[0] },
+        { index: 1, value: 50, color: colors[2] },
+        { index: 2, value: 75, color: colors[3] },
       ],
     });
 
     instance.onAddThreshold(2);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 62.5, color: '#EF843C' },
-      { index: 3, value: 75, color: '#6ED0E0' },
+      { index: 0, value: -Infinity, color: colors[0] },
+      { index: 1, value: 50, color: colors[2] },
+      { index: 2, value: 62.5, color: colors[4] },
+      { index: 3, value: 75, color: colors[3] },
     ]);
   });
 });

@@ -3,8 +3,8 @@ import { Threshold } from '../../types';
 import { ColorPicker } from '..';
 import { PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { ThemeContext } from '../../themes';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 export interface Props {
   thresholds: Threshold[];
