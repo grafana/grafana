@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { FormField, Props } from './FormField';
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     label: 'Test',
     labelWidth: 11,
@@ -15,9 +15,22 @@ const setup = (propOverrides?: object) => {
   return shallow(<FormField {...props} />);
 };
 
-describe('Render', () => {
-  it('should render component', () => {
+describe('FormField', () => {
+  it('should render component with default inputEl', () => {
     const wrapper = setup();
+
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should render component with custom inputEl', () => {
+    const wrapper = setup({
+      inputEl: (
+        <>
+          <span>Input</span>
+          <button>Ok</button>
+        </>
+      ),
+    });
 
     expect(wrapper).toMatchSnapshot();
   });
