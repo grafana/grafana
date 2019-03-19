@@ -239,14 +239,13 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
-	// User
-	EditorsCanOwn bool
-
 	// Dataproxy
 	SendUserHeader bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
+
+	EditorsCanAdmin bool
 }
 
 type CommandLineArgs struct {
@@ -670,7 +669,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
-	cfg.EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
+	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")

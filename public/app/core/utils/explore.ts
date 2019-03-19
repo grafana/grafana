@@ -9,6 +9,7 @@ import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
 import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { getNextRefIdChar } from './query';
 
 // Types
 import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
@@ -225,12 +226,8 @@ export function generateKey(index = 0): string {
   return `Q-${Date.now()}-${Math.random()}-${index}`;
 }
 
-export function generateRefId(index = 0): string {
-  return `${index + 1}`;
-}
-
-export function generateEmptyQuery(index = 0): { refId: string; key: string } {
-  return { refId: generateRefId(index), key: generateKey(index) };
+export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
+  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
 /**
@@ -238,9 +235,9 @@ export function generateEmptyQuery(index = 0): { refId: string; key: string } {
  */
 export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
   if (queries && typeof queries === 'object' && queries.length > 0) {
-    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(i) }));
+    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(queries, i) }));
   }
-  return [{ ...generateEmptyQuery() }];
+  return [{ ...generateEmptyQuery(queries) }];
 }
 
 /**
