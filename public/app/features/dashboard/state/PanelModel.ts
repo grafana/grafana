@@ -111,12 +111,12 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
 
-  constructor(model) {
+  constructor(model: any) {
     this.events = new Emitter();
 
     // copy properties from persisted model
     for (const property in model) {
-      this[property] = model[property];
+      (this as any)[property] = model[property];
     }
 
     // defaults
@@ -150,7 +150,7 @@ export class PanelModel {
     }
   }
 
-  getOptions(panelDefaults) {
+  getOptions(panelDefaults: any) {
     return _.defaultsDeep(this.options || {}, panelDefaults);
   }
 
@@ -227,7 +227,7 @@ export class PanelModel {
       }
       return {
         ...acc,
-        [property]: this[property],
+        [property]: (this as any)[property],
       };
     }, {});
   }
@@ -236,7 +236,7 @@ export class PanelModel {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
     Object.keys(prevOptions).map(property => {
-      this[property] = prevOptions[property];
+      (this as any)[property] = prevOptions[property];
     });
   }
 
@@ -252,7 +252,7 @@ export class PanelModel {
         continue;
       }
 
-      delete this[key];
+      delete (this as any)[key];
     }
 
     this.cachedPluginOptions[oldPluginId] = oldOptions;
