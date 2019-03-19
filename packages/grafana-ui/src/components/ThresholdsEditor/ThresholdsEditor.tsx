@@ -14,7 +14,7 @@ export interface Props {
   thresholds: Threshold[];
   onChange: (thresholds: Threshold[]) => void;
   /**
-   * @enableText enable ability to add text to a threshold.
+   * @description enableText gives the user the ability to add text to a threshold.
    */
   enableText?: boolean;
 }
