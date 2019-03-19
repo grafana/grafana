@@ -18,7 +18,7 @@ export { FormField } from './FormField/FormField';
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
+
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
@@ -31,3 +31,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+
+// Panel editors
+export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
+export { LegendEditor, LegendOptions } from './LegendEditor/LegendEditor';

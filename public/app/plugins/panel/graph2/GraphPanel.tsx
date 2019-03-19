@@ -10,9 +10,9 @@ import { Graph } from '@grafana/ui';
 
 // Types
 import { PanelProps, NullValueMode, TimeSeriesVMs } from '@grafana/ui/src/types';
-import { Options } from './types';
+import { GraphOptions } from './types';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<GraphOptions> {}
 
 export class GraphPanel extends PureComponent<Props> {
   render() {
@@ -28,15 +28,17 @@ export class GraphPanel extends PureComponent<Props> {
     }
 
     return (
-      <Graph
-        timeSeries={vmSeries}
-        timeRange={timeRange}
-        showLines={showLines}
-        showPoints={showPoints}
-        showBars={showBars}
-        width={width}
-        height={height}
-      />
+      <>
+        <Graph
+          timeSeries={vmSeries}
+          timeRange={timeRange}
+          showLines={showLines}
+          showPoints={showPoints}
+          showBars={showBars}
+          width={width}
+          height={height}
+        />
+      </>
     );
   }
 }
