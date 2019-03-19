@@ -148,3 +148,7 @@ login_maximum_lifetime_days = 1
 ```
 
 The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
+
+### Breaking Changes
+
+If you utilize the [Dashboard Service](https://github.com/grafana/grafana/commit/8574dca081002f36e482b572517d8f05fd44453f#diff-1ab99561f9f6a10e1fafcddc39bc1d65) in your plugins, `dash` has been renamed to `dashboard`
