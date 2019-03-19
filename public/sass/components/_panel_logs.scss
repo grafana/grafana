@@ -299,6 +299,8 @@ $column-horizontal-spacing: 10px;
 
   &__value {
     flex: 1;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   &__count,
