@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
-
+import config from 'app/core/config';
+import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
   panelCtrl: any;
   panel: any;
@@ -30,6 +31,8 @@ export class ThresholdFormCtrl {
       fill: true,
       line: true,
       yaxis: 'left',
+      fillColor: 'rgba(234,112, 112, 0.12)',
+      lineColor: 'rgba(237, 46, 24, 0.60)',
     });
     this.panelCtrl.render();
   }
@@ -55,6 +58,19 @@ export class ThresholdFormCtrl {
       this.panel.thresholds[index].lineColor = newColor;
       this.render();
     };
+  }
+
+  onThresholdTypeChange(index) {
+    // Because of the ng-model binding, threshold's color mode is already set here
+    if (this.panel.thresholds[index].colorMode === 'custom') {
+      this.panel.thresholds[index].fillColor = tinycolor(config.theme.colors.blueBase)
+        .setAlpha(0.2)
+        .toRgbString();
+      this.panel.thresholds[index].lineColor = tinycolor(config.theme.colors.blueShade)
+        .setAlpha(0.6)
+        .toRgbString();
+    }
+    this.panelCtrl.render();
   }
 }
 
