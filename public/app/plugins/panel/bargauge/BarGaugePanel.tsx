@@ -22,6 +22,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         orientation={options.orientation}
         thresholds={options.thresholds}
         theme={config.theme}
+        displayMode={options.displayMode}
       />
     );
   };

@@ -166,7 +166,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         <div className="thresholds-row-input-inner-color">
           {threshold.color && (
             <div className="thresholds-row-input-inner-color-colorpicker">
-              <ColorPicker color={threshold.color} onChange={color => this.onChangeThresholdColor(threshold, color)} />
+              <ColorPicker
+                color={threshold.color}
+                onChange={color => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
             </div>
           )}
         </div>
