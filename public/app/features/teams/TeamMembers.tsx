@@ -4,8 +4,8 @@ import SlideDown from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
-import { loadTeamMembers, addTeamMember, setSearchMemberQuery } from './state/actions';
-import { getSearchMemberQuery, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
+import { addTeamMember, setSearchMemberQuery } from './state/actions';
+import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
@@ -15,7 +15,6 @@ import TeamMemberRow from './TeamMemberRow';
 export interface Props {
   members: TeamMember[];
   searchMemberQuery: string;
-  loadTeamMembers: typeof loadTeamMembers;
   addTeamMember: typeof addTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
   syncEnabled: boolean;
@@ -32,10 +31,6 @@ export class TeamMembers extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = { isAdding: false, newTeamMember: null };
-  }
-
-  componentDidMount() {
-    this.props.loadTeamMembers();
   }
 
   onSearchQueryChange = (value: string) => {
@@ -150,7 +145,6 @@ export class TeamMembers extends PureComponent<Props, State> {
 
 function mapStateToProps(state) {
   return {
-    members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
     editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
@@ -158,7 +152,6 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-  loadTeamMembers,
   addTeamMember,
   setSearchMemberQuery,
 };

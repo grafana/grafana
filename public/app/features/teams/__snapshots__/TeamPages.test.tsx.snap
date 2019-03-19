@@ -30,6 +30,7 @@ exports[`Render should render member page if team not empty 1`] = `
     isLoading={true}
   >
     <Connect(TeamMembers)
+      members={Array []}
       syncEnabled={true}
     />
   </PageContents>

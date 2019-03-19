@@ -12,7 +12,6 @@ const setup = (propOverrides?: object) => {
     members: [] as TeamMember[],
     searchMemberQuery: '',
     setSearchMemberQuery: jest.fn(),
-    loadTeamMembers: jest.fn(),
     addTeamMember: jest.fn(),
     syncEnabled: false,
     editorsCanAdmin: false,

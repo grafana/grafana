@@ -14,6 +14,7 @@ const setup = (propOverrides?: object) => {
     navModel: {} as NavModel,
     teamId: 1,
     loadTeam: jest.fn(),
+    loadTeamMembers: jest.fn(),
     pageName: 'members',
     team: {} as Team,
     members: [] as TeamMember[],
