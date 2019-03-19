@@ -1,6 +1,7 @@
 import { storiesOf } from '@storybook/react';
-import { number, text } from '@storybook/addon-knobs';
+import { number, text, boolean } from '@storybook/addon-knobs';
 import { BarGauge } from './BarGauge';
+import { VizOrientation } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -15,6 +16,8 @@ const getKnobs = () => {
     threshold2Color: text('threshold2Color', 'red'),
     unit: text('unit', 'ms'),
     decimals: number('decimals', 1),
+    horizontal: boolean('horizontal', false),
+    lcd: boolean('lcd', false),
   };
 };
 
@@ -22,7 +25,7 @@ const BarGaugeStories = storiesOf('UI/BarGauge/BarGauge', module);
 
 BarGaugeStories.addDecorator(withCenteredStory);
 
-BarGaugeStories.add('Vertical, with basic thresholds', () => {
+BarGaugeStories.add('Simple with basic thresholds', () => {
   const {
     value,
     minValue,
@@ -33,11 +36,13 @@ BarGaugeStories.add('Vertical, with basic thresholds', () => {
     threshold2Value,
     unit,
     decimals,
+    horizontal,
+    lcd,
   } = getKnobs();
 
   return renderComponentWithTheme(BarGauge, {
-    width: 200,
-    height: 400,
+    width: 700,
+    height: 700,
     value: value,
     minValue: minValue,
     maxValue: maxValue,
@@ -45,6 +50,8 @@ BarGaugeStories.add('Vertical, with basic thresholds', () => {
     prefix: '',
     postfix: '',
     decimals: decimals,
+    orientation: horizontal ? VizOrientation.Horizontal : VizOrientation.Vertical,
+    displayMode: lcd ? 'lcd' : 'simple',
     thresholds: [
       { index: 0, value: -Infinity, color: 'green' },
       { index: 1, value: threshold1Value, color: threshold1Color },

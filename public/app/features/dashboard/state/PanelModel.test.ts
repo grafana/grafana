@@ -3,9 +3,10 @@ import { PanelModel } from './PanelModel';
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model;
+    let modelJson;
 
     beforeEach(() => {
-      model = new PanelModel({
+      modelJson = {
         type: 'table',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
@@ -23,7 +24,8 @@ describe('PanelModel', () => {
             },
           ],
         },
-      });
+      };
+      model = new PanelModel(modelJson);
     });
 
     it('should apply defaults', () => {
@@ -36,6 +38,15 @@ describe('PanelModel', () => {
 
     it('should add missing refIds', () => {
       expect(model.targets[1].refId).toBe('B');
+    });
+
+    it("shouldn't break panel with non-array targets", () => {
+      modelJson.targets = {
+        0: { refId: 'A' },
+        foo: { bar: 'baz' },
+      };
+      model = new PanelModel(modelJson);
+      expect(model.targets[0].refId).toBe('A');
     });
 
     it('getSaveModel should remove defaults', () => {

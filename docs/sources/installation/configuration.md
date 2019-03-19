@@ -354,6 +354,11 @@ options are `Admin` and `Editor`. e.g. :
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
 
+### editors_can_admin
+
+Editors can administrate dashboards, folders and teams they create.
+Defaults to `false`.
+
 ### login_hint
 
 Text used as placeholder text on login page for login/username input.
