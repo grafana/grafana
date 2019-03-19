@@ -17,7 +17,7 @@ The preferred solution, in this case, is to inject the `bus` into services or ta
 
 ### settings package
 In the `setting` packages there are many global variables which Grafana sets at startup. This is also something we want to move
-away from and move as much configuration as possible to the `setting.Cfg` struct and pass the around just like the bus
+away from and move as much configuration as possible to the `setting.Cfg` struct and pass it around, just like the bus.
 
 ## Linting and formatting
 We enforce strict `gofmt` formating and use some linters on our codebase. You can find the current list of linters at https://github.com/grafana/grafana/blob/master/scripts/gometalinter.sh#L23 
