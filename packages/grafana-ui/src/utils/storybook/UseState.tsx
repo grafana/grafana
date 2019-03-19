@@ -2,7 +2,7 @@ import React from 'react';
 
 interface StateHolderProps<T> {
   initialState: T;
-  children: (currentState: T, updateState: (nextState: T) => void) => JSX.Element;
+  children: (currentState: T, updateState: (nextState: T) => void) => React.ReactNode;
 }
 
 export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T; initialState: T }> {
