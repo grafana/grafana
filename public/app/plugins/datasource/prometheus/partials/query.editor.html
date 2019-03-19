@@ -41,7 +41,7 @@
 
     <div class="gf-form gf-form--grow">
       <label class="gf-form-label width-5">Format</label>
-      <div class="gf-form-select-wrapper width-8">
+      <div class="gf-form-select-wrapper width-12">
         <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats"
           ng-change="ctrl.refresh()"></select>
       </div>
@@ -52,6 +52,21 @@
           <i class="fa fa-share-square-o"></i>
         </a>
       </label>
+    </div>
+  </div>
+  <div class="gf-form-inline" ng-if="ctrl.target.format === 'linkedin_heatmap'">
+    <div class="gf-form">
+      <label class="gf-form-label width-8">X aixs label</label>
+      <input type="text" class="gf-form-input width-8" ng-model="ctrl.target.xAxisLabel"
+        spellcheck='false' ng-model-onblur ng-change="ctrl.refreshMetricData()"
+      />
+    </div>
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label width-8">Y aixs label</label>
+      <input type="text" class="gf-form-input width-8" ng-model="ctrl.target.yAxisLabel"
+        spellcheck='false' ng-model-onblur ng-change="ctrl.refreshMetricData()"
+      />
+      <label class="gf-form-label gf-form-label--grow"></label>
     </div>
   </div>
 </query-editor-row>

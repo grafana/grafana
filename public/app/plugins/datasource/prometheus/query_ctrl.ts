@@ -35,6 +35,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
       { text: 'Time series', value: 'time_series' },
       { text: 'Table', value: 'table' },
       { text: 'Heatmap', value: 'heatmap' },
+      { text: 'LinkedIn Heatmap', value: 'linkedin_heatmap' },
     ];
 
     this.instant = false;

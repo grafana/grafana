@@ -25,6 +25,10 @@ export class ResultTransformer {
       seriesList.sort(sortSeriesByLabel);
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
+    } else if (prometheusResult && options.format === 'linkedin_heatmap') {
+      const seriesList = [];
+      seriesList.push(this.transformLinkedinHeatmapData(prometheusResult, options));
+      return seriesList;
     } else if (prometheusResult) {
       const seriesList = [];
       for (const metricData of prometheusResult) {
@@ -172,6 +176,42 @@ export class ResultTransformer {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
+  }
+
+  transformLinkedinHeatmapData(metricData, options) {
+    console.log(options);
+    const { xAxisLabel, yAxisLabel } = options;
+    const heatmapData = {};
+    const labels = [];
+    for (let i = 0; i < metricData.length; i++) {
+      const md = metricData[i];
+      const x = md.metric[xAxisLabel];
+      const y = md.metric[yAxisLabel];
+      const val = parseFloat(md.value[1]);
+      if (heatmapData[y]) {
+        heatmapData[y][x] = val;
+      } else {
+        labels.push(y);
+        heatmapData[y] = { [x]: val };
+      }
+    }
+    // console.log(heatmapData);
+    // console.log(labels);
+    const result = new Array(labels.length);
+    for (let i = 0; i < labels.length; i++) {
+      const yLabel = labels[i];
+      for (let j = 0; j < labels.length; j++) {
+        const xLabel = labels[j];
+        const point = heatmapData[yLabel][xLabel] || 0;
+        if (result[i]) {
+          result[i].push(point);
+        } else {
+          result[i] = [point];
+        }
+      }
+    }
+    // console.log(result);
+    return [result, labels];
   }
 
   transformToHistogramOverTime(seriesList) {

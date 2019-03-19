@@ -170,6 +170,8 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           responseListLength: responseList.length,
           refId: activeTargets[index].refId,
           valueWithRefId: activeTargets[index].valueWithRefId,
+          xAxisLabel: activeTargets[index].xAxisLabel,
+          yAxisLabel: activeTargets[index].yAxisLabel,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
         result = [...result, ...series];

@@ -22,6 +22,7 @@ import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
+import * as linkedinHeatmapPanel from 'app/plugins/panel/linkedin-heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as table2Panel from 'app/plugins/panel/table2/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
@@ -62,6 +63,7 @@ const builtInPlugins = {
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
+  'app/plugins/panel/linkedin-heatmap/module': linkedinHeatmapPanel,
 };
 
 export default builtInPlugins;
