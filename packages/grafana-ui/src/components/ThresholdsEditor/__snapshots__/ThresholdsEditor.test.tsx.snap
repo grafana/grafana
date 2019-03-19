@@ -83,10 +83,12 @@ exports[`Render should render with base threshold 1`] = `
                   >
                     <WithTheme(ColorPicker)
                       color="#7EB26D"
+                      enableNamedColors={true}
                       onChange={[Function]}
                     >
                       <ColorPicker
                         color="#7EB26D"
+                        enableNamedColors={true}
                         onChange={[Function]}
                         theme={
                           Object {
@@ -230,6 +232,7 @@ exports[`Render should render with base threshold 1`] = `
                           content={
                             <ColorPickerPopover
                               color="#7EB26D"
+                              enableNamedColors={true}
                               onChange={[Function]}
                               theme={
                                 Object {
