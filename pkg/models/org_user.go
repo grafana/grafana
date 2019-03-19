@@ -35,6 +35,10 @@ func (r RoleType) Includes(other RoleType) bool {
 	if r == ROLE_EDITOR {
 		return other != ROLE_ADMIN
 	}
+	
+	if r == ROLE_VIEWER {
+		return other == ROLE_VIEWER
+	}
 
 	return false
 }
