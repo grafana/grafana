@@ -17,12 +17,6 @@ const defaultProps = {
 /**
  * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
- * @param label
- * @param labelWidth
- * @param inputWidth
- * @param inputEl
- * @param inputProps
- * @constructor
  */
 export const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputWidth, inputEl, ...inputProps }) => {
   return (
