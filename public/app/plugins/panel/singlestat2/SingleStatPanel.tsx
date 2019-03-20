@@ -4,7 +4,7 @@ import React, { PureComponent, CSSProperties } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
+import { DisplayValue, PanelProps, processTimeSeries, NullValueMode, guessColumnTypes } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -24,13 +24,31 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
     theme: config.theme,
   });
 
-  return processTimeSeries({
-    data,
-    nullValueMode: NullValueMode.Null,
-  }).map((series, index) => {
-    const value = stat !== 'name' ? series.stats[stat] : series.label;
-    return processor(value);
+  const values: DisplayValue[] = [];
+  data.forEach(t => {
+    const table = guessColumnTypes(t);
+    for (let i = 0; i < table.columns.length; i++) {
+      const column = table.columns[i];
+
+      // Show all columns that are not 'time'
+      if (column.type === 'number') {
+        const series = processTimeSeries({
+          data: [table],
+          xColumn: i,
+          yColumn: i,
+          nullValueMode: NullValueMode.Null,
+        })[0];
+
+        const value = stat !== 'name' ? series.stats[stat] : series.label;
+        values.push(processor(value));
+      }
+    }
   });
+
+  if (values.length === 0) {
+    throw { message: 'Could not find numeric data' };
+  }
+  return values;
 };
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {

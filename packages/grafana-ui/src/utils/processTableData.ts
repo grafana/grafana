@@ -4,6 +4,7 @@ import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
 import { TableData, Column, TimeSeries } from '../types';
+import { isString } from 'util';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -145,6 +146,57 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
     rows: timeSeries.datapoints,
   };
 }
+
+/**
+ * @returns a table Returns a copy of the table with the best guess for each column type
+ */
+export const guessColumnTypes = (table: TableData): TableData => {
+  let changed = false;
+  const columns = table.columns.map((column, index) => {
+    if (!column.type) {
+      // 1. Use the column name to guess
+      if (column.text) {
+        const name = column.text.toLowerCase();
+        if (name === 'date' || name === 'time') {
+          changed = true;
+          return {
+            ...column,
+            type: 'time',
+          };
+        }
+      }
+
+      // 2. Check the first non-null value
+      for (let i = 0; i < table.rows.length; i++) {
+        const v = table.rows[i][index];
+        if (v !== null) {
+          let type;
+          if (isNumber(v)) {
+            type = 'number';
+          } else if (isString(v)) {
+            type = 'string';
+          }
+          if (type) {
+            changed = true;
+            return {
+              ...column,
+              type,
+            };
+          }
+          break;
+        }
+      }
+    }
+    return column;
+  });
+  if (changed) {
+    return {
+      ...table,
+      columns,
+    };
+  }
+  return table;
+};
 
 export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
 
