@@ -1,7 +1,7 @@
 import React, { CSSProperties, MouseEvent } from 'react';
 import { DisplayValue } from '../../utils/index';
 
-export interface Props {
+interface Props {
   value: DisplayValue;
   children: JSX.Element;
 }
@@ -57,7 +57,6 @@ export class DisplayValueLink extends React.PureComponent<Props, State> {
 
     const { hover } = this.state;
     const isHref = typeof link === 'string';
-    console.log('XXX', isHref, link);
     return (
       <>
         {hover && this.renderTooltip()}
