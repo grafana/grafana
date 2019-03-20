@@ -29,7 +29,7 @@ func TestIcinga2Notifier(t *testing.T) {
 			Convey("from settings", func() {
 				json := `
 				{
-          "url": "http://google.com"
+          "Url": "http://google.com"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -52,15 +52,14 @@ func TestIcinga2Notifier(t *testing.T) {
 				So(icinga2Notifier.ServiceName, ShouldEqual, "")
 			})
 
-			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, Mention, and Token", func() {
+			Convey("from settings with Url, User, Password, HostName, and ServiceName", func() {
 				json := `
 				{
-          "url": "http://google.com",
-          "username": "Grafana Alerts",
-          "Password": "123456",
-          "HostName": "Dummy",
-          "ServiceName": "Service1",
-          "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
+					"Url": "http://google.com",
+					"User": "Grafana Alerts",
+					"Password": "123456",
+					"HostName": "Dummy",
+					"ServiceName": "Service1"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -78,7 +77,7 @@ func TestIcinga2Notifier(t *testing.T) {
 				So(icinga2Notifier.Type, ShouldEqual, "icinga2")
 				So(icinga2Notifier.Url, ShouldEqual, "http://google.com")
 				So(icinga2Notifier.User, ShouldEqual, "Grafana Alerts")
-				So(icinga2Notifier.Password, ShouldEqual, "xxxxx")
+				So(icinga2Notifier.Password, ShouldEqual, "123456")
 				So(icinga2Notifier.HostName, ShouldEqual, "Dummy")
 				So(icinga2Notifier.ServiceName, ShouldEqual, "Service1")
 			})
