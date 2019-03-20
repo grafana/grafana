@@ -17,7 +17,7 @@ exports[`Render should render with base threshold 1`] = `
       ],
       "results": Array [
         Object {
-          "isThrow": false,
+          "type": "return",
           "value": undefined,
         },
       ],

@@ -51,27 +51,13 @@ export enum NullValueMode {
 export type TimeSeriesVMs = TimeSeriesVM[];
 
 export interface Column {
-  text: string;
-  title?: string;
-  type?: string;
-  sort?: boolean;
-  desc?: boolean;
-  filterable?: boolean;
+  text: string; // The column name
+  type?: 'time' | 'number' | 'string' | 'object'; // not used anywhere? can we remove?
+  filterable?: boolean; // currently only set by elasticsearch, and used in the table panel
   unit?: string;
 }
 
 export interface TableData {
   columns: Column[];
   rows: any[];
-  type: string;
-  columnMap: any;
-}
-
-export type SingleStatValue = number | string | null;
-
-/*
- * So we can add meta info like tags & series name
- */
-export interface SingleStatValueInfo {
-  value: SingleStatValue;
 }

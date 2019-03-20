@@ -4,28 +4,33 @@ import React, { PureComponent, CSSProperties } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { processSingleStatPanelData, DisplayValue, PanelProps } from '@grafana/ui';
+import { DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
 
 export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
-  const { panelData, replaceVariables, options } = props;
+  const { data, replaceVariables, options } = props;
   const { valueOptions, valueMappings } = options;
+  const { unit, decimals, stat } = valueOptions;
+
   const processor = getDisplayProcessor({
-    unit: valueOptions.unit,
-    decimals: valueOptions.decimals,
+    unit,
+    decimals,
     mappings: valueMappings,
     thresholds: options.thresholds,
-
     prefix: replaceVariables(valueOptions.prefix),
     suffix: replaceVariables(valueOptions.suffix),
     theme: config.theme,
   });
-  return processSingleStatPanelData({
-    panelData: panelData,
-    stat: valueOptions.stat,
-  }).map(stat => processor(stat.value));
+
+  return processTimeSeries({
+    data,
+    nullValueMode: NullValueMode.Null,
+  }).map((series, index) => {
+    const value = stat !== 'name' ? series.stats[stat] : series.label;
+    return processor(value);
+  });
 };
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
@@ -50,14 +55,14 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   };
 
   render() {
-    const { height, width, options, panelData, renderCounter } = this.props;
+    const { height, width, options, data, renderCounter } = this.props;
     return (
       <ProcessedValuesRepeater
         getProcessedValues={this.getProcessedValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
-        source={panelData}
+        source={data}
         renderCounter={renderCounter}
         orientation={options.orientation}
       />

@@ -7,7 +7,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
 import Page from 'app/core/components/Page/Page';
-import SlideDown from 'app/core/components/Animations/SlideDown';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';

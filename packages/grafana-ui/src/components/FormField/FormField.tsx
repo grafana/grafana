@@ -5,6 +5,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   labelWidth?: number;
   inputWidth?: number;
+  inputEl?: React.ReactNode;
 }
 
 const defaultProps = {
@@ -12,14 +13,18 @@ const defaultProps = {
   inputWidth: 12,
 };
 
-const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputWidth, ...inputProps }) => {
+/**
+ * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
+ * custom inputEl if required in which case inputWidth and inputProps are ignored.
+ */
+export const FormField: FunctionComponent<Props> = ({ label, labelWidth, inputWidth, inputEl, ...inputProps }) => {
   return (
     <div className="form-field">
       <FormLabel width={labelWidth}>{label}</FormLabel>
-      <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />
+      {inputEl || <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />}
     </div>
   );
 };
 
+FormField.displayName = 'FormField';
 FormField.defaultProps = defaultProps;
-export { FormField };
