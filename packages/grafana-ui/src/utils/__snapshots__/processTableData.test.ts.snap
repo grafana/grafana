@@ -2,7 +2,6 @@
 
 exports[`processTableData basic processing should generate a header and fix widths 1`] = `
 Object {
-  "columnMap": Object {},
   "columns": Array [
     Object {
       "text": "Column 1",
@@ -31,13 +30,11 @@ Object {
       null,
     ],
   ],
-  "type": "table",
 }
 `;
 
 exports[`processTableData basic processing should read header and two rows 1`] = `
 Object {
-  "columnMap": Object {},
   "columns": Array [
     Object {
       "text": "a",
@@ -61,6 +58,5 @@ Object {
       6,
     ],
   ],
-  "type": "table",
 }
 `;

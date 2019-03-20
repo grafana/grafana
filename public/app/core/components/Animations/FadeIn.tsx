@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, CSSProperties } from 'react';
 import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {
@@ -10,12 +10,12 @@ interface Props {
 }
 
 export const FadeIn: FC<Props> = props => {
-  const defaultStyle = {
+  const defaultStyle: CSSProperties = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,
   };
 
-  const transitionStyles = {
+  const transitionStyles: { [str: string]: CSSProperties } = {
     exited: { opacity: 0, display: 'none' },
     entering: { opacity: 0 },
     entered: { opacity: 1 },

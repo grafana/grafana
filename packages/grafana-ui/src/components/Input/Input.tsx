@@ -1,18 +1,11 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import classNames from 'classnames';
-import { validate, EventsWithValidation, hasValidationEvent } from '../../utils/validate';
-import { ValidationEvents, ValidationRule } from '../../types/input';
+import { validate, EventsWithValidation, hasValidationEvent } from '../../utils';
+import { ValidationEvents, ValidationRule } from '../../types';
 
 export enum InputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
-}
-
-export enum InputTypes {
-  Text = 'text',
-  Number = 'number',
-  Password = 'password',
-  Email = 'email',
 }
 
 interface Props extends React.HTMLProps<HTMLInputElement> {

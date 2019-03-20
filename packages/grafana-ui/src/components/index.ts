@@ -15,6 +15,7 @@ export { ButtonSelect } from './Select/ButtonSelect';
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
 export { FormField } from './FormField/FormField';
+export { SecretFormField } from './SecretFormFied/SecretFormField';
 
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
@@ -26,6 +27,7 @@ export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
+export { Input, InputStatus } from './Input/Input';
 
 // Visualizations
 export { Gauge } from './Gauge/Gauge';

@@ -1,4 +1,4 @@
-﻿import { ValidationRule, ValidationEvents } from '../types/input';
+import { ValidationRule, ValidationEvents } from '../types/input';
 
 export enum EventsWithValidation {
   onBlur = 'onBlur',

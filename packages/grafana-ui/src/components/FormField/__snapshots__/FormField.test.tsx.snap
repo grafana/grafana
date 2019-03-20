@@ -1,6 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Render should render component 1`] = `
+exports[`FormField should render component with custom inputEl 1`] = `
+<div
+  className="form-field"
+>
+  <Component
+    width={11}
+  >
+    Test
+  </Component>
+  <span>
+    Input
+  </span>
+  <button>
+    Ok
+  </button>
+</div>
+`;
+
+exports[`FormField should render component with default inputEl 1`] = `
 <div
   className="form-field"
 >

@@ -16,13 +16,13 @@ interface Props extends PanelProps<Options> {}
 
 export class GraphPanel extends PureComponent<Props> {
   render() {
-    const { panelData, timeRange, width, height } = this.props;
+    const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
     let vmSeries: TimeSeriesVMs;
-    if (panelData.timeSeries) {
+    if (data) {
       vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
+        data,
         nullValueMode: NullValueMode.Ignore,
       });
     }

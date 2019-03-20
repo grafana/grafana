@@ -1,12 +1,12 @@
 import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { LoadingState, TableData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  panelData: PanelData;
+  data?: TableData[];
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
@@ -14,11 +14,6 @@ export interface PanelProps<T = any> {
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
-}
-
-export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
 }
 
 export interface PanelEditorProps<T = any> {

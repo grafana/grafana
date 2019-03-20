@@ -6,7 +6,7 @@ import { ThresholdsEditor, ValueMappingsEditor, PanelOptionsGrid, PanelOptionsGr
 
 // Types
 import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
-import { BarGaugeOptions, orientationOptions } from './types';
+import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
 import { SingleStatValueOptions } from '../singlestat2/types';
 
@@ -32,6 +32,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
   onMinValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, minValue: target.value });
   onMaxValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, maxValue: target.value });
   onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
+  onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
   render() {
     const { options } = this.props;
@@ -51,6 +52,16 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                 defaultValue={orientationOptions[0]}
                 onChange={this.onOrientationChange}
                 value={orientationOptions.find(item => item.value === options.orientation)}
+              />
+            </div>
+            <div className="form-field">
+              <FormLabel width={8}>Display Mode</FormLabel>
+              <Select
+                width={12}
+                options={displayModes}
+                defaultValue={displayModes[0]}
+                onChange={this.onDisplayModeChange}
+                value={displayModes.find(item => item.value === options.displayMode)}
               />
             </div>
           </PanelOptionsGroup>

@@ -3,8 +3,8 @@ import { Threshold } from '../../types';
 import { ColorPicker } from '..';
 import { PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { ThemeContext } from '../../themes';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 export interface Props {
   thresholds: Threshold[];
@@ -166,7 +166,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         <div className="thresholds-row-input-inner-color">
           {threshold.color && (
             <div className="thresholds-row-input-inner-color-colorpicker">
-              <ColorPicker color={threshold.color} onChange={color => this.onChangeThresholdColor(threshold, color)} />
+              <ColorPicker
+                color={threshold.color}
+                onChange={color => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
             </div>
           )}
         </div>
