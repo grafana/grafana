@@ -5,9 +5,9 @@ import { getMappedValue } from './valueMappings';
 import { GrafanaTheme, GrafanaThemeType } from '../types';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 import moment from 'moment';
-import { ReactElement } from 'react';
+import { ReactNode } from 'react';
 
-export type DisplayValueClick = () => void;
+export type DisplayValueClicked = () => void;
 
 export interface DisplayValue {
   text: string; // Show in the UI
@@ -15,8 +15,9 @@ export interface DisplayValue {
   color?: string; // color based on configs or Threshold
   fontSize?: string;
   title?: string; // An optional title for this value
-  link?: string | DisplayValueClick; // URL or action
-  tooltip?: string | ReactElement<any>; // passed to Popper
+  link?: string | DisplayValueClicked; // URL or callback
+  linkNewWindow?: boolean; // target _blank
+  tooltip?: ReactNode;
 }
 
 export interface DisplayValueOptions {

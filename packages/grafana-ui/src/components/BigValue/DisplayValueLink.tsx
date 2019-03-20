@@ -1,42 +1,88 @@
-import React from 'react';
-import { Tooltip } from '../Tooltip/Tooltip';
+import React, { CSSProperties, MouseEvent } from 'react';
 import { DisplayValue } from '../../utils/index';
-import * as PopperJS from 'popper.js';
 
-export interface DisplayValueProps {
+export interface Props {
   value: DisplayValue;
   children: JSX.Element;
-  placement?: PopperJS.Placement;
 }
 
-export const DisplayValueLink = ({ placement, children, value }: DisplayValueProps) => {
-  const { tooltip, link } = value;
-  if (!tooltip && !link) {
-    return children;
+interface State {
+  hover: boolean;
+  x: number;
+  y: number;
+}
+
+export class DisplayValueLink extends React.PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hover: false,
+      x: 0,
+      y: 0,
+    };
   }
 
-  // If we want it to follow the mouse, we don't use popper
-  const body = tooltip ? (
-    <Tooltip theme="info" placement={placement ? placement : 'top'} content={tooltip}>
-      {children}
-    </Tooltip>
-  ) : (
-    children
-  );
-
-  if (link) {
-    if (typeof link === 'string') {
-      return (
-        <a className="display-value-link" href={link}>
-          {body}
-        </a>
-      );
+  onMouseMove = (evt: MouseEvent) => {
+    if (this.props.value.tooltip) {
+      this.setState({ hover: true, x: evt.pageX, y: evt.pageY });
     }
+  };
+
+  onMouseLeave = () => {
+    if (this.props.value.tooltip) {
+      this.setState({ hover: false });
+    }
+  };
+
+  renderTooltip = () => {
+    const { x, y } = this.state;
+    const style: CSSProperties = {
+      top: y - 25,
+      left: x + 20,
+    };
     return (
-      <a className="display-value-link" href="#" onClick={link}>
-        {body}
-      </a>
+      <div style={style} className="display-value-tooltip">
+        {this.props.value.tooltip}
+      </div>
+    );
+  };
+
+  render() {
+    const { value, children } = this.props;
+    const { tooltip, link, linkNewWindow } = value;
+
+    if (!tooltip && !link) {
+      return children;
+    }
+
+    const { hover } = this.state;
+    const isHref = typeof link === 'string';
+    console.log('XXX', isHref, link);
+    return (
+      <>
+        {hover && this.renderTooltip()}
+
+        {isHref ? (
+          <a
+            className="display-value-link"
+            href={link as string}
+            target={linkNewWindow ? '_blank' : undefined}
+            onMouseMove={this.onMouseMove}
+            onMouseLeave={this.onMouseLeave}
+          >
+            {children}
+          </a>
+        ) : (
+          <div
+            className="display-value-link"
+            onClick={link as any}
+            onMouseMove={this.onMouseMove}
+            onMouseLeave={this.onMouseLeave}
+          >
+            {children}
+          </div>
+        )}
+      </>
     );
   }
-  return body;
-};
+}

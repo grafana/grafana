@@ -14,10 +14,19 @@
   font-weight: $font-weight-semi-bold;
 }
 
+.display-value-tooltip {
+  background: $body-bg;
+  border: 1px solid $external-link-color;
+  padding: 5px;
+  z-index: 1000;
+  position: absolute;
+}
+
 .display-value-link {
   border: 1px solid transparent;
+  cursor: pointer;
 }
 
 .display-value-link:hover {
-  border: 1px solid $blue;
+  border: 1px solid $external-link-color;
 }
