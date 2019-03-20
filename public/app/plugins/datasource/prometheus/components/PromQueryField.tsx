@@ -90,6 +90,7 @@ interface CascaderOption {
 }
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
+  onBlur?: () => void;
   history: HistoryItem[];
 }
 
@@ -259,6 +260,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               additionalPlugins={this.plugins}
               cleanText={cleanText}
               initialQuery={query.expr}
+              onBlur={this.props.onBlur}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
               onQueryChange={this.onChangeQuery}

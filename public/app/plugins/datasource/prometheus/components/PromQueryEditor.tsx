@@ -102,8 +102,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           <PromQueryField
             datasource={datasource}
             query={query}
-            onQueryChange={this.onFieldChange}
+            onBlur={this.onRunQuery}
             onExecuteQuery={this.onRunQuery}
+            onQueryChange={this.onFieldChange}
             history={[]}
           />
         </div>

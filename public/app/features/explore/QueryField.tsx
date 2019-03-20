@@ -33,6 +33,7 @@ export interface QueryFieldProps {
   cleanText?: (text: string) => string;
   disabled?: boolean;
   initialQuery: string | null;
+  onBlur?: () => void;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
@@ -385,6 +386,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   handleBlur = (event, change) => {
+    const { onBlur } = this.props;
     const { lastExecutedValue } = this.state;
     const previousValue = lastExecutedValue ? Plain.serialize(this.state.lastExecutedValue) : null;
     const currentValue = Plain.serialize(change.value);
@@ -397,6 +399,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     if (previousValue !== currentValue) {
       this.executeOnQueryChangeAndExecuteQueries();
+    }
+
+    if (onBlur) {
+      onBlur();
     }
   };
 
