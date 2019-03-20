@@ -320,13 +320,13 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 }
 
 func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
-	cmd := &m.GetAuthInfoQuery{UserId: c.UserId}
-	if err := bus.Dispatch(cmd); err != nil {
+	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
+	if err := bus.Dispatch(authInfoQuery); err != nil {
 		logger.Error("Error feching oauth information for user", "error", err)
 		return
 	}
 
-	provider := cmd.Result.AuthModule
+	provider := authInfoQuery.Result.AuthModule
 	connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	if !ok {
 		logger.Error("Failed to find oauth provider with given name", "provider", provider)
@@ -335,25 +335,25 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(c.Req.Context(), &oauth2.Token{
-		AccessToken:  cmd.Result.OAuthAccessToken,
-		Expiry:       cmd.Result.OAuthExpiry,
-		RefreshToken: cmd.Result.OAuthRefreshToken,
-		TokenType:    cmd.Result.OAuthTokenType,
+		AccessToken:  authInfoQuery.Result.OAuthAccessToken,
+		Expiry:       authInfoQuery.Result.OAuthExpiry,
+		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
+		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}).Token()
 	if err != nil {
-		logger.Error("Failed to retrieve access token from oauth provider", "provider", cmd.Result.AuthModule)
+		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule)
 		return
 	}
 
 	// If the tokens are not the same, update the entry in the DB
-	if token.AccessToken != cmd.Result.OAuthAccessToken {
-		cmd2 := &m.UpdateAuthInfoCommand{
-			UserId:     cmd.Result.Id,
-			AuthModule: cmd.Result.AuthModule,
-			AuthId:     cmd.Result.AuthId,
+	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
+		updateAuthCommand := &m.UpdateAuthInfoCommand{
+			UserId:     authInfoQuery.Result.Id,
+			AuthModule: authInfoQuery.Result.AuthModule,
+			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(cmd2); err != nil {
+		if err := bus.Dispatch(updateAuthCommand); err != nil {
 			logger.Error("Failed to update access token during token refresh", "error", err)
 			return
 		}
