@@ -195,7 +195,7 @@ exports[`Render should render with base threshold 1`] = `
                             "typography": Object {
                               "fontFamily": Object {
                                 "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                "sansSerif": "'Roboto', 'Helvetica  Neue', Arial, sans-serif",
                               },
                               "heading": Object {
                                 "h1": "28px",
@@ -339,7 +339,7 @@ exports[`Render should render with base threshold 1`] = `
                                   "typography": Object {
                                     "fontFamily": Object {
                                       "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                      "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                      "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
                                     },
                                     "heading": Object {
                                       "h1": "28px",
