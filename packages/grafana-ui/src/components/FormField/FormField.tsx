@@ -1,5 +1,4 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-// import React, { InputHTMLAttributes } from 'react';
 import { FormLabel } from '../FormLabel/FormLabel';
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
