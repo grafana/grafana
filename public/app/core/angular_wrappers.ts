@@ -9,7 +9,7 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 
 export function registerAngularDirectives() {
@@ -58,5 +58,12 @@ export function registerAngularDirectives() {
     'onExecuteQuery',
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
+  ]);
+  react2AngularDirective('secretFormField', SecretFormField, [
+    'value',
+    'isConfigured',
+    'inputWidth',
+    ['onReset', { watchDepth: 'reference', wrapApply: true }],
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }
