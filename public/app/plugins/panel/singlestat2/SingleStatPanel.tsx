@@ -4,29 +4,34 @@ import React, { PureComponent } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { processSingleStatPanelData, DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
 import { Sparkline } from '@grafana/ui/src/components/BigValue/BigValue';
+import { DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor, BigValue } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
 
 export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
-  const { panelData, replaceVariables, options } = props;
+  const { data, replaceVariables, options } = props;
   const { valueOptions, valueMappings } = options;
+  const { unit, decimals, stat } = valueOptions;
+
   const processor = getDisplayProcessor({
-    unit: valueOptions.unit,
-    decimals: valueOptions.decimals,
+    unit,
+    decimals,
     mappings: valueMappings,
     thresholds: options.thresholds,
-
     prefix: replaceVariables(valueOptions.prefix),
     suffix: replaceVariables(valueOptions.suffix),
     theme: config.theme,
   });
-  return processSingleStatPanelData({
-    panelData: panelData,
-    stat: valueOptions.stat,
-  }).map(stat => processor(stat.value));
+
+  return processTimeSeries({
+    data,
+    nullValueMode: NullValueMode.Null,
+  }).map((series, index) => {
+    const value = stat !== 'name' ? series.stats[stat] : series.label;
+    return processor(value);
+  });
 };
 
 interface SingleStatDisplay {
@@ -43,7 +48,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   };
 
   getProcessedValues = (): SingleStatDisplay[] => {
-    const { panelData, replaceVariables, options } = this.props;
+    const { data, replaceVariables, options } = this.props;
     const { valueOptions, valueMappings } = options;
     const processor = getDisplayProcessor({
       unit: valueOptions.unit,
@@ -56,7 +61,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     const { colorBackground, colorValue, colorPrefix, colorPostfix, sparkline } = options;
 
     return processTimeSeries({
-      timeSeries: panelData.timeSeries,
+      data,
       nullValueMode: NullValueMode.Null,
     }).map(tsvm => {
       const v: SingleStatDisplay = {
@@ -103,14 +108,14 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   };
 
   render() {
-    const { height, width, options, panelData, renderCounter } = this.props;
+    const { height, width, options, data, renderCounter } = this.props;
     return (
       <ProcessedValuesRepeater
         getProcessedValues={this.getProcessedValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
-        source={panelData}
+        source={data}
         renderCounter={renderCounter}
         orientation={options.orientation}
       />

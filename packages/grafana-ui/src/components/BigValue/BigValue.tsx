@@ -10,7 +10,7 @@ import { Themeable } from '../../types/index';
 import { DisplayValueLink } from './DisplayValueLink';
 
 export interface Sparkline {
-  data: any[]; // [[number,number]]
+  data: any[][]; // [[number,number]]
   minX: number;
   maxX: number;
   full: boolean; // full height

@@ -45,7 +45,7 @@ $arrowSize: 15px;
     border-right-color: transparent;
     border-top-color: transparent;
     top: 0;
-    left: calc(100% -$arrowSize);
+    left: calc(100%-#{$arrowSize});
   }
 
   &[data-placement^='right'] {

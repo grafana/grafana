@@ -40,8 +40,6 @@ export function makeDummyTable(columnCount: number, rowCount: number): TableData
       const suffix = (rowId + 1).toString();
       return Array.from(new Array(columnCount), (x, colId) => columnIndexToLeter(colId) + suffix);
     }),
-    type: 'table',
-    columnMap: {},
   };
 }
 
