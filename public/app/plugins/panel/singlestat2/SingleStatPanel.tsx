@@ -17,7 +17,6 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
     decimals: valueOptions.decimals,
     mappings: valueMappings,
     thresholds: options.thresholds,
-
     prefix: replaceVariables(valueOptions.prefix),
     suffix: replaceVariables(valueOptions.suffix),
     theme: config.theme,
