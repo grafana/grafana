@@ -78,6 +78,15 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = evalContext.Rule.Message
 	}
 
+	images := ""
+	if evalContext.ImagePublicUrl != "" {
+		images = []map[string]interface{}{
+			{
+				"image": evalContext.ImagePublicUrl
+			}
+		}
+	}
+
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -90,11 +99,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 			{
 				"title": "Details",
 				"facts": fields,
-				"images": []map[string]interface{}{
-					{
-						"image": evalContext.ImagePublicUrl,
-					},
-				},
+				"images": images,
 				"text": message,
 			},
 		},
