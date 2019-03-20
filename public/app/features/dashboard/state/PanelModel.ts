@@ -1,9 +1,12 @@
 // Libraries
 import _ from 'lodash';
 
-// Types
+// Utils
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeSeries, Threshold, ScopedVars } from '@grafana/ui';
+import { getNextRefIdChar } from 'app/core/utils/query';
+
+// Types
+import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
 import { TableData } from '@grafana/ui/src';
 
 export interface GridPos {
@@ -125,10 +128,10 @@ export class PanelModel {
   }
 
   ensureQueryIds() {
-    if (this.targets) {
+    if (this.targets && _.isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
-          query.refId = this.getNextQueryLetter();
+          query.refId = getNextRefIdChar(this.targets);
         }
       }
     }
@@ -229,10 +232,6 @@ export class PanelModel {
     }, {});
   }
 
-  private saveCurrentPanelOptions() {
-    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
-  }
-
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
@@ -241,14 +240,11 @@ export class PanelModel {
     });
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.saveCurrentPanelOptions();
-    this.type = pluginId;
+  changeType(pluginId: string, hook?: PanelTypeChangedHook) {
+    const oldOptions: any = this.getOptionsToRemember();
+    const oldPluginId = this.type;
 
-    // for angular panels only we need to remove all events and let angular panels do some cleanup
-    if (fromAngularPanel) {
-      this.destroy();
-    }
+    this.type = pluginId;
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -259,23 +255,22 @@ export class PanelModel {
       delete this[key];
     }
 
+    this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
+
+    // Callback that can validate and migrate any existing settings
+    if (hook) {
+      this.options = this.options || {};
+      const old = oldOptions ? oldOptions.options : null;
+
+      Object.assign(this.options, hook(this.options, oldPluginId, old));
+    }
   }
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    query.refId = this.getNextQueryLetter();
+    query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
-  }
-
-  getNextQueryLetter(): string {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(this.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   changeQuery(query: DataQuery, index: number) {

@@ -245,12 +245,13 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   }
 
   const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
+    const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
       previous.duplicates++;
     } else {
-      row.duplicates = 0;
-      result.push(row);
+      rowCopy.duplicates = 0;
+      result.push(rowCopy);
     }
     return result;
   }, []);

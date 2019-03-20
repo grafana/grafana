@@ -6,11 +6,6 @@ import { cleanUpDashboard } from '../state/actions';
 import { getNoPayloadActionCreatorMock, NoPayloadActionCreatorMock } from 'app/core/redux';
 import { DashboardRouteInfo, DashboardInitPhase } from 'app/types';
 
-jest.mock('sass/_variables.generated.scss', () => ({
-  panelhorizontalpadding: 10,
-  panelVerticalPadding: 10,
-}));
-
 jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
 
 interface ScenarioContext {

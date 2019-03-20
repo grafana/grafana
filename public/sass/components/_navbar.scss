@@ -157,14 +157,8 @@
 
 @include media-breakpoint-up(sm) {
   .navbar {
-    padding-left: 60px;
-  }
-
-  .sidemenu-open {
-    .navbar {
-      padding-left: 25px;
-      margin-left: 0;
-    }
+    padding-left: 20px;
+    margin-left: 0;
   }
 
   .navbar-page-btn {

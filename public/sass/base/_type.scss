@@ -109,9 +109,9 @@ h6,
 .h4,
 .h5,
 .h6 {
-  margin-bottom: $headings-margin-bottom;
+  margin-bottom: $space-sm;
   font-family: $headings-font-family;
-  font-weight: $headings-font-weight;
+  font-weight: $font-weight-regular;
   line-height: $headings-line-height;
   color: $headings-color;
 }
@@ -141,29 +141,6 @@ h6,
   font-size: $font-size-h6;
 }
 
-.lead {
-  font-size: $lead-font-size;
-  font-weight: $lead-font-weight;
-}
-
-// Type display classes
-.display-1 {
-  font-size: $display1-size;
-  font-weight: $display1-weight;
-}
-.display-2 {
-  font-size: $display2-size;
-  font-weight: $display2-weight;
-}
-.display-3 {
-  font-size: $display3-size;
-  font-weight: $display3-weight;
-}
-.display-4 {
-  font-size: $display4-size;
-  font-weight: $display4-weight;
-}
-
 //
 // Horizontal rules
 //
@@ -172,7 +149,7 @@ hr {
   margin-top: $spacer-y;
   margin-bottom: $spacer-y;
   border: 0;
-  border-top: $hr-border-width solid $hr-border-color;
+  border-top: $border-width solid $hr-border-color;
 }
 
 //

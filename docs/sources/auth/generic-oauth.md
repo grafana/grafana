@@ -217,10 +217,10 @@ Some OAuth2 providers might not support `client_id` and `client_secret` passed v
 results in `invalid_client` error. To allow Grafana to authenticate via these type of providers, the client identifiers must be
 send via POST body, which can be enabled via the following settings:
 
-    ```bash
-    [auth.generic_oauth]
-    send_client_credentials_via_post = true
-    ```
+```bash
+[auth.generic_oauth]
+send_client_credentials_via_post = true
+```
 
 <hr>
 
