@@ -252,6 +252,10 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
 	}
+	
+	if proxy.ctx.SignedInUser.OrgId != proxy.ctx.Req.Request.Header.Get("X-Grafana-Org-Id") {
+		return errors.New("Org-id in header not match with logged in user")
+	}
 
 	// found route if there are any
 	if len(proxy.plugin.Routes) > 0 {
