@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/bmizerany/assert"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
