@@ -165,6 +165,15 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+
+### Icinga2
+
+Notifications can be send to Icinga2 as passive check result.
+
+Setup up the Icinga2 API according to the official documentation and make sure to use a SSL certificate which is valid to Grafana: [Icinga2 Documentation](https://icinga.com/docs/icinga2/latest/doc/12-icinga2-api/)
+
+Create a check within Icinga2 which is allowed to accept passive checks and use its host and name in the Grafana Notification Channel configuration.
+
 ### All supported notifier
 
 Name | Type |Support images
@@ -184,6 +193,7 @@ Pushover | `pushover` | no
 Telegram | `telegram` | no
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
+Icinga2 | `icinga2` | no
 
 # Enable images in notifications {#external-image-store}
 
