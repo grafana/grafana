@@ -1,11 +1,14 @@
+// @ts-ignore
+import _ from 'lodash';
 import {
   calculateResultsFromQueryTransactions,
   generateEmptyQuery,
   getIntervals,
   ensureQueries,
   getQueryKeys,
+  parseUrlState,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
+import { ExploreItemState, ExploreState, QueryTransaction, ExploreId } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
 import { HigherOrderAction, ActionTypes } from './actionTypes';
@@ -40,6 +43,7 @@ import {
   updateUIStateAction,
   toggleLogLevelAction,
 } from './actionTypes';
+import { CoreActionTypes } from 'app/core/actions/location';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -85,6 +89,8 @@ export const initialExploreState: ExploreState = {
   split: null,
   left: makeExploreItemState(),
   right: makeExploreItemState(),
+  leftUrlState: null,
+  rightUrlState: null,
 };
 
 /**
@@ -502,6 +508,34 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
 
     case ActionTypes.ResetExplore: {
       return initialExploreState;
+    }
+
+    case CoreActionTypes.UpdateLocation: {
+      const path = action.payload.path;
+      if (path && path !== '/explore') {
+        return initialExploreState;
+      }
+
+      const urlStates = action.payload.query;
+      const { left, right } = urlStates;
+      const leftUrlState = urlStates.left ? parseUrlState(left) : undefined;
+      const rightUrlState = urlStates.right ? parseUrlState(right) : undefined;
+      const split = urlStates.right || false;
+      const leftUrlStateUpdated = _.isEqual(leftUrlState, state.leftUrlState) === false;
+      const rightUrlStateUpdated = _.isEqual(rightUrlState, state.rightUrlState) === false;
+
+      if (leftUrlStateUpdated || rightUrlStateUpdated) {
+        return {
+          ...state,
+          split,
+          leftUrlState,
+          rightUrlState,
+          [ExploreId.left]: { ...state[ExploreId.left], initialized: !leftUrlStateUpdated },
+          [ExploreId.right]: { ...state[ExploreId.right], initialized: !rightUrlStateUpdated },
+        };
+      }
+
+      return state;
     }
   }
 

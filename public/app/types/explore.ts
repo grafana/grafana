@@ -106,6 +106,10 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right: ExploreItemState;
+
+  leftUrlState: ExploreUrlState;
+
+  rightUrlState: ExploreUrlState;
 }
 
 export interface ExploreItemState {

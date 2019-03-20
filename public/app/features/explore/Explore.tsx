@@ -89,37 +89,24 @@ export class Explore extends React.PureComponent<ExploreProps> {
    */
   timepickerRef: React.RefObject<TimePicker>;
 
-  constructor(props) {
+  constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
     this.timepickerRef = React.createRef();
   }
 
   async componentDidMount() {
-    const { exploreId, initialized, urlState } = this.props;
-    // Don't initialize on split, but need to initialize urlparameters when present
-    if (!initialized) {
-      // Load URL state and parse range
-      const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
-      const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
-      const initialQueries: DataQuery[] = ensureQueries(queries);
-      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      const width = this.el ? this.el.offsetWidth : 0;
-
-      this.props.initializeExplore(
-        exploreId,
-        initialDatasource,
-        initialQueries,
-        initialRange,
-        width,
-        this.exploreEvents,
-        ui
-      );
-    }
+    this.refreshExplore();
   }
 
   componentWillUnmount() {
     this.exploreEvents.removeAllListeners();
+  }
+
+  componentDidUpdate(prevProps: ExploreProps) {
+    if (prevProps.urlState !== this.props.urlState) {
+      this.refreshExplore();
+    }
   }
 
   getRef = el => {
@@ -167,6 +154,29 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onStopScanning = () => {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
+  };
+
+  refreshExplore = () => {
+    const { exploreId, urlState, initialized } = this.props;
+    if (!initialized) {
+      // Don't initialize on split, but need to initialize urlparameters when present
+      // Load URL state and parse range
+      const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
+      const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+      const initialQueries: DataQuery[] = ensureQueries(queries);
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
+      const width = this.el ? this.el.offsetWidth : 0;
+
+      this.props.initializeExplore(
+        exploreId,
+        initialDatasource,
+        initialQueries,
+        initialRange,
+        width,
+        this.exploreEvents,
+        ui
+      );
+    }
   };
 
   render() {
