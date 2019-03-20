@@ -1,6 +1,6 @@
 {
   "type": "panel",
-  "name": "PieChart",
+  "name": "PieChart v2",
   "id": "piechart",
   "state": "alpha",
 
@@ -12,8 +12,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/piechart_logo_small.png",
-      "large": "img/piechart_logo_large.png"
+      "small": "img/icon_piechart.svg",
+      "large": "img/icon_piechart.svg"
     }
   }
 }

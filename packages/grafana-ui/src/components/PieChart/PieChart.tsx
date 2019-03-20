@@ -145,5 +145,3 @@ export class PieChart extends PureComponent<Props> {
     }
   }
 }
-
-export default PieChart;

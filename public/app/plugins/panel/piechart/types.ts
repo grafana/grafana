@@ -3,9 +3,7 @@ import { PieChartType } from '@grafana/ui';
 export interface PieChartOptions {
   pieType: PieChartType;
   strokeWidth: number;
-
   valueOptions: PieChartValueOptions;
-  // TODO: Options for Legend / Combine components
 }
 
 export interface PieChartValueOptions {

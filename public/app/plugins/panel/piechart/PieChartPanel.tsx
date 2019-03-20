@@ -15,13 +15,13 @@ interface Props extends PanelProps<PieChartOptions> {}
 
 export class PieChartPanel extends PureComponent<Props> {
   render() {
-    const { panelData, width, height, options } = this.props;
+    const { data, width, height, options } = this.props;
     const { valueOptions } = options;
 
     const datapoints: PieChartDataPoint[] = [];
-    if (panelData.timeSeries) {
+    if (data) {
       const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
+        data,
         nullValueMode: NullValueMode.Null,
       });
 
