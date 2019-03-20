@@ -4,6 +4,7 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
+import { getFlotPairs } from './flotPairs';
 import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../types';
 
 interface Options {
@@ -34,7 +35,14 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
 
     const colorIndex = index % colors.length;
     const label = item.columns[yColumn].text;
-    const result = [];
+
+    // Use external calculator just to make sure it works :)
+    const result = getFlotPairs({
+      rows: item.rows,
+      xIndex: xColumn,
+      yIndex: yColumn,
+      nullValueMode,
+    });
 
     // stat defaults
     let total = 0;
@@ -137,8 +145,6 @@ export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Opt
           allIsZero = false;
         }
       }
-
-      result.push([currentTime, currentValue]);
     }
 
     if (max === -Number.MAX_VALUE) {
