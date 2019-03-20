@@ -11,7 +11,7 @@ import { PromQuery } from '../types';
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
 
-type Props = QueryEditorProps<PrometheusDatasource, PromQuery>;
+export type Props = QueryEditorProps<PrometheusDatasource, PromQuery>;
 
 const FORMAT_OPTIONS: SelectOptionItem[] = [
   { label: 'Time series', value: 'time_series' },
