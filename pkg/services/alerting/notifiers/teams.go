@@ -78,13 +78,11 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = evalContext.Rule.Message
 	}
 
-	images := ""
+	images := make([]map[string]interface{}, 0)
 	if evalContext.ImagePublicUrl != "" {
-		images = []map[string]interface{}{
-			{
-				"image": evalContext.ImagePublicUrl,
-			},
-		}
+		images = append(images, map[string]interface{}{
+			"image": evalContext.ImagePublicUrl,
+		})
 	}
 
 	body := map[string]interface{}{
