@@ -3,7 +3,7 @@ import isNumber from 'lodash/isNumber';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
-import { TableData, Column, TimeSeries } from '../types';
+import { TableData, Column, TimeSeries, ColumnType } from '../types';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -131,6 +131,7 @@ export function parseCSV(text: string, options?: TableParseOptions, details?: Ta
 
 function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
   return {
+    name: timeSeries.target,
     columns: [
       {
         text: timeSeries.target || 'Value',
@@ -138,7 +139,7 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
       },
       {
         text: 'Time',
-        type: 'time',
+        type: ColumnType.time,
         unit: 'dateTimeAsIso',
       },
     ],
