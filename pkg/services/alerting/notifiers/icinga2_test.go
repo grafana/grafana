@@ -29,7 +29,7 @@ func TestIcinga2Notifier(t *testing.T) {
 			Convey("from settings", func() {
 				json := `
 				{
-          "Url": "http://google.com"
+          			"url": "http://google.com"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -55,11 +55,11 @@ func TestIcinga2Notifier(t *testing.T) {
 			Convey("from settings with Url, User, Password, HostName, and ServiceName", func() {
 				json := `
 				{
-					"Url": "http://google.com",
-					"User": "Grafana Alerts",
-					"Password": "123456",
-					"HostName": "Dummy",
-					"ServiceName": "Service1"
+					"url": "http://google.com",
+					"user": "Grafana Alerts",
+					"password": "123456",
+					"hostName": "Dummy",
+					"serviceName": "Service1"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
