@@ -34,6 +34,7 @@ type Options struct {
 	observers           []jaeger.Observer
 	gen128Bit           bool
 	zipkinSharedRPCSpan bool
+	maxTagValueLength   int
 	tags                []opentracing.Tag
 	injectors           map[interface{}]jaeger.Injector
 	extractors          map[interface{}]jaeger.Extractor
@@ -98,6 +99,13 @@ func Gen128Bit(gen128Bit bool) Option {
 func ZipkinSharedRPCSpan(zipkinSharedRPCSpan bool) Option {
 	return func(c *Options) {
 		c.zipkinSharedRPCSpan = zipkinSharedRPCSpan
+	}
+}
+
+// MaxTagValueLength can be provided to override the default max tag value length.
+func MaxTagValueLength(maxTagValueLength int) Option {
+	return func(c *Options) {
+		c.maxTagValueLength = maxTagValueLength
 	}
 }
 

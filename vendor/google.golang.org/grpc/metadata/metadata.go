@@ -22,13 +22,14 @@
 package metadata // import "google.golang.org/grpc/metadata"
 
 import (
+	"context"
 	"fmt"
 	"strings"
-
-	"golang.org/x/net/context"
 )
 
-// DecodeKeyValue returns k, v, nil.  It is deprecated and should not be used.
+// DecodeKeyValue returns k, v, nil.
+//
+// Deprecated: use k and v directly instead.
 func DecodeKeyValue(k, v string) (string, string, error) {
 	return k, v, nil
 }
@@ -93,6 +94,30 @@ func (md MD) Len() int {
 // Copy returns a copy of md.
 func (md MD) Copy() MD {
 	return Join(md)
+}
+
+// Get obtains the values for a given key.
+func (md MD) Get(k string) []string {
+	k = strings.ToLower(k)
+	return md[k]
+}
+
+// Set sets the value of a given key with a slice of values.
+func (md MD) Set(k string, vals ...string) {
+	if len(vals) == 0 {
+		return
+	}
+	k = strings.ToLower(k)
+	md[k] = vals
+}
+
+// Append adds the values to key k, not overwriting what was already stored at that key.
+func (md MD) Append(k string, vals ...string) {
+	if len(vals) == 0 {
+		return
+	}
+	k = strings.ToLower(k)
+	md[k] = append(md[k], vals...)
 }
 
 // Join joins any number of mds into a single MD.

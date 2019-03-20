@@ -19,7 +19,8 @@
 package base
 
 import (
-	"golang.org/x/net/context"
+	"context"
+
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/grpclog"
@@ -29,6 +30,7 @@ import (
 type baseBuilder struct {
 	name          string
 	pickerBuilder PickerBuilder
+	config        Config
 }
 
 func (bb *baseBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) balancer.Balancer {
@@ -38,11 +40,12 @@ func (bb *baseBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) 
 
 		subConns: make(map[resolver.Address]balancer.SubConn),
 		scStates: make(map[balancer.SubConn]connectivity.State),
-		csEvltr:  &connectivityStateEvaluator{},
+		csEvltr:  &balancer.ConnectivityStateEvaluator{},
 		// Initialize picker to a picker that always return
 		// ErrNoSubConnAvailable, because when state of a SubConn changes, we
 		// may call UpdateBalancerState with this picker.
 		picker: NewErrPicker(balancer.ErrNoSubConnAvailable),
+		config: bb.config,
 	}
 }
 
@@ -54,12 +57,13 @@ type baseBalancer struct {
 	cc            balancer.ClientConn
 	pickerBuilder PickerBuilder
 
-	csEvltr *connectivityStateEvaluator
+	csEvltr *balancer.ConnectivityStateEvaluator
 	state   connectivity.State
 
 	subConns map[resolver.Address]balancer.SubConn
 	scStates map[balancer.SubConn]connectivity.State
 	picker   balancer.Picker
+	config   Config
 }
 
 func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) {
@@ -74,7 +78,7 @@ func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) 
 		addrsSet[a] = struct{}{}
 		if _, ok := b.subConns[a]; !ok {
 			// a is a new address (not existing in b.subConns).
-			sc, err := b.cc.NewSubConn([]resolver.Address{a}, balancer.NewSubConnOptions{})
+			sc, err := b.cc.NewSubConn([]resolver.Address{a}, balancer.NewSubConnOptions{HealthCheckEnabled: b.config.HealthCheck})
 			if err != nil {
 				grpclog.Warningf("base.baseBalancer: failed to create new SubConn: %v", err)
 				continue
@@ -133,7 +137,7 @@ func (b *baseBalancer) HandleSubConnStateChange(sc balancer.SubConn, s connectiv
 	}
 
 	oldAggrState := b.state
-	b.state = b.csEvltr.recordTransition(oldS, s)
+	b.state = b.csEvltr.RecordTransition(oldS, s)
 
 	// Regenerate picker when one of the following happens:
 	//  - this sc became ready from not-ready
@@ -146,7 +150,6 @@ func (b *baseBalancer) HandleSubConnStateChange(sc balancer.SubConn, s connectiv
 	}
 
 	b.cc.UpdateBalancerState(b.state, b.picker)
-	return
 }
 
 // Close is a nop because base balancer doesn't have internal state to clean up,
@@ -165,45 +168,4 @@ type errPicker struct {
 
 func (p *errPicker) Pick(ctx context.Context, opts balancer.PickOptions) (balancer.SubConn, func(balancer.DoneInfo), error) {
 	return nil, nil, p.err
-}
-
-// connectivityStateEvaluator gets updated by addrConns when their
-// states transition, based on which it evaluates the state of
-// ClientConn.
-type connectivityStateEvaluator struct {
-	numReady            uint64 // Number of addrConns in ready state.
-	numConnecting       uint64 // Number of addrConns in connecting state.
-	numTransientFailure uint64 // Number of addrConns in transientFailure.
-}
-
-// recordTransition records state change happening in every subConn and based on
-// that it evaluates what aggregated state should be.
-// It can only transition between Ready, Connecting and TransientFailure. Other states,
-// Idle and Shutdown are transitioned into by ClientConn; in the beginning of the connection
-// before any subConn is created ClientConn is in idle state. In the end when ClientConn
-// closes it is in Shutdown state.
-//
-// recordTransition should only be called synchronously from the same goroutine.
-func (cse *connectivityStateEvaluator) recordTransition(oldState, newState connectivity.State) connectivity.State {
-	// Update counters.
-	for idx, state := range []connectivity.State{oldState, newState} {
-		updateVal := 2*uint64(idx) - 1 // -1 for oldState and +1 for new.
-		switch state {
-		case connectivity.Ready:
-			cse.numReady += updateVal
-		case connectivity.Connecting:
-			cse.numConnecting += updateVal
-		case connectivity.TransientFailure:
-			cse.numTransientFailure += updateVal
-		}
-	}
-
-	// Evaluate.
-	if cse.numReady > 0 {
-		return connectivity.Ready
-	}
-	if cse.numConnecting > 0 {
-		return connectivity.Connecting
-	}
-	return connectivity.TransientFailure
 }

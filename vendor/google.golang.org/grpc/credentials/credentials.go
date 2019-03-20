@@ -23,6 +23,7 @@
 package credentials // import "google.golang.org/grpc/credentials"
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -31,7 +32,8 @@ import (
 	"net"
 	"strings"
 
-	"golang.org/x/net/context"
+	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc/credentials/internal"
 )
 
 // alpnProtoStr are the specified application level protocols for gRPC.
@@ -107,6 +109,25 @@ type TransportCredentials interface {
 	OverrideServerName(string) error
 }
 
+// Bundle is a combination of TransportCredentials and PerRPCCredentials.
+//
+// It also contains a mode switching method, so it can be used as a combination
+// of different credential policies.
+//
+// Bundle cannot be used together with individual TransportCredentials.
+// PerRPCCredentials from Bundle will be appended to other PerRPCCredentials.
+//
+// This API is experimental.
+type Bundle interface {
+	TransportCredentials() TransportCredentials
+	PerRPCCredentials() PerRPCCredentials
+	// NewWithMode should make a copy of Bundle, and switch mode. Modifying the
+	// existing Bundle may cause races.
+	//
+	// NewWithMode returns nil if the requested mode is not supported.
+	NewWithMode(mode string) (Bundle, error)
+}
+
 // TLSInfo contains the auth information for a TLS authenticated connection.
 // It implements the AuthInfo interface.
 type TLSInfo struct {
@@ -116,6 +137,18 @@ type TLSInfo struct {
 // AuthType returns the type of TLSInfo as a string.
 func (t TLSInfo) AuthType() string {
 	return "tls"
+}
+
+// GetSecurityValue returns security info requested by channelz.
+func (t TLSInfo) GetSecurityValue() ChannelzSecurityValue {
+	v := &TLSChannelzSecurityValue{
+		StandardName: cipherSuiteLookup[t.State.CipherSuite],
+	}
+	// Currently there's no way to get LocalCertificate info from tls package.
+	if len(t.State.PeerCertificates) > 0 {
+		v.RemoteCertificate = t.State.PeerCertificates[0].Raw
+	}
+	return v
 }
 
 // tlsCreds is the credentials required for authenticating a connection using TLS.
@@ -155,7 +188,7 @@ func (c *tlsCreds) ClientHandshake(ctx context.Context, authority string, rawCon
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
 	}
-	return conn, TLSInfo{conn.ConnectionState()}, nil
+	return internal.WrapSyscallConn(rawConn, conn), TLSInfo{conn.ConnectionState()}, nil
 }
 
 func (c *tlsCreds) ServerHandshake(rawConn net.Conn) (net.Conn, AuthInfo, error) {
@@ -163,7 +196,7 @@ func (c *tlsCreds) ServerHandshake(rawConn net.Conn) (net.Conn, AuthInfo, error)
 	if err := conn.Handshake(); err != nil {
 		return nil, nil, err
 	}
-	return conn, TLSInfo{conn.ConnectionState()}, nil
+	return internal.WrapSyscallConn(rawConn, conn), TLSInfo{conn.ConnectionState()}, nil
 }
 
 func (c *tlsCreds) Clone() TransportCredentials {
@@ -217,4 +250,79 @@ func NewServerTLSFromFile(certFile, keyFile string) (TransportCredentials, error
 		return nil, err
 	}
 	return NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}}), nil
+}
+
+// ChannelzSecurityInfo defines the interface that security protocols should implement
+// in order to provide security info to channelz.
+type ChannelzSecurityInfo interface {
+	GetSecurityValue() ChannelzSecurityValue
+}
+
+// ChannelzSecurityValue defines the interface that GetSecurityValue() return value
+// should satisfy. This interface should only be satisfied by *TLSChannelzSecurityValue
+// and *OtherChannelzSecurityValue.
+type ChannelzSecurityValue interface {
+	isChannelzSecurityValue()
+}
+
+// TLSChannelzSecurityValue defines the struct that TLS protocol should return
+// from GetSecurityValue(), containing security info like cipher and certificate used.
+type TLSChannelzSecurityValue struct {
+	StandardName      string
+	LocalCertificate  []byte
+	RemoteCertificate []byte
+}
+
+func (*TLSChannelzSecurityValue) isChannelzSecurityValue() {}
+
+// OtherChannelzSecurityValue defines the struct that non-TLS protocol should return
+// from GetSecurityValue(), which contains protocol specific security info. Note
+// the Value field will be sent to users of channelz requesting channel info, and
+// thus sensitive info should better be avoided.
+type OtherChannelzSecurityValue struct {
+	Name  string
+	Value proto.Message
+}
+
+func (*OtherChannelzSecurityValue) isChannelzSecurityValue() {}
+
+var cipherSuiteLookup = map[uint16]string{
+	tls.TLS_RSA_WITH_RC4_128_SHA:                "TLS_RSA_WITH_RC4_128_SHA",
+	tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA:           "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+	tls.TLS_RSA_WITH_AES_128_CBC_SHA:            "TLS_RSA_WITH_AES_128_CBC_SHA",
+	tls.TLS_RSA_WITH_AES_256_CBC_SHA:            "TLS_RSA_WITH_AES_256_CBC_SHA",
+	tls.TLS_RSA_WITH_AES_128_GCM_SHA256:         "TLS_RSA_WITH_AES_128_GCM_SHA256",
+	tls.TLS_RSA_WITH_AES_256_GCM_SHA384:         "TLS_RSA_WITH_AES_256_GCM_SHA384",
+	tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA:        "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA:    "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:    "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+	tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA:          "TLS_ECDHE_RSA_WITH_RC4_128_SHA",
+	tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA:     "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA",
+	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA:      "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+	tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:      "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:   "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+	tls.TLS_FALLBACK_SCSV:                       "TLS_FALLBACK_SCSV",
+	tls.TLS_RSA_WITH_AES_128_CBC_SHA256:         "TLS_RSA_WITH_AES_128_CBC_SHA256",
+	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256: "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256:   "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305:    "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305:  "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+}
+
+// cloneTLSConfig returns a shallow clone of the exported
+// fields of cfg, ignoring the unexported sync.Once, which
+// contains a mutex and must not be copied.
+//
+// If cfg is nil, a new zero tls.Config is returned.
+//
+// TODO: inline this function if possible.
+func cloneTLSConfig(cfg *tls.Config) *tls.Config {
+	if cfg == nil {
+		return &tls.Config{}
+	}
+
+	return cfg.Clone()
 }

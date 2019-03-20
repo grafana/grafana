@@ -43,15 +43,15 @@ func ParseStats(r io.Reader) (*Stats, error) {
 		fieldXpc         = "xpc"
 
 		// Unimplemented at this time due to lack of documentation.
-		fieldPushAil = "push_ail"
-		fieldXstrat  = "xstrat"
-		fieldAbtb2   = "abtb2"
-		fieldAbtc2   = "abtc2"
-		fieldBmbt2   = "bmbt2"
-		fieldIbt2    = "ibt2"
-		fieldFibt2   = "fibt2"
-		fieldQm      = "qm"
-		fieldDebug   = "debug"
+		// fieldPushAil = "push_ail"
+		// fieldXstrat  = "xstrat"
+		// fieldAbtb2   = "abtb2"
+		// fieldAbtc2   = "abtc2"
+		// fieldBmbt2   = "bmbt2"
+		// fieldIbt2    = "ibt2"
+		// fieldFibt2   = "fibt2"
+		// fieldQm      = "qm"
+		// fieldDebug   = "debug"
 	)
 
 	var xfss Stats
