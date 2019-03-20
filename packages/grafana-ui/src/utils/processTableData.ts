@@ -149,6 +149,16 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
   };
 }
 
+export const getFirstTimeColumn = (table: TableData): number => {
+  const { columns } = table;
+  for (let i = 0; i < columns.length; i++) {
+    if (columns[i].type === ColumnType.time) {
+      return i;
+    }
+  }
+  return -1;
+};
+
 /**
  * @returns a table Returns a copy of the table with the best guess for each column type
  */
