@@ -6,6 +6,12 @@ import $q from 'q';
 import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
 
+jest.mock('app/store/store', () => ({
+  store: {
+    subscribe: jest.fn().mockReturnValue(() => {}),
+  },
+}));
+
 describe('VariableSrv', function(this: any) {
   const ctx = {
     datasourceSrv: {},
@@ -33,6 +39,7 @@ describe('VariableSrv', function(this: any) {
     },
     $location: {
       search: () => {},
+      url: () => '',
     },
   } as any;
 

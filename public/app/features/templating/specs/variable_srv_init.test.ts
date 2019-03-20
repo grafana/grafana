@@ -6,6 +6,12 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 // @ts-ignore
 import $q from 'q';
 
+jest.mock('app/store/store', () => ({
+  store: {
+    subscribe: jest.fn().mockReturnValue(() => {}),
+  },
+}));
+
 describe('VariableSrv init', function(this: any) {
   const templateSrv = {
     init: (vars: any) => {
@@ -32,6 +38,7 @@ describe('VariableSrv init', function(this: any) {
     describe(desc, () => {
       const scenario: any = {
         urlParams: {},
+        url: '',
         setup: (setupFn: Function) => {
           scenario.setupFn = setupFn;
         },
@@ -61,6 +68,7 @@ describe('VariableSrv init', function(this: any) {
         ctx.variableSrv.datasourceSrv = ctx.datasourceSrv;
 
         ctx.variableSrv.$location.search = () => scenario.urlParams;
+        ctx.variableSrv.$location.url = () => scenario.url;
         ctx.variableSrv.dashboard = new DashboardModel({
           templating: { list: scenario.variables },
         });
@@ -86,6 +94,7 @@ describe('VariableSrv init', function(this: any) {
           },
         ];
         scenario.urlParams['var-apps'] = 'new';
+        scenario.url = '/d/000000001/home';
         scenario.metricSources = [];
       });
 
@@ -119,6 +128,7 @@ describe('VariableSrv init', function(this: any) {
       scenario.setup(() => {
         scenario.variables = _.cloneDeep(variableList);
         scenario.urlParams['var-app'] = 'google';
+        scenario.url = '/d/000000001/home';
         scenario.queryResult = [{ text: 'google-server1' }, { text: 'google-server2' }];
       });
 
@@ -174,6 +184,7 @@ describe('VariableSrv init', function(this: any) {
         },
       ];
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
+      scenario.url = '/d/000000001/home';
     });
 
     it('should update current value', () => {
@@ -204,6 +215,7 @@ describe('VariableSrv init', function(this: any) {
           },
         ];
         scenario.urlParams['var-apps'] = ['val1', 'val2'];
+        scenario.url = '/d/000000001/home';
       });
 
       it('should display concatenated values in text', () => {
@@ -232,6 +244,7 @@ describe('VariableSrv init', function(this: any) {
         },
       ];
       scenario.urlParams['var-apps'] = ['val2', 'val1'];
+      scenario.url = '/d/000000001/home';
     });
 
     it('should update current value', () => {
