@@ -1,10 +1,11 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
+
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
-import { TableData, Column, TimeSeries } from '../types';
-import { isString } from 'util';
+import { TableData, Column, TimeSeries, ColumnType } from '../types';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -132,6 +133,7 @@ export function parseCSV(text: string, options?: TableParseOptions, details?: Ta
 
 function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
   return {
+    name: timeSeries.target,
     columns: [
       {
         text: timeSeries.target || 'Value',
@@ -139,7 +141,7 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
       },
       {
         text: 'Time',
-        type: 'time',
+        type: ColumnType.time,
         unit: 'dateTimeAsIso',
       },
     ],
@@ -161,8 +163,8 @@ export const guessColumnTypes = (table: TableData): TableData => {
           changed = true;
           return {
             ...column,
-            type: 'time',
-          } as Column;
+            type: ColumnType.time,
+          };
         }
       }
 
@@ -170,18 +172,18 @@ export const guessColumnTypes = (table: TableData): TableData => {
       for (let i = 0; i < table.rows.length; i++) {
         const v = table.rows[i][index];
         if (v !== null) {
-          let type;
+          let type: ColumnType | undefined;
           if (isNumber(v)) {
-            type = 'number';
+            type = ColumnType.number;
           } else if (isString(v)) {
-            type = 'string';
+            type = ColumnType.string;
           }
           if (type) {
             changed = true;
             return {
               ...column,
               type,
-            } as Column;
+            };
           }
           break;
         }
