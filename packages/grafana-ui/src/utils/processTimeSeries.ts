@@ -5,6 +5,7 @@ import { colors } from './colors';
 
 // Types
 import { TimeSeries, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
+import { getFlotPairs } from './flotPairs';
 
 interface Options {
   timeSeries: TimeSeries[];
@@ -15,7 +16,14 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
   const vmSeries = timeSeries.map((item, index) => {
     const colorIndex = index % colors.length;
     const label = item.target;
-    const result = [];
+
+    // Use external calculator just to make sure it works :)
+    const result = getFlotPairs({
+      rows: item.datapoints,
+      xIndex: 1,
+      yIndex: 0,
+      nullValueMode,
+    });
 
     // stat defaults
     let total = 0;
@@ -118,8 +126,6 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
           allIsZero = false;
         }
       }
-
-      result.push([currentTime, currentValue]);
     }
 
     if (max === -Number.MAX_VALUE) {
