@@ -52,6 +52,9 @@ Open a graph in edit mode by click the title > Edit (or by pressing `e` key whil
 | _Metric lookup_    | Search for metric names in this input field.                                                                                                                                                                                                                                                                                        |
 | _Format as_        | Switch between Table, Time series or Heatmap. Table format will only work in the Table panel. Heatmap format is suitable for displaying metrics having histogram type on Heatmap panel. Under the hood, it converts cumulative histogram to regular and sorts series by the bucket bound.                                           |
 
+> NOTE: Grafana slightly modifies the request dates for queries to align them with the dynamically calculated step.
+> This ensures consistent display of metrics data but can result in a small gap of data at the right edge of a graph.
+
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
