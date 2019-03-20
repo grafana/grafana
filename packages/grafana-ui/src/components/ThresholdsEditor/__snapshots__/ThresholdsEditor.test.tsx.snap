@@ -228,15 +228,15 @@ exports[`Render should render with base threshold 1`] = `
                                 "regular": 400,
                                 "semibold": 500,
                               },
-                              "zIndex": Object {
-                                "dropdown": "1000",
-                                "modal": "1050",
-                                "modalBackdrop": "1040",
-                                "navbarFixed": "1020",
-                                "sidemenu": "1025",
-                                "tooltip": "1030",
-                                "typeahead": "1060",
-                              },
+                            },
+                            "zIndex": Object {
+                              "dropdown": "1000",
+                              "modal": "1050",
+                              "modalBackdrop": "1040",
+                              "navbarFixed": "1020",
+                              "sidemenu": "1025",
+                              "tooltip": "1030",
+                              "typeahead": "1060",
                             },
                           }
                         }
@@ -385,15 +385,15 @@ exports[`Render should render with base threshold 1`] = `
                                       "regular": 400,
                                       "semibold": 500,
                                     },
-                                    "zIndex": Object {
-                                      "dropdown": "1000",
-                                      "modal": "1050",
-                                      "modalBackdrop": "1040",
-                                      "navbarFixed": "1020",
-                                      "sidemenu": "1025",
-                                      "tooltip": "1030",
-                                      "typeahead": "1060",
-                                    },
+                                  },
+                                  "zIndex": Object {
+                                    "dropdown": "1000",
+                                    "modal": "1050",
+                                    "modalBackdrop": "1040",
+                                    "navbarFixed": "1020",
+                                    "sidemenu": "1025",
+                                    "tooltip": "1030",
+                                    "typeahead": "1060",
                                   },
                                 }
                               }
