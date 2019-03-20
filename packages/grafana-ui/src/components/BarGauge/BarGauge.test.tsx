@@ -12,6 +12,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     maxValue: 100,
     minValue: 0,
+    displayMode: 'basic',
     thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
     height: 300,
     width: 300,

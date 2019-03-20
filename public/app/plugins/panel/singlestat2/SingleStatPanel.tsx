@@ -50,8 +50,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   };
 
   render() {
-    const { height, width, options, panelData } = this.props;
-    const { orientation } = options;
+    const { height, width, options, panelData, renderCounter } = this.props;
     return (
       <ProcessedValuesRepeater
         getProcessedValues={this.getProcessedValues}
@@ -59,7 +58,8 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         width={width}
         height={height}
         source={panelData}
-        orientation={orientation}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
       />
     );
   }

@@ -110,7 +110,7 @@ Formats single & multi valued variables for use in URL parameters.
 
 ```bash
 servers = ['foo()bar BAZ', 'test2']
-String to interpolate: '${servers:lucene}'
+String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 

@@ -974,6 +974,7 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 
 		hs := HTTPServer{
 			Bus: bus.GetBus(),
+			Cfg: setting.NewCfg(),
 		}
 
 		sc := setupScenarioContext(url)
@@ -1024,6 +1025,7 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
 			Bus: bus.GetBus(),
 		}
 
