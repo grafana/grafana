@@ -1,7 +1,12 @@
 import _ from 'lodash';
-import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQueryOptions } from '@grafana/ui';
+import { DataSourceApi, DataQueryOptions, TableData, TimeSeries } from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
+
+type TestData = TimeSeries | TableData;
+
+export interface TestDataRegistry {
+  [key: string]: TestData[];
+}
 
 export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   id: number;
@@ -42,24 +47,49 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
         },
       })
       .then(res => {
-        const data = [];
+        const data: TestData[] = [];
 
+        // The results are not in the order we asked for them
         if (res.data.results) {
+          const byRefID: TestDataRegistry = {};
+
           _.forEach(res.data.results, queryRes => {
+            const refId = queryRes.refId || 'Result' + data.length + 1;
+            const qdata: TestData[] = [];
+            byRefID[refId] = qdata;
+
             if (queryRes.tables) {
               for (const table of queryRes.tables) {
-                const model = new TableModel();
-                model.rows = table.rows;
-                model.columns = table.columns;
-
-                data.push(model);
+                qdata.push(table as TableData);
               }
             }
-            for (const series of queryRes.series) {
-              data.push({
-                target: series.name,
-                datapoints: series.points,
-              });
+            if (queryRes.series) {
+              for (const series of queryRes.series) {
+                qdata.push({
+                  target: series.name,
+                  datapoints: series.points,
+                });
+              }
+            }
+          });
+
+          // Return them in the order they were asked for
+          queries.forEach(q => {
+            const found = byRefID[q.refId];
+            if (found) {
+              for (const d of found) {
+                data.push(d);
+                byRefID[q.refId] = null;
+              }
+            }
+          });
+
+          // In case there are items left over
+          _.forEach(byRefID, v => {
+            if (v) {
+              for (const d of v) {
+                data.push(d);
+              }
             }
           });
         }
