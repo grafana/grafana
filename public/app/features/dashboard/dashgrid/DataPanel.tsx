@@ -11,16 +11,15 @@ import {
   DataQueryResponse,
   DataQueryError,
   LoadingState,
-  PanelData,
   TableData,
   TimeRange,
-  TimeSeries,
   ScopedVars,
+  toTableData,
 } from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;
-  panelData: PanelData;
+  data: TableData[];
 }
 
 export interface Props {
@@ -44,7 +43,7 @@ export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
   response: DataQueryResponse;
-  panelData: PanelData;
+  data?: TableData[];
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -64,7 +63,6 @@ export class DataPanel extends Component<Props, State> {
       response: {
         data: [],
       },
-      panelData: {},
       isFirstLoad: true,
     };
   }
@@ -149,7 +147,7 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        panelData: this.getPanelData(resp),
+        data: toTableData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {
@@ -172,23 +170,9 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
-  getPanelData(response: DataQueryResponse) {
-    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
-      return {
-        tableData: response.data[0] as TableData,
-        timeSeries: null,
-      };
-    }
-
-    return {
-      timeSeries: response.data as TimeSeries[],
-      tableData: null,
-    };
-  }
-
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, panelData } = this.state;
+    const { loading, isFirstLoad, data } = this.state;
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
@@ -206,7 +190,7 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, panelData })}
+        {this.props.children({ loading, data })}
       </>
     );
   }

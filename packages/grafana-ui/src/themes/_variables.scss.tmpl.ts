@@ -120,7 +120,7 @@ $headings-line-height: ${theme.typography.lineHeight.sm} !default;
 $border-width: ${theme.border.width.sm} !default;
 
 $border-radius: ${theme.border.radius.md} !default;
-$border-radius-lg: ${theme.border.radius.lg}!default;
+$border-radius-lg: ${theme.border.radius.lg} !default;
 $border-radius-sm: ${theme.border.radius.sm} !default;
 
 // Page
@@ -190,7 +190,6 @@ $btn-padding-y-lg: 11px !default;
 
 $btn-padding-x-xl: 21px !default;
 $btn-padding-y-xl: 11px !default;
-
 
 $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 
