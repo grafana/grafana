@@ -14,6 +14,9 @@ export interface PanelProps<T = any> {
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
+  targets?: any[];
+  onCustomQuery?: any;
+  customQuery?: string;
 }
 
 export interface PanelData {

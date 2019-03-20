@@ -37,7 +37,8 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
     const x = event.layerX;
     const y = event.layerY;
     const pointLabels = this.getPointLabels(x, y);
-    if (this.props.onPointHover) {
+    const pointValue = this.getPointValue(x, y);
+    if (this.props.onPointHover && pointValue !== null) {
       this.props.onPointClick(pointLabels);
     }
   };
@@ -54,7 +55,7 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
     const pointValue = this.getPointValue(x, y);
     // console.log(pointLabels, pointValue);
 
-    if (this.props.onPointHover && pointValue) {
+    if (this.props.onPointHover) {
       this.props.onPointHover(pointValue, pointLabels);
     }
   };
@@ -81,7 +82,7 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
 
     const { width, height, data } = this.props;
 
-    if (!width || !height) {
+    if (!width || !height || !data) {
       return;
     }
 

@@ -39,6 +39,7 @@ export interface State {
   timeInfo?: string;
   timeRange?: TimeRange;
   errorMessage: string | null;
+  customQuery?: string;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
@@ -119,6 +120,11 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   };
 
+  onCustomQuery = (query: string) => {
+    console.log('issue query:', query);
+    this.setState({ customQuery: query });
+  };
+
   clearErrorState() {
     if (this.state.errorMessage) {
       this.setState({ errorMessage: null });
@@ -142,7 +148,14 @@ export class PanelChrome extends PureComponent<Props, State> {
     return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
   }
 
-  renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
+  renderPanelPlugin(
+    loading: LoadingState,
+    panelData: PanelData,
+    width: number,
+    height: number,
+    targets?,
+    onCustomQuery?
+  ): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.reactPanel.panel;
@@ -164,6 +177,8 @@ export class PanelChrome extends PureComponent<Props, State> {
           height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
           replaceVariables={this.replaceVariables}
+          targets={targets}
+          onCustomQuery={onCustomQuery}
         />
       </div>
     );
@@ -171,7 +186,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   renderPanelBody = (width: number, height: number): JSX.Element => {
     const { panel } = this.props;
-    const { refreshCounter, timeRange } = this.state;
+    const { refreshCounter, timeRange, customQuery } = this.state;
     const { datasource, targets } = panel;
     return (
       <>
@@ -187,9 +202,10 @@ export class PanelChrome extends PureComponent<Props, State> {
             scopedVars={panel.scopedVars}
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
+            customQuery={customQuery}
           >
             {({ loading, panelData }) => {
-              return this.renderPanelPlugin(loading, panelData, width, height);
+              return this.renderPanelPlugin(loading, panelData, width, height, targets, this.onCustomQuery);
             }}
           </DataPanel>
         ) : (

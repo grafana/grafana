@@ -1,4 +1,5 @@
 // Library
+import _ from 'lodash';
 import React, { Component } from 'react';
 
 // Services
@@ -38,6 +39,7 @@ export interface Props {
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
   onError: (message: string, error: DataQueryError) => void;
+  customQuery?: string;
 }
 
 export interface State {
@@ -82,17 +84,21 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.issueQueries();
+    // console.log(prevProps.customQuery, this.props.customQuery);
+    if (this.props.customQuery && prevProps.customQuery !== this.props.customQuery) {
+      this.issueQueries(this.props.customQuery);
+    } else {
+      this.issueQueries();
+    }
   }
 
   hasPropsChanged(prevProps: Props) {
-    return this.props.refreshCounter !== prevProps.refreshCounter;
+    return this.props.refreshCounter !== prevProps.refreshCounter || prevProps.customQuery !== this.props.customQuery;
   }
 
-  private issueQueries = async () => {
+  private issueQueries = async (customQuery?) => {
     const {
       isVisible,
-      queries,
       datasource,
       panelId,
       dashboardId,
@@ -103,6 +109,7 @@ export class DataPanel extends Component<Props, State> {
       onDataResponse,
       onError,
     } = this.props;
+    const queries = _.cloneDeep(this.props.queries);
 
     if (!isVisible) {
       return;
@@ -121,6 +128,12 @@ export class DataPanel extends Component<Props, State> {
       // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;
       const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+      if (customQuery && queries[0].expr) {
+        queries[0].expr = customQuery;
+        queries[0].format = 'time_series';
+        queries[0].instant = false;
+      }
+      console.log(this.props, queries);
 
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
