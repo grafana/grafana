@@ -82,8 +82,8 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.ImagePublicUrl != "" {
 		images = []map[string]interface{}{
 			{
-				"image": evalContext.ImagePublicUrl
-			}
+				"image": evalContext.ImagePublicUrl,
+			},
 		}
 	}
 
@@ -97,10 +97,10 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{
 			{
-				"title": "Details",
-				"facts": fields,
+				"title":  "Details",
+				"facts":  fields,
 				"images": images,
-				"text": message,
+				"text":   message,
 			},
 		},
 		"potentialAction": []map[string]interface{}{
