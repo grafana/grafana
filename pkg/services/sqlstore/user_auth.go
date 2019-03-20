@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var getTime = time.Now
+
 func init() {
 	bus.AddHandler("sql", GetUserByAuthInfo)
 	bus.AddHandler("sql", GetAuthInfo)
@@ -153,7 +155,7 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
 			AuthId:     cmd.AuthId,
-			Created:    time.Now(),
+			Created:    getTime(),
 		}
 
 		if cmd.OAuthToken != nil {
@@ -187,7 +189,7 @@ func UpdateAuthInfo(cmd *m.UpdateAuthInfoCommand) error {
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
 			AuthId:     cmd.AuthId,
-			Created:    time.Now(),
+			Created:    getTime(),
 		}
 
 		if cmd.OAuthToken != nil {
