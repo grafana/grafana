@@ -17,6 +17,9 @@ export enum StatID {
   delta = 'delta',
   step = 'step',
 
+  changeCount = 'changeCount',
+  distinctCount = 'distinctCount',
+
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
 }
@@ -29,9 +32,10 @@ export interface ColumnStats {
 type StatCalculator = (data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
 
 export interface StatCalculatorInfo {
-  value: string; // The ID - value maps directly to select component
-  label: string; // The name - label for Select component
+  id: string;
+  name: string;
   description: string;
+
   alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
 
   // Internal details
@@ -83,7 +87,7 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
   if (!data.rows || data.rows.length < 1) {
     const stats = {} as ColumnStats;
     queue.forEach(stat => {
-      stats[stat.value] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
+      stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
     });
     return stats;
   }
@@ -93,13 +97,13 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].calculator) {
-    return [queue[0].calculator(data, columnIndex, ignoreNulls, nullAsZero)];
+    return queue[0].calculator(data, columnIndex, ignoreNulls, nullAsZero);
   }
 
   // For now everything can use the standard stats
   let values = standardStatsStat(data, columnIndex, ignoreNulls, nullAsZero);
   queue.forEach(calc => {
-    if (!values.hasOwnProperty(calc.value) && calc.calculator) {
+    if (!values.hasOwnProperty(calc.id) && calc.calculator) {
       values = {
         ...values,
         ...calc.calculator(data, columnIndex, ignoreNulls, nullAsZero),
@@ -127,75 +131,89 @@ function getById(id: string): StatCalculatorInfo | undefined {
   if (!hasBuiltIndex) {
     [
       {
-        value: StatID.last,
-        label: 'Last',
+        id: StatID.last,
+        name: 'Last',
         description: 'Last Value (current)',
         standard: true,
         alias: 'current',
-        stat: calculateLast,
+        calculator: calculateLast,
       },
-      { value: StatID.first, label: 'First', description: 'First Value', standard: true, stat: calculateFirst },
-      { value: StatID.min, label: 'Min', description: 'Minimum Value', standard: true },
-      { value: StatID.max, label: 'Max', description: 'Maximum Value', standard: true },
-      { value: StatID.mean, label: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
+      { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
+      { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
+      { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
+      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true },
       {
-        value: StatID.sum,
-        label: 'Total',
+        id: StatID.sum,
+        name: 'Total',
         description: 'The sum of all values',
         emptyInputResult: 0,
         standard: true,
         alias: 'total',
       },
       {
-        value: StatID.count,
-        label: 'Count',
+        id: StatID.count,
+        name: 'Count',
         description: 'Number of values in response',
         emptyInputResult: 0,
         standard: true,
       },
       {
-        value: StatID.range,
-        label: 'Range',
+        id: StatID.range,
+        name: 'Range',
         description: 'Difference between minimum and maximum values',
         standard: true,
       },
       {
-        value: StatID.delta,
-        label: 'Delta',
+        id: StatID.delta,
+        name: 'Delta',
         description: 'Cumulative change in value (??? help not really sure ???)',
         standard: true,
       },
       {
-        value: StatID.step,
-        label: 'Step',
+        id: StatID.step,
+        name: 'Step',
         description: 'Minimum interval between values',
         standard: true,
       },
       {
-        value: StatID.diff,
-        label: 'Difference',
+        id: StatID.diff,
+        name: 'Difference',
         description: 'Difference between first and last values',
         standard: true,
       },
       {
-        value: StatID.logmin,
-        label: 'Min (above zero)',
+        id: StatID.logmin,
+        name: 'Min (above zero)',
         description: 'Used for log min scale',
         standard: true,
       },
-    ].forEach(calc => {
-      const { value, alias } = calc;
-      if (index.hasOwnProperty(value)) {
-        console.warn('Duplicate Stat', value, calc, index);
+      {
+        id: StatID.changeCount,
+        name: 'Change Count',
+        description: 'Number of times the value changes',
+        standard: false,
+        calculator: calculateChangeCount,
+      },
+      {
+        id: StatID.distinctCount,
+        name: 'Distinct Count',
+        description: 'Number of distinct values',
+        standard: false,
+        calculator: calculateDistinctCount,
+      },
+    ].forEach(info => {
+      const { id, alias } = info;
+      if (index.hasOwnProperty(id)) {
+        console.warn('Duplicate Stat', id, info, index);
       }
-      index[value] = calc;
+      index[id] = info;
       if (alias) {
         if (index.hasOwnProperty(alias)) {
-          console.warn('Duplicate Stat (alias)', alias, calc, index);
+          console.warn('Duplicate Stat (alias)', alias, info, index);
         }
-        index[alias] = calc;
+        index[alias] = info;
       }
-      listOfStats.push(calc);
+      listOfStats.push(info);
     });
     hasBuiltIndex = true;
   }
@@ -324,9 +342,61 @@ function standardStatsStat(
 }
 
 function calculateFirst(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
+  console.log('FIRST', data);
   return { first: data.rows[0][columnIndex] };
 }
 
 function calculateLast(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
   return { last: data.rows[data.rows.length - 1][columnIndex] };
+}
+
+function calculateChangeCount(
+  data: TableData,
+  columnIndex: number,
+  ignoreNulls: boolean,
+  nullAsZero: boolean
+): ColumnStats {
+  let count = 0;
+  let first = true;
+  let last: any = null;
+  for (let i = 0; i < data.rows.length; i++) {
+    let currentValue = data.rows[i][columnIndex];
+    if (currentValue === null) {
+      if (ignoreNulls) {
+        continue;
+      }
+      if (nullAsZero) {
+        currentValue = 0;
+      }
+    }
+    if (!first && last !== currentValue) {
+      count++;
+    }
+    first = false;
+    last = currentValue;
+  }
+
+  return { changeCount: count };
+}
+
+function calculateDistinctCount(
+  data: TableData,
+  columnIndex: number,
+  ignoreNulls: boolean,
+  nullAsZero: boolean
+): ColumnStats {
+  const distinct = new Set<any>();
+  for (let i = 0; i < data.rows.length; i++) {
+    let currentValue = data.rows[i][columnIndex];
+    if (currentValue === null) {
+      if (ignoreNulls) {
+        continue;
+      }
+      if (nullAsZero) {
+        currentValue = 0;
+      }
+    }
+    distinct.add(currentValue);
+  }
+  return { distinctCount: distinct.size };
 }

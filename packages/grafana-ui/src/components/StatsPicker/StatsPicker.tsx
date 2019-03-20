@@ -36,10 +36,10 @@ export class StatsPicker extends PureComponent<Props> {
 
     const current = getStatsCalculators(stats);
     if (current.length !== stats.length) {
-      const found = current.map(v => v.value);
+      const found = current.map(v => v.id);
       const notFound = difference(stats, found);
       console.warn('Unknown stats', notFound, stats);
-      onChange(current.map(stat => stat.value));
+      onChange(current.map(stat => stat.id));
     }
 
     // Make sure there is only one
@@ -65,15 +65,31 @@ export class StatsPicker extends PureComponent<Props> {
 
   render() {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
-    const current = getStatsCalculators(stats);
+    const options = getStatsCalculators().map(s => {
+      return {
+        value: s.id,
+        label: s.name,
+        desctipiton: s.description,
+      };
+    });
+
+    const value: SelectOptionItem[] = [];
+    stats.forEach(s => {
+      const o = options.find(v => v.value === s);
+      if (o) {
+        value.push(o);
+      }
+    });
+
+    //getStatsCalculators(stats);
     return (
       <Select
         width={width}
-        value={current}
+        value={value}
         isClearable={!defaultStat}
         isMulti={allowMultiple}
         isSearchable={true}
-        options={getStatsCalculators()}
+        options={options}
         placeholder={placeholder}
         onChange={this.onSelectionChange}
       />

@@ -32,14 +32,14 @@ describe('Stats Calculators', () => {
     const stats = getStatsCalculators(names);
     expect(stats.length).toBe(2);
 
-    const found = stats.map(v => v.value);
+    const found = stats.map(v => v.id);
     const notFound = _.difference(names, found);
     expect(notFound.length).toBe(2);
 
     expect(notFound[0]).toBe('not a stat');
   });
 
-  it('should calculate stats', () => {
+  it('should calculate basic stats', () => {
     const stats = calculateStats({
       data: basicTable,
       columnIndex: 0,
@@ -60,16 +60,22 @@ describe('Stats Calculators', () => {
     const stats = calculateStats({
       data: basicTable,
       columnIndex: 0,
-      stats: ['first', 'last', 'mean'],
+      stats: ['first'],
     });
 
-    // First
+    // Should do the simple version that just looks up value
+    expect(Object.keys(stats).length).toEqual(1);
     expect(stats.first).toEqual(10);
+  });
 
-    // Last
-    expect(stats.last).toEqual(20);
+  it('should get non standard stats', () => {
+    const stats = calculateStats({
+      data: basicTable,
+      columnIndex: 0,
+      stats: [StatID.distinctCount, StatID.changeCount],
+    });
 
-    // Mean
-    expect(stats.mean).toEqual(15);
+    expect(stats.distinctCount).toEqual(2);
+    expect(stats.changeCount).toEqual(1);
   });
 });
