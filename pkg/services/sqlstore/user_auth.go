@@ -127,40 +127,21 @@ func GetAuthInfo(query *m.GetAuthInfoQuery) error {
 		return m.ErrUserNotFound
 	}
 
-	if userAuth.OAuthAccessToken != "" {
-		decodedAccessToken, err := base64.StdEncoding.DecodeString(userAuth.OAuthAccessToken)
-		if err != nil {
-			return err
-		}
-		decryptedAccessToken, err := util.Decrypt(decodedAccessToken, setting.SecretKey)
-		if err != nil {
-			return err
-		}
-		userAuth.OAuthAccessToken = string(decryptedAccessToken)
-
+	secretAccessToken, err := decodeAndDecrypt(userAuth.OAuthAccessToken)
+	if err != nil {
+		return err
 	}
-	if userAuth.OAuthRefreshToken != "" {
-		decodedRefreshToken, err := base64.StdEncoding.DecodeString(userAuth.OAuthRefreshToken)
-		if err != nil {
-			return err
-		}
-		decryptedRefreshToken, err := util.Decrypt(decodedRefreshToken, setting.SecretKey)
-		if err != nil {
-			return err
-		}
-		userAuth.OAuthRefreshToken = string(decryptedRefreshToken)
+	secretRefreshToken, err := decodeAndDecrypt(userAuth.OAuthRefreshToken)
+	if err != nil {
+		return err
 	}
-	if userAuth.OAuthTokenType != "" {
-		decodedTokenType, err := base64.StdEncoding.DecodeString(userAuth.OAuthTokenType)
-		if err != nil {
-			return err
-		}
-		decryptedTokenType, err := util.Decrypt(decodedTokenType, setting.SecretKey)
-		if err != nil {
-			return err
-		}
-		userAuth.OAuthTokenType = string(decryptedTokenType)
+	secretTokenType, err := decodeAndDecrypt(userAuth.OAuthTokenType)
+	if err != nil {
+		return err
 	}
+	userAuth.OAuthAccessToken = secretAccessToken
+	userAuth.OAuthRefreshToken = secretRefreshToken
+	userAuth.OAuthTokenType = secretTokenType
 
 	query.Result = userAuth
 	return nil
@@ -176,22 +157,22 @@ func SetAuthInfo(cmd *m.SetAuthInfoCommand) error {
 		}
 
 		if cmd.OAuthToken != nil {
-			secretAccessToken, err := util.Encrypt([]byte(cmd.OAuthToken.AccessToken), setting.SecretKey)
+			secretAccessToken, err := encryptAndEncode(cmd.OAuthToken.AccessToken)
 			if err != nil {
 				return err
 			}
-			secretRefreshToken, err := util.Encrypt([]byte(cmd.OAuthToken.RefreshToken), setting.SecretKey)
+			secretRefreshToken, err := encryptAndEncode(cmd.OAuthToken.RefreshToken)
 			if err != nil {
 				return err
 			}
-			secretTokenType, err := util.Encrypt([]byte(cmd.OAuthToken.TokenType), setting.SecretKey)
+			secretTokenType, err := encryptAndEncode(cmd.OAuthToken.TokenType)
 			if err != nil {
 				return err
 			}
 
-			authUser.OAuthAccessToken = base64.StdEncoding.EncodeToString(secretAccessToken)
-			authUser.OAuthRefreshToken = base64.StdEncoding.EncodeToString(secretRefreshToken)
-			authUser.OAuthTokenType = base64.StdEncoding.EncodeToString(secretTokenType)
+			authUser.OAuthAccessToken = secretAccessToken
+			authUser.OAuthRefreshToken = secretRefreshToken
+			authUser.OAuthTokenType = secretTokenType
 			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 		}
 
@@ -210,21 +191,22 @@ func UpdateAuthInfo(cmd *m.UpdateAuthInfoCommand) error {
 		}
 
 		if cmd.OAuthToken != nil {
-			secretAccessToken, err := util.Encrypt([]byte(cmd.OAuthToken.AccessToken), setting.SecretKey)
+			secretAccessToken, err := encryptAndEncode(cmd.OAuthToken.AccessToken)
 			if err != nil {
 				return err
 			}
-			secretRefreshToken, err := util.Encrypt([]byte(cmd.OAuthToken.RefreshToken), setting.SecretKey)
+			secretRefreshToken, err := encryptAndEncode(cmd.OAuthToken.RefreshToken)
 			if err != nil {
 				return err
 			}
-			secretTokenType, err := util.Encrypt([]byte(cmd.OAuthToken.TokenType), setting.SecretKey)
+			secretTokenType, err := encryptAndEncode(cmd.OAuthToken.TokenType)
 			if err != nil {
 				return err
 			}
-			authUser.OAuthAccessToken = base64.StdEncoding.EncodeToString(secretAccessToken)
-			authUser.OAuthRefreshToken = base64.StdEncoding.EncodeToString(secretRefreshToken)
-			authUser.OAuthTokenType = base64.StdEncoding.EncodeToString(secretTokenType)
+
+			authUser.OAuthAccessToken = secretAccessToken
+			authUser.OAuthRefreshToken = secretRefreshToken
+			authUser.OAuthTokenType = secretTokenType
 			authUser.OAuthExpiry = cmd.OAuthToken.Expiry
 		}
 
@@ -243,4 +225,32 @@ func DeleteAuthInfo(cmd *m.DeleteAuthInfoCommand) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err
 	})
+}
+
+// decodeAndDecrypt will decode the string with the standard bas64 decoder
+// and then decrypt it with grafana's secretKey
+func decodeAndDecrypt(s string) (string, error) {
+	// Bail out if empty string since it'll cause a segfault in util.Decrypt
+	if s == "" {
+		return "", nil
+	}
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return "", err
+	}
+	decrypted, err := util.Decrypt(decoded, setting.SecretKey)
+	if err != nil {
+		return "", err
+	}
+	return string(decrypted), nil
+}
+
+// encryptAndEncode will encrypt a string with grafana's secretKey, and
+// then encode it with the standard bas64 encoder
+func encryptAndEncode(s string) (string, error) {
+	encrypted, err := util.Encrypt([]byte(s), setting.SecretKey)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
