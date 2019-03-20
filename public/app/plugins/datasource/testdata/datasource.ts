@@ -49,49 +49,28 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       .then(res => {
         const data: TestData[] = [];
 
-        // The results are not in the order we asked for them
-        if (res.data.results) {
-          const byRefID: TestDataRegistry = {};
-
-          _.forEach(res.data.results, queryRes => {
-            const refId = queryRes.refId || 'Result' + data.length + 1;
-            const qdata: TestData[] = [];
-            byRefID[refId] = qdata;
-
-            if (queryRes.tables) {
-              for (const table of queryRes.tables) {
-                qdata.push(table as TableData);
+        // Returns data in the order it was asked for.
+        // if the response has data with different refId, it is ignored
+        for (let i = 0; i < queries.length; i++) {
+          const query = queries[i];
+          const results = res.data.results[query.refId];
+          if (results) {
+            if (results.tables) {
+              for (const table of results.tables) {
+                data.push(table as TableData);
               }
             }
-            if (queryRes.series) {
-              for (const series of queryRes.series) {
-                qdata.push({
+            if (results.series) {
+              for (const series of results.series) {
+                data.push({
                   target: series.name,
                   datapoints: series.points,
                 });
               }
             }
-          });
-
-          // Return them in the order they were asked for
-          queries.forEach(q => {
-            const found = byRefID[q.refId];
-            if (found) {
-              for (const d of found) {
-                data.push(d);
-                byRefID[q.refId] = null;
-              }
-            }
-          });
-
-          // In case there are items left over
-          _.forEach(byRefID, v => {
-            if (v) {
-              for (const d of v) {
-                data.push(d);
-              }
-            }
-          });
+          } else {
+            console.warn('No Results for:', query);
+          }
         }
 
         return { data: data };
