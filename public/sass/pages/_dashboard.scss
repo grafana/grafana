@@ -1,5 +1,5 @@
 .dashboard-container {
-  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
+  padding: $space-md $space-md 0 $space-md;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -78,7 +78,7 @@ div.flot-text {
 }
 
 .panel-content {
-  padding: $panel-padding;
+  padding: 0 $space-md $space-sm $space-md;
   height: calc(100% - 27px);
   position: relative;
 
@@ -260,7 +260,6 @@ div.flot-text {
 }
 
 .dashboard-header {
-  font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
   overflow: hidden;
@@ -271,10 +270,6 @@ div.flot-text {
     @include brand-bottom-border();
     padding: 0.5rem 0.5rem 0.2rem 0.5rem;
   }
-}
-
-.panel-full-edit {
-  padding-top: $dashboard-padding;
 }
 
 .dashboard-loading {

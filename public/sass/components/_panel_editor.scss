@@ -9,14 +9,14 @@
 
   &--edit {
     height: 40%;
-    margin: 0 $dashboard-padding;
+    margin: 0 $space-md;
   }
 
   &--view {
     flex: 1 1 0;
     height: 90%;
-    margin: 0 $dashboard-padding;
-    padding-top: $dashboard-padding;
+    margin: 0 $space-md;
+    padding-top: $space-md;
   }
 }
 
@@ -80,11 +80,7 @@
   }
 
   .submenu-controls {
-    padding: 0 $dashboard-padding $space-sm $dashboard-padding;
-  }
-
-  .panel-editor-container__panel {
-    margin: 0 $dashboard-padding;
+    padding: 0 $space-md $space-sm $space-md;
   }
 
   .search-container {

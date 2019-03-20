@@ -4,7 +4,7 @@ const theme: GrafanaThemeCommons = {
   name: 'Grafana Default',
   typography: {
     fontFamily: {
-      sansSerif: "'Roboto', Helvetica, Arial, sans-serif",
+      sansSerif: "'Roboto', 'Helvetica Neue', Arial, sans-serif",
       monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
     },
     size: {
@@ -33,6 +33,10 @@ const theme: GrafanaThemeCommons = {
       sm: 1.1,
       md: 4 / 3,
       lg: 1.5,
+    },
+    link: {
+      decoration: 'none',
+      hoverDecoration: 'none',
     },
   },
   breakpoints: {
@@ -65,6 +69,15 @@ const theme: GrafanaThemeCommons = {
   panelPadding: {
     horizontal: 10,
     vertical: 5,
+  },
+  zIndex: {
+    dropdown: '1000',
+    navbarFixed: '1020',
+    sidemenu: '1025',
+    tooltip: '1030',
+    modalBackdrop: '1040',
+    modal: '1050',
+    typeahead: '1060',
   },
 };
 
