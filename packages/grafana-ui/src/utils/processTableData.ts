@@ -162,7 +162,7 @@ export const guessColumnTypes = (table: TableData): TableData => {
           return {
             ...column,
             type: 'time',
-          };
+          } as Column;
         }
       }
 
@@ -181,7 +181,7 @@ export const guessColumnTypes = (table: TableData): TableData => {
             return {
               ...column,
               type,
-            };
+            } as Column;
           }
           break;
         }
