@@ -24,7 +24,6 @@ describe('GraphiteQueryCtrl', () => {
   beforeEach(() => {
     GraphiteQueryCtrl.prototype.target = ctx.target;
     GraphiteQueryCtrl.prototype.datasource = ctx.datasource;
-
     GraphiteQueryCtrl.prototype.panelCtrl = ctx.panelCtrl;
 
     ctx.ctrl = new GraphiteQueryCtrl(
@@ -81,22 +80,6 @@ describe('GraphiteQueryCtrl', () => {
 
     it('should add function and remove select metric link', () => {
       expect(ctx.ctrl.segments.length).toBe(0);
-    });
-  });
-
-  describe('when initializing target without metric expression and only function', () => {
-    beforeEach(() => {
-      ctx.ctrl.target.target = 'asPercent(#A, #B)';
-      ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([]);
-      ctx.ctrl.parseTarget();
-    });
-
-    it('should not add select metric segment', () => {
-      expect(ctx.ctrl.segments.length).toBe(1);
-    });
-
-    it('should add second series ref as param', () => {
-      expect(ctx.ctrl.queryModel.functions[0].params.length).toBe(1);
     });
   });
 

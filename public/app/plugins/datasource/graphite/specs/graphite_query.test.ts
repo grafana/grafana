@@ -44,4 +44,16 @@ describe('Graphite query model', () => {
       expect(ctx.queryModel.target.targetFull).toBeDefined();
     });
   });
+
+  describe('when query seriesByTag and series ref', () => {
+    beforeEach(() => {
+      ctx.target = { refId: 'A', target: `group(seriesByTag('namespace=asd'), #A)` };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+    });
+
+    it('should keep group function series ref', () => {
+      expect(ctx.queryModel.functions[1].params[0]).toBe('#A');
+    });
+  });
 });
