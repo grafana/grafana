@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import Prism from 'prismjs';
+import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -12,13 +13,20 @@ const PRISM_SYNTAX = 'promql';
 export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
   // State
   const [languageProviderInitialised, setLanguageProvideInitilised] = useState(false);
-  const [logLabelOptions, setLogLabelOptions] = useState([]);
   const [syntax, setSyntax] = useState(null);
+
   /**
    * Holds information about currently selected option from rc-cascader to perform effect
-   * that loads option values not fetched yet
+   * that loads option values not fetched yet. Based on that useLokiLabels hook decides whether or not
+   * the option requires additional data fetching
    */
   const [activeOption, setActiveOption] = useState([]);
+
+  const { logLabelOptions, setLogLabelOptions, refreshLabels } = useLokiLabels(
+    languageProvider,
+    languageProviderInitialised,
+    activeOption
+  );
 
   // Async
   const initialiseLanguageProvider = async () => {
@@ -31,37 +39,16 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
     setLanguageProvideInitilised(true);
   };
 
-  const fetchOptionValues = async option => {
-    await languageProvider.fetchLabelValues(option);
-    setLogLabelOptions(languageProvider.logLabelOptions);
-  };
-
   // Effects
   useEffect(() => {
     initialiseLanguageProvider();
   }, []);
-
-  useEffect(() => {
-    if (languageProviderInitialised) {
-      const targetOption = activeOption[activeOption.length - 1];
-      const nextOptions = logLabelOptions.map(option => {
-        if (option.value === targetOption.value) {
-          return {
-            ...option,
-            loading: true,
-          };
-        }
-        return option;
-      });
-      setLogLabelOptions(nextOptions); // to set loading
-      fetchOptionValues(targetOption.value);
-    }
-  }, [activeOption]);
 
   return {
     isSyntaxReady: languageProviderInitialised,
     syntax,
     logLabelOptions,
     setActiveOption,
+    refreshLabels,
   };
 };

@@ -67,6 +67,7 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreD
   logLabelOptions: any[];
   syntaxLoaded: any;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
+  onLabelsRefresh?: () => void;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
@@ -149,7 +150,16 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const { error, hint, query, syntaxLoaded, logLabelOptions, onLoadOptions, datasource } = this.props;
+    const {
+      error,
+      hint,
+      query,
+      syntaxLoaded,
+      logLabelOptions,
+      onLoadOptions,
+      onLabelsRefresh,
+      datasource,
+    } = this.props;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
@@ -158,7 +168,16 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <Cascader options={logLabelOptions} onChange={this.onChangeLogLabels} loadData={onLoadOptions}>
+            <Cascader
+              options={logLabelOptions}
+              onChange={this.onChangeLogLabels}
+              loadData={onLoadOptions}
+              onPopupVisibleChange={isVisible => {
+                if (isVisible && onLabelsRefresh) {
+                  onLabelsRefresh();
+                }
+              }}
+            >
               <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>

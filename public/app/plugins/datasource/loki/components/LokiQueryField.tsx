@@ -3,7 +3,7 @@ import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldFor
 import { useLokiSyntax } from './useLokiSyntax';
 
 const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({ datasource, ...otherProps }) => {
-  const { isSyntaxReady, setActiveOption, ...syntaxProps } = useLokiSyntax(datasource.languageProvider);
+  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(datasource.languageProvider);
 
   return (
     <LokiQueryFieldForm
@@ -16,6 +16,7 @@ const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({ datasource
        * to fetch data of options that aren't fetched yet
        */
       onLoadOptions={setActiveOption}
+      onLabelsRefresh={refreshLabels}
       {...syntaxProps}
       {...otherProps}
     />
