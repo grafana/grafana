@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`read csv should get X and y 1`] = `
+Array [
+  Object {
+    "columns": Array [
+      Object {
+        "text": "Column 1",
+        "type": "number",
+      },
+      Object {
+        "text": "Column 2",
+        "type": "number",
+      },
+      Object {
+        "text": "Column 3",
+        "type": "number",
+      },
+      Object {
+        "text": "Column 4",
+        "type": "number",
+      },
+    ],
+    "rows": Array [
+      Array [
+        2,
+        3,
+        4,
+        null,
+      ],
+      Array [
+        5,
+        6,
+        null,
+        null,
+      ],
+      Array [
+        null,
+        null,
+        null,
+        7,
+      ],
+    ],
+  },
+]
+`;
