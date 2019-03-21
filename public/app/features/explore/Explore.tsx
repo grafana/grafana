@@ -106,7 +106,25 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    this.refreshExplore();
+    const { exploreId, urlState, initialized } = this.props;
+    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
+    const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+    const initialQueries: DataQuery[] = ensureQueries(queries);
+    const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
+    const width = this.el ? this.el.offsetWidth : 0;
+
+    // initialize the whole explore first time we mount and if browser history contains a change in datasource
+    if (!initialized) {
+      this.props.initializeExplore(
+        exploreId,
+        initialDatasource,
+        initialQueries,
+        initialRange,
+        width,
+        this.exploreEvents,
+        ui
+      );
+    }
   }
 
   componentWillUnmount() {
@@ -165,31 +183,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   refreshExplore = () => {
-    const { exploreId, urlState, initialized, refresh } = this.props;
-    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
-    const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
-    const initialQueries: DataQuery[] = ensureQueries(queries);
-    const initialRange = {
-      from: parseTime(range.from),
-      to: parseTime(range.to),
-    };
-    const width = this.el ? this.el.offsetWidth : 0;
+    const { exploreId, refresh } = this.props;
 
-    // initialize the whole explore first time we mount and if browser history contains a change in datasource
-    if (!initialized || refresh.datasource) {
-      this.props.initializeExplore(
-        exploreId,
-        initialDatasource,
-        initialQueries,
-        initialRange,
-        width,
-        this.exploreEvents,
-        ui
-      );
-      return;
-    }
-
-    if (refresh.queries || refresh.ui || refresh.range) {
+    if (refresh.queries || refresh.ui || refresh.range || refresh.datasource) {
       this.props.refreshExplore(exploreId);
     }
   };

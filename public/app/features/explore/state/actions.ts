@@ -17,8 +17,6 @@ import {
   buildQueryTransaction,
   serializeStateToUrlParam,
   parseUrlState,
-  DEFAULT_UI_STATE,
-  DEFAULT_RANGE,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -779,13 +777,22 @@ export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy)
 export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const itemState = getState().explore[exploreId];
-    const { urlState, refresh } = itemState;
+    if (!itemState.initialized) {
+      return;
+    }
+
+    const { urlState, refresh, containerWidth, eventBridge } = itemState;
     const { datasource, queries, range, ui } = urlState;
-    const refreshDataSource = datasource;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
     const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
 
-    console.log(refreshDataSource);
+    // need to refresh datasource
+    if (refresh.datasource) {
+      const initialQueries = ensureQueries(queries);
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
+      return;
+    }
 
     if (refresh.range) {
       dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
