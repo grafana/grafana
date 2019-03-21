@@ -255,7 +255,6 @@ export class TimePicker extends PureComponent<Props> {
               <i className="fa fa-chevron-left" />
             </button>
           )}
-          {/* Tooltip need real element */}
           <ButtonSelect
             className="time-picker-button-select"
             value={value}
