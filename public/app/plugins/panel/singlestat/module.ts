@@ -8,7 +8,7 @@ import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
+import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName, isTableData } from '@grafana/ui';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -112,7 +112,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       scopedVars: _.extend({}, this.panel.scopedVars),
     };
 
-    if (dataList.length > 0 && dataList[0].type === 'table') {
+    if (dataList.length > 0 && isTableData(dataList[0])) {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
       this.setTableValues(tableData, data);

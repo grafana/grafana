@@ -3,7 +3,7 @@ import isNumber from 'lodash/isNumber';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
-import { TableData, Column } from '../types';
+import { TableData, Column, TimeSeries, ColumnType } from '../types';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -70,8 +70,6 @@ export function matchRowSizes(table: TableData): TableData {
   return {
     columns,
     rows: fixedRows,
-    type: table.type,
-    columnMap: table.columnMap,
   };
 }
 
@@ -118,8 +116,6 @@ export function parseCSV(text: string, options?: TableParseOptions, details?: Ta
     return {
       columns: [],
       rows: [],
-      type: 'table',
-      columnMap: {},
     };
   }
 
@@ -130,10 +126,48 @@ export function parseCSV(text: string, options?: TableParseOptions, details?: Ta
   return matchRowSizes({
     columns: makeColumns(header),
     rows: results.data,
-    type: 'table',
-    columnMap: {},
   });
 }
+
+function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
+  return {
+    name: timeSeries.target,
+    columns: [
+      {
+        text: timeSeries.target || 'Value',
+        unit: timeSeries.unit,
+      },
+      {
+        text: 'Time',
+        type: ColumnType.time,
+        unit: 'dateTimeAsIso',
+      },
+    ],
+    rows: timeSeries.datapoints,
+  };
+}
+
+export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
+
+export const toTableData = (results?: any[]): TableData[] => {
+  if (!results) {
+    return [];
+  }
+
+  return results
+    .filter(d => !!d)
+    .map(data => {
+      if (data.hasOwnProperty('columns')) {
+        return data as TableData;
+      }
+      if (data.hasOwnProperty('datapoints')) {
+        return convertTimeSeriesToTableData(data);
+      }
+      // TODO, try to convert JSON to table?
+      console.warn('Can not convert', data);
+      throw new Error('Unsupported data format');
+    });
+};
 
 export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {
   if (isNumber(sortIndex)) {

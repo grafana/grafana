@@ -50,28 +50,29 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export type TimeSeriesVMs = TimeSeriesVM[];
 
+export enum ColumnType {
+  time = 'time', // or date
+  number = 'number',
+  string = 'string',
+  boolean = 'boolean',
+  other = 'other', // Object, Array, etc
+}
+
 export interface Column {
-  text: string;
-  title?: string;
-  type?: string;
-  sort?: boolean;
-  desc?: boolean;
+  text: string; // The column name
+  type?: ColumnType;
   filterable?: boolean;
   unit?: string;
+  dateFormat?: string; // Source data format
+}
+
+export interface Tags {
+  [key: string]: string;
 }
 
 export interface TableData {
+  name?: string;
   columns: Column[];
-  rows: any[];
-  type: string;
-  columnMap: any;
-}
-
-export type SingleStatValue = number | string | null;
-
-/*
- * So we can add meta info like tags & series name
- */
-export interface SingleStatValueInfo {
-  value: SingleStatValue;
+  rows: any[][];
+  tags?: Tags;
 }

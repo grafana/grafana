@@ -260,7 +260,6 @@ div.flot-text {
 }
 
 .dashboard-header {
-  font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
   overflow: hidden;
@@ -271,10 +270,6 @@ div.flot-text {
     @include brand-bottom-border();
     padding: 0.5rem 0.5rem 0.2rem 0.5rem;
   }
-}
-
-.panel-full-edit {
-  padding-top: $dashboard-padding;
 }
 
 .dashboard-loading {
