@@ -253,7 +253,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	if String(proxy.ctx.SignedInUser.OrgId) != proxy.ctx.Req.Request.Header.Get("X-Grafana-Org-Id") {
+	if strconv.FormatInt(proxy.ctx.SignedInUser.OrgId, 10) != proxy.ctx.Req.Request.Header.Get("X-Grafana-Org-Id") {
 		return errors.New("Org-id in header not match with logged in user")
 	}
 
