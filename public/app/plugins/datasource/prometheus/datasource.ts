@@ -354,6 +354,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           })
           .value();
 
+        const dupCheck = {};
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
@@ -365,6 +366,10 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
             };
 
             if (annotation.useValueForTime) {
+              if (dupCheck[value[1]]) {
+                continue;
+              }
+              dupCheck[value[1]] = true;
               event['time'] = Math.floor(parseFloat(value[1]));
             } else {
               event['time'] = Math.floor(parseFloat(value[0])) * 1000;
