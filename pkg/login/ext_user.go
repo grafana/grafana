@@ -172,7 +172,7 @@ func updateUserAuth(user *m.User, extUser *m.ExternalUserInfo) error {
 		OAuthToken: extUser.OAuthToken,
 	}
 
-	log.Debug("Updating user_auth info", "user_id", user.Id)
+	logger.Debug("Updating user_auth info", "user_id", user.Id)
 	return bus.Dispatch(updateCmd)
 }
 
