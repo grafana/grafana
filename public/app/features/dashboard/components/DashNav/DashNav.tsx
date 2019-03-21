@@ -16,7 +16,7 @@ import { Tooltip, SelectOptionItem } from '@grafana/ui';
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
+import { RefreshPicker } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { TimePicker } from '../TimePicker/TimePicker';
 import { DashboardModel } from '../../state';
 import { TimeRange } from '@grafana/ui/src/types';
