@@ -240,7 +240,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Pre-load values for default labels
       return Promise.all(
         labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key))
-      ).then((values) => {
+      ).then(values => {
         this.logLabelFetchTs = Date.now();
         return values;
       });

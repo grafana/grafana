@@ -150,10 +150,10 @@ describe('Labels refresh', () => {
     jest.clearAllMocks();
     clear();
   });
-  it('should not refresh labels if refresh interval hasn\'t passed', () => {
+  it("should not refresh labels if refresh interval hasn't passed", () => {
     advanceTo(new Date(2019, 1, 1, 0, 0, 0));
     instance.logLabelFetchTs = Date.now();
-    advanceBy(LABEL_REFRESH_INTERVAL/2);
+    advanceBy(LABEL_REFRESH_INTERVAL / 2);
     instance.refreshLogLabels();
     expect(instance.fetchLogLabels).not.toBeCalled();
   });
