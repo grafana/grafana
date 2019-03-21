@@ -9,7 +9,8 @@ export interface Props {
   initialValue: string | undefined;
   intervals: string[];
   onRefreshClicked: () => void;
-  onIntervalChanged: (interval: string) => void;
+  onIntervalChanged: (item: SelectOptionItem) => void;
+  value: SelectOptionItem;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
@@ -30,7 +31,7 @@ export class RefreshPicker extends PureComponent<Props> {
   };
 
   onSelectChanged = (item: SelectOptionItem) => {
-    this.props.onIntervalChanged(item.value);
+    this.props.onIntervalChanged(item);
   };
 
   onClickOutside = () => this.setState({ isSelectOpen: false });
@@ -39,7 +40,7 @@ export class RefreshPicker extends PureComponent<Props> {
     const { onRefreshClicked, intervals, initialValue } = this.props;
 
     const options = this.intervalsToOptions(intervals);
-    const selectedValue = this.mapStringToSelectOptionItem(initialValue);
+    const selectedValue = this.props.value || this.mapStringToSelectOptionItem(initialValue) || this.emptyItem;
 
     return (
       <div className="refresh-picker">

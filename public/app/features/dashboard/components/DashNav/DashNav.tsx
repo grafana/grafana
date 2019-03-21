@@ -10,7 +10,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, SelectOptionItem } from '@grafana/ui';
 
 // State
 import { updateLocation } from 'app/core/actions';
@@ -33,6 +33,7 @@ export interface Props {
 
 export interface State {
   timePickerValue: TimeRange;
+  refreshPickerValue: SelectOptionItem;
 }
 
 export class DashNav extends PureComponent<Props, State> {
@@ -46,6 +47,7 @@ export class DashNav extends PureComponent<Props, State> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
     this.state = {
       timePickerValue: this.timeSrv.timeRange(),
+      refreshPickerValue: undefined,
     };
   }
 
@@ -64,6 +66,10 @@ export class DashNav extends PureComponent<Props, State> {
       this.timepickerCmp.destroy();
     }
   }
+
+  onRefresh = () => {
+    this.timeSrv.refreshDashboard();
+  };
 
   onOpenSearch = () => {
     appEvents.emit('show-dash-search');
@@ -185,6 +191,12 @@ export class DashNav extends PureComponent<Props, State> {
     this.timeSrv.setTime(newRange);
     this.setState({
       timePickerValue: timeRange,
+    });
+  };
+
+  onChangeRefreshPicker = (selectOptionItem: SelectOptionItem) => {
+    this.setState({
+      refreshPickerValue: selectOptionItem,
     });
   };
 
@@ -311,10 +323,11 @@ export class DashNav extends PureComponent<Props, State> {
             popoverOptions={TimePicker.defaultPopoverOptions}
           />
           <RefreshPicker
-            onIntervalChanged={() => {}}
-            onRefreshClicked={() => {}}
+            onIntervalChanged={this.onChangeRefreshPicker}
+            onRefreshClicked={this.onRefresh}
             intervals={['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d']}
             initialValue={undefined}
+            value={this.state.refreshPickerValue}
           />
         </div>
 
