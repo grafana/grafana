@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
+import { TypeaheadInput } from 'app/features/explore/QueryField';
 
 /**
  *
@@ -12,7 +13,7 @@ import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider'
 export const useLokiLabels = (
   languageProvider: LokiLanguageProvider,
   languageProviderInitialised: boolean,
-  activeOption: any[]
+  activeOption: TypeaheadInput[]
 ) => {
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
@@ -40,7 +41,6 @@ export const useLokiLabels = (
       return;
     }
     const targetOption = activeOption[activeOption.length - 1];
-
     if (!targetOption) {
       return;
     }
