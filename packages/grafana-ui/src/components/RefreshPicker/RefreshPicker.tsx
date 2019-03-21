@@ -22,7 +22,6 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   mapStringToSelectOptionItem = (interval: string): SelectOptionItem => {
-    console.log('interval', interval);
     return interval ? { label: interval, value: stringToMs(interval) } : this.emptyItem;
   };
 
@@ -55,7 +54,6 @@ export class RefreshPicker extends PureComponent<Props> {
     const options = this.intervalsToOptions(intervals);
     const selectedValue =
       this.props.value || (initialValue ? this.mapStringToSelectOptionItem(initialValue) : this.emptyItem);
-    // const selectedValue = this.props.value || this.emptyItem;
 
     return (
       <div className="refresh-picker">
