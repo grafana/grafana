@@ -24,15 +24,9 @@ import { LogLevel } from 'app/core/logs_model';
  *
  */
 export enum ActionTypes {
-  InitializeExploreSplit = 'explore/INITIALIZE_EXPLORE_SPLIT',
   SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
-}
-
-export interface InitializeExploreSplitAction {
-  type: ActionTypes.InitializeExploreSplit;
-  payload: {};
 }
 
 export interface SplitCloseAction {
@@ -260,11 +254,6 @@ export const initializeExploreAction = actionCreatorFactory<InitializeExplorePay
 ).create();
 
 /**
- * Initialize the wrapper split state
- */
-export const initializeExploreSplitAction = noPayloadActionCreatorFactory('explore/INITIALIZE_EXPLORE_SPLIT').create();
-
-/**
  * Display an error that happened during the selection of a datasource
  */
 export const loadDatasourceFailureAction = actionCreatorFactory<LoadDatasourceFailurePayload>(
@@ -411,12 +400,7 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
 export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
 
-export type HigherOrderAction =
-  | InitializeExploreSplitAction
-  | SplitCloseAction
-  | SplitOpenAction
-  | ResetExploreAction
-  | ActionOf<any>;
+export type HigherOrderAction = SplitCloseAction | SplitOpenAction | ResetExploreAction | ActionOf<any>;
 
 export type Action =
   | ActionOf<AddQueryRowPayload>

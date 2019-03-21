@@ -106,10 +106,6 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right: ExploreItemState;
-
-  leftUrlState: ExploreUrlState;
-
-  rightUrlState: ExploreUrlState;
 }
 
 export interface ExploreItemState {
@@ -252,6 +248,17 @@ export interface ExploreItemState {
    * Currently hidden log series
    */
   hiddenLogLevels?: LogLevel[];
+
+  urlState: ExploreUrlState;
+
+  refresh: ExploreRefreshState;
+}
+
+export interface ExploreRefreshState {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+  ui: boolean;
 }
 
 export interface ExploreUIState {

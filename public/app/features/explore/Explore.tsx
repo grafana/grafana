@@ -18,21 +18,31 @@ import TableContainer from './TableContainer';
 import TimePicker, { parseTime } from './TimePicker';
 
 // Actions
-import { changeSize, changeTime, initializeExplore, modifyQueries, scanStart, setQueries } from './state/actions';
+import {
+  changeSize,
+  changeTime,
+  initializeExplore,
+  modifyQueries,
+  scanStart,
+  setQueries,
+  runQueries,
+} from './state/actions';
 
 // Types
 import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
-import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId } from 'app/types/explore';
+import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreRefreshState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction } from './state/actionTypes';
+import { scanStopAction, updateUIStateAction, changeTimeAction, clearQueriesAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
+  changeTimeAction: typeof changeTimeAction;
+  clearQueriesAction: typeof clearQueriesAction;
   datasourceError: string;
   datasourceInstance: ExploreDataSourceApi;
   datasourceLoading: boolean | null;
@@ -42,6 +52,8 @@ interface ExploreProps {
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
   range: RawTimeRange;
+  refresh: ExploreRefreshState;
+  runQueries: typeof runQueries;
   scanner?: RangeScanner;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -53,8 +65,9 @@ interface ExploreProps {
   supportsGraph: boolean | null;
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
-  urlState: ExploreUrlState;
   queryKeys: string[];
+  urlState: ExploreUrlState;
+  updateUIStateAction: typeof updateUIStateAction;
 }
 
 /**
@@ -95,7 +108,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.timepickerRef = React.createRef();
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     this.refreshExplore();
   }
 
@@ -104,9 +117,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidUpdate(prevProps: ExploreProps) {
-    if (prevProps.urlState !== this.props.urlState) {
-      this.refreshExplore();
-    }
+    this.refreshExplore();
   }
 
   getRef = el => {
@@ -157,16 +168,18 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   refreshExplore = () => {
-    const { exploreId, urlState, initialized } = this.props;
-    if (!initialized) {
-      // Don't initialize on split, but need to initialize urlparameters when present
-      // Load URL state and parse range
-      const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
-      const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
-      const initialQueries: DataQuery[] = ensureQueries(queries);
-      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      const width = this.el ? this.el.offsetWidth : 0;
+    const { exploreId, urlState, initialized, refresh } = this.props;
+    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
+    const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+    const initialQueries: DataQuery[] = ensureQueries(queries);
+    const initialRange = {
+      from: parseTime(range.from),
+      to: parseTime(range.to),
+    };
+    const width = this.el ? this.el.offsetWidth : 0;
 
+    // initialize the whole explore first time we mount and if browser history contains a change in datasource
+    if (!initialized || refresh.datasource) {
       this.props.initializeExplore(
         exploreId,
         initialDatasource,
@@ -176,6 +189,30 @@ export class Explore extends React.PureComponent<ExploreProps> {
         this.exploreEvents,
         ui
       );
+      return;
+    }
+
+    // need to refresh time range
+    if (refresh.range) {
+      this.props.changeTimeAction({
+        exploreId,
+        range: initialRange as TimeRange,
+      });
+    }
+
+    // need to refresh ui state
+    if (refresh.ui) {
+      this.props.updateUIStateAction({ ...ui, exploreId });
+    }
+
+    // need to refresh queries
+    if (refresh.queries) {
+      this.props.setQueries(exploreId, initialQueries);
+    }
+
+    // always run queries when refresh is needed
+    if (refresh.queries || refresh.ui || refresh.range) {
+      this.props.runQueries(exploreId);
     }
   };
 
@@ -268,6 +305,8 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     supportsLogs,
     supportsTable,
     queryKeys,
+    urlState,
+    refresh,
   } = item;
   return {
     StartPage,
@@ -283,17 +322,23 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     supportsLogs,
     supportsTable,
     queryKeys,
+    urlState,
+    refresh,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
   changeTime,
+  changeTimeAction,
+  clearQueriesAction,
   initializeExplore,
   modifyQueries,
+  runQueries,
   scanStart,
   scanStopAction,
   setQueries,
+  updateUIStateAction,
 };
 
 export default hot(module)(

@@ -16,6 +16,7 @@ import {
   updateHistory,
   buildQueryTransaction,
   serializeStateToUrlParam,
+  parseUrlState,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -54,7 +55,6 @@ import {
   queryTransactionStartAction,
   queryTransactionSuccessAction,
   scanRangeAction,
-  runQueriesEmptyAction,
   scanStartAction,
   setQueriesAction,
   splitCloseAction,
@@ -67,6 +67,7 @@ import {
   ToggleLogsPayload,
   ToggleTablePayload,
   updateUIStateAction,
+  runQueriesAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -518,7 +519,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     } = getState().explore[exploreId];
 
     if (!hasNonEmptyQuery(queries)) {
-      dispatch(runQueriesEmptyAction({ exploreId }));
+      dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
       return;
     }
@@ -527,6 +528,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
+    dispatch(runQueriesAction());
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
@@ -657,11 +659,15 @@ export function splitClose(): ThunkResult<void> {
 export function splitOpen(): ThunkResult<void> {
   return (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore.left;
+    const leftState = getState().explore[ExploreId.left];
+    const queryState = getState().location.query[ExploreId.left] as string;
+    const urlState = parseUrlState(queryState);
     const itemState = {
       ...leftState,
       queryTransactions: [],
       queries: leftState.queries.slice(),
+      exploreId: ExploreId.right,
+      urlState,
     };
     dispatch(splitOpenAction({ itemState }));
     dispatch(stateSave());

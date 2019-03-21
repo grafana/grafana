@@ -3,18 +3,16 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreUrlState } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 
 import ErrorBoundary from './ErrorBoundary';
 import Explore from './Explore';
 import { CustomScrollbar } from '@grafana/ui';
-import { initializeExploreSplitAction, resetExploreAction } from './state/actionTypes';
+import { resetExploreAction } from './state/actionTypes';
 
 interface WrapperProps {
   split: boolean;
   resetExploreAction: typeof resetExploreAction;
-  leftUrlState: ExploreUrlState;
-  rightUrlState: ExploreUrlState;
 }
 
 export class Wrapper extends Component<WrapperProps> {
@@ -23,18 +21,18 @@ export class Wrapper extends Component<WrapperProps> {
   }
 
   render() {
-    const { split, leftUrlState, rightUrlState } = this.props;
+    const { split } = this.props;
 
     return (
       <div className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
           <div className="explore-wrapper">
             <ErrorBoundary>
-              <Explore exploreId={ExploreId.left} urlState={leftUrlState} />
+              <Explore exploreId={ExploreId.left} />
             </ErrorBoundary>
             {split && (
               <ErrorBoundary>
-                <Explore exploreId={ExploreId.right} urlState={rightUrlState} />
+                <Explore exploreId={ExploreId.right} />
               </ErrorBoundary>
             )}
           </div>
@@ -45,12 +43,11 @@ export class Wrapper extends Component<WrapperProps> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  const { split, leftUrlState, rightUrlState } = state.explore;
-  return { split, leftUrlState, rightUrlState };
+  const { split } = state.explore;
+  return { split };
 };
 
 const mapDispatchToProps = {
-  initializeExploreSplitAction,
   resetExploreAction,
 };
 
