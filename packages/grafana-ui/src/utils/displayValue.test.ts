@@ -1,5 +1,5 @@
 import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, DisplayValue } from './displayValue';
-import { MappingType, ValueMapping } from '../types/panel';
+import { MappingType, ValueMapping } from '../types';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
@@ -128,7 +128,7 @@ describe('Format value', () => {
 
     const result = instance(value);
 
-    expect(result.text).toEqual('6.0');
+    expect(result.text).toEqual('6');
   });
 
   it('should return formatted value if there are no matching value mappings', () => {
@@ -141,7 +141,7 @@ describe('Format value', () => {
 
     const result = instance(value);
 
-    expect(result.text).toEqual('10.0');
+    expect(result.text).toEqual('10');
   });
 
   it('should return mapped value if there are matching value mappings', () => {

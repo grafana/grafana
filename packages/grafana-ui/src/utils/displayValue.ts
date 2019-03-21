@@ -15,7 +15,6 @@ export interface DisplayValue {
 export interface DisplayValueOptions {
   unit?: string;
   decimals?: DecimalCount;
-  scaledDecimals?: DecimalCount;
   dateFormat?: string; // If set try to convert numbers to date
 
   color?: string;
@@ -37,6 +36,7 @@ export type DisplayProcessor = (value: any) => DisplayValue;
 export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
     const formatFunc = getValueFormat(options.unit || 'none');
+
     return (value: any) => {
       const { prefix, suffix, mappings, thresholds, theme } = options;
       let color = options.color;
@@ -47,12 +47,15 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       let shouldFormat = true;
       if (mappings && mappings.length > 0) {
         const mappedValue = getMappedValue(mappings, value);
+
         if (mappedValue) {
           text = mappedValue.text;
           const v = toNumber(text);
+
           if (!isNaN(v)) {
             numeric = v;
           }
+
           shouldFormat = false;
         }
       }
@@ -67,7 +70,8 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
 
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
-          text = formatFunc(numeric, options.decimals, options.scaledDecimals, options.isUtc);
+          const decimalInfo = getDecimalsForValue(value);
+          text = formatFunc(numeric, decimalInfo.decimals, decimalInfo.scaledDecimals, options.isUtc);
         }
         if (thresholds && thresholds.length > 0) {
           color = getColorFromThreshold(numeric, thresholds, theme);
@@ -142,4 +146,40 @@ export function getColorFromThreshold(value: number, thresholds: Threshold[], th
 
   // Use the first threshold as the default color
   return getColorFromHexRgbOrName(thresholds[0].color, themeType);
+}
+
+export function getDecimalsForValue(value: number): { decimals: number; scaledDecimals: number } {
+  const delta = value / 2;
+  let dec = -Math.floor(Math.log(delta) / Math.LN10);
+
+  const magn = Math.pow(10, -dec);
+  const norm = delta / magn; // norm is between 1.0 and 10.0
+  let size;
+
+  if (norm < 1.5) {
+    size = 1;
+  } else if (norm < 3) {
+    size = 2;
+    // special case for 2.5, requires an extra decimal
+    if (norm > 2.25) {
+      size = 2.5;
+      ++dec;
+    }
+  } else if (norm < 7.5) {
+    size = 5;
+  } else {
+    size = 10;
+  }
+
+  size *= magn;
+
+  // reduce starting decimals if not needed
+  if (Math.floor(value) === value) {
+    dec = 0;
+  }
+
+  const decimals = Math.max(0, dec);
+  const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
+
+  return { decimals, scaledDecimals };
 }
