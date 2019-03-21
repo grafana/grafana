@@ -133,7 +133,7 @@
     "build": "grunt build",
     "test": "grunt test",
     "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit --skipLibCheck",
+    "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
