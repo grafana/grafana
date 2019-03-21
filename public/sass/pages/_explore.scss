@@ -31,7 +31,7 @@
   flex-flow: row wrap;
   justify-content: flex-start;
   height: auto;
-  padding: 0 $space-md;
+  padding: 0 $dashboard-padding;
   border-bottom: 1px solid #0000;
   transition-duration: 0.35s;
   transition-timing-function: ease-in-out;
@@ -91,7 +91,7 @@
 }
 
 .explore-toolbar-content-item:first-child {
-  padding-left: $space-md;
+  padding-left: $dashboard-spacer;
   margin-right: auto;
 }
 
@@ -142,7 +142,7 @@
 @media only screen and (max-width: 544px) {
   .explore-toolbar-header-title {
     .navbar-page-btn {
-      margin-left: $space-md;
+      margin-left: $dashboard-padding;
     }
   }
 }
