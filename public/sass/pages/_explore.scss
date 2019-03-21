@@ -156,7 +156,7 @@
 }
 
 .explore-container {
-  padding: $space-md;
+  padding: $dashboard-padding;
 }
 
 .explore-wrapper {
@@ -172,7 +172,7 @@
 }
 
 .explore-panel__body {
-  padding: 0 $space-md $space-sm $space-md;
+  padding: $panel-padding;
 }
 
 .explore-panel__header {

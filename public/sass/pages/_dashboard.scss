@@ -1,5 +1,5 @@
 .dashboard-container {
-  padding: $space-md $space-md 0 $space-md;
+  padding: $dashboard-padding;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -78,7 +78,7 @@ div.flot-text {
 }
 
 .panel-content {
-  padding: 0 $space-md $space-sm $space-md;
+  padding: $panel-padding;
   height: calc(100% - 27px);
   position: relative;
 
