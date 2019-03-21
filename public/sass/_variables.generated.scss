@@ -90,7 +90,7 @@ $grid-gutter-width: 30px !default;
 // Typography
 // -------------------------
 
-$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
+$font-family-sans-serif: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 $font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
 
 $font-size-root: 14px !default;
@@ -113,7 +113,6 @@ $font-size-h4: 18px !default;
 $font-size-h5: 16px !default;
 $font-size-h6: 14px !default;
 
-$headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-line-height: 1.1 !default;
 
 // Components
@@ -200,10 +199,8 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$dashboard-padding: 10px * 2;
-$panel-horizontal-padding: 10;
-$panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
+$dashboard-padding: $space-md;
+$panel-padding: 0 $space-md $space-sm $space-md;
 
 // tabs
 $tabs-padding: 10px 15px 9px;
