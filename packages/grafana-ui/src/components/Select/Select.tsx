@@ -17,6 +17,8 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
+import { Tooltip } from '@grafana/ui';
 
 export interface SelectOptionItem {
   label?: string;
@@ -48,10 +50,15 @@ export interface CommonProps {
   backspaceRemovesValue?: boolean;
   isOpen?: boolean;
   components?: any;
+  tooltipContent?: PopperContent<any>;
 }
 
 export interface SelectProps {
   options: SelectOptionItem[];
+}
+
+interface SelectState {
+  isMenuOpen: boolean;
 }
 
 interface AsyncProps {
@@ -59,6 +66,26 @@ interface AsyncProps {
   loadOptions: (query: string) => Promise<SelectOptionItem[]>;
   loadingMessage?: () => string;
 }
+
+const wrapInTooltip = (
+  component: React.ReactElement,
+  tooltipContent: PopperContent<any> | undefined,
+  isMenuOpen: boolean
+) => {
+  const showTooltip = isMenuOpen ? false : undefined;
+  if (tooltipContent) {
+    return (
+      <Tooltip show={showTooltip} content={tooltipContent} placement="bottom">
+        <div>
+          {/* div needed for tooltip */}
+          {component}
+        </div>
+      </Tooltip>
+    );
+  } else {
+    return <div>{component}</div>;
+  }
+};
 
 export const MenuList = (props: any) => {
   return (
@@ -70,7 +97,7 @@ export const MenuList = (props: any) => {
   );
 };
 
-export class Select extends PureComponent<CommonProps & SelectProps> {
+export class Select extends PureComponent<CommonProps & SelectProps, SelectState> {
   static defaultProps = {
     width: null,
     className: '',
@@ -92,6 +119,13 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       Group: SelectOptionGroup,
     },
   };
+
+  state = {
+    isMenuOpen: false,
+  };
+
+  onOpen = () => this.setState({ isMenuOpen: true });
+  onClose = () => this.setState({ isMenuOpen: false });
 
   render() {
     const {
@@ -117,7 +151,10 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
       noOptionsMessage,
       isOpen,
       components,
+      tooltipContent,
     } = this.props;
+
+    const { isMenuOpen } = this.state;
 
     let widthClass = '';
     if (width) {
@@ -127,7 +164,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
 
-    return (
+    return wrapInTooltip(
       <ReactSelect
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
@@ -153,7 +190,11 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
         isMulti={isMulti}
         backspaceRemovesValue={backspaceRemovesValue}
         menuIsOpen={isOpen}
-      />
+        onMenuOpen={this.onOpen}
+        onMenuClose={this.onClose}
+      />,
+      tooltipContent,
+      isMenuOpen
     );
   }
 }
@@ -198,6 +239,7 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
       openMenuOnFocus,
       maxMenuHeight,
       isMulti,
+      tooltipContent,
     } = this.props;
 
     let widthClass = '';
@@ -207,7 +249,7 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
 
-    return (
+    return wrapInTooltip(
       <ReactAsyncSelect
         classNamePrefix="gf-form-select-box"
         className={selectClassNames}
@@ -239,7 +281,9 @@ export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
         maxMenuHeight={maxMenuHeight}
         isMulti={isMulti}
         backspaceRemovesValue={backspaceRemovesValue}
-      />
+      />,
+      tooltipContent,
+      false
     );
   }
 }

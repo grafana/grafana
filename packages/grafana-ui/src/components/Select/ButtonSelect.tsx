@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import Select, { SelectOptionItem } from './Select';
+import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
 
 interface ButtonComponentProps {
   label: string | undefined;
@@ -37,6 +38,7 @@ export interface Props {
   components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectOptionItem) => void;
+  tooltipContent?: PopperContent<any>;
 }
 
 export class ButtonSelect extends PureComponent<Props> {
@@ -46,7 +48,7 @@ export class ButtonSelect extends PureComponent<Props> {
   };
 
   render() {
-    const { className, options, value, label, iconClass, components, maxMenuHeight } = this.props;
+    const { className, options, value, label, iconClass, components, maxMenuHeight, tooltipContent } = this.props;
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),
@@ -65,6 +67,7 @@ export class ButtonSelect extends PureComponent<Props> {
           maxMenuHeight={maxMenuHeight}
           components={combinedComponents}
           className="gf-form-select-box-button-select"
+          tooltipContent={tooltipContent}
         />
       </div>
     );
