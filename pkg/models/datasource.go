@@ -24,6 +24,8 @@ const (
 	DS_ACCESS_PROXY  = "proxy"
 	DS_STACKDRIVER   = "stackdriver"
 	DS_AZURE_MONITOR = "grafana-azure-monitor-datasource"
+	DS_METAQUERIES   = "metaqueries"
+	//DS_DRUIDPLUGIN 	 = "druidplugin"
 )
 
 var (
@@ -62,19 +64,21 @@ type DataSource struct {
 }
 
 var knownDatasourcePlugins = map[string]bool{
-	DS_ES:                                 true,
-	DS_GRAPHITE:                           true,
-	DS_INFLUXDB:                           true,
-	DS_INFLUXDB_08:                        true,
-	DS_KAIROSDB:                           true,
-	DS_CLOUDWATCH:                         true,
-	DS_PROMETHEUS:                         true,
-	DS_OPENTSDB:                           true,
-	DS_POSTGRES:                           true,
-	DS_MYSQL:                              true,
-	DS_MSSQL:                              true,
-	DS_STACKDRIVER:                        true,
-	DS_AZURE_MONITOR:                      true,
+	DS_ES:            true,
+	DS_GRAPHITE:      true,
+	DS_INFLUXDB:      true,
+	DS_INFLUXDB_08:   true,
+	DS_KAIROSDB:      true,
+	DS_CLOUDWATCH:    true,
+	DS_PROMETHEUS:    true,
+	DS_OPENTSDB:      true,
+	DS_POSTGRES:      true,
+	DS_MYSQL:         true,
+	DS_MSSQL:         true,
+	DS_STACKDRIVER:   true,
+	DS_AZURE_MONITOR: true,
+	DS_METAQUERIES:   true,
+	//DS_DRUIDPLUGIN:					       true,
 	"opennms":                             true,
 	"abhisant-druid-datasource":           true,
 	"dalmatinerdb-datasource":             true,

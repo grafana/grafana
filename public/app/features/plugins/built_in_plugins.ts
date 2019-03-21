@@ -13,6 +13,8 @@ import * as mssqlPlugin from 'app/plugins/datasource/mssql/module';
 import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
 import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
 import * as azureMonitorPlugin from 'app/plugins/datasource/grafana-azure-monitor-datasource/module';
+import * as metaqueriesPlugin from 'app/plugins/datasource/metaqueries/module';
+// import * as druidPlugin from 'app/plugins/datasource/druidplugin/module';
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';
@@ -43,6 +45,8 @@ const builtInPlugins = {
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/metaqueries/module': metaqueriesPlugin,
+  // 'app/plugins/datasource/druidplugin/module': druidPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/text2/module': text2Panel,

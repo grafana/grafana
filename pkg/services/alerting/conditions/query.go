@@ -110,6 +110,45 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
+
+	if getDsInfo.Result.Type == "metaqueries" {
+		//req.Queries = []*tsdb.Query{}
+		query := &m.GetDashboardQuery{Id: context.Rule.DashboardId, OrgId: context.Rule.OrgId}
+
+		if err := bus.Dispatch(query); err != nil {
+			return nil, m.ErrDashboardNotFound
+		}
+
+		//panels, err := query.Result.Data.Get("panels").MustArray()
+
+		interestedPanel := simplejson.NewFromAny(nil)
+		for _, panel := range query.Result.Data.Get("panels").MustArray() {
+			panelJSON := simplejson.NewFromAny(panel)
+			panelId, _ := panelJSON.Get("id").Int64()
+			if panelId == context.Rule.PanelId {
+				interestedPanel = panelJSON
+			}
+		}
+		targets := interestedPanel.Get("targets")
+
+		for _, target := range targets.MustArray() {
+			targetJSON := simplejson.NewFromAny(target)
+
+			dataSourcename := targetJSON.Get("datasource")
+			getTargetDsInfo := &m.GetDataSourceByNameQuery{
+				Name: dataSourcename.MustString(),
+				//OrgId: context.Rule.OrgId,
+			}
+
+			if err := bus.Dispatch(getTargetDsInfo); err != nil {
+				return nil, fmt.Errorf("Could not find datasource %v", err)
+			}
+
+			tsdbQuery := tsdb.Query{RefId: targetJSON.Get("refId").MustString(), Model: targetJSON, DataSource: getTargetDsInfo.Result}
+			req.Queries = append(req.Queries, &tsdbQuery)
+		}
+
+	}
 	result := make(tsdb.TimeSeriesSlice, 0)
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
@@ -144,7 +183,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
-				RefId:      "A",
+				RefId:      "ALERT",
 				Model:      c.Query.Model,
 				DataSource: datasource,
 			},

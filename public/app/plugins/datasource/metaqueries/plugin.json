@@ -1,0 +1,22 @@
+{
+  "name": "MetaQueries",
+  "id": "metaqueries",
+  "type": "datasource",
+
+  "metrics": true,
+  "alerting": true,
+  "mixed": true,
+
+  "info": {
+    "version": "0.0.1",
+    "author": {
+      "name": "Gaurav Shah",
+      "url": "https://github.com/GoshPosh/grafana-meta-queries"
+    },
+    "links": [{ "name": "GitHub", "url": "https://github.com/GoshPosh/grafana-meta-queries#readme" }],
+    "logos": {
+      "small": "img/metaqueries_logo.png",
+      "large": "img/metaqueries_logo.png"
+    }
+  }
+}

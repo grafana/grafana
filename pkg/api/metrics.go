@@ -35,6 +35,10 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 
 	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
+	ctx := c.Req
+	cc := ctx.Context()
+	ncc := context.WithValue(cc, "ds", hs.DatasourceCache)
+
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
 			RefId:         query.Get("refId").MustString("A"),
@@ -45,7 +49,7 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
+	resp, err := tsdb.HandleRequest(ncc, ds, request)
 	if err != nil {
 		return Error(500, "Metric request error", err)
 	}
