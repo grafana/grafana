@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import Prism from 'prismjs';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
-import  { TypeaheadInput } from 'app/features/explore/QueryField';
+import { TypeaheadInput } from 'app/features/explore/QueryField';
 
 const PRISM_SYNTAX = 'promql';
 

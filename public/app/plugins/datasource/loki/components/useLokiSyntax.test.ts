@@ -1,4 +1,4 @@
-import { renderHook,act} from 'react-hooks-testing-library';
+import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiSyntax } from './useLokiSyntax';
 import { TypeaheadInput } from 'app/features/explore/QueryField';
@@ -28,7 +28,7 @@ describe('useLokiSyntax hook', () => {
     prefix: 'prefix',
     text: 'text',
     value: {} as Value,
-    wrapperNode: {} as Element
+    wrapperNode: {} as Element,
   };
 
   it('should provide Loki syntax when used', async () => {
@@ -67,5 +67,4 @@ describe('useLokiSyntax hook', () => {
 
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock3);
   });
-
 });

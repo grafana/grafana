@@ -14,7 +14,6 @@ describe('useLokiLabels hook', () => {
     return Promise.resolve();
   };
 
-
   it('should refresh labels', async () => {
     const { result, waitForNextUpdate } = renderHook(() => useLokiLabels(languageProvider, true, []));
     act(() => result.current.refreshLabels());
@@ -22,5 +21,4 @@ describe('useLokiLabels hook', () => {
     await waitForNextUpdate();
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock);
   });
-
 });
