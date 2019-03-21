@@ -33,7 +33,7 @@ export interface Props {
   className: string | undefined;
   options: SelectOptionItem[];
   value: SelectOptionItem;
-  label: string;
+  label?: string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;

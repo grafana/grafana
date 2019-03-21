@@ -202,7 +202,7 @@ export class DashNav extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, onAddPanel } = this.props;
-    const { timePickerValue } = this.state;
+    const { timePickerValue, refreshPickerValue } = this.state;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -324,10 +324,10 @@ export class DashNav extends PureComponent<Props, State> {
           />
           <RefreshPicker
             onIntervalChanged={this.onChangeRefreshPicker}
-            onRefreshClicked={this.onRefresh}
+            onRefresh={this.onRefresh}
             intervals={['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d']}
             initialValue={undefined}
-            value={this.state.refreshPickerValue}
+            value={refreshPickerValue}
           />
         </div>
 
