@@ -27,3 +27,8 @@ If you think we missed exposing a crucial lib or Grafana component let us know b
 The angular directive `<spectrum-picker>` is now deprecated (will still work for a version more) but we recommend plugin authors
 to upgrade to new `<color-picker color="ctrl.color" onChange="ctrl.onSparklineColorChange"></color-picker>`
 
+## Changes in v6.0
+
+### DashboardSrv.ts
+
+If you utilize [DashboardSrv](https://github.com/grafana/grafana/commit/8574dca081002f36e482b572517d8f05fd44453f#diff-1ab99561f9f6a10e1fafcddc39bc1d65) in your plugin code, `dash` was renamed to `dashboard` 
