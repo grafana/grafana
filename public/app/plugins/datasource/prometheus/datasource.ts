@@ -224,7 +224,8 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
-    // Align query interval with step
+    // Align query interval with step to allow query caching and to ensure
+    // that about-same-time query results look the same.
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
@@ -497,8 +498,15 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   }
 }
 
-export function alignRange(start, end, step) {
-  const alignedEnd = Math.ceil(end / step) * step;
+/**
+ * Align query range to step.
+ * Rounds start and end down to a multiple of step.
+ * @param start Timestamp marking the beginning of the range.
+ * @param end Timestamp marking the end of the range.
+ * @param step Interval to align start and end with.
+ */
+export function alignRange(start: number, end: number, step: number): { end: number; start: number } {
+  const alignedEnd = Math.floor(end / step) * step;
   const alignedStart = Math.floor(start / step) * step;
   return {
     end: alignedEnd,
