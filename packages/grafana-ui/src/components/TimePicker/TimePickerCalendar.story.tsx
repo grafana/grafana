@@ -4,7 +4,7 @@ import { action } from '@storybook/addon-actions';
 import { Moment } from 'moment';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TimePickerCalendar } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePickerCalendar';
+import { TimePickerCalendar } from './TimePickerCalendar';
 import { UseState } from '../../utils/storybook/UseState';
 
 const TimePickerCalendarStories = storiesOf('UI/TimePicker/TimePickerCalendar', module);

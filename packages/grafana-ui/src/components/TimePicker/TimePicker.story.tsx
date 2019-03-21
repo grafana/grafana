@@ -3,7 +3,7 @@ import moment, { Moment } from 'moment';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
-import { TimePicker } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePicker';
+import { TimePicker } from './TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 

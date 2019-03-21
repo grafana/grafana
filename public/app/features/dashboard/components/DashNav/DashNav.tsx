@@ -17,9 +17,9 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { RefreshPicker } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { TimePicker } from '../TimePicker/TimePicker';
-import { DashboardModel } from '../../state';
+import { TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { TimeRange } from '@grafana/ui/src/types';
+import { DashboardModel } from '../../state';
 
 export interface Props {
   dashboard: DashboardModel;

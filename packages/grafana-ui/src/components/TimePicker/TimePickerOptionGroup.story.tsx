@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import moment from 'moment';
 import { action } from '@storybook/addon-actions';
 
-import { TimePickerOptionGroup } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePickerOptionGroup';
+import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 import { popoverOptions } from './TimePicker.story';

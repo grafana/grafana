@@ -4,7 +4,7 @@ import moment, { Moment } from 'moment';
 
 import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TimePickerPopover } from '../../../../../public/app/features/dashboard/components/TimePicker/TimePickerPopover';
+import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
 import { popoverOptions } from './TimePicker.story';
 
