@@ -366,11 +366,12 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
             };
 
             if (annotation.useValueForTime) {
-              if (dupCheck[value[1]]) {
+              const timestampValue = Math.floor(parseFloat(value[1]));
+              if (dupCheck[timestampValue]) {
                 continue;
               }
-              dupCheck[value[1]] = true;
-              event['time'] = Math.floor(parseFloat(value[1]));
+              dupCheck[timestampValue] = true;
+              event['time'] = timestampValue;
             } else {
               event['time'] = Math.floor(parseFloat(value[0])) * 1000;
             }
