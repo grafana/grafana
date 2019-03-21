@@ -17,6 +17,8 @@ import {
   buildQueryTransaction,
   serializeStateToUrlParam,
   parseUrlState,
+  DEFAULT_UI_STATE,
+  DEFAULT_RANGE,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -71,6 +73,7 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
+import { parseTime } from '../TimePicker';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
@@ -772,3 +775,35 @@ export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy)
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };
 };
+
+export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const itemState = getState().explore[exploreId];
+    const { urlState, refresh } = itemState;
+    const { datasource, queries, range, ui } = urlState;
+    const refreshDataSource = datasource;
+    const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
+    const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
+
+    console.log(refreshDataSource);
+
+    if (refresh.range) {
+      dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
+    }
+
+    // need to refresh ui state
+    if (refresh.ui) {
+      dispatch(updateUIStateAction({ ...ui, exploreId }));
+    }
+
+    // need to refresh queries
+    if (refresh.queries) {
+      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    // always run queries when refresh is needed
+    if (refresh.queries || refresh.ui || refresh.range) {
+      dispatch(runQueries(exploreId));
+    }
+  };
+}

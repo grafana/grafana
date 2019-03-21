@@ -25,7 +25,7 @@ import {
   modifyQueries,
   scanStart,
   setQueries,
-  runQueries,
+  refreshExplore,
 } from './state/actions';
 
 // Types
@@ -35,14 +35,12 @@ import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction, updateUIStateAction, changeTimeAction, clearQueriesAction } from './state/actionTypes';
+import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
-  changeTimeAction: typeof changeTimeAction;
-  clearQueriesAction: typeof clearQueriesAction;
   datasourceError: string;
   datasourceInstance: ExploreDataSourceApi;
   datasourceLoading: boolean | null;
@@ -53,7 +51,7 @@ interface ExploreProps {
   modifyQueries: typeof modifyQueries;
   range: RawTimeRange;
   refresh: ExploreRefreshState;
-  runQueries: typeof runQueries;
+  refreshExplore: typeof refreshExplore;
   scanner?: RangeScanner;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -67,7 +65,6 @@ interface ExploreProps {
   supportsTable: boolean | null;
   queryKeys: string[];
   urlState: ExploreUrlState;
-  updateUIStateAction: typeof updateUIStateAction;
 }
 
 /**
@@ -192,27 +189,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
       return;
     }
 
-    // need to refresh time range
-    if (refresh.range) {
-      this.props.changeTimeAction({
-        exploreId,
-        range: initialRange as TimeRange,
-      });
-    }
-
-    // need to refresh ui state
-    if (refresh.ui) {
-      this.props.updateUIStateAction({ ...ui, exploreId });
-    }
-
-    // need to refresh queries
-    if (refresh.queries) {
-      this.props.setQueries(exploreId, initialQueries);
-    }
-
-    // always run queries when refresh is needed
     if (refresh.queries || refresh.ui || refresh.range) {
-      this.props.runQueries(exploreId);
+      this.props.refreshExplore(exploreId);
     }
   };
 
@@ -330,15 +308,12 @@ function mapStateToProps(state: StoreState, { exploreId }) {
 const mapDispatchToProps = {
   changeSize,
   changeTime,
-  changeTimeAction,
-  clearQueriesAction,
   initializeExplore,
   modifyQueries,
-  runQueries,
+  refreshExplore,
   scanStart,
   scanStopAction,
   setQueries,
-  updateUIStateAction,
 };
 
 export default hot(module)(
