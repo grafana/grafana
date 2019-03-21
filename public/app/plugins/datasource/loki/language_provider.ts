@@ -228,6 +228,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchLogLabels() {
     const url = '/api/prom/label';
     try {
+      this.logLabelFetchTs = Date.now();
       const res = await this.request(url);
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
@@ -240,10 +241,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Pre-load values for default labels
       return Promise.all(
         labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key))
-      ).then(values => {
-        this.logLabelFetchTs = Date.now();
-        return values;
-      });
+      );
     } catch (e) {
       console.error(e);
     }
