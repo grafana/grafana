@@ -66,8 +66,8 @@
   }
 
   .divider {
-    height: 0.1rem;
-    margin: 0.5rem 0; // 8px 1px
+    height: 1px;
+    margin: $space-sm 0; // 8px 1px
     overflow: hidden;
     background-color: $dropdownDividerTop;
     border-bottom: 1px solid $dropdownDividerBottom;
@@ -314,7 +314,7 @@
 
   &::before {
     font-family: FontAwesome;
-    width: 2rem;
+    width: 28px;
     display: inline-block;
     text-align: center;
     content: '\f11c';
