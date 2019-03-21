@@ -1,10 +1,14 @@
-import { ValueMapping, Threshold } from '../types';
+// Libraries
 import _ from 'lodash';
+import moment from 'moment';
+
+// Utils
 import { getValueFormat, DecimalCount } from './valueFormats/valueFormats';
 import { getMappedValue } from './valueMappings';
-import { GrafanaTheme, GrafanaThemeType } from '../types';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
-import moment from 'moment';
+
+// Types
+import { GrafanaTheme, GrafanaThemeType, ValueMapping, Threshold } from '../types';
 
 export interface DisplayValue {
   text: string; // Show in the UI
