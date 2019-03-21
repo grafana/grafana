@@ -51,25 +51,19 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
 
         // Returns data in the order it was asked for.
         // if the response has data with different refId, it is ignored
-        for (let i = 0; i < queries.length; i++) {
-          const query = queries[i];
+        for (const query of queries) {
           const results = res.data.results[query.refId];
-          if (results) {
-            if (results.tables) {
-              for (const table of results.tables) {
-                data.push(table as TableData);
-              }
-            }
-            if (results.series) {
-              for (const series of results.series) {
-                data.push({
-                  target: series.name,
-                  datapoints: series.points,
-                });
-              }
-            }
-          } else {
+          if (!results) {
             console.warn('No Results for:', query);
+            continue;
+          }
+
+          for (const table of results.tables || []) {
+            data.push(table as TableData);
+          }
+
+          for (const series of results.series || []) {
+            data.push({ target: series.name, datapoints: series.points });
           }
         }
 
