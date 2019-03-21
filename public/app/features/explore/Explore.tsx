@@ -1,7 +1,9 @@
 // Libraries
 import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
+// @ts-ignore
 import { connect } from 'react-redux';
+// @ts-ignore
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
 
@@ -135,7 +137,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.refreshExplore();
   }
 
-  getRef = el => {
+  getRef = (el: any) => {
     this.el = el;
   };
 
@@ -155,7 +157,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.onModifyQueries({ type: 'ADD_FILTER', key, value });
   };
 
-  onModifyQueries = (action, index?: number) => {
+  onModifyQueries = (action: any, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance && datasourceInstance.modifyQuery) {
       const modifier = (queries: DataQuery, modification: any) => datasourceInstance.modifyQuery(queries, modification);
@@ -262,7 +264,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];

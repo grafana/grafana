@@ -294,7 +294,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queries, queryTransactions } = state;
       const { modification, index, modifier } = action.payload;
       let nextQueries: DataQuery[];
-      let nextQueryTransactions;
+      let nextQueryTransactions: QueryTransaction[];
       if (index === undefined) {
         // Modify all queries
         nextQueries = queries.map((query, i) => ({
