@@ -170,24 +170,20 @@ const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
  *
  * TODO: better Date/Time support!  Look for standard date strings?
  */
-export function guessColumnTypeFromValue(v: any, parseString?: boolean): ColumnType {
+export function guessColumnTypeFromValue(v: any): ColumnType {
   if (isNumber(v)) {
     return ColumnType.number;
   }
 
   if (isString(v)) {
-    if (parseString) {
-      const c0 = v[0].toLowerCase();
-      if (c0 === 't' || c0 === 'f') {
-        if (v === 'true' || v === 'TRUE' || v === 'True' || v === 'false' || v === 'FALSE' || v === 'False') {
-          return ColumnType.boolean;
-        }
-      }
-
-      if (NUMBER.test(v)) {
-        return ColumnType.number;
-      }
+    if (NUMBER.test(v)) {
+      return ColumnType.number;
     }
+
+    if (v === 'true' || v === 'TRUE' || v === 'True' || v === 'false' || v === 'FALSE' || v === 'False') {
+      return ColumnType.boolean;
+    }
+
     return ColumnType.string;
   }
 
@@ -205,7 +201,7 @@ export function guessColumnTypeFromValue(v: any, parseString?: boolean): ColumnT
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-function guessColumnTypeFromTable(table: TableData, index: number, parseString?: boolean): ColumnType | undefined {
+function guessColumnTypeFromTable(table: TableData, index: number): ColumnType | undefined {
   const column = table.columns[index];
 
   // 1. Use the column name to guess
@@ -220,7 +216,7 @@ function guessColumnTypeFromTable(table: TableData, index: number, parseString?:
   for (let i = 0; i < table.rows.length; i++) {
     const v = table.rows[i][index];
     if (v !== null) {
-      return guessColumnTypeFromValue(v, parseString);
+      return guessColumnTypeFromValue(v);
     }
   }
 

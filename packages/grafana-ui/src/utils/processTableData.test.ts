@@ -54,9 +54,6 @@ describe('toTableData', () => {
     expect(guessColumnTypeFromValue(1)).toBe(ColumnType.number);
     expect(guessColumnTypeFromValue(1.234)).toBe(ColumnType.number);
     expect(guessColumnTypeFromValue(3.125e7)).toBe(ColumnType.number);
-    expect(guessColumnTypeFromValue('1')).toBe(ColumnType.string);
-    expect(guessColumnTypeFromValue('1.234')).toBe(ColumnType.string);
-    expect(guessColumnTypeFromValue('3.125e7')).toBe(ColumnType.string);
     expect(guessColumnTypeFromValue(true)).toBe(ColumnType.boolean);
     expect(guessColumnTypeFromValue(false)).toBe(ColumnType.boolean);
     expect(guessColumnTypeFromValue(new Date())).toBe(ColumnType.time);
@@ -64,19 +61,19 @@ describe('toTableData', () => {
   });
 
   it('Guess Colum Types from strings', () => {
-    expect(guessColumnTypeFromValue('1', true)).toBe(ColumnType.number);
-    expect(guessColumnTypeFromValue('1.234', true)).toBe(ColumnType.number);
-    expect(guessColumnTypeFromValue('3.125e7', true)).toBe(ColumnType.number);
-    expect(guessColumnTypeFromValue('True', true)).toBe(ColumnType.boolean);
-    expect(guessColumnTypeFromValue('FALSE', true)).toBe(ColumnType.boolean);
-    expect(guessColumnTypeFromValue('true', true)).toBe(ColumnType.boolean);
-    expect(guessColumnTypeFromValue('xxxx', true)).toBe(ColumnType.string);
+    expect(guessColumnTypeFromValue('1')).toBe(ColumnType.number);
+    expect(guessColumnTypeFromValue('1.234')).toBe(ColumnType.number);
+    expect(guessColumnTypeFromValue('3.125e7')).toBe(ColumnType.number);
+    expect(guessColumnTypeFromValue('True')).toBe(ColumnType.boolean);
+    expect(guessColumnTypeFromValue('FALSE')).toBe(ColumnType.boolean);
+    expect(guessColumnTypeFromValue('true')).toBe(ColumnType.boolean);
+    expect(guessColumnTypeFromValue('xxxx')).toBe(ColumnType.string);
   });
 
   it('Guess Colum Types from table', () => {
     const table = {
       columns: [{ text: 'A (number)' }, { text: 'B (strings)' }, { text: 'C (nulls)' }, { text: 'Time' }],
-      rows: [[123, null, null, '2000'], [null, '123', null, 'XXX']],
+      rows: [[123, null, null, '2000'], [null, 'Hello', null, 'XXX']],
     };
     const norm = guessColumnTypes(table);
     expect(norm.columns[0].type).toBe(ColumnType.number);
