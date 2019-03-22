@@ -32,7 +32,7 @@ export type PanelMigrationHook<TOptions = any> = (options: Partial<TOptions>) =>
 export type PanelTypeChangedHook<TOptions = any> = (
   options: Partial<TOptions>,
   prevPluginId: string,
-  prevOptions: any
+  prevOptions?: any
 ) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
