@@ -744,7 +744,8 @@ export class HeatmapRenderer {
     } else {
       const pos = this.getEventPos(event, offset);
       this.drawCrosshair(offset.x);
-      this.tooltip.show(pos, this.data);
+      // This is the graph the mouse is over so it should be drawn on top
+      this.tooltip.show(pos, this.data, true);
       this.emitGraphHoverEvent(pos);
     }
   }
