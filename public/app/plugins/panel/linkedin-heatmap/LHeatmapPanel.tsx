@@ -19,6 +19,9 @@ import { NullValueMode } from '@grafana/ui/src/types';
 interface LHeatmapPanelState {
   pointValue: number;
   pointLabels: string[];
+  heatmapData?: any;
+  labels?: any;
+  vmSeries?: TimeSeriesVMs;
 }
 
 export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LHeatmapPanelState> {
@@ -32,6 +35,31 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
       pointValue: null,
       pointLabels: [],
     };
+  }
+
+  componentDidMount() {
+    const data = this.props.panelData.timeSeries[0];
+    const heatmapData = data[0];
+    const labels = data[1];
+    this.setState({ heatmapData, labels });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.panelData !== prevProps.panelData) {
+      const { panelData } = this.props;
+      const data = panelData.timeSeries[0];
+      if (!data || (data && !_.isArray(data))) {
+        const vmSeries = processTimeSeries({
+          timeSeries: panelData.timeSeries,
+          nullValueMode: NullValueMode.Ignore,
+        });
+        this.setState({ vmSeries });
+      } else {
+        const heatmapData = data[0];
+        const labels = data[1];
+        this.setState({ heatmapData, labels });
+      }
+    }
   }
 
   handlePointHover = (value: number, labels: string[]) => {
@@ -90,22 +118,7 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
 
   render() {
     // console.log(this.props);
-    const { height, width, panelData, timeRange } = this.props;
-    const data = panelData.timeSeries[0];
-    let heatmapData, labels, vmSeries: TimeSeriesVMs;
-    if (!data || (data && !_.isArray(data))) {
-      heatmapData = this.heatmapData;
-      labels = this.labels;
-      vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Ignore,
-      });
-    } else {
-      heatmapData = data[0];
-      labels = data[1];
-      this.heatmapData = heatmapData;
-      this.labels = labels;
-    }
+    const { height, width, timeRange } = this.props;
     const pointValue = this.state.pointValue || 'null';
 
     return (
@@ -114,16 +127,14 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
           <HeatmapCanvas
             width={width / 2}
             height={height - 40}
-            data={heatmapData}
-            labels={labels}
+            data={this.state.heatmapData}
+            labels={this.state.labels}
             valueToColor={this.valueToColor}
             onPointHover={this.handlePointHover}
             onPointClick={this.handlePointClick}
           />
-          {vmSeries && (
-            <div className="linkedin-heatmap-graph-container" style={{ width: width / 2, height: height / 2 }}>
-              <Graph timeSeries={vmSeries} timeRange={timeRange} showLines={true} width={width / 2} height={height} />
-            </div>
+          {this.state.vmSeries && (
+            <HeatmapGraph vmSeries={this.state.vmSeries} timeRange={timeRange} width={width} height={height} />
           )}
         </div>
         <div className="linkedin-heatmap-value-container" style={{ padding: '8px' }}>
@@ -132,6 +143,17 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
           </span>
           <span style={{ marginLeft: '8px' }}>{pointValue}</span>
         </div>
+      </div>
+    );
+  }
+}
+
+class HeatmapGraph extends PureComponent<any> {
+  render() {
+    const { vmSeries, timeRange, width, height } = this.props;
+    return (
+      <div className="linkedin-heatmap-graph-container" style={{ width: width / 2, height: height / 2 }}>
+        <Graph timeSeries={vmSeries} timeRange={timeRange} showLines={true} width={width / 2} height={height} />
       </div>
     );
   }
