@@ -340,7 +340,9 @@ jobs:
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
       - run:
           name: Deploy to grafana.com
-          command: 'cd enterprise-dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -from-local'
+          command: |
+            cd enterprise-dist
+            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -version "$(cat grafana.version)"' --nightly
 
 
   deploy-enterprise-release:
@@ -405,7 +407,7 @@ jobs:
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
             rm dist/*latest*
-            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -from-local
+            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "$(cat grafana.version)" --nightly
 
   deploy-release:
     docker:
