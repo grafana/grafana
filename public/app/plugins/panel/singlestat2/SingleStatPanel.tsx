@@ -4,10 +4,17 @@ import React, { PureComponent } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { Sparkline } from '@grafana/ui/src/components/BigValue/BigValue';
-import { DisplayValue, PanelProps, processTimeSeries, NullValueMode, ColumnType } from '@grafana/ui';
+import { Sparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
+import {
+  DisplayValue,
+  PanelProps,
+  processTimeSeries,
+  getDisplayProcessor,
+  NullValueMode,
+  ColumnType,
+  calculateStats,
+} from '@grafana/ui';
 import { config } from 'app/core/config';
-import { getDisplayProcessor, BigValue } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
 
 export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
@@ -15,7 +22,7 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   const { valueOptions, valueMappings } = options;
   const { unit, decimals, stat } = valueOptions;
 
-  const processor = getDisplayProcessor({
+  const display = getDisplayProcessor({
     unit,
     decimals,
     mappings: valueMappings,
@@ -26,28 +33,36 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   });
 
   const values: DisplayValue[] = [];
+
   for (const table of data) {
+    if (stat === 'name') {
+      values.push(display(table.name));
+    }
+
     for (let i = 0; i < table.columns.length; i++) {
       const column = table.columns[i];
 
       // Show all columns that are not 'time'
       if (column.type === ColumnType.number) {
-        const series = processTimeSeries({
-          data: [table],
-          xColumn: i,
-          yColumn: i,
+        const stats = calculateStats({
+          table,
+          columnIndex: i,
+          stats: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
-        })[0];
-
-        const value = stat !== 'name' ? series.stats[stat] : series.label;
-        values.push(processor(value));
+        });
+        const displayValue = display(stats[stat]);
+        values.push(displayValue);
       }
     }
   }
 
   if (values.length === 0) {
-    throw { message: 'Could not find numeric data' };
+    values.push({
+      numeric: 0,
+      text: 'No data',
+    });
   }
+
   return values;
 };
 

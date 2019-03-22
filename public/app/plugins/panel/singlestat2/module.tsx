@@ -1,4 +1,4 @@
-import { ReactPanelPlugin } from '@grafana/ui';
+import { ReactPanelPlugin, getStatsCalculators } from '@grafana/ui';
 import { SingleStatOptions, defaults, SingleStatBaseOptions } from './types';
 import { SingleStatPanel } from './SingleStatPanel';
 import cloneDeep from 'lodash/cloneDeep';
@@ -10,7 +10,7 @@ const optionsToKeep = ['valueOptions', 'stat', 'maxValue', 'maxValue', 'threshol
 
 export const singleStatBaseOptionsCheck = (
   options: Partial<SingleStatBaseOptions>,
-  prevPluginId?: string,
+  prevPluginId: string,
   prevOptions?: any
 ) => {
   if (prevOptions) {
@@ -20,10 +20,20 @@ export const singleStatBaseOptionsCheck = (
       }
     });
   }
+  return options;
+};
 
+export const singleStatMigrationCheck = (options: Partial<SingleStatBaseOptions>) => {
+  // 6.1 renamed some stats, This makes sure they are up to date
+  // avg -> mean, current -> last, total -> sum
+  const { valueOptions } = options;
+  if (valueOptions && valueOptions.stat) {
+    valueOptions.stat = getStatsCalculators([valueOptions.stat]).map(s => s.id)[0];
+  }
   return options;
 };
 
 reactPanel.setEditor(SingleStatEditor);
 reactPanel.setDefaults(defaults);
 reactPanel.setPanelTypeChangedHook(singleStatBaseOptionsCheck);
+reactPanel.setPanelMigrationHook(singleStatMigrationCheck);
