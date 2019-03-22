@@ -73,15 +73,8 @@ export class StatsPicker extends PureComponent<Props> {
       };
     });
 
-    const value: SelectOptionItem[] = [];
-    stats.forEach(s => {
-      const o = options.find(v => v.value === s);
-      if (o) {
-        value.push(o);
-      }
-    });
+    const value: SelectOptionItem[] = options.filter(option => stats.find(stat => option.value === stat));
 
-    //getStatsCalculators(stats);
     return (
       <Select
         width={width}

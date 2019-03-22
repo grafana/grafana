@@ -14,11 +14,11 @@ export const singleStatBaseOptionsCheck = (
   prevOptions?: any
 ) => {
   if (prevOptions) {
-    optionsToKeep.forEach(v => {
-      if (prevOptions.hasOwnProperty(v)) {
-        options[v] = cloneDeep(prevOptions.display);
+    for (const otk of optionsToKeep) {
+      if (prevOptions.hasOwnProperty(otk)) {
+        options[otk] = cloneDeep(prevOptions[otk]);
       }
-    });
+    }
   }
 
   // 6.1 renamed some stats, This makes sure they are up to date

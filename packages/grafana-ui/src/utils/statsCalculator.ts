@@ -35,7 +35,6 @@ export interface StatCalculatorInfo {
   id: string;
   name: string;
   description: string;
-
   alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
 
   // Internal details
@@ -54,6 +53,7 @@ export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
     }
     return listOfStats;
   }
+
   return ids.reduce((list, id) => {
     const stat = getById(id);
     if (stat) {
@@ -123,6 +123,7 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 interface TableStatIndex {
   [id: string]: StatCalculatorInfo;
 }
+
 const listOfStats: StatCalculatorInfo[] = [];
 const index: TableStatIndex = {};
 let hasBuiltIndex = false;
@@ -166,7 +167,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
       {
         id: StatID.delta,
         name: 'Delta',
-        description: 'Cumulative change in value (??? help not really sure ???)',
+        description: 'Cumulative change in value',
         standard: true,
       },
       {
@@ -217,6 +218,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
     });
     hasBuiltIndex = true;
   }
+
   return index[id];
 }
 

@@ -38,7 +38,7 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
       if (column.type === ColumnType.number) {
         const stats = calculateStats({
           table,
-          columnIndex: i, // Hardcoded for now!
+          columnIndex: i,
           stats: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
         });
@@ -49,7 +49,10 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   }
 
   if (values.length === 0) {
-    throw { message: 'Could not find numeric data' };
+    values.push({
+      numeric: 0,
+      text: 'No data',
+    });
   }
 
   return values;
