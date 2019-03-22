@@ -32,7 +32,6 @@ import {
   queryTransactionStartAction,
   queryTransactionSuccessAction,
   removeQueryRowAction,
-  runQueriesEmptyAction,
   scanRangeAction,
   scanStartAction,
   scanStopAction,
@@ -186,12 +185,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
-    },
-  })
-  .addMapper({
-    filter: runQueriesEmptyAction,
-    mapper: (state): ExploreItemState => {
-      return { ...state, queryTransactions: [] };
     },
   })
   .addMapper({

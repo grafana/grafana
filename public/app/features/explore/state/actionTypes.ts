@@ -148,10 +148,6 @@ export interface RemoveQueryRowPayload {
   index: number;
 }
 
-export interface RunQueriesEmptyPayload {
-  exploreId: ExploreId;
-}
-
 export interface ScanStartPayload {
   exploreId: ExploreId;
   scanner: RangeScanner;
@@ -331,7 +327,6 @@ export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransacti
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
 export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
-export const runQueriesEmptyAction = actionCreatorFactory<RunQueriesEmptyPayload>('explore/RUN_QUERIES_EMPTY').create();
 
 /**
  * Start a scan for more results using the given scanner.
@@ -419,7 +414,6 @@ export type Action =
   | ActionOf<QueryTransactionStartPayload>
   | ActionOf<QueryTransactionSuccessPayload>
   | ActionOf<RemoveQueryRowPayload>
-  | ActionOf<RunQueriesEmptyPayload>
   | ActionOf<ScanStartPayload>
   | ActionOf<ScanRangePayload>
   | ActionOf<SetQueriesPayload>
