@@ -29,7 +29,7 @@ export class PieChartPanel extends PureComponent<Props> {
         const serie = vmSeries[i];
         if (serie) {
           datapoints.push({
-            value: serie.stats[valueOptions.stat],
+            value: 7, // serie.stats[valueOptions.stat],
             name: serie.label,
             color: serie.color,
           });
