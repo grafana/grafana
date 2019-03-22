@@ -2,24 +2,10 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, Select, UnitPicker } from '@grafana/ui';
+import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, UnitPicker, StatID } from '@grafana/ui';
 
 // Types
 import { SingleStatValueOptions } from './types';
-
-const statOptions = [
-  { value: 'min', label: 'Min' },
-  { value: 'max', label: 'Max' },
-  { value: 'avg', label: 'Average' },
-  { value: 'current', label: 'Current' },
-  { value: 'total', label: 'Total' },
-  { value: 'name', label: 'Name' },
-  { value: 'first', label: 'First' },
-  { value: 'delta', label: 'Delta' },
-  { value: 'diff', label: 'Difference' },
-  { value: 'range', label: 'Range' },
-  { value: 'last_time', label: 'Time of last point' },
-];
 
 const labelWidth = 6;
 
@@ -30,7 +16,12 @@ export interface Props {
 
 export class SingleStatValueEditor extends PureComponent<Props> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
-  onStatChange = stat => this.props.onChange({ ...this.props.options, stat: stat.value });
+
+  onStatsChange = stats => {
+    console.log('SELECTED', stats);
+    const stat = stats[0] || StatID.mean;
+    this.props.onChange({ ...this.props.options, stat });
+  };
 
   onDecimalChange = event => {
     if (!isNaN(event.target.value)) {
@@ -57,15 +48,19 @@ export class SingleStatValueEditor extends PureComponent<Props> {
       decimalsString = decimals.toString();
     }
 
+    console.log('xxx', stat);
+
     return (
       <PanelOptionsGroup title="Value">
         <div className="gf-form">
           <FormLabel width={labelWidth}>Stat</FormLabel>
-          <Select
+          <StatsPicker
             width={12}
-            options={statOptions}
-            onChange={this.onStatChange}
-            value={statOptions.find(option => option.value === stat)}
+            placeholder="Choose Stat"
+            defaultStat={StatID.mean}
+            allowMultiple={false}
+            stats={[stat]}
+            onChange={this.onStatsChange}
           />
         </div>
         <div className="gf-form">

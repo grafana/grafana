@@ -41,7 +41,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate basic stats', () => {
     const stats = calculateStats({
-      data: basicTable,
+      table: basicTable,
       columnIndex: 0,
       stats: ['first', 'last', 'mean'],
     });
@@ -58,7 +58,7 @@ describe('Stats Calculators', () => {
 
   it('should support a single stat also', () => {
     const stats = calculateStats({
-      data: basicTable,
+      table: basicTable,
       columnIndex: 0,
       stats: ['first'],
     });
@@ -70,12 +70,23 @@ describe('Stats Calculators', () => {
 
   it('should get non standard stats', () => {
     const stats = calculateStats({
-      data: basicTable,
+      table: basicTable,
       columnIndex: 0,
       stats: [StatID.distinctCount, StatID.changeCount],
     });
 
     expect(stats.distinctCount).toEqual(2);
     expect(stats.changeCount).toEqual(1);
+  });
+
+  it('should calculate step', () => {
+    const stats = calculateStats({
+      table: { columns: [{ text: 'A' }], rows: [[100], [200], [300], [400]] },
+      columnIndex: 0,
+      stats: [StatID.step, StatID.delta],
+    });
+
+    expect(stats.step).toEqual(100);
+    expect(stats.delta).toEqual(300);
   });
 });

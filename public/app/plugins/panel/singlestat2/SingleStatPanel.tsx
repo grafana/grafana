@@ -4,7 +4,7 @@ import React, { PureComponent, CSSProperties } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
+import { DisplayValue, PanelProps, NullValueMode, calculateStats } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -14,7 +14,7 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   const { valueOptions, valueMappings } = options;
   const { unit, decimals, stat } = valueOptions;
 
-  const processor = getDisplayProcessor({
+  const display = getDisplayProcessor({
     unit,
     decimals,
     mappings: valueMappings,
@@ -24,12 +24,20 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
     theme: config.theme,
   });
 
-  return processTimeSeries({
-    data,
-    nullValueMode: NullValueMode.Null,
-  }).map((series, index) => {
-    const value = stat !== 'name' ? series.stats[stat] : series.label;
-    return processor(value);
+  return data.map(table => {
+    // Support last_time?  Add that to the migration?  last, but differnt column
+    if (stat === 'name') {
+      // Should not really be possible anymore?
+      return display(table.name);
+    }
+    return display(
+      calculateStats({
+        table,
+        columnIndex: 0, // Hardcoded for now!
+        stats: [stat], // The stats to calculate
+        nullValueMode: NullValueMode.Null,
+      })[stat]
+    );
   });
 };
 

@@ -69,7 +69,7 @@ export class StatsPicker extends PureComponent<Props> {
       return {
         value: s.id,
         label: s.name,
-        desctipiton: s.description,
+        description: s.description,
       };
     });
 

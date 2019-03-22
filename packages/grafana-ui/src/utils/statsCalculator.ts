@@ -29,7 +29,7 @@ export interface ColumnStats {
 }
 
 // Internal function
-type StatCalculator = (data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
+type StatCalculator = (table: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
 
 export interface StatCalculatorInfo {
   id: string;
@@ -64,7 +64,7 @@ export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
 }
 
 export interface CalculateStatsOptions {
-  data: TableData;
+  table: TableData;
   columnIndex: number;
   stats: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
@@ -74,7 +74,7 @@ export interface CalculateStatsOptions {
  * @returns an object with a key for each selected stat
  */
 export function calculateStats(options: CalculateStatsOptions): ColumnStats {
-  const { data, columnIndex, stats, nullValueMode } = options;
+  const { table, columnIndex, stats, nullValueMode } = options;
 
   if (!stats || stats.length < 1) {
     return {};
@@ -84,7 +84,7 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 
   // Return early for empty tables
   // This lets the concrete implementations assume at least one row
-  if (!data.rows || data.rows.length < 1) {
+  if (!table.rows || table.rows.length < 1) {
     const stats = {} as ColumnStats;
     queue.forEach(stat => {
       stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
@@ -97,19 +97,19 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].calculator) {
-    return queue[0].calculator(data, columnIndex, ignoreNulls, nullAsZero);
+    return queue[0].calculator(table, columnIndex, ignoreNulls, nullAsZero);
   }
 
   // For now everything can use the standard stats
-  let values = standardStatsStat(data, columnIndex, ignoreNulls, nullAsZero);
-  queue.forEach(calc => {
+  let values = standardStatsStat(table, columnIndex, ignoreNulls, nullAsZero);
+  for (const calc of queue) {
     if (!values.hasOwnProperty(calc.id) && calc.calculator) {
       values = {
         ...values,
-        ...calc.calculator(data, columnIndex, ignoreNulls, nullAsZero),
+        ...calc.calculator(table, columnIndex, ignoreNulls, nullAsZero),
       };
     }
-  });
+  }
   return values;
 }
 
@@ -141,7 +141,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
       { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
       { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
       { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
-      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true },
+      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
       {
         id: StatID.sum,
         name: 'Total',
@@ -241,7 +241,7 @@ function standardStatsStat(
     range: null,
     diff: null,
     delta: 0,
-    step: 0,
+    step: Number.MAX_VALUE,
 
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
@@ -260,8 +260,6 @@ function standardStatsStat(
     }
 
     if (currentValue !== null) {
-      stats.last = currentValue;
-
       const isFirst = stats.first === null;
       if (isFirst) {
         stats.first = currentValue;
@@ -324,6 +322,10 @@ function standardStatsStat(
     stats.min = null;
   }
 
+  if (stats.step === Number.MAX_VALUE) {
+    stats.step = null;
+  }
+
   if (stats.nonNullCount > 0) {
     stats.mean = stats.sum! / stats.nonNullCount;
   }
@@ -342,7 +344,6 @@ function standardStatsStat(
 }
 
 function calculateFirst(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
-  console.log('FIRST', data);
   return { first: data.rows[0][columnIndex] };
 }
 
