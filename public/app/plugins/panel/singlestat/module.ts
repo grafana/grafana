@@ -279,15 +279,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
-        const decimalInfo = getDecimalsForValue(data.value);
+        let decimals = this.panel.decimals;
+        let scaledDecimals = 0;
 
-        data.valueFormatted = formatFunc(
-          data.value,
-          decimalInfo.decimals,
-          decimalInfo.scaledDecimals,
-          this.dashboard.isTimezoneUtc()
-        );
-        data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
+        if (!this.panel.decimals) {
+          const decimalInfo = getDecimalsForValue(data.value);
+          decimals = decimalInfo.decimals;
+          scaledDecimals = decimalInfo.scaledDecimals;
+        }
+
+        data.valueFormatted = formatFunc(data.value, decimals, scaledDecimals, this.dashboard.isTimezoneUtc());
+        data.valueRounded = kbn.roundValue(data.value, decimals);
       }
 
       // Add $__name variable for using in prefix or postfix
