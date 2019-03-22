@@ -58,6 +58,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cacheTimeout: true,
   cachedPluginOptions: true,
   transparent: true,
+  pluginVersion: true,
 };
 
 const defaults: any = {
@@ -87,6 +88,7 @@ export class PanelModel {
   targets: DataQuery[];
   datasource: string;
   thresholds?: any;
+  pluginVersion?: string;
 
   snapshotData?: TimeSeries[] | [TableData];
   timeFrom?: any;

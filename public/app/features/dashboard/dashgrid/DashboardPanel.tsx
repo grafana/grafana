@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import classNames from 'classnames';
+import get from 'lodash/get';
 
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
@@ -99,12 +100,13 @@ export class DashboardPanel extends PureComponent<Props, State> {
           panel.changeType(pluginId, hook);
         }
       } else if (plugin.exports && plugin.exports.reactPanel && panel.options) {
+        const pluginVersion = get(plugin, 'info.version') || config.buildInfo.version;
         const hook = plugin.exports.reactPanel.onPanelMigration;
-        if (hook) {
-          panel.options = hook(panel.options);
+        if (hook && panel.pluginVersion !== pluginVersion) {
+          panel.options = hook(panel.options, panel.pluginVersion);
+          panel.pluginVersion = pluginVersion;
         }
       }
-
       this.setState({ plugin, angularPanel: null });
     }
   }

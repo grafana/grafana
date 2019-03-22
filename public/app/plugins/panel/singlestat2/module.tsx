@@ -21,12 +21,16 @@ export const singleStatBaseOptionsCheck = (
   return options;
 };
 
-export const singleStatMigrationCheck = (options: Partial<SingleStatBaseOptions>) => {
-  // 6.1 renamed some stats, This makes sure they are up to date
-  // avg -> mean, current -> last, total -> sum
-  const { valueOptions } = options;
-  if (valueOptions && valueOptions.stat) {
-    valueOptions.stat = getStatsCalculators([valueOptions.stat]).map(s => s.id)[0];
+export const singleStatMigrationCheck = (exiting: any, oldVersion?: string) => {
+  const options = exiting as Partial<SingleStatOptions>;
+  if (options.valueOptions) {
+    // 6.1 renamed some stats, This makes sure they are up to date
+    // avg -> mean, current -> last, total -> sum
+
+    const { valueOptions } = options;
+    if (valueOptions && valueOptions.stat) {
+      valueOptions.stat = getStatsCalculators([valueOptions.stat]).map(s => s.id)[0];
+    }
   }
   return options;
 };
