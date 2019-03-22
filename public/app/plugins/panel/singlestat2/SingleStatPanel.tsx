@@ -27,10 +27,6 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   const values: DisplayValue[] = [];
 
   for (const table of data) {
-    if (stat === 'name') {
-      values.push(display(table.name));
-    }
-
     for (let i = 0; i < table.columns.length; i++) {
       const column = table.columns[i];
 

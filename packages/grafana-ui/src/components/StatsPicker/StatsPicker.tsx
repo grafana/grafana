@@ -5,12 +5,14 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { getStatsCalculators } from '../../utils/statsCalculator';
+import { getStatsCalculators, StatCalculatorInfo } from '../../utils/statsCalculator';
 import { SelectOptionItem } from '../Select/Select';
+import { ColumnType } from '../../types/data';
 
 interface Props {
   placeholder?: string;
   onChange: (stats: string[]) => void;
+  filter?: (stat: StatCalculatorInfo) => boolean;
   stats: string[];
   width?: number;
   allowMultiple?: boolean;
@@ -63,15 +65,20 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
+  // If no filter is defined, get all of them
+  allStatsFilter = (v: StatCalculatorInfo) => true;
+
   render() {
-    const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
-    const options = getStatsCalculators().map(s => {
-      return {
-        value: s.id,
-        label: s.name,
-        description: s.description,
-      };
-    });
+    const { width, stats, allowMultiple, defaultStat, placeholder, filter } = this.props;
+    const options = getStatsCalculators()
+      .filter(filter || this.allStatsFilter)
+      .map(s => {
+        return {
+          value: s.id,
+          label: s.name,
+          description: s.description,
+        };
+      });
 
     const value: SelectOptionItem[] = options.filter(option => stats.find(stat => option.value === stat));
 

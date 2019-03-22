@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { TableData, NullValueMode } from '../types/index';
+import { TableData, NullValueMode, ColumnType } from '../types/index';
 
 export enum StatID {
   sum = 'sum',
@@ -22,6 +22,8 @@ export enum StatID {
 
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
+
+  name = 'name', // The column name.  Not really a stat
 }
 
 export interface ColumnStats {
@@ -35,6 +37,7 @@ export interface StatCalculatorInfo {
   id: string;
   name: string;
   description: string;
+  resultType?: ColumnType;
   alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
 
   // Internal details
@@ -140,15 +143,23 @@ function getById(id: string): StatCalculatorInfo | undefined {
         calculator: calculateLast,
       },
       { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
-      { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
-      { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
-      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
+      { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true, resultType: ColumnType.number },
+      { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true, resultType: ColumnType.number },
+      {
+        id: StatID.mean,
+        name: 'Mean',
+        description: 'Average Value',
+        standard: true,
+        resultType: ColumnType.number,
+        alias: 'avg',
+      },
       {
         id: StatID.sum,
         name: 'Total',
         description: 'The sum of all values',
         emptyInputResult: 0,
         standard: true,
+        resultType: ColumnType.number,
         alias: 'total',
       },
       {
@@ -156,6 +167,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
         name: 'Count',
         description: 'Number of values in response',
         emptyInputResult: 0,
+        resultType: ColumnType.number,
         standard: true,
       },
       {
@@ -163,30 +175,35 @@ function getById(id: string): StatCalculatorInfo | undefined {
         name: 'Range',
         description: 'Difference between minimum and maximum values',
         standard: true,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.delta,
         name: 'Delta',
         description: 'Cumulative change in value',
         standard: true,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.step,
         name: 'Step',
         description: 'Minimum interval between values',
         standard: true,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.diff,
         name: 'Difference',
         description: 'Difference between first and last values',
         standard: true,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.logmin,
         name: 'Min (above zero)',
         description: 'Used for log min scale',
         standard: true,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.changeCount,
@@ -194,6 +211,7 @@ function getById(id: string): StatCalculatorInfo | undefined {
         description: 'Number of times the value changes',
         standard: false,
         calculator: calculateChangeCount,
+        resultType: ColumnType.number,
       },
       {
         id: StatID.distinctCount,
@@ -201,6 +219,15 @@ function getById(id: string): StatCalculatorInfo | undefined {
         description: 'Number of distinct values',
         standard: false,
         calculator: calculateDistinctCount,
+        resultType: ColumnType.number,
+      },
+      {
+        id: StatID.name,
+        name: 'Name',
+        description: 'Column Name',
+        standard: false,
+        calculator: getColumnName,
+        resultType: ColumnType.string,
       },
     ].forEach(info => {
       const { id, alias } = info;
@@ -343,6 +370,10 @@ function standardStatsStat(
   }
 
   return stats;
+}
+
+function getColumnName(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
+  return { name: data.columns[columnIndex].text };
 }
 
 function calculateFirst(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
