@@ -1,44 +1,27 @@
-import { parseCSV, toTableData, guessColumnTypes, guessColumnTypeFromValue } from './processTableData';
+import { toTableData, guessColumnTypes, guessColumnTypeFromValue } from './processTableData';
 import { ColumnType } from '../types/data';
 import moment from 'moment';
 
 describe('processTableData', () => {
-  describe('basic processing', () => {
-    it('should read header and two rows', () => {
-      const text = 'a,b,c\n1,2,3\n4,5,6';
-      expect(parseCSV(text)).toMatchSnapshot();
+  describe('toTableData', () => {
+    it('converts timeseries to table ', () => {
+      const input1 = {
+        target: 'Field Name',
+        datapoints: [[100, 1], [200, 2]],
+      };
+      let table = toTableData(input1);
+      expect(table.columns[0].text).toBe(input1.target);
+      expect(table.rows).toBe(input1.datapoints);
+
+      // Should fill a default name if target is empty
+      const input2 = {
+        // without target
+        target: '',
+        datapoints: [[100, 1], [200, 2]],
+      };
+      table = toTableData(input2);
+      expect(table.columns[0].text).toEqual('Value');
     });
-
-    it('should generate a header and fix widths', () => {
-      const text = '1\n2,3,4\n5,6';
-      const table = parseCSV(text, {
-        headerIsFirstLine: false,
-      });
-      expect(table.rows.length).toBe(3);
-
-      expect(table).toMatchSnapshot();
-    });
-  });
-});
-
-describe('toTableData', () => {
-  it('converts timeseries to table ', () => {
-    const input1 = {
-      target: 'Field Name',
-      datapoints: [[100, 1], [200, 2]],
-    };
-    let table = toTableData(input1);
-    expect(table.columns[0].text).toBe(input1.target);
-    expect(table.rows).toBe(input1.datapoints);
-
-    // Should fill a default name if target is empty
-    const input2 = {
-      // without target
-      target: '',
-      datapoints: [[100, 1], [200, 2]],
-    };
-    table = toTableData(input2);
-    expect(table.columns[0].text).toEqual('Value');
   });
 
   it('keeps tableData unchanged', () => {

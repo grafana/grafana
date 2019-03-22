@@ -15,9 +15,9 @@ TableInputStories.add('default', () => {
     <div style={{ width: '90%', height: '90vh' }}>
       <TableInputCSV
         text={'a,b,c\n1,2,3'}
-        onTableParsed={(table: TableData, text: string) => {
-          console.log('Table', table, text);
-          action('Table')(table, text);
+        onTablesParsed={(tables: TableData[], text: string) => {
+          console.log('Table', tables, text);
+          action('Table')(tables, text);
         }}
       />
     </div>

@@ -26,11 +26,12 @@ export interface CSVParseCallbacks {
 }
 
 export interface CSVOptions {
-  parse?: CSVParseConfig;
+  config?: CSVParseConfig;
   callback?: CSVParseCallbacks;
 }
 
 export function readCSV(csv: string, options?: CSVOptions): Promise<TableData[]> {
+  // Wraps the string in a ReadableStreamReader
   return readCSVFromStream(
     {
       cancel: () => {
@@ -38,7 +39,7 @@ export function readCSV(csv: string, options?: CSVOptions): Promise<TableData[]>
       },
       read: () => {
         return Promise.resolve({ done: true, value: csv });
-      }, // ReadableStreamReadResult<string>
+      },
       releaseLock: () => {},
     },
     options
@@ -55,7 +56,7 @@ type ColumnParser = (value: string) => any;
 
 export function readCSVFromStream(reader: ReadableStreamReader<string>, options?: CSVOptions): Promise<TableData[]> {
   return new Promise((resolve, reject) => {
-    const config = options ? options.parse : {};
+    const config = options ? options.config : {};
     const callback = options ? options.callback : null;
 
     const column: ColumnParser[] = [];
