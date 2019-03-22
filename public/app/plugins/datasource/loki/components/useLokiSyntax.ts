@@ -13,7 +13,7 @@ const PRISM_SYNTAX = 'promql';
  */
 export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
   // State
-  const [languageProviderInitialised, setLanguageProvideInitilised] = useState(false);
+  const [languageProviderInitialized, setLanguageProviderInitilized] = useState(false);
   const [syntax, setSyntax] = useState(null);
 
   /**
@@ -25,28 +25,28 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
 
   const { logLabelOptions, setLogLabelOptions, refreshLabels } = useLokiLabels(
     languageProvider,
-    languageProviderInitialised,
+    languageProviderInitialized,
     activeOption
   );
 
   // Async
-  const initialiseLanguageProvider = async () => {
-    if (!languageProviderInitialised) {
+  const initializeLanguageProvider = async () => {
+    if (!languageProviderInitialized) {
       await languageProvider.start();
     }
     Prism.languages[PRISM_SYNTAX] = languageProvider.getSyntax();
     setLogLabelOptions(languageProvider.logLabelOptions);
     setSyntax(languageProvider.getSyntax());
-    setLanguageProvideInitilised(true);
+    setLanguageProviderInitilized(true);
   };
 
   // Effects
   useEffect(() => {
-    initialiseLanguageProvider();
+    initializeLanguageProvider();
   }, []);
 
   return {
-    isSyntaxReady: languageProviderInitialised,
+    isSyntaxReady: languageProviderInitialized,
     syntax,
     logLabelOptions,
     setActiveOption,

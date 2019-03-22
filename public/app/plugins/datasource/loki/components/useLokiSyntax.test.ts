@@ -1,8 +1,7 @@
 import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiSyntax } from './useLokiSyntax';
-import { TypeaheadInput } from 'app/features/explore/QueryField';
-import { Value } from 'slate';
+import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 
 describe('useLokiSyntax hook', () => {
   const datasource = {
@@ -23,12 +22,9 @@ describe('useLokiSyntax hook', () => {
     return Promise.resolve([]);
   };
 
-  const activeOptionMock: TypeaheadInput = {
-    editorNode: {} as Element,
-    prefix: 'prefix',
-    text: 'text',
-    value: {} as Value,
-    wrapperNode: {} as Element,
+  const activeOptionMock: CascaderOption = {
+    label: '',
+    value: '',
   };
 
   it('should provide Loki syntax when used', async () => {
