@@ -1,5 +1,5 @@
-import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, DisplayValue } from './displayValue';
-import { MappingType, ValueMapping } from '../types/panel';
+import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, getDecimalsForValue } from './displayValue';
+import { DisplayValue, MappingType, ValueMapping } from '../types';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
@@ -144,6 +144,20 @@ describe('Format value', () => {
     expect(result.text).toEqual('10.0');
   });
 
+  it('should set auto decimals, 1 significant', () => {
+    const value = '1.23';
+    const instance = getDisplayProcessor({ decimals: null });
+
+    expect(instance(value).text).toEqual('1.2');
+  });
+
+  it('should set auto decimals, 2 significant', () => {
+    const value = '0.0245';
+    const instance = getDisplayProcessor({ decimals: null });
+
+    expect(instance(value).text).toEqual('0.02');
+  });
+
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
       { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
@@ -153,5 +167,20 @@ describe('Format value', () => {
     const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
 
     expect(instance(value).text).toEqual('1-20');
+  });
+});
+
+describe('getDecimalsForValue()', () => {
+  it('should calculate reasonable decimals precision for given value', () => {
+    expect(getDecimalsForValue(1.01)).toEqual({ decimals: 1, scaledDecimals: 4 });
+    expect(getDecimalsForValue(9.01)).toEqual({ decimals: 0, scaledDecimals: 2 });
+    expect(getDecimalsForValue(1.1)).toEqual({ decimals: 1, scaledDecimals: 4 });
+    expect(getDecimalsForValue(2)).toEqual({ decimals: 0, scaledDecimals: 2 });
+    expect(getDecimalsForValue(20)).toEqual({ decimals: 0, scaledDecimals: 1 });
+    expect(getDecimalsForValue(200)).toEqual({ decimals: 0, scaledDecimals: 0 });
+    expect(getDecimalsForValue(2000)).toEqual({ decimals: 0, scaledDecimals: 0 });
+    expect(getDecimalsForValue(20000)).toEqual({ decimals: 0, scaledDecimals: -2 });
+    expect(getDecimalsForValue(200000)).toEqual({ decimals: 0, scaledDecimals: -3 });
+    expect(getDecimalsForValue(200000000)).toEqual({ decimals: 0, scaledDecimals: -6 });
   });
 });
