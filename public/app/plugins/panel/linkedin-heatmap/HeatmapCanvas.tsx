@@ -34,6 +34,13 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
     if (!this.ctx) {
       return;
     }
+    console.log(event);
+    if (event.ctrlKey) {
+      return this.zoomCanvas(event);
+    }
+    if (event.shiftKey) {
+      return this.resetZoom();
+    }
     const x = event.layerX;
     const y = event.layerY;
     const pointLabels = this.getPointLabels(x, y);
@@ -50,6 +57,7 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
     const x = event.layerX;
     const y = event.layerY;
     // const pixel = this.ctx.getImageData(x, y, 1, 1);
+    // console.log(pixel);
     // const pixelData = pixel.data;
     const pointLabels = this.getPointLabels(x, y);
     const pointValue = this.getPointValue(x, y);
@@ -73,6 +81,25 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
       return null;
     }
     return this.props.data[yIndex][xIndex];
+  }
+
+  zoomCanvas(event) {
+    const { width, height } = this.props;
+    const x = event.layerX;
+    const y = event.layerY;
+    // this.ctx.save();
+    this.ctx.clearRect(0, 0, width, height);
+    this.ctx.translate(-x, -y);
+    this.ctx.scale(2, 2);
+    this.draw();
+    // this.ctx.restore();
+  }
+
+  resetZoom() {
+    const { width, height } = this.props;
+    this.ctx.clearRect(0, 0, width, height);
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.draw();
   }
 
   draw() {
