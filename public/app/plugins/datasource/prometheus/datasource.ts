@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export class PrometheusDatasource implements DataSourceApi<PromQuery> {
@@ -355,10 +355,11 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           })
           .value();
 
+        const dupCheck = {};
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
-            const event = {
+            const event: AnnotationEvent = {
               annotation: annotation,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
@@ -366,9 +367,14 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
             };
 
             if (annotation.useValueForTime) {
-              event['time'] = Math.floor(parseFloat(value[1]));
+              const timestampValue = Math.floor(parseFloat(value[1]));
+              if (dupCheck[timestampValue]) {
+                continue;
+              }
+              dupCheck[timestampValue] = true;
+              event.time = timestampValue;
             } else {
-              event['time'] = Math.floor(parseFloat(value[0])) * 1000;
+              event.time = Math.floor(parseFloat(value[0])) * 1000;
             }
 
             eventList.push(event);
