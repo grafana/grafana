@@ -86,9 +86,9 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
   // This lets the concrete implementations assume at least one row
   if (!table.rows || table.rows.length < 1) {
     const stats = {} as ColumnStats;
-    queue.forEach(stat => {
+    for (const stat of queue) {
       stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
-    });
+    }
     return stats;
   }
 

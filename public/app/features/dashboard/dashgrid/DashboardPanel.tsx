@@ -102,7 +102,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
         const hook = plugin.exports.reactPanel.panelTypeChangedHook;
         if (hook) {
           panel.options = hook(panel.options || {}, null, null);
-          console.log('OPITONS', pluginId, panel);
         }
       }
 

@@ -18,7 +18,6 @@ export class SingleStatValueEditor extends PureComponent<Props> {
   onUnitChange = unit => this.props.onChange({ ...this.props.options, unit: unit.value });
 
   onStatsChange = stats => {
-    console.log('SELECTED', stats);
     const stat = stats[0] || StatID.mean;
     this.props.onChange({ ...this.props.options, stat });
   };
@@ -47,8 +46,6 @@ export class SingleStatValueEditor extends PureComponent<Props> {
     if (Number.isFinite(decimals)) {
       decimalsString = decimals.toString();
     }
-
-    console.log('xxx', stat);
 
     return (
       <PanelOptionsGroup title="Value">
