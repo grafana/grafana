@@ -1,6 +1,7 @@
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('GraphiteQueryCtrl', () => {
   const ctx = {
@@ -30,7 +31,7 @@ describe('GraphiteQueryCtrl', () => {
       {},
       {},
       new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
-      {},
+      new TemplateSrvStub(),
       {}
     );
   });
@@ -291,7 +292,7 @@ describe('GraphiteQueryCtrl', () => {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       ctx.ctrl.parseTarget();
-      ctx.ctrl.removeTag(0);
+      ctx.ctrl.tagChanged({ key: ctx.ctrl.removeTagValue });
     });
 
     it('should update tags', () => {

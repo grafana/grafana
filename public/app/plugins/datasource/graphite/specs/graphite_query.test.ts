@@ -1,5 +1,6 @@
 import gfunc from '../gfunc';
 import GraphiteQuery from '../graphite_query';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('Graphite query model', () => {
   const ctx: any = {
@@ -9,7 +10,7 @@ describe('Graphite query model', () => {
       waitForFuncDefsLoaded: jest.fn().mockReturnValue(Promise.resolve(null)),
       createFuncInstance: gfunc.createFuncInstance,
     },
-    templateSrv: {},
+    templateSrv: new TemplateSrvStub(),
     targets: [],
   };
 

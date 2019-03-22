@@ -172,7 +172,7 @@ export function TemplateSrvStub(this: any) {
   this.variables = [];
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
-  this.replace = function(text: string) {
+  this.replace = (text: string) => {
     return _.template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
