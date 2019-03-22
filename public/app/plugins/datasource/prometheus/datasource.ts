@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export class PrometheusDatasource implements DataSourceApi<PromQuery> {
@@ -359,7 +359,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
-            const event: any = {
+            const event: AnnotationEvent = {
               annotation: annotation,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,

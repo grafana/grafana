@@ -76,3 +76,17 @@ export interface TableData {
   rows: any[][];
   tags?: Tags;
 }
+
+export interface AnnotationEvent {
+  annotation?: any;
+  dashboardId?: number;
+  panelId?: number;
+  userId?: number;
+  time?: number;
+  timeEnd?: number;
+  isRegion?: boolean;
+  title?: string;
+  text?: string;
+  type?: string;
+  tags?: string;
+}
