@@ -1,11 +1,5 @@
-import {
-  getDisplayProcessor,
-  getColorFromThreshold,
-  DisplayProcessor,
-  DisplayValue,
-  getDecimalsForValue,
-} from './displayValue';
-import { MappingType, ValueMapping } from '../types';
+import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, getDecimalsForValue } from './displayValue';
+import { DisplayValue, MappingType, ValueMapping } from '../types';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
@@ -134,7 +128,7 @@ describe('Format value', () => {
 
     const result = instance(value);
 
-    expect(result.text).toEqual('6');
+    expect(result.text).toEqual('6.0');
   });
 
   it('should return formatted value if there are no matching value mappings', () => {
@@ -147,7 +141,14 @@ describe('Format value', () => {
 
     const result = instance(value);
 
-    expect(result.text).toEqual('10');
+    expect(result.text).toEqual('10.0');
+  });
+
+  it('should set auto decimals, 1 significant', () => {
+    const value = '1.23';
+    const instance = getDisplayProcessor({ decimals: null });
+
+    expect(instance(value).text).toEqual('1.2');
   });
 
   it('should return mapped value if there are matching value mappings', () => {

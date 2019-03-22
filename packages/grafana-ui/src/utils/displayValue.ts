@@ -3,37 +3,12 @@ import _ from 'lodash';
 import moment from 'moment';
 
 // Utils
-import { getValueFormat, DecimalCount } from './valueFormats/valueFormats';
+import { getValueFormat } from './valueFormats/valueFormats';
 import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { GrafanaTheme, GrafanaThemeType, ValueMapping, Threshold } from '../types';
-
-export interface DisplayValue {
-  text: string; // Show in the UI
-  numeric: number; // Use isNaN to check if it is a real number
-  color?: string; // color based on configs or Threshold
-}
-
-export interface DisplayValueOptions {
-  unit?: string;
-  decimals?: DecimalCount;
-  dateFormat?: string; // If set try to convert numbers to date
-
-  color?: string;
-  mappings?: ValueMapping[];
-  thresholds?: Threshold[];
-  prefix?: string;
-  suffix?: string;
-
-  // Alternative to empty string
-  noValue?: string;
-
-  // Context
-  isUtc?: boolean;
-  theme?: GrafanaTheme; // Will pick 'dark' if not defined
-}
+import { DecimalInfo, DisplayValue, DisplayValueOptions, GrafanaTheme, GrafanaThemeType, Threshold } from '../types';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -74,8 +49,23 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
 
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
-          const decimalInfo = getDecimalsForValue(value);
-          text = formatFunc(numeric, decimalInfo.decimals, decimalInfo.scaledDecimals, options.isUtc);
+          let decimals;
+          let scaledDecimals = 0;
+
+          if (!options.decimals) {
+            const decimalInfo = getDecimalsForValue(value);
+
+            decimals = decimalInfo.decimals;
+            scaledDecimals = decimalInfo.scaledDecimals;
+          } else {
+            decimals = options.decimals;
+          }
+
+          console.log('coin coin', value);
+          console.log(decimals);
+          console.log(scaledDecimals);
+
+          text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
         if (thresholds && thresholds.length > 0) {
           color = getColorFromThreshold(numeric, thresholds, theme);
@@ -152,7 +142,7 @@ export function getColorFromThreshold(value: number, thresholds: Threshold[], th
   return getColorFromHexRgbOrName(thresholds[0].color, themeType);
 }
 
-export function getDecimalsForValue(value: number): { decimals: number; scaledDecimals: number } {
+export function getDecimalsForValue(value: number): DecimalInfo {
   const delta = value / 2;
   let dec = -Math.floor(Math.log(delta) / Math.LN10);
 
