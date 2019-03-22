@@ -8,9 +8,29 @@ import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { DecimalInfo, DisplayValue, DisplayValueOptions, GrafanaTheme, GrafanaThemeType, Threshold } from '../types';
+import { Threshold, ValueMapping, DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType } from '../types';
+import { DecimalCount } from './valueFormats/valueFormats';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
+
+export interface DisplayValueOptions {
+  unit?: string;
+  decimals?: DecimalCount;
+  dateFormat?: string; // If set try to convert numbers to date
+
+  color?: string;
+  mappings?: ValueMapping[];
+  thresholds?: Threshold[];
+  prefix?: string;
+  suffix?: string;
+
+  // Alternative to empty string
+  noValue?: string;
+
+  // Context
+  isUtc?: boolean;
+  theme?: GrafanaTheme; // Will pick 'dark' if not defined
+}
 
 export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
