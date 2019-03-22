@@ -9,7 +9,6 @@ import {
   colors,
   TimeSeriesVMs,
   ColumnType,
-  guessColumnTypes,
   getFirstTimeColumn,
   processTimeSeries,
 } from '@grafana/ui';
@@ -23,8 +22,7 @@ export class GraphPanel extends PureComponent<Props> {
     const { showLines, showBars, showPoints } = this.props.options;
 
     const vmSeries: TimeSeriesVMs = [];
-    for (let t = 0; t < data.length; t++) {
-      const table = guessColumnTypes(data[t]);
+    for (const table of data) {
       const timeColumn = getFirstTimeColumn(table);
       if (timeColumn >= 0) {
         for (let i = 0; i < table.columns.length; i++) {

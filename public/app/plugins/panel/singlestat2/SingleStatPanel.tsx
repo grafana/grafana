@@ -4,7 +4,7 @@ import React, { PureComponent, CSSProperties } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { DisplayValue, PanelProps, processTimeSeries, NullValueMode, guessColumnTypes, ColumnType } from '@grafana/ui';
+import { DisplayValue, PanelProps, processTimeSeries, NullValueMode, ColumnType } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -25,8 +25,7 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
   });
 
   const values: DisplayValue[] = [];
-  for (let t = 0; t < data.length; t++) {
-    const table = guessColumnTypes(data[t]);
+  for (const table of data) {
     for (let i = 0; i < table.columns.length; i++) {
       const column = table.columns[i];
 
