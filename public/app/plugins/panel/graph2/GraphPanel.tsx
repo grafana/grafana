@@ -24,23 +24,25 @@ export class GraphPanel extends PureComponent<Props> {
     const vmSeries: TimeSeriesVMs = [];
     for (const table of data) {
       const timeColumn = getFirstTimeColumn(table);
-      if (timeColumn >= 0) {
-        for (let i = 0; i < table.columns.length; i++) {
-          const column = table.columns[i];
+      if (timeColumn < 0) {
+        continue;
+      }
 
-          // Show all numeric columns
-          if (column.type === ColumnType.number) {
-            const tsvm = processTimeSeries({
-              data: [table],
-              xColumn: timeColumn,
-              yColumn: i,
-              nullValueMode: NullValueMode.Null,
-            })[0];
+      for (let i = 0; i < table.columns.length; i++) {
+        const column = table.columns[i];
 
-            const colorIndex = vmSeries.length % colors.length;
-            tsvm.color = colors[colorIndex];
-            vmSeries.push(tsvm);
-          }
+        // Show all numeric columns
+        if (column.type === ColumnType.number) {
+          const tsvm = processTimeSeries({
+            data: [table],
+            xColumn: timeColumn,
+            yColumn: i,
+            nullValueMode: NullValueMode.Null,
+          })[0];
+
+          const colorIndex = vmSeries.length % colors.length;
+          tsvm.color = colors[colorIndex];
+          vmSeries.push(tsvm);
         }
       }
     }
