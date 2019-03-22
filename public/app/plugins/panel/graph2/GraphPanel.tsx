@@ -2,14 +2,16 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-// Utils
-import { processTimeSeries } from '@grafana/ui/src/utils';
-
-// Components
-import { Graph } from '@grafana/ui';
-
-// Types
-import { PanelProps, NullValueMode, TimeSeriesVMs } from '@grafana/ui/src/types';
+import {
+  Graph,
+  PanelProps,
+  NullValueMode,
+  colors,
+  TimeSeriesVMs,
+  ColumnType,
+  getFirstTimeColumn,
+  processTimeSeries,
+} from '@grafana/ui';
 import { Options } from './types';
 
 interface Props extends PanelProps<Options> {}
@@ -19,12 +21,30 @@ export class GraphPanel extends PureComponent<Props> {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    let vmSeries: TimeSeriesVMs;
-    if (data) {
-      vmSeries = processTimeSeries({
-        data,
-        nullValueMode: NullValueMode.Ignore,
-      });
+    const vmSeries: TimeSeriesVMs = [];
+    for (const table of data) {
+      const timeColumn = getFirstTimeColumn(table);
+      if (timeColumn < 0) {
+        continue;
+      }
+
+      for (let i = 0; i < table.columns.length; i++) {
+        const column = table.columns[i];
+
+        // Show all numeric columns
+        if (column.type === ColumnType.number) {
+          const tsvm = processTimeSeries({
+            data: [table],
+            xColumn: timeColumn,
+            yColumn: i,
+            nullValueMode: NullValueMode.Null,
+          })[0];
+
+          const colorIndex = vmSeries.length % colors.length;
+          tsvm.color = colors[colorIndex];
+          vmSeries.push(tsvm);
+        }
+      }
     }
 
     return (

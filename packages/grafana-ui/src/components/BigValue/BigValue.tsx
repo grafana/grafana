@@ -3,10 +3,10 @@ import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
 
 // Utils
-import { DisplayValue, getColorFromHexRgbOrName } from '../../utils/index';
+import { getColorFromHexRgbOrName } from '../../utils/index';
 
 // Types
-import { Themeable } from '../../types/index';
+import { Themeable, DisplayValue } from '../../types/index';
 import { DisplayValueLink } from './DisplayValueLink';
 
 export interface Sparkline {

@@ -1,5 +1,5 @@
 import React, { CSSProperties, MouseEvent } from 'react';
-import { DisplayValue } from '../../utils/index';
+import { DisplayValue } from '../../types/index';
 
 interface Props {
   value: DisplayValue;

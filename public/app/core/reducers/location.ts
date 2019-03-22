@@ -1,7 +1,8 @@
-import { Action, CoreActionTypes } from 'app/core/actions/location';
 import { LocationState } from 'app/types';
 import { renderUrl } from 'app/core/utils/url';
 import _ from 'lodash';
+import { reducerFactory } from 'app/core/redux';
+import { updateLocation } from 'app/core/actions';
 
 export const initialState: LocationState = {
   url: '',
@@ -12,9 +13,10 @@ export const initialState: LocationState = {
   lastUpdated: 0,
 };
 
-export const locationReducer = (state = initialState, action: Action): LocationState => {
-  switch (action.type) {
-    case CoreActionTypes.UpdateLocation: {
+export const locationReducer = reducerFactory<LocationState>(initialState)
+  .addMapper({
+    filter: updateLocation,
+    mapper: (state, action): LocationState => {
       const { path, routeParams, replace } = action.payload;
       let query = action.payload.query || state.query;
 
@@ -31,8 +33,6 @@ export const locationReducer = (state = initialState, action: Action): LocationS
         replace: replace === true,
         lastUpdated: new Date().getTime(),
       };
-    }
-  }
-
-  return state;
-};
+    },
+  })
+  .create();

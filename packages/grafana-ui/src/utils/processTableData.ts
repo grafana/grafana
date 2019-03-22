@@ -1,5 +1,9 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
+import isBoolean from 'lodash/isBoolean';
+import moment from 'moment';
+
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
@@ -147,26 +151,118 @@ function convertTimeSeriesToTableData(timeSeries: TimeSeries): TableData {
   };
 }
 
-export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
+export const getFirstTimeColumn = (table: TableData): number => {
+  const { columns } = table;
+  for (let i = 0; i < columns.length; i++) {
+    if (columns[i].type === ColumnType.time) {
+      return i;
+    }
+  }
+  return -1;
+};
 
-export const toTableData = (results?: any[]): TableData[] => {
-  if (!results) {
-    return [];
+// PapaParse Dynamic Typing regex:
+// https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
+const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
+
+/**
+ * Given a value this will guess the best column type
+ *
+ * TODO: better Date/Time support!  Look for standard date strings?
+ */
+export function guessColumnTypeFromValue(v: any): ColumnType {
+  if (isNumber(v)) {
+    return ColumnType.number;
   }
 
-  return results
-    .filter(d => !!d)
-    .map(data => {
-      if (data.hasOwnProperty('columns')) {
-        return data as TableData;
-      }
-      if (data.hasOwnProperty('datapoints')) {
-        return convertTimeSeriesToTableData(data);
-      }
-      // TODO, try to convert JSON to table?
-      console.warn('Can not convert', data);
-      throw new Error('Unsupported data format');
-    });
+  if (isString(v)) {
+    if (NUMBER.test(v)) {
+      return ColumnType.number;
+    }
+
+    if (v === 'true' || v === 'TRUE' || v === 'True' || v === 'false' || v === 'FALSE' || v === 'False') {
+      return ColumnType.boolean;
+    }
+
+    return ColumnType.string;
+  }
+
+  if (isBoolean(v)) {
+    return ColumnType.boolean;
+  }
+
+  if (v instanceof Date || v instanceof moment) {
+    return ColumnType.time;
+  }
+
+  return ColumnType.other;
+}
+
+/**
+ * Looks at the data to guess the column type.  This ignores any existing setting
+ */
+function guessColumnTypeFromTable(table: TableData, index: number): ColumnType | undefined {
+  const column = table.columns[index];
+
+  // 1. Use the column name to guess
+  if (column.text) {
+    const name = column.text.toLowerCase();
+    if (name === 'date' || name === 'time') {
+      return ColumnType.time;
+    }
+  }
+
+  // 2. Check the first non-null value
+  for (let i = 0; i < table.rows.length; i++) {
+    const v = table.rows[i][index];
+    if (v !== null) {
+      return guessColumnTypeFromValue(v);
+    }
+  }
+
+  // Could not find anything
+  return undefined;
+}
+
+/**
+ * @returns a table Returns a copy of the table with the best guess for each column type
+ * If the table already has column types defined, they will be used
+ */
+export const guessColumnTypes = (table: TableData): TableData => {
+  for (let i = 0; i < table.columns.length; i++) {
+    if (!table.columns[i].type) {
+      // Somethign is missing a type return a modified copy
+      return {
+        ...table,
+        columns: table.columns.map((column, index) => {
+          if (column.type) {
+            return column;
+          }
+          // Replace it with a calculated version
+          return {
+            ...column,
+            type: guessColumnTypeFromTable(table, index),
+          };
+        }),
+      };
+    }
+  }
+  // No changes necessary
+  return table;
+};
+
+export const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
+
+export const toTableData = (data: any): TableData => {
+  if (data.hasOwnProperty('columns')) {
+    return data as TableData;
+  }
+  if (data.hasOwnProperty('datapoints')) {
+    return convertTimeSeriesToTableData(data);
+  }
+  // TODO, try to convert JSON/Array to table?
+  console.warn('Can not convert', data);
+  throw new Error('Unsupported data format');
 };
 
 export function sortTableData(data: TableData, sortIndex?: number, reverse = false): TableData {

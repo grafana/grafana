@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
 import { Sparkline } from '@grafana/ui/src/components/BigValue/BigValue';
-import { DisplayValue, PanelProps, processTimeSeries, NullValueMode } from '@grafana/ui';
+import { DisplayValue, PanelProps, processTimeSeries, NullValueMode, ColumnType } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor, BigValue } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -25,13 +25,30 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
     theme: config.theme,
   });
 
-  return processTimeSeries({
-    data,
-    nullValueMode: NullValueMode.Null,
-  }).map((series, index) => {
-    const value = stat !== 'name' ? series.stats[stat] : series.label;
-    return processor(value);
-  });
+  const values: DisplayValue[] = [];
+  for (const table of data) {
+    for (let i = 0; i < table.columns.length; i++) {
+      const column = table.columns[i];
+
+      // Show all columns that are not 'time'
+      if (column.type === ColumnType.number) {
+        const series = processTimeSeries({
+          data: [table],
+          xColumn: i,
+          yColumn: i,
+          nullValueMode: NullValueMode.Null,
+        })[0];
+
+        const value = stat !== 'name' ? series.stats[stat] : series.label;
+        values.push(processor(value));
+      }
+    }
+  }
+
+  if (values.length === 0) {
+    throw { message: 'Could not find numeric data' };
+  }
+  return values;
 };
 
 interface SingleStatDisplay {
