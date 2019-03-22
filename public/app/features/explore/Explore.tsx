@@ -32,7 +32,7 @@ import {
 
 // Types
 import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
-import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreRefreshState } from 'app/types/explore';
+import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -52,7 +52,7 @@ interface ExploreProps {
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
   range: RawTimeRange;
-  refresh: ExploreRefreshState;
+  update: ExploreUpdateState;
   refreshExplore: typeof refreshExplore;
   scanner?: RangeScanner;
   scanning?: boolean;
@@ -185,9 +185,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   refreshExplore = () => {
-    const { exploreId, refresh } = this.props;
+    const { exploreId, update } = this.props;
 
-    if (refresh.queries || refresh.ui || refresh.range || refresh.datasource) {
+    if (update.queries || update.ui || update.range || update.datasource) {
       this.props.refreshExplore(exploreId);
     }
   };
@@ -282,7 +282,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supportsTable,
     queryKeys,
     urlState,
-    refresh,
+    update,
   } = item;
   return {
     StartPage,
@@ -299,7 +299,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supportsTable,
     queryKeys,
     urlState,
-    refresh,
+    update,
   };
 }
 

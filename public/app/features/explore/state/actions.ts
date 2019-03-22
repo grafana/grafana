@@ -781,35 +781,35 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
       return;
     }
 
-    const { urlState, refresh, containerWidth, eventBridge } = itemState;
+    const { urlState, update, containerWidth, eventBridge } = itemState;
     const { datasource, queries, range, ui } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
     const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
 
     // need to refresh datasource
-    if (refresh.datasource) {
+    if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
       dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
       return;
     }
 
-    if (refresh.range) {
+    if (update.range) {
       dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
     }
 
     // need to refresh ui state
-    if (refresh.ui) {
+    if (update.ui) {
       dispatch(updateUIStateAction({ ...ui, exploreId }));
     }
 
     // need to refresh queries
-    if (refresh.queries) {
+    if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
     }
 
     // always run queries when refresh is needed
-    if (refresh.queries || refresh.ui || refresh.range) {
+    if (update.queries || update.ui || update.range) {
       dispatch(runQueries(exploreId));
     }
   };

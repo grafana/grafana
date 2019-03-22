@@ -1,5 +1,5 @@
 import { refreshExplore } from './actions';
-import { ExploreId, ExploreUrlState, ExploreRefreshState } from 'app/types';
+import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import {
@@ -11,7 +11,7 @@ import {
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
-import { makeInitialRefreshState } from './reducers';
+import { makeInitialUpdateState } from './reducers';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -23,15 +23,15 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   }),
 }));
 
-const setup = (refreshOverides?: Partial<ExploreRefreshState>) => {
+const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
   const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const range = { from: 'now', to: 'now' };
   const urlState: ExploreUrlState = { datasource: 'some-datasource', queries: [], range, ui };
-  const refreshDefaults = makeInitialRefreshState();
-  const refresh = { ...refreshDefaults, ...refreshOverides };
+  const updateDefaults = makeInitialUpdateState();
+  const update = { ...updateDefaults, ...updateOverides };
   const initialState = {
     explore: {
       [exploreId]: {
@@ -39,7 +39,7 @@ const setup = (refreshOverides?: Partial<ExploreRefreshState>) => {
         urlState,
         containerWidth,
         eventBridge,
-        refresh,
+        update,
         datasourceInstance: { name: 'some-datasource' },
         queries: [],
         range,
@@ -60,7 +60,7 @@ const setup = (refreshOverides?: Partial<ExploreRefreshState>) => {
 
 describe('refreshExplore', () => {
   describe('when explore is initialized', () => {
-    describe('and refresh datasource is set', () => {
+    describe('and update datasource is set', () => {
       it('then it should dispatch initializeExplore', () => {
         const { exploreId, ui, range, initialState, containerWidth, eventBridge } = setup({ datasource: true });
 
@@ -84,7 +84,7 @@ describe('refreshExplore', () => {
       });
     });
 
-    describe('and refresh range is set', () => {
+    describe('and update range is set', () => {
       it('then it should dispatch changeTimeAction', () => {
         const { exploreId, range, initialState } = setup({ range: true });
 
@@ -100,7 +100,7 @@ describe('refreshExplore', () => {
       });
     });
 
-    describe('and refresh ui is set', () => {
+    describe('and update ui is set', () => {
       it('then it should dispatch updateUIStateAction', () => {
         const { exploreId, initialState, ui } = setup({ ui: true });
 
@@ -116,7 +116,7 @@ describe('refreshExplore', () => {
       });
     });
 
-    describe('and refresh queries is set', () => {
+    describe('and update queries is set', () => {
       it('then it should dispatch setQueriesAction', () => {
         const { exploreId, initialState } = setup({ queries: true });
 
@@ -133,7 +133,7 @@ describe('refreshExplore', () => {
     });
   });
 
-  describe('when explore is not initialized', () => {
+  describe('when update is not initialized', () => {
     it('then it should not dispatch any actions', () => {
       const exploreId = ExploreId.left;
       const initialState = { explore: { [exploreId]: { initialized: false } } };

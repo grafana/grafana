@@ -251,10 +251,10 @@ export interface ExploreItemState {
 
   urlState: ExploreUrlState;
 
-  refresh: ExploreRefreshState;
+  update: ExploreUpdateState;
 }
 
-export interface ExploreRefreshState {
+export interface ExploreUpdateState {
   datasource: boolean;
   queries: boolean;
   range: boolean;

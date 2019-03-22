@@ -9,7 +9,7 @@ import {
   parseUrlState,
   DEFAULT_UI_STATE,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreRefreshState } from 'app/types/explore';
+import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
 import { HigherOrderAction, ActionTypes } from './actionTypes';
@@ -54,7 +54,7 @@ export const DEFAULT_RANGE = {
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
-export const makeInitialRefreshState = (): ExploreRefreshState => ({
+export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
   range: false,
@@ -88,7 +88,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportsTable: null,
   queryKeys: [],
   urlState: null,
-  refresh: makeInitialRefreshState(),
+  update: makeInitialUpdateState(),
 });
 
 /**
@@ -208,7 +208,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         ...ui,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -226,7 +226,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         datasourceError: action.payload.error,
         datasourceLoading: false,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -237,7 +237,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         datasourceMissing: true,
         datasourceLoading: false,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -277,7 +277,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         datasourceError: null,
         logsHighlighterExpressions: undefined,
         queryTransactions: [],
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -332,7 +332,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queryTransactions,
         showingStartPage: false,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -353,7 +353,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queryTransactions: nextQueryTransactions,
         showingStartPage: false,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -374,7 +374,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         history,
         queryTransactions,
         showingStartPage: false,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -432,7 +432,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         scanning: false,
         scanRange: undefined,
         scanner: undefined,
-        refresh: makeInitialRefreshState(),
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -533,7 +533,7 @@ export const updateChildRefreshState = (
   const urlState = parseUrlState(queryState);
   if (!state.urlState || path !== '/explore') {
     // we only want to refresh when browser back/forward
-    return { ...state, urlState, refresh: { datasource: false, queries: false, range: false, ui: false } };
+    return { ...state, urlState, update: { datasource: false, queries: false, range: false, ui: false } };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
@@ -544,8 +544,8 @@ export const updateChildRefreshState = (
   return {
     ...state,
     urlState,
-    refresh: {
-      ...state.refresh,
+    update: {
+      ...state.update,
       datasource,
       queries,
       range,

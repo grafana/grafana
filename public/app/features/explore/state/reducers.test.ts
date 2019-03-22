@@ -1,4 +1,4 @@
-import { itemReducer, makeExploreItemState, exploreReducer, makeInitialRefreshState } from './reducers';
+import { itemReducer, makeExploreItemState, exploreReducer, makeInitialUpdateState } from './reducers';
 import { ExploreId, ExploreItemState, ExploreUrlState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { scanStartAction, scanStopAction } from './actionTypes';
@@ -50,7 +50,7 @@ describe('Explore item reducer', () => {
 });
 
 export const setup = (urlStateOverrides?: any) => {
-  const refresh = makeInitialRefreshState();
+  const update = makeInitialUpdateState();
   const urlStateDefaults: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],
@@ -67,7 +67,7 @@ export const setup = (urlStateOverrides?: any) => {
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
   const serializedUrlState = serializeStateToUrlParam(urlState);
-  const initalState = { split: false, left: { urlState, refresh }, right: { urlState, refresh } };
+  const initalState = { split: false, left: { urlState, update }, right: { urlState, update } };
 
   return {
     initalState,
@@ -117,7 +117,7 @@ describe('Explore reducer', () => {
 
       describe("and query contains a 'left'", () => {
         describe('but urlState is not set in state', () => {
-          it('then it should just add urlState and refresh in state', () => {
+          it('then it should just add urlState and update in state', () => {
             const { initalState, serializedUrlState } = setup();
             const stateWithoutUrlState = { ...initalState, left: { urlState: null } };
             const expectedState = { ...initalState };
@@ -137,7 +137,7 @@ describe('Explore reducer', () => {
         });
 
         describe("but '/explore' is missing in path", () => {
-          it('then it should just add urlState and refresh in state', () => {
+          it('then it should just add urlState and update in state', () => {
             const { initalState, serializedUrlState } = setup();
             const expectedState = { ...initalState };
 
@@ -157,14 +157,14 @@ describe('Explore reducer', () => {
 
         describe("and '/explore' is in path", () => {
           describe('and datasource differs', () => {
-            it('then it should return refresh datasource', () => {
+            it('then it should return update datasource', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = {
                 ...initalState,
                 left: {
                   ...initalState.left,
-                  refresh: {
-                    ...initalState.left.refresh,
+                  update: {
+                    ...initalState.left.update,
                     datasource: true,
                   },
                 },
@@ -195,14 +195,14 @@ describe('Explore reducer', () => {
           });
 
           describe('and range differs', () => {
-            it('then it should return refresh range', () => {
+            it('then it should return update range', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = {
                 ...initalState,
                 left: {
                   ...initalState.left,
-                  refresh: {
-                    ...initalState.left.refresh,
+                  update: {
+                    ...initalState.left.update,
                     range: true,
                   },
                 },
@@ -236,14 +236,14 @@ describe('Explore reducer', () => {
           });
 
           describe('and queries differs', () => {
-            it('then it should return refresh queries', () => {
+            it('then it should return update queries', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = {
                 ...initalState,
                 left: {
                   ...initalState.left,
-                  refresh: {
-                    ...initalState.left.refresh,
+                  update: {
+                    ...initalState.left.update,
                     queries: true,
                   },
                 },
@@ -274,14 +274,14 @@ describe('Explore reducer', () => {
           });
 
           describe('and ui differs', () => {
-            it('then it should return refresh ui', () => {
+            it('then it should return update ui', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = {
                 ...initalState,
                 left: {
                   ...initalState.left,
-                  refresh: {
-                    ...initalState.left.refresh,
+                  update: {
+                    ...initalState.left.update,
                     ui: true,
                   },
                 },
@@ -315,7 +315,7 @@ describe('Explore reducer', () => {
           });
 
           describe('and nothing differs', () => {
-            fit('then it should return refresh ui', () => {
+            fit('then it should return update ui', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = { ...initalState };
 
