@@ -151,6 +151,13 @@ describe('Format value', () => {
     expect(instance(value).text).toEqual('1.2');
   });
 
+  it('should set auto decimals, 2 significant', () => {
+    const value = '0.0245';
+    const instance = getDisplayProcessor({ decimals: null });
+
+    expect(instance(value).text).toEqual('0.02');
+  });
+
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
       { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },

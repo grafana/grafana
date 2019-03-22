@@ -61,10 +61,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
             decimals = options.decimals;
           }
 
-          console.log('coin coin', value);
-          console.log(decimals);
-          console.log(scaledDecimals);
-
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
         if (thresholds && thresholds.length > 0) {
