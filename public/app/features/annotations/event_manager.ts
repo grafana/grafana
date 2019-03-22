@@ -114,7 +114,7 @@ export class EventManager {
 
         // add properties used by jquery flot events
         item.min = item.time;
-        item.max = item.time;
+        item.max = item.timeEnd || item.time;
         item.eventType = item.source.name;
 
         if (item.newState) {
