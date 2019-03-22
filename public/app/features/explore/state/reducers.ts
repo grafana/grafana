@@ -534,7 +534,7 @@ export const updateChildRefreshState = (
   const path = payload.path || '';
   const queryState = payload.query[exploreId] as string;
   if (!queryState) {
-    return { ...state };
+    return state;
   }
 
   const urlState = parseUrlState(queryState);
@@ -581,7 +581,7 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
 
     case updateLocation.type: {
       const { query } = action.payload;
-      if (!query[ExploreId.left]) {
+      if (!query || !query[ExploreId.left]) {
         return state;
       }
 
