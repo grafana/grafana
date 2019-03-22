@@ -3,17 +3,15 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { config } from 'app/core/config';
 import { processTimeSeries } from '@grafana/ui/src/utils';
-import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils';
 
 // Components
-import { Gauge, Graph, TimeSeriesVMs } from '@grafana/ui';
+import { Graph, TimeSeriesVMs } from '@grafana/ui';
 import { HeatmapCanvas } from './HeatmapCanvas';
 
 // Types
 import { LHeatmapOptions } from './types';
-import { DisplayValue, PanelProps } from '@grafana/ui';
+import { PanelProps } from '@grafana/ui';
 import { NullValueMode } from '@grafana/ui/src/types';
 
 interface LHeatmapPanelState {
@@ -83,42 +81,9 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
     }
   };
 
-  valueToColor = (value: number) => {
-    const thresholds = this.props.options.thresholds;
-    let color = getColorFromHexRgbOrName(thresholds[0].color);
-    for (const threshold of thresholds) {
-      if (value > threshold.value) {
-        color = getColorFromHexRgbOrName(threshold.color);
-      }
-    }
-    return color;
-  };
-
-  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
-    const { options } = this.props;
-
-    return (
-      <Gauge
-        value={value}
-        width={width}
-        height={height}
-        thresholds={options.thresholds}
-        showThresholdLabels={options.showThresholdLabels}
-        showThresholdMarkers={options.showThresholdMarkers}
-        minValue={options.minValue}
-        maxValue={options.maxValue}
-        theme={config.theme}
-      />
-    );
-  };
-
-  getProcessedValues = (): DisplayValue[] => {
-    return [];
-  };
-
   render() {
     // console.log(this.props);
-    const { height, width, timeRange } = this.props;
+    const { height, width, timeRange, options } = this.props;
     const pointValue = this.state.pointValue || 'null';
 
     return (
@@ -129,7 +94,7 @@ export class LHeatmapPanel extends PureComponent<PanelProps<LHeatmapOptions>, LH
             height={height - 40}
             data={this.state.heatmapData}
             labels={this.state.labels}
-            valueToColor={this.valueToColor}
+            thresholds={options.thresholds}
             onPointHover={this.handlePointHover}
             onPointClick={this.handlePointClick}
           />

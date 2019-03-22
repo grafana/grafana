@@ -1,11 +1,12 @@
 import React from 'react';
+import { getColorFromHexRgbOrName } from '@grafana/ui/src/utils';
 
 interface HeatmapCanvasProps {
   width: number;
   height: number;
   data: number[][];
   labels: string[];
-  valueToColor?: (value: number) => string;
+  thresholds: any[];
   onPointHover?: (value: number, labels: string[]) => void;
   onPointClick?: (labels: string[]) => void;
 }
@@ -102,6 +103,17 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
     this.draw();
   }
 
+  valueToColor = (value: number) => {
+    const thresholds = this.props.thresholds;
+    let color = getColorFromHexRgbOrName(thresholds[0].color);
+    for (const threshold of thresholds) {
+      if (value > threshold.value) {
+        color = getColorFromHexRgbOrName(threshold.color);
+      }
+    }
+    return color;
+  };
+
   draw() {
     if (this.canvas === null) {
       return;
@@ -126,11 +138,7 @@ export class HeatmapCanvas extends React.PureComponent<HeatmapCanvasProps> {
       const row = data[i];
       for (let j = 0; j < row.length; j++) {
         const value = row[j];
-        if (this.props.valueToColor) {
-          ctx.fillStyle = this.props.valueToColor(value);
-        } else {
-          ctx.fillStyle = `rgb(200,${value},0)`;
-        }
+        ctx.fillStyle = this.valueToColor(value);
         ctx.fillRect(i * pointSize, j * pointSize, pointSize, pointSize);
       }
     }
