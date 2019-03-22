@@ -94,12 +94,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
         } else {
           let hook: PanelTypeChangedHook | null = null;
           if (plugin.exports.reactPanel) {
-            hook = plugin.exports.reactPanel.panelTypeChangedHook;
+            hook = plugin.exports.reactPanel.onPanelTypeChanged;
           }
           panel.changeType(pluginId, hook);
         }
       } else if (plugin.exports && plugin.exports.reactPanel && panel.options) {
-        const hook = plugin.exports.reactPanel.panelMigrationHook;
+        const hook = plugin.exports.reactPanel.onPanelMigration;
         if (hook) {
           panel.options = hook(panel.options);
         }

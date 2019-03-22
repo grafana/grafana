@@ -4,8 +4,6 @@ import { SingleStatPanel } from './SingleStatPanel';
 import cloneDeep from 'lodash/cloneDeep';
 import { SingleStatEditor } from './SingleStatEditor';
 
-export const reactPanel = new ReactPanelPlugin<SingleStatOptions>(SingleStatPanel);
-
 const optionsToKeep = ['valueOptions', 'stat', 'maxValue', 'maxValue', 'thresholds', 'valueMappings'];
 
 export const singleStatBaseOptionsCheck = (
@@ -33,7 +31,8 @@ export const singleStatMigrationCheck = (options: Partial<SingleStatBaseOptions>
   return options;
 };
 
-reactPanel.setEditor(SingleStatEditor);
-reactPanel.setDefaults(defaults);
-reactPanel.setPanelTypeChangedHook(singleStatBaseOptionsCheck);
-reactPanel.setPanelMigrationHook(singleStatMigrationCheck);
+export const reactPanel = new ReactPanelPlugin<SingleStatOptions>(SingleStatPanel, defaults);
+
+reactPanel.editor = SingleStatEditor;
+reactPanel.onPanelTypeChanged = singleStatBaseOptionsCheck;
+reactPanel.onPanelMigration = singleStatMigrationCheck;

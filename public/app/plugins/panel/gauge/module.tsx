@@ -3,10 +3,10 @@ import { ReactPanelPlugin } from '@grafana/ui';
 import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
-import { singleStatBaseOptionsCheck } from '../singlestat2/module';
+import { singleStatBaseOptionsCheck, singleStatMigrationCheck } from '../singlestat2/module';
 
-export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
+export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel, defaults);
 
-reactPanel.setEditor(GaugePanelEditor);
-reactPanel.setDefaults(defaults);
-reactPanel.setPanelTypeChangedHook(singleStatBaseOptionsCheck);
+reactPanel.editor = GaugePanelEditor;
+reactPanel.onPanelTypeChanged = singleStatBaseOptionsCheck;
+reactPanel.onPanelMigration = singleStatMigrationCheck;
