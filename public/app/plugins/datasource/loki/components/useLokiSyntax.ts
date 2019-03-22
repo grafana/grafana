@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import Prism from 'prismjs';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
-import { TypeaheadInput } from 'app/features/explore/QueryField';
+import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -21,7 +21,7 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
    * that loads option values not fetched yet. Based on that useLokiLabels hook decides whether or not
    * the option requires additional data fetching
    */
-  const [activeOption, setActiveOption] = useState<TypeaheadInput[]>();
+  const [activeOption, setActiveOption] = useState<CascaderOption[]>();
 
   const { logLabelOptions, setLogLabelOptions, refreshLabels } = useLokiLabels(
     languageProvider,

@@ -54,7 +54,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
   return suggestion;
 }
 
-interface CascaderOption {
+export interface CascaderOption {
   label: string;
   value: string;
   children?: CascaderOption[];
