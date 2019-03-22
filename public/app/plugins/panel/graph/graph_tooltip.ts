@@ -49,11 +49,13 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     }
   };
 
-  this.renderAndShow = (absoluteTime, innerHtml, pos, xMode) => {
+  this.renderAndShow = (absoluteTime, innerHtml, pos, xMode, primary) => {
     if (xMode === 'time') {
       innerHtml = '<div class="graph-tooltip-time">' + absoluteTime + '</div>' + innerHtml;
     }
     $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
+    // The primary tooltip should be drawn on top
+    $tooltip.css('zIndex', primary ? 9999 : 9998);
   };
 
   this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
@@ -159,7 +161,8 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
   });
 
   elem.bind('plothover', (event, pos, item) => {
-    self.show(pos, item);
+    // This is the graph the mouse is over so it should be drawn on top
+    self.show(pos, item, true);
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
@@ -176,7 +179,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     plot.unhighlight();
   };
 
-  this.show = (pos, item) => {
+  this.show = (pos, item, primary) => {
     const plot = elem.data().plot;
     const plotData = plot.getData();
     const xAxes = plot.getXAxes();
@@ -265,7 +268,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
         plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
       }
 
-      self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
+      self.renderAndShow(absoluteTime, seriesHtml, pos, xMode, primary);
     } else if (item) {
       // single series tooltip
       series = seriesList[item.seriesIndex];
@@ -285,7 +288,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
 
       group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-      self.renderAndShow(absoluteTime, group, pos, xMode);
+      self.renderAndShow(absoluteTime, group, pos, xMode, primary);
     } else {
       // no hit
       $tooltip.detach();

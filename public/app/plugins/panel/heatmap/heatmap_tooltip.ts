@@ -58,7 +58,7 @@ export class HeatmapTooltip {
     this.tooltip = null;
   }
 
-  show(pos, data) {
+  show(pos, data, primary) {
     if (!this.panel.tooltip.show || !data) {
       return;
     }
@@ -144,6 +144,8 @@ export class HeatmapTooltip {
     }
 
     this.tooltip.html(tooltipHtml);
+    // The primary tooltip should be drawn on top
+    this.tooltip.css('zIndex', primary ? 9999 : 9998);
 
     if (this.panel.tooltip.showHistogram) {
       this.addHistogram(xData);
