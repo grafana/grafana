@@ -439,6 +439,15 @@ jobs:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
+  store-build-artifacts:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - attach_workspace:
+          at: .
+      - store_artifacts:
+          path: ./dist
+
 workflows:
   version: 2
   build-master:
@@ -562,6 +571,17 @@ workflows:
         - cache-server-test:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
+            requires:
+              - build
+              - test-backend
+              - test-frontend
+              - codespell
+              - gometalinter
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
+        - store-build-artifacts:
             requires:
               - build
               - test-backend
