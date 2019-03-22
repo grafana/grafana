@@ -3,6 +3,8 @@ import { shallow } from 'enzyme';
 import { AlertRuleList, Props } from './AlertRuleList';
 import { AlertRule, NavModel } from '../../types';
 import appEvents from '../../core/app_events';
+import { mockActionCreator } from 'app/core/redux';
+import { updateLocation } from 'app/core/actions';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -12,7 +14,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
     alertRules: [] as AlertRule[],
-    updateLocation: jest.fn(),
+    updateLocation: mockActionCreator(updateLocation),
     getAlertRulesAsync: jest.fn(),
     setSearchQuery: jest.fn(),
     togglePauseAlertRule: jest.fn(),
