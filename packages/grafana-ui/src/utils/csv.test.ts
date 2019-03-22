@@ -11,6 +11,9 @@ describe('read csv', () => {
       expect(table.rows.length).toBe(3);
 
       // Make sure everythign it padded properly
+      for (const row of table.rows) {
+        expect(row.length).toBe(table.columns.length);
+      }
 
       expect(tables[0]).toMatchSnapshot();
     });

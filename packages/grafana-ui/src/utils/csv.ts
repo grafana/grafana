@@ -3,6 +3,7 @@ import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
 
 // Types
 import { TableData, Column, ColumnType } from '../types/index';
+import { guessColumnTypeFromValue } from './processTableData';
 
 // Subset of all parse options
 export interface CSVParseConfig {
@@ -118,7 +119,7 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
             }
 
             if (state === ParseState.Starting) {
-              const type = guessColumnType(first);
+              const type = guessColumnTypeFromValue(first);
               if (type === ColumnType.string) {
                 table.columns = makeColumnsFor(line);
                 state = ParseState.InHeader;
@@ -203,27 +204,9 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
   });
 }
 
-// PapaParse Dynamic Typing regex:
-// https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
-const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;
-
-function guessColumnType(value: string): ColumnType {
-  if (value === 'true' || value === 'TRUE' || value === 'false' || value === 'FALSE') {
-    return ColumnType.boolean;
-  }
-
-  if (NUMBER.test(value)) {
-    return ColumnType.number;
-  }
-
-  // TODO, date support?
-
-  return ColumnType.string;
-}
-
 function makeColumnParser(value: string, column: Column): ColumnParser {
   if (!column.type) {
-    column.type = guessColumnType(value);
+    column.type = guessColumnTypeFromValue(value);
   }
 
   if (column.type === ColumnType.number) {
