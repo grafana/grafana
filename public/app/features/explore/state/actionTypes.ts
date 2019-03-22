@@ -35,11 +35,6 @@ export interface InitializeExploreSplitAction {
   payload: {};
 }
 
-export interface SplitCloseAction {
-  type: ActionTypes.SplitClose;
-  payload: {};
-}
-
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
   payload: {
@@ -175,6 +170,10 @@ export interface ScanStopPayload {
 export interface SetQueriesPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
+}
+
+export interface SplitCloseActionPayload {
+  itemId: ExploreId;
 }
 
 export interface SplitOpenPayload {
@@ -366,7 +365,7 @@ export const setQueriesAction = actionCreatorFactory<SetQueriesPayload>('explore
 /**
  * Close the split view and save URL state.
  */
-export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLOSE').create();
+export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('explore/SPLIT_CLOSE').create();
 
 /**
  * Open the split view and copy the left state to be the right state.
@@ -413,7 +412,7 @@ export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload
 
 export type HigherOrderAction =
   | InitializeExploreSplitAction
-  | SplitCloseAction
+  | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
   | ActionOf<any>;

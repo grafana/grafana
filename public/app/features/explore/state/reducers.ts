@@ -5,10 +5,10 @@ import {
   ensureQueries,
   getQueryKeys,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, QueryTransaction } from 'app/types/explore';
+import { ExploreItemState, ExploreState, QueryTransaction, ExploreId } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
-import { HigherOrderAction, ActionTypes } from './actionTypes';
+import { HigherOrderAction, ActionTypes, SplitCloseActionPayload } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
   addQueryRowAction,
@@ -489,7 +489,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 export const exploreReducer = (state = initialExploreState, action: HigherOrderAction): ExploreState => {
   switch (action.type) {
     case ActionTypes.SplitClose: {
-      return { ...state, split: false };
+      const { itemId } = action.payload as SplitCloseActionPayload;
+      const targetSplit = {
+        left: itemId === ExploreId.left ? state.right : state.left,
+        right: initialExploreState.right,
+      };
+      return {
+        ...state,
+        ...targetSplit,
+        split: false,
+      };
     }
 
     case ActionTypes.SplitOpen: {
