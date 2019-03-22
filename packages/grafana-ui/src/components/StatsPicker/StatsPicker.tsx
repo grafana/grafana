@@ -7,7 +7,6 @@ import { Select } from '../index';
 
 import { getStatsCalculators, StatCalculatorInfo } from '../../utils/statsCalculator';
 import { SelectOptionItem } from '../Select/Select';
-import { ColumnType } from '../../types/data';
 
 interface Props {
   placeholder?: string;
