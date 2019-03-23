@@ -127,7 +127,6 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
                 continue;
               }
               table.columns = makeColumnsFor(new Array(line.length));
-              console.log('GOT', table.columns, table.columns[0]);
               table.columns[0].type = type;
               state = ParseState.InHeader; // fall through to read rows
             }

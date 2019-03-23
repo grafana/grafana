@@ -1,10 +1,12 @@
-import { parseCSV } from './processTableData';
 import { getStatsCalculators, StatID, calculateStats } from './statsCalculator';
 
 import _ from 'lodash';
 
 describe('Stats Calculators', () => {
-  const basicTable = parseCSV('a,b,c\n10,20,30\n20,30,40');
+  const basicTable = {
+    columns: [{ text: 'a' }, { text: 'b' }, { text: 'c' }],
+    rows: [[10, 20, 30], [20, 30, 40]],
+  };
 
   it('should load all standard stats', () => {
     const names = [
