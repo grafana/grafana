@@ -237,3 +237,27 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	}
 	return data, nil
 }
+
+var coreDatasourceTypes = []string{
+	"azuremonitor",
+	"cloudwatch",
+	"elasticsearch",
+	"graphite",
+	"influxdb",
+	"mssql",
+	"mysql",
+	"opentsdb",
+	"postgres",
+	"prometheus",
+	"stackdriver",
+	"testdata",
+}
+
+func IsCoreDatasource(dsType string) bool {
+	for _, val := range coreDatasourceTypes {
+		if val == dsType {
+			return true
+		}
+	}
+	return false
+}

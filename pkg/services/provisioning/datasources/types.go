@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
@@ -116,6 +117,19 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 	}
 
 	for _, ds := range cfg.Datasources {
+
+		// To provide better security, core datasources store passwords in secureJsonData but that was not always the
+		// case that is why provisioning files can use password field directly. This normalizes it so both password
+		// field and secureJsonData can be used in config. For non core datasources they have to opt in explicitly to
+		// use secureJsonData.
+		if plugins.IsCoreDatasource(ds.Type) {
+			ds.SecureJsonData["basicAuthPassword"] = ds.BasicAuthPassword
+			ds.BasicAuthPassword = ""
+
+			ds.SecureJsonData["password"] = ds.Password
+			ds.Password = ""
+		}
+
 		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
 			OrgId:             ds.OrgId,
 			Name:              ds.Name,

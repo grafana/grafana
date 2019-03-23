@@ -51,35 +51,50 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*D
 		return nil, err
 	}
 
-	var apiVersion *ConfigVersion
-	err = yaml.Unmarshal(yamlFile, &apiVersion)
+	apiVersion, err := getDatasourceConfigApiVersion(yamlFile)
 	if err != nil {
 		return nil, err
 	}
 
-	if apiVersion == nil {
-		apiVersion = &ConfigVersion{ApiVersion: 0}
+	if apiVersion == 0 {
+		cr.log.Warn("[Deprecated] the datasource provisioning config is outdated. please upgrade", "filename", filename)
 	}
 
-	if apiVersion.ApiVersion > 0 {
+	return cr.getDatasourceAsConfigForVersion(apiVersion, yamlFile)
+}
+
+func (cr *configReader) getDatasourceAsConfigForVersion(version int64, yamlFile []byte) (*DatasourcesAsConfig, error) {
+	if version > 0 {
 		var v1 *DatasourcesAsConfigV1
-		err = yaml.Unmarshal(yamlFile, &v1)
+		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
 			return nil, err
 		}
 
-		return v1.mapToDatasourceFromConfig(apiVersion.ApiVersion), nil
-	}
+		return v1.mapToDatasourceFromConfig(version), nil
+	} else {
+		var v0 *DatasourcesAsConfigV0
+		err := yaml.Unmarshal(yamlFile, &v0)
+		if err != nil {
+			return nil, err
+		}
 
-	var v0 *DatasourcesAsConfigV0
-	err = yaml.Unmarshal(yamlFile, &v0)
+		return v0.mapToDatasourceFromConfig(version), nil
+	}
+}
+
+func getDatasourceConfigApiVersion(yamlFile []byte) (int64, error) {
+	var apiVersion *ConfigVersion
+	err := yaml.Unmarshal(yamlFile, &apiVersion)
 	if err != nil {
-		return nil, err
+		return -1, err
 	}
 
-	cr.log.Warn("[Deprecated] the datasource provisioning config is outdated. please upgrade", "filename", filename)
+	if apiVersion == nil {
+		return 0, nil
+	}
 
-	return v0.mapToDatasourceFromConfig(apiVersion.ApiVersion), nil
+	return apiVersion.ApiVersion, nil
 }
 
 func validateDefaultUniqueness(datasources []*DatasourcesAsConfig) error {
