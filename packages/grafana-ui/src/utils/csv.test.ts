@@ -1,4 +1,7 @@
-import { readCSV } from './csv';
+import { readCSV, readCSVFromStream } from './csv';
+
+const fs = require('fs');
+const Readable = require('stream').Readable;
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -15,6 +18,18 @@ describe('read csv', () => {
         expect(row.length).toBe(table.columns.length);
       }
 
+      expect(tables[0]).toMatchSnapshot();
+    });
+  });
+
+  it('should read csv from local file system', () => {
+    const path = __dirname + '/testdata/simple.csv';
+    console.log('PATH', path);
+    expect(fs.existsSync(path)).toBeTruthy();
+
+    const stream = fs.createReadStream(path, 'utf8');
+    return readCSVFromStream(stream).then(tables => {
+      //expect(tables.length).toBe(1);
       expect(tables[0]).toMatchSnapshot();
     });
   });

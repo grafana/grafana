@@ -42,3 +42,10 @@ Object {
   ],
 }
 `;
+
+exports[`read csv should read csv from local file system 1`] = `
+Object {
+  "columns": Array [],
+  "rows": Array [],
+}
+`;
