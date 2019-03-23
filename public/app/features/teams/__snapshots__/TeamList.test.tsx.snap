@@ -133,6 +133,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -183,6 +184,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -233,6 +235,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -283,6 +286,7 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
                 onConfirm={[Function]}
               />
             </td>
@@ -333,6 +337,259 @@ exports[`Render should render teams table 1`] = `
               className="text-right"
             >
               <DeleteButton
+                disabled={false}
+                onConfirm={[Function]}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </PageContents>
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on and signedin user is a viewer should disable the new team button 1`] = `
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Team List",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <ForwardRef
+          inputClassName="gf-form-input"
+          labelClassName="gf-form--has-input-icon gf-form--grow"
+          onChange={[Function]}
+          placeholder="Search teams"
+          value=""
+        />
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-primary disabled"
+        href="#"
+      >
+        New team
+      </a>
+    </div>
+    <div
+      className="admin-list-table"
+    >
+      <table
+        className="filter-table filter-table--hover form-inline"
+      >
+        <thead>
+          <tr>
+            <th />
+            <th>
+              Name
+            </th>
+            <th>
+              Email
+            </th>
+            <th>
+              Members
+            </th>
+            <th
+              style={
+                Object {
+                  "width": "1%",
+                }
+              }
+            />
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            key="1"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test-1
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test-1@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                1
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                disabled={true}
+                onConfirm={[Function]}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </PageContents>
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on and signedin user is not viewer should enable the new team button 1`] = `
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Team List",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
+  >
+    <div
+      className="page-action-bar"
+    >
+      <div
+        className="gf-form gf-form--grow"
+      >
+        <ForwardRef
+          inputClassName="gf-form-input"
+          labelClassName="gf-form--has-input-icon gf-form--grow"
+          onChange={[Function]}
+          placeholder="Search teams"
+          value=""
+        />
+      </div>
+      <div
+        className="page-action-bar__spacer"
+      />
+      <a
+        className="btn btn-primary"
+        href="org/teams/new"
+      >
+        New team
+      </a>
+    </div>
+    <div
+      className="admin-list-table"
+    >
+      <table
+        className="filter-table filter-table--hover form-inline"
+      >
+        <thead>
+          <tr>
+            <th />
+            <th>
+              Name
+            </th>
+            <th>
+              Email
+            </th>
+            <th>
+              Members
+            </th>
+            <th
+              style={
+                Object {
+                  "width": "1%",
+                }
+              }
+            />
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            key="1"
+          >
+            <td
+              className="width-4 text-center link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                <img
+                  className="filter-table__avatar"
+                  src="some/url/"
+                />
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test-1
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                test-1@test.com
+              </a>
+            </td>
+            <td
+              className="link-td"
+            >
+              <a
+                href="org/teams/edit/1"
+              >
+                1
+              </a>
+            </td>
+            <td
+              className="text-right"
+            >
+              <DeleteButton
+                disabled={true}
                 onConfirm={[Function]}
               />
             </td>

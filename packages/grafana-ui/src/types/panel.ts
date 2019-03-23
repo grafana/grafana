@@ -1,12 +1,12 @@
 import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { LoadingState, TableData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  panelData: PanelData;
+  data?: TableData[];
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
@@ -16,20 +16,32 @@ export interface PanelProps<T = any> {
   replaceVariables: InterpolateFunction;
 }
 
-export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
-}
-
 export interface PanelEditorProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
 }
 
+/**
+ * Called when a panel is first loaded with existing options
+ */
+export type PanelMigrationHook<TOptions = any> = (options: Partial<TOptions>) => Partial<TOptions>;
+
+/**
+ * Called before a panel is initalized
+ */
+export type PanelTypeChangedHook<TOptions = any> = (
+  options: Partial<TOptions>,
+  prevPluginId: string,
+  prevOptions?: any
+) => Partial<TOptions>;
+
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+
+  panelMigrationHook?: PanelMigrationHook<TOptions>;
+  panelTypeChangedHook?: PanelTypeChangedHook<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -41,6 +53,21 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+  }
+
+  /**
+   * Called when the panel first loaded with
+   */
+  setPanelMigrationHook(v: PanelMigrationHook<TOptions>) {
+    this.panelMigrationHook = v;
+  }
+
+  /**
+   * Called when the visualization changes.
+   * Lets you keep whatever settings made sense in the previous panel
+   */
+  setPanelTypeChangedHook(v: PanelTypeChangedHook<TOptions>) {
+    this.panelTypeChangedHook = v;
   }
 }
 
@@ -56,17 +83,6 @@ export interface PanelMenuItem {
   onClick?: () => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
-}
-
-export interface Threshold {
-  index: number;
-  value: number;
-  color: string;
-}
-
-export enum BasicGaugeColor {
-  Green = '#299c46',
-  Red = '#d44a3a',
 }
 
 export enum MappingType {
@@ -90,4 +106,10 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export enum VizOrientation {
+  Auto = 'auto',
+  Vertical = 'vertical',
+  Horizontal = 'horizontal',
 }

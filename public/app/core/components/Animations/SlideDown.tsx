@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties, FC } from 'react';
 import Transition from 'react-transition-group/Transition';
 
 interface Style {
@@ -16,11 +16,18 @@ export const defaultStyle: Style = {
   overflow: 'hidden',
 };
 
-export default ({ children, in: inProp, maxHeight = defaultMaxHeight, style = defaultStyle }) => {
+export interface Props {
+  children: React.ReactNode;
+  in: boolean;
+  maxHeight?: number;
+  style?: CSSProperties;
+}
+
+export const SlideDown: FC<Props> = ({ children, in: inProp, maxHeight = defaultMaxHeight, style = defaultStyle }) => {
   // There are 4 main states a Transition can be in:
   // ENTERING, ENTERED, EXITING, EXITED
-  // https://reactcommunity.org/react-transition-group/
-  const transitionStyles = {
+  // https://reactcommunity.or[g/react-transition-group/
+  const transitionStyles: { [str: string]: CSSProperties } = {
     exited: { maxHeight: 0 },
     entering: { maxHeight: maxHeight },
     entered: { maxHeight: 'unset', overflow: 'visible' },
@@ -34,6 +41,7 @@ export default ({ children, in: inProp, maxHeight = defaultMaxHeight, style = de
           style={{
             ...style,
             ...transitionStyles[state],
+            inProp,
           }}
         >
           {children}

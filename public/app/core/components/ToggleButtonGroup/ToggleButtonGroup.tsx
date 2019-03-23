@@ -37,7 +37,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
   tooltip,
   onChange,
 }) => {
-  const handleChange = event => {
+  const onClick = event => {
     event.stopPropagation();
     if (onChange) {
       onChange(value);
@@ -46,7 +46,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
 
   const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
   const button = (
-    <button className={btnClassName} onClick={handleChange}>
+    <button className={btnClassName} onClick={onClick}>
       <span>{children}</span>
     </button>
   );

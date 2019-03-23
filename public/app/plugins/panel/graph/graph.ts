@@ -337,9 +337,17 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          const histMin = _.min(_.map(this.data, s => s.stats.min));
-          const histMax = _.max(_.map(this.data, s => s.stats.max));
+          let histMin = _.min(_.map(this.data, s => s.stats.min));
+          let histMax = _.max(_.map(this.data, s => s.stats.max));
           const ticks = panel.xaxis.buckets || this.panelWidth / 50;
+          if (panel.xaxis.min != null) {
+            const isInvalidXaxisMin = tickStep(panel.xaxis.min, histMax, ticks) <= 0;
+            histMin = isInvalidXaxisMin ? histMin : panel.xaxis.min;
+          }
+          if (panel.xaxis.max != null) {
+            const isInvalidXaxisMax = tickStep(histMin, panel.xaxis.max, ticks) <= 0;
+            histMax = isInvalidXaxisMax ? histMax : panel.xaxis.max;
+          }
           bucketSize = tickStep(histMin, histMax, ticks);
           options.series.bars.barWidth = bucketSize * 0.8;
           this.data = convertToHistogramData(this.data, bucketSize, this.ctrl.hiddenSeries, histMin, histMax);

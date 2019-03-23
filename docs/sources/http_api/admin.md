@@ -341,3 +341,105 @@ Content-Type: application/json
 
 {"state": "new state", "message": "alerts pause/un paused", "alertsAffected": 100}
 ```
+
+## Auth tokens for User
+
+`GET /api/admin/users/:id/auth-tokens`
+
+Return a list of all auth tokens (devices) that the user currently have logged in from.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+GET /api/admin/users/1/auth-tokens HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 361,
+    "isActive": false,
+    "clientIp": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36",
+    "createdAt": "2019-03-05T21:22:54+01:00",
+    "seenAt": "2019-03-06T19:41:06+01:00"
+  },
+  {
+    "id": 364,
+    "isActive": false,
+    "clientIp": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
+    "createdAt": "2019-03-06T19:41:19+01:00",
+    "seenAt": "2019-03-06T19:41:21+01:00"
+  }
+]
+```
+
+## Revoke auth token for User
+
+`POST /api/admin/users/:id/revoke-auth-token`
+
+Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in
+and will be required to authenticate again upon next activity.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+POST /api/admin/users/1/revoke-auth-token HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "authTokenId": 364
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "User auth token revoked"
+}
+```
+
+## Logout User
+
+`POST /api/admin/users/:id/logout`
+
+Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in
+and will be required to authenticate again upon next activity.
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
+**Example Request**:
+
+```http
+POST /api/admin/users/1/logout HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "message": "User auth token revoked"
+}
+```

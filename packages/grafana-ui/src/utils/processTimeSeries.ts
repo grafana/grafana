@@ -4,18 +4,45 @@ import isNumber from 'lodash/isNumber';
 import { colors } from './colors';
 
 // Types
-import { TimeSeries, TimeSeriesVMs, NullValueMode, TimeSeriesValue } from '../types';
+import { getFlotPairs } from './flotPairs';
+import { TimeSeriesVMs, NullValueMode, TimeSeriesValue, TableData } from '../types';
 
 interface Options {
-  timeSeries: TimeSeries[];
+  data: TableData[];
+  xColumn?: number; // Time (or null to guess)
+  yColumn?: number; // Value (or null to guess)
   nullValueMode: NullValueMode;
 }
 
-export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeSeriesVMs {
-  const vmSeries = timeSeries.map((item, index) => {
+// NOTE: this should move to processTableData.ts
+// I left it as is so the merge changes are more clear.
+export function processTimeSeries({ data, xColumn, yColumn, nullValueMode }: Options): TimeSeriesVMs {
+  const vmSeries = data.map((item, index) => {
+    if (!isNumber(xColumn)) {
+      xColumn = 1; // Default timeseries colum.  TODO, find first time field!
+    }
+    if (!isNumber(yColumn)) {
+      yColumn = 0; // TODO, find first non-time field
+    }
+
+    // TODO? either % or throw error?
+    if (xColumn >= item.columns.length) {
+      throw new Error('invalid colum: ' + xColumn);
+    }
+    if (yColumn >= item.columns.length) {
+      throw new Error('invalid colum: ' + yColumn);
+    }
+
     const colorIndex = index % colors.length;
-    const label = item.target;
-    const result = [];
+    const label = item.columns[yColumn].text;
+
+    // Use external calculator just to make sure it works :)
+    const result = getFlotPairs({
+      rows: item.rows,
+      xIndex: xColumn,
+      yIndex: yColumn,
+      nullValueMode,
+    });
 
     // stat defaults
     let total = 0;
@@ -42,9 +69,9 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
     let previousValue = 0;
     let previousDeltaUp = true;
 
-    for (let i = 0; i < item.datapoints.length; i++) {
-      currentValue = item.datapoints[i][0];
-      currentTime = item.datapoints[i][1];
+    for (let i = 0; i < item.rows.length; i++) {
+      currentValue = item.rows[i][yColumn];
+      currentTime = item.rows[i][xColumn];
 
       if (typeof currentTime !== 'number') {
         continue;
@@ -95,7 +122,7 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
           if (previousValue > currentValue) {
             // counter reset
             previousDeltaUp = false;
-            if (i === item.datapoints.length - 1) {
+            if (i === item.rows.length - 1) {
               // reset on last
               delta += currentValue;
             }
@@ -118,8 +145,6 @@ export function processTimeSeries({ timeSeries, nullValueMode }: Options): TimeS
           allIsZero = false;
         }
       }
-
-      result.push([currentTime, currentValue]);
     }
 
     if (max === -Number.MAX_VALUE) {

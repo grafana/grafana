@@ -56,6 +56,20 @@ jobs:
             name: postgres integration tests
             command: './scripts/circle-test-postgres.sh'
 
+  cache-server-test:
+    docker:
+      - image: circleci/golang:1.11.5
+      - image: circleci/redis:4-alpine
+      - image: memcached
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+        - checkout
+        - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
+        - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
+        - run:
+            name: cache server tests
+            command: './scripts/circle-test-cache-servers.sh'
+
   codespell:
     docker:
       - image: circleci/python
@@ -308,7 +322,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -331,7 +345,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.0
+    - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
@@ -364,7 +378,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -395,7 +409,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
@@ -545,6 +559,8 @@ workflows:
             filters: *filter-not-release-or-master
         - postgres-integration-test:
             filters: *filter-not-release-or-master
+        - cache-server-test:
+            filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
               - build
@@ -554,4 +570,5 @@ workflows:
               - gometalinter
               - mysql-integration-test
               - postgres-integration-test
+              - cache-server-test
             filters: *filter-not-release-or-master

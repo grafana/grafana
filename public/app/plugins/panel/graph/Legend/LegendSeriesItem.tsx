@@ -174,9 +174,11 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
         onToggleAxis={this.props.onToggleAxis}
         enableNamedColors
       >
-        <span className="graph-legend-icon">
-          <SeriesIcon color={this.props.color} />
-        </span>
+        {({ ref, showColorPicker, hideColorPicker }) => (
+          <span ref={ref} onClick={showColorPicker} onMouseLeave={hideColorPicker} className="graph-legend-icon">
+            <SeriesIcon color={this.props.color} />
+          </span>
+        )}
       </SeriesColorPicker>
     );
   }
