@@ -3,10 +3,10 @@ import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, getThresholdForValue, DisplayValue } from '../../utils';
+import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
 
 // Types
-import { Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
+import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
 

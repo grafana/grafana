@@ -110,7 +110,6 @@ $font-size-h4: ${theme.typography.heading.h4} !default;
 $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
-$headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-line-height: ${theme.typography.lineHeight.sm} !default;
 
 // Components
@@ -130,8 +129,8 @@ $page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
-$link-decoration: none !default;
-$link-hover-decoration: none !default;
+$link-decoration: ${theme.typography.link.decoration} !default;
+$link-hover-decoration: ${theme.typography.link.hoverDecoration} !default;
 
 // Tables
 //
@@ -166,13 +165,13 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-$zindex-dropdown: 1000;
-$zindex-navbar-fixed: 1020;
-$zindex-sidemenu: 1025;
-$zindex-tooltip: 1030;
-$zindex-modal-backdrop: 1040;
-$zindex-modal: 1050;
-$zindex-typeahead: 1060;
+$zindex-dropdown: ${theme.zIndex.dropdown};
+$zindex-navbar-fixed: ${theme.zIndex.navbarFixed};
+$zindex-sidemenu: ${theme.zIndex.sidemenu};
+$zindex-tooltip: ${theme.zIndex.tooltip};
+$zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
+$zindex-modal: ${theme.zIndex.modal};
+$zindex-typeahead: ${theme.zIndex.typeahead};
 
 // Buttons
 //
@@ -197,10 +196,8 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$dashboard-padding: 10px * 2;
-$panel-horizontal-padding: 10;
-$panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
+$dashboard-padding: $space-md;
+$panel-padding: 0 $space-md $space-sm $space-md;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

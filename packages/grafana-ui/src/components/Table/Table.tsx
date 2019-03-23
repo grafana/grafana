@@ -8,6 +8,7 @@ import {
   CellMeasurerCache,
   CellMeasurer,
   GridCellProps,
+  Index,
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
@@ -26,6 +27,7 @@ import { stringToJsRegex } from '../../utils/index';
 export interface Props extends Themeable {
   data: TableData;
 
+  minColumnWidth: number;
   showHeader: boolean;
   fixedHeader: boolean;
   fixedColumns: number;
@@ -46,6 +48,7 @@ interface State {
 
 interface ColumnRenderInfo {
   header: string;
+  width: number;
   builder: TableCellBuilder;
 }
 
@@ -64,6 +67,7 @@ export class Table extends Component<Props, State> {
     fixedHeader: true,
     fixedColumns: 0,
     rotate: false,
+    minColumnWidth: 150,
   };
 
   constructor(props: Props) {
@@ -76,7 +80,7 @@ export class Table extends Component<Props, State> {
     this.renderer = this.initColumns(props);
     this.measurer = new CellMeasurerCache({
       defaultHeight: 30,
-      defaultWidth: 150,
+      fixedWidth: true,
     });
   }
 
@@ -110,7 +114,8 @@ export class Table extends Component<Props, State> {
 
   /** Given the configuration, setup how each column gets rendered */
   initColumns(props: Props): ColumnRenderInfo[] {
-    const { styles, data } = props;
+    const { styles, data, width, minColumnWidth } = props;
+    const columnWidth = Math.max(width / data.columns.length, minColumnWidth);
 
     return data.columns.map((col, index) => {
       let title = col.text;
@@ -131,6 +136,7 @@ export class Table extends Component<Props, State> {
 
       return {
         header: title,
+        width: columnWidth,
         builder: getCellBuilder(col, style, this.props),
       };
     });
@@ -228,6 +234,10 @@ export class Table extends Component<Props, State> {
     );
   };
 
+  getColumnWidth = (col: Index): number => {
+    return this.renderer[col.index].width;
+  };
+
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
@@ -269,7 +279,7 @@ export class Table extends Component<Props, State> {
         rowCount={rowCount}
         overscanColumnCount={8}
         overscanRowCount={8}
-        columnWidth={this.measurer.columnWidth}
+        columnWidth={this.getColumnWidth}
         deferredMeasurementCache={this.measurer}
         cellRenderer={this.cellRenderer}
         rowHeight={this.measurer.rowHeight}
