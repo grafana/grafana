@@ -50,7 +50,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
     return (
       <PanelOptionsGroup title="Value">
         <div className="gf-form">
-          <FormLabel width={labelWidth}>Stat</FormLabel>
+          <FormLabel width={labelWidth}>Show</FormLabel>
           <StatsPicker
             width={12}
             placeholder="Choose Stat"
