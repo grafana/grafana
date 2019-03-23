@@ -17,7 +17,7 @@ interface Props extends PanelProps<PieChartOptions> {}
 export class PieChartPanel extends PureComponent<Props> {
   render() {
     const { width, height, options } = this.props;
-    
+
     const values = getSingleStatValues(this.props);
 
     return (
