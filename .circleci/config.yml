@@ -130,7 +130,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -174,7 +174,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -243,7 +243,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -275,7 +275,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.3
+    - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
