@@ -2,56 +2,33 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
-import { PieChart, PieChartDataPoint } from '@grafana/ui';
+import { PieChart } from '@grafana/ui';
 
 // Types
 import { PieChartOptions } from './types';
-import { PanelProps, NullValueMode } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui/src/types';
+import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
 
 interface Props extends PanelProps<PieChartOptions> {}
 
 export class PieChartPanel extends PureComponent<Props> {
   render() {
-    const { data, width, height, options } = this.props;
-    const { valueOptions } = options;
-
-    const datapoints: PieChartDataPoint[] = [];
-    if (data) {
-      const vmSeries = processTimeSeries({
-        data,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      for (let i = 0; i < vmSeries.length; i++) {
-        const serie = vmSeries[i];
-        if (serie) {
-          datapoints.push({
-            value: 7, // serie.stats[valueOptions.stat],
-            name: serie.label,
-            color: serie.color,
-          });
-        }
-      }
-    }
-    // TODO: support table data
+    const { width, height, options } = this.props;
+    
+    const values = getSingleStatValues(this.props);
 
     return (
-      <ThemeContext.Consumer>
-        {theme => (
-          <PieChart
-            width={width}
-            height={height}
-            datapoints={datapoints}
-            pieType={options.pieType}
-            strokeWidth={options.strokeWidth}
-            unit={valueOptions.unit}
-            theme={theme}
-          />
-        )}
-      </ThemeContext.Consumer>
+      <PieChart
+        width={width}
+        height={height}
+        values={values}
+        pieType={options.pieType}
+        strokeWidth={options.strokeWidth}
+        theme={config.theme}
+      />
     );
   }
 }

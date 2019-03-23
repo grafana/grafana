@@ -25,7 +25,7 @@ export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartDataPoint, PieChartType } from './PieChart/PieChart';
+export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
