@@ -342,7 +342,7 @@ jobs:
           name: Deploy to grafana.com
           command: |
             cd enterprise-dist
-            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -version "$(cat grafana.version)"' --nightly
+            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -version "$(cat grafana.version)" --nightly
 
 
   deploy-enterprise-release:
