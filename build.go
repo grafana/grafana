@@ -421,13 +421,17 @@ func grunt(params ...string) {
 	}
 }
 
+func genPackageVersion() string {
+	if includeBuildId {
+		return fmt.Sprintf("%v-%v", linuxPackageVersion, linuxPackageIteration)
+	} else {
+		return version
+	}
+}
+
 func gruntBuildArg(task string) []string {
 	args := []string{task}
-	if includeBuildId {
-		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
-	} else {
-		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
-	}
+	args = append(args, fmt.Sprintf("--pkgVer=%v", genPackageVersion()))
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
 	}
@@ -449,13 +453,7 @@ func setup() {
 }
 
 func printGeneratedVersion() {
-	var genVersion string
-	if includeBuildId {
-		genVersion = fmt.Sprintf("%v-%v", linuxPackageVersion, linuxPackageIteration)
-	} else {
-		genVersion = version
-	}
-	fmt.Print(genVersion)
+	fmt.Print(genPackageVersion())
 }
 
 func test(pkg string) {
