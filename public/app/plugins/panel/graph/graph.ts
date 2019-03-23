@@ -38,6 +38,7 @@ class GraphElement {
   panel: any;
   plot: any;
   sortedSeries: any[];
+  originData: any[];
   data: any[];
   panelWidth: number;
   eventManager: EventManager;
@@ -76,7 +77,9 @@ class GraphElement {
   }
 
   onRender(renderData) {
-    this.data = renderData || this.data;
+    this.originData = renderData || this.originData;
+    // data could be altered for displaying top series. Keep originData unaltered
+    this.data = this.originData;
     if (!this.data) {
       return;
     }
@@ -85,6 +88,20 @@ class GraphElement {
     this.buildFlotPairs(this.data);
     const graphHeight = this.elem.height();
     updateLegendValues(this.data, this.panel, graphHeight);
+
+    // Top series order
+    // 0: original, 1: ascending, -1: descending
+    if (this.panel.topSeries.order !== 0) {
+      const order = this.panel.topSeries.order;
+      const orderBy = this.panel.topSeries.orderBy;
+
+      this.data = _.sortBy(this.data, s => s.stats[orderBy] * order);
+    }
+
+    // Top series limit
+    if (this.panel.topSeries.limit > 0) {
+      this.data = this.data.slice(0, this.panel.topSeries.limit);
+    }
 
     if (!this.panel.legend.show) {
       if (this.legendElem.hasChildNodes()) {

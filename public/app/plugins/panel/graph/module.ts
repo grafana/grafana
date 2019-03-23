@@ -104,6 +104,11 @@ class GraphCtrl extends MetricsPanelCtrl {
       shared: true,
       sort: 0,
     },
+    // top series
+    topSeries: {
+      order: 0,
+      orderBy: 'avg',
+    },
     // time overrides
     timeFrom: null,
     timeShift: null,
@@ -125,6 +130,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    _.defaults(this.panel.topSeries, this.panelDefaults.topSeries);
 
     this.processor = new DataProcessor(this.panel);
 

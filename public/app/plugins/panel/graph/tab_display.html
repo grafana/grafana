@@ -138,6 +138,38 @@
       </div>
     </div>
   </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Top Series</h5>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-4">Order</label>
+        <div class="gf-form-select-wrapper max-width-8">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.panel.topSeries.order"
+            ng-options="f.value as f.text for f in [{text: 'Original', value: 0}, {text: 'Ascending', value: 1}, {text: 'Descending', value: -1}]"
+            ng-change="ctrl.render()"
+          ></select>
+        </div>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-3">By</label>
+        <div class="gf-form-select-wrapper max-width-8">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.panel.topSeries.orderBy"
+            ng-options="f for f in ['min', 'max', 'avg', 'current', 'total']"
+            ng-change="ctrl.render()"
+          ></select>
+        </div>
+      </div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-4">Limit</label>
+      <input type="number" class="gf-form-input width-8" placeholder="value" bs-tooltip="'Limit number of series for displaying top series'" data-placement="right" ng-model="ctrl.panel.topSeries.limit" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+  </div>
 </div>
 
 <div>
