@@ -24,7 +24,7 @@ export interface PanelEditorProps<T = any> {
 /**
  * Called when a panel is first loaded with existing options
  */
-export type PanelMigrationHook<TOptions = any> = (options: Partial<TOptions>) => Partial<TOptions>;
+export type PanelMigrationHook<TOptions = any> = (exiting: any, oldVersion?: string) => Partial<TOptions>;
 
 /**
  * Called before a panel is initalized
@@ -40,34 +40,23 @@ export class ReactPanelPlugin<TOptions = any> {
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
 
-  panelMigrationHook?: PanelMigrationHook<TOptions>;
-  panelTypeChangedHook?: PanelTypeChangedHook<TOptions>;
+  /**
+   * This function is called before the panel first loads if
+   * the current version is different than the version that was saved.
+   *
+   * This is a good place to support any changes to the options model
+   */
+  onPanelMigration?: PanelMigrationHook<TOptions>;
 
-  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+  /**
+   * This function is called when the visualization was changed.  This
+   * passes in the options that were used in the previous visualization
+   */
+  onPanelTypeChanged?: PanelTypeChangedHook<TOptions>;
+
+  constructor(panel: ComponentClass<PanelProps<TOptions>>, defaults?: TOptions) {
     this.panel = panel;
-  }
-
-  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
-    this.editor = editor;
-  }
-
-  setDefaults(defaults: TOptions) {
     this.defaults = defaults;
-  }
-
-  /**
-   * Called when the panel first loaded with
-   */
-  setPanelMigrationHook(v: PanelMigrationHook<TOptions>) {
-    this.panelMigrationHook = v;
-  }
-
-  /**
-   * Called when the visualization changes.
-   * Lets you keep whatever settings made sense in the previous panel
-   */
-  setPanelTypeChangedHook(v: PanelTypeChangedHook<TOptions>) {
-    this.panelTypeChangedHook = v;
   }
 }
 
