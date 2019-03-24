@@ -160,3 +160,12 @@ export function deleteTeam(id: number): ThunkResult<void> {
     dispatch(loadTeams());
   };
 }
+
+export function updateTeamMember(member: TeamMember): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().put(`/api/teams/${member.teamId}/members/${member.userId}`, {
+      permission: member.permission,
+    });
+    dispatch(loadTeamMembers());
+  };
+}

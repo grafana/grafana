@@ -6,353 +6,37 @@ exports[`Render BarGauge with basic options should render 1`] = `
     Object {
       "alignItems": "center",
       "display": "flex",
-      "flexDirection": "row",
+      "flexDirection": "row-reverse",
       "height": "300px",
+      "justifyContent": "flex-end",
       "width": "300px",
     }
   }
 >
   <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.7)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
-    style={
-      Object {
-        "backgroundColor": "rgba(126, 178, 109, 0.15)",
-        "borderRadius": "2px",
-        "height": "300px",
-        "marginRight": "4px",
-        "width": "4px",
-      }
-    }
-  />
-  <div
     className="bar-gauge__value"
     style={
       Object {
         "color": "#7EB26D",
-        "fontSize": "27.272727272727263px",
-        "marginLeft": "8px",
+        "fontSize": "27.27272727272727px",
       }
     }
   >
     25
   </div>
+  <div
+    style={
+      Object {
+        "background": "rgba(126, 178, 109, 0.15)",
+        "border": "1px solid #7EB26D",
+        "borderRadius": "3px",
+        "boxShadow": "0 0 4px #7EB26D",
+        "height": "300px",
+        "marginRight": "10px",
+        "transition": "width 1s",
+        "width": "60px",
+      }
+    }
+  />
 </div>
 `;

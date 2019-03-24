@@ -14,6 +14,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
+	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
@@ -41,8 +42,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/users", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", reqOrgAdmin, hs.Index)
-	r.Get("/org/teams", reqOrgAdmin, hs.Index)
-	r.Get("/org/teams/*", reqOrgAdmin, hs.Index)
+	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
+	r.Get("/org/teams/*", reqCanAccessTeams, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
@@ -133,6 +134,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/preferences", Wrap(GetUserPreferences))
 			userRoute.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateUserPreferences))
+
+			userRoute.Get("/auth-tokens", Wrap(hs.GetUserAuthTokens))
+			userRoute.Post("/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.RevokeUserAuthToken))
 		})
 
 		// users (admin permission required)
@@ -150,20 +154,21 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), Wrap(CreateTeam))
-			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), Wrap(UpdateTeam))
-			teamsRoute.Delete("/:teamId", Wrap(DeleteTeamByID))
+			teamsRoute.Post("/", bind(m.CreateTeamCommand{}), Wrap(hs.CreateTeam))
+			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), Wrap(hs.UpdateTeam))
+			teamsRoute.Delete("/:teamId", Wrap(hs.DeleteTeamByID))
 			teamsRoute.Get("/:teamId/members", Wrap(GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(AddTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", Wrap(RemoveTeamMember))
-			teamsRoute.Get("/:teamId/preferences", Wrap(GetTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(UpdateTeamPreferences))
-		}, reqOrgAdmin)
+			teamsRoute.Post("/:teamId/members", bind(m.AddTeamMemberCommand{}), Wrap(hs.AddTeamMember))
+			teamsRoute.Put("/:teamId/members/:userId", bind(m.UpdateTeamMemberCommand{}), Wrap(hs.UpdateTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", Wrap(hs.RemoveTeamMember))
+			teamsRoute.Get("/:teamId/preferences", Wrap(hs.GetTeamPreferences))
+			teamsRoute.Put("/:teamId/preferences", bind(dtos.UpdatePrefsCmd{}), Wrap(hs.UpdateTeamPreferences))
+		}, reqCanAccessTeams)
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Get("/:teamId", Wrap(GetTeamByID))
-			teamsRoute.Get("/search", Wrap(SearchTeams))
+			teamsRoute.Get("/search", Wrap(hs.SearchTeams))
 		})
 
 		// org information available to all users.
@@ -262,7 +267,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
 			folderRoute.Get("/", Wrap(GetFolders))
 			folderRoute.Get("/id/:id", Wrap(GetFolderByID))
-			folderRoute.Post("/", bind(m.CreateFolderCommand{}), Wrap(CreateFolder))
+			folderRoute.Post("/", bind(m.CreateFolderCommand{}), Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", Wrap(GetFolderByUID))
@@ -375,6 +380,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), Wrap(PauseAllAlerts))
+
+		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
+		adminRoute.Get("/users/:id/auth-tokens", Wrap(hs.AdminGetUserAuthTokens))
+		adminRoute.Post("/users/:id/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
 	}, reqGrafanaAdmin)
 
 	// rendering

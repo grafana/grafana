@@ -14,6 +14,7 @@ import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
+import { PanelTypeChangedHook } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -91,7 +92,16 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
           this.props.panel.changeType(pluginId);
         } else {
-          panel.changeType(pluginId, plugin.exports.reactPanel.preserveOptions);
+          let hook: PanelTypeChangedHook | null = null;
+          if (plugin.exports.reactPanel) {
+            hook = plugin.exports.reactPanel.panelTypeChangedHook;
+          }
+          panel.changeType(pluginId, hook);
+        }
+      } else if (plugin.exports && plugin.exports.reactPanel && panel.options) {
+        const hook = plugin.exports.reactPanel.panelMigrationHook;
+        if (hook) {
+          panel.options = hook(panel.options);
         }
       }
 

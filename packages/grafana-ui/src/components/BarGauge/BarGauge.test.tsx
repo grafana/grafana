@@ -11,16 +11,15 @@ jest.mock('jquery', () => ({
 const setup = (propOverrides?: object) => {
   const props: Props = {
     maxValue: 100,
-    valueMappings: [],
     minValue: 0,
-    prefix: '',
-    suffix: '',
+    displayMode: 'basic',
     thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
-    unit: 'none',
     height: 300,
     width: 300,
-    value: 25,
-    decimals: 0,
+    value: {
+      text: '25',
+      numeric: 25,
+    },
     theme: getTheme(),
     orientation: VizOrientation.Horizontal,
   };

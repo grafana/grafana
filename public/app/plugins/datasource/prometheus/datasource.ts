@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi } from '@grafana/ui/src/types';
+import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export class PrometheusDatasource implements DataSourceApi<PromQuery> {
@@ -224,7 +224,8 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
-    // Align query interval with step
+    // Align query interval with step to allow query caching and to ensure
+    // that about-same-time query results look the same.
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
@@ -354,10 +355,11 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           })
           .value();
 
+        const dupCheck = {};
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
-            const event = {
+            const event: AnnotationEvent = {
               annotation: annotation,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
@@ -365,9 +367,14 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
             };
 
             if (annotation.useValueForTime) {
-              event['time'] = Math.floor(parseFloat(value[1]));
+              const timestampValue = Math.floor(parseFloat(value[1]));
+              if (dupCheck[timestampValue]) {
+                continue;
+              }
+              dupCheck[timestampValue] = true;
+              event.time = timestampValue;
             } else {
-              event['time'] = Math.floor(parseFloat(value[0])) * 1000;
+              event.time = Math.floor(parseFloat(value[0])) * 1000;
             }
 
             eventList.push(event);
@@ -497,8 +504,15 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   }
 }
 
-export function alignRange(start, end, step) {
-  const alignedEnd = Math.ceil(end / step) * step;
+/**
+ * Align query range to step.
+ * Rounds start and end down to a multiple of step.
+ * @param start Timestamp marking the beginning of the range.
+ * @param end Timestamp marking the end of the range.
+ * @param step Interval to align start and end with.
+ */
+export function alignRange(start: number, end: number, step: number): { end: number; start: number } {
+  const alignedEnd = Math.floor(end / step) * step;
   const alignedStart = Math.floor(start / step) * step;
   return {
     end: alignedEnd,
