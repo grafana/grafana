@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Graph, PanelProps, NullValueMode, colors, TimeSeriesVMs, ColumnType, getFirstTimeColumn } from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, TimeSeriesVMs, FieldType, getFirstTimeField } from '@grafana/ui';
 import { Options } from './types';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
@@ -15,16 +15,16 @@ export class GraphPanel extends PureComponent<Props> {
 
     const vmSeries: TimeSeriesVMs = [];
     for (const table of data) {
-      const timeColumn = getFirstTimeColumn(table);
+      const timeColumn = getFirstTimeField(table);
       if (timeColumn < 0) {
         continue;
       }
 
-      for (let i = 0; i < table.columns.length; i++) {
-        const column = table.columns[i];
+      for (let i = 0; i < table.fields.length; i++) {
+        const column = table.fields[i];
 
         // Show all numeric columns
-        if (column.type === ColumnType.number) {
+        if (column.type === FieldType.number) {
           // Use external calculator just to make sure it works :)
           const points = getFlotPairs({
             rows: table.rows,
@@ -34,7 +34,7 @@ export class GraphPanel extends PureComponent<Props> {
           });
 
           vmSeries.push({
-            label: column.text,
+            label: column.name,
             data: points,
             color: colors[vmSeries.length % colors.length],
 
