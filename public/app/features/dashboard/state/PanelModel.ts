@@ -245,15 +245,22 @@ export class PanelModel {
     });
   }
 
+  private getPluginVersion(plugin: PanelPlugin): string {
+    return _.get(plugin, 'info.version') || config.buildInfo.version;
+  }
+
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
     const { reactPanel } = plugin.exports;
 
-    const version = _.get(plugin, 'info.version') || config.buildInfo.version;
-    if (reactPanel && reactPanel.onPanelMigration && version !== this.pluginVersion) {
-      this.options = reactPanel.onPanelMigration(this);
-      this.pluginVersion = version;
+    // Call PanelMigration Handler if the version has changed
+    if (reactPanel && reactPanel.onPanelMigration) {
+      const version = this.getPluginVersion(plugin);
+      if (version !== this.pluginVersion) {
+        this.options = reactPanel.onPanelMigration(this);
+        this.pluginVersion = version;
+      }
     }
   }
 
@@ -285,11 +292,15 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const onPanelTypeChanged = reactPanel ? reactPanel.onPanelTypeChanged : null;
-    if (onPanelTypeChanged) {
-      this.options = this.options || {};
-      const old = oldOptions ? oldOptions.options : {};
-      Object.assign(this.options, onPanelTypeChanged(this.options, oldPluginId, old));
+    if (reactPanel) {
+      if (reactPanel.onPanelTypeChanged) {
+        this.options = this.options || {};
+        const old = oldOptions ? oldOptions.options : {};
+        Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
+      }
+      if (reactPanel.onPanelMigration) {
+        this.pluginVersion = this.getPluginVersion(newPlugin);
+      }
     }
   }
 
