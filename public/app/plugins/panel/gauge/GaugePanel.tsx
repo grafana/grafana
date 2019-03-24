@@ -33,7 +33,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   getProcessedValues = (): DisplayValue[] => {
-    return getSingleStatValues(this.props);
+    return [getSingleStatValues(this.props)[0]];
   };
 
   render() {
