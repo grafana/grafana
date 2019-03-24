@@ -21,10 +21,16 @@ export interface PanelEditorProps<T = any> {
   onOptionsChange: (options: T) => void;
 }
 
+export interface PanelModel<TOptions = any> {
+  id: number;
+  options: TOptions;
+  pluginVersion?: string;
+}
+
 /**
- * Called when a panel is first loaded with existing options
+ * Called when a panel is first loaded with current panel model
  */
-export type PanelMigrationHandler<TOptions = any> = (exiting: any, oldVersion?: string) => Partial<TOptions>;
+export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
 
 /**
  * Called before a panel is initalized
