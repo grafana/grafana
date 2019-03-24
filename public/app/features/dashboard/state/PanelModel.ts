@@ -8,6 +8,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import { DataQuery, TimeSeries, Threshold, ScopedVars, TableData } from '@grafana/ui';
 import { PanelPlugin } from 'app/types';
+import config from 'app/core/config';
 
 export interface GridPos {
   x: number;
@@ -251,7 +252,7 @@ export class PanelModel {
 
     if (reactPanel && reactPanel.onPanelMigration) {
       this.options = reactPanel.onPanelMigration(this);
-      this.pluginVersion = plugin.info ? plugin.info.version : '1.0.0';
+      this.pluginVersion = _.get(plugin, 'info.version') || config.buildInfo.version;
     }
   }
 
