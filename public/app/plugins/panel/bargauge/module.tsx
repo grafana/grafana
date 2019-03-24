@@ -5,7 +5,7 @@ import { BarGaugePanelEditor } from './BarGaugePanelEditor';
 import { BarGaugeOptions, defaults } from './types';
 import { singleStatBaseOptionsCheck } from '../singlestat2/module';
 
-export const reactPanel = new ReactPanelPlugin<BarGaugeOptions>(BarGaugePanel, defaults);
-
-reactPanel.editor = BarGaugePanelEditor;
-reactPanel.onPanelTypeChanged = singleStatBaseOptionsCheck;
+export const reactPanel = new ReactPanelPlugin<BarGaugeOptions>(BarGaugePanel)
+  .setDefaults(defaults)
+  .setEditor(BarGaugePanelEditor)
+  .setPanelChangeHandler(singleStatBaseOptionsCheck);

@@ -35,8 +35,8 @@ export const singleStatMigrationCheck = (exiting: any, oldVersion?: string) => {
   return options;
 };
 
-export const reactPanel = new ReactPanelPlugin<SingleStatOptions>(SingleStatPanel, defaults);
-
-reactPanel.editor = SingleStatEditor;
-reactPanel.onPanelTypeChanged = singleStatBaseOptionsCheck;
-reactPanel.onPanelMigration = singleStatMigrationCheck;
+export const reactPanel = new ReactPanelPlugin<SingleStatOptions>(SingleStatPanel)
+  .setDefaults(defaults)
+  .setEditor(SingleStatEditor)
+  .setPanelChangeHandler(singleStatMigrationCheck)
+  .setMigrationHandler(singleStatMigrationCheck);

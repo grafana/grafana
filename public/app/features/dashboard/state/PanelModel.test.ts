@@ -1,4 +1,5 @@
 import { PanelModel } from './PanelModel';
+import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -76,7 +77,7 @@ describe('PanelModel', () => {
 
     describe('when changing panel type', () => {
       beforeEach(() => {
-        model.changeType('graph');
+        model.changePlugin(getPanelPlugin({ id: 'graph', exports: {} }));
         model.alert = { id: 2 };
       });
 
@@ -85,12 +86,12 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changeType('table');
+        model.changePlugin(getPanelPlugin({ id: 'table', exports: {} }));
         expect(model.showColumns).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
-        model.changeType('table');
+        model.changePlugin(getPanelPlugin({ id: 'table', exports: {} }));
         expect(model.alert).toBe(undefined);
       });
     });

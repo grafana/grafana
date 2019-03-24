@@ -24,12 +24,12 @@ export interface PanelEditorProps<T = any> {
 /**
  * Called when a panel is first loaded with existing options
  */
-export type PanelMigrationHook<TOptions = any> = (exiting: any, oldVersion?: string) => Partial<TOptions>;
+export type PanelMigrationHandler<TOptions = any> = (exiting: any, oldVersion?: string) => Partial<TOptions>;
 
 /**
  * Called before a panel is initalized
  */
-export type PanelTypeChangedHook<TOptions = any> = (
+export type PanelTypeChangedHandler<TOptions = any> = (
   options: Partial<TOptions>,
   prevPluginId: string,
   prevOptions?: any
@@ -39,6 +39,22 @@ export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+  onPanelMigration?: PanelMigrationHandler<TOptions>;
+  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
+
+  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+    this.panel = panel;
+  }
+
+  setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
+    this.editor = editor;
+    return this;
+  }
+
+  setDefaults(defaults: TOptions) {
+    this.defaults = defaults;
+    return this;
+  }
 
   /**
    * This function is called before the panel first loads if
@@ -46,17 +62,18 @@ export class ReactPanelPlugin<TOptions = any> {
    *
    * This is a good place to support any changes to the options model
    */
-  onPanelMigration?: PanelMigrationHook<TOptions>;
+  setMigrationHandler(handler: PanelMigrationHandler) {
+    this.onPanelMigration = handler;
+    return this;
+  }
 
   /**
    * This function is called when the visualization was changed.  This
    * passes in the options that were used in the previous visualization
    */
-  onPanelTypeChanged?: PanelTypeChangedHook<TOptions>;
-
-  constructor(panel: ComponentClass<PanelProps<TOptions>>, defaults?: TOptions) {
-    this.panel = panel;
-    this.defaults = defaults;
+  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
+    this.onPanelTypeChanged = handler;
+    return this;
   }
 }
 

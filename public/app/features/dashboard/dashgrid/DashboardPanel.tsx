@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import classNames from 'classnames';
-import get from 'lodash/get';
 
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
@@ -15,7 +14,6 @@ import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
-import { PanelTypeChangedHook } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -72,9 +70,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
     if (!this.state.plugin || this.state.plugin.id !== pluginId) {
       let plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
 
-      // remember if this is from an angular panel
-      const fromAngularPanel = this.state.angularPanel != null;
-
       // unmount angular panel
       this.cleanUpAngularPanel();
 
@@ -87,26 +82,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
       }
 
       if (panel.type !== pluginId) {
-        if (fromAngularPanel) {
-          // for angular panels only we need to remove all events and let angular panels do some cleanup
-          panel.destroy();
-
-          this.props.panel.changeType(pluginId);
-        } else {
-          let hook: PanelTypeChangedHook | null = null;
-          if (plugin.exports.reactPanel) {
-            hook = plugin.exports.reactPanel.onPanelTypeChanged;
-          }
-          panel.changeType(pluginId, hook);
-        }
-      } else if (plugin.exports && plugin.exports.reactPanel && panel.options) {
-        const pluginVersion = get(plugin, 'info.version') || config.buildInfo.version;
-        const hook = plugin.exports.reactPanel.onPanelMigration;
-        if (hook && panel.pluginVersion !== pluginVersion) {
-          panel.options = hook(panel.options, panel.pluginVersion);
-          panel.pluginVersion = pluginVersion;
-        }
+        panel.changePlugin(plugin);
+      } else {
+        panel.pluginLoaded(plugin);
       }
+
       this.setState({ plugin, angularPanel: null });
     }
   }
