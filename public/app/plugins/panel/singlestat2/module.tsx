@@ -9,15 +9,13 @@ const optionsToKeep = ['valueOptions', 'stat', 'maxValue', 'maxValue', 'threshol
 export const singleStatBaseOptionsCheck = (
   options: Partial<SingleStatBaseOptions>,
   prevPluginId: string,
-  prevOptions?: any
+  prevOptions: any
 ) => {
-  if (prevOptions) {
-    optionsToKeep.forEach(v => {
-      if (prevOptions.hasOwnProperty(v)) {
-        options[v] = cloneDeep(prevOptions.display);
-      }
-    });
-  }
+  optionsToKeep.forEach(v => {
+    if (prevOptions.hasOwnProperty(v)) {
+      options[v] = cloneDeep(prevOptions.display);
+    }
+  });
   return options;
 };
 
