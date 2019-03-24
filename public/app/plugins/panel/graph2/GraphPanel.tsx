@@ -2,17 +2,9 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import {
-  Graph,
-  PanelProps,
-  NullValueMode,
-  colors,
-  TimeSeriesVMs,
-  ColumnType,
-  getFirstTimeColumn,
-  processTimeSeries,
-} from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, TimeSeriesVMs, ColumnType, getFirstTimeColumn } from '@grafana/ui';
 import { Options } from './types';
+import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
 interface Props extends PanelProps<Options> {}
 
@@ -33,16 +25,23 @@ export class GraphPanel extends PureComponent<Props> {
 
         // Show all numeric columns
         if (column.type === ColumnType.number) {
-          const tsvm = processTimeSeries({
-            data: [table],
-            xColumn: timeColumn,
-            yColumn: i,
+          // Use external calculator just to make sure it works :)
+          const points = getFlotPairs({
+            rows: table.rows,
+            xIndex: timeColumn,
+            yIndex: i,
             nullValueMode: NullValueMode.Null,
-          })[0];
+          });
 
-          const colorIndex = vmSeries.length % colors.length;
-          tsvm.color = colors[colorIndex];
-          vmSeries.push(tsvm);
+          vmSeries.push({
+            label: column.text,
+            data: points,
+            color: colors[vmSeries.length % colors.length],
+
+            // TODO (calculate somewhere)
+            allIsNull: false,
+            allIsZero: false,
+          });
         }
       }
     }
