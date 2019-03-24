@@ -8,14 +8,15 @@ import { Sparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValu
 import {
   DisplayValue,
   PanelProps,
-  processTimeSeries,
   getDisplayProcessor,
   NullValueMode,
   ColumnType,
   calculateStats,
+  getFirstTimeColumn,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
+import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
 export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
   const { data, replaceVariables, options } = props;
@@ -80,9 +81,9 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   };
 
   getProcessedValues = (): SingleStatDisplay[] => {
-    const { data, replaceVariables, options } = this.props;
+    const { data, replaceVariables, options, timeRange } = this.props;
     const { valueOptions, valueMappings } = options;
-    const processor = getDisplayProcessor({
+    const display = getDisplayProcessor({
       unit: valueOptions.unit,
       decimals: valueOptions.decimals,
       mappings: valueMappings,
@@ -91,52 +92,78 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     });
 
     const { colorBackground, colorValue, colorPrefix, colorPostfix, sparkline } = options;
+    const { stat } = valueOptions;
 
-    return processTimeSeries({
-      data,
-      nullValueMode: NullValueMode.Null,
-    }).map(tsvm => {
-      const v: SingleStatDisplay = {
-        value: processor(tsvm.stats[valueOptions.stat]),
-      };
-      const color = v.value.color;
-      if (!colorValue) {
-        delete v.value.color;
-      }
-      if (colorBackground) {
-        v.backgroundColor = color;
-      }
-      if (options.valueFontSize) {
-        v.value.fontSize = options.valueFontSize;
-      }
+    const values: SingleStatDisplay[] = [];
 
-      if (valueOptions.prefix) {
-        v.prefix = {
-          text: replaceVariables(valueOptions.prefix),
-          numeric: NaN,
-          color: colorPrefix ? color : null,
-          fontSize: options.prefixFontSize,
-        };
-      }
-      if (valueOptions.suffix) {
-        v.suffix = {
-          text: replaceVariables(valueOptions.suffix),
-          numeric: NaN,
-          color: colorPostfix ? color : null,
-          fontSize: options.postfixFontSize,
-        };
-      }
+    for (const table of data) {
+      const timeColumn = sparkline.show ? getFirstTimeColumn(table) : -1;
 
-      if (sparkline.show && tsvm.data.length > 1) {
-        v.sparkline = {
-          ...sparkline,
-          data: tsvm.data,
-          minX: tsvm.data[0][0], // TODO, get the time somehow
-          maxX: tsvm.data[tsvm.data.length - 1][0],
-        };
+      for (let i = 0; i < table.columns.length; i++) {
+        const column = table.columns[i];
+
+        // Show all columns that are not 'time'
+        if (column.type === ColumnType.number) {
+          const stats = calculateStats({
+            table,
+            columnIndex: i,
+            stats: [stat], // The stats to calculate
+            nullValueMode: NullValueMode.Null,
+          });
+          const v: SingleStatDisplay = {
+            value: display(stats[stat]),
+          };
+
+          const color = v.value.color;
+          if (!colorValue) {
+            delete v.value.color;
+          }
+          if (colorBackground) {
+            v.backgroundColor = color;
+          }
+          if (options.valueFontSize) {
+            v.value.fontSize = options.valueFontSize;
+          }
+
+          if (valueOptions.prefix) {
+            v.prefix = {
+              text: replaceVariables(valueOptions.prefix),
+              numeric: NaN,
+              color: colorPrefix ? color : null,
+              fontSize: options.prefixFontSize,
+            };
+          }
+          if (valueOptions.suffix) {
+            v.suffix = {
+              text: replaceVariables(valueOptions.suffix),
+              numeric: NaN,
+              color: colorPostfix ? color : null,
+              fontSize: options.postfixFontSize,
+            };
+          }
+
+          if (sparkline.show && timeColumn >= 0) {
+            const points = getFlotPairs({
+              rows: table.rows,
+              xIndex: timeColumn,
+              yIndex: i,
+              nullValueMode: NullValueMode.Null,
+            });
+
+            v.sparkline = {
+              ...sparkline,
+              data: points,
+              minX: timeRange.from.valueOf(),
+              maxX: timeRange.to.valueOf(),
+            };
+          }
+
+          values.push(v);
+        }
       }
-      return v;
-    });
+    }
+
+    return values;
   };
 
   render() {
