@@ -250,9 +250,10 @@ export class PanelModel {
 
     const { reactPanel } = plugin.exports;
 
-    if (reactPanel && reactPanel.onPanelMigration) {
+    const version = _.get(plugin, 'info.version') || config.buildInfo.version;
+    if (reactPanel && reactPanel.onPanelMigration && version !== this.pluginVersion) {
       this.options = reactPanel.onPanelMigration(this);
-      this.pluginVersion = _.get(plugin, 'info.version') || config.buildInfo.version;
+      this.pluginVersion = version;
     }
   }
 
