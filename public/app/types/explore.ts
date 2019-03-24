@@ -248,6 +248,17 @@ export interface ExploreItemState {
    * Currently hidden log series
    */
   hiddenLogLevels?: LogLevel[];
+
+  urlState: ExploreUrlState;
+
+  update: ExploreUpdateState;
+}
+
+export interface ExploreUpdateState {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+  ui: boolean;
 }
 
 export interface ExploreUIState {

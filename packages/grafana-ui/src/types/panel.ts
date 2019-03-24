@@ -1,12 +1,12 @@
 import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { LoadingState, TableData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  panelData: PanelData;
+  data?: TableData[];
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
@@ -16,22 +16,22 @@ export interface PanelProps<T = any> {
   replaceVariables: InterpolateFunction;
 }
 
-export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
-}
-
 export interface PanelEditorProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
 }
 
 /**
+ * Called when a panel is first loaded with existing options
+ */
+export type PanelMigrationHook<TOptions = any> = (options: Partial<TOptions>) => Partial<TOptions>;
+
+/**
  * Called before a panel is initalized
  */
 export type PanelTypeChangedHook<TOptions = any> = (
   options: Partial<TOptions>,
-  prevPluginId?: string,
+  prevPluginId: string,
   prevOptions?: any
 ) => Partial<TOptions>;
 
@@ -40,6 +40,7 @@ export class ReactPanelPlugin<TOptions = any> {
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
 
+  panelMigrationHook?: PanelMigrationHook<TOptions>;
   panelTypeChangedHook?: PanelTypeChangedHook<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
@@ -52,6 +53,13 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+  }
+
+  /**
+   * Called when the panel first loaded with
+   */
+  setPanelMigrationHook(v: PanelMigrationHook<TOptions>) {
+    this.panelMigrationHook = v;
   }
 
   /**

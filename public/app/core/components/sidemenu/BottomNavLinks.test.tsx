@@ -12,6 +12,7 @@ const setup = (propOverrides?: object) => {
     {
       link: {},
       user: {
+        id: 1,
         isGrafanaAdmin: false,
         isSignedIn: false,
         orgCount: 2,

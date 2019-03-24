@@ -1,4 +1,4 @@
-import { VizOrientation, ValueMapping, Threshold } from '@grafana/ui';
+import { VizOrientation, ValueMapping, Threshold, StatID } from '@grafana/ui';
 
 export interface SingleStatBaseOptions {
   valueMappings: ValueMapping[];
@@ -24,7 +24,7 @@ export const defaults: SingleStatOptions = {
     prefix: '',
     suffix: '',
     decimals: null,
-    stat: 'avg',
+    stat: StatID.mean,
     unit: 'none',
   },
   valueMappings: [],

@@ -176,12 +176,10 @@
 }
 
 .explore-panel__header {
-  padding: $panel-padding;
-  padding-top: 5px;
-  padding-bottom: 0;
+  padding: $space-sm $space-md 0 $space-md;
   display: flex;
   cursor: pointer;
-  margin-bottom: 5px;
+  margin-bottom: $space-sm;
   transition: all 0.1s linear;
 }
 

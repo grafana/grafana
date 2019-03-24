@@ -1,24 +1,31 @@
-import { VizOrientation, SelectOptionItem } from '@grafana/ui';
-
+import { VizOrientation, SelectOptionItem, StatID } from '@grafana/ui';
 import { SingleStatBaseOptions } from '../singlestat2/types';
+
+export interface BarGaugeOptions extends SingleStatBaseOptions {
+  minValue: number;
+  maxValue: number;
+  displayMode: 'basic' | 'lcd' | 'gradient';
+}
+
+export const displayModes: SelectOptionItem[] = [
+  { value: 'gradient', label: 'Gradient' },
+  { value: 'lcd', label: 'Retro LCD' },
+  { value: 'basic', label: 'Basic' },
+];
 
 export const orientationOptions: SelectOptionItem[] = [
   { value: VizOrientation.Horizontal, label: 'Horizontal' },
   { value: VizOrientation.Vertical, label: 'Vertical' },
 ];
 
-export interface BarGaugeOptions extends SingleStatBaseOptions {
-  minValue: number;
-  maxValue: number;
-}
-
 export const defaults: BarGaugeOptions = {
   minValue: 0,
   maxValue: 100,
+  displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
   valueOptions: {
     unit: 'none',
-    stat: 'avg',
+    stat: StatID.mean,
     prefix: '',
     suffix: '',
     decimals: null,

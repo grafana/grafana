@@ -3,6 +3,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardSearchHit } from 'app/types/search';
 
 export class BackendSrv {
   private inFlightRequests = {};
@@ -237,7 +238,7 @@ export class BackendSrv {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
-  search(query) {
+  search(query): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
   }
 

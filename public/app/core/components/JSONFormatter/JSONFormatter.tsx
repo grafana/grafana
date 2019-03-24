@@ -1,5 +1,4 @@
 ﻿import React, { PureComponent, createRef } from 'react';
-// import JSONFormatterJS, { JSONFormatterConfiguration } from 'json-formatter-js';
 import { JsonExplorer } from 'app/core/core'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
