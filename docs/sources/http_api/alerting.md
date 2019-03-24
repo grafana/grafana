@@ -275,7 +275,7 @@ Content-Type: application/json
 
 ## Update alert notification
 
-`PUT /api/alert-notifications/1`
+`PUT /api/alert-notifications/:id`
 
 **Example Request**:
 
@@ -321,7 +321,7 @@ Content-Type: application/json
 
 ## Delete alert notification
 
-`DELETE /api/alert-notifications/:notificationId`
+`DELETE /api/alert-notifications/:id`
 
 **Example Request**:
 
