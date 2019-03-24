@@ -32,7 +32,7 @@ export type PanelMigrationHandler<TOptions = any> = (exiting: any, oldVersion?: 
 export type PanelTypeChangedHandler<TOptions = any> = (
   options: Partial<TOptions>,
   prevPluginId: string,
-  prevOptions?: any
+  prevOptions: any
 ) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {

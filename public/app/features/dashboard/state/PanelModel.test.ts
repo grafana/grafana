@@ -1,5 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { ReactPanelPlugin } from '@grafana/ui/src/types/panel';
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -93,6 +94,44 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table', exports: {} }));
         expect(model.alert).toBe(undefined);
+      });
+    });
+
+    describe('when changing from angular panel', () => {
+      let tearDownPublished = false;
+
+      beforeEach(() => {
+        model.events.on('panel-teardown', () => {
+          tearDownPublished = true;
+        });
+        model.changePlugin(getPanelPlugin({ id: 'graph', exports: {} }));
+      });
+
+      it('should teardown / destroy panel so angular panels event subscriptions are removed', () => {
+        expect(tearDownPublished).toBe(true);
+        expect(model.events.getEventCount()).toBe(0);
+      });
+    });
+
+    describe('when changing to react panel', () => {
+      const onPanelTypeChanged = jest.fn();
+      const reactPanel = new ReactPanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+
+      beforeEach(() => {
+        model.changePlugin(
+          getPanelPlugin({
+            id: 'react',
+            exports: {
+              reactPanel,
+            },
+          })
+        );
+      });
+
+      it('should call react onPanelTypeChanged', () => {
+        expect(onPanelTypeChanged.mock.calls.length).toBe(1);
+        expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
+        expect(onPanelTypeChanged.mock.calls[0][2].thresholds).toBeDefined();
       });
     });
 

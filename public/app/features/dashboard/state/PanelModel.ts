@@ -282,11 +282,11 @@ export class PanelModel {
     this.type = pluginId;
     this.plugin = newPlugin;
 
-    // Callback that can validate and migrate any existing settings
+    // Let panel plugins inspect options from previous panel and keep any that it can use
     const onPanelTypeChanged = reactPanel ? reactPanel.onPanelTypeChanged : null;
     if (onPanelTypeChanged) {
       this.options = this.options || {};
-      const old = oldOptions ? oldOptions.options : null;
+      const old = oldOptions ? oldOptions.options : {};
       Object.assign(this.options, onPanelTypeChanged(this.options, oldPluginId, old));
     }
   }
