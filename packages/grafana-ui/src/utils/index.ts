@@ -1,4 +1,3 @@
-export * from './processTimeSeries';
 export * from './processTableData';
 export * from './valueFormats/valueFormats';
 export * from './colors';
