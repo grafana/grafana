@@ -144,6 +144,7 @@ Please refer to each datasource documentation for specific provisioning examples
 | Datasource | Misc |
 | ---- | ---- |
 | Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
+| Zabbix | Zabbix uses the plugin name `alexanderzobnin-zabbix-datasource` as a `type` |
 
 #### Json Data
 
@@ -172,6 +173,8 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of open connections to the database (Grafana v5.4+) |
 | maxIdleConns | number | MySQL, PostgreSQL & MSSQL | Maximum number of connections in the idle connection pool (Grafana v5.4+) |
 | connMaxLifetime | number | MySQL, PostgreSQL & MSSQL | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+) |
+| username | string | Zabbix | Username in Zabbix API details (**WARNING!** It's unencrypted) |
+| password | string | Zabbix | Password in Zabbix API details (**WARNING!** It's unencrypted) |
 
 #### Secure Json Data
 
