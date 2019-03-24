@@ -23,10 +23,11 @@
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
     "noImplicitAny": false,
+    "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
-    "typeRoots": ["node_modules/@types", "types"],
+    "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
       "app": ["app"],
       "sass": ["sass"]

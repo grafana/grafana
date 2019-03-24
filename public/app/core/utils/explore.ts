@@ -9,6 +9,7 @@ import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
 import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { getNextRefIdChar } from './query';
 
 // Types
 import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
@@ -20,6 +21,7 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
+  ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 
@@ -224,12 +226,8 @@ export function generateKey(index = 0): string {
   return `Q-${Date.now()}-${Math.random()}-${index}`;
 }
 
-export function generateRefId(index = 0): string {
-  return `${index + 1}`;
-}
-
-export function generateEmptyQuery(index = 0): { refId: string; key: string } {
-  return { refId: generateRefId(index), key: generateKey(index) };
+export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
+  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
 /**
@@ -237,9 +235,9 @@ export function generateEmptyQuery(index = 0): { refId: string; key: string } {
  */
 export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
   if (queries && typeof queries === 'object' && queries.length > 0) {
-    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(i) }));
+    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(queries, i) }));
   }
-  return [{ ...generateEmptyQuery() }];
+  return [{ ...generateEmptyQuery(queries) }];
 }
 
 /**
@@ -301,11 +299,24 @@ export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: 
   return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
 }
 
-export function makeTimeSeriesList(dataList) {
-  return dataList.map((seriesData, index) => {
+export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
+  // Prevent multiple Graph transactions to have the same colors
+  let colorIndexOffset = 0;
+  for (const other of allTransactions) {
+    // Only need to consider transactions that came before the current one
+    if (other === transaction) {
+      break;
+    }
+    // Count timeseries of previous query results
+    if (other.resultType === 'Graph' && other.done) {
+      colorIndexOffset += other.result.length;
+    }
+  }
+
+  return dataList.map((seriesData, index: number) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
-    const colorIndex = index % colors.length;
+    const colorIndex = (colorIndexOffset + index) % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
@@ -317,7 +328,7 @@ export function makeTimeSeriesList(dataList) {
 
     return series;
   });
-}
+};
 
 /**
  * Update the query history. Side-effect: store history in local storage

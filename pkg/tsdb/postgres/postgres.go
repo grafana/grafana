@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
 	"strconv"
 
@@ -19,7 +20,9 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	logger := log.New("tsdb.postgres")
 
 	cnnstr := generateConnectionString(datasource)
-	logger.Debug("getEngine", "connection", cnnstr)
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",

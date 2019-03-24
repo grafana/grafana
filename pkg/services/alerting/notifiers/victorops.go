@@ -92,14 +92,29 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageType = AlertStateRecovery
 	}
 
+	fields := make(map[string]interface{}, 0)
+	fieldLimitCount := 4
+	for index, evt := range evalContext.EvalMatches {
+		fields[evt.Metric] = evt.Value
+		if index > fieldLimitCount {
+			break
+		}
+	}
+
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message_type", messageType)
 	bodyJSON.Set("entity_id", evalContext.Rule.Name)
+	bodyJSON.Set("entity_display_name", evalContext.GetNotificationTitle())
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_start_time", evalContext.StartTime.Unix())
 	bodyJSON.Set("state_message", evalContext.Rule.Message)
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 	bodyJSON.Set("alert_url", ruleUrl)
+	bodyJSON.Set("metrics", fields)
+
+	if evalContext.Error != nil {
+		bodyJSON.Set("error_message", evalContext.Error.Error())
+	}
 
 	if evalContext.ImagePublicUrl != "" {
 		bodyJSON.Set("image_url", evalContext.ImagePublicUrl)

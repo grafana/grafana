@@ -3,7 +3,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 @mixin select-control() {
   width: 100%;
-  margin-right: $gf-form-margin;
+  margin-right: $space-xs;
   @include border-radius($input-border-radius-sm);
   background-color: $input-bg;
 }

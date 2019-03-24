@@ -4,8 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelData, TimeRange, TimeSeries } from '@grafana/ui';
-import { TableData } from '@grafana/ui/src';
+import { TimeRange } from '@grafana/ui';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -170,19 +169,3 @@ export function getResolution(panel: PanelModel): number {
 
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
 }
-
-const isTimeSeries = (data: any): data is TimeSeries => data && data.hasOwnProperty('datapoints');
-const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
-export const snapshotDataToPanelData = (panel: PanelModel): PanelData => {
-  const snapshotData = panel.snapshotData;
-  if (isTimeSeries(snapshotData[0])) {
-    return {
-      timeSeries: snapshotData,
-    } as PanelData;
-  } else if (isTableData(snapshotData[0])) {
-    return {
-      tableData: snapshotData[0],
-    } as PanelData;
-  }
-  throw new Error('snapshotData is invalid:' + snapshotData.toString());
-};

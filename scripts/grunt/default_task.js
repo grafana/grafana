@@ -34,14 +34,17 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('no-only-tests', function () {
-    var files = grunt.file.expand('public/**/*_specs\.ts', 'public/**/*_specs\.js');
+    var files = grunt.file.expand(
+      'public/**/*@(_specs|\.test)\.@(ts|js|tsx|jsx)',
+      'packages/grafana-ui/**/*@(_specs|\.test)\.@(ts|js|tsx|jsx)'
+    );
 
     files.forEach(function (spec) {
       var rows = grunt.file.read(spec).split('\n');
       rows.forEach(function (row) {
         if (row.indexOf('.only(') > 0) {
           grunt.log.errorlns(row);
-          grunt.fail.warn('found only statement in test: ' + spec)
+          grunt.fail.warn('found only statement in test: ' + spec);
         }
       });
     });

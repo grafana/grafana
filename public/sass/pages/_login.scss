@@ -43,11 +43,11 @@ select:-webkit-autofill:focus {
   flex-direction: column;
   width: 100%;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 .login-form {
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
   width: 100%;
 }
 
@@ -69,13 +69,13 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: $space-sm;
 
   &--right {
     justify-content: flex-end;
 
     & .btn {
-      margin-left: 1rem;
+      margin-left: $space-md;
     }
   }
   & .btn-inverse {
@@ -90,7 +90,7 @@ select:-webkit-autofill:focus {
 }
 
 .login-button-forgot-password {
-  padding-top: 1rem;
+  padding-top: $space-md;
 }
 
 .login-text {
@@ -117,7 +117,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   flex-grow: 0;
-  padding-top: 2rem;
+  padding-top: $space-xl;
 
   .logo-icon {
     width: 70px;
@@ -150,7 +150,7 @@ select:-webkit-autofill:focus {
 
 .login-inner-box {
   text-align: center;
-  padding: 2rem;
+  padding: $space-xl;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -177,7 +177,7 @@ select:-webkit-autofill:focus {
 }
 
 .login-change-password-info {
-  padding-bottom: 1.5rem;
+  padding-bottom: $space-lg;
 
   & h5 {
     text-align: left;
@@ -229,7 +229,7 @@ select:-webkit-autofill:focus {
 .login-divider {
   float: left;
   width: 100%;
-  margin: 0 25% 1rem 25%;
+  margin: 0 25% $space-md 25%;
   display: flex;
   justify-content: space-between;
 
@@ -251,7 +251,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: $space-md;
 }
 
 .login-signup-title {
@@ -262,7 +262,7 @@ select:-webkit-autofill:focus {
 
 .login-btn {
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 .signup-page-background {
@@ -307,7 +307,7 @@ select:-webkit-autofill:focus {
 
 @include media-breakpoint-up(sm) {
   .login-branding {
-    padding: 1rem;
+    padding: $space-md;
 
     .logo-icon {
       width: 80px;
@@ -329,7 +329,7 @@ select:-webkit-autofill:focus {
 
   .login-branding {
     width: 45%;
-    padding: 2rem;
+    padding: $space-xl;
     flex-grow: 1;
     border-right: 1px solid $login-border;
 
@@ -340,7 +340,7 @@ select:-webkit-autofill:focus {
 
   .login-inner-box {
     width: 55%;
-    padding: 1rem 4rem;
+    padding: $space-md 56px;
   }
 
   .login-button-group {

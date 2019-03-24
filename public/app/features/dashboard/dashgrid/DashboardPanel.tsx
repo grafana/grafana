@@ -15,6 +15,7 @@ import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { PanelResizer } from './PanelResizer';
 import { loadPanelRef, copyReference } from '../state/PanelReference';
+import { PanelTypeChangedHook } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -103,21 +104,35 @@ export class DashboardPanel extends PureComponent<Props, State> {
       // unmount angular panel
       this.cleanUpAngularPanel();
 
-      if (panel.type !== pluginId) {
-        this.props.panel.changeType(pluginId, fromAngularPanel);
-      }
-
-      if (plugin.exports) {
-        this.setState({ plugin, angularPanel: null });
-      } else {
+      if (!plugin.exports) {
         try {
           plugin.exports = await importPluginModule(plugin.module);
         } catch (e) {
           plugin = getPanelPluginNotFound(pluginId);
         }
-
-        this.setState({ plugin, angularPanel: null });
       }
+
+      if (panel.type !== pluginId) {
+        if (fromAngularPanel) {
+          // for angular panels only we need to remove all events and let angular panels do some cleanup
+          panel.destroy();
+
+          this.props.panel.changeType(pluginId);
+        } else {
+          let hook: PanelTypeChangedHook | null = null;
+          if (plugin.exports.reactPanel) {
+            hook = plugin.exports.reactPanel.panelTypeChangedHook;
+          }
+          panel.changeType(pluginId, hook);
+        }
+      } else if (plugin.exports && plugin.exports.reactPanel && panel.options) {
+        const hook = plugin.exports.reactPanel.panelMigrationHook;
+        if (hook) {
+          panel.options = hook(panel.options);
+        }
+      }
+
+      this.setState({ plugin, angularPanel: null });
     }
   }
 

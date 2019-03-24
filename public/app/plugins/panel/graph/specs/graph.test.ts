@@ -516,4 +516,408 @@ describe('grafanaGraph', () => {
       expect(ctx.plotData[0].data[0][1]).toBe(2);
     });
   });
+
+  describe('when graph is histogram, and xaxis min is set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 150;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than min', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is zero', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 0;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than zero', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is null', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = null;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is undefined', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = undefined;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 250;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values greater than max', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is zero', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 0;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values greater than zero', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is null', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = null;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis max should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is undefined', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = undefined;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis max should not should node affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min and max are set', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 150;
+        ctrl.panel.xaxis.max = 250;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should not contain values lower than min and greater than max', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min and max are zero', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 0;
+        ctrl.panel.xaxis.max = 0;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[-100, 1], [100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis max should be ignored otherwise the bucketSize is zero', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min and max are null', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = null;
+        ctrl.panel.xaxis.max = null;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min and max should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min and max are undefined', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = undefined;
+        ctrl.panel.xaxis.max = undefined;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min and max should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is greater than xaxis max', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 150;
+        ctrl.panel.xaxis.max = 100;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis max should be ignored otherwise the bucketSize is negative', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  // aaa
+  describe('when graph is histogram, and xaxis min is greater than the maximum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 301;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min should be ignored otherwise the bucketSize is negative', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is equal to the maximum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 300;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min should be ignored otherwise the bucketSize is zero', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis min is lower than the minimum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.min = 99;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('xaxis min should not affect the histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is equal to the minimum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 100;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should calculate correct histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is a lower than the minimum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 99;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should calculate empty histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(nonZero.length).toBe(0);
+    });
+  });
+
+  describe('when graph is histogram, and xaxis max is greater than the maximum value', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        ctrl.panel.xaxis.mode = 'histogram';
+        ctrl.panel.xaxis.max = 301;
+        ctrl.panel.stack = false;
+        ctrl.hiddenSeries = {};
+        ctx.data[0] = new TimeSeries({
+          datapoints: [[100, 1], [100, 2], [200, 3], [300, 4]],
+          alias: 'series1',
+        });
+      });
+    });
+
+    it('should calculate correct histogram', () => {
+      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+    });
+  });
 });

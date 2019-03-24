@@ -11,16 +11,16 @@ import {
   DataQueryResponse,
   DataQueryError,
   LoadingState,
-  PanelData,
   TableData,
   TimeRange,
-  TimeSeries,
   ScopedVars,
+  toTableData,
+  guessColumnTypes,
 } from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;
-  panelData: PanelData;
+  data: TableData[];
 }
 
 export interface Props {
@@ -44,7 +44,26 @@ export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
   response: DataQueryResponse;
-  panelData: PanelData;
+  data?: TableData[];
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedTableData(results?: any[]): TableData[] {
+  if (!results) {
+    return [];
+  }
+
+  const tables: TableData[] = [];
+  for (const r of results) {
+    if (r) {
+      tables.push(guessColumnTypes(toTableData(r)));
+    }
+  }
+  return tables;
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -64,7 +83,6 @@ export class DataPanel extends Component<Props, State> {
       response: {
         data: [],
       },
-      panelData: {},
       isFirstLoad: true,
     };
   }
@@ -116,7 +134,7 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const ds = await this.dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource, scopedVars);
 
       // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;
@@ -149,7 +167,7 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        panelData: this.getPanelData(resp),
+        data: getProcessedTableData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {
@@ -172,23 +190,9 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
-  getPanelData(response: DataQueryResponse) {
-    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
-      return {
-        tableData: response.data[0] as TableData,
-        timeSeries: null,
-      };
-    }
-
-    return {
-      timeSeries: response.data as TimeSeries[],
-      tableData: null,
-    };
-  }
-
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, panelData } = this.state;
+    const { loading, isFirstLoad, data } = this.state;
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
@@ -206,7 +210,7 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, panelData })}
+        {this.props.children({ loading, data })}
       </>
     );
   }

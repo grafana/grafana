@@ -1,12 +1,12 @@
-import _ from 'lodash';
-import { PanelModel } from '../state/PanelModel';
+import { PanelModel } from './PanelModel';
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model;
+    let modelJson;
 
     beforeEach(() => {
-      model = new PanelModel({
+      modelJson = {
         type: 'table',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
@@ -24,7 +24,8 @@ describe('PanelModel', () => {
             },
           ],
         },
-      });
+      };
+      model = new PanelModel(modelJson);
     });
 
     it('should apply defaults', () => {
@@ -37,6 +38,15 @@ describe('PanelModel', () => {
 
     it('should add missing refIds', () => {
       expect(model.targets[1].refId).toBe('B');
+    });
+
+    it("shouldn't break panel with non-array targets", () => {
+      modelJson.targets = {
+        0: { refId: 'A' },
+        foo: { bar: 'baz' },
+      };
+      model = new PanelModel(modelJson);
+      expect(model.targets[0].refId).toBe('A');
     });
 
     it('getSaveModel should remove defaults', () => {
@@ -66,7 +76,7 @@ describe('PanelModel', () => {
 
     describe('when changing panel type', () => {
       beforeEach(() => {
-        model.changeType('graph', true);
+        model.changeType('graph');
         model.alert = { id: 2 };
       });
 
@@ -75,12 +85,12 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changeType('table', true);
+        model.changeType('table');
         expect(model.showColumns).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
-        model.changeType('table', true);
+        model.changeType('table');
         expect(model.alert).toBe(undefined);
       });
     });

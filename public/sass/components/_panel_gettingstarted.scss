@@ -117,7 +117,7 @@ $path-position: $marker-size-half - ($path-height / 2);
 }
 
 .progress-step-cta {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $border-radius-sm);
   @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
   display: none;
 }

@@ -209,7 +209,7 @@ providers:
     path: /var/lib/grafana/dashboards
 ```
 
-When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
 #### Making changes to a provisioned dashboard
 
