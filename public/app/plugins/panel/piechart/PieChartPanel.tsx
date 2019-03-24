@@ -18,7 +18,6 @@ export class PieChartPanel extends PureComponent<Props> {
   render() {
     const { width, height, options } = this.props;
 
-    // TODO -- only process when the data/config changes
     const values = getSingleStatValues(this.props);
 
     return (
