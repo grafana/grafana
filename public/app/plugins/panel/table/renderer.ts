@@ -110,6 +110,7 @@ export class TableRenderer {
         if (this.isUtc) {
           date = date.utc();
         }
+
         return date.format(column.style.dateFormat);
       };
     }
@@ -308,13 +309,13 @@ export class TableRenderer {
     const startPos = page * pageSize;
     const endPos = Math.min(startPos + pageSize, this.table.rows.length);
     let html = '';
-    const rowClasses = [];
-    let rowClass = '';
 
     for (let y = startPos; y < endPos; y++) {
       const row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+      const rowClasses = [];
+      let rowClass = '';
       for (let i = 0; i < this.table.columns.length; i++) {
         cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }

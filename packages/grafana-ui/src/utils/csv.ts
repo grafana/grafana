@@ -2,8 +2,8 @@
 import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
 
 // Types
-import { TableData, Column, ColumnType } from '../types/index';
-import { guessColumnTypeFromValue } from './processTableData';
+import { SeriesData, Field, FieldType } from '../types/index';
+import { guessFieldTypeFromValue } from './processSeriesData';
 
 // Subset of all parse options
 export interface CSVParseConfig {
@@ -19,7 +19,7 @@ export interface CSVParseCallbacks {
    * This can return a modified table to force any
    * Column configurations
    */
-  onHeader: (table: TableData) => void;
+  onHeader: (table: SeriesData) => void;
 
   // Called after each row is read and
   onRow: (row: any[]) => void;
@@ -30,7 +30,7 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): Promise<TableData[]> {
+export function readCSV(csv: string, options?: CSVOptions): Promise<SeriesData[]> {
   // Wraps the string in a ReadableStreamReader
   return readCSVFromStream(
     {
@@ -52,20 +52,20 @@ enum ParseState {
   ReadingRows,
 }
 
-type ColumnParser = (value: string) => any;
+type FieldParser = (value: string) => any;
 
-export function readCSVFromStream(reader: ReadableStreamReader<string>, options?: CSVOptions): Promise<TableData[]> {
+export function readCSVFromStream(reader: ReadableStreamReader<string>, options?: CSVOptions): Promise<SeriesData[]> {
   return new Promise((resolve, reject) => {
     const config = options ? options.config : {};
     const callback = options ? options.callback : null;
 
-    const column: ColumnParser[] = [];
+    const column: FieldParser[] = [];
     let state = ParseState.Starting;
-    let table: TableData = {
-      columns: [],
+    let table: SeriesData = {
+      fields: [],
       rows: [],
     };
-    const tables: TableData[] = [table];
+    const tables: SeriesData[] = [table];
 
     const step = (results: ParseResult, parser: Parser): void => {
       for (let i = 0; i < results.data.length; i++) {
@@ -79,39 +79,41 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
               // #{columkey}#a,b,c
               const idx = first.indexOf('#', 2);
               if (idx > 0) {
-                const k = first.substr(1, idx);
+                const k = first.substr(1, idx - 1);
 
                 // Simple object used to check if headers match
-                const headerKeys: Column = {
-                  text: '#',
-                  type: ColumnType.number,
+                const headerKeys: Field = {
+                  name: '#',
+                  type: FieldType.number,
                   unit: '#',
                   dateFormat: '#',
                 };
+
+                console.log('CHECK', first, k, headerKeys);
 
                 // Check if it is a known/supported column
                 if (headerKeys.hasOwnProperty(k)) {
                   // Starting a new table after reading rows
                   if (state === ParseState.ReadingRows) {
                     table = {
-                      columns: [],
+                      fields: [],
                       rows: [],
                     };
                     tables.push(table);
                   }
 
-                  padColumnWidth(table.columns, line.length);
-                  const columns: any[] = table.columns; // cast to any so we can lookup by key
-                  const v = first.substr(i + 1);
-                  columns[0][k] = v;
-                  for (let j = 0; j < columns.length; j++) {
-                    columns[j][k] = line[j];
+                  padColumnWidth(table.fields, line.length);
+                  const fields: any[] = table.fields; // cast to any so we can lookup by key
+                  const v = first.substr(idx + 1);
+                  fields[0][k] = v;
+                  for (let j = 1; j < fields.length; j++) {
+                    fields[j][k] = line[j];
                   }
                   state = ParseState.InHeader;
                   continue;
                 }
               } else if (state === ParseState.Starting) {
-                table.columns = makeColumnsFor(line);
+                table.fields = makeFieldsFor(line);
                 state = ParseState.InHeader;
                 continue;
               }
@@ -120,27 +122,27 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
             }
 
             if (state === ParseState.Starting) {
-              const type = guessColumnTypeFromValue(first);
-              if (type === ColumnType.string) {
-                table.columns = makeColumnsFor(line);
+              const type = guessFieldTypeFromValue(first);
+              if (type === FieldType.string) {
+                table.fields = makeFieldsFor(line);
                 state = ParseState.InHeader;
                 continue;
               }
-              table.columns = makeColumnsFor(new Array(line.length));
-              table.columns[0].type = type;
+              table.fields = makeFieldsFor(new Array(line.length));
+              table.fields[0].type = type;
               state = ParseState.InHeader; // fall through to read rows
             }
           }
 
           if (state === ParseState.InHeader) {
-            padColumnWidth(table.columns, line.length);
+            padColumnWidth(table.fields, line.length);
             state = ParseState.ReadingRows;
           }
 
           if (state === ParseState.ReadingRows) {
             // Make sure colum structure is valid
-            if (line.length > table.columns.length) {
-              padColumnWidth(table.columns, line.length);
+            if (line.length > table.fields.length) {
+              padColumnWidth(table.fields, line.length);
               if (callback) {
                 callback.onHeader(table);
               } else {
@@ -159,7 +161,7 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
               const v = line[j];
               if (v) {
                 if (!column[j]) {
-                  column[j] = makeColumnParser(v, table.columns[j]);
+                  column[j] = makeFieldParser(v, table.fields[j]);
                 }
                 row.push(column[j](v));
               } else {
@@ -204,19 +206,19 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
   });
 }
 
-function makeColumnParser(value: string, column: Column): ColumnParser {
+function makeFieldParser(value: string, column: Field): FieldParser {
   if (!column.type) {
-    column.type = guessColumnTypeFromValue(value);
+    column.type = guessFieldTypeFromValue(value);
   }
 
-  if (column.type === ColumnType.number) {
+  if (column.type === FieldType.number) {
     return (value: string) => {
       return parseFloat(value);
     };
   }
 
   // Will convert anything that starts with "T" to true
-  if (column.type === ColumnType.boolean) {
+  if (column.type === FieldType.boolean) {
     return (value: string) => {
       return value[0] === 'T' || value[0] === 't' || value[0] === '1';
     };
@@ -229,23 +231,23 @@ function makeColumnParser(value: string, column: Column): ColumnParser {
 /**
  * Creates a column object for each string in the list
  */
-function makeColumnsFor(line: string[]): Column[] {
-  const columns: Column[] = [];
+function makeFieldsFor(line: string[]): Field[] {
+  const fields: Field[] = [];
   for (let i = 0; i < line.length; i++) {
     const v = line[i] ? line[i] : 'Column ' + (i + 1);
-    columns.push({ text: v });
+    fields.push({ name: v });
   }
-  return columns;
+  return fields;
 }
 
 /**
  * Makes sure the colum has valid entries up the the width
  */
-function padColumnWidth(columns: Column[], width: number) {
-  if (columns.length < width) {
-    for (let i = columns.length; i < width; i++) {
-      columns.push({
-        text: 'Column ' + (i + 1),
+function padColumnWidth(fields: Field[], width: number) {
+  if (fields.length < width) {
+    for (let i = fields.length; i < width; i++) {
+      fields.push({
+        name: 'Field ' + (i + 1),
       });
     }
   }

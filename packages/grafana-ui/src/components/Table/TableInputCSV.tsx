@@ -1,18 +1,18 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { TableData } from '../../types/data';
+import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
 import { CSVParseConfig, readCSV } from '../../utils/csv';
 
 interface Props {
   config?: CSVParseConfig;
   text: string;
-  onTablesParsed: (tables: TableData[], text: string) => void;
+  onSeriesParsed: (data: SeriesData[], text: string) => void;
 }
 
 interface State {
   text: string;
-  tables: TableData[];
+  data: SeriesData[];
 }
 
 /**
@@ -25,14 +25,14 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     const { text, config } = props;
     this.state = {
       text,
-      tables: [],
+      data: [],
     };
-    readCSV(text, { config }).then(tables => {
+    readCSV(text, { config }).then(data => {
       this.state = {
         text,
-        tables,
+        data,
       };
-      this.props.onTablesParsed(tables, text);
+      this.props.onSeriesParsed(data, text);
     });
   }
 
@@ -40,8 +40,8 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     const { config } = this.props;
     const { text } = this.state;
 
-    readCSV(text, { config }).then(tables => {
-      this.setState({ tables });
+    readCSV(text, { config }).then(data => {
+      this.setState({ data });
     });
   }, 150);
 
@@ -57,8 +57,8 @@ class TableInputCSV extends React.PureComponent<Props, State> {
       this.setState({ text: this.props.text });
     }
 
-    if (this.state.tables !== prevState.tables) {
-      this.props.onTablesParsed(this.state.tables, this.state.text);
+    if (this.state.data !== prevState.data) {
+      this.props.onSeriesParsed(this.state.data, this.state.text);
     }
   }
 
@@ -67,19 +67,19 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { tables } = this.state;
+    const { data } = this.state;
 
     return (
       <AutoSizer>
         {({ height, width }) => (
           <div className="gf-table-input-csv" style={{ width, height }}>
             <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
-            {tables && (
+            {data && (
               <footer>
-                {tables.map(table => {
+                {data.map(series => {
                   return (
                     <span>
-                      Rows:{table.rows.length}, Columns:{table.columns.length} &nbsp;
+                      Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
                       <i className="fa fa-check-circle" />
                     </span>
                   );

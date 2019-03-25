@@ -100,6 +100,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       return { text, numeric, color };
     };
   }
+
   return toStringProcessor;
 }
 

@@ -2,21 +2,21 @@
 
 exports[`read csv should get X and y 1`] = `
 Object {
-  "columns": Array [
+  "fields": Array [
     Object {
-      "text": "Column 1",
+      "name": "Column 1",
       "type": "number",
     },
     Object {
-      "text": "Column 2",
+      "name": "Column 2",
       "type": "number",
     },
     Object {
-      "text": "Column 3",
+      "name": "Column 3",
       "type": "number",
     },
     Object {
-      "text": "Column 4",
+      "name": "Field 4",
       "type": "number",
     },
   ],
@@ -45,7 +45,65 @@ Object {
 
 exports[`read csv should read csv from local file system 1`] = `
 Object {
-  "columns": Array [],
-  "rows": Array [],
+  "fields": Array [
+    Object {
+      "name": "a",
+      "type": "number",
+    },
+    Object {
+      "name": "b",
+      "type": "number",
+    },
+    Object {
+      "name": "c",
+      "type": "number",
+    },
+  ],
+  "rows": Array [
+    Array [
+      10,
+      20,
+      30,
+    ],
+    Array [
+      40,
+      50,
+      60,
+    ],
+  ],
+}
+`;
+
+exports[`read csv should read csv with headers 1`] = `
+Object {
+  "fields": Array [
+    Object {
+      "name": "a",
+      "type": "number",
+      "unit": "ms",
+    },
+    Object {
+      "name": "b",
+      "type": "string",
+      "unit": "lengthm",
+    },
+    Object {
+      "name": "c",
+      "type": "boolean",
+      "unit": "s",
+    },
+  ],
+  "rows": Array [
+    Array [
+      10,
+      "20",
+      false,
+    ],
+    Array [
+      40,
+      "50",
+      false,
+    ],
+  ],
 }
 `;

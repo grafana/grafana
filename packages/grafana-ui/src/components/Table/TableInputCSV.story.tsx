@@ -3,7 +3,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import TableInputCSV from './TableInputCSV';
 import { action } from '@storybook/addon-actions';
-import { TableData } from '../../types/data';
+import { SeriesData } from '../../types/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 const TableInputStories = storiesOf('UI/Table/Input', module);
@@ -15,9 +15,9 @@ TableInputStories.add('default', () => {
     <div style={{ width: '90%', height: '90vh' }}>
       <TableInputCSV
         text={'a,b,c\n1,2,3'}
-        onTablesParsed={(tables: TableData[], text: string) => {
-          console.log('Table', tables, text);
-          action('Table')(tables, text);
+        onSeriesParsed={(data: SeriesData[], text: string) => {
+          console.log('Data', data, text);
+          action('Data')(data, text);
         }}
       />
     </div>

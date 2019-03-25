@@ -19,12 +19,12 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, TableData, DataQueryError } from '@grafana/ui';
+import { DataQueryResponse, TimeRange, LoadingState, DataQueryError, SeriesData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedTableData } from './DataPanel';
+import { getProcessedSeriesData } from './DataPanel';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -141,10 +141,10 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get getDataForPanel() {
-    return this.hasPanelSnapshot ? getProcessedTableData(this.props.panel.snapshotData) : null;
+    return this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : null;
   }
 
-  renderPanelPlugin(loading: LoadingState, data: TableData[], width: number, height: number): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, data: SeriesData[], width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.reactPanel.panel;
