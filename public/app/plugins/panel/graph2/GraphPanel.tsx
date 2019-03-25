@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Graph, PanelProps, NullValueMode, colors, TimeSeriesVMs, FieldType, getFirstTimeField } from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, Trace, FieldType, getFirstTimeField } from '@grafana/ui';
 import { Options } from './types';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
@@ -13,7 +13,7 @@ export class GraphPanel extends PureComponent<Props> {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const vmSeries: TimeSeriesVMs = [];
+    const traces: Trace[] = [];
     for (const table of data) {
       const timeColumn = getFirstTimeField(table);
       if (timeColumn < 0) {
@@ -33,22 +33,20 @@ export class GraphPanel extends PureComponent<Props> {
             nullValueMode: NullValueMode.Null,
           });
 
-          vmSeries.push({
-            label: column.name,
-            data: points,
-            color: colors[vmSeries.length % colors.length],
-
-            // TODO (calculate somewhere)
-            allIsNull: false,
-            allIsZero: false,
-          });
+          if (points.length > 0) {
+            traces.push({
+              label: column.name,
+              data: points,
+              color: colors[traces.length % colors.length],
+            });
+          }
         }
       }
     }
 
     return (
       <Graph
-        timeSeries={vmSeries}
+        traces={traces}
         timeRange={timeRange}
         showLines={showLines}
         showPoints={showPoints}
