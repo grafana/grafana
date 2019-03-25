@@ -20,46 +20,48 @@ export function parse(
   if (!text) {
     return undefined;
   }
-  if (moment.isMoment(text)) {
-    return text;
-  }
-  if (_.isDate(text)) {
-    return moment(text);
-  }
 
-  // Explicit cast to make TS happy
-  const stringTime = text as string;
-
-  let time;
-  let mathString = '';
-  let index;
-  let parseString;
-
-  if (stringTime.substring(0, 3) === 'now') {
-    if (timezone === 'utc') {
-      time = moment.utc();
-    } else {
-      time = moment();
+  if (typeof text !== 'string') {
+    if (moment.isMoment(text)) {
+      return text;
     }
-    mathString = stringTime.substring('now'.length);
+    if (_.isDate(text)) {
+      return moment(text);
+    }
+    // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
+    return undefined;
   } else {
-    index = stringTime.indexOf('||');
-    if (index === -1) {
-      parseString = text;
-      mathString = ''; // nothing else
+    let time;
+    let mathString = '';
+    let index;
+    let parseString;
+
+    if (text.substring(0, 3) === 'now') {
+      if (timezone === 'utc') {
+        time = moment.utc();
+      } else {
+        time = moment();
+      }
+      mathString = text.substring('now'.length);
     } else {
-      parseString = stringTime.substring(0, index);
-      mathString = stringTime.substring(index + 2);
+      index = text.indexOf('||');
+      if (index === -1) {
+        parseString = text;
+        mathString = ''; // nothing else
+      } else {
+        parseString = text.substring(0, index);
+        mathString = text.substring(index + 2);
+      }
+      // We're going to just require ISO8601 timestamps, k?
+      time = moment(parseString, moment.ISO_8601);
     }
-    // We're going to just require ISO8601 timestamps, k?
-    time = moment(parseString, moment.ISO_8601);
-  }
 
-  if (!mathString.length) {
-    return time;
-  }
+    if (!mathString.length) {
+      return time;
+    }
 
-  return parseDateMath(mathString, time, roundUp);
+    return parseDateMath(mathString, time, roundUp);
+  }
 }
 
 /**
