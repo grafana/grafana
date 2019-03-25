@@ -26,8 +26,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return interval ? { label: interval, value: stringToMs(interval) } : this.emptyItem;
   };
 
-  intervalsToOptions = (intervals: string[] | undefined): SelectOptionItem[] => {
-    intervals = intervals || defaultIntervals;
+  intervalsToOptions = (intervals: string[] = defaultIntervals): SelectOptionItem[] => {
     const options = intervals.map(this.mapStringToSelectOptionItem);
     options.unshift(this.emptyItem);
     return options;
