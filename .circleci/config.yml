@@ -167,7 +167,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
             - scripts/*.sh
             - scripts/build/release_publisher/release_publisher
             - scripts/build/publish.sh
@@ -196,7 +196,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
 
   grafana-docker-master:
     machine:
@@ -271,7 +271,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - enterprise-dist/grafana-enterprise*
+            - enterprise-dist/*
 
   build-all-enterprise:
     docker:
@@ -318,7 +318,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - enterprise-dist/grafana-enterprise*
+        - enterprise-dist/*
 
   deploy-enterprise-master:
     docker:
