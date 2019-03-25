@@ -24,7 +24,6 @@ import { LogLevel } from 'app/core/logs_model';
  *
  */
 export enum ActionTypes {
-  SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
 }
