@@ -194,9 +194,18 @@ const defaultPopoverOptions = {
   ],
 };
 
-export class TimePicker extends PureComponent<Props> {
+export interface State {
+  isMenuOpen: boolean;
+  // isPopoverOpen: boolean;
+}
+
+export class TimePicker extends PureComponent<Props, State> {
   static defaultSelectOptions = defaultSelectOptions;
   static defaultPopoverOptions = defaultPopoverOptions;
+  state: State = {
+    isMenuOpen: false,
+    // isPopoverOpen: false,
+  };
 
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
     const { value, popoverOptions, isTimezoneUtc, timezone } = this.props;
@@ -228,10 +237,20 @@ export class TimePicker extends PureComponent<Props> {
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
+  onChangeMenuOpenState = (isOpen: boolean) => {
+    this.setState({
+      isMenuOpen: isOpen,
+    });
+  };
+  onOpenMenu = () => this.onChangeMenuOpenState(true);
+  onCloseMenu = () => this.onChangeMenuOpenState(false);
+
   onPopoverClose = (timeRange: TimeRange) => {
     const { onChange } = this.props;
     onChange(timeRange);
     // Here we should also close the Select but no sure how to solve this without introducing state in this component
+    // Edit: State introduced
+    this.onCloseMenu();
   };
 
   render() {
@@ -246,7 +265,6 @@ export class TimePicker extends PureComponent<Props> {
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);
     const isAbsolute = moment.isMoment(value.raw.to);
-
     return (
       <div className="time-picker">
         <div className="time-picker-buttons">
@@ -264,6 +282,9 @@ export class TimePicker extends PureComponent<Props> {
             components={{ Group: TimePickerOptionGroup }}
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={tooltipContent}
+            isMenuOpen={this.state.isMenuOpen}
+            onOpenMenu={this.onOpenMenu}
+            onCloseMenu={this.onCloseMenu}
           />
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>

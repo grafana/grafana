@@ -51,14 +51,12 @@ export interface CommonProps {
   isOpen?: boolean;
   components?: any;
   tooltipContent?: PopperContent<any>;
+  onOpenMenu?: () => void;
+  onCloseMenu?: () => void;
 }
 
 export interface SelectProps {
   options: SelectOptionItem[];
-}
-
-interface SelectState {
-  isMenuOpen: boolean;
 }
 
 interface AsyncProps {
@@ -70,7 +68,7 @@ interface AsyncProps {
 const wrapInTooltip = (
   component: React.ReactElement,
   tooltipContent: PopperContent<any> | undefined,
-  isMenuOpen: boolean
+  isMenuOpen: boolean | undefined
 ) => {
   const showTooltip = isMenuOpen ? false : undefined;
   if (tooltipContent) {
@@ -97,7 +95,7 @@ export const MenuList = (props: any) => {
   );
 };
 
-export class Select extends PureComponent<CommonProps & SelectProps, SelectState> {
+export class Select extends PureComponent<CommonProps & SelectProps> {
   static defaultProps = {
     width: null,
     className: '',
@@ -120,12 +118,19 @@ export class Select extends PureComponent<CommonProps & SelectProps, SelectState
     },
   };
 
-  state = {
-    isMenuOpen: false,
+  onOpenMenu = () => {
+    const { onOpenMenu } = this.props;
+    if (onOpenMenu) {
+      onOpenMenu();
+    }
   };
 
-  onOpen = () => this.setState({ isMenuOpen: true });
-  onClose = () => this.setState({ isMenuOpen: false });
+  onCloseMenu = () => {
+    const { onCloseMenu } = this.props;
+    if (onCloseMenu) {
+      onCloseMenu();
+    }
+  };
 
   render() {
     const {
@@ -154,8 +159,6 @@ export class Select extends PureComponent<CommonProps & SelectProps, SelectState
       tooltipContent,
     } = this.props;
 
-    const { isMenuOpen } = this.state;
-
     let widthClass = '';
     if (width) {
       widthClass = 'width-' + width;
@@ -163,7 +166,6 @@ export class Select extends PureComponent<CommonProps & SelectProps, SelectState
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
-
     return wrapInTooltip(
       <ReactSelect
         classNamePrefix="gf-form-select-box"
@@ -190,11 +192,11 @@ export class Select extends PureComponent<CommonProps & SelectProps, SelectState
         isMulti={isMulti}
         backspaceRemovesValue={backspaceRemovesValue}
         menuIsOpen={isOpen}
-        onMenuOpen={this.onOpen}
-        onMenuClose={this.onClose}
+        onMenuOpen={this.onOpenMenu}
+        onMenuClose={this.onCloseMenu}
       />,
       tooltipContent,
-      isMenuOpen
+      isOpen
     );
   }
 }

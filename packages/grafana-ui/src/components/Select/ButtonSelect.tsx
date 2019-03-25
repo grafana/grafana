@@ -39,6 +39,9 @@ export interface Props {
   maxMenuHeight?: number;
   onChange: (item: SelectOptionItem) => void;
   tooltipContent?: PopperContent<any>;
+  isMenuOpen?: boolean;
+  onOpenMenu?: () => void;
+  onCloseMenu?: () => void;
 }
 
 export class ButtonSelect extends PureComponent<Props> {
@@ -48,12 +51,23 @@ export class ButtonSelect extends PureComponent<Props> {
   };
 
   render() {
-    const { className, options, value, label, iconClass, components, maxMenuHeight, tooltipContent } = this.props;
+    const {
+      className,
+      options,
+      value,
+      label,
+      iconClass,
+      components,
+      maxMenuHeight,
+      tooltipContent,
+      isMenuOpen,
+      onOpenMenu,
+      onCloseMenu,
+    } = this.props;
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),
     };
-
     return (
       <div className={className}>
         <Select
@@ -68,6 +82,9 @@ export class ButtonSelect extends PureComponent<Props> {
           components={combinedComponents}
           className="gf-form-select-box-button-select"
           tooltipContent={tooltipContent}
+          isOpen={isMenuOpen}
+          onOpenMenu={onOpenMenu}
+          onCloseMenu={onCloseMenu}
         />
       </div>
     );
