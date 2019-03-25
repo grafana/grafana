@@ -6,7 +6,7 @@ import { PieChartOptions } from './types';
 import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
 import { SingleStatValueOptions } from '../singlestat2/types';
 
-export default class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
+export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
     this.props.onOptionsChange({
       ...this.props.options,

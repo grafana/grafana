@@ -33,7 +33,7 @@ export const getMockPlugins = (amount: number): Plugin[] => {
   return plugins;
 };
 
-export const getPanelPlugin = (options: { id: string; sort?: number; hideFromList?: boolean }): PanelPlugin => {
+export const getPanelPlugin = (options: Partial<PanelPlugin>): PanelPlugin => {
   return {
     id: options.id,
     name: options.id,
@@ -56,6 +56,7 @@ export const getPanelPlugin = (options: { id: string; sort?: number; hideFromLis
     hideFromList: options.hideFromList === true,
     module: '',
     baseUrl: '',
+    exports: options.exports,
   };
 };
 
