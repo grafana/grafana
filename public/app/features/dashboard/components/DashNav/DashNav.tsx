@@ -1,6 +1,7 @@
 // Libaries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import moment from 'moment';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
@@ -16,9 +17,9 @@ import { Tooltip, SelectOptionItem } from '@grafana/ui';
 import { updateLocation } from 'app/core/actions';
 
 // Types
+import { TimeRange } from '@grafana/ui';
 import { RefreshPicker } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
-import { TimeRange } from '@grafana/ui/src/types';
 import { DashboardModel } from '../../state';
 
 export interface Props {
@@ -183,16 +184,56 @@ export class DashNav extends PureComponent<Props, State> {
     const panel = dashboard.timepicker;
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
-    const newRange = {
+    const nextRange = {
       from: timeRange.raw.from,
       to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
     };
 
-    this.timeSrv.setTime(newRange);
+    this.timeSrv.setTime(nextRange);
+
     this.setState({
       timePickerValue: timeRange,
     });
   };
+
+  onMoveTimePicker = (direction: number) => {
+    const range = this.timeSrv.timeRange();
+
+    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    let to: number, from: number;
+    if (direction === -1) {
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
+    } else if (direction === 1) {
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to.valueOf() < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
+      }
+    } else {
+      to = range.to.valueOf();
+      from = range.from.valueOf();
+    }
+
+    const nextRange = {
+      from: moment.utc(from),
+      to: moment.utc(to),
+    };
+
+    const nextTimeRange: TimeRange = {
+      ...nextRange,
+      raw: nextRange,
+    };
+
+    this.timeSrv.setTime(nextRange);
+    this.setState({
+      timePickerValue: nextTimeRange,
+    });
+  };
+
+  onMoveForward = () => this.onMoveTimePicker(1);
+  onMoveBack = () => this.onMoveTimePicker(-1);
 
   onChangeRefreshPicker = (selectOptionItem: SelectOptionItem) => {
     this.setState({
@@ -310,12 +351,8 @@ export class DashNav extends PureComponent<Props, State> {
             value={this.state.timePickerValue}
             onChange={this.onChangeTimePicker}
             tooltipContent={TimePickerTooltipContent}
-            onMoveBackward={() => {
-              console.log('onMoveBackward');
-            }}
-            onMoveForward={() => {
-              console.log('onMoveForward');
-            }}
+            onMoveBackward={this.onMoveBack}
+            onMoveForward={this.onMoveForward}
             onZoom={() => {
               console.log('onZoom');
             }}

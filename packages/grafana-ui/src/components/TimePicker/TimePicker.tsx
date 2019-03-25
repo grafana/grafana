@@ -196,7 +196,6 @@ const defaultPopoverOptions = {
 
 export interface State {
   isMenuOpen: boolean;
-  // isPopoverOpen: boolean;
 }
 
 export class TimePicker extends PureComponent<Props, State> {
@@ -204,7 +203,6 @@ export class TimePicker extends PureComponent<Props, State> {
   static defaultPopoverOptions = defaultPopoverOptions;
   state: State = {
     isMenuOpen: false,
-    // isPopoverOpen: false,
   };
 
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
