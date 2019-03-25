@@ -106,7 +106,7 @@ h4,
 h5,
 h6 {
   margin-top: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: $space-sm;
 }
 
 // Reset margins on paragraphs
@@ -115,7 +115,7 @@ h6 {
 // bottom margin to use `rem` units instead of `em`.
 p {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 // Abbreviations and acronyms
@@ -125,7 +125,7 @@ abbr[title] {
 }
 
 address {
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
   font-style: normal;
   line-height: inherit;
 }
@@ -134,7 +134,7 @@ ol,
 ul,
 dl {
   margin-top: 0;
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
 ol ol,
@@ -149,12 +149,12 @@ dt {
 }
 
 dd {
-  margin-bottom: 0.5rem;
+  margin-bottom: $space-sm;
   margin-left: 0; // Undo browser default
 }
 
 blockquote {
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 //
@@ -183,7 +183,7 @@ pre {
   // Remove browser default top margin
   margin-top: 0;
   // Reset browser default of `1em` to use `rem`s
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 //
@@ -193,7 +193,7 @@ pre {
 figure {
   // Normalize adds `margin` to `figure`s as browsers apply it inconsistently.
   // We reset that to create a better flow in-page.
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
 
 //
@@ -314,8 +314,8 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
+  margin-bottom: $space-sm;
+  font-size: $space-lg;
   line-height: inherit;
   //  border: 0;
 }

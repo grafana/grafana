@@ -24,17 +24,10 @@ import { LogLevel } from 'app/core/logs_model';
  *
  */
 export enum ActionTypes {
-  InitializeExploreSplit = 'explore/INITIALIZE_EXPLORE_SPLIT',
   SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
 }
-
-export interface InitializeExploreSplitAction {
-  type: ActionTypes.InitializeExploreSplit;
-  payload: {};
-}
-
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
   payload: {
@@ -149,10 +142,6 @@ export interface RemoveQueryRowPayload {
   index: number;
 }
 
-export interface RunQueriesEmptyPayload {
-  exploreId: ExploreId;
-}
-
 export interface ScanStartPayload {
   exploreId: ExploreId;
   scanner: RangeScanner;
@@ -259,11 +248,6 @@ export const initializeExploreAction = actionCreatorFactory<InitializeExplorePay
 ).create();
 
 /**
- * Initialize the wrapper split state
- */
-export const initializeExploreSplitAction = noPayloadActionCreatorFactory('explore/INITIALIZE_EXPLORE_SPLIT').create();
-
-/**
  * Display an error that happened during the selection of a datasource
  */
 export const loadDatasourceFailureAction = actionCreatorFactory<LoadDatasourceFailurePayload>(
@@ -341,7 +325,6 @@ export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransacti
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
 export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
-export const runQueriesEmptyAction = actionCreatorFactory<RunQueriesEmptyPayload>('explore/RUN_QUERIES_EMPTY').create();
 
 /**
  * Start a scan for more results using the given scanner.
@@ -411,7 +394,6 @@ export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_E
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
 
 export type HigherOrderAction =
-  | InitializeExploreSplitAction
   | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
@@ -434,7 +416,6 @@ export type Action =
   | ActionOf<QueryTransactionStartPayload>
   | ActionOf<QueryTransactionSuccessPayload>
   | ActionOf<RemoveQueryRowPayload>
-  | ActionOf<RunQueriesEmptyPayload>
   | ActionOf<ScanStartPayload>
   | ActionOf<ScanRangePayload>
   | ActionOf<SetQueriesPayload>

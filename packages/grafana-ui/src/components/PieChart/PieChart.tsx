@@ -2,26 +2,20 @@ import React, { PureComponent } from 'react';
 import { select, pie, arc, event } from 'd3';
 import { sum } from 'lodash';
 
-import { GrafanaThemeType } from '../../types';
+import { GrafanaThemeType, DisplayValue } from '../../types';
 import { Themeable } from '../../index';
+import { colors as grafana_colors } from '../../utils/index';
 
 export enum PieChartType {
   PIE = 'pie',
   DONUT = 'donut',
 }
 
-export interface PieChartDataPoint {
-  value: number;
-  name: string;
-  color: string;
-}
-
 export interface Props extends Themeable {
   height: number;
   width: number;
-  datapoints: PieChartDataPoint[];
+  values: DisplayValue[];
 
-  unit: string;
   pieType: PieChartType;
   strokeWidth: number;
 }
@@ -49,15 +43,20 @@ export class PieChart extends PureComponent<Props> {
   }
 
   draw() {
-    const { datapoints, pieType, strokeWidth } = this.props;
+    const { values, pieType, strokeWidth } = this.props;
 
-    if (datapoints.length === 0) {
+    if (values.length === 0) {
       return;
     }
 
-    const data = datapoints.map(datapoint => datapoint.value);
-    const names = datapoints.map(datapoint => datapoint.name);
-    const colors = datapoints.map(datapoint => datapoint.color);
+    const data = values.map(datapoint => datapoint.numeric);
+    const names = values.map(datapoint => datapoint.text);
+    const colors = values.map((p, idx) => {
+      if (p.color) {
+        return p.color;
+      }
+      return grafana_colors[idx % grafana_colors.length];
+    });
 
     const total = sum(data) || 1;
     const percents = data.map((item: number) => (item / total) * 100);
@@ -108,9 +107,9 @@ export class PieChart extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, datapoints } = this.props;
+    const { height, width, values } = this.props;
 
-    if (datapoints.length > 0) {
+    if (values.length > 0) {
       return (
         <div className="piechart-panel">
           <div

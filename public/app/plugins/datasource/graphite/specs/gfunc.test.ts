@@ -30,66 +30,92 @@ describe('when creating func instance from func names', () => {
   });
 });
 
+function replaceVariablesDummy(str: string) {
+  return str;
+}
+
 describe('when rendering func instance', () => {
   it('should handle single metric param', () => {
     const func = gfunc.createFuncInstance('sumSeries');
-    expect(func.render('hello.metric')).toEqual('sumSeries(hello.metric)');
+    expect(func.render('hello.metric', replaceVariablesDummy)).toEqual('sumSeries(hello.metric)');
   });
 
   it('should include default params if options enable it', () => {
     const func = gfunc.createFuncInstance('scaleToSeconds', {
       withDefaultParams: true,
     });
-    expect(func.render('hello')).toEqual('scaleToSeconds(hello, 1)');
+    expect(func.render('hello', replaceVariablesDummy)).toEqual('scaleToSeconds(hello, 1)');
   });
 
   it('should handle int or interval params with number', () => {
     const func = gfunc.createFuncInstance('movingMedian');
     func.params[0] = '5';
-    expect(func.render('hello')).toEqual('movingMedian(hello, 5)');
+    expect(func.render('hello', replaceVariablesDummy)).toEqual('movingMedian(hello, 5)');
   });
 
   it('should handle int or interval params with interval string', () => {
     const func = gfunc.createFuncInstance('movingMedian');
     func.params[0] = '5min';
-    expect(func.render('hello')).toEqual("movingMedian(hello, '5min')");
+    expect(func.render('hello', replaceVariablesDummy)).toEqual("movingMedian(hello, '5min')");
   });
 
   it('should never quote boolean paramater', () => {
     const func = gfunc.createFuncInstance('sortByName');
     func.params[0] = '$natural';
-    expect(func.render('hello')).toEqual('sortByName(hello, $natural)');
+    expect(func.render('hello', replaceVariablesDummy)).toEqual('sortByName(hello, $natural)');
   });
 
   it('should never quote int paramater', () => {
     const func = gfunc.createFuncInstance('maximumAbove');
     func.params[0] = '$value';
-    expect(func.render('hello')).toEqual('maximumAbove(hello, $value)');
+    expect(func.render('hello', replaceVariablesDummy)).toEqual('maximumAbove(hello, $value)');
   });
 
   it('should never quote node paramater', () => {
     const func = gfunc.createFuncInstance('aliasByNode');
     func.params[0] = '$node';
-    expect(func.render('hello')).toEqual('aliasByNode(hello, $node)');
+    expect(func.render('hello', replaceVariablesDummy)).toEqual('aliasByNode(hello, $node)');
   });
 
   it('should handle metric param and int param and string param', () => {
     const func = gfunc.createFuncInstance('groupByNode');
     func.params[0] = 5;
     func.params[1] = 'avg';
-    expect(func.render('hello.metric')).toEqual("groupByNode(hello.metric, 5, 'avg')");
+    expect(func.render('hello.metric', replaceVariablesDummy)).toEqual("groupByNode(hello.metric, 5, 'avg')");
   });
 
   it('should handle function with no metric param', () => {
     const func = gfunc.createFuncInstance('randomWalk');
     func.params[0] = 'test';
-    expect(func.render(undefined)).toEqual("randomWalk('test')");
+    expect(func.render(undefined, replaceVariablesDummy)).toEqual("randomWalk('test')");
   });
 
   it('should handle function multiple series params', () => {
     const func = gfunc.createFuncInstance('asPercent');
     func.params[0] = '#B';
-    expect(func.render('#A')).toEqual('asPercent(#A, #B)');
+    expect(func.render('#A', replaceVariablesDummy)).toEqual('asPercent(#A, #B)');
+  });
+
+  it('should not quote variables that have numeric value', () => {
+    const func = gfunc.createFuncInstance('movingAverage');
+    func.params[0] = '$variable';
+
+    const replaceVariables = (str: string) => {
+      return str.replace('$variable', '60');
+    };
+
+    expect(func.render('metric', replaceVariables)).toBe('movingAverage(metric, $variable)');
+  });
+
+  it('should quote variables that have string value', () => {
+    const func = gfunc.createFuncInstance('movingAverage');
+    func.params[0] = '$variable';
+
+    const replaceVariables = (str: string) => {
+      return str.replace('$variable', '10min');
+    };
+
+    expect(func.render('metric', replaceVariables)).toBe("movingAverage(metric, '$variable')");
   });
 });
 
