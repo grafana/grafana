@@ -271,7 +271,7 @@ export class PanelModel {
     const reactPanel = newPlugin.exports.reactPanel;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (!reactPanel) {
+    if (!_.has(this, 'plugin.exports.reactPanel')) {
       this.destroy();
     }
 
