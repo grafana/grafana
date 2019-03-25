@@ -32,13 +32,6 @@ fi
 echo "Build arguments: $OPT"
 echo "current dir: $(pwd)"
 
-if [ -d "dist" ]; then
-  rm -rf dist
-fi
-
-mkdir dist
-go run build.go -gen-version ${OPT} > dist/grafana.version
-
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
   go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
@@ -61,6 +54,13 @@ else
 fi
 echo "Building frontend"
 go run build.go ${OPT} build-frontend
+
+if [ -d "dist" ]; then
+  rm -rf dist
+fi
+
+mkdir dist
+go run build.go -gen-version ${OPT} > dist/grafana.version
 
 # Load ruby, needed for packing with fpm
 source /etc/profile.d/rvm.sh
