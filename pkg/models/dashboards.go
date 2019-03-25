@@ -356,3 +356,7 @@ type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
 }
+
+type UnprovisionDashboard struct {
+	Id int64
+}

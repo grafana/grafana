@@ -121,6 +121,15 @@ func (fr *fileReader) startWalkingDisk() error {
 
 func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	if fr.Cfg.DisableDeletion {
+		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
+		// so afterwards the dashboard is considered unprovisioned.
+		for _, provisioningData := range provisionedDashboardRefs {
+			cmd := &models.UnprovisionDashboard{Id: provisioningData.DashboardId}
+			err := bus.Dispatch(cmd)
+			if err != nil {
+				fr.log.Error("failed to unprovision dashboard", "dashboard_id", cmd.Id, "error", err)
+			}
+		}
 		return
 	}
 
