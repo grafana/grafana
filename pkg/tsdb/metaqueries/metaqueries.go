@@ -182,34 +182,32 @@ func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.
 
 				response, err = tsdb.HandleRequest(ctx, druid.Queries[0].DataSource, druid)
 			}
-
-			dataPoints := response.Results[""].Series[0].Points
-			points := make([]tsdb.TimePoint, 0)
-			datapointByTime := make(map[int64]float64)
-
-			for i := 0; i < len(dataPoints); i++ {
-
-				datapointByTime[int64(dataPoints[i][1].Float64)] = dataPoints[i][0].Float64
-				var metricSum float64
-
-				for count := 0; count < periodsToShift; count++ {
-					targetDate := time.Unix(int64(dataPoints[i][1].Float64), 0).AddDate(0, 0, -count).Unix()
-					metricSum += datapointByTime[int64(targetDate)]
-				}
-				dataPoints[i][0].Float64 = metricSum / float64(periodsToShift)
-				if int64(dataPoints[i][1].Float64) >= FromEpochMs && int64(dataPoints[i][1].Float64) <= ToEpochMs {
-					points = append(points, tsdb.NewTimePoint(dataPoints[i][0], dataPoints[i][1].Float64))
-				}
-			}
-
-			fmt.Println("points ", points)
-			response.Results[""].Series[0].Points = points
-			fmt.Println("error message ", err)
-			fmt.Println("response message ", len(response.Results))
-			fmt.Println(reflect.TypeOf(response))
-			return response, err
 		}
 	}
 
+	dataPoints := response.Results[""].Series[0].Points
+	points := make([]tsdb.TimePoint, 0)
+	datapointByTime := make(map[int64]float64)
+
+	for i := 0; i < len(dataPoints); i++ {
+
+		datapointByTime[int64(dataPoints[i][1].Float64)] = dataPoints[i][0].Float64
+		var metricSum float64
+
+		for count := 0; count < periodsToShift; count++ {
+			targetDate := time.Unix(int64(dataPoints[i][1].Float64), 0).AddDate(0, 0, -count).Unix()
+			metricSum += datapointByTime[int64(targetDate)]
+		}
+		dataPoints[i][0].Float64 = metricSum / float64(periodsToShift)
+		if int64(dataPoints[i][1].Float64) >= FromEpochMs && int64(dataPoints[i][1].Float64) <= ToEpochMs {
+			points = append(points, tsdb.NewTimePoint(dataPoints[i][0], dataPoints[i][1].Float64))
+		}
+	}
+
+	fmt.Println("points ", points)
+	response.Results[""].Series[0].Points = points
+	fmt.Println("error message ", err)
+	fmt.Println("response message ", len(response.Results))
+	fmt.Println(reflect.TypeOf(response))
 	return response, err
 }
