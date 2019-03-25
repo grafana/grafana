@@ -120,7 +120,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     } else if (direction === 1) {
       nextTo = to.valueOf() + timespan;
       nextFrom = from.valueOf() + timespan;
-      if (nextTo > Date.now() && to < Date.now()) {
+      if (nextTo > Date.now() && to.valueOf() < Date.now()) {
         nextTo = Date.now();
         nextFrom = from.valueOf();
       }

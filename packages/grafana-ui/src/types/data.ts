@@ -5,6 +5,44 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export enum FieldType {
+  time = 'time', // or date
+  number = 'number',
+  string = 'string',
+  boolean = 'boolean',
+  other = 'other', // Object, Array, etc
+}
+
+export interface Field {
+  name: string; // The column name
+  type?: FieldType;
+  filterable?: boolean;
+  unit?: string;
+  dateFormat?: string; // Source data format
+}
+
+export interface Tags {
+  [key: string]: string;
+}
+
+export interface SeriesData {
+  name?: string;
+  fields: Field[];
+  rows: any[][];
+  tags?: Tags;
+}
+
+export interface Column {
+  text: string; // For a Column, the 'text' is the field name
+  filterable?: boolean;
+  unit?: string;
+}
+
+export interface TableData {
+  columns: Column[];
+  rows: any[][];
+}
+
 export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
@@ -20,25 +58,8 @@ export interface TimeSeriesVM {
   label: string;
   color: string;
   data: TimeSeriesValue[][];
-  stats: TimeSeriesStats;
   allIsNull: boolean;
   allIsZero: boolean;
-}
-
-export interface TimeSeriesStats {
-  [key: string]: number | null;
-  total: number | null;
-  max: number | null;
-  min: number | null;
-  logmin: number;
-  avg: number | null;
-  current: number | null;
-  first: number | null;
-  delta: number;
-  diff: number | null;
-  range: number | null;
-  timeStep: number;
-  count: number;
 }
 
 export enum NullValueMode {
@@ -50,28 +71,16 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export type TimeSeriesVMs = TimeSeriesVM[];
 
-export interface Column {
-  text: string;
+export interface AnnotationEvent {
+  annotation?: any;
+  dashboardId?: number;
+  panelId?: number;
+  userId?: number;
+  time?: number;
+  timeEnd?: number;
+  isRegion?: boolean;
   title?: string;
+  text?: string;
   type?: string;
-  sort?: boolean;
-  desc?: boolean;
-  filterable?: boolean;
-  unit?: string;
-}
-
-export interface TableData {
-  columns: Column[];
-  rows: any[];
-  type: string;
-  columnMap: any;
-}
-
-export type SingleStatValue = number | string | null;
-
-/*
- * So we can add meta info like tags & series name
- */
-export interface SingleStatValueInfo {
-  value: SingleStatValue;
+  tags?: string;
 }

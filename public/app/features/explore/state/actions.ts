@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -16,13 +15,13 @@ import {
   updateHistory,
   buildQueryTransaction,
   serializeStateToUrlParam,
+  parseUrlState,
 } from 'app/core/utils/explore';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { StoreState } from 'app/types';
 import {
   RawTimeRange,
   TimeRange,
@@ -34,7 +33,6 @@ import {
 } from '@grafana/ui/src/types';
 import { ExploreId, ExploreUrlState, RangeScanner, ResultType, QueryOptions, ExploreUIState } from 'app/types/explore';
 import {
-  Action,
   updateDatasourceInstanceAction,
   changeQueryAction,
   changeSizeAction,
@@ -54,7 +52,6 @@ import {
   queryTransactionStartAction,
   queryTransactionSuccessAction,
   scanRangeAction,
-  runQueriesEmptyAction,
   scanStartAction,
   setQueriesAction,
   splitCloseAction,
@@ -67,11 +64,12 @@ import {
   ToggleLogsPayload,
   ToggleTablePayload,
   updateUIStateAction,
+  runQueriesAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+import { ThunkResult } from 'app/types';
+import { parseTime } from '../TimePicker';
 
 /**
  * Updates UI state and save it to the URL
@@ -518,7 +516,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     } = getState().explore[exploreId];
 
     if (!hasNonEmptyQuery(queries)) {
-      dispatch(runQueriesEmptyAction({ exploreId }));
+      dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
       return;
     }
@@ -527,6 +525,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
+    dispatch(runQueriesAction());
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
@@ -642,9 +641,9 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
 /**
  * Close the split view and save URL state.
  */
-export function splitClose(): ThunkResult<void> {
+export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return dispatch => {
-    dispatch(splitCloseAction());
+    dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
 }
@@ -657,11 +656,15 @@ export function splitClose(): ThunkResult<void> {
 export function splitOpen(): ThunkResult<void> {
   return (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore.left;
+    const leftState = getState().explore[ExploreId.left];
+    const queryState = getState().location.query[ExploreId.left] as string;
+    const urlState = parseUrlState(queryState);
     const itemState = {
       ...leftState,
       queryTransactions: [],
       queries: leftState.queries.slice(),
+      exploreId: ExploreId.right,
+      urlState,
     };
     dispatch(splitOpenAction({ itemState }));
     dispatch(stateSave());
@@ -766,3 +769,44 @@ export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy)
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };
 };
+
+export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const itemState = getState().explore[exploreId];
+    if (!itemState.initialized) {
+      return;
+    }
+
+    const { urlState, update, containerWidth, eventBridge } = itemState;
+    const { datasource, queries, range, ui } = urlState;
+    const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
+    const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
+
+    // need to refresh datasource
+    if (update.datasource) {
+      const initialQueries = ensureQueries(queries);
+      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
+      return;
+    }
+
+    if (update.range) {
+      dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
+    }
+
+    // need to refresh ui state
+    if (update.ui) {
+      dispatch(updateUIStateAction({ ...ui, exploreId }));
+    }
+
+    // need to refresh queries
+    if (update.queries) {
+      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    // always run queries when refresh is needed
+    if (update.queries || update.ui || update.range) {
+      dispatch(runQueries(exploreId));
+    }
+  };
+}

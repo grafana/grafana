@@ -2,7 +2,7 @@ import React from 'react';
 
 import renderer from 'react-test-renderer';
 import TableInputCSV from './TableInputCSV';
-import { TableData } from '../../types/data';
+import { SeriesData } from '../../types/data';
 
 describe('TableInputCSV', () => {
   it('renders correctly', () => {
@@ -10,7 +10,7 @@ describe('TableInputCSV', () => {
       .create(
         <TableInputCSV
           text={'a,b,c\n1,2,3'}
-          onTableParsed={(table: TableData, text: string) => {
+          onTableParsed={(table: SeriesData, text: string) => {
             // console.log('Table:', table, 'from:', text);
           }}
         />

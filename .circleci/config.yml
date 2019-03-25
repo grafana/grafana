@@ -130,7 +130,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -167,14 +167,14 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
             - scripts/*.sh
             - scripts/build/release_publisher/release_publisher
             - scripts/build/publish.sh
 
   build:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -196,7 +196,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
 
   grafana-docker-master:
     machine:
@@ -243,7 +243,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -271,11 +271,11 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - enterprise-dist/grafana-enterprise*
+            - enterprise-dist/*
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.3
+    - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -318,11 +318,11 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - enterprise-dist/grafana-enterprise*
+        - enterprise-dist/*
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -340,12 +340,14 @@ jobs:
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
       - run:
           name: Deploy to grafana.com
-          command: 'cd enterprise-dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -from-local'
+          command: |
+            cd enterprise-dist
+            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -version "v$(cat grafana.version)" --nightly
 
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.0
+    - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
@@ -378,7 +380,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - attach_workspace:
           at: .
@@ -405,11 +407,11 @@ jobs:
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
             rm dist/*latest*
-            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -from-local
+            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.1
     steps:
       - checkout
       - attach_workspace:
@@ -438,6 +440,15 @@ jobs:
       - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
+
+  store-build-artifacts:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - attach_workspace:
+          at: .
+      - store_artifacts:
+          path: ./dist
 
 workflows:
   version: 2
@@ -562,6 +573,17 @@ workflows:
         - cache-server-test:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
+            requires:
+              - build
+              - test-backend
+              - test-frontend
+              - codespell
+              - gometalinter
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
+        - store-build-artifacts:
             requires:
               - build
               - test-backend

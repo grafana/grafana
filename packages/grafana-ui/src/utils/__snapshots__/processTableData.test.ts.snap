@@ -1,17 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`processTableData basic processing should generate a header and fix widths 1`] = `
+exports[`processSeriesData basic processing should generate a header and fix widths 1`] = `
 Object {
-  "columnMap": Object {},
-  "columns": Array [
+  "fields": Array [
     Object {
-      "text": "Column 1",
+      "name": "Field 1",
     },
     Object {
-      "text": "Column 2",
+      "name": "Field 2",
     },
     Object {
-      "text": "Column 3",
+      "name": "Field 3",
     },
   ],
   "rows": Array [
@@ -31,22 +30,20 @@ Object {
       null,
     ],
   ],
-  "type": "table",
 }
 `;
 
-exports[`processTableData basic processing should read header and two rows 1`] = `
+exports[`processSeriesData basic processing should read header and two rows 1`] = `
 Object {
-  "columnMap": Object {},
-  "columns": Array [
+  "fields": Array [
     Object {
-      "text": "a",
+      "name": "a",
     },
     Object {
-      "text": "b",
+      "name": "b",
     },
     Object {
-      "text": "c",
+      "name": "c",
     },
   ],
   "rows": Array [
@@ -61,6 +58,5 @@ Object {
       6,
     ],
   ],
-  "type": "table",
 }
 `;

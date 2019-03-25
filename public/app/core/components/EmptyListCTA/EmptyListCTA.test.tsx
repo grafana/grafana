@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import renderer from 'react-test-renderer';
+import { shallow } from 'enzyme';
 import EmptyListCTA from './EmptyListCTA';
 
 const model = {
@@ -16,7 +16,7 @@ const model = {
 
 describe('EmptyListCTA', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<EmptyListCTA model={model} />).toJSON();
+    const tree = shallow(<EmptyListCTA model={model} />);
     expect(tree).toMatchSnapshot();
   });
 });

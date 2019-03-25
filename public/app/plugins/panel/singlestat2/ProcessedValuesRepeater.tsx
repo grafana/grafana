@@ -7,7 +7,7 @@ export interface Props<T> {
   height: number;
   orientation: VizOrientation;
   source: any; // If this changes, the values will be processed
-  processFlag?: boolean; // change to force processing
+  renderCounter: number; // change to force processing
 
   getProcessedValues: () => T[];
   renderValue: (value: T, width: number, height: number) => JSX.Element;
@@ -30,8 +30,8 @@ export class ProcessedValuesRepeater<T> extends PureComponent<Props<T>, State<T>
   }
 
   componentDidUpdate(prevProps: Props<T>) {
-    const { processFlag, source } = this.props;
-    if (processFlag !== prevProps.processFlag || source !== prevProps.source) {
+    const { renderCounter, source } = this.props;
+    if (renderCounter !== prevProps.renderCounter || source !== prevProps.source) {
       this.setState({ values: this.props.getProcessedValues() });
     }
   }
@@ -39,6 +39,7 @@ export class ProcessedValuesRepeater<T> extends PureComponent<Props<T>, State<T>
   render() {
     const { orientation, height, width, renderValue } = this.props;
     const { values } = this.state;
+
     return (
       <VizRepeater height={height} width={width} values={values} orientation={orientation}>
         {({ vizHeight, vizWidth, value }) => renderValue(value, vizWidth, vizHeight)}

@@ -41,7 +41,9 @@ export class PlaylistSrv {
 
     const dash = this.dashboards[this.index];
     const queryParams = this.$location.search();
-    const filteredParams = _.pickBy(queryParams, value => value !== null);
+    const filteredParams = _.pickBy(queryParams, key => {
+      return key === 'kiosk' || key === 'autofitpanels' || key === 'orgId';
+    });
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
 
     // this is done inside timeout to make sure digest happens after

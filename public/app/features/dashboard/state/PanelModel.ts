@@ -6,8 +6,9 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, TimeSeries, Threshold, ScopedVars, PanelTypeChangedHook } from '@grafana/ui';
-import { TableData } from '@grafana/ui/src';
+import { DataQuery, TimeSeries, Threshold, ScopedVars, TableData } from '@grafana/ui';
+import { PanelPlugin } from 'app/types';
+import config from 'app/core/config';
 
 export interface GridPos {
   x: number;
@@ -23,6 +24,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   isEditing: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
+  plugin: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -58,6 +60,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cacheTimeout: true,
   cachedPluginOptions: true,
   transparent: true,
+  pluginVersion: true,
 };
 
 const defaults: any = {
@@ -87,6 +90,7 @@ export class PanelModel {
   targets: DataQuery[];
   datasource: string;
   thresholds?: any;
+  pluginVersion?: string;
 
   snapshotData?: TimeSeries[] | [TableData];
   timeFrom?: any;
@@ -110,13 +114,14 @@ export class PanelModel {
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean };
+  plugin?: PanelPlugin;
 
-  constructor(model) {
+  constructor(model: any) {
     this.events = new Emitter();
 
     // copy properties from persisted model
     for (const property in model) {
-      this[property] = model[property];
+      (this as any)[property] = model[property];
     }
 
     // defaults
@@ -150,7 +155,7 @@ export class PanelModel {
     }
   }
 
-  getOptions(panelDefaults) {
+  getOptions(panelDefaults: any) {
     return _.defaultsDeep(this.options || {}, panelDefaults);
   }
 
@@ -227,7 +232,7 @@ export class PanelModel {
       }
       return {
         ...acc,
-        [property]: this[property],
+        [property]: (this as any)[property],
       };
     }, {});
   }
@@ -236,15 +241,39 @@ export class PanelModel {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
     Object.keys(prevOptions).map(property => {
-      this[property] = prevOptions[property];
+      (this as any)[property] = prevOptions[property];
     });
   }
 
-  changeType(pluginId: string, hook?: PanelTypeChangedHook) {
+  private getPluginVersion(plugin: PanelPlugin): string {
+    return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
+  }
+
+  pluginLoaded(plugin: PanelPlugin) {
+    this.plugin = plugin;
+
+    const { reactPanel } = plugin.exports;
+
+    // Call PanelMigration Handler if the version has changed
+    if (reactPanel && reactPanel.onPanelMigration) {
+      const version = this.getPluginVersion(plugin);
+      if (version !== this.pluginVersion) {
+        this.options = reactPanel.onPanelMigration(this);
+        this.pluginVersion = version;
+      }
+    }
+  }
+
+  changePlugin(newPlugin: PanelPlugin) {
+    const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
+    const reactPanel = newPlugin.exports.reactPanel;
 
-    this.type = pluginId;
+    // for angular panels we must remove all events and let angular panels do some cleanup
+    if (this.plugin.exports.PanelCtrl) {
+      this.destroy();
+    }
 
     // remove panel type specific  options
     for (const key of _.keys(this)) {
@@ -252,18 +281,26 @@ export class PanelModel {
         continue;
       }
 
-      delete this[key];
+      delete (this as any)[key];
     }
 
     this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
 
-    // Callback that can validate and migrate any existing settings
-    if (hook) {
-      this.options = this.options || {};
-      const old = oldOptions ? oldOptions.options : null;
+    // switch
+    this.type = pluginId;
+    this.plugin = newPlugin;
 
-      Object.assign(this.options, hook(this.options, oldPluginId, old));
+    // Let panel plugins inspect options from previous panel and keep any that it can use
+    if (reactPanel) {
+      if (reactPanel.onPanelTypeChanged) {
+        this.options = this.options || {};
+        const old = oldOptions && oldOptions.options ? oldOptions.options : {};
+        Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
+      }
+      if (reactPanel.onPanelMigration) {
+        this.pluginVersion = this.getPluginVersion(newPlugin);
+      }
     }
   }
 

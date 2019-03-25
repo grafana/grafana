@@ -37,16 +37,16 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   render() {
-    const { height, width, options, panelData } = this.props;
-    const { orientation } = options;
+    const { height, width, options, data, renderCounter } = this.props;
     return (
       <ProcessedValuesRepeater
         getProcessedValues={this.getProcessedValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
-        source={panelData}
-        orientation={orientation}
+        source={data}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
       />
     );
   }

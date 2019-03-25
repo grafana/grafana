@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+
 import SlideDown from 'app/core/components/Animations/SlideDown';
 import { Input, Tooltip } from '@grafana/ui';
+
 import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';

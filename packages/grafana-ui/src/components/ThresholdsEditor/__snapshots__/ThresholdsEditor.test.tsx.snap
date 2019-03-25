@@ -83,10 +83,12 @@ exports[`Render should render with base threshold 1`] = `
                   >
                     <WithTheme(ColorPicker)
                       color="#7EB26D"
+                      enableNamedColors={true}
                       onChange={[Function]}
                     >
                       <ColorPicker
                         color="#7EB26D"
+                        enableNamedColors={true}
                         onChange={[Function]}
                         theme={
                           Object {
@@ -193,7 +195,7 @@ exports[`Render should render with base threshold 1`] = `
                             "typography": Object {
                               "fontFamily": Object {
                                 "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
                               },
                               "heading": Object {
                                 "h1": "28px",
@@ -209,6 +211,10 @@ exports[`Render should render with base threshold 1`] = `
                                 "sm": 1.1,
                                 "xs": 1,
                               },
+                              "link": Object {
+                                "decoration": "none",
+                                "hoverDecoration": "none",
+                              },
                               "size": Object {
                                 "base": "13px",
                                 "lg": "18px",
@@ -223,6 +229,15 @@ exports[`Render should render with base threshold 1`] = `
                                 "semibold": 500,
                               },
                             },
+                            "zIndex": Object {
+                              "dropdown": "1000",
+                              "modal": "1050",
+                              "modalBackdrop": "1040",
+                              "navbarFixed": "1020",
+                              "sidemenu": "1025",
+                              "tooltip": "1030",
+                              "typeahead": "1060",
+                            },
                           }
                         }
                       >
@@ -230,6 +245,7 @@ exports[`Render should render with base threshold 1`] = `
                           content={
                             <ColorPickerPopover
                               color="#7EB26D"
+                              enableNamedColors={true}
                               onChange={[Function]}
                               theme={
                                 Object {
@@ -336,7 +352,7 @@ exports[`Render should render with base threshold 1`] = `
                                   "typography": Object {
                                     "fontFamily": Object {
                                       "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                      "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                      "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
                                     },
                                     "heading": Object {
                                       "h1": "28px",
@@ -352,6 +368,10 @@ exports[`Render should render with base threshold 1`] = `
                                       "sm": 1.1,
                                       "xs": 1,
                                     },
+                                    "link": Object {
+                                      "decoration": "none",
+                                      "hoverDecoration": "none",
+                                    },
                                     "size": Object {
                                       "base": "13px",
                                       "lg": "18px",
@@ -365,6 +385,15 @@ exports[`Render should render with base threshold 1`] = `
                                       "regular": 400,
                                       "semibold": 500,
                                     },
+                                  },
+                                  "zIndex": Object {
+                                    "dropdown": "1000",
+                                    "modal": "1050",
+                                    "modalBackdrop": "1040",
+                                    "navbarFixed": "1020",
+                                    "sidemenu": "1025",
+                                    "tooltip": "1030",
+                                    "typeahead": "1060",
                                   },
                                 }
                               }

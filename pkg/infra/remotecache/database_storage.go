@@ -101,7 +101,7 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 
 	// insert or update depending on if item already exist
 	if has {
-		sql := `UPDATE cache_data SET data=?, created=?, expire=? WHERE cache_key='?'`
+		sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
 		_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
 	} else {
 		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`

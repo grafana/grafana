@@ -75,6 +75,72 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(q2.Result[0].External, ShouldEqual, true)
 			})
 
+			Convey("Should be able to update users in a team", func() {
+				userId := userIds[0]
+				team := group1.Result
+				addMemberCmd := m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team.Id, UserId: userId}
+				err = AddTeamMember(&addMemberCmd)
+				So(err, ShouldBeNil)
+
+				qBeforeUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qBeforeUpdate)
+				So(err, ShouldBeNil)
+				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+
+				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
+					UserId:     userId,
+					OrgId:      testOrgId,
+					TeamId:     team.Id,
+					Permission: m.PERMISSION_ADMIN,
+				})
+
+				So(err, ShouldBeNil)
+
+				qAfterUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qAfterUpdate)
+				So(err, ShouldBeNil)
+				So(qAfterUpdate.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
+			})
+
+			Convey("Should default to member permission level when updating a user with invalid permission level", func() {
+				userID := userIds[0]
+				team := group1.Result
+				addMemberCmd := m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team.Id, UserId: userID}
+				err = AddTeamMember(&addMemberCmd)
+				So(err, ShouldBeNil)
+
+				qBeforeUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qBeforeUpdate)
+				So(err, ShouldBeNil)
+				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+
+				invalidPermissionLevel := m.PERMISSION_EDIT
+				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
+					UserId:     userID,
+					OrgId:      testOrgId,
+					TeamId:     team.Id,
+					Permission: invalidPermissionLevel,
+				})
+
+				So(err, ShouldBeNil)
+
+				qAfterUpdate := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team.Id}
+				err = GetTeamMembers(qAfterUpdate)
+				So(err, ShouldBeNil)
+				So(qAfterUpdate.Result[0].Permission, ShouldEqual, 0)
+			})
+
+			Convey("Shouldn't be able to update a user not in the team.", func() {
+				err = UpdateTeamMember(&m.UpdateTeamMemberCommand{
+					UserId:     1,
+					OrgId:      testOrgId,
+					TeamId:     group1.Result.Id,
+					Permission: m.PERMISSION_ADMIN,
+				})
+
+				So(err, ShouldEqual, m.ErrTeamMemberNotFound)
+			})
+
 			Convey("Should be able to search for teams", func() {
 				query := &m.SearchTeamsQuery{OrgId: testOrgId, Query: "group", Page: 1}
 				err = SearchTeams(query)
@@ -112,6 +178,33 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = GetTeamMembers(q2)
 				So(err, ShouldBeNil)
 				So(len(q2.Result), ShouldEqual, 0)
+			})
+
+			Convey("When ProtectLastAdmin is set to true", func() {
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], Permission: m.PERMISSION_ADMIN})
+				So(err, ShouldBeNil)
+
+				Convey("A user should not be able to remove the last admin", func() {
+					err = RemoveTeamMember(&m.RemoveTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], ProtectLastAdmin: true})
+					So(err, ShouldEqual, m.ErrLastTeamAdmin)
+				})
+
+				Convey("A user should be able to remove an admin if there are other admins", func() {
+					AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[1], Permission: m.PERMISSION_ADMIN})
+					err = RemoveTeamMember(&m.RemoveTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], ProtectLastAdmin: true})
+					So(err, ShouldEqual, nil)
+				})
+
+				Convey("A user should not be able to remove the admin permission for the last admin", func() {
+					err = UpdateTeamMember(&m.UpdateTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
+					So(err, ShouldEqual, m.ErrLastTeamAdmin)
+				})
+
+				Convey("A user should be able to remove the admin permission if there are other admins", func() {
+					AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[1], Permission: m.PERMISSION_ADMIN})
+					err = UpdateTeamMember(&m.UpdateTeamMemberCommand{OrgId: testOrgId, TeamId: group1.Result.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
+					So(err, ShouldEqual, nil)
+				})
 			})
 
 			Convey("Should be able to remove a group with users and permissions", func() {

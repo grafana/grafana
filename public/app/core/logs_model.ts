@@ -77,6 +77,7 @@ export interface LogsMetaItem {
 }
 
 export interface LogsModel {
+  hasUniqueLabels: boolean;
   id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
