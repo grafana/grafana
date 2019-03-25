@@ -1,4 +1,4 @@
-import { readCSV, toCSV } from './csv';
+import { readCSV, toCSV, CSVHeaderStyle } from './csv';
 
 const fs = require('fs');
 
@@ -53,10 +53,20 @@ describe('write csv', () => {
     const path = __dirname + '/testdata/roundtrip.csv';
     const csv = fs.readFileSync(path, 'utf8');
     return readCSV(csv).then(data => {
-      const out = toCSV(data);
+      const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
       expect(data.length).toBe(1);
       expect(data[0].fields.length).toBe(3);
       expect(norm(out)).toBe(norm(csv));
+
+      // Keep the name even without special formatting
+      return readCSV(out).then(again => {
+        const shorter = toCSV(again, { headerStyle: CSVHeaderStyle.name });
+        return readCSV(shorter).then(f => {
+          const fields = f[0].fields;
+          expect(fields.length).toBe(3);
+          expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
+        });
+      });
     });
   });
 });

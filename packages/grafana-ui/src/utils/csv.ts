@@ -7,13 +7,19 @@ import isNumber from 'lodash/isNumber';
 import { SeriesData, Field, FieldType } from '../types/index';
 import { guessFieldTypeFromValue } from './processSeriesData';
 
+export enum CSVHeaderStyle {
+  full,
+  name,
+  none,
+}
+
 // Subset of all parse options
 export interface CSVConfig {
   delimiter?: string; // default: ","
   newline?: string; // default: "\r\n"
   quoteChar?: string; // default: '"'
   encoding?: string; // default: "",
-  writeHeader?: boolean; // true
+  headerStyle?: CSVHeaderStyle;
 }
 
 export interface CSVParseCallbacks {
@@ -258,11 +264,11 @@ type FieldWriter = (value: any) => string;
 
 function writeValue(value: any, config: CSVConfig): string {
   const str = value.toString();
-  if (str.indexOf('"') >= 0) {
+  if (str.includes('"')) {
     // Escape the double quote characters
     return config.quoteChar + str.replace('"', '""') + config.quoteChar;
   }
-  if (str.indexOf('\n') >= 0 || str.indexOf(config.delimiter) >= 0) {
+  if (str.includes('\n') || str.includes(config.delimiter)) {
     return config.quoteChar + str + config.quoteChar;
   }
   return str;
@@ -316,18 +322,26 @@ export function toCSV(data: SeriesData[], config?: CSVConfig): string {
     newline: '\r\n',
     quoteChar: '"',
     encoding: '',
-    writeHeader: true,
+    headerStyle: CSVHeaderStyle.name,
   });
 
   for (const series of data) {
     const { rows, fields } = series;
-    if (config.writeHeader) {
+    if (config.headerStyle === CSVHeaderStyle.full) {
       csv =
         csv +
         getHeaderLine('name', fields, config) +
         getHeaderLine('type', fields, config) +
         getHeaderLine('unit', fields, config) +
         getHeaderLine('dateFormat', fields, config);
+    } else if (config.headerStyle === CSVHeaderStyle.name) {
+      for (let i = 0; i < fields.length; i++) {
+        if (i > 0) {
+          csv += config.delimiter;
+        }
+        csv += fields[i].name;
+      }
+      csv += config.newline;
     }
     const writers = fields.map(field => makeFieldWriter(field, config!));
     for (let i = 0; i < rows.length; i++) {
