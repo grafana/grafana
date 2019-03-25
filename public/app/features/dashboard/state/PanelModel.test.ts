@@ -28,6 +28,7 @@ describe('PanelModel', () => {
         },
       };
       model = new PanelModel(modelJson);
+      model.pluginLoaded(getPanelPlugin({ id: 'table', exports: { PanelCtrl: {} as any } }));
     });
 
     it('should apply defaults', () => {

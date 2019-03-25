@@ -246,7 +246,7 @@ export class PanelModel {
   }
 
   private getPluginVersion(plugin: PanelPlugin): string {
-    return _.get(plugin, 'info.version') || config.buildInfo.version;
+    return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -271,7 +271,7 @@ export class PanelModel {
     const reactPanel = newPlugin.exports.reactPanel;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (!_.has(this, 'plugin.exports.reactPanel')) {
+    if (this.plugin.exports.PanelCtrl) {
       this.destroy();
     }
 
