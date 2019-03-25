@@ -262,7 +262,7 @@ function writeValue(value: any, config: CSVConfig): string {
     // Escape the double quote characters
     return config.quoteChar + str.replace('"', '""') + config.quoteChar;
   }
-  if (str.indexOf('\n') >= 0 || str.index(config.delimiter)) {
+  if (str.indexOf('\n') >= 0 || str.indexOf(config.delimiter) >= 0) {
     return config.quoteChar + str + config.quoteChar;
   }
   return str;
