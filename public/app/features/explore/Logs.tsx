@@ -169,6 +169,7 @@ export default class Logs extends PureComponent<Props, State> {
     const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
+    const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
     const meta = [...data.meta];
@@ -247,7 +248,7 @@ export default class Logs extends PureComponent<Props, State> {
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
@@ -262,7 +263,7 @@ export default class Logs extends PureComponent<Props, State> {
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}

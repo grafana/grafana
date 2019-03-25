@@ -1,12 +1,12 @@
 import { ComponentClass } from 'react';
-import { LoadingState, TableData } from './data';
+import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  data?: TableData[];
+  data?: SeriesData[];
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;

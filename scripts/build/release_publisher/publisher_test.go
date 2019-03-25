@@ -30,7 +30,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedOs:      "linux",
 			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.2.0-beta1.linux-amd64.tar.gz",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"linux", "amd64", ".linux-amd64.tar.gz"}},
+			buildArtifacts:  []buildArtifact{{"linux", "amd64", ".linux-amd64.tar.gz", ""}},
 		},
 		{
 			version:         "v5.2.3",
@@ -44,7 +44,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedOs:      "rhel",
 			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.2.3-1.x86_64.rpm",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm"}},
+			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm", ""}},
 		},
 		{
 			version:         "v5.4.0-pre1asdf",
@@ -58,7 +58,21 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedOs:      "rhel",
 			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0-pre1asdf.x86_64.rpm",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm"}},
+			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm", ""}},
+		},
+		{
+			version:         "v5.4.0-pre1asdf",
+			expectedVersion: "5.4.0-pre1asdf",
+			whatsNewURL:     "https://whatsnews.foo/",
+			relNotesURL:     "https://relnotes.foo/",
+			nightly:         true,
+			expectedBeta:    false,
+			expectedStable:  false,
+			expectedArch:    "armv6",
+			expectedOs:      "linux",
+			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-rpi-5.4.0-pre1asdf_armhf.deb",
+			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
+			buildArtifacts:  []buildArtifact{{"linux", "armv6", "_armhf.deb", "-rpi"}},
 		},
 	}
 
@@ -103,78 +117,6 @@ type mockHTTPGetter struct{}
 
 func (mockHTTPGetter) getContents(url string) (string, error) {
 	return url, nil
-}
-
-func TestPreparingReleaseFromLocal(t *testing.T) {
-	whatsNewURL := "https://whatsnews.foo/"
-	relNotesURL := "https://relnotes.foo/"
-	expectedVersion := "5.4.0-123pre1"
-	expectedBuilds := 4
-
-	var builder releaseBuilder
-	testDataPath := "testdata"
-	builder = releaseLocalSources{
-		path:                   testDataPath,
-		artifactConfigurations: completeBuildArtifactConfigurations,
-	}
-
-	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewURL, relNotesURL, true)
-
-	if relAll.Stable || !relAll.Nightly {
-		t.Error("Expected a nightly release but wasn't.")
-	}
-
-	if relAll.ReleaseNotesURL != relNotesURL {
-		t.Errorf("expected releaseNotesURL to be %s, but it was %s", relNotesURL, relAll.ReleaseNotesURL)
-	}
-	if relAll.WhatsNewURL != whatsNewURL {
-		t.Errorf("expected whatsNewURL to be %s, but it was %s", whatsNewURL, relAll.WhatsNewURL)
-	}
-
-	if relAll.Beta {
-		t.Errorf("Expected release to be nightly, not beta.")
-	}
-
-	if relAll.Version != expectedVersion {
-		t.Errorf("Expected version=%s, but got=%s", expectedVersion, relAll.Version)
-	}
-
-	if len(relAll.Builds) != expectedBuilds {
-		t.Errorf("Expected %v builds, but was %v", expectedBuilds, len(relAll.Builds))
-	}
-
-	expectedArch := "amd64"
-	expectedOs := "win"
-
-	builder = releaseLocalSources{
-		path: testDataPath,
-		artifactConfigurations: []buildArtifact{{
-			os:         expectedOs,
-			arch:       expectedArch,
-			urlPostfix: ".windows-amd64.zip",
-		}},
-	}
-
-	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewURL, relNotesURL, true)
-
-	if len(relOne.Builds) != 1 {
-		t.Errorf("Expected 1 artifact, but was %v", len(relOne.Builds))
-	}
-
-	build := relOne.Builds[0]
-
-	if build.Arch != expectedArch {
-		t.Fatalf("Expected arch to be %s, but was %s", expectedArch, build.Arch)
-	}
-
-	if build.Os != expectedOs {
-		t.Fatalf("Expected os to be %s, but was %s", expectedOs, build.Os)
-	}
-
-	_, err := builder.prepareRelease("", "", "", false)
-	if err == nil {
-		t.Error("Error was nil, but expected an error as the local releaser only supports nightly builds.")
-	}
 }
 
 func TestFilterBuildArtifacts(t *testing.T) {

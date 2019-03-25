@@ -459,11 +459,21 @@ exports[`Render should render with base threshold 1`] = `
                 <div
                   className="thresholds-row-input-inner-value"
                 >
-                  <input
+                  <Input
+                    className=""
                     readOnly={true}
                     type="text"
                     value="Base"
-                  />
+                  >
+                    <div>
+                      <input
+                        className="gf-form-input"
+                        readOnly={true}
+                        type="text"
+                        value="Base"
+                      />
+                    </div>
+                  </Input>
                 </div>
               </div>
             </div>

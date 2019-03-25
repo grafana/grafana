@@ -10,9 +10,9 @@ import {
   PanelProps,
   getDisplayProcessor,
   NullValueMode,
-  ColumnType,
+  FieldType,
   calculateStats,
-  getFirstTimeColumn,
+  getFirstTimeField,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -35,19 +35,19 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
 
   const values: DisplayValue[] = [];
 
-  for (const table of data) {
+  for (const series of data) {
     if (stat === 'name') {
-      values.push(display(table.name));
+      values.push(display(series.name));
     }
 
-    for (let i = 0; i < table.columns.length; i++) {
-      const column = table.columns[i];
+    for (let i = 0; i < series.fields.length; i++) {
+      const column = series.fields[i];
 
-      // Show all columns that are not 'time'
-      if (column.type === ColumnType.number) {
+      // Show all fields that are not 'time'
+      if (column.type === FieldType.number) {
         const stats = calculateStats({
-          table,
-          columnIndex: i,
+          series,
+          fieldIndex: i,
           stats: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
         });
@@ -96,17 +96,17 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
     const values: SingleStatDisplay[] = [];
 
-    for (const table of data) {
-      const timeColumn = sparkline.show ? getFirstTimeColumn(table) : -1;
+    for (const series of data) {
+      const timeColumn = sparkline.show ? getFirstTimeField(series) : -1;
 
-      for (let i = 0; i < table.columns.length; i++) {
-        const column = table.columns[i];
+      for (let i = 0; i < series.fields.length; i++) {
+        const column = series.fields[i];
 
-        // Show all columns that are not 'time'
-        if (column.type === ColumnType.number) {
+        // Show all fields that are not 'time'
+        if (column.type === FieldType.number) {
           const stats = calculateStats({
-            table,
-            columnIndex: i,
+            series,
+            fieldIndex: i,
             stats: [stat], // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
@@ -144,7 +144,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
           if (sparkline.show && timeColumn >= 0) {
             const points = getFlotPairs({
-              rows: table.rows,
+              rows: series.rows,
               xIndex: timeColumn,
               yIndex: i,
               nullValueMode: NullValueMode.Null,
