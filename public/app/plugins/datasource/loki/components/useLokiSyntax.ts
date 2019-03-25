@@ -3,6 +3,7 @@ import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider'
 import Prism from 'prismjs';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
+import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -12,7 +13,7 @@ const PRISM_SYNTAX = 'promql';
  * @description Initializes given language provider, exposes Loki syntax and enables loading label option values
  */
 export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
-  let mounted = false;
+  const mounted = useRefMounted();
   // State
   const [languageProviderInitialized, setLanguageProviderInitilized] = useState(false);
   const [syntax, setSyntax] = useState(null);
@@ -34,7 +35,7 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
   const initializeLanguageProvider = async () => {
     await languageProvider.start();
     Prism.languages[PRISM_SYNTAX] = languageProvider.getSyntax();
-    if (mounted) {
+    if (mounted.current) {
       setLogLabelOptions(languageProvider.logLabelOptions);
       setSyntax(languageProvider.getSyntax());
       setLanguageProviderInitilized(true);
@@ -43,12 +44,7 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
 
   // Effects
   useEffect(() => {
-    mounted = true;
     initializeLanguageProvider();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   return {

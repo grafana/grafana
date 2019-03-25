@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
+import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
 /**
  *
@@ -15,7 +16,7 @@ export const useLokiLabels = (
   languageProviderInitialised: boolean,
   activeOption: CascaderOption[]
 ) => {
-  let mounted = false;
+  const mounted = useRefMounted();
 
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
@@ -24,14 +25,14 @@ export const useLokiLabels = (
   // Async
   const fetchOptionValues = async option => {
     await languageProvider.fetchLabelValues(option);
-    if (mounted) {
+    if (mounted.current) {
       setLogLabelOptions(languageProvider.logLabelOptions);
     }
   };
 
   const tryLabelsRefresh = async () => {
     await languageProvider.refreshLogLabels();
-    if (mounted) {
+    if (mounted.current) {
       setRefreshLabels(false);
       setLogLabelOptions(languageProvider.logLabelOptions);
     }
@@ -43,7 +44,6 @@ export const useLokiLabels = (
   // It's a subject of activeOption state change only. This is because of specific behavior or rc-cascader
   // https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
   useEffect(() => {
-    mounted = true;
     if (languageProviderInitialised) {
       const targetOption = activeOption[activeOption.length - 1];
       if (targetOption) {
@@ -60,10 +60,6 @@ export const useLokiLabels = (
         fetchOptionValues(targetOption.value);
       }
     }
-
-    return () => {
-      mounted = false;
-    };
   }, [activeOption]);
 
   // This effect is performed on shouldTryRefreshLabels state change only.
