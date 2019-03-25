@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, UnitPicker, StatID, ColumnType } from '@grafana/ui';
+import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, UnitPicker, StatID, FieldType } from '@grafana/ui';
 
 // Types
 import { SingleStatValueOptions } from './types';
@@ -53,7 +53,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
           <FormLabel width={labelWidth}>Show</FormLabel>
           <StatsPicker
             width={12}
-            filter={v => v.resultType !== ColumnType.string}
+            filter={v => v.resultType !== FieldType.string}
             placeholder="Choose Stat"
             defaultStat={StatID.mean}
             allowMultiple={false}

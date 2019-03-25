@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -73,7 +74,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
             <form name="folderSettingsForm" onSubmit={this.onSave}>
               <div className="gf-form">
                 <label className="gf-form-label width-7">Name</label>
-                <input
+                <Input
                   type="text"
                   className="gf-form-input width-30"
                   value={folder.title}

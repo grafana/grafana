@@ -5,6 +5,44 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export enum FieldType {
+  time = 'time', // or date
+  number = 'number',
+  string = 'string',
+  boolean = 'boolean',
+  other = 'other', // Object, Array, etc
+}
+
+export interface Field {
+  name: string; // The column name
+  type?: FieldType;
+  filterable?: boolean;
+  unit?: string;
+  dateFormat?: string; // Source data format
+}
+
+export interface Tags {
+  [key: string]: string;
+}
+
+export interface SeriesData {
+  name?: string;
+  fields: Field[];
+  rows: any[][];
+  tags?: Tags;
+}
+
+export interface Column {
+  text: string; // For a Column, the 'text' is the field name
+  filterable?: boolean;
+  unit?: string;
+}
+
+export interface TableData {
+  columns: Column[];
+  rows: any[][];
+}
+
 export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
@@ -32,33 +70,6 @@ export enum NullValueMode {
 
 /** View model projection of many time series */
 export type TimeSeriesVMs = TimeSeriesVM[];
-
-export enum ColumnType {
-  time = 'time', // or date
-  number = 'number',
-  string = 'string',
-  boolean = 'boolean',
-  other = 'other', // Object, Array, etc
-}
-
-export interface Column {
-  text: string; // The column name
-  type?: ColumnType;
-  filterable?: boolean;
-  unit?: string;
-  dateFormat?: string; // Source data format
-}
-
-export interface Tags {
-  [key: string]: string;
-}
-
-export interface TableData {
-  name?: string;
-  columns: Column[];
-  rows: any[][];
-  tags?: Tags;
-}
 
 export interface AnnotationEvent {
   annotation?: any;
