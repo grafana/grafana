@@ -97,12 +97,22 @@ Object {
     Array [
       10,
       "20",
-      false,
+      true,
     ],
     Array [
       40,
       "50",
       false,
+    ],
+    Array [
+      40,
+      "500",
+      false,
+    ],
+    Array [
+      40,
+      "50",
+      true,
     ],
   ],
 }

@@ -89,8 +89,6 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
                   dateFormat: '#',
                 };
 
-                console.log('CHECK', first, k, headerKeys);
-
                 // Check if it is a known/supported column
                 if (headerKeys.hasOwnProperty(k)) {
                   // Starting a new table after reading rows
@@ -220,7 +218,7 @@ function makeFieldParser(value: string, column: Field): FieldParser {
   // Will convert anything that starts with "T" to true
   if (column.type === FieldType.boolean) {
     return (value: string) => {
-      return value[0] === 'T' || value[0] === 't' || value[0] === '1';
+      return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
     };
   }
 
