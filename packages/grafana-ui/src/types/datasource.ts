@@ -1,12 +1,12 @@
 import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries } from './data';
+import { TableData, TimeSeries, SeriesData } from './data';
+
+export type DataQueryResponseData = TimeSeries | TableData | SeriesData | any;
 
 export interface DataQueryResponse {
-  data: DataQueryResponseData;
+  data: DataQueryResponseData[];
 }
-
-export type DataQueryResponseData = TimeSeries[] | [TableData] | any;
 
 export interface DataQuery {
   /**
