@@ -12,6 +12,7 @@ const PRISM_SYNTAX = 'promql';
  * @description Initializes given language provider, exposes Loki syntax and enables loading label option values
  */
 export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
+  let mounted = false;
   // State
   const [languageProviderInitialized, setLanguageProviderInitilized] = useState(false);
   const [syntax, setSyntax] = useState(null);
@@ -31,18 +32,23 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
 
   // Async
   const initializeLanguageProvider = async () => {
-    if (!languageProviderInitialized) {
-      await languageProvider.start();
-    }
+    await languageProvider.start();
     Prism.languages[PRISM_SYNTAX] = languageProvider.getSyntax();
-    setLogLabelOptions(languageProvider.logLabelOptions);
-    setSyntax(languageProvider.getSyntax());
-    setLanguageProviderInitilized(true);
+    if (mounted) {
+      setLogLabelOptions(languageProvider.logLabelOptions);
+      setSyntax(languageProvider.getSyntax());
+      setLanguageProviderInitilized(true);
+    }
   };
 
   // Effects
   useEffect(() => {
+    mounted = true;
     initializeLanguageProvider();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return {

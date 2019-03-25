@@ -15,6 +15,8 @@ export const useLokiLabels = (
   languageProviderInitialised: boolean,
   activeOption: CascaderOption[]
 ) => {
+  let mounted = false;
+
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
@@ -22,13 +24,17 @@ export const useLokiLabels = (
   // Async
   const fetchOptionValues = async option => {
     await languageProvider.fetchLabelValues(option);
-    setLogLabelOptions(languageProvider.logLabelOptions);
+    if (mounted) {
+      setLogLabelOptions(languageProvider.logLabelOptions);
+    }
   };
 
   const tryLabelsRefresh = async () => {
     await languageProvider.refreshLogLabels();
-    setRefreshLabels(false);
-    setLogLabelOptions(languageProvider.logLabelOptions);
+    if (mounted) {
+      setRefreshLabels(false);
+      setLogLabelOptions(languageProvider.logLabelOptions);
+    }
   };
 
   // Effects
@@ -37,25 +43,27 @@ export const useLokiLabels = (
   // It's a subject of activeOption state change only. This is because of specific behavior or rc-cascader
   // https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
   useEffect(() => {
-    if (!languageProviderInitialised) {
-      return;
-    }
-    const targetOption = activeOption[activeOption.length - 1];
-    if (!targetOption) {
-      return;
+    mounted = true;
+    if (languageProviderInitialised) {
+      const targetOption = activeOption[activeOption.length - 1];
+      if (targetOption) {
+        const nextOptions = logLabelOptions.map(option => {
+          if (option.value === targetOption.value) {
+            return {
+              ...option,
+              loading: true,
+            };
+          }
+          return option;
+        });
+        setLogLabelOptions(nextOptions); // to set loading
+        fetchOptionValues(targetOption.value);
+      }
     }
 
-    const nextOptions = logLabelOptions.map(option => {
-      if (option.value === targetOption.value) {
-        return {
-          ...option,
-          loading: true,
-        };
-      }
-      return option;
-    });
-    setLogLabelOptions(nextOptions); // to set loading
-    fetchOptionValues(targetOption.value);
+    return () => {
+      mounted = false;
+    };
   }, [activeOption]);
 
   // This effect is performed on shouldTryRefreshLabels state change only.
