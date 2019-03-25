@@ -295,7 +295,7 @@ export class PanelModel {
     if (reactPanel) {
       if (reactPanel.onPanelTypeChanged) {
         this.options = this.options || {};
-        const old = oldOptions ? oldOptions.options : {};
+        const old = oldOptions && oldOptions.options ? oldOptions.options : {};
         Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
       }
       if (reactPanel.onPanelMigration) {
