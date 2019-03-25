@@ -31,13 +31,6 @@ fi
 echo "Build arguments: $OPT"
 echo "current dir: $(pwd)"
 
-if [ -d "dist" ]; then
-  rm -rf dist
-fi
-
-mkdir dist
-go run build.go -gen-version ${OPT} > dist/grafana.version
-
 go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
 go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
 go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
@@ -48,6 +41,13 @@ yarn install --pure-lockfile --no-progress
 
 echo "Building frontend"
 go run build.go ${OPT} build-frontend
+
+if [ -d "dist" ]; then
+  rm -rf dist
+fi
+
+mkdir dist
+go run build.go -gen-version ${OPT} > dist/grafana.version
 
 # Load ruby, needed for packing with fpm
 source /etc/profile.d/rvm.sh
