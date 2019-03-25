@@ -294,6 +294,13 @@ export function importQueries(
   };
 }
 
+export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const instance = getState().explore[exploreId].datasourceInstance;
+    dispatch(loadDatasource(exploreId, instance));
+  };
+};
+
 /**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
