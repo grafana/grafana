@@ -28,7 +28,7 @@ export interface TableParseDetails {
  * This makes sure the header and all rows have equal length.
  *
  * @param series (immutable)
- * @returns a new series that has equal length rows, or the same
+ * @returns a series that has equal length rows, or the same
  * series if no changes were needed
  */
 export function matchRowSizes(series: SeriesData): SeriesData {
