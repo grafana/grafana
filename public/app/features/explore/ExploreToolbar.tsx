@@ -164,7 +164,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               <RefreshPicker
                 onIntervalChanged={this.onChangeRefreshInterval}
                 onRefresh={this.onRunQuery}
-                intervals={['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d']}
                 initialValue={undefined}
                 value={refreshInterval}
               />
