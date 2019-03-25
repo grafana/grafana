@@ -50,9 +50,6 @@ func (e *MetaqueriesExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 	println(response)
 	return response, err
 }
-
-var actualFrom int64
-
 func (e *MetaqueriesExecutor) timeShift(ctx context.Context, dsInfo *models.DataSource, modelJson *simplejson.Json, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 
 	periodsToShift, err1 := strconv.Atoi(modelJson.Get("periods").MustString())
@@ -125,8 +122,6 @@ func (e *MetaqueriesExecutor) timeShift(ctx context.Context, dsInfo *models.Data
 }
 func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.DataSource, modelJson *simplejson.Json, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
 
-	//&{map[outputMetricName:ma periods:2 query:A queryType:MovingAverage refId:B datasource:MetaQueries metric:ct]}
-
 	periodsToShift, err1 := strconv.Atoi(modelJson.Get("periods").MustString())
 	if err1 != nil {
 		// handle error
@@ -140,22 +135,17 @@ func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.
 	if error2 != nil {
 	}
 
-	if actualFrom == 0 {
-		actualFrom = FromEpochMs
-	}
+	fmt.Println("FromEpochMs ", time.Unix(FromEpochMs, 0).UTC().String())
+	fmt.Println("ToEpochMs ", time.Unix(ToEpochMs, 0).UTC().String())
 
-	//from := time.Unix(int64(FromEpochMs), 0)
-	shiftedFrom := time.Unix(int64(FromEpochMs), 0).AddDate(0, 0, -(periodsToShift - 1))
+	from := time.Unix(int64(FromEpochMs), 0).AddDate(0, 0, -(periodsToShift - 1))
 	to := time.Unix(int64(ToEpochMs), 0)
 
-	fmt.Println("from ", shiftedFrom.UTC().String())
-	fmt.Println("to ", to.UTC().String())
+	fmt.Println("tsdbQuery.TimeRange.From ", from.UTC().String())
+	fmt.Println("tsdbQuery.TimeRange.To ", to.UTC().String())
 
-	tsdbQuery.TimeRange.From = strconv.Itoa(int(shiftedFrom.Unix()))
+	tsdbQuery.TimeRange.From = strconv.Itoa(int(from.Unix()))
 	tsdbQuery.TimeRange.To = strconv.Itoa(int(to.Unix()))
-
-	fmt.Println("tsdbQuery.TimeRange.From ", tsdbQuery.TimeRange.From)
-	fmt.Println("tsdbQuery.TimeRange.To ", tsdbQuery.TimeRange.To)
 
 	var response *tsdb.Response
 	var err error
@@ -175,9 +165,8 @@ func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.
 
 			} else if tsdbQuery.Queries[i].Model.Get("druidDS") != nil {
 
-				//fmt.Println("actualFrom ",actualFrom)
-				fmt.Println("FromEpochMs ", FromEpochMs)
-				fmt.Println("ToEpochMs ", ToEpochMs)
+				fmt.Println("FromEpochMs in druid ", time.Unix(FromEpochMs, 0).UTC().String())
+				fmt.Println("ToEpochMs in druid ", time.Unix(ToEpochMs, 0).UTC().String())
 
 				druidQuery := tsdbQuery.Queries[i]
 				var druid *tsdb.TsdbQuery
@@ -192,40 +181,35 @@ func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.
 				druid.Queries = append(druid.Queries, druidQuery)
 
 				response, err = tsdb.HandleRequest(ctx, druid.Queries[0].DataSource, druid)
-
-				dataPoints := response.Results[""].Series[0].Points
-				points := make([]tsdb.TimePoint, 0)
-				datapointByTime := make(map[int64]float64)
-
-				for i := 0; i < len(dataPoints); i++ {
-
-					datapointByTime[int64(dataPoints[i][1].Float64)] = dataPoints[i][0].Float64
-					var metricSum float64
-
-					if int64(dataPoints[i][1].Float64) >= actualFrom && int64(dataPoints[i][1].Float64) <= ToEpochMs {
-
-						for count := 0; count < periodsToShift; count++ {
-							targetDate := time.Unix(int64(dataPoints[i][1].Float64), 0).AddDate(0, 0, -count).Unix()
-							metricSum += datapointByTime[int64(targetDate)]
-
-						}
-						dataPoints[i][0].Float64 = metricSum / float64(periodsToShift)
-						points = append(points, tsdb.NewTimePoint(dataPoints[i][0], dataPoints[i][1].Float64))
-
-					}
-				}
-
-				response.Results[""].Series[0].Points = dataPoints
-				response.Results[""].Series[0].Points = points
-				fmt.Println("error message ", err)
-				fmt.Println("response message ", len(response.Results))
-				fmt.Println(reflect.TypeOf(response))
-				return response, err
 			}
+
+			dataPoints := response.Results[""].Series[0].Points
+			points := make([]tsdb.TimePoint, 0)
+			datapointByTime := make(map[int64]float64)
+
+			for i := 0; i < len(dataPoints); i++ {
+
+				datapointByTime[int64(dataPoints[i][1].Float64)] = dataPoints[i][0].Float64
+				var metricSum float64
+
+				for count := 0; count < periodsToShift; count++ {
+					targetDate := time.Unix(int64(dataPoints[i][1].Float64), 0).AddDate(0, 0, -count).Unix()
+					metricSum += datapointByTime[int64(targetDate)]
+				}
+				dataPoints[i][0].Float64 = metricSum / float64(periodsToShift)
+				if int64(dataPoints[i][1].Float64) >= FromEpochMs && int64(dataPoints[i][1].Float64) <= ToEpochMs {
+					points = append(points, tsdb.NewTimePoint(dataPoints[i][0], dataPoints[i][1].Float64))
+				}
+			}
+
+			fmt.Println("points ", points)
+			response.Results[""].Series[0].Points = points
+			fmt.Println("error message ", err)
+			fmt.Println("response message ", len(response.Results))
+			fmt.Println(reflect.TypeOf(response))
+			return response, err
 		}
 	}
 
-	fmt.Println("test response", err)
-	fmt.Println("test response ", len(response.Results))
 	return response, err
 }
