@@ -398,9 +398,7 @@ Array [
       >
         Alias By
       </label>
-      <div
-        className="our-custom-wrapper-class"
-      >
+      <div>
         <input
           className="gf-form-input gf-form-input width-24"
           onChange={[Function]}
@@ -428,9 +426,7 @@ Array [
       >
         Project
       </span>
-      <div
-        className="our-custom-wrapper-class"
-      >
+      <div>
         <input
           className="gf-form-input gf-form-input width-15"
           disabled={true}
