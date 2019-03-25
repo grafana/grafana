@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  SelectOptionItem,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
@@ -248,6 +249,11 @@ export interface ExploreItemState {
    * Currently hidden log series
    */
   hiddenLogLevels?: LogLevel[];
+
+  /**
+   * How often item should be refreshed
+   */
+  refreshInterval?: SelectOptionItem;
 }
 
 export interface ExploreUIState {

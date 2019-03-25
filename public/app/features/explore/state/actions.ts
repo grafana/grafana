@@ -23,6 +23,8 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { StoreState } from 'app/types';
+import { SelectOptionItem } from '@grafana/ui';
+
 import {
   RawTimeRange,
   TimeRange,
@@ -37,6 +39,8 @@ import {
   Action,
   updateDatasourceInstanceAction,
   changeQueryAction,
+  changeRefreshIntervalAction,
+  ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
   changeTimeAction,
@@ -160,6 +164,16 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
     dispatch(changeTimeAction({ exploreId, range }));
     dispatch(runQueries(exploreId));
   };
+}
+
+/**
+ * Change the time range of Explore. Called from the RefreshPicker.
+ */
+export function changeRefreshInterval(
+  exploreId: ExploreId,
+  refreshInterval: SelectOptionItem
+): ActionOf<ChangeRefreshIntervalPayload> {
+  return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
 
 /**

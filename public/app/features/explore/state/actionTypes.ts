@@ -1,5 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
+import { SelectOptionItem } from '@grafana/ui';
 import {
   RawTimeRange,
   TimeRange,
@@ -77,6 +78,11 @@ export interface ChangeSizePayload {
 export interface ChangeTimePayload {
   exploreId: ExploreId;
   range: TimeRange;
+}
+
+export interface ChangeRefreshIntervalPayload {
+  exploreId: ExploreId;
+  refreshInterval: SelectOptionItem;
 }
 
 export interface ClearQueriesPayload {
@@ -238,6 +244,13 @@ export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
 export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
+
+/**
+ * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ */
+export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshIntervalPayload>(
+  'explore/CHANGE_REFRESH_INTERVAL'
+).create();
 
 /**
  * Clear all queries and results.
@@ -423,6 +436,7 @@ export type Action =
   | ActionOf<ChangeQueryPayload>
   | ActionOf<ChangeSizePayload>
   | ActionOf<ChangeTimePayload>
+  | ActionOf<ChangeRefreshIntervalPayload>
   | ActionOf<ClearQueriesPayload>
   | ActionOf<HighlightLogsExpressionPayload>
   | ActionOf<InitializeExplorePayload>

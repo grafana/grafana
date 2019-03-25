@@ -15,6 +15,7 @@ import {
   changeQueryAction,
   changeSizeAction,
   changeTimeAction,
+  changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
@@ -159,6 +160,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: changeTimeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, range: action.payload.range };
+    },
+  })
+  .addMapper({
+    filter: changeRefreshIntervalAction,
+    mapper: (state, action): ExploreItemState => {
+      return { ...state, refreshInterval: action.payload.refreshInterval };
     },
   })
   .addMapper({
