@@ -183,8 +183,9 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
           }
 
           let paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
+          const hasValue = paramValue !== null && paramValue !== undefined;
 
-          const last = index >= func.params.length - 1 && param.optional && !paramValue;
+          const last = index >= func.params.length - 1 && param.optional && !hasValue;
           if (last && param.multiple) {
             paramValue = '+';
           }
@@ -197,7 +198,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
             '<a ng-click="" class="graphite-func-param-link' +
               (last ? ' query-part__last' : '') +
               '">' +
-              (paramValue || '&nbsp;') +
+              (hasValue ? paramValue : '&nbsp;') +
               '</a>'
           );
           const $input = $(paramTemplate);

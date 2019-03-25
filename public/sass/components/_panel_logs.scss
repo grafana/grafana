@@ -3,8 +3,7 @@ $column-horizontal-spacing: 10px;
 .logs-panel-options {
   display: flex;
   background-color: $page-bg;
-  padding: $panel-padding;
-  padding-top: 10px;
+  padding: $space-sm $space-md $space-sm $space-md;
   border-radius: $border-radius;
   margin: $space-md 0 $space-sm;
   border: $panel-border;

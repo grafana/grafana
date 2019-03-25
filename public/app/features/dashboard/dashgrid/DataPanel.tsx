@@ -15,6 +15,7 @@ import {
   TimeRange,
   ScopedVars,
   toTableData,
+  guessColumnTypes,
 } from '@grafana/ui';
 
 interface RenderProps {
@@ -44,6 +45,25 @@ export interface State {
   loading: LoadingState;
   response: DataQueryResponse;
   data?: TableData[];
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedTableData(results?: any[]): TableData[] {
+  if (!results) {
+    return [];
+  }
+
+  const tables: TableData[] = [];
+  for (const r of results) {
+    if (r) {
+      tables.push(guessColumnTypes(toTableData(r)));
+    }
+  }
+  return tables;
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -147,7 +167,7 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        data: toTableData(resp.data),
+        data: getProcessedTableData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {

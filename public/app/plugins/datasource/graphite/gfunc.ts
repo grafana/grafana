@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { isVersionGtOrEq } from 'app/core/utils/version';
+import { InterpolateFunction } from '@grafana/ui';
 
 const index = {};
 
@@ -961,24 +962,30 @@ export class FuncInstance {
     this.updateText();
   }
 
-  render(metricExp) {
+  render(metricExp: string, replaceVariables: InterpolateFunction): string {
     const str = this.def.name + '(';
 
     const parameters = _.map(this.params, (value, index) => {
+      const valueInterpolated = replaceVariables(value);
       let paramType;
+
       if (index < this.def.params.length) {
         paramType = this.def.params[index].type;
       } else if (_.get(_.last(this.def.params), 'multiple')) {
         paramType = _.get(_.last(this.def.params), 'type');
       }
+
       // param types that should never be quoted
       if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
         return value;
       }
+
       // param types that might be quoted
-      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+value)) {
-        return _.toString(+value);
+      // To quote variables correctly we need to interpolate it to check if it contains a numeric or string value
+      if (_.includes(['int_or_interval', 'node_or_tag'], paramType) && _.isFinite(+valueInterpolated)) {
+        return _.toString(value);
       }
+
       return "'" + value + "'";
     });
 

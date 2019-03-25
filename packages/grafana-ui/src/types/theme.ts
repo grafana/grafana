@@ -46,6 +46,10 @@ export interface GrafanaThemeCommons {
       h5: string;
       h6: string;
     };
+    link: {
+      decoration: string;
+      hoverDecoration: string;
+    };
   };
   spacing: {
     d: string;
@@ -70,6 +74,15 @@ export interface GrafanaThemeCommons {
   panelPadding: {
     horizontal: number;
     vertical: number;
+  };
+  zIndex: {
+    dropdown: string;
+    navbarFixed: string;
+    sidemenu: string;
+    tooltip: string;
+    modalBackdrop: string;
+    modal: string;
+    typeahead: string;
   };
 }
 
