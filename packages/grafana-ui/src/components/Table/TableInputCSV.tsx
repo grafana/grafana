@@ -2,10 +2,10 @@ import React from 'react';
 import debounce from 'lodash/debounce';
 import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
-import { CSVParseConfig, readCSV } from '../../utils/csv';
+import { CSVConfig, readCSV } from '../../utils/csv';
 
 interface Props {
-  config?: CSVParseConfig;
+  config?: CSVConfig;
   text: string;
   onSeriesParsed: (data: SeriesData[], text: string) => void;
 }

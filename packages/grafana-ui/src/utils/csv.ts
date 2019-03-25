@@ -1,16 +1,19 @@
 // Libraries
 import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
+import defaults from 'lodash/defaults';
+import isNumber from 'lodash/isNumber';
 
 // Types
 import { SeriesData, Field, FieldType } from '../types/index';
 import { guessFieldTypeFromValue } from './processSeriesData';
 
 // Subset of all parse options
-export interface CSVParseConfig {
+export interface CSVConfig {
   delimiter?: string; // default: ","
   newline?: string; // default: "\r\n"
   quoteChar?: string; // default: '"'
-  encoding?: string; // default: ""
+  encoding?: string; // default: "",
+  writeHeader?: boolean; // true
 }
 
 export interface CSVParseCallbacks {
@@ -26,7 +29,7 @@ export interface CSVParseCallbacks {
 }
 
 export interface CSVOptions {
-  config?: CSVParseConfig;
+  config?: CSVConfig;
   callback?: CSVParseCallbacks;
 }
 
@@ -249,4 +252,100 @@ function padColumnWidth(fields: Field[], width: number) {
       });
     }
   }
+}
+
+type FieldWriter = (value: any) => string;
+
+function writeValue(value: any, config: CSVConfig): string {
+  const str = value.toString();
+  if (str.indexOf('"') >= 0) {
+    // Escape the double quote characters
+    return config.quoteChar + str.replace('"', '""') + config.quoteChar;
+  }
+  if (str.indexOf('\n') >= 0 || str.index(config.delimiter)) {
+    return config.quoteChar + str + config.quoteChar;
+  }
+  return str;
+}
+
+function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
+  if (field.type) {
+    if (field.type === FieldType.boolean) {
+      return (value: any) => {
+        return value ? 'true' : 'false';
+      };
+    }
+
+    if (field.type === FieldType.number) {
+      return (value: any) => {
+        if (isNumber(value)) {
+          return value.toString();
+        }
+        return writeValue(value, config);
+      };
+    }
+  }
+
+  return (value: any) => writeValue(value, config);
+}
+
+function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
+  for (const f of fields) {
+    if (f.hasOwnProperty(key)) {
+      let line = '#' + key + '#';
+      for (let i = 0; i < fields.length; i++) {
+        if (i > 0) {
+          line = line + config.delimiter;
+        }
+
+        const v = (fields[i] as any)[key];
+        if (v) {
+          line = line + writeValue(v, config);
+        }
+      }
+      return line + config.newline;
+    }
+  }
+  return '';
+}
+
+export function toCSV(data: SeriesData[], config?: CSVConfig): string {
+  let csv = '';
+  config = defaults(config, {
+    delimiter: ',',
+    newline: '\r\n',
+    quoteChar: '"',
+    encoding: '',
+    writeHeader: true,
+  });
+
+  for (const series of data) {
+    const { rows, fields } = series;
+    if (config.writeHeader) {
+      csv =
+        csv +
+        getHeaderLine('name', fields, config) +
+        getHeaderLine('type', fields, config) +
+        getHeaderLine('unit', fields, config) +
+        getHeaderLine('dateFormat', fields, config);
+    }
+    const writers = fields.map(field => makeFieldWriter(field, config!));
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      for (let j = 0; j < row.length; j++) {
+        if (j > 0) {
+          csv = csv + config.delimiter;
+        }
+
+        const v = row[j];
+        if (v !== null) {
+          csv = csv + writers[j](v);
+        }
+      }
+      csv = csv + config.newline;
+    }
+    csv = csv + config.newline;
+  }
+
+  return csv;
 }

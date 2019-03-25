@@ -1,4 +1,4 @@
-import { readCSV } from './csv';
+import { readCSV, toCSV } from './csv';
 
 const fs = require('fs');
 
@@ -40,6 +40,23 @@ describe('read csv', () => {
     return readCSV(csv).then(data => {
       expect(data.length).toBe(1);
       expect(data[0]).toMatchSnapshot();
+    });
+  });
+});
+
+function norm(csv: string): string {
+  return csv.trim().replace(/[\r]/g, '');
+}
+
+describe('write csv', () => {
+  it('should write the same CSV that we read', () => {
+    const path = __dirname + '/testdata/roundtrip.csv';
+    const csv = fs.readFileSync(path, 'utf8');
+    return readCSV(csv).then(data => {
+      const out = toCSV(data);
+      expect(data.length).toBe(1);
+      expect(data[0].fields.length).toBe(3);
+      expect(norm(out)).toBe(norm(csv));
     });
   });
 });
