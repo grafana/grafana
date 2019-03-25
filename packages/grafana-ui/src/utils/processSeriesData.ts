@@ -7,7 +7,7 @@ import moment from 'moment';
 import Papa, { ParseError, ParseMeta } from 'papaparse';
 
 // Types
-import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types';
+import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
 
 // Subset of all parse options
 export interface TableParseOptions {
@@ -27,13 +27,13 @@ export interface TableParseDetails {
 /**
  * This makes sure the header and all rows have equal length.
  *
- * @param table (immutable)
- * @returns a new table that has equal length rows, or the same
- * table if no changes were needed
+ * @param series (immutable)
+ * @returns a series that has equal length rows, or the same
+ * series if no changes were needed
  */
-export function matchRowSizes(table: SeriesData): SeriesData {
-  const { rows } = table;
-  let { fields } = table;
+export function matchRowSizes(series: SeriesData): SeriesData {
+  const { rows } = series;
+  let { fields } = series;
 
   let sameSize = true;
   let size = fields.length;
@@ -44,7 +44,7 @@ export function matchRowSizes(table: SeriesData): SeriesData {
     }
   });
   if (sameSize) {
-    return table;
+    return series;
   }
 
   // Pad Fields
@@ -164,8 +164,8 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
   };
 }
 
-export const getFirstTimeField = (table: SeriesData): number => {
-  const { fields } = table;
+export const getFirstTimeField = (series: SeriesData): number => {
+  const { fields } = series;
   for (let i = 0; i < fields.length; i++) {
     if (fields[i].type === FieldType.time) {
       return i;
@@ -214,8 +214,8 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-function guessFieldTypeFromTable(table: SeriesData, index: number): FieldType | undefined {
-  const column = table.fields[index];
+function guessFieldTypeFromTable(series: SeriesData, index: number): FieldType | undefined {
+  const column = series.fields[index];
 
   // 1. Use the column name to guess
   if (column.name) {
@@ -226,8 +226,8 @@ function guessFieldTypeFromTable(table: SeriesData, index: number): FieldType | 
   }
 
   // 2. Check the first non-null value
-  for (let i = 0; i < table.rows.length; i++) {
-    const v = table.rows[i][index];
+  for (let i = 0; i < series.rows.length; i++) {
+    const v = series.rows[i][index];
     if (v !== null) {
       return guessFieldTypeFromValue(v);
     }
@@ -238,30 +238,30 @@ function guessFieldTypeFromTable(table: SeriesData, index: number): FieldType | 
 }
 
 /**
- * @returns a table Returns a copy of the table with the best guess for each column type
- * If the table already has column types defined, they will be used
+ * @returns a copy of the series with the best guess for each field type
+ * If the series already has field types defined, they will be used
  */
-export const guessFieldTypes = (table: SeriesData): SeriesData => {
-  for (let i = 0; i < table.fields.length; i++) {
-    if (!table.fields[i].type) {
+export const guessFieldTypes = (series: SeriesData): SeriesData => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (!series.fields[i].type) {
       // Somethign is missing a type return a modified copy
       return {
-        ...table,
-        fields: table.fields.map((column, index) => {
-          if (column.type) {
-            return column;
+        ...series,
+        fields: series.fields.map((field, index) => {
+          if (field.type) {
+            return field;
           }
           // Replace it with a calculated version
           return {
-            ...column,
-            type: guessFieldTypeFromTable(table, index),
+            ...field,
+            type: guessFieldTypeFromTable(series, index),
           };
         }),
       };
     }
   }
   // No changes necessary
-  return table;
+  return series;
 };
 
 export const isTableData = (data: any): data is SeriesData => data && data.hasOwnProperty('columns');
@@ -278,7 +278,7 @@ export const toSeriesData = (data: any): SeriesData => {
   if (data.hasOwnProperty('columns')) {
     return convertTableToSeriesData(data);
   }
-  // TODO, try to convert JSON/Array to table?
+  // TODO, try to convert JSON/Array to seriesta?
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
 };

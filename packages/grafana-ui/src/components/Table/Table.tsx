@@ -12,7 +12,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortSeriesData } from '../../utils/processTableData';
+import { sortSeriesData } from '../../utils/processSeriesData';
 
 import { SeriesData, InterpolateFunction } from '@grafana/ui';
 import {
