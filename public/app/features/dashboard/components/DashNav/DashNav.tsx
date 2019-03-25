@@ -1,7 +1,6 @@
 // Libaries
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import moment from 'moment';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
@@ -11,15 +10,12 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
-import { Tooltip, SelectOptionItem } from '@grafana/ui';
+import { Tooltip } from '@grafana/ui';
 
 // State
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { TimeRange } from '@grafana/ui';
-import { RefreshPicker } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { DashboardModel } from '../../state';
 
 export interface Props {
@@ -32,12 +28,7 @@ export interface Props {
   onAddPanel: () => void;
 }
 
-export interface State {
-  timePickerValue: TimeRange;
-  refreshPickerValue: SelectOptionItem;
-}
-
-export class DashNav extends PureComponent<Props, State> {
+export class DashNav extends PureComponent<Props> {
   timePickerEl: HTMLElement;
   timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
@@ -46,10 +37,6 @@ export class DashNav extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
-    this.state = {
-      timePickerValue: this.timeSrv.timeRange(),
-      refreshPickerValue: undefined,
-    };
   }
 
   componentDidMount() {
@@ -179,83 +166,11 @@ export class DashNav extends PureComponent<Props, State> {
     );
   }
 
-  onChangeTimePicker = (timeRange: TimeRange) => {
-    const { dashboard } = this.props;
-    const panel = dashboard.timepicker;
-    const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
-
-    const nextRange = {
-      from: timeRange.raw.from,
-      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
-    };
-
-    this.timeSrv.setTime(nextRange);
-
-    this.setState({
-      timePickerValue: timeRange,
-    });
-  };
-
-  onMoveTimePicker = (direction: number) => {
-    const range = this.timeSrv.timeRange();
-
-    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    let to: number, from: number;
-    if (direction === -1) {
-      to = range.to.valueOf() - timespan;
-      from = range.from.valueOf() - timespan;
-    } else if (direction === 1) {
-      to = range.to.valueOf() + timespan;
-      from = range.from.valueOf() + timespan;
-      if (to > Date.now() && range.to.valueOf() < Date.now()) {
-        to = Date.now();
-        from = range.from.valueOf();
-      }
-    } else {
-      to = range.to.valueOf();
-      from = range.from.valueOf();
-    }
-
-    const nextRange = {
-      from: moment.utc(from),
-      to: moment.utc(to),
-    };
-
-    const nextTimeRange: TimeRange = {
-      ...nextRange,
-      raw: nextRange,
-    };
-
-    this.timeSrv.setTime(nextRange);
-    this.setState({
-      timePickerValue: nextTimeRange,
-    });
-  };
-
-  onMoveForward = () => this.onMoveTimePicker(1);
-  onMoveBack = () => this.onMoveTimePicker(-1);
-
-  onChangeRefreshPicker = (selectOptionItem: SelectOptionItem) => {
-    this.setState({
-      refreshPickerValue: selectOptionItem,
-    });
-  };
-
   render() {
     const { dashboard, onAddPanel } = this.props;
-    const { timePickerValue, refreshPickerValue } = this.state;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-    const TimePickerTooltipContent = (
-      <>
-        {dashboard.formatDate(timePickerValue.from)}
-        <br />
-        to
-        <br />
-        {dashboard.formatDate(timePickerValue.to)}
-      </>
-    );
 
     return (
       <div className="navbar">
@@ -342,28 +257,6 @@ export class DashNav extends PureComponent<Props, State> {
             classSuffix="tv"
             icon="fa fa-desktop"
             onClick={this.onToggleTVMode}
-          />
-        </div>
-
-        <div className="navbar-buttons">
-          <TimePicker
-            isTimezoneUtc={false}
-            value={this.state.timePickerValue}
-            onChange={this.onChangeTimePicker}
-            tooltipContent={TimePickerTooltipContent}
-            onMoveBackward={this.onMoveBack}
-            onMoveForward={this.onMoveForward}
-            onZoom={() => {
-              console.log('onZoom');
-            }}
-            selectOptions={TimePicker.defaultSelectOptions}
-            popoverOptions={TimePicker.defaultPopoverOptions}
-          />
-          <RefreshPicker
-            onIntervalChanged={this.onChangeRefreshPicker}
-            onRefresh={this.onRefresh}
-            initialValue={undefined}
-            value={refreshPickerValue}
           />
         </div>
 
