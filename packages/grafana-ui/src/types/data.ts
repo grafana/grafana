@@ -20,25 +20,8 @@ export interface TimeSeriesVM {
   label: string;
   color: string;
   data: TimeSeriesValue[][];
-  stats: TimeSeriesStats;
   allIsNull: boolean;
   allIsZero: boolean;
-}
-
-export interface TimeSeriesStats {
-  [key: string]: number | null;
-  total: number | null;
-  max: number | null;
-  min: number | null;
-  logmin: number;
-  avg: number | null;
-  current: number | null;
-  first: number | null;
-  delta: number;
-  diff: number | null;
-  range: number | null;
-  timeStep: number;
-  count: number;
 }
 
 export enum NullValueMode {
@@ -50,14 +33,43 @@ export enum NullValueMode {
 /** View model projection of many time series */
 export type TimeSeriesVMs = TimeSeriesVM[];
 
+export enum ColumnType {
+  time = 'time', // or date
+  number = 'number',
+  string = 'string',
+  boolean = 'boolean',
+  other = 'other', // Object, Array, etc
+}
+
 export interface Column {
   text: string; // The column name
-  type?: 'time' | 'number' | 'string' | 'object'; // not used anywhere? can we remove?
-  filterable?: boolean; // currently only set by elasticsearch, and used in the table panel
+  type?: ColumnType;
+  filterable?: boolean;
   unit?: string;
+  dateFormat?: string; // Source data format
+}
+
+export interface Tags {
+  [key: string]: string;
 }
 
 export interface TableData {
+  name?: string;
   columns: Column[];
-  rows: any[];
+  rows: any[][];
+  tags?: Tags;
+}
+
+export interface AnnotationEvent {
+  annotation?: any;
+  dashboardId?: number;
+  panelId?: number;
+  userId?: number;
+  time?: number;
+  timeEnd?: number;
+  isRegion?: boolean;
+  title?: string;
+  text?: string;
+  type?: string;
+  tags?: string;
 }
