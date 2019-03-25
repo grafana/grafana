@@ -1,6 +1,6 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processTableData';
+import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processSeriesData';
 import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
 

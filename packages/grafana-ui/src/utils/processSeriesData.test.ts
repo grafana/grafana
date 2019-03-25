@@ -1,4 +1,4 @@
-import { parseCSV, toSeriesData, guessFieldTypes, guessFieldTypeFromValue } from './processTableData';
+import { parseCSV, toSeriesData, guessFieldTypes, guessFieldTypeFromValue } from './processSeriesData';
 import { FieldType } from '../types/data';
 import moment from 'moment';
 
@@ -11,25 +11,25 @@ describe('processSeriesData', () => {
 
     it('should generate a header and fix widths', () => {
       const text = '1\n2,3,4\n5,6';
-      const table = parseCSV(text, {
+      const series = parseCSV(text, {
         headerIsFirstLine: false,
       });
-      expect(table.rows.length).toBe(3);
+      expect(series.rows.length).toBe(3);
 
-      expect(table).toMatchSnapshot();
+      expect(series).toMatchSnapshot();
     });
   });
 });
 
 describe('toSeriesData', () => {
-  it('converts timeseries to table ', () => {
+  it('converts timeseries to series', () => {
     const input1 = {
       target: 'Field Name',
       datapoints: [[100, 1], [200, 2]],
     };
-    let table = toSeriesData(input1);
-    expect(table.fields[0].name).toBe(input1.target);
-    expect(table.rows).toBe(input1.datapoints);
+    let series = toSeriesData(input1);
+    expect(series.fields[0].name).toBe(input1.target);
+    expect(series.rows).toBe(input1.datapoints);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -37,17 +37,17 @@ describe('toSeriesData', () => {
       target: '',
       datapoints: [[100, 1], [200, 2]],
     };
-    table = toSeriesData(input2);
-    expect(table.fields[0].name).toEqual('Value');
+    series = toSeriesData(input2);
+    expect(series.fields[0].name).toEqual('Value');
   });
 
-  it('keeps tableData unchanged', () => {
+  it('keeps seriesData unchanged', () => {
     const input = {
       fields: [{ text: 'A' }, { text: 'B' }, { text: 'C' }],
       rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
     };
-    const table = toSeriesData(input);
-    expect(table).toBe(input);
+    const series = toSeriesData(input);
+    expect(series).toBe(input);
   });
 
   it('Guess Colum Types from value', () => {
@@ -70,12 +70,12 @@ describe('toSeriesData', () => {
     expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
   });
 
-  it('Guess Colum Types from table', () => {
-    const table = {
+  it('Guess Colum Types from series', () => {
+    const series = {
       fields: [{ name: 'A (number)' }, { name: 'B (strings)' }, { name: 'C (nulls)' }, { name: 'Time' }],
       rows: [[123, null, null, '2000'], [null, 'Hello', null, 'XXX']],
     };
-    const norm = guessFieldTypes(table);
+    const norm = guessFieldTypes(series);
     expect(norm.fields[0].type).toBe(FieldType.number);
     expect(norm.fields[1].type).toBe(FieldType.string);
     expect(norm.fields[2].type).toBeUndefined();
