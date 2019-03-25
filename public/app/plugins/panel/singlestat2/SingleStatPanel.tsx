@@ -4,7 +4,7 @@ import React, { PureComponent, CSSProperties } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { DisplayValue, PanelProps, NullValueMode, ColumnType, calculateStats } from '@grafana/ui';
+import { DisplayValue, PanelProps, NullValueMode, FieldType, calculateStats } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getDisplayProcessor } from '@grafana/ui';
 import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
@@ -26,19 +26,19 @@ export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): D
 
   const values: DisplayValue[] = [];
 
-  for (const table of data) {
+  for (const series of data) {
     if (stat === 'name') {
-      values.push(display(table.name));
+      values.push(display(series.name));
     }
 
-    for (let i = 0; i < table.columns.length; i++) {
-      const column = table.columns[i];
+    for (let i = 0; i < series.fields.length; i++) {
+      const column = series.fields[i];
 
       // Show all columns that are not 'time'
-      if (column.type === ColumnType.number) {
+      if (column.type === FieldType.number) {
         const stats = calculateStats({
-          table,
-          columnIndex: i,
+          series,
+          fieldIndex: i,
           stats: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
         });
