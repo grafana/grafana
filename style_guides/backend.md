@@ -20,9 +20,9 @@ In the `setting` packages there are many global variables which Grafana sets at 
 away from and move as much configuration as possible to the `setting.Cfg` struct and pass it around, just like the bus.
 
 ## Linting and formatting
-We enforce strict `gofmt` formating and use some linters on our codebase. You can find the current list of linters at https://github.com/grafana/grafana/blob/master/scripts/gometalinter.sh#L23 
+We enforce strict `gofmt` formating and use some linters on our codebase. You can find the current list of linters at https://github.com/grafana/grafana/blob/master/scripts/backend-lint.sh 
 
-We don't enforce `golint` but we encourage it and we will test so the number of linting errors does not increase over time.
+We use [revive](https://github.com/mgechev/revive) as a go linter, and do enforce our [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml) for it.
 
 ## Testing
 We use GoConvey for BDD/scenario based testing. Which we think is useful for testing certain chain or interactions. Ex https://github.com/grafana/grafana/blob/master/pkg/services/auth/auth_token_test.go
