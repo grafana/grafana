@@ -39,6 +39,6 @@ export class RandomWalkStream extends StreamHandler<StreamingQuery> {
   looper = () => {
     this.value += (Math.random() - 0.5) * 0.2;
     this.addRows([[this.value, Date.now()]]);
-    setTimeout(this.looper, 10); //this.options.delay);
+    setTimeout(this.looper, 50); //this.options.delay);
   };
 }

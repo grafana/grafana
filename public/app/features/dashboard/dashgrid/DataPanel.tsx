@@ -261,7 +261,6 @@ export class DataPanel extends Component<Props, State> {
 
     // Time from the query or the response
     const timeRange = response && response.range ? response.range : this.props.timeRange;
-
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
