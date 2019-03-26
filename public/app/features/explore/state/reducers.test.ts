@@ -138,6 +138,7 @@ describe('Explore item reducer', () => {
             supportsLogs: false,
             supportsTable: false,
             StartPage: null,
+            showingStartPage: false,
             queries: [],
             queryKeys: [],
           };
@@ -147,6 +148,7 @@ describe('Explore item reducer', () => {
             supportsLogs: true,
             supportsTable: true,
             StartPage,
+            showingStartPage: true,
             queries: [],
             queryKeys: [],
           };

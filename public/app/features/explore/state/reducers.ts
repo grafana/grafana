@@ -236,6 +236,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         supportsLogs,
         supportsTable,
         StartPage,
+        showingStartPage: Boolean(StartPage),
         queryKeys: getQueryKeys(state.queries, datasourceInstance),
       };
     },
