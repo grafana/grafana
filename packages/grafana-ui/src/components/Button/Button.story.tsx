@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { Button, LinkButton } from './Button';
-import { ButtonSize, ButtonVariant, ButtonProps } from './AbstractButton';
+import { ButtonSize, ButtonVariant, CommonButtonProps } from './AbstractButton';
 // @ts-ignore
 import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
@@ -28,7 +28,7 @@ const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,
 };
 
-const renderButtonStory = (buttonComponent: React.ComponentType<ButtonProps<any>>) => {
+const renderButtonStory = (buttonComponent: React.ComponentType<CommonButtonProps>) => {
   const isDisabled = boolean('Disable button', false);
   return withPropsCombinations(
     buttonComponent,
@@ -45,11 +45,12 @@ ButtonStories.add('with icon', () => {
   const iconKnob = select(
     'Icon',
     {
-      Plus: 'plus',
-      User: 'user',
-      Gear: 'gear',
+      Plus: 'fa fa-plus',
+      User: 'fa fa-user',
+      Gear: 'fa fa-gear',
+      Alert: 'icon-gf icon-gf-alert',
     },
-    'plus'
+    'fa fa-plus'
   );
   return withPropsCombinations(Button, { ...variants, ...defaultProps, icon: [iconKnob] }, combinationOptions)();
 });

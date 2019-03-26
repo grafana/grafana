@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { AbstractButton, ButtonProps, ButtonSize } from './AbstractButton';
+import { AbstractButton, ButtonProps, ButtonSize, LinkButtonProps } from './AbstractButton';
 import { ThemeContext } from '../../themes';
 
 const getSizeNameComponentSegment = (size: ButtonSize) => {
@@ -16,8 +16,13 @@ const getSizeNameComponentSegment = (size: ButtonSize) => {
       return 'Medium';
   }
 };
-const buttonFactory = (renderAs: string, size: ButtonSize, displayName: string) => {
-  const ButtonComponent: React.FunctionComponent<ButtonProps<HTMLButtonElement>> = props => {
+
+const buttonFactory: <T>(renderAs: string, size: ButtonSize, displayName: string) => React.ComponentType<T> = (
+  renderAs,
+  size,
+  displayName
+) => {
+  const ButtonComponent: React.FunctionComponent<any> = props => {
     const theme = useContext(ThemeContext);
     return <AbstractButton {...props} size={size} renderAs={renderAs} theme={theme} />;
   };
@@ -26,55 +31,55 @@ const buttonFactory = (renderAs: string, size: ButtonSize, displayName: string) 
   return ButtonComponent;
 };
 
-export const Button: React.FunctionComponent<ButtonProps<HTMLButtonElement>> = props => {
+export const Button: React.FunctionComponent<ButtonProps> = props => {
   const theme = useContext(ThemeContext);
   return <AbstractButton {...props} renderAs="button" theme={theme} />;
 };
 Button.displayName = 'Button';
 
-export const LinkButton: React.FunctionComponent<ButtonProps<HTMLAnchorElement>> = props => {
+export const LinkButton: React.FunctionComponent<LinkButtonProps> = props => {
   const theme = useContext(ThemeContext);
   return <AbstractButton {...props} renderAs="a" theme={theme} />;
 };
 LinkButton.displayName = 'LinkButton';
 
-export const ExtraSmallButton = buttonFactory(
+export const ExtraSmallButton = buttonFactory<ButtonProps>(
   'button',
   ButtonSize.ExtraSmall,
   `${getSizeNameComponentSegment(ButtonSize.ExtraSmall)}Button`
 );
-export const SmallButton = buttonFactory(
+export const SmallButton = buttonFactory<ButtonProps>(
   'button',
   ButtonSize.Small,
   `${getSizeNameComponentSegment(ButtonSize.Small)}Button`
 );
-export const LargeButton = buttonFactory(
+export const LargeButton = buttonFactory<ButtonProps>(
   'button',
   ButtonSize.Large,
   `${getSizeNameComponentSegment(ButtonSize.Large)}Button`
 );
-export const ExtraLargeButton = buttonFactory(
+export const ExtraLargeButton = buttonFactory<ButtonProps>(
   'button',
   ButtonSize.ExtraLarge,
   `${getSizeNameComponentSegment(ButtonSize.ExtraLarge)}Button`
 );
 
-export const ExtraSmallLinkButton = buttonFactory(
+export const ExtraSmallLinkButton = buttonFactory<LinkButtonProps>(
   'a',
   ButtonSize.ExtraSmall,
   `${getSizeNameComponentSegment(ButtonSize.ExtraSmall)}LinkButton`
 );
-export const SmallLinkButton = buttonFactory(
+export const SmallLinkButton = buttonFactory<LinkButtonProps>(
   'a',
   ButtonSize.Small,
   `${getSizeNameComponentSegment(ButtonSize.Small)}LinkButton`
 );
-export const LargeLinkButton = buttonFactory(
+export const LargeLinkButton = buttonFactory<LinkButtonProps>(
   'a',
   ButtonSize.Large,
   `${getSizeNameComponentSegment(ButtonSize.Large)}LinkButton`
 );
-export const ExtraLargeLinkButton = buttonFactory(
+export const ExtraLargeLinkButton = buttonFactory<LinkButtonProps>(
   'a',
   ButtonSize.ExtraLarge,
   `${getSizeNameComponentSegment(ButtonSize.ExtraLarge)}LinkButton`

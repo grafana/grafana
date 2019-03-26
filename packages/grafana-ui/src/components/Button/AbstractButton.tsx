@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
@@ -20,21 +20,22 @@ export enum ButtonSize {
   ExtraLarge = 'xl',
 }
 
-export interface ButtonProps<T> extends React.HTMLAttributes<T> {
+export interface CommonButtonProps{
   size?: ButtonSize;
   variant?: ButtonVariant;
-  className?: string;
   /**
-   * icon prop is a temporary solution. It accepts a font-awesome icon name for the icon to be rendered.
-   * Currently ONLY font-awesome icons are supported.
+   * icon prop is a temporary solution. It accepts lefacy icon class names for the icon to be rendered.
    * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
    */
   icon?: string;
-  disabled?: boolean;
+  className?: string;
 }
 
-interface AbstractButtonProps extends ButtonProps<any>, Themeable {
-  renderAs: React.ComponentType<ButtonProps<any>> | string;
+export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {}
+export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
+
+interface AbstractButtonProps extends CommonButtonProps, Themeable {
+  renderAs: React.ComponentType<CommonButtonProps> | string;
 }
 
 const buttonVariantStyles = (
@@ -49,6 +50,7 @@ const buttonVariantStyles = (
   text-shadow: 0 ${invert ? '1px' : '-1px'} ${textShadowColor};
   &:hover {
     background: ${from};
+    color: ${textColor};
   }
 
   &:focus {
@@ -179,10 +181,10 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
     variant,
   };
 
-  const finalClassName = buttonStyles.button;
+  const finalClassName = cx(buttonStyles.button, className);
   const finalChildren = icon ? (
     <span className={buttonStyles.iconWrap}>
-      <i className={cx(['fa', `fa-${icon}`, buttonStyles.icon])} />
+      <i className={cx([icon, buttonStyles.icon])} />
       {children}
     </span>
   ) : (
