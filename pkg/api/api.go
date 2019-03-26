@@ -350,6 +350,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), Wrap(UpdateAlertNotification))
 			alertNotifications.Get("/:notificationId", Wrap(GetAlertNotificationByID))
 			alertNotifications.Delete("/:notificationId", Wrap(DeleteAlertNotification))
+			alertNotifications.Get("/uid/:uid", Wrap(GetAlertNotificationByUID))
+			alertNotifications.Put("/uid/:uid", bind(m.UpdateAlertNotificationWithUidCommand{}), Wrap(UpdateAlertNotificationByUID))
+			alertNotifications.Delete("/uid/:uid", Wrap(DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 
 		apiRoute.Get("/annotations", Wrap(GetAnnotations))
