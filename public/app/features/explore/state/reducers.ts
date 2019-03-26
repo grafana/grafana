@@ -77,7 +77,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   requestedDatasourceName: null,
   datasourceError: null,
   datasourceLoading: null,
-  datasourceTesting: null,
   datasourceMissing: false,
   exploreDatasources: [],
   history: [],
@@ -275,7 +274,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         history,
         datasourceLoading: false,
         datasourceMissing: false,
-        datasourceError: null,
         logsHighlighterExpressions: undefined,
         queryTransactions: [],
         update: makeInitialUpdateState(),
@@ -523,7 +521,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state): ExploreItemState => {
       return {
         ...state,
-        datasourceTesting: true,
+        datasourceError: null,
       };
     },
   })
@@ -533,7 +531,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         datasourceError: null,
-        datasourceTesting: false,
       };
     },
   })
@@ -543,7 +540,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         datasourceError: action.payload.error,
-        datasourceTesting: false,
         queryTransactions: [],
         graphResult: undefined,
         tableResult: undefined,

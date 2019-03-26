@@ -135,10 +135,6 @@ export interface ExploreItemState {
    */
   datasourceLoading: boolean | null;
   /**
-   * True if the datasource is loading. `null` if the loading has not started yet.
-   */
-  datasourceTesting: boolean | null;
-  /**
    * True if there is no datasource to be selected.
    */
   datasourceMissing: boolean;

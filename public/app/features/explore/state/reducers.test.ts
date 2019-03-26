@@ -5,14 +5,25 @@ import {
   makeInitialUpdateState,
   initialExploreState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, QueryTransaction } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { scanStartAction, scanStopAction, splitOpenAction, splitCloseAction } from './actionTypes';
+import {
+  scanStartAction,
+  scanStopAction,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
+  updateDatasourceInstanceAction,
+  splitOpenAction,
+  splitCloseAction,
+} from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
-import { LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
+import TableModel from 'app/core/table_model';
+import { DataSourceApi } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -51,6 +62,101 @@ describe('Explore item reducer', () => {
           scanner: undefined,
           scanRange: undefined,
         });
+    });
+  });
+
+  describe('testing datasource', () => {
+    describe('when testDataSourcePendingAction is dispatched', () => {
+      it('then it should set datasourceError', () => {
+        reducerTester()
+          .givenReducer(itemReducer, { datasourceError: {} })
+          .whenActionIsDispatched(testDataSourcePendingAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ datasourceError: null });
+      });
+    });
+
+    describe('when testDataSourceSuccessAction is dispatched', () => {
+      it('then it should set datasourceError', () => {
+        reducerTester()
+          .givenReducer(itemReducer, { datasourceError: {} })
+          .whenActionIsDispatched(testDataSourceSuccessAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ datasourceError: null });
+      });
+    });
+
+    describe('when testDataSourceFailureAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        const error = 'some error';
+        const initalState: Partial<ExploreItemState> = {
+          datasourceError: null,
+          queryTransactions: [{} as QueryTransaction],
+          graphResult: [],
+          tableResult: {} as TableModel,
+          logsResult: {} as LogsModel,
+          update: {
+            datasource: true,
+            queries: true,
+            range: true,
+            ui: true,
+          },
+        };
+        const expectedState = {
+          datasourceError: error,
+          queryTransactions: [],
+          graphResult: undefined,
+          tableResult: undefined,
+          logsResult: undefined,
+          update: makeInitialUpdateState(),
+        };
+
+        reducerTester()
+          .givenReducer(itemReducer, initalState)
+          .whenActionIsDispatched(testDataSourceFailureAction({ exploreId: ExploreId.left, error }))
+          .thenStateShouldEqual(expectedState);
+      });
+    });
+  });
+
+  describe('changing datasource', () => {
+    describe('when updateDatasourceInstanceAction is dispatched', () => {
+      describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
+        it('then it should set correct state', () => {
+          const StartPage = {};
+          const datasourceInstance = {
+            meta: {
+              metrics: {},
+              logs: {},
+              tables: {},
+            },
+            pluginExports: {
+              ExploreStartPage: StartPage,
+            },
+          } as DataSourceApi;
+          const initalState: Partial<ExploreItemState> = {
+            datasourceInstance: null,
+            supportsGraph: false,
+            supportsLogs: false,
+            supportsTable: false,
+            StartPage: null,
+            queries: [],
+            queryKeys: [],
+          };
+          const expectedState = {
+            datasourceInstance,
+            supportsGraph: true,
+            supportsLogs: true,
+            supportsTable: true,
+            StartPage,
+            queries: [],
+            queryKeys: [],
+          };
+
+          reducerTester()
+            .givenReducer(itemReducer, initalState)
+            .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
+            .thenStateShouldEqual(expectedState);
+        });
+      });
     });
   });
 });
