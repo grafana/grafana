@@ -64,6 +64,14 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     await loadDataSource(pageId);
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const { dataSource } = this.props;
+
+    if (prevProps.dataSource !== dataSource) {
+      this.setState({ dataSource });
+    }
+  }
+
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
 
@@ -95,9 +103,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   };
 
   onModelChange = (dataSource: DataSourceSettings) => {
-    this.setState({
-      dataSource: dataSource,
-    });
+    this.setState({ dataSource });
   };
 
   isReadOnly() {

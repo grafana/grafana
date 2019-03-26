@@ -336,6 +336,8 @@ func (e *StackdriverExecutor) unmarshalResponse(res *http.Response) (Stackdriver
 		return StackdriverResponse{}, err
 	}
 
+	// slog.Info("stackdriver", "response", string(body))
+
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
 		return StackdriverResponse{}, fmt.Errorf(string(body))
@@ -559,7 +561,7 @@ func calcBucketBound(bucketOptions StackdriverBucketOptions, n int) string {
 	} else if bucketOptions.ExponentialBuckets != nil {
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	} else if bucketOptions.ExplicitBuckets != nil {
-		bucketBound = strconv.FormatInt(bucketOptions.ExplicitBuckets.Bounds[(n-1)], 10)
+		bucketBound = fmt.Sprintf("%g", bucketOptions.ExplicitBuckets.Bounds[n])
 	}
 	return bucketBound
 }

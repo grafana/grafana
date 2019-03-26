@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import config from 'app/core/config';
 
 export interface Props {
   isReadOnly: boolean;
@@ -23,7 +24,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
       <button type="submit" className="btn btn-danger" disabled={isReadOnly} onClick={onDelete}>
         Delete
       </button>
-      <a className="btn btn-inverse" href="/datasources">
+      <a className="btn btn-inverse" href={`${config.appSubUrl}/datasources`}>
         Back
       </a>
     </div>

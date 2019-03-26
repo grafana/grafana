@@ -75,7 +75,7 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body, mode: KioskUrlValue, sidemenuOpen: boolean) {
+function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue, sidemenuOpen: boolean) {
   body.removeClass('view-mode--tv');
   body.removeClass('view-mode--kiosk');
   body.removeClass('view-mode--inactive');
@@ -174,8 +174,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', options => {
-        const search = $location.search();
+      appEvents.on('toggle-kiosk-mode', (options: { exit?: boolean }) => {
+        const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
           search.kiosk = '1';
@@ -197,7 +197,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }
         }
 
-        $location.search(search);
+        $timeout(() => $location.search(search));
         setViewModeBodyClass(body, search.kiosk, sidemenuOpen);
       });
 

@@ -185,7 +185,7 @@ export class Metrics extends React.Component<Props, State> {
                 },
               ]}
               placeholder="Select Metric"
-              className="width-15"
+              className="width-26"
             />
           </div>
           <div className="gf-form gf-form--grow">

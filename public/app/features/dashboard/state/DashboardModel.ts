@@ -887,8 +887,8 @@ export class DashboardModel {
     }
 
     // add back navbar height
-    if (kioskMode === KIOSK_MODE_TV) {
-      visibleHeight += 55;
+    if (kioskMode && kioskMode !== KIOSK_MODE_TV) {
+      visibleHeight += navbarHeight;
     }
 
     const visibleGridHeight = Math.floor(visibleHeight / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));

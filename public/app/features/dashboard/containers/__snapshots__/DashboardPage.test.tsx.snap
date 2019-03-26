@@ -113,6 +113,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       hideTracksWhenNotNeeded={false}
       scrollTop={0}
       setScrollTop={[Function]}
+      updateAfterMountMs={500}
     >
       <div
         className="dashboard-container"
@@ -349,6 +350,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       hideTracksWhenNotNeeded={false}
       scrollTop={0}
       setScrollTop={[Function]}
+      updateAfterMountMs={500}
     >
       <DashboardSettings
         dashboard={

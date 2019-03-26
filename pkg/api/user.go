@@ -121,7 +121,7 @@ func GetUserTeams(c *m.ReqContext) Response {
 	return getUserTeamList(c.OrgId, c.ParamsInt64(":id"))
 }
 
-func getUserTeamList(userID int64, orgID int64) Response {
+func getUserTeamList(orgID int64, userID int64) Response {
 	query := m.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {

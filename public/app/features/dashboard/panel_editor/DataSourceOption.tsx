@@ -1,16 +1,17 @@
-import React, { FC } from 'react';
+import React, { FC, ChangeEvent } from 'react';
 import { FormLabel } from '@grafana/ui';
 
 interface Props {
   label: string;
   placeholder?: string;
-  name?: string;
-  value?: string;
-  onChange?: (evt: any) => void;
+  name: string;
+  value: string;
+  onBlur: (event: ChangeEvent<HTMLInputElement>) => void;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   tooltipInfo?: any;
 }
 
-export const DataSourceOptions: FC<Props> = ({ label, placeholder, name, value, onChange, tooltipInfo }) => {
+export const DataSourceOption: FC<Props> = ({ label, placeholder, name, value, onBlur, onChange, tooltipInfo }) => {
   return (
     <div className="gf-form gf-form--flex-end">
       <FormLabel tooltip={tooltipInfo}>{label}</FormLabel>
@@ -20,10 +21,10 @@ export const DataSourceOptions: FC<Props> = ({ label, placeholder, name, value, 
         placeholder={placeholder}
         name={name}
         spellCheck={false}
-        onBlur={evt => onChange(evt.target.value)}
+        onBlur={onBlur}
+        onChange={onChange}
+        value={value}
       />
     </div>
   );
 };
-
-export default DataSourceOptions;

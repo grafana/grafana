@@ -13,6 +13,133 @@ import (
 )
 
 func TestLdapAuther(t *testing.T) {
+	Convey("initialBind", t, func() {
+		Convey("Given bind dn and password configured", func() {
+			conn := &mockLdapConn{}
+			var actualUsername, actualPassword string
+			conn.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
+					BindPassword: "bindpwd",
+				},
+			}
+			err := ldapAuther.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(ldapAuther.requireSecondBind, ShouldBeTrue)
+			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "bindpwd")
+		})
+
+		Convey("Given bind dn configured", func() {
+			conn := &mockLdapConn{}
+			var actualUsername, actualPassword string
+			conn.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
+				},
+			}
+			err := ldapAuther.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(ldapAuther.requireSecondBind, ShouldBeFalse)
+			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "pwd")
+		})
+
+		Convey("Given empty bind dn and password", func() {
+			conn := &mockLdapConn{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			conn.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn:   conn,
+				server: &LdapServerConf{},
+			}
+			err := ldapAuther.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(ldapAuther.requireSecondBind, ShouldBeTrue)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldBeEmpty)
+		})
+	})
+
+	Convey("serverBind", t, func() {
+		Convey("Given bind dn and password configured", func() {
+			conn := &mockLdapConn{}
+			var actualUsername, actualPassword string
+			conn.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN:       "o=users,dc=grafana,dc=org",
+					BindPassword: "bindpwd",
+				},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "bindpwd")
+		})
+
+		Convey("Given bind dn configured", func() {
+			conn := &mockLdapConn{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			conn.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn: conn,
+				server: &LdapServerConf{
+					BindDN: "o=users,dc=grafana,dc=org",
+				},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
+		})
+
+		Convey("Given empty bind dn and password", func() {
+			conn := &mockLdapConn{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			conn.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			ldapAuther := &ldapAuther{
+				conn:   conn,
+				server: &LdapServerConf{},
+			}
+			err := ldapAuther.serverBind()
+			So(err, ShouldBeNil)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldBeEmpty)
+		})
+	})
 
 	Convey("When translating ldap user to grafana user", t, func() {
 
@@ -365,12 +492,26 @@ func TestLdapAuther(t *testing.T) {
 }
 
 type mockLdapConn struct {
-	result           *ldap.SearchResult
-	searchCalled     bool
-	searchAttributes []string
+	result                      *ldap.SearchResult
+	searchCalled                bool
+	searchAttributes            []string
+	bindProvider                func(username, password string) error
+	unauthenticatedBindProvider func(username string) error
 }
 
 func (c *mockLdapConn) Bind(username, password string) error {
+	if c.bindProvider != nil {
+		return c.bindProvider(username, password)
+	}
+
+	return nil
+}
+
+func (c *mockLdapConn) UnauthenticatedBind(username string) error {
+	if c.unauthenticatedBindProvider != nil {
+		return c.unauthenticatedBindProvider(username)
+	}
+
 	return nil
 }
 

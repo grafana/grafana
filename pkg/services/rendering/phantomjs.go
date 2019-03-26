@@ -36,7 +36,7 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	phantomDebugArg := "--debug=false"
-	if log.GetLogLevelFor("renderer") >= log.LvlDebug {
+	if log.GetLogLevelFor("rendering") >= log.LvlDebug {
 		phantomDebugArg = "--debug=true"
 	}
 
@@ -64,12 +64,25 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 	cmd := exec.CommandContext(commandCtx, binPath, cmdArgs...)
 	cmd.Stderr = cmd.Stdout
 
+	timezone := ""
+
 	if opts.Timezone != "" {
+		timezone = isoTimeOffsetToPosixTz(opts.Timezone)
 		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", isoTimeOffsetToPosixTz(opts.Timezone))
+		cmd.Env = appendEnviron(baseEnviron, "TZ", timezone)
 	}
 
+	rs.log.Debug("executing Phantomjs", "binPath", binPath, "cmdArgs", cmdArgs, "timezone", timezone)
+
 	out, err := cmd.Output()
+
+	if out != nil {
+		rs.log.Debug("Phantomjs output", "out", string(out))
+	}
+
+	if err != nil {
+		rs.log.Debug("Phantomjs error", "error", err)
+	}
 
 	// check for timeout first
 	if commandCtx.Err() == context.DeadlineExceeded {
@@ -81,8 +94,6 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 		rs.log.Error("Phantomjs exited with non zero exit code", "error", err)
 		return nil, err
 	}
-
-	rs.log.Debug("Phantomjs output", "out", string(out))
 
 	rs.log.Debug("Image rendered", "path", pngPath)
 	return &RenderResult{FilePath: pngPath}, nil
