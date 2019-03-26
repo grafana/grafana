@@ -1,4 +1,4 @@
-import { refreshExplore } from './actions';
+import { refreshExplore, testDatasource, loadDatasource } from './actions';
 import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -8,6 +8,11 @@ import {
   changeTimeAction,
   updateUIStateAction,
   setQueriesAction,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
+  loadDatasourcePendingAction,
+  loadDatasourceReadyAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -67,18 +72,20 @@ describe('refreshExplore', () => {
         thunkTester(initialState)
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId)
-          .thenDispatchedActionsAreEqual(dispatchedActions => {
-            const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
-            const { type, payload } = initializeExplore;
+          .then(instance => {
+            instance.thenDispatchedActionsAreEqual(dispatchedActions => {
+              const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
+              const { type, payload } = initializeExplore;
 
-            expect(type).toEqual(initializeExploreAction.type);
-            expect(payload.containerWidth).toEqual(containerWidth);
-            expect(payload.eventBridge).toEqual(eventBridge);
-            expect(payload.queries.length).toBe(1); // Queries have generated keys hard to expect on
-            expect(payload.range).toEqual(range);
-            expect(payload.ui).toEqual(ui);
+              expect(type).toEqual(initializeExploreAction.type);
+              expect(payload.containerWidth).toEqual(containerWidth);
+              expect(payload.eventBridge).toEqual(eventBridge);
+              expect(payload.queries.length).toBe(1); // Queries have generated keys hard to expect on
+              expect(payload.range).toEqual(range);
+              expect(payload.ui).toEqual(ui);
 
-            return true;
+              return true;
+            });
           });
       });
     });
@@ -90,11 +97,13 @@ describe('refreshExplore', () => {
         thunkTester(initialState)
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId)
-          .thenDispatchedActionsAreEqual(dispatchedActions => {
-            expect(dispatchedActions[0].type).toEqual(changeTimeAction.type);
-            expect(dispatchedActions[0].payload).toEqual({ exploreId, range });
+          .then(instance => {
+            instance.thenDispatchedActionsAreEqual(dispatchedActions => {
+              expect(dispatchedActions[0].type).toEqual(changeTimeAction.type);
+              expect(dispatchedActions[0].payload).toEqual({ exploreId, range });
 
-            return true;
+              return true;
+            });
           });
       });
     });
@@ -106,11 +115,13 @@ describe('refreshExplore', () => {
         thunkTester(initialState)
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId)
-          .thenDispatchedActionsAreEqual(dispatchedActions => {
-            expect(dispatchedActions[0].type).toEqual(updateUIStateAction.type);
-            expect(dispatchedActions[0].payload).toEqual({ ...ui, exploreId });
+          .then(instance => {
+            instance.thenDispatchedActionsAreEqual(dispatchedActions => {
+              expect(dispatchedActions[0].type).toEqual(updateUIStateAction.type);
+              expect(dispatchedActions[0].payload).toEqual({ ...ui, exploreId });
 
-            return true;
+              return true;
+            });
           });
       });
     });
@@ -122,11 +133,13 @@ describe('refreshExplore', () => {
         thunkTester(initialState)
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId)
-          .thenDispatchedActionsAreEqual(dispatchedActions => {
-            expect(dispatchedActions[0].type).toEqual(setQueriesAction.type);
-            expect(dispatchedActions[0].payload).toEqual({ exploreId, queries: [] });
+          .then(instance => {
+            instance.thenDispatchedActionsAreEqual(dispatchedActions => {
+              expect(dispatchedActions[0].type).toEqual(setQueriesAction.type);
+              expect(dispatchedActions[0].payload).toEqual({ exploreId, queries: [] });
 
-            return true;
+              return true;
+            });
           });
       });
     });
@@ -140,7 +153,141 @@ describe('refreshExplore', () => {
       thunkTester(initialState)
         .givenThunk(refreshExplore)
         .whenThunkIsDispatched(exploreId)
-        .thenThereAreNoDispatchedActions();
+        .then(instance => instance.thenThereAreNoDispatchedActions());
+    });
+  });
+});
+
+describe('test datasource', () => {
+  describe('when testDatasource thunk is dispatched', () => {
+    describe('and testDatasource call on instance is successful', () => {
+      it('then it should dispatch testDataSourceSuccessAction', () => {
+        const exploreId = ExploreId.left;
+        const mockDatasourceInstance = {
+          testDatasource: () => {
+            return Promise.resolve({ status: 'success' });
+          },
+        };
+
+        thunkTester({})
+          .givenThunk(testDatasource)
+          .whenThunkIsDispatched(exploreId, mockDatasourceInstance)
+          .then(instance => {
+            instance.thenDispatchedActionsEqual([
+              testDataSourcePendingAction({ exploreId }),
+              testDataSourceSuccessAction({ exploreId }),
+            ]);
+          });
+      });
+    });
+
+    describe('and testDatasource call on instance is not successful', () => {
+      it('then it should dispatch testDataSourceFailureAction', () => {
+        const exploreId = ExploreId.left;
+        const error = 'something went wrong';
+        const mockDatasourceInstance = {
+          testDatasource: () => {
+            return Promise.resolve({ status: 'fail', message: error });
+          },
+        };
+
+        thunkTester({})
+          .givenThunk(testDatasource)
+          .whenThunkIsDispatched(exploreId, mockDatasourceInstance)
+          .then(instance => {
+            instance.thenDispatchedActionsEqual([
+              testDataSourcePendingAction({ exploreId }),
+              testDataSourceFailureAction({ exploreId, error }),
+            ]);
+          });
+      });
+    });
+
+    describe('and testDatasource call on instance throws', () => {
+      it('then it should dispatch testDataSourceFailureAction', () => {
+        const exploreId = ExploreId.left;
+        const error = 'something went wrong';
+        const mockDatasourceInstance = {
+          testDatasource: () => {
+            throw { statusText: error };
+          },
+        };
+
+        thunkTester({})
+          .givenThunk(testDatasource)
+          .whenThunkIsDispatched(exploreId, mockDatasourceInstance)
+          .then(instance => {
+            instance.thenDispatchedActionsEqual([
+              testDataSourcePendingAction({ exploreId }),
+              testDataSourceFailureAction({ exploreId, error }),
+            ]);
+          });
+      });
+    });
+  });
+});
+
+describe('loading datasource', () => {
+  describe('when loadDatasource thunk is dispatched', () => {
+    describe('and all goes fine', () => {
+      it('then it should dispatch correct actions', () => {
+        const exploreId = ExploreId.left;
+        const name = 'some-datasource';
+        const initialState = { explore: { [exploreId]: { requestedDatasourceName: name } } };
+        const mockDatasourceInstance = {
+          testDatasource: () => {
+            return Promise.resolve({ status: 'success' });
+          },
+          name,
+          init: jest.fn(),
+          meta: { id: 'some id' },
+        };
+
+        thunkTester(initialState)
+          .givenThunk(loadDatasource)
+          .whenThunkIsDispatched(exploreId, mockDatasourceInstance)
+          .then(instance => {
+            instance.thenDispatchedActionsEqual([
+              loadDatasourcePendingAction({
+                exploreId,
+                requestedDatasourceName: mockDatasourceInstance.name,
+              }),
+              testDataSourcePendingAction({ exploreId }),
+              loadDatasourceReadyAction({ exploreId, history: [] }),
+              testDataSourceSuccessAction({ exploreId }),
+            ]);
+          });
+      });
+    });
+
+    describe('and user changes datasource during load', () => {
+      it('then it should dispatch correct actions', () => {
+        const exploreId = ExploreId.left;
+        const name = 'some-datasource';
+        const initialState = { explore: { [exploreId]: { requestedDatasourceName: 'some-other-datasource' } } };
+        const mockDatasourceInstance = {
+          testDatasource: () => {
+            return Promise.resolve({ status: 'success' });
+          },
+          name,
+          init: jest.fn(),
+          meta: { id: 'some id' },
+        };
+
+        thunkTester(initialState)
+          .givenThunk(loadDatasource)
+          .whenThunkIsDispatched(exploreId, mockDatasourceInstance)
+          .then(instance => {
+            instance.thenDispatchedActionsEqual([
+              loadDatasourcePendingAction({
+                exploreId,
+                requestedDatasourceName: mockDatasourceInstance.name,
+              }),
+              testDataSourcePendingAction({ exploreId }),
+              testDataSourceSuccessAction({ exploreId }),
+            ]);
+          });
+      });
     });
   });
 });

@@ -274,7 +274,7 @@ export const loadDatasourcePendingAction = actionCreatorFactory<LoadDatasourcePe
  * Datasource loading was completed.
  */
 export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceReadyPayload>(
-  'explore/LOAD_DATASOURCE_SUCCESS'
+  'explore/LOAD_DATASOURCE_READY'
 ).create();
 
 /**
@@ -405,36 +405,4 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
 
-export type HigherOrderAction =
-  | ActionOf<SplitCloseActionPayload>
-  | SplitOpenAction
-  | ResetExploreAction
-  | ActionOf<any>;
-
-export type Action =
-  | ActionOf<AddQueryRowPayload>
-  | ActionOf<ChangeQueryPayload>
-  | ActionOf<ChangeSizePayload>
-  | ActionOf<ChangeTimePayload>
-  | ActionOf<ClearQueriesPayload>
-  | ActionOf<HighlightLogsExpressionPayload>
-  | ActionOf<InitializeExplorePayload>
-  | ActionOf<LoadDatasourceFailurePayload>
-  | ActionOf<LoadDatasourceMissingPayload>
-  | ActionOf<LoadDatasourcePendingPayload>
-  | ActionOf<LoadDatasourceReadyPayload>
-  | ActionOf<ModifyQueriesPayload>
-  | ActionOf<QueryTransactionFailurePayload>
-  | ActionOf<QueryTransactionStartPayload>
-  | ActionOf<QueryTransactionSuccessPayload>
-  | ActionOf<RemoveQueryRowPayload>
-  | ActionOf<ScanStartPayload>
-  | ActionOf<ScanRangePayload>
-  | ActionOf<SetQueriesPayload>
-  | ActionOf<SplitOpenPayload>
-  | ActionOf<ToggleTablePayload>
-  | ActionOf<ToggleGraphPayload>
-  | ActionOf<ToggleLogsPayload>
-  | ActionOf<UpdateDatasourceInstancePayload>
-  | ActionOf<QueriesImportedPayload>
-  | ActionOf<ToggleLogLevelPayload>;
+export type HigherOrderAction = SplitCloseAction | SplitOpenAction | ResetExploreAction | ActionOf<any>;

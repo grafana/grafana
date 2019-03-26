@@ -22,6 +22,7 @@ import {
 import { updateLocation } from 'app/core/actions';
 
 // Types
+import { ThunkResult } from 'app/types';
 import {
   RawTimeRange,
   TimeRange,
@@ -71,7 +72,6 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-import { ThunkResult } from 'app/types';
 import { parseTime } from '../TimePicker';
 
 /**
@@ -239,7 +239,10 @@ export function initializeExplore(
 /**
  * Datasource loading was successfully completed.
  */
-export const loadDatasourceReady = (exploreId: ExploreId, instance: any): ActionOf<LoadDatasourceReadyPayload> => {
+export const loadDatasourceReady = (
+  exploreId: ExploreId,
+  instance: DataSourceApi
+): ActionOf<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
@@ -290,7 +293,7 @@ export function importQueries(
  * Tests datasource.
  */
 export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     let datasourceError = null;
 
     dispatch(testDataSourcePendingAction({ exploreId }));
@@ -348,7 +351,6 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     dispatch(loadDatasourceReady(exploreId, instance));
-    return Promise.resolve();
   };
 }
 

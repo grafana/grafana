@@ -9,18 +9,19 @@ export interface ThunkGiven {
 }
 
 export interface ThunkWhen {
-  whenThunkIsDispatched: (...args: any) => ThunkThen;
+  whenThunkIsDispatched: (...args: any) => Promise<ThunkThen>;
 }
 
 export interface ThunkThen {
-  thenDispatchedActionsEqual: (actions: Array<ActionOf<any>>) => ThunkWhen;
-  thenDispatchedActionsAreEqual: (callback: (actions: Array<ActionOf<any>>) => boolean) => ThunkWhen;
-  thenThereAreNoDispatchedActions: () => ThunkWhen;
+  thenDispatchedActionsEqual: (actions: Array<ActionOf<any>>) => void;
+  thenDispatchedActionsAreEqual: (callback: (dispatchedActions: Array<ActionOf<any>>) => boolean) => void;
+  thenThereAreNoDispatchedActions: () => void;
 }
 
-export const thunkTester = (initialState: any): ThunkGiven => {
+export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
   const store = mockStore(initialState);
   let thunkUnderTest = null;
+  let resultingActions: Array<ActionOf<any>> = [];
 
   const givenThunk = (thunkFunction: any): ThunkWhen => {
     thunkUnderTest = thunkFunction;
@@ -28,27 +29,26 @@ export const thunkTester = (initialState: any): ThunkGiven => {
     return instance;
   };
 
-  function whenThunkIsDispatched(...args: any): ThunkThen {
-    store.dispatch(thunkUnderTest(...arguments));
+  const whenThunkIsDispatched = async (...args: any): Promise<ThunkThen> => {
+    await store.dispatch(thunkUnderTest(...args));
+
+    resultingActions = store.getActions();
+    if (debug) {
+      console.log('resultingActions:', resultingActions);
+    }
 
     return instance;
-  }
+  };
 
-  const thenDispatchedActionsEqual = (actions: Array<ActionOf<any>>): ThunkWhen => {
-    const resultingActions = store.getActions();
+  const thenDispatchedActionsEqual = (actions: Array<ActionOf<any>>): void => {
     expect(resultingActions).toEqual(actions);
-
-    return instance;
   };
 
-  const thenDispatchedActionsAreEqual = (callback: (dispathedActions: Array<ActionOf<any>>) => boolean): ThunkWhen => {
-    const resultingActions = store.getActions();
+  const thenDispatchedActionsAreEqual = (callback: (dispatchedActions: Array<ActionOf<any>>) => boolean): void => {
     expect(callback(resultingActions)).toBe(true);
-
-    return instance;
   };
 
-  const thenThereAreNoDispatchedActions = () => {
+  const thenThereAreNoDispatchedActions = (): void => {
     return thenDispatchedActionsEqual([]);
   };
 
