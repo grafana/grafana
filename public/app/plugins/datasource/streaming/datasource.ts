@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+import { RequestStream } from './RequestStream';
 import { RandomWalkStream } from './RandomWalkStream';
 import { StreamHandler } from './StreamHandler';
 import { DataQueryResponse, DataQuery, DataQueryOptions } from '@grafana/ui';
@@ -32,7 +33,10 @@ export default class StreamingDatasource {
 
     let stream = openStreams[panelId];
     if (!stream) {
-      stream = new RandomWalkStream(options, this);
+      if (false) {
+        stream = new RandomWalkStream(options, this);
+      }
+      stream = new RequestStream(options, this);
       openStreams[panelId] = stream;
       console.log('MAKE Stream', openStreams);
     }

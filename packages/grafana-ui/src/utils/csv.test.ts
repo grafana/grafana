@@ -1,5 +1,6 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
 
+// Test with local CSV files
 const fs = require('fs');
 
 describe('read csv', () => {

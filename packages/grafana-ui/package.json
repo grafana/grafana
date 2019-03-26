@@ -22,6 +22,7 @@
     "@types/react-color": "^2.14.0",
     "classnames": "^2.2.5",
     "d3": "^5.7.0",
+    "fast-text-encoding": "^1.0.0",
     "jquery": "^3.2.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
@@ -36,6 +37,7 @@
     "react-virtualized": "^9.21.0",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
+    "text-encoding": "^0.7.0",
     "tinycolor2": "^1.4.1"
   },
   "devDependencies": {

@@ -41,6 +41,8 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<DataQueryRe
     const oldestTimestamp = rows[0][1];
     const mostRecentTimestamp = rows[rows.length - 1][1];
 
+    // console.log( 'SEND', this.series );
+
     this.next({
       data: [this.series],
       range: {

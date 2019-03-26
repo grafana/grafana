@@ -3,6 +3,9 @@ import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
 import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
+// polyfil for TextEncoder/TextDecoder (node & IE)
+import 'fast-text-encoding'; //'text-encoding';  // 'fast-text-encoding';
+
 // Types
 import { SeriesData, Field, FieldType } from '../types/index';
 import { guessFieldTypeFromValue } from './processSeriesData';
@@ -47,7 +50,8 @@ export function readCSV(csv: string, options?: CSVOptions): Promise<SeriesData[]
         return Promise.reject('unsupported');
       },
       read: () => {
-        return Promise.resolve({ done: true, value: csv });
+        const uint8Array = new TextEncoder().encode(csv);
+        return Promise.resolve({ done: true, value: uint8Array });
       },
       releaseLock: () => {},
     },
@@ -63,12 +67,15 @@ enum ParseState {
 
 type FieldParser = (value: string) => any;
 
-export function readCSVFromStream(reader: ReadableStreamReader<string>, options?: CSVOptions): Promise<SeriesData[]> {
+export function readCSVFromStream(
+  reader: ReadableStreamReader<Uint8Array>,
+  options?: CSVOptions
+): Promise<SeriesData[]> {
   return new Promise((resolve, reject) => {
     const config = options ? options.config : {};
     const callback = options ? options.callback : null;
 
-    const column: FieldParser[] = [];
+    const field: FieldParser[] = [];
     let state = ParseState.Starting;
     let table: SeriesData = {
       fields: [],
@@ -167,10 +174,10 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
             for (let j = 0; j < line.length; j++) {
               const v = line[j];
               if (v) {
-                if (!column[j]) {
-                  column[j] = makeFieldParser(v, table.fields[j]);
+                if (!field[j]) {
+                  field[j] = makeFieldParser(v, table.fields[j]);
                 }
-                row.push(column[j](v));
+                row.push(field[j](v));
               } else {
                 row.push(null);
               }
@@ -199,33 +206,38 @@ export function readCSVFromStream(reader: ReadableStreamReader<string>, options?
       step,
     } as ParseConfig;
 
-    const processText = (value: ReadableStreamReadResult<string>): any => {
+    const process = (value: ReadableStreamReadResult<Uint8Array>): any => {
       if (value.value) {
-        Papa.parse(value.value, papacfg);
+        const str = new TextDecoder().decode(value.value);
+        Papa.parse(str, papacfg);
       }
       if (value.done) {
         resolve(tables);
         return;
       }
-      return reader.read().then(processText);
+      return reader.read().then(process);
     };
-    reader.read().then(processText);
+    reader.read().then(process);
   });
 }
 
-function makeFieldParser(value: string, column: Field): FieldParser {
-  if (!column.type) {
-    column.type = guessFieldTypeFromValue(value);
+function makeFieldParser(value: string, field: Field): FieldParser {
+  if (!field.type) {
+    if (field.name === 'time' || field.name === 'Time') {
+      field.type = FieldType.time;
+    } else {
+      field.type = guessFieldTypeFromValue(value);
+    }
   }
 
-  if (column.type === FieldType.number) {
+  if (field.type === FieldType.number) {
     return (value: string) => {
       return parseFloat(value);
     };
   }
 
   // Will convert anything that starts with "T" to true
-  if (column.type === FieldType.boolean) {
+  if (field.type === FieldType.boolean) {
     return (value: string) => {
       return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
     };
@@ -236,7 +248,7 @@ function makeFieldParser(value: string, column: Field): FieldParser {
 }
 
 /**
- * Creates a column object for each string in the list
+ * Creates a field object for each string in the list
  */
 function makeFieldsFor(line: string[]): Field[] {
   const fields: Field[] = [];
