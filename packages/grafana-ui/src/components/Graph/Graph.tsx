@@ -1,6 +1,7 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
+import toNumber from 'lodash/toNumber';
 
 // Types
 import { TimeRange, TimeSeriesVMs } from '../../types';
@@ -44,8 +45,15 @@ export class Graph extends PureComponent<GraphProps> {
     }
 
     const ticks = width / 100;
-    const min = timeRange.from.valueOf();
-    const max = timeRange.to.valueOf();
+    let min: number = timeRange.from.valueOf();
+    let max: number = timeRange.to.valueOf();
+
+    if (isNaN(min)) {
+      min = toNumber(timeRange.raw.from);
+    }
+    if (isNaN(max)) {
+      max = toNumber(timeRange.raw.to);
+    }
 
     const flotOptions = {
       legend: {
@@ -94,7 +102,7 @@ export class Graph extends PureComponent<GraphProps> {
     };
 
     try {
-      // console.log('Graph render');
+      // console.log('Graph render', timeRange.from );
       $.plot(this.element, timeSeries, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, timeSeries);

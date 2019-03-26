@@ -2,7 +2,7 @@ import moment from 'moment';
 
 import { Subject } from 'rxjs';
 import _ from 'lodash';
-import { SeriesData, DataQueryResponse } from '@grafana/ui';
+import { SeriesData, DataQueryResponse, getFirstTimeField } from '@grafana/ui';
 import { StreamingQuery, StreamingQueryOptions } from './datasource';
 
 export class StreamHandler<T extends StreamingQuery> extends Subject<DataQueryResponse> {
@@ -38,10 +38,11 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<DataQueryRe
       this.series.rows = rows;
     }
 
-    const oldestTimestamp = rows[0][1];
-    const mostRecentTimestamp = rows[rows.length - 1][1];
+    const timeIndex = getFirstTimeField(this.series);
+    const oldestTimestamp = rows[0][timeIndex];
+    const mostRecentTimestamp = rows[rows.length - 1][timeIndex];
 
-    // console.log( 'SEND', this.series );
+    // console.log( 'SEND', oldestTimestamp, mostRecentTimestamp, (mostRecentTimestamp-oldestTimestamp), timeIndex );
 
     this.next({
       data: [this.series],
