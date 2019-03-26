@@ -26,10 +26,10 @@ CallToActionCardStories.add('default', () => {
     'custom'
   );
 
-  console.log(ctaElement);
   return renderComponentWithTheme(CallToActionCard, {
     message: text('Call to action message', 'Renders message prop content'),
-    callToActionElement: ctaElements[ctaElement],
+    callToActionElement: ctaElements
+    [ctaElement],
     footer: text('Call to action footer', 'Renders footer prop content'),
   });
 });
