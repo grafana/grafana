@@ -1,16 +1,21 @@
 import React from 'react';
-import { Themeable, GrafanaTheme } from '../../types';
+import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
+import { Themeable, GrafanaTheme } from '../../types';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 export enum ButtonVariant {
   Primary = 'primary',
   Secondary = 'secondary',
   Danger = 'danger',
+  Inverse = 'inverse',
+  Transparent = 'transparent',
 }
 
 export enum ButtonSize {
   ExtraSmall = 'xs',
   Small = 'sm',
+  Medium = 'md',
   Large = 'lg',
   ExtraLarge = 'xl',
 }
@@ -25,10 +30,16 @@ interface AbstractButtonProps extends ButtonProps<any>, Themeable {
   renderAs: React.ComponentType<ButtonProps<any>> | string;
 }
 
-const buttonVariantStyles = (from: string, to: string, textColor: string, textShadowColor: string) => css`
+const buttonVariantStyles = (
+  from: string,
+  to: string,
+  textColor: string,
+  textShadowColor = 'rgba(0, 0, 0, 0.1)',
+  invert = false
+) => css`
   background: linear-gradient(to bottom, ${from}, ${to});
   color: ${textColor};
-  text-shadow: 0 -1px ${textShadowColor};
+  text-shadow: 0 ${invert ? '1px' : '-1px'} ${textShadowColor};
   &:hover {
     background: ${from};
   }
@@ -66,31 +77,42 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
       break;
+    default:
+      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      fontSize = theme.typography.size.base;
   }
+
   switch (variant) {
     case ButtonVariant.Primary:
-      background = buttonVariantStyles(
-        theme.colors.greenBase,
-        theme.colors.greenShade,
-        theme.colors.white,
-        'rgba(0, 0, 0, 0.1)'
-      );
+      background = buttonVariantStyles(theme.colors.greenBase, theme.colors.greenShade, theme.colors.white);
       break;
     case ButtonVariant.Secondary:
-      background = buttonVariantStyles(
-        theme.colors.blueBase,
-        theme.colors.blueShade,
-        theme.colors.white,
-        'rgba(0, 0, 0, 0.1)'
-      );
+      background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
       break;
     case ButtonVariant.Danger:
-      background = buttonVariantStyles(
-        theme.colors.redBase,
-        theme.colors.redShade,
-        theme.colors.white,
-        'rgba(0, 0, 0, 0.1)'
-      );
+      background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
+      break;
+    case ButtonVariant.Inverse:
+      const from = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark6 }, theme.type) as string;
+      const to = selectThemeVariant(
+        {
+          light: tinycolor(from)
+            .darken(5)
+            .toString(),
+          dark: tinycolor(from)
+            .lighten(4)
+            .toString(),
+        },
+        theme.type
+      ) as string;
+
+      background = buttonVariantStyles(from, to, theme.colors.link, 'rgba(0, 0, 0, 0.1)', true);
+      break;
+    case ButtonVariant.Transparent:
+      background = css`
+        ${buttonVariantStyles('', '', theme.colors.link, 'rgba(0, 0, 0, 0.1)', true)};
+        background: transparent;
+      `;
       break;
   }
 

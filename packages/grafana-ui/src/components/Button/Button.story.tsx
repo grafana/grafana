@@ -14,8 +14,8 @@ const defaultProps = {
 };
 
 const variants = {
-  size: [ButtonSize.ExtraSmall, ButtonSize.Small, ButtonSize.Large, ButtonSize.ExtraLarge],
-  variant: [ButtonVariant.Primary, ButtonVariant.Secondary, ButtonVariant.Danger],
+  size: [ButtonSize.ExtraSmall, ButtonSize.Small, ButtonSize.Medium, ButtonSize.Large, ButtonSize.ExtraLarge],
+  variant: [ButtonVariant.Primary, ButtonVariant.Secondary, ButtonVariant.Danger, ButtonVariant.Inverse, ButtonVariant.Transparent],
 };
 const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,
