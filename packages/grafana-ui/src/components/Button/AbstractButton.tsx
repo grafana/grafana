@@ -20,7 +20,7 @@ export enum ButtonSize {
   ExtraLarge = 'xl',
 }
 
-export interface CommonButtonProps{
+export interface CommonButtonProps {
   size?: ButtonSize;
   variant?: ButtonVariant;
   /**
