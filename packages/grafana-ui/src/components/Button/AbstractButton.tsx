@@ -30,6 +30,7 @@ export interface ButtonProps<T> extends React.HTMLAttributes<T> {
    * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
    */
   icon?: string;
+  disabled?: boolean;
 }
 
 interface AbstractButtonProps extends ButtonProps<any>, Themeable {
@@ -129,6 +130,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
 
   return {
     button: css`
+      label: button;
       display: inline-block;
       font-weight: ${fontWeight};
       font-size: ${fontSize};
@@ -141,15 +143,22 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       border: none;
       border-radius: ${borderRadius};
       ${background};
-      label: button;
+
+      &[disabled],
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+        box-shadow: none;
+      }
+
     `,
     iconWrap: css`
-      display: flex;
       label: button-icon-wrap;
+      display: flex;
     `,
     icon: css`
-      margin-right: ${iconDistance};
       label: button-icon;
+      margin-right: ${iconDistance};
     `,
   };
 };
