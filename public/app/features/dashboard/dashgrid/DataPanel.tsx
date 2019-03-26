@@ -25,6 +25,7 @@ import { Subscribable, Unsubscribable } from 'rxjs';
 interface RenderProps {
   loading: LoadingState;
   data: SeriesData[];
+  timeRange?: TimeRange;
 }
 
 export interface Props {
@@ -243,7 +244,7 @@ export class DataPanel extends Component<Props, State> {
 
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, data } = this.state;
+    const { loading, isFirstLoad, data, response } = this.state;
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
@@ -258,10 +259,13 @@ export class DataPanel extends Component<Props, State> {
       );
     }
 
+    // Time from the query or the response
+    const timeRange = response && response.range ? response.range : this.props.timeRange;
+
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, data })}
+        {this.props.children({ loading, timeRange, data })}
       </>
     );
   }
