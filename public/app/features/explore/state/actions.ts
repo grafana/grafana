@@ -99,7 +99,14 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
  */
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const newDataSourceInstance = await getDatasourceSrv().get(datasource);
+    let newDataSourceInstance: DataSourceApi = null;
+
+    if (!datasource) {
+      newDataSourceInstance = await getDatasourceSrv().get();
+    } else {
+      newDataSourceInstance = await getDatasourceSrv().get(datasource);
+    }
+
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
 
@@ -208,29 +215,7 @@ export function initializeExplore(
     );
 
     if (exploreDatasources.length >= 1) {
-      let instance;
-
-      if (datasourceName) {
-        try {
-          instance = await getDatasourceSrv().get(datasourceName);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      // Checking on instance here because requested datasource could be deleted already
-      if (!instance) {
-        instance = await getDatasourceSrv().get();
-      }
-
-      dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: instance }));
-
-      try {
-        await dispatch(loadDatasource(exploreId, instance));
-      } catch (error) {
-        console.error(error);
-        return;
-      }
-      dispatch(runQueries(exploreId, true));
+      dispatch(changeDatasource(exploreId, datasourceName));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
@@ -272,8 +257,14 @@ export function importQueries(
   queries: DataQuery[],
   sourceDataSource: DataSourceApi,
   targetDataSource: DataSourceApi
-) {
+): ThunkResult<void> {
   return async dispatch => {
+    if (!sourceDataSource) {
+      // explore not initialized
+      dispatch(queriesImportedAction({ exploreId, queries }));
+      return;
+    }
+
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
     if (sourceDataSource.meta.id === targetDataSource.meta.id) {
@@ -296,6 +287,9 @@ export function importQueries(
   };
 }
 
+/**
+ * Tests datasource.
+ */
 export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
   return async (dispatch, getState) => {
     let datasourceError = null;
