@@ -53,6 +53,41 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
+  onDuplicateRow = () => {
+   appEvents.emit('confirm-modal', {
+     title: 'Duplicate Row',
+     text: 'Are you sure you want to duplicate this row and all its panels?',
+     altActionText: 'Duplicate row only',
+     icon: 'fa-clone',
+     onConfirm: () => {
+      const dashboard = this.props.dashboard;
+      const { gridPos } = this.props.panel;
+      const panellist = [];
+      let counter = 1;
+      for (const panelItem of this.props.panel.panels) {
+        if (panelItem.type !== "row") {
+          const panelitemObj = new PanelModel(panelItem);
+          const resp = dashboard.duplicatePanel( panelitemObj, false );
+          resp["id"] = resp["id"] + counter;
+          resp["gridPos"] = panelItem["gridPos"];
+          panellist.push(resp);
+          counter = counter + 1;
+        }
+      }
+      const newRow: any = {
+        type: 'row',
+        title: 'New Duplicated Row',
+        gridPos: { x: gridPos.x, y: gridPos.y + 1, w: gridPos.w, h: gridPos.h },
+        panels: panellist,
+        collapsed: true,
+        hasRefreshed: true
+      };
+      dashboard.addPanel(newRow);
+     }
+   });
+  };
+
+
   onDelete = () => {
     appEvents.emit('confirm-modal', {
       title: 'Delete Row',
@@ -100,6 +135,9 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             </a>
             <a className="pointer" onClick={this.onDelete}>
               <i className="fa fa-trash" />
+            </a>
+            <a className="pointer" onClick={this.onDuplicateRow}>
+              <i className="fa fa-clone" />
             </a>
           </div>
         )}

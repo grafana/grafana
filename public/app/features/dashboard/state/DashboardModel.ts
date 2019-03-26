@@ -665,7 +665,7 @@ export class DashboardModel {
     return null;
   }
 
-  duplicatePanel(panel) {
+  duplicatePanel(panel, doAddPanel = true) {
     const newPanel = panel.getSaveModel();
     newPanel.id = this.getNextPanelId();
 
@@ -685,8 +685,9 @@ export class DashboardModel {
       // add below
       newPanel.gridPos.y += panel.gridPos.h;
     }
-
-    this.addPanel(newPanel);
+    if ( doAddPanel === true ) {
+      this.addPanel(newPanel);
+    }
     return newPanel;
   }
 
