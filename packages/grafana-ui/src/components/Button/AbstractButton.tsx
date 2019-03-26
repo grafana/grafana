@@ -1,6 +1,6 @@
 import React from 'react';
 import tinycolor from 'tinycolor2';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
@@ -24,6 +24,12 @@ export interface ButtonProps<T> extends React.HTMLAttributes<T> {
   size?: ButtonSize;
   variant?: ButtonVariant;
   className?: string;
+  /**
+   * icon prop is a temporary solution. It accepts a font-awesome icon name for the icon to be rendered.
+   * Currently ONLY font-awesome icons are supported.
+   * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
+   */
+  icon?: string;
 }
 
 interface AbstractButtonProps extends ButtonProps<any>, Themeable {
@@ -50,35 +56,40 @@ const buttonVariantStyles = (
   }
 `;
 
-const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonVariant) => {
+const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonVariant, withIcon: boolean) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
     fontSize,
+    iconDistance,
     fontWeight = theme.typography.weight.semibold;
 
   switch (size) {
     case ButtonSize.ExtraSmall:
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.xs;
-
+      iconDistance = theme.spacing.xs;
       break;
     case ButtonSize.Small:
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.sm;
+      iconDistance = theme.spacing.xs;
       break;
     case ButtonSize.Large:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
+      iconDistance = theme.spacing.sm;
       break;
     case ButtonSize.ExtraLarge:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
+      iconDistance = theme.spacing.sm;
       break;
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      iconDistance = theme.spacing.sm;
       fontSize = theme.typography.size.base;
   }
 
@@ -124,13 +135,21 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       font-family: ${theme.typography.fontFamily.sansSerif};
       line-height: ${theme.typography.lineHeight.xs};
       padding: ${padding};
-      text-align: center;
+      text-align: ${withIcon ? 'left' : 'center'};
       vertical-align: middle;
       cursor: pointer;
       border: none;
       border-radius: ${borderRadius};
       ${background};
       label: button;
+    `,
+    iconWrap: css`
+      display: flex;
+      label: button-icon-wrap;
+    `,
+    icon: css`
+      margin-right: ${iconDistance};
+      label: button-icon;
     `,
   };
 };
@@ -141,28 +160,42 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   size = ButtonSize.Medium,
   variant = ButtonVariant.Primary,
   className,
+  icon,
+  children,
   ...otherProps
 }) => {
-  const finalClassName = getButtonStyles(theme, size, variant).button;
+  const buttonStyles = getButtonStyles(theme, size, variant, !!icon);
   const nonHtmlProps = {
     theme,
     size,
     variant,
   };
 
-  if (typeof renderAs === 'string') {
-    // Let's not pass props like theme/size/variant to plain HTML elements, i.e. a, button, div
-    return React.createElement(renderAs, {
-      ...otherProps,
-      className: finalClassName,
-    });
-  }
+  const finalClassName = buttonStyles.button;
+  const finalChildren = icon ? (
+    <span className={buttonStyles.iconWrap}>
+      <i className={cx(['fa', `fa-${icon}`, buttonStyles.icon])} />
+      {children}
+    </span>
+  ) : (
+    children
+  );
 
-  return React.createElement(renderAs, {
-    ...otherProps,
-    ...nonHtmlProps,
-    className: finalClassName,
-  });
+  const finalProps =
+    typeof renderAs === 'string'
+      ? {
+          ...otherProps,
+          className: finalClassName,
+          children: finalChildren,
+        }
+      : {
+          ...otherProps,
+          ...nonHtmlProps,
+          className: finalClassName,
+          children: finalChildren,
+        };
+
+  return React.createElement(renderAs, finalProps);
 };
 
 AbstractButton.displayName = 'AbstractButton';

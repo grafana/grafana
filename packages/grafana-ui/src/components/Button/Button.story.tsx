@@ -5,6 +5,7 @@ import { ButtonSize, ButtonVariant } from './AbstractButton';
 import withPropsCombinations from 'react-storybook-addon-props-combinations';
 import { action } from '@storybook/addon-actions';
 import { ThemeableCombinationsRowRenderer } from '../../utils/storybook/CombinationsRowRenderer';
+import { select } from '@storybook/addon-knobs';
 
 const ButtonStories = storiesOf('UI/Button', module);
 
@@ -15,7 +16,13 @@ const defaultProps = {
 
 const variants = {
   size: [ButtonSize.ExtraSmall, ButtonSize.Small, ButtonSize.Medium, ButtonSize.Large, ButtonSize.ExtraLarge],
-  variant: [ButtonVariant.Primary, ButtonVariant.Secondary, ButtonVariant.Danger, ButtonVariant.Inverse, ButtonVariant.Transparent],
+  variant: [
+    ButtonVariant.Primary,
+    ButtonVariant.Secondary,
+    ButtonVariant.Danger,
+    ButtonVariant.Inverse,
+    ButtonVariant.Transparent,
+  ],
 };
 const combinationOptions = {
   CombinationRenderer: ThemeableCombinationsRowRenderer,
@@ -30,3 +37,17 @@ ButtonStories.add(
   'as link element',
   withPropsCombinations(LinkButton, { ...variants, ...defaultProps }, combinationOptions)
 );
+
+ButtonStories.add('with icon', () => {
+  const iconKnob = select(
+    'Icon',
+    {
+      Plus: 'plus',
+      User: 'user',
+      Gear: 'gear',
+    },
+    'plus'
+  );
+  return withPropsCombinations(Button, { ...variants, ...defaultProps, icon: [iconKnob] }, combinationOptions)();
+});
+

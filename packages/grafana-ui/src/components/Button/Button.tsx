@@ -4,7 +4,6 @@ import { ThemeContext } from '../../themes';
 
 export const Button: React.FunctionComponent<ButtonProps<HTMLButtonElement>> = (props) => {
   const theme = useContext(ThemeContext);
-
   return <AbstractButton {...props} renderAs="button" theme={theme} />;
 };
 Button.displayName = "Button";
