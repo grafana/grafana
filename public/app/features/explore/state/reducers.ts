@@ -31,10 +31,9 @@ import {
   highlightLogsExpressionAction,
   initializeExploreAction,
   updateDatasourceInstanceAction,
-  loadDatasourceFailureAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
-  loadDatasourceSuccessAction,
+  loadDatasourceReadyAction,
   modifyQueriesAction,
   queryTransactionFailureAction,
   queryTransactionStartAction,
@@ -224,21 +223,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.queries, datasourceInstance) };
-    },
-  })
-  .addMapper({
-    filter: loadDatasourceFailureAction,
-    mapper: (state, action): ExploreItemState => {
+      // Capabilities
+      const supportsGraph = datasourceInstance.meta.metrics;
+      const supportsLogs = datasourceInstance.meta.logs;
+      const supportsTable = datasourceInstance.meta.tables;
+      // Custom components
+      const StartPage = datasourceInstance.pluginExports.ExploreStartPage;
+
       return {
         ...state,
-        datasourceError: action.payload.error,
-        datasourceLoading: false,
-        queryTransactions: [],
-        graphResult: undefined,
-        tableResult: undefined,
-        logsResult: undefined,
-        update: makeInitialUpdateState(),
+        datasourceInstance,
+        supportsGraph,
+        supportsLogs,
+        supportsTable,
+        StartPage,
+        queryKeys: getQueryKeys(state.queries, datasourceInstance),
       };
     },
   })
@@ -256,34 +255,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: loadDatasourcePendingAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
+      return {
+        ...state,
+        datasourceLoading: true,
+        requestedDatasourceName: action.payload.requestedDatasourceName,
+      };
     },
   })
   .addMapper({
-    filter: loadDatasourceSuccessAction,
+    filter: loadDatasourceReadyAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, range } = state;
-      const {
-        StartPage,
-        datasourceInstance,
-        history,
-        showingStartPage,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
-      } = action.payload;
+      const { containerWidth, range, datasourceInstance } = state;
+      const { history } = action.payload;
       const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
 
       return {
         ...state,
         queryIntervals,
-        StartPage,
-        datasourceInstance,
         history,
-        showingStartPage,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
         datasourceLoading: false,
         datasourceMissing: false,
         datasourceError: null,

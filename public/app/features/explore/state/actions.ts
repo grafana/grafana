@@ -44,8 +44,8 @@ import {
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
   queriesImportedAction,
-  LoadDatasourceSuccessPayload,
-  loadDatasourceSuccessAction,
+  LoadDatasourceReadyPayload,
+  loadDatasourceReadyAction,
   modifyQueriesAction,
   queryTransactionFailureAction,
   queryTransactionStartAction,
@@ -237,32 +237,17 @@ export function initializeExplore(
 }
 
 /**
- * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
- * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
- * e.g., Prometheus -> Loki queries.
+ * Datasource loading was successfully completed.
  */
-export const loadDatasourceSuccess = (exploreId: ExploreId, instance: any): ActionOf<LoadDatasourceSuccessPayload> => {
-  // Capabilities
-  const supportsGraph = instance.meta.metrics;
-  const supportsLogs = instance.meta.logs;
-  const supportsTable = instance.meta.tables;
-  // Custom components
-  const StartPage = instance.pluginExports.ExploreStartPage;
-
+export const loadDatasourceReady = (exploreId: ExploreId, instance: any): ActionOf<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
   store.set(LAST_USED_DATASOURCE_KEY, instance.name);
 
-  return loadDatasourceSuccessAction({
+  return loadDatasourceReadyAction({
     exploreId,
-    StartPage,
-    datasourceInstance: instance,
     history,
-    showingStartPage: Boolean(StartPage),
-    supportsGraph,
-    supportsLogs,
-    supportsTable,
   });
 };
 
@@ -362,7 +347,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
       return;
     }
 
-    dispatch(loadDatasourceSuccess(exploreId, instance));
+    dispatch(loadDatasourceReady(exploreId, instance));
     return Promise.resolve();
   };
 }

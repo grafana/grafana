@@ -98,16 +98,9 @@ export interface LoadDatasourcePendingPayload {
   requestedDatasourceName: string;
 }
 
-export interface LoadDatasourceSuccessPayload {
+export interface LoadDatasourceReadyPayload {
   exploreId: ExploreId;
-  StartPage?: any;
-  datasourceInstance: any;
   history: HistoryItem[];
-  logsHighlighterExpressions?: any[];
-  showingStartPage: boolean;
-  supportsGraph: boolean;
-  supportsLogs: boolean;
-  supportsTable: boolean;
 }
 
 export interface TestDatasourcePendingPayload {
@@ -264,13 +257,6 @@ export const initializeExploreAction = actionCreatorFactory<InitializeExplorePay
 ).create();
 
 /**
- * Display an error that happened during the selection of a datasource
- */
-export const loadDatasourceFailureAction = actionCreatorFactory<LoadDatasourceFailurePayload>(
-  'explore/LOAD_DATASOURCE_FAILURE'
-).create();
-
-/**
  * Display an error when no datasources have been configured
  */
 export const loadDatasourceMissingAction = actionCreatorFactory<LoadDatasourceMissingPayload>(
@@ -285,11 +271,9 @@ export const loadDatasourcePendingAction = actionCreatorFactory<LoadDatasourcePe
 ).create();
 
 /**
- * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
- * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
- * e.g., Prometheus -> Loki queries.
+ * Datasource loading was completed.
  */
-export const loadDatasourceSuccessAction = actionCreatorFactory<LoadDatasourceSuccessPayload>(
+export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceReadyPayload>(
   'explore/LOAD_DATASOURCE_SUCCESS'
 ).create();
 
@@ -438,7 +422,7 @@ export type Action =
   | ActionOf<LoadDatasourceFailurePayload>
   | ActionOf<LoadDatasourceMissingPayload>
   | ActionOf<LoadDatasourcePendingPayload>
-  | ActionOf<LoadDatasourceSuccessPayload>
+  | ActionOf<LoadDatasourceReadyPayload>
   | ActionOf<ModifyQueriesPayload>
   | ActionOf<QueryTransactionFailurePayload>
   | ActionOf<QueryTransactionStartPayload>
