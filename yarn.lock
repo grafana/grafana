@@ -2457,10 +2457,10 @@
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-1.10.35.tgz#4e5c2b1e5b3bf0b863efb8c5e70081f52e6c9518"
   integrity sha512-SVtqEcudm7yjkTwoRA1gC6CNMhGDdMx4Pg8BPdiqI7bXXdCn1BPmtxgeWYQOgDxrq53/5YTlhq5ULxBEAlWIBg==
 
-"@types/lodash@^4.14.119":
-  version "4.14.123"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.123.tgz#39be5d211478c8dd3bdae98ee75bb7efe4abfe4d"
-  integrity sha512-pQvPkc4Nltyx7G1Ww45OjVqUsJP4UsZm+GWJpigXgkikZqJgRm4c48g027o6tdgubWHwFRF15iFd+Y4Pmqv6+Q==
+"@types/lodash@4.14.119", "@types/lodash@^4.14.119":
+  version "4.14.119"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.119.tgz#be847e5f4bc3e35e46d041c394ead8b603ad8b39"
+  integrity sha512-Z3TNyBL8Vd/M9D9Ms2S3LmFq2sSMzahodD6rCS9V2N44HUMINb75jNkSuwAx7eo2ufqTdfOdtGQpNbieUjPQmw==
 
 "@types/node@*", "@types/node@^11.9.5":
   version "11.11.3"
@@ -2553,7 +2553,7 @@
     "@types/prop-types" "*"
     "@types/react" "*"
 
-"@types/react@*", "@types/react@16.8.8", "@types/react@^16.8.8":
+"@types/react@*", "@types/react@^16.8.8":
   version "16.8.8"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-16.8.8.tgz#4b60a469fd2469f7aa6eaa0f8cfbc51f6d76e662"
   integrity sha512-xwEvyet96u7WnB96kqY0yY7qxx/pEpU51QeACkKFtrgjjXITQn0oO1iwPEraXVgh10ZFPix7gs1R4OJXF7P5sg==
@@ -4537,11 +4537,6 @@ caniuse-api@^3.0.0:
     caniuse-lite "^1.0.0"
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
-
-caniuse-db@1.0.30000772:
-  version "1.0.30000772"
-  resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000772.tgz#51aae891768286eade4a3d8319ea76d6a01b512b"
-  integrity sha1-UarokXaChureSj2DGep21qAbUSs=
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000939, caniuse-lite@^1.0.30000940:
   version "1.0.30000951"
@@ -12301,6 +12296,11 @@ object-copy@^0.1.0:
     define-property "^0.2.5"
     kind-of "^3.0.3"
 
+object-hash@^1.1.8:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/object-hash/-/object-hash-1.3.1.tgz#fde452098a951cb145f039bb7d455449ddc126df"
+  integrity sha512-OSuu/pU4ENM9kmREg0BdNrUDIl1heYa4mBZacJc+vVWz4GtAwu7jO8s4AIt2aGRUTqxykpWzI3Oqnsm13tTMDA==
+
 object-inspect@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/object-inspect/-/object-inspect-1.6.0.tgz#c70b6cbf72f274aab4c34c0c82f5167bf82cf15b"
@@ -13538,6 +13538,14 @@ pretty-error@^2.0.2, pretty-error@^2.1.1:
     renderkid "^2.0.1"
     utila "~0.4"
 
+pretty-format@^21.2.1:
+  version "21.2.1"
+  resolved "https://registry.yarnpkg.com/pretty-format/-/pretty-format-21.2.1.tgz#ae5407f3cf21066cd011aa1ba5fce7b6a2eddb36"
+  integrity sha512-ZdWPGYAnYfcVP8yKA3zFjCn8s4/17TeYH28MXuC8vTp0o21eXjbFGcOAXZEaDaOFJjc3h2qa7HQNHNshhvoh2A==
+  dependencies:
+    ansi-regex "^3.0.0"
+    ansi-styles "^3.2.0"
+
 pretty-format@^24.5.0:
   version "24.5.0"
   resolved "https://registry.yarnpkg.com/pretty-format/-/pretty-format-24.5.0.tgz#cc69a0281a62cd7242633fc135d6930cd889822d"
@@ -14288,6 +14296,14 @@ react-sizeme@^2.3.6:
     lodash.debounce "^4.0.8"
     lodash.throttle "^4.1.1"
     shallowequal "^1.0.2"
+
+react-storybook-addon-props-combinations@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-storybook-addon-props-combinations/-/react-storybook-addon-props-combinations-1.1.0.tgz#22a61794cc3c106bf44be809af3c3241f6988e72"
+  integrity sha512-gCHyLTkXthuP3wV5nQn3A6ZrBjYnRniRtVprSrq+7Vu9SX1jUhIEPvqdLdPVRmlq9rwgKAX2QVo6kNd95kZ7Hw==
+  dependencies:
+    object-hash "^1.1.8"
+    pretty-format "^21.2.1"
 
 react-syntax-highlighter@^8.0.1:
   version "8.1.0"
