@@ -226,6 +226,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         datasourceError: action.payload.error,
         datasourceLoading: false,
+        queryTransactions: [],
+        graphResult: undefined,
+        tableResult: undefined,
+        logsResult: undefined,
         update: makeInitialUpdateState(),
       };
     },

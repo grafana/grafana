@@ -20,7 +20,7 @@ export const Alert: FC<Props> = props => {
           <div className="alert-title">{message}</div>
         </div>
         {button && (
-          <div>
+          <div className="alert-button">
             <button className="btn btn-outline-danger" onClick={button.onClick}>
               {button.text}
             </button>

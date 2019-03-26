@@ -294,6 +294,9 @@ export function importQueries(
   };
 }
 
+/**
+ * Reconnects datasource when there is a connection failure.
+ */
 export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const instance = getState().explore[exploreId].datasourceInstance;
