@@ -28,18 +28,25 @@ const detailsRenderer: (combinationProps: any) => JSX.Element = props => {
 };
 
 interface CombinationsRowRendererProps extends Themeable {
-    Component: React.ComponentType<any>;
-    props: any;
-    options: any;
+  Component: React.ComponentType<any>;
+  props: any;
+  options: any;
 }
 
-const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererProps> = ({ Component, props, theme }) => {
+const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererProps> = ({
+  Component,
+  props,
+  theme,
+}) => {
   const el = React.createElement(Component, props);
 
-  const borderColor = selectThemeVariant({
-    dark: theme.colors.dark8,
-    light: theme.colors.gray5,
-  }, theme.type);
+  const borderColor = selectThemeVariant(
+    {
+      dark: theme.colors.dark8,
+      light: theme.colors.gray5,
+    },
+    theme.type
+  );
 
   const rowStyle = css`
     display: flex;
@@ -63,7 +70,7 @@ const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererPr
     flex-shrink: 1;
     border-right: 1px solid ${borderColor};
     ${cellStyle};
-    `;
+  `;
   const variantsCellStyle = css`
     width: 200px;
     border-right: 1px solid ${borderColor};
@@ -74,12 +81,14 @@ const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererPr
     <div className={rowStyle}>
       <div className={previewCellStyle}>{el}</div>
       <div className={variantsCellStyle}>{detailsRenderer(props)}</div>
-      <div className={cellStyle}>{prettyFormat(el, {
-        plugins: [prettyFormat.plugins.ReactElement],
-        printFunctionName: true
-      })}</div>
+      <div className={cellStyle}>
+        {prettyFormat(el, {
+          plugins: [prettyFormat.plugins.ReactElement],
+          printFunctionName: true,
+        })}
+      </div>
     </div>
   );
 };
 
-export const ThemeableCombinationsRowRenderer =  withTheme(CombinationsRowRenderer);
+export const ThemeableCombinationsRowRenderer = withTheme(CombinationsRowRenderer);

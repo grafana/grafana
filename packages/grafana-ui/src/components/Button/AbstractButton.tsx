@@ -150,7 +150,6 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
         opacity: 0.65;
         box-shadow: none;
       }
-
     `,
     iconWrap: css`
       label: button-icon-wrap;

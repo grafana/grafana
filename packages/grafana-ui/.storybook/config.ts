@@ -3,7 +3,6 @@ import { withKnobs } from '@storybook/addon-knobs';
 import { withTheme } from '../src/utils/storybook/withTheme';
 import { withPaddedStory } from '../src/utils/storybook/withPaddedStory';
 
-
 // @ts-ignore
 import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
