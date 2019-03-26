@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, DataQueryError, DataQueryResponseData } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -31,6 +31,8 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
+  queryError?: DataQueryError;
+  queryResponse?: DataQueryResponseData[];
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -62,19 +64,23 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
   }
 
-  onPanelDataError = () => {
+  onPanelDataError = (error: DataQueryError) => {
     // Some query controllers listen to data error events and need a digest
     if (this.angularQueryEditor) {
       // for some reason this needs to be done in next tick
       setTimeout(this.angularQueryEditor.digest);
+    } else {
+      this.setState({ queryError: error });
     }
   };
 
-  onPanelDataReceived = () => {
+  onPanelDataReceived = (data: DataQueryResponseData[]) => {
     // Some query controllers listen to data error events and need a digest
     if (this.angularQueryEditor) {
       // for some reason this needs to be done in next tick
       setTimeout(this.angularQueryEditor.digest);
+    } else {
+      this.setState({ queryResponse: data });
     }
   };
 
@@ -152,7 +158,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderPluginEditor() {
     const { query, onChange } = this.props;
-    const { datasource } = this.state;
+    const { datasource, queryResponse, queryError } = this.state;
 
     if (datasource.pluginExports.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
@@ -160,7 +166,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     if (datasource.pluginExports.QueryEditor) {
       const QueryEditor = datasource.pluginExports.QueryEditor;
-      return <QueryEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={this.onRunQuery} />;
+      return (
+        <QueryEditor
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          onRunQuery={this.onRunQuery}
+          queryResponse={queryResponse}
+          queryError={queryError}
+        />
+      );
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;

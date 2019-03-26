@@ -26,6 +26,7 @@ export interface Tags {
 }
 
 export interface SeriesData {
+  refId?: string; // query source refId
   name?: string;
   fields: Field[];
   rows: any[][];
@@ -39,6 +40,7 @@ export interface Column {
 }
 
 export interface TableData {
+  refId?: string; // query ref id
   columns: Column[];
   rows: any[][];
 }
@@ -48,6 +50,7 @@ export type TimeSeriesValue = number | null;
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
 export interface TimeSeries {
+  refId?: string; // query ref id
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;

@@ -1,6 +1,14 @@
 import { ComponentClass } from 'react';
 import { ReactPanelPlugin } from './panel';
-import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
+import {
+  DataQueryOptions,
+  DataQuery,
+  DataQueryResponse,
+  DataQueryResponseData,
+  DataQueryError,
+  QueryHint,
+  QueryFixAction,
+} from './datasource';
 
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
@@ -52,6 +60,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
+  queryResponse?: DataQueryResponseData[];
+  queryError?: DataQueryError;
 }
 
 export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
