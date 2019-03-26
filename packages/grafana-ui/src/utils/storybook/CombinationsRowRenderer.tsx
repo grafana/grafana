@@ -3,6 +3,7 @@ import { css } from 'emotion';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import prettyFormat from 'pretty-format';
 
 const detailsRenderer: (combinationProps: any) => JSX.Element = props => {
   const listStyle = css`
@@ -62,12 +63,21 @@ const CombinationsRowRenderer: React.FunctionComponent<CombinationsRowRendererPr
     flex-shrink: 1;
     border-right: 1px solid ${borderColor};
     ${cellStyle};
+    `;
+  const variantsCellStyle = css`
+    width: 200px;
+    border-right: 1px solid ${borderColor};
+    ${cellStyle};
   `;
 
   return (
     <div className={rowStyle}>
       <div className={previewCellStyle}>{el}</div>
-      <div className={cellStyle}>{detailsRenderer(props)}</div>
+      <div className={variantsCellStyle}>{detailsRenderer(props)}</div>
+      <div className={cellStyle}>{prettyFormat(el, {
+        plugins: [prettyFormat.plugins.ReactElement],
+        printFunctionName: true
+      })}</div>
     </div>
   );
 };
