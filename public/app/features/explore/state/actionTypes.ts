@@ -405,4 +405,8 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
 
-export type HigherOrderAction = SplitCloseAction | SplitOpenAction | ResetExploreAction | ActionOf<any>;
+export type HigherOrderAction =
+  | ActionOf<SplitCloseActionPayload>
+  | SplitOpenAction
+  | ResetExploreAction
+  | ActionOf<any>;
