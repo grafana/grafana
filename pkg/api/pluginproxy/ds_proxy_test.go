@@ -9,10 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -386,6 +389,54 @@ func TestDSRouteRule(t *testing.T) {
 				So(req.Header.Get("Origin"), ShouldEqual, "")
 				So(req.Header.Get("Referer"), ShouldEqual, "")
 				So(req.Header.Get("X-Canary"), ShouldEqual, "stillthere")
+			})
+		})
+
+		Convey("When proxying a datasource that has oauth token pass-thru enabled", func() {
+			social.SocialMap["generic_oauth"] = &social.SocialGenericOAuth{
+				SocialBase: &social.SocialBase{
+					Config: &oauth2.Config{},
+				},
+			}
+
+			bus.AddHandler("test", func(query *m.GetAuthInfoQuery) error {
+				query.Result = &m.UserAuth{
+					Id:                1,
+					UserId:            1,
+					AuthModule:        "generic_oauth",
+					OAuthAccessToken:  "testtoken",
+					OAuthRefreshToken: "testrefreshtoken",
+					OAuthTokenType:    "Bearer",
+					OAuthExpiry:       time.Now().AddDate(0, 0, 1),
+				}
+				return nil
+			})
+
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Type: "custom-datasource",
+				Url:  "http://host/root/",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"oauthPassThru": true,
+				}),
+			}
+
+			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
+			ctx := &m.ReqContext{
+				SignedInUser: &m.SignedInUser{UserId: 1},
+				Context: &macaron.Context{
+					Req: macaron.Request{Request: req},
+				},
+			}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+
+			So(err, ShouldBeNil)
+
+			proxy.getDirector()(req)
+
+			Convey("Should have access token in header", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, fmt.Sprintf("%s %s", "Bearer", "testtoken"))
 			})
 		})
 
