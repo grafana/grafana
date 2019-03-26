@@ -1,4 +1,4 @@
-import { parseCSV } from './processTableData';
+import { parseCSV } from './processSeriesData';
 import { getStatsCalculators, StatID, calculateStats } from './statsCalculator';
 
 import _ from 'lodash';

@@ -1,4 +1,4 @@
-export * from './processTableData';
+export * from './processSeriesData';
 export * from './valueFormats/valueFormats';
 export * from './colors';
 export * from './namedColorsPalette';
