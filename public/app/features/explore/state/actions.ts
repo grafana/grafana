@@ -42,7 +42,6 @@ import {
   clearQueriesAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
-  loadDatasourceFailureAction,
   loadDatasourcePendingAction,
   queriesImportedAction,
   LoadDatasourceSuccessPayload,
@@ -65,6 +64,9 @@ import {
   ToggleTablePayload,
   updateUIStateAction,
   runQueriesAction,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -294,6 +296,28 @@ export function importQueries(
   };
 }
 
+export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    let datasourceError = null;
+
+    dispatch(testDataSourcePendingAction({ exploreId }));
+
+    try {
+      const testResult = await instance.testDatasource();
+      datasourceError = testResult.status === 'success' ? null : testResult.message;
+    } catch (error) {
+      datasourceError = (error && error.statusText) || 'Network error';
+    }
+
+    if (datasourceError) {
+      dispatch(testDataSourceFailureAction({ exploreId, error: datasourceError }));
+      return;
+    }
+
+    dispatch(testDataSourceSuccessAction({ exploreId }));
+  };
+};
+
 /**
  * Reconnects datasource when there is a connection failure.
  */
@@ -313,19 +337,8 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
 
     // Keep ID to track selection
     dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
-    let datasourceError = null;
 
-    try {
-      const testResult = await instance.testDatasource();
-      datasourceError = testResult.status === 'success' ? null : testResult.message;
-    } catch (error) {
-      datasourceError = (error && error.statusText) || 'Network error';
-    }
-
-    if (datasourceError) {
-      dispatch(loadDatasourceFailureAction({ exploreId, error: datasourceError }));
-      return Promise.reject(`${datasourceName} loading failed`);
-    }
+    dispatch(testDatasource(exploreId, instance));
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
       // User already changed datasource again, discard results

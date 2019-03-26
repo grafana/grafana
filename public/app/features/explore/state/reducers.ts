@@ -11,8 +11,15 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
-
-import { HigherOrderAction, ActionTypes, SplitCloseActionPayload, splitCloseAction } from './actionTypes';
+import {
+  HigherOrderAction,
+  ActionTypes,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
+  splitCloseAction,
+  SplitCloseActionPayload,
+} from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
   addQueryRowAction,
@@ -70,6 +77,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   requestedDatasourceName: null,
   datasourceError: null,
   datasourceLoading: null,
+  datasourceTesting: null,
   datasourceMissing: false,
   exploreDatasources: [],
   history: [],
@@ -518,6 +526,40 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         hiddenLogLevels: Array.from(hiddenLogLevels),
+      };
+    },
+  })
+  .addMapper({
+    filter: testDataSourcePendingAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        datasourceTesting: true,
+      };
+    },
+  })
+  .addMapper({
+    filter: testDataSourceSuccessAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        datasourceError: null,
+        datasourceTesting: false,
+      };
+    },
+  })
+  .addMapper({
+    filter: testDataSourceFailureAction,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        datasourceError: action.payload.error,
+        datasourceTesting: false,
+        queryTransactions: [],
+        graphResult: undefined,
+        tableResult: undefined,
+        logsResult: undefined,
+        update: makeInitialUpdateState(),
       };
     },
   })

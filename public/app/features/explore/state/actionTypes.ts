@@ -111,6 +111,19 @@ export interface LoadDatasourceSuccessPayload {
   supportsTable: boolean;
 }
 
+export interface TestDatasourcePendingPayload {
+  exploreId: ExploreId;
+}
+
+export interface TestDatasourceFailurePayload {
+  exploreId: ExploreId;
+  error: string;
+}
+
+export interface TestDatasourceSuccessPayload {
+  exploreId: ExploreId;
+}
+
 export interface ModifyQueriesPayload {
   exploreId: ExploreId;
   modification: QueryFixAction;
@@ -391,6 +404,15 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
  */
 export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
+export const testDataSourcePendingAction = actionCreatorFactory<TestDatasourcePendingPayload>(
+  'explore/TEST_DATASOURCE_PENDING'
+).create();
+export const testDataSourceSuccessAction = actionCreatorFactory<TestDatasourceSuccessPayload>(
+  'explore/TEST_DATASOURCE_SUCCESS'
+).create();
+export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFailurePayload>(
+  'explore/TEST_DATASOURCE_FAILURE'
+).create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
