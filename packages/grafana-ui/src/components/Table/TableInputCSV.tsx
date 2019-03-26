@@ -25,24 +25,15 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     const { text, config } = props;
     this.state = {
       text,
-      data: [],
+      data: readCSV(text, { config }),
     };
-    readCSV(text, { config }).then(data => {
-      this.state = {
-        text,
-        data,
-      };
-      this.props.onSeriesParsed(data, text);
-    });
   }
 
   readCSV = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
-    readCSV(text, { config }).then(data => {
-      this.setState({ data });
-    });
+    this.setState({ data: readCSV(text, { config }) });
   }, 150);
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -76,9 +67,9 @@ class TableInputCSV extends React.PureComponent<Props, State> {
             <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
             {data && (
               <footer>
-                {data.map(series => {
+                {data.map((series, index) => {
                   return (
-                    <span>
+                    <span key={index}>
                       Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
                       <i className="fa fa-check-circle" />
                     </span>

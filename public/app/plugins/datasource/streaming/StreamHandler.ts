@@ -2,7 +2,7 @@ import moment from 'moment';
 
 import { Subject } from 'rxjs';
 import _ from 'lodash';
-import { SeriesData, DataQueryResponse, getFirstTimeField } from '@grafana/ui';
+import { SeriesData, DataQueryResponse, getFirstTimeField, TimeRange } from '@grafana/ui';
 import { StreamingQuery, StreamingQueryOptions } from './datasource';
 
 export class StreamHandler<T extends StreamingQuery> extends Subject<DataQueryResponse> {
@@ -38,22 +38,28 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<DataQueryRe
       this.series.rows = rows;
     }
 
+    // Hardcoded time format (millis, but should support any date value)
+    let range: TimeRange;
     const timeIndex = getFirstTimeField(this.series);
-    const oldestTimestamp = rows[0][timeIndex];
-    const mostRecentTimestamp = rows[rows.length - 1][timeIndex];
+    if (timeIndex >= 0) {
+      const first = rows[0][timeIndex];
+      const last = rows[rows.length - 1][timeIndex];
+      const from = moment(new Date(Math.min(first, last)));
+      const to = moment(new Date(Math.max(first, last)));
 
-    // console.log( 'SEND', oldestTimestamp, mostRecentTimestamp, (mostRecentTimestamp-oldestTimestamp), timeIndex );
+      range = {
+        raw: {
+          from,
+          to,
+        },
+        from,
+        to,
+      };
+    }
 
     this.next({
       data: [this.series],
-      range: {
-        raw: {
-          from: oldestTimestamp,
-          to: mostRecentTimestamp,
-        },
-        from: moment(oldestTimestamp),
-        to: moment(mostRecentTimestamp),
-      },
+      range,
     });
   }
 

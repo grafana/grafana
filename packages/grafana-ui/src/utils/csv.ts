@@ -3,9 +3,6 @@ import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
 import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
-// polyfil for TextEncoder/TextDecoder (node & IE)
-import 'fast-text-encoding'; //'text-encoding';  // 'fast-text-encoding';
-
 // Types
 import { SeriesData, Field, FieldType } from '../types/index';
 import { guessFieldTypeFromValue } from './processSeriesData';
@@ -42,21 +39,8 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): Promise<SeriesData[]> {
-  // Wraps the string in a ReadableStreamReader
-  return readCSVFromStream(
-    {
-      cancel: () => {
-        return Promise.reject('unsupported');
-      },
-      read: () => {
-        const uint8Array = new TextEncoder().encode(csv);
-        return Promise.resolve({ done: true, value: uint8Array });
-      },
-      releaseLock: () => {},
-    },
-    options
-  );
+export function readCSV(csv: string, options?: CSVOptions): SeriesData[] {
+  return new CSVReader(options).readCSV(csv);
 }
 
 enum ParseState {
@@ -67,158 +51,162 @@ enum ParseState {
 
 type FieldParser = (value: string) => any;
 
-export function readCSVFromStream(
-  reader: ReadableStreamReader<Uint8Array>,
-  options?: CSVOptions
-): Promise<SeriesData[]> {
-  return new Promise((resolve, reject) => {
-    const config = options ? options.config : {};
-    const callback = options ? options.callback : null;
+export class CSVReader {
+  config: CSVConfig;
+  callback?: CSVParseCallbacks;
 
-    const field: FieldParser[] = [];
-    let state = ParseState.Starting;
-    let table: SeriesData = {
+  field: FieldParser[];
+  series: SeriesData;
+  state: ParseState;
+  data: SeriesData[];
+
+  constructor(options?: CSVOptions) {
+    if (!options) {
+      options = {};
+    }
+    this.config = options.config || {};
+    this.callback = options.callback;
+
+    this.field = [];
+    this.state = ParseState.Starting;
+    this.series = {
       fields: [],
       rows: [],
     };
-    const tables: SeriesData[] = [table];
+    this.data = [];
+  }
 
-    const step = (results: ParseResult, parser: Parser): void => {
-      for (let i = 0; i < results.data.length; i++) {
-        const line: string[] = results.data[i];
-        if (line.length > 0) {
-          const first = line[0]; // null or value, papaparse does not return ''
-          if (first) {
-            // Comment or header queue
-            if (first.startsWith('#')) {
-              // Look for special header column
-              // #{columkey}#a,b,c
-              const idx = first.indexOf('#', 2);
-              if (idx > 0) {
-                const k = first.substr(1, idx - 1);
+  // PapaParse callback on each line
+  private step = (results: ParseResult, parser: Parser): void => {
+    for (let i = 0; i < results.data.length; i++) {
+      const line: string[] = results.data[i];
+      if (line.length < 1) {
+        continue;
+      }
+      const first = line[0]; // null or value, papaparse does not return ''
+      if (first) {
+        // Comment or header queue
+        if (first.startsWith('#')) {
+          // Look for special header column
+          // #{columkey}#a,b,c
+          const idx = first.indexOf('#', 2);
+          if (idx > 0) {
+            const k = first.substr(1, idx - 1);
 
-                // Simple object used to check if headers match
-                const headerKeys: Field = {
-                  name: '#',
-                  type: FieldType.number,
-                  unit: '#',
-                  dateFormat: '#',
+            // Simple object used to check if headers match
+            const headerKeys: Field = {
+              name: '#',
+              type: FieldType.number,
+              unit: '#',
+              dateFormat: '#',
+            };
+
+            // Check if it is a known/supported column
+            if (headerKeys.hasOwnProperty(k)) {
+              // Starting a new table after reading rows
+              if (this.state === ParseState.ReadingRows) {
+                this.series = {
+                  fields: [],
+                  rows: [],
                 };
-
-                // Check if it is a known/supported column
-                if (headerKeys.hasOwnProperty(k)) {
-                  // Starting a new table after reading rows
-                  if (state === ParseState.ReadingRows) {
-                    table = {
-                      fields: [],
-                      rows: [],
-                    };
-                    tables.push(table);
-                  }
-
-                  padColumnWidth(table.fields, line.length);
-                  const fields: any[] = table.fields; // cast to any so we can lookup by key
-                  const v = first.substr(idx + 1);
-                  fields[0][k] = v;
-                  for (let j = 1; j < fields.length; j++) {
-                    fields[j][k] = line[j];
-                  }
-                  state = ParseState.InHeader;
-                  continue;
-                }
-              } else if (state === ParseState.Starting) {
-                table.fields = makeFieldsFor(line);
-                state = ParseState.InHeader;
-                continue;
+                this.data.push(this.series);
               }
-              // Ignore comment lines
+
+              padColumnWidth(this.series.fields, line.length);
+              const fields: any[] = this.series.fields; // cast to any so we can lookup by key
+              const v = first.substr(idx + 1);
+              fields[0][k] = v;
+              for (let j = 1; j < fields.length; j++) {
+                fields[j][k] = line[j];
+              }
+              this.state = ParseState.InHeader;
               continue;
             }
-
-            if (state === ParseState.Starting) {
-              const type = guessFieldTypeFromValue(first);
-              if (type === FieldType.string) {
-                table.fields = makeFieldsFor(line);
-                state = ParseState.InHeader;
-                continue;
-              }
-              table.fields = makeFieldsFor(new Array(line.length));
-              table.fields[0].type = type;
-              state = ParseState.InHeader; // fall through to read rows
-            }
+          } else if (this.state === ParseState.Starting) {
+            this.series.fields = makeFieldsFor(line);
+            this.state = ParseState.InHeader;
+            continue;
           }
+          // Ignore comment lines
+          continue;
+        }
 
-          if (state === ParseState.InHeader) {
-            padColumnWidth(table.fields, line.length);
-            state = ParseState.ReadingRows;
+        if (this.state === ParseState.Starting) {
+          const type = guessFieldTypeFromValue(first);
+          if (type === FieldType.string) {
+            this.series.fields = makeFieldsFor(line);
+            this.state = ParseState.InHeader;
+            continue;
           }
+          this.series.fields = makeFieldsFor(new Array(line.length));
+          this.series.fields[0].type = type;
+          this.state = ParseState.InHeader; // fall through to read rows
+        }
+      }
 
-          if (state === ParseState.ReadingRows) {
-            // Make sure colum structure is valid
-            if (line.length > table.fields.length) {
-              padColumnWidth(table.fields, line.length);
-              if (callback) {
-                callback.onHeader(table);
-              } else {
-                // Expand all rows with nulls
-                for (let x = 0; x < table.rows.length; x++) {
-                  const row = table.rows[x];
-                  while (row.length < line.length) {
-                    row.push(null);
-                  }
-                }
-              }
-            }
+      if (this.state === ParseState.InHeader) {
+        padColumnWidth(this.series.fields, line.length);
+        this.state = ParseState.ReadingRows;
+      }
 
-            const row: any[] = [];
-            for (let j = 0; j < line.length; j++) {
-              const v = line[j];
-              if (v) {
-                if (!field[j]) {
-                  field[j] = makeFieldParser(v, table.fields[j]);
-                }
-                row.push(field[j](v));
-              } else {
+      if (this.state === ParseState.ReadingRows) {
+        // Make sure colum structure is valid
+        if (line.length > this.series.fields.length) {
+          padColumnWidth(this.series.fields, line.length);
+          if (this.callback) {
+            this.callback.onHeader(this.series);
+          } else {
+            // Expand all rows with nulls
+            for (let x = 0; x < this.series.rows.length; x++) {
+              const row = this.series.rows[x];
+              while (row.length < line.length) {
                 row.push(null);
               }
             }
-
-            if (callback) {
-              // Send the header after we guess the type
-              if (table.rows.length === 0) {
-                callback.onHeader(table);
-                table.rows.push(row); // Only add the first row
-              }
-              callback.onRow(row);
-            } else {
-              table.rows.push(row);
-            }
           }
         }
+
+        const row: any[] = [];
+        for (let j = 0; j < line.length; j++) {
+          const v = line[j];
+          if (v) {
+            if (!this.field[j]) {
+              this.field[j] = makeFieldParser(v, this.series.fields[j]);
+            }
+            row.push(this.field[j](v));
+          } else {
+            row.push(null);
+          }
+        }
+
+        if (this.callback) {
+          // Send the header after we guess the type
+          if (this.series.rows.length === 0) {
+            this.callback.onHeader(this.series);
+            this.series.rows.push(row); // Only add the first row
+          }
+          this.callback.onRow(row);
+        } else {
+          this.series.rows.push(row);
+        }
       }
-    };
+    }
+  };
+
+  readCSV(text: string): SeriesData[] {
+    this.data = [this.series];
 
     const papacfg = {
-      ...config,
+      ...this.config,
       dynamicTyping: false,
       skipEmptyLines: true,
       comments: false, // Keep comment lines
-      step,
+      step: this.step,
     } as ParseConfig;
 
-    const process = (value: ReadableStreamReadResult<Uint8Array>): any => {
-      if (value.value) {
-        const str = new TextDecoder().decode(value.value);
-        Papa.parse(str, papacfg);
-      }
-      if (value.done) {
-        resolve(tables);
-        return;
-      }
-      return reader.read().then(process);
-    };
-    reader.read().then(process);
-  });
+    Papa.parse(text, papacfg);
+    return this.data;
+  }
 }
 
 function makeFieldParser(value: string, field: Field): FieldParser {

@@ -6,7 +6,9 @@ import { StreamHandler } from './StreamHandler';
 import { DataQueryResponse, DataQuery, DataQueryOptions } from '@grafana/ui';
 
 export interface StreamingQuery extends DataQuery {
-  delay: number;
+  url: string;
+  speed: number; // Milliseconds
+  spread: number; // Spread (for random noise)
 }
 
 export interface StreamingQueryOptions<T extends StreamingQuery> extends DataQueryOptions<T> {}
@@ -27,16 +29,22 @@ export default class StreamingDatasource {
     this.interval = safeJsonData.timeInterval;
   }
 
-  query(options: any): Promise<DataQueryResponse> {
+  query(options: StreamingQueryOptions<any>): Promise<DataQueryResponse> {
     const { panelId } = options;
     const { openStreams } = this;
 
     let stream = openStreams[panelId];
     if (!stream) {
+      const target = options.targets[0];
+      if (!target || !target.url) {
+        return Promise.resolve({ data: [] });
+      }
+
+      console.log('OPTIONS', options);
       if (false) {
         stream = new RandomWalkStream(options, this);
       }
-      stream = new RequestStream(options, this);
+      stream = new RequestStream(target, options, this);
       openStreams[panelId] = stream;
       console.log('MAKE Stream', openStreams);
     }

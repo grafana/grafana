@@ -6,20 +6,19 @@ const fs = require('fs');
 describe('read csv', () => {
   it('should get X and y', () => {
     const text = ',1\n2,3,4\n5,6\n,,,7';
-    return readCSV(text).then(data => {
-      expect(data.length).toBe(1);
+    const data = readCSV(text);
+    expect(data.length).toBe(1);
 
-      const series = data[0];
-      expect(series.fields.length).toBe(4);
-      expect(series.rows.length).toBe(3);
+    const series = data[0];
+    expect(series.fields.length).toBe(4);
+    expect(series.rows.length).toBe(3);
 
-      // Make sure everythign it padded properly
-      for (const row of series.rows) {
-        expect(row.length).toBe(series.fields.length);
-      }
+    // Make sure everythign it padded properly
+    for (const row of series.rows) {
+      expect(row.length).toBe(series.fields.length);
+    }
 
-      expect(series).toMatchSnapshot();
-    });
+    expect(series).toMatchSnapshot();
   });
 
   it('should read csv from local file system', () => {
@@ -27,10 +26,9 @@ describe('read csv', () => {
     expect(fs.existsSync(path)).toBeTruthy();
 
     const csv = fs.readFileSync(path, 'utf8');
-    return readCSV(csv).then(data => {
-      expect(data.length).toBe(1);
-      expect(data[0]).toMatchSnapshot();
-    });
+    const data = readCSV(csv);
+    expect(data.length).toBe(1);
+    expect(data[0]).toMatchSnapshot();
   });
 
   it('should read csv with headers', () => {
@@ -38,10 +36,9 @@ describe('read csv', () => {
     expect(fs.existsSync(path)).toBeTruthy();
 
     const csv = fs.readFileSync(path, 'utf8');
-    return readCSV(csv).then(data => {
-      expect(data.length).toBe(1);
-      expect(data[0]).toMatchSnapshot();
-    });
+    const data = readCSV(csv);
+    expect(data.length).toBe(1);
+    expect(data[0]).toMatchSnapshot();
   });
 });
 
@@ -53,21 +50,19 @@ describe('write csv', () => {
   it('should write the same CSV that we read', () => {
     const path = __dirname + '/testdata/roundtrip.csv';
     const csv = fs.readFileSync(path, 'utf8');
-    return readCSV(csv).then(data => {
-      const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
-      expect(data.length).toBe(1);
-      expect(data[0].fields.length).toBe(3);
-      expect(norm(out)).toBe(norm(csv));
+    const data = readCSV(csv);
+    const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
+    expect(data.length).toBe(1);
+    expect(data[0].fields.length).toBe(3);
+    expect(norm(out)).toBe(norm(csv));
 
-      // Keep the name even without special formatting
-      return readCSV(out).then(again => {
-        const shorter = toCSV(again, { headerStyle: CSVHeaderStyle.name });
-        return readCSV(shorter).then(f => {
-          const fields = f[0].fields;
-          expect(fields.length).toBe(3);
-          expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
-        });
-      });
-    });
+    // Keep the name even without special formatting
+    const again = readCSV(out);
+    const shorter = toCSV(again, { headerStyle: CSVHeaderStyle.name });
+
+    const f = readCSV(shorter);
+    const fields = f[0].fields;
+    expect(fields.length).toBe(3);
+    expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 });

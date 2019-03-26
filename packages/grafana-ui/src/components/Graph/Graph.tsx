@@ -1,7 +1,6 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import toNumber from 'lodash/toNumber';
 
 // Types
 import { TimeRange, TimeSeriesVMs } from '../../types';
@@ -45,15 +44,15 @@ export class Graph extends PureComponent<GraphProps> {
     }
 
     const ticks = width / 100;
-    let min: number = timeRange.from.valueOf();
-    let max: number = timeRange.to.valueOf();
+    const min: number = timeRange.from.valueOf();
+    const max: number = timeRange.to.valueOf();
 
-    if (isNaN(min)) {
-      min = toNumber(timeRange.raw.from);
-    }
-    if (isNaN(max)) {
-      max = toNumber(timeRange.raw.to);
-    }
+    // if (isNaN(min)) {
+    //   min = toNumber(timeRange.raw.from);
+    // }
+    // if (isNaN(max)) {
+    //   max = toNumber(timeRange.raw.to);
+    // }
 
     const flotOptions = {
       legend: {
