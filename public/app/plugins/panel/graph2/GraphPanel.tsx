@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Graph, PanelProps, NullValueMode, colors, GraphSeriesVM, FieldType, getFirstTimeField } from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, GraphPlotVM, FieldType, getFirstTimeField } from '@grafana/ui';
 import { Options } from './types';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
@@ -13,7 +13,7 @@ export class GraphPanel extends PureComponent<Props> {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const series: GraphSeriesVM[] = [];
+    const plots: GraphPlotVM[] = [];
     for (const table of data) {
       const timeColumn = getFirstTimeField(table);
       if (timeColumn < 0) {
@@ -27,17 +27,17 @@ export class GraphPanel extends PureComponent<Props> {
         if (column.type === FieldType.number) {
           // Use external calculator just to make sure it works :)
           const points = getFlotPairs({
-            rows: table.rows,
+            series: table,
             xIndex: timeColumn,
             yIndex: i,
             nullValueMode: NullValueMode.Null,
           });
 
           if (points.length > 0) {
-            series.push({
+            plots.push({
               label: column.name,
               data: points,
-              color: colors[series.length % colors.length],
+              color: colors[plots.length % colors.length],
             });
           }
         }
@@ -46,7 +46,7 @@ export class GraphPanel extends PureComponent<Props> {
 
     return (
       <Graph
-        series={series}
+        plot={plots}
         timeRange={timeRange}
         showLines={showLines}
         showPoints={showPoints}

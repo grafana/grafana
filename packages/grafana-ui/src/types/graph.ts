@@ -1,9 +1,11 @@
 import { DisplayValue } from './displayValue';
 
+export type GraphPlotValue = number | null;
+
 /** View model projection of a series */
-export interface GraphSeriesVM {
+export interface GraphPlotVM {
   label: string;
   color: string;
-  data: any[][]; // [x,y][]
+  data: GraphPlotValue[][]; // [x,y][]
   info?: DisplayValue[]; // Legend info
 }
