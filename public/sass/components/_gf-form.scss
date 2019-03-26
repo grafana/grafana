@@ -98,7 +98,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-label {
-  padding: $space-inset-md;
+  padding: $input-padding;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
   font-size: $font-size-sm;
@@ -167,7 +167,7 @@ $input-border: 1px solid $input-border-color;
   display: block;
   width: 100%;
   height: $input-height;
-  padding: $space-inset-md;
+  padding: $input-padding;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
@@ -329,7 +329,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-btn {
-  padding: $space-inset-md;
+  padding: $input-padding;
   margin-right: $space-xs;
   line-height: $input-line-height;
   font-size: $font-size-sm;
