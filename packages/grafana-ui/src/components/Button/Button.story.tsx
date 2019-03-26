@@ -29,7 +29,7 @@ const combinationOptions = {
 };
 
 const renderButtonStory = (buttonComponent: React.ComponentType<ButtonProps<any>>) => {
-  const isDisabled = boolean('Disable button', true);
+  const isDisabled = boolean('Disable button', false);
   return withPropsCombinations(
     buttonComponent,
     { ...variants, ...defaultProps, disabled: [isDisabled] },
