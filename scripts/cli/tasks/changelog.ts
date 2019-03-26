@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Task, TaskRunner } from './task';
 import axios from 'axios';
 
@@ -20,29 +21,57 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
     },
   });
 
-  let markdown = '';
-
-  for (const item of res.data) {
+  const issues = res.data.filter(item => {
     if (!item.milestone) {
       console.log('Item missing milestone', item.number);
-      continue;
+      return false;
     }
+    return item.milestone.title === milestone;
+  });
 
-    // For some reason I could not get the github api to filter on milestone and label
-    // So doing this filter here
-    if (item.milestone.title !== milestone) {
-      continue;
-    }
+  const bugs = _.sortBy(
+    issues.filter(item => {
+      if (item.title.match(/fix|fixes/i)) {
+        return true;
+      }
+      if (item.labels.find(label => label.name === 'type/bug')) {
+        return true;
+      }
+      return false;
+    }),
+    'title'
+  );
 
-    markdown += '* ' + item.title + '.';
-    markdown += ` [#${item.number}](${githubGrafanaUrl}/pull/${item.number})`;
-    markdown += `, [@${item.user.login}](${item.user.html_url})`;
+  const notBugs = _.sortBy(res.data.filter(item => !bugs.find(bug => bug === item)), 'title');
 
-    markdown += '\n';
+  let markdown = '### Features / Enhancements\n';
+
+  for (const item of notBugs) {
+    markdown += getMarkdownLineForIssue(item);
+  }
+
+  markdown += '\n### Bug Fixes\n';
+  for (const item of bugs) {
+    markdown += getMarkdownLineForIssue(item);
   }
 
   console.log(markdown);
 };
+
+function getMarkdownLineForIssue(item: any) {
+  let markdown = '';
+  let title = item.title.replace(/^([^:]*)/, (match, g1) => {
+    return `**${g1}**`;
+  });
+
+  markdown += '* ' + title + '.';
+  markdown += ` [#${item.number}](${githubGrafanaUrl}/pull/${item.number})`;
+  markdown += `, [@${item.user.login}](${item.user.html_url})`;
+
+  markdown += '\n';
+
+  return markdown;
+}
 
 export const changelogTask = new Task<ChangelogOptions>();
 changelogTask.setName('Changelog generator task');

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -73,7 +72,6 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	defer resp.Body.Close()
 	if resp.StatusCode/100 != 2 {
-		ioutil.ReadAll(resp.Body)
 		return nil, fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status)
 	}
 
