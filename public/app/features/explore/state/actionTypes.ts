@@ -79,7 +79,6 @@ export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
   eventBridge: Emitter;
-  exploreDatasources: DataSourceSelectItem[];
   queries: DataQuery[];
   range: RawTimeRange;
   ui: ExploreUIState;
@@ -210,6 +209,11 @@ export interface ToggleLogLevelPayload {
 export interface QueriesImportedPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
+}
+
+export interface LoadExploreDataSourcesPayload {
+  exploreId: ExploreId;
+  exploreDatasources: DataSourceSelectItem[];
 }
 
 /**
@@ -412,6 +416,9 @@ export const testDataSourceSuccessAction = actionCreatorFactory<TestDatasourceSu
 ).create();
 export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFailurePayload>(
   'explore/TEST_DATASOURCE_FAILURE'
+).create();
+export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
+  'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
 
 export type HigherOrderAction =

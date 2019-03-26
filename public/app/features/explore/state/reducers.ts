@@ -19,6 +19,7 @@ import {
   testDataSourceFailureAction,
   splitCloseAction,
   SplitCloseActionPayload,
+  loadExploreDatasources,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -205,12 +206,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, exploreDatasources, queries, range, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, ui } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
-        exploreDatasources,
         range,
         queries,
         initialized: true,
@@ -560,6 +560,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         tableResult: undefined,
         logsResult: undefined,
         update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: loadExploreDatasources,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        exploreDatasources: action.payload.exploreDatasources,
       };
     },
   })

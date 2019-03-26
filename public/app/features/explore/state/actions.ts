@@ -67,6 +67,7 @@ import {
   testDataSourcePendingAction,
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
+  loadExploreDatasources,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -181,6 +182,33 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
 }
 
 /**
+ * Loads all explore data sources and sets the chosen datasource.
+ * If there are no datasources a missing datasource action is dispatched.
+ */
+export function loadExploreDatasourcesAndSetDatasource(
+  exploreId: ExploreId,
+  datasourceName: string
+): ThunkResult<void> {
+  return dispatch => {
+    const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
+      .getExternal()
+      .map(ds => ({
+        value: ds.name,
+        name: ds.name,
+        meta: ds.meta,
+      }));
+
+    dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
+
+    if (exploreDatasources.length >= 1) {
+      dispatch(changeDatasource(exploreId, datasourceName));
+    } else {
+      dispatch(loadDatasourceMissingAction({ exploreId }));
+    }
+  };
+}
+
+/**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
@@ -194,31 +222,17 @@ export function initializeExplore(
   ui: ExploreUIState
 ): ThunkResult<void> {
   return async dispatch => {
-    const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
-      .getExternal()
-      .map(ds => ({
-        value: ds.name,
-        name: ds.name,
-        meta: ds.meta,
-      }));
-
+    dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({
         exploreId,
         containerWidth,
         eventBridge,
-        exploreDatasources,
         queries,
         range,
         ui,
       })
     );
-
-    if (exploreDatasources.length >= 1) {
-      dispatch(changeDatasource(exploreId, datasourceName));
-    } else {
-      dispatch(loadDatasourceMissingAction({ exploreId }));
-    }
   };
 }
 

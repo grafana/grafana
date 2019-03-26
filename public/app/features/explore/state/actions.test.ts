@@ -68,13 +68,12 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId)
           .thenDispatchedActionsAreEqual(dispatchedActions => {
-            const initializeExplore = dispatchedActions[0] as ActionOf<InitializeExplorePayload>;
+            const initializeExplore = dispatchedActions[2] as ActionOf<InitializeExplorePayload>;
             const { type, payload } = initializeExplore;
 
             expect(type).toEqual(initializeExploreAction.type);
             expect(payload.containerWidth).toEqual(containerWidth);
             expect(payload.eventBridge).toEqual(eventBridge);
-            expect(payload.exploreDatasources).toEqual([]);
             expect(payload.queries.length).toBe(1); // Queries have generated keys hard to expect on
             expect(payload.range).toEqual(range);
             expect(payload.ui).toEqual(ui);
