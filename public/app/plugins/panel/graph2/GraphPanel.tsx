@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Graph, PanelProps, NullValueMode, colors, Trace, FieldType, getFirstTimeField } from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, GraphSeriesVM, FieldType, getFirstTimeField } from '@grafana/ui';
 import { Options } from './types';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
@@ -13,7 +13,7 @@ export class GraphPanel extends PureComponent<Props> {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const traces: Trace[] = [];
+    const series: GraphSeriesVM[] = [];
     for (const table of data) {
       const timeColumn = getFirstTimeField(table);
       if (timeColumn < 0) {
@@ -34,10 +34,10 @@ export class GraphPanel extends PureComponent<Props> {
           });
 
           if (points.length > 0) {
-            traces.push({
+            series.push({
               label: column.name,
               data: points,
-              color: colors[traces.length % colors.length],
+              color: colors[series.length % colors.length],
             });
           }
         }
@@ -46,7 +46,7 @@ export class GraphPanel extends PureComponent<Props> {
 
     return (
       <Graph
-        traces={traces}
+        series={series}
         timeRange={timeRange}
         showLines={showLines}
         showPoints={showPoints}
