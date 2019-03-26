@@ -1,0 +1,19 @@
+{
+  "type": "datasource",
+  "name": "Streaming",
+  "id": "streaming",
+
+  "state": "alpha",
+
+  "metrics": true,
+  "explote": true,
+  "alerting": false,
+
+  "info": {
+    "description": "Streaming Datasource",
+    "logos": {
+      "small": "img/stream.svg",
+      "large": "img/stream.svg"
+    }
+  }
+}

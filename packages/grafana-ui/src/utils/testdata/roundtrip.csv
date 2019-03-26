@@ -1,0 +1,12 @@
+#name#a,b,c
+#type#number,string,boolean
+#unit#ms,,s
+10,AA,true
+20,XX,false
+30,YY,false
+40,ZZ,true
+50,"X,Y",true
+60,"X
+Y",true
+70,BB,false
+

@@ -1,0 +1,20 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="true">
+
+  <label class="gf-form gf-form--grow gf-form--has-input-icon" >
+    <input type="text" 
+      class="gf-form-input gf-form--grow" 
+      placeholder="path/to/file.csv"
+      ng-model="ctrl.target.path" 
+      ng-keypress="ctrl.onKeyPress( $event )"/><i class="gf-form-input-icon fa fa-file-o"></i>
+  </label>
+  <div class="gf-form">
+    <gf-form-switch 
+      class="gf-form-inline" 
+      label="Process Changes" 
+      label-class="width-12" 
+      tooltip="Expect the table to represent time and changes to a filed"
+      checked="ctrl.target.changes" 
+      on-change="ctrl.onExecute()"></gf-form-switch>
+  </div>
+
+</query-editor-row>

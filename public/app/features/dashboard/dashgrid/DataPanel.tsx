@@ -16,7 +16,11 @@ import {
   ScopedVars,
   toSeriesData,
   guessFieldTypes,
+  DataQueryResponseData,
 } from '@grafana/ui';
+import throttle from 'lodash/throttle';
+
+import { Subscribable, Unsubscribable } from 'rxjs';
 
 interface RenderProps {
   loading: LoadingState;
@@ -72,6 +76,9 @@ export class DataPanel extends Component<Props, State> {
     dashboardId: 1,
   };
 
+  dataStream: Subscribable<DataQueryResponse>;
+  dataSubscription: Unsubscribable;
+
   dataSourceSrv: DatasourceSrv = getDatasourceSrv();
   isUnmounted = false;
 
@@ -93,6 +100,10 @@ export class DataPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.isUnmounted = true;
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+      this.dataSubscription = null;
+    }
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -106,6 +117,40 @@ export class DataPanel extends Component<Props, State> {
   hasPropsChanged(prevProps: Props) {
     return this.props.refreshCounter !== prevProps.refreshCounter;
   }
+
+  private handleDataStream = (stream: Subscribable<DataQueryResponseData>) => {
+    if (this.dataStream) {
+      if (stream === this.dataStream) {
+        return;
+      }
+      console.log('stream handeler changed');
+      if (this.dataSubscription) {
+        console.log('removing existing subscription');
+        this.dataSubscription.unsubscribe();
+        this.dataSubscription = null;
+      }
+    }
+
+    console.log('init stream', stream);
+    this.dataStream = stream;
+    this.dataSubscription = stream.subscribe({
+      next: throttle((resp: DataQueryResponse) => {
+        this.setState({
+          loading: LoadingState.Done,
+          response: resp,
+          data: getProcessedSeriesData(resp.data),
+          isFirstLoad: false,
+        });
+      }, 100), // Don't ever update faster than 10hz
+      error: (err: any) => {
+        console.log('panel: observer got error', err);
+      },
+      complete: () => {
+        console.log('panel: observer got complete');
+        this.dataStream = null;
+      },
+    });
+  };
 
   private issueQueries = async () => {
     const {
@@ -157,6 +202,12 @@ export class DataPanel extends Component<Props, State> {
       const resp = await ds.query(queryOptions);
 
       if (this.isUnmounted) {
+        return;
+      }
+
+      // check if data source returns a stream
+      if (resp && resp.stream) {
+        this.handleDataStream(resp.stream);
         return;
       }
 
