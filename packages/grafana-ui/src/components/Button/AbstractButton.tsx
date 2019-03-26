@@ -21,8 +21,8 @@ export enum ButtonSize {
 }
 
 export interface ButtonProps<T> extends React.HTMLAttributes<T> {
-  size: ButtonSize;
-  variant: ButtonVariant;
+  size?: ButtonSize;
+  variant?: ButtonVariant;
   className?: string;
 }
 
@@ -129,7 +129,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       cursor: pointer;
       border: none;
       border-radius: ${borderRadius};
-      ${background}
+      ${background};
+      label: button;
     `,
   };
 };
@@ -137,8 +138,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
 export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   renderAs,
   theme,
-  size,
-  variant,
+  size = ButtonSize.Medium,
+  variant = ButtonVariant.Primary,
   className,
   ...otherProps
 }) => {
