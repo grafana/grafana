@@ -9,7 +9,7 @@ import { getColorFromHexRgbOrName } from '../../utils/index';
 import { Themeable, DisplayValue } from '../../types/index';
 import { DisplayValueLink } from './DisplayValueLink';
 
-export interface Sparkline {
+export interface BigValueSparkline {
   data: any[][]; // [[number,number]]
   minX: number;
   maxX: number;
@@ -21,12 +21,10 @@ export interface Sparkline {
 export interface Props extends Themeable {
   height: number;
   width: number;
-
   value: DisplayValue;
   prefix?: DisplayValue;
   suffix?: DisplayValue;
-
-  sparkline?: Sparkline;
+  sparkline?: BigValueSparkline;
   backgroundColor?: string;
 }
 

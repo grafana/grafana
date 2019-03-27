@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 // Types
 import { SingleStatOptions, SingleStatBaseOptions } from './types';
 
-import { Sparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
+import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
 import {
   DisplayValue,
   PanelProps,
@@ -71,7 +71,7 @@ interface SingleStatDisplay {
   value: DisplayValue;
   prefix?: DisplayValue;
   suffix?: DisplayValue;
-  sparkline?: Sparkline;
+  sparkline?: BigValueSparkline;
   backgroundColor?: string;
 }
 
@@ -83,6 +83,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   getProcessedValues = (): SingleStatDisplay[] => {
     const { data, replaceVariables, options, timeRange } = this.props;
     const { valueOptions, valueMappings } = options;
+
     const display = getDisplayProcessor({
       unit: valueOptions.unit,
       decimals: valueOptions.decimals,
@@ -110,6 +111,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
             stats: [stat], // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
+
           const v: SingleStatDisplay = {
             value: display(stats[stat]),
           };

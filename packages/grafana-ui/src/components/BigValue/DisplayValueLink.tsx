@@ -12,6 +12,9 @@ interface State {
   y: number;
 }
 
+/*
+  Experimental (POC) component
+ */
 export class DisplayValueLink extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
