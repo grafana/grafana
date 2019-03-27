@@ -1,5 +1,5 @@
 const selectorRegexp = /(?:^|\s){[^{]*}/g;
-const caseInsensitive = '(?i)';
+const caseInsensitive = '(?i)'; // Golang mode modifier for Loki, doesn't work in JavaScript
 export function parseQuery(input: string) {
   input = input || '';
   const match = input.match(selectorRegexp);
