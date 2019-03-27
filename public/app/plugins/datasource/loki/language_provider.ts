@@ -248,8 +248,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return [];
   }
 
-  async refreshLogLabels() {
-    if (this.labelKeys && Date.now() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) {
+  async refreshLogLabels(forceRefresh?: boolean) {
+    if ((this.labelKeys && Date.now() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
       await this.fetchLogLabels();
     }
   }

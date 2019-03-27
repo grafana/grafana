@@ -3,6 +3,11 @@ import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider'
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
+interface RefreshLabelType {
+  refresh: boolean;
+  force?: boolean;
+}
+
 /**
  *
  * @param languageProvider
@@ -20,7 +25,7 @@ export const useLokiLabels = (
 
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
-  const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
+  const [shouldTryRefreshLabels, setRefreshLabels] = useState({ refresh: false, force: false });
 
   // Async
   const fetchOptionValues = async option => {
@@ -30,10 +35,14 @@ export const useLokiLabels = (
     }
   };
 
-  const tryLabelsRefresh = async () => {
-    await languageProvider.refreshLogLabels();
+  const tryLabelsRefresh = async (config: RefreshLabelType) => {
+    if (!config.refresh && !config.force) {
+      return;
+    }
+
+    await languageProvider.refreshLogLabels(config.force);
     if (mounted.current) {
-      setRefreshLabels(false);
+      setRefreshLabels({ refresh: false, force: false });
       setLogLabelOptions(languageProvider.logLabelOptions);
     }
   };
@@ -66,14 +75,12 @@ export const useLokiLabels = (
   // Since shouldTryRefreshLabels is reset AFTER the labels are refreshed we are secured in case of trying to refresh
   // when previous refresh hasn't finished yet
   useEffect(() => {
-    if (shouldTryRefreshLabels) {
-      tryLabelsRefresh();
-    }
+    tryLabelsRefresh(shouldTryRefreshLabels);
   }, [shouldTryRefreshLabels]);
 
   return {
     logLabelOptions,
     setLogLabelOptions,
-    refreshLabels: () => setRefreshLabels(true),
+    refreshLabels: (forceRefresh?: boolean) => setRefreshLabels({ refresh: true, force: forceRefresh === true }),
   };
 };

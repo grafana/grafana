@@ -1,13 +1,20 @@
 import React, { FunctionComponent } from 'react';
 import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldForm';
 import { useLokiSyntax } from './useLokiSyntax';
+import { useLokiForceRefresh } from './useLokiForceRefresh';
 
-const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({ datasource, ...otherProps }) => {
+const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({
+  datasource,
+  datasourceStatus,
+  ...otherProps
+}) => {
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(datasource.languageProvider);
+  useLokiForceRefresh(datasourceStatus, refreshLabels);
 
   return (
     <LokiQueryFieldForm
       datasource={datasource}
+      datasourceStatus={datasourceStatus}
       syntaxLoaded={isSyntaxReady}
       /**
        * setActiveOption name is intentional. Because of the way rc-cascader requests additional data
