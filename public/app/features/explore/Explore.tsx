@@ -40,6 +40,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -233,16 +234,17 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
+        <div className={`explore-container`}>
+          <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
+            <Alert
+              message={`Error connecting to datasource: ${datasourceError}`}
+              button={{ text: 'Reconnect', onClick: this.onReconnect }}
+            />
+          </FadeIn>
+        </div>
+
         {datasourceInstance && (
           <div className="explore-container">
-            {datasourceError && (
-              <div className="explore-container-alert">
-                <Alert
-                  message={`Error connecting to datasource: ${datasourceError}`}
-                  button={{ text: 'Reconnect', onClick: this.onReconnect }}
-                />
-              </div>
-            )}
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
