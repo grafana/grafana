@@ -94,6 +94,9 @@ func (e *MetaqueriesExecutor) timeShift(ctx context.Context, dsInfo *models.Data
 				tsdbQuery.Queries[0] = tsdbQuery.Queries[i]
 				response, err = e.timeShift(ctx, tsdbQuery.Queries[i].DataSource, tsdbQuery.Queries[i].Model, tsdbQuery)
 
+			} else if targetDataSource == "MetaQueries" && targetQueryType == "MovingAverage" {
+				tsdbQuery.Queries[0] = tsdbQuery.Queries[i]
+				response, err = e.movingAverage(ctx, tsdbQuery.Queries[i].DataSource, tsdbQuery.Queries[i].Model, tsdbQuery)
 			} else if tsdbQuery.Queries[i].Model.Get("druidDS") != nil {
 
 				druidQuery := tsdbQuery.Queries[i]
@@ -112,12 +115,24 @@ func (e *MetaqueriesExecutor) timeShift(ctx context.Context, dsInfo *models.Data
 				fmt.Println("error message ", err)
 				fmt.Println("response message ", len(response.Results))
 				fmt.Println(reflect.TypeOf(response))
-				return response, err
 			}
 		}
 	}
-	fmt.Println("test response", err)
-	fmt.Println("test response ", len(response.Results))
+
+	dataPoints := response.Results[""].Series[0].Points
+	points := make([]tsdb.TimePoint, 0)
+
+	for i := 0; i < len(dataPoints); i++ {
+		dataPoints[i][1].Float64 = float64(time.Unix(int64(dataPoints[i][1].Float64), 0).AddDate(0, 0, -periodsToShift).Unix())
+		if int64(dataPoints[i][1].Float64) >= FromEpochMs && int64(dataPoints[i][1].Float64) <= ToEpochMs {
+			points = append(points, tsdb.NewTimePoint(dataPoints[i][0], dataPoints[i][1].Float64))
+		}
+	}
+
+	response.Results[""].Series[0].Points = points
+	fmt.Println("error message ", err)
+	fmt.Println("response message ", len(response.Results))
+	fmt.Println(reflect.TypeOf(response))
 	return response, err
 }
 func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.DataSource, modelJson *simplejson.Json, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -162,6 +177,10 @@ func (e *MetaqueriesExecutor) movingAverage(ctx context.Context, dsInfo *models.
 			if targetDataSource == "MetaQueries" && targetQueryType == "MovingAverage" {
 				tsdbQuery.Queries[0] = tsdbQuery.Queries[i]
 				response, err = e.movingAverage(ctx, tsdbQuery.Queries[i].DataSource, tsdbQuery.Queries[i].Model, tsdbQuery)
+
+			} else if targetDataSource == "MetaQueries" && targetQueryType == "TimeShift" {
+				tsdbQuery.Queries[0] = tsdbQuery.Queries[i]
+				response, err = e.timeShift(ctx, tsdbQuery.Queries[i].DataSource, tsdbQuery.Queries[i].Model, tsdbQuery)
 
 			} else if tsdbQuery.Queries[i].Model.Get("druidDS") != nil {
 
