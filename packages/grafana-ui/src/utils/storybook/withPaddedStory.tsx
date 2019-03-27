@@ -8,7 +8,7 @@ const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
         minHeight: '100vh',
         width: '100%',
         padding: '20px',
-        display: 'flex'
+        display: 'flex',
       }}
     >
       {children}

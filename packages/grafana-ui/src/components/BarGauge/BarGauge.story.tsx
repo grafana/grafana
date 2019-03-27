@@ -43,7 +43,7 @@ BarGaugeStories.add('Simple with basic thresholds', () => {
   return renderComponentWithTheme(BarGauge, {
     width: 300,
     height: 300,
-    value: {text: value.toString(), numeric: value},
+    value: { text: value.toString(), numeric: value },
     minValue: minValue,
     maxValue: maxValue,
     unit: unit,

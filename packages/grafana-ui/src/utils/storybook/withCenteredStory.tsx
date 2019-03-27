@@ -23,6 +23,12 @@ const CenteredStory: React.FunctionComponent<CenteredStoryProps> = ({ horizontal
 };
 
 export const withNotCenteredStory = (story: RenderFunction) => <CenteredStory>{story()}</CenteredStory>;
-export const withCenteredStory = (story: RenderFunction) => <CenteredStory horizontal vertical>{story()}</CenteredStory>;
-export const withHorizontallyCenteredStory = (story: RenderFunction) => <CenteredStory horizontal>{story()}</CenteredStory>;
+export const withCenteredStory = (story: RenderFunction) => (
+  <CenteredStory horizontal vertical>
+    {story()}
+  </CenteredStory>
+);
+export const withHorizontallyCenteredStory = (story: RenderFunction) => (
+  <CenteredStory horizontal>{story()}</CenteredStory>
+);
 export const withVerticallyCenteredStory = (story: RenderFunction) => <CenteredStory vertical>{story()}</CenteredStory>;
