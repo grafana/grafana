@@ -156,6 +156,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     iconWrap: css`
       label: button-icon-wrap;
       display: flex;
+      align-items: center;
     `,
     icon: css`
       label: button-icon;
@@ -185,7 +186,7 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   const finalChildren = icon ? (
     <span className={buttonStyles.iconWrap}>
       <i className={cx([icon, buttonStyles.icon])} />
-      {children}
+      <span>{children}</span>
     </span>
   ) : (
     children
