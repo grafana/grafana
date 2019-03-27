@@ -179,7 +179,11 @@ var (
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
-	// Explore UI
+    AlertingExcuteCaculateTimeout int
+    AlertingResultHandleTimeout int
+    AlertingMaxAttempts int
+
+// Explore UI
 	ExploreEnabled bool
 
 	// logger
@@ -759,6 +763,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
+
+	AlertingExcuteCaculateTimeout = alerting.Key("execute_caculate_rule_timeout").MustInt()
+	AlertingResultHandleTimeout = alerting.Key("result_handle_timeout").MustInt()
+	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt()
+
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)

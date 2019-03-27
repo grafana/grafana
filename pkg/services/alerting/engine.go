@@ -28,6 +28,10 @@ type AlertingService struct {
 	ruleReader    RuleReader
 	log           log.Logger
 	resultHandler ResultHandler
+	alertingExcuteCaculateTimeout  int
+	alertingResultHandleTimeout int
+	alertingMaxAttempts   int
+
 }
 
 func init() {
@@ -50,6 +54,10 @@ func (e *AlertingService) Init() error {
 	e.scheduler = NewScheduler()
 	e.evalHandler = NewEvalHandler()
 	e.ruleReader = NewRuleReader()
+	e.alertingExcuteCaculateTimeout = setting.AlertingExcuteCaculateTimeout
+	e.alertingResultHandleTimeout = setting.AlertingResultHandleTimeout
+	e.alertingMaxAttempts = setting.AlertingMaxAttempts
+
 	e.log = log.New("alerting.engine")
 	e.resultHandler = NewResultHandler(e.RenderService)
 	return nil
@@ -104,10 +112,6 @@ func (e *AlertingService) runJobDispatcher(grafanaCtx context.Context) error {
 
 var (
 	unfinishedWorkTimeout = time.Second * 5
-	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout        = time.Second * 30
-	resultHandleTimeout = time.Second * 30
-	alertMaxAttempts    = 3
 )
 
 func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
@@ -117,7 +121,7 @@ func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *J
 		}
 	}()
 
-	cancelChan := make(chan context.CancelFunc, alertMaxAttempts*2)
+	cancelChan := make(chan context.CancelFunc, e.alertingMaxAttempts*2)
 	attemptChan := make(chan int, 1)
 
 	// Initialize with first attemptID=1
@@ -161,7 +165,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), time.Second * time.Duration(e.alertingExcuteCaculateTimeout))
 	cancelChan <- cancelFn
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
@@ -197,7 +201,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 				tlog.Error(evalContext.Error),
 				tlog.String("message", "alerting execution attempt failed"),
 			)
-			if attemptID < alertMaxAttempts {
+			if attemptID < e.alertingMaxAttempts {
 				span.Finish()
 				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
@@ -206,7 +210,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 
 		// create new context with timeout for notifications
-		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), resultHandleTimeout)
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(),time.Duration(e.alertingResultHandleTimeout) * time.Second)
 		cancelChan <- resultHandleCancelFn
 
 		// override the context used for evaluation with a new context for notifications.
