@@ -115,12 +115,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
-    try {
-      await dispatch(loadDatasource(exploreId, newDataSourceInstance));
-    } catch (error) {
-      console.error(error);
-      return;
-    }
+    await dispatch(loadDatasource(exploreId, newDataSourceInstance));
 
     dispatch(runQueries(exploreId));
   };
@@ -320,7 +315,7 @@ export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): T
 export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const instance = getState().explore[exploreId].datasourceInstance;
-    dispatch(loadDatasource(exploreId, instance));
+    dispatch(changeDatasource(exploreId, instance.name));
   };
 };
 
@@ -334,7 +329,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     // Keep ID to track selection
     dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
 
-    dispatch(testDatasource(exploreId, instance));
+    await dispatch(testDatasource(exploreId, instance));
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
       // User already changed datasource again, discard results
@@ -531,7 +526,13 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
       supportsGraph,
       supportsLogs,
       supportsTable,
+      datasourceError,
     } = getState().explore[exploreId];
+
+    if (datasourceError) {
+      // let's not run any queries if data source is in a faulty state
+      return;
+    }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));

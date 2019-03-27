@@ -9,19 +9,13 @@ export interface ThunkGiven {
 }
 
 export interface ThunkWhen {
-  whenThunkIsDispatched: (...args: any) => Promise<ThunkThen>;
-}
-
-export interface ThunkThen {
-  thenDispatchedActionsEqual: (actions: Array<ActionOf<any>>) => void;
-  thenDispatchedActionsAreEqual: (callback: (dispatchedActions: Array<ActionOf<any>>) => boolean) => void;
-  thenThereAreNoDispatchedActions: () => void;
+  whenThunkIsDispatched: (...args: any) => Promise<Array<ActionOf<any>>>;
 }
 
 export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
   const store = mockStore(initialState);
   let thunkUnderTest = null;
-  let resultingActions: Array<ActionOf<any>> = [];
+  let dispatchedActions: Array<ActionOf<any>> = [];
 
   const givenThunk = (thunkFunction: any): ThunkWhen => {
     thunkUnderTest = thunkFunction;
@@ -29,35 +23,20 @@ export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
     return instance;
   };
 
-  const whenThunkIsDispatched = async (...args: any): Promise<ThunkThen> => {
+  const whenThunkIsDispatched = async (...args: any): Promise<Array<ActionOf<any>>> => {
     await store.dispatch(thunkUnderTest(...args));
 
-    resultingActions = store.getActions();
+    dispatchedActions = store.getActions();
     if (debug) {
-      console.log('resultingActions:', resultingActions);
+      console.log('resultingActions:', dispatchedActions);
     }
 
-    return instance;
-  };
-
-  const thenDispatchedActionsEqual = (actions: Array<ActionOf<any>>): void => {
-    expect(resultingActions).toEqual(actions);
-  };
-
-  const thenDispatchedActionsAreEqual = (callback: (dispatchedActions: Array<ActionOf<any>>) => boolean): void => {
-    expect(callback(resultingActions)).toBe(true);
-  };
-
-  const thenThereAreNoDispatchedActions = (): void => {
-    return thenDispatchedActionsEqual([]);
+    return dispatchedActions;
   };
 
   const instance = {
     givenThunk,
     whenThunkIsDispatched,
-    thenDispatchedActionsEqual,
-    thenDispatchedActionsAreEqual,
-    thenThereAreNoDispatchedActions,
   };
 
   return instance;
