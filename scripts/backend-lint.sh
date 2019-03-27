@@ -19,6 +19,7 @@ go get -u github.com/opennota/check/cmd/structcheck
 go get -u github.com/mdempsky/unconvert
 go get -u github.com/opennota/check/cmd/varcheck
 go get -u honnef.co/go/tools/cmd/staticcheck
+go get -u github.com/mgechev/revive
 
 exit_if_fail gometalinter --enable-gc --vendor --deadline 10m --disable-all \
   --enable=deadcode \
@@ -31,3 +32,4 @@ exit_if_fail gometalinter --enable-gc --vendor --deadline 10m --disable-all \
   --enable=staticcheck
 
 exit_if_fail go vet ./pkg/...
+exit_if_fail revive -formatter stylish -config ./conf/revive.toml

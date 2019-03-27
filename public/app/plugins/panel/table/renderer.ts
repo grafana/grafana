@@ -177,7 +177,7 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isString(v) || _.isArray(v)) {
+        if (isNaN(v) || _.isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 
