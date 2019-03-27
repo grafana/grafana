@@ -146,7 +146,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
           if (sparkline.show && timeColumn >= 0) {
             const points = getFlotPairs({
-              rows: series.rows,
+              series,
               xIndex: timeColumn,
               yIndex: i,
               nullValueMode: NullValueMode.Null,
