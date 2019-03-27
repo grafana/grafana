@@ -7,7 +7,7 @@ import { describeTimeRange } from '../../../../../public/app/core/utils/rangeuti
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,
   isTimezoneUtc: boolean,
-  timezone?: string
+  timezone?: dateMath.Timezone
 ): TimeRange => {
   const fromMoment = stringToMoment(timeOption.from, isTimezoneUtc, false, timezone);
   const toMoment = stringToMoment(timeOption.to, isTimezoneUtc, true, timezone);
@@ -15,13 +15,19 @@ export const mapTimeOptionToTimeRange = (
   return { from: fromMoment, to: toMoment, raw: { from: timeOption.from, to: timeOption.to } };
 };
 
-export const stringToMoment = (value: string, isTimezoneUtc: boolean, roundUp?: boolean, timezone?: string): Moment => {
+export const stringToMoment = (
+  value: string,
+  isTimezoneUtc: boolean,
+  roundUp?: boolean,
+  timezone?: dateMath.Timezone
+): Moment => {
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
       return moment();
     }
 
-    return dateMath.parse(value, roundUp, timezone);
+    const parsed = dateMath.parse(value, roundUp, timezone);
+    return parsed || moment();
   }
 
   if (isTimezoneUtc) {

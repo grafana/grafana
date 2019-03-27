@@ -145,12 +145,12 @@ export function describeTimeRange(range: RawTimeRange): string {
 
   if (moment.isMoment(range.from)) {
     const toMoment = dateMath.parse(range.to, true);
-    return formatDate(range.from) + ' to ' + toMoment.fromNow();
+    return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
   }
 
   if (moment.isMoment(range.to)) {
     const from = dateMath.parse(range.from, false);
-    return from.fromNow() + ' to ' + formatDate(range.to);
+    return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
   }
 
   if (range.to.toString() === 'now') {

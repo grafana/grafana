@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import moment, { Moment } from 'moment';
 import { TimeFragment } from '@grafana/ui';
+import { Timezone } from '../../../../../public/app/core/utils/datemath';
 
 import { stringToMoment } from './time';
 
@@ -9,7 +10,7 @@ export interface Props {
   value: TimeFragment;
   isTimezoneUtc: boolean;
   roundup?: boolean;
-  timezone?: string;
+  timezone?: Timezone;
   onChange: (value: Moment) => void;
 }
 
