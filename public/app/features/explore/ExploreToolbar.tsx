@@ -101,6 +101,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     const {
       datasourceMissing,
       exploreDatasources,
+      closeSplit,
       exploreId,
       loading,
       range,
@@ -108,7 +109,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       splitted,
       timepickerRef,
       refreshInterval,
-      closeSplit,
       onChangeTime,
       split,
     } = this.props;
@@ -126,7 +126,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => this.props.closeSplit(exploreId)}>
+              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
                 <i className="fa fa-times fa-fw" />
               </a>
             )}
