@@ -86,7 +86,7 @@ jobs:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  gometalinter:
+  backend-lint:
     docker:
       - image: circleci/golang:1.11.5
         environment:
@@ -96,8 +96,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Gometalinter tests
-          command: './scripts/gometalinter.sh'
+          name: backend lint
+          command: './scripts/backend-lint.sh'
 
   test-frontend:
     docker:
@@ -460,7 +460,7 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - gometalinter:
+      - backend-lint:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -476,7 +476,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -487,7 +487,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -497,7 +497,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -511,7 +511,7 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - gometalinter:
+      - backend-lint:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -527,7 +527,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -538,7 +538,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -549,7 +549,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -560,7 +560,7 @@ workflows:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
-        - gometalinter:
+        - backend-lint:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -578,7 +578,7 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - gometalinter
+              - backend-lint
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
@@ -589,7 +589,7 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - gometalinter
+              - backend-lint
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test

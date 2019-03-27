@@ -34,7 +34,7 @@
 }
 
 .sidemenu__top {
-  padding-top: 3rem;
+  padding-top: 40px;
   flex-grow: 1;
 }
 
@@ -161,7 +161,7 @@
 }
 
 .sidemenu-subtitle {
-  padding: 0.5rem 1rem 0.5rem;
+  padding: $space-sm $space-md $space-sm;
   font-size: $font-size-sm;
   color: $text-color-weak;
   border-bottom: 1px solid $dropdownDividerBottom;
@@ -186,7 +186,7 @@ li.sidemenu-org-switcher {
 
 .sidemenu-org-switcher__switch {
   font-size: $font-size-sm;
-  padding-left: 1.5rem;
+  padding-left: $space-lg;
   display: flex;
   align-items: center;
   > i.fa.fa-random {
@@ -197,7 +197,7 @@ li.sidemenu-org-switcher {
 
 .sidemenu__logo {
   display: block;
-  padding: 0.4rem 1rem 0.4rem 0.65rem;
+  padding: 6px 14px 6px 9px;
   min-height: $navbarHeight;
   position: relative;
   height: $navbarHeight - 1px;
@@ -263,7 +263,7 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu__top {
-      padding-top: 0rem;
+      padding-top: 0;
     }
 
     .side-menu-header {

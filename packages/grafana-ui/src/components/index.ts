@@ -5,6 +5,8 @@ export { Popper } from './Tooltip/Popper';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
+export * from './Button/Button';
+
 // Select
 export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';

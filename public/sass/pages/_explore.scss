@@ -219,9 +219,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 3.5rem;
+  top: 48px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 11px;
 }
 
 .graph-legend {
@@ -267,7 +267,7 @@
   align-items: flex-start;
 
   & + & {
-    margin-top: 0.5rem;
+    margin-top: $space-sm;
   }
 }
 
