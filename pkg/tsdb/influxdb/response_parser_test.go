@@ -75,8 +75,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 							{
 								Name:    "cpu.upc",
 								Columns: []string{"time", "mean", "sum"},
-								Tags:    map[string]string{
-									"datacenter": "America",
+								Tags: map[string]string{
+									"datacenter":     "America",
 									"dc.region.name": "Northeast",
 								},
 								Values: [][]interface{}{
