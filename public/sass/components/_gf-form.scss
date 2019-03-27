@@ -267,7 +267,7 @@ $input-border: 1px solid $input-border-color;
   .gf-form-select-icon {
     position: absolute;
     z-index: 1;
-    left: $space-sm;
+    left: $input-padding;
     top: 50%;
     margin-top: -7px;
 
@@ -343,7 +343,7 @@ $input-border: 1px solid $input-border-color;
     font-size: $font-size-base;
     line-height: $input-line-height;
     margin: -6px -5px 0 5px;
-    padding: $space-inset-sm;
+    padding: $space-xs;
   }
 }
 

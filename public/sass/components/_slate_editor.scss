@@ -51,14 +51,13 @@
     color: $text-color-weak;
     font-size: $font-size-sm;
     line-height: $line-height-base;
-    padding: $space-inset-md;
+    padding: $space-sm;
   }
 
   .typeahead-item {
     height: auto;
     font-family: $font-family-monospace;
-    padding: $space-inset-md;
-    padding-left: $space-md;
+    padding: $space-sm $space-sm $space-sm $space-md;
     font-size: $font-size-sm;
     text-overflow: ellipsis;
     overflow: hidden;
