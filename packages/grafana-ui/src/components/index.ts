@@ -38,3 +38,5 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+
+export { CallToActionCard } from './CallToActionCard/CallToActionCard';
