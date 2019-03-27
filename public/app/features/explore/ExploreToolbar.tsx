@@ -125,8 +125,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 </span>
               )}
             </div>
-            {exploreId === 'right' && (
-              <a className="explore-toolbar-header-close" onClick={closeSplit}>
+            {splitted && (
+              <a className="explore-toolbar-header-close" onClick={() => this.props.closeSplit(exploreId)}>
                 <i className="fa fa-times fa-fw" />
               </a>
             )}

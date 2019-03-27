@@ -25,16 +25,9 @@ import { LogLevel } from 'app/core/logs_model';
  *
  */
 export enum ActionTypes {
-  SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
 }
-
-export interface SplitCloseAction {
-  type: ActionTypes.SplitClose;
-  payload: {};
-}
-
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
   payload: {
@@ -171,6 +164,10 @@ export interface ScanStopPayload {
 export interface SetQueriesPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
+}
+
+export interface SplitCloseActionPayload {
+  itemId: ExploreId;
 }
 
 export interface SplitOpenPayload {
@@ -363,7 +360,7 @@ export const setQueriesAction = actionCreatorFactory<SetQueriesPayload>('explore
 /**
  * Close the split view and save URL state.
  */
-export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLOSE').create();
+export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('explore/SPLIT_CLOSE').create();
 
 /**
  * Open the split view and copy the left state to be the right state.
@@ -408,7 +405,11 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
 export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
 
-export type HigherOrderAction = SplitCloseAction | SplitOpenAction | ResetExploreAction | ActionOf<any>;
+export type HigherOrderAction =
+  | ActionOf<SplitCloseActionPayload>
+  | SplitOpenAction
+  | ResetExploreAction
+  | ActionOf<any>;
 
 export type Action =
   | ActionOf<AddQueryRowPayload>

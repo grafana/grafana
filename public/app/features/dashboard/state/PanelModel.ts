@@ -8,6 +8,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import { DataQuery, TimeSeries, Threshold, ScopedVars, TableData } from '@grafana/ui';
 import { PanelPlugin } from 'app/types';
+import config from 'app/core/config';
 
 export interface GridPos {
   x: number;
@@ -244,14 +245,22 @@ export class PanelModel {
     });
   }
 
+  private getPluginVersion(plugin: PanelPlugin): string {
+    return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
+  }
+
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
     const { reactPanel } = plugin.exports;
 
+    // Call PanelMigration Handler if the version has changed
     if (reactPanel && reactPanel.onPanelMigration) {
-      this.options = reactPanel.onPanelMigration(this);
-      this.pluginVersion = plugin.info ? plugin.info.version : '1.0.0';
+      const version = this.getPluginVersion(plugin);
+      if (version !== this.pluginVersion) {
+        this.options = reactPanel.onPanelMigration(this);
+        this.pluginVersion = version;
+      }
     }
   }
 
@@ -262,7 +271,7 @@ export class PanelModel {
     const reactPanel = newPlugin.exports.reactPanel;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (!reactPanel) {
+    if (this.plugin.exports.PanelCtrl) {
       this.destroy();
     }
 
@@ -283,11 +292,15 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const onPanelTypeChanged = reactPanel ? reactPanel.onPanelTypeChanged : null;
-    if (onPanelTypeChanged) {
-      this.options = this.options || {};
-      const old = oldOptions ? oldOptions.options : {};
-      Object.assign(this.options, onPanelTypeChanged(this.options, oldPluginId, old));
+    if (reactPanel) {
+      if (reactPanel.onPanelTypeChanged) {
+        this.options = this.options || {};
+        const old = oldOptions && oldOptions.options ? oldOptions.options : {};
+        Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
+      }
+      if (reactPanel.onPanelMigration) {
+        this.pluginVersion = this.getPluginVersion(newPlugin);
+      }
     }
   }
 

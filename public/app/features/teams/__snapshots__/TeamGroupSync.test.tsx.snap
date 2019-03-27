@@ -50,7 +50,7 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form"
         >
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"
@@ -168,7 +168,7 @@ exports[`Render should render groups table 1`] = `
         <div
           className="gf-form"
         >
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             placeholder="cn=ops,ou=groups,dc=grafana,dc=org"

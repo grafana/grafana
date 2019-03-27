@@ -73,7 +73,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
-    paceLength: 10,
+    spaceLength: 10,
     // show hide points
     points: false,
     // point radius in pixels

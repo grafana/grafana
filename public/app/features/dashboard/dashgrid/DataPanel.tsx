@@ -11,16 +11,16 @@ import {
   DataQueryResponse,
   DataQueryError,
   LoadingState,
-  TableData,
+  SeriesData,
   TimeRange,
   ScopedVars,
-  toTableData,
-  guessColumnTypes,
+  toSeriesData,
+  guessFieldTypes,
 } from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;
-  data: TableData[];
+  data: SeriesData[];
 }
 
 export interface Props {
@@ -44,7 +44,7 @@ export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
   response: DataQueryResponse;
-  data?: TableData[];
+  data?: SeriesData[];
 }
 
 /**
@@ -52,18 +52,18 @@ export interface State {
  *
  * This is also used by PanelChrome for snapshot support
  */
-export function getProcessedTableData(results?: any[]): TableData[] {
+export function getProcessedSeriesData(results?: any[]): SeriesData[] {
   if (!results) {
     return [];
   }
 
-  const tables: TableData[] = [];
+  const series: SeriesData[] = [];
   for (const r of results) {
     if (r) {
-      tables.push(guessColumnTypes(toTableData(r)));
+      series.push(guessFieldTypes(toSeriesData(r)));
     }
   }
-  return tables;
+  return series;
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -167,7 +167,7 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        data: getProcessedTableData(resp.data),
+        data: getProcessedSeriesData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {

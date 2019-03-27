@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -23,7 +22,6 @@ import {
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { StoreState } from 'app/types';
 import { SelectOptionItem } from '@grafana/ui';
 
 import {
@@ -37,7 +35,6 @@ import {
 } from '@grafana/ui/src/types';
 import { ExploreId, ExploreUrlState, RangeScanner, ResultType, QueryOptions, ExploreUIState } from 'app/types/explore';
 import {
-  Action,
   updateDatasourceInstanceAction,
   changeQueryAction,
   changeRefreshIntervalAction,
@@ -75,9 +72,8 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
+import { ThunkResult } from 'app/types';
 import { parseTime } from '../TimePicker';
-
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
 
 /**
  * Updates UI state and save it to the URL
@@ -659,9 +655,9 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
 /**
  * Close the split view and save URL state.
  */
-export function splitClose(): ThunkResult<void> {
+export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return dispatch => {
-    dispatch(splitCloseAction());
+    dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
 }

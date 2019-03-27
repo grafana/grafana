@@ -85,9 +85,10 @@ func (rt releaseType) nightly() bool {
 }
 
 type buildArtifact struct {
-	os         string
-	arch       string
-	urlPostfix string
+	os             string
+	arch           string
+	urlPostfix     string
+	packagePostfix string
 }
 
 func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releaseType) string {
@@ -102,7 +103,7 @@ func (t buildArtifact) getURL(baseArchiveURL, version string, releaseType releas
 		rhelReleaseExtra = "-1"
 	}
 
-	url := strings.Join([]string{baseArchiveURL, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
+	url := strings.Join([]string{baseArchiveURL, t.packagePostfix, prefix, version, rhelReleaseExtra, t.urlPostfix}, "")
 	return url
 }
 
@@ -128,9 +129,10 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		urlPostfix: "_armhf.deb",
 	},
 	{
-		os:         "deb",
-		arch:       "armv6",
-		urlPostfix: "_armel.deb",
+		os:             "deb",
+		arch:           "armv6",
+		packagePostfix: "-rpi",
+		urlPostfix:     "_armhf.deb",
 	},
 	{
 		os:         "rhel",

@@ -1,18 +1,18 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processTableData';
-import { TableData } from '../../types/data';
+import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processSeriesData';
+import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
 
 interface Props {
   options?: TableParseOptions;
   text: string;
-  onTableParsed: (table: TableData, text: string) => void;
+  onTableParsed: (table: SeriesData, text: string) => void;
 }
 
 interface State {
   text: string;
-  table: TableData;
+  table: SeriesData;
   details: TableParseDetails;
 }
 
@@ -82,7 +82,7 @@ class TableInputCSV extends React.PureComponent<Props, State> {
           <div className="gf-table-input-csv" style={{ width, height }}>
             <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
             <footer onClick={this.onFooterClicked} className={footerClassNames}>
-              Rows:{table.rows.length}, Columns:{table.columns.length} &nbsp;
+              Rows:{table.rows.length}, Columns:{table.fields.length} &nbsp;
               {hasErrors ? <i className="fa fa-exclamation-triangle" /> : <i className="fa fa-check-circle" />}
             </footer>
           </div>

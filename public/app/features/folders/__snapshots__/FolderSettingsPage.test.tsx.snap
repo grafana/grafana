@@ -27,7 +27,7 @@ exports[`Render should enable save button 1`] = `
           >
             Name
           </label>
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             type="text"
@@ -85,7 +85,7 @@ exports[`Render should render component 1`] = `
           >
             Name
           </label>
-          <input
+          <Input
             className="gf-form-input width-30"
             onChange={[Function]}
             type="text"
