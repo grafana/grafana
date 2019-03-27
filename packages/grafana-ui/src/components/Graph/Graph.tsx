@@ -44,15 +44,8 @@ export class Graph extends PureComponent<GraphProps> {
     }
 
     const ticks = width / 100;
-    const min: number = timeRange.from.valueOf();
-    const max: number = timeRange.to.valueOf();
-
-    // if (isNaN(min)) {
-    //   min = toNumber(timeRange.raw.from);
-    // }
-    // if (isNaN(max)) {
-    //   max = toNumber(timeRange.raw.to);
-    // }
+    const min = timeRange.from.valueOf();
+    const max = timeRange.to.valueOf();
 
     const flotOptions = {
       legend: {
@@ -101,7 +94,7 @@ export class Graph extends PureComponent<GraphProps> {
     };
 
     try {
-      // console.log('Graph render', timeRange.from );
+      console.log('Graph render');
       $.plot(this.element, timeSeries, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, timeSeries);

@@ -144,15 +144,9 @@ export class PanelChrome extends PureComponent<Props, State> {
     return this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : null;
   }
 
-  renderPanelPlugin(
-    loading: LoadingState,
-    data: SeriesData[],
-    timeRange: TimeRange,
-    width: number,
-    height: number
-  ): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, data: SeriesData[], width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { renderCounter } = this.state;
+    const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.exports.reactPanel.panel;
 
     // This is only done to increase a counter that is used by backend
@@ -196,12 +190,12 @@ export class PanelChrome extends PureComponent<Props, State> {
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
-            {({ loading, data, timeRange }) => {
-              return this.renderPanelPlugin(loading, data, timeRange, width, height);
+            {({ loading, data }) => {
+              return this.renderPanelPlugin(loading, data, width, height);
             }}
           </DataPanel>
         ) : (
-          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, timeRange, width, height)
+          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, width, height)
         )}
       </>
     );

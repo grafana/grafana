@@ -1,20 +1,11 @@
 import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
-import { Subscribable } from 'rxjs';
 
 export type DataQueryResponseData = TimeSeries | TableData | SeriesData | any;
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-
-  range?: TimeRange;
-
-  // Existing but not documented interface
-  subscribe?: (options: any) => any;
-
-  // better?
-  stream?: Subscribable<DataQueryResponse>;
 }
 
 export interface DataQuery {
