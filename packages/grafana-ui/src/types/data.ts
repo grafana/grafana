@@ -53,23 +53,11 @@ export interface TimeSeries {
   unit?: string;
 }
 
-/** View model projection of a time series */
-export interface TimeSeriesVM {
-  label: string;
-  color: string;
-  data: TimeSeriesValue[][];
-  allIsNull: boolean;
-  allIsZero: boolean;
-}
-
 export enum NullValueMode {
   Null = 'null',
   Ignore = 'connected',
   AsZero = 'null as zero',
 }
-
-/** View model projection of many time series */
-export type TimeSeriesVMs = TimeSeriesVM[];
 
 export interface AnnotationEvent {
   annotation?: any;
