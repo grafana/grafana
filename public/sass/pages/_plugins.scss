@@ -2,7 +2,7 @@
   color: $gray-3;
   font-size: $font-size-sm;
   position: relative;
-  top: 1.2rem;
+  top: $space-md;
 
   &:hover {
     color: $link-hover-color;
