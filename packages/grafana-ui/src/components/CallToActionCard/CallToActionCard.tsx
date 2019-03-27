@@ -1,18 +1,19 @@
 import React from 'react';
 import { Themeable, GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 export interface CallToActionCardProps extends Themeable {
   message?: string | JSX.Element;
   callToActionElement: JSX.Element;
   footer?: string | JSX.Element;
+  className?: string;
 }
 
 const getCallToActionCardStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     label: call-to-action-card;
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.lg};
     background: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.grayBlue }, theme.type)};
     border-radius: ${theme.border.radius.md};
     display: flex;
@@ -34,11 +35,12 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
   callToActionElement,
   footer,
   theme,
+  className,
 }) => {
   const css = getCallToActionCardStyles(theme);
 
   return (
-    <div className={css.wrapper}>
+    <div className={cx([css.wrapper, className])}>
       {message && <div className={css.message}>{message}</div>}
       {callToActionElement}
       {footer && <div className={css.footer}>{footer}</div>}
