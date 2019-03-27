@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write"
+	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
 	uploadUrl string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s&predefinedAcl=publicRead"
 )
 
