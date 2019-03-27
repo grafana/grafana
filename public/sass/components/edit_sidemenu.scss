@@ -8,26 +8,6 @@
   min-width: 0;
 }
 
-.edit-sidemenu-aside {
-  margin-right: $spacer * 2;
-}
-
-.edit-sidemenu {
-  width: 100%;
-  list-style: none;
-
-  li.active {
-    @include left-brand-border-gradient();
-  }
-
-  a {
-    display: block;
-    color: $text-color;
-    margin: 0 0 1.5rem 1rem;
-    white-space: nowrap;
-  }
-}
-
 .column-styles-heading {
   border-bottom: 1px solid $gray-1;
 }
@@ -35,20 +15,5 @@
 @include media-breakpoint-down(sm) {
   .edit-tab-with-sidemenu {
     flex-direction: column;
-  }
-
-  .edit-sidemenu-aside {
-    width: 100%;
-    margin-bottom: 2rem;
-  }
-
-  .edit-sidemenu {
-    li {
-      float: left;
-    }
-
-    a {
-      margin: 0.3rem 1rem;
-    }
   }
 }
