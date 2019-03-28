@@ -250,8 +250,8 @@ table {
 }
 
 caption {
-  padding-top: $table-cell-padding;
-  padding-bottom: $table-cell-padding;
+  padding-top: $space-inset-squish-md;
+  padding-bottom: $space-inset-squish-md;
   color: $text-muted;
   text-align: left;
   caption-side: bottom;
