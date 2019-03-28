@@ -72,7 +72,7 @@ export class Input extends PureComponent<Props> {
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
-      <div className="our-custom-wrapper-class">
+      <div>
         <input {...inputElementProps} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>

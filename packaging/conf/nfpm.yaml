@@ -1,0 +1,36 @@
+name: "grafana"
+arch: "${ARCH}"
+platform: "linux"
+version: "${VERSION}"
+section: "default"
+priority: "extra"
+replaces:
+- grafana
+provides:
+- grafana-server
+- grafana-cli
+depends:
+- adduser
+- libfontconfig
+maintainer: "<contact@grafana.com>"
+description: |
+  Grafana
+vendor: "Grafana"
+homepage: "https://grafana.com"
+license: "Apache 2"
+bindir: "/usr/sbin"
+files:
+  "./bin/grafana-server": "/usr/sbin/grafana-server"
+  "./bin/grafana-cli": "/usr/sbin/grafana-cli"
+config_files:
+  ./packaging/deb/init.d/grafana-server: "/etc/init.d/grafana-server"
+  ./packaging/deb/default/grafana-server: "/etc/default/grafana-server"
+  ./packaging/deb/systemd/grafana-server.service: "/usr/lib/systemd/system/grafana-server.service"
+overrides:
+  rpm:
+    scripts:
+      preinstall: ./scripts/preinstall.sh
+      postremove: ./scripts/postremove.sh
+  deb:
+    scripts:
+      postinstall: ./packaging/deb/control/postinst

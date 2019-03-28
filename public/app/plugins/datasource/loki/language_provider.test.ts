@@ -1,6 +1,8 @@
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider from './language_provider';
+import LanguageProvider, { LABEL_REFRESH_INTERVAL } from './language_provider';
+import { advanceTo, clear, advanceBy } from 'jest-date-mock';
+import { beforeEach } from 'test/lib/common';
 
 describe('Language completion provider', () => {
   const datasource = {
@@ -131,5 +133,35 @@ describe('Query imports', () => {
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
       expect(result).toEqual('{baz="42",foo="bar"}');
     });
+  });
+});
+
+describe('Labels refresh', () => {
+  const datasource = {
+    metadataRequest: () => ({ data: { data: [] } }),
+  };
+  const instance = new LanguageProvider(datasource);
+
+  beforeEach(() => {
+    instance.fetchLogLabels = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    clear();
+  });
+  it("should not refresh labels if refresh interval hasn't passed", () => {
+    advanceTo(new Date(2019, 1, 1, 0, 0, 0));
+    instance.logLabelFetchTs = Date.now();
+    advanceBy(LABEL_REFRESH_INTERVAL / 2);
+    instance.refreshLogLabels();
+    expect(instance.fetchLogLabels).not.toBeCalled();
+  });
+  it('should refresh labels if refresh interval passed', () => {
+    advanceTo(new Date(2019, 1, 1, 0, 0, 0));
+    instance.logLabelFetchTs = Date.now();
+    advanceBy(LABEL_REFRESH_INTERVAL + 1);
+    instance.refreshLogLabels();
+    expect(instance.fetchLogLabels).toBeCalled();
   });
 });

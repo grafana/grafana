@@ -67,14 +67,14 @@ type UpdateAlertNotificationCommand struct {
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
-	Uid                   string
-	Name                  string
-	Type                  string
-	SendReminder          bool
-	DisableResolveMessage bool
-	Frequency             string
-	IsDefault             bool
-	Settings              *simplejson.Json
+	Uid                   string           `json:"-"`
+	Name                  string           `json:"name"  binding:"Required"`
+	Type                  string           `json:"type"  binding:"Required"`
+	SendReminder          bool             `json:"sendReminder"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Frequency             string           `json:"frequency"`
+	IsDefault             bool             `json:"isDefault"`
+	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
 
 	OrgId  int64
 	Result *AlertNotification

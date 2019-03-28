@@ -5,6 +5,8 @@ export { Popper } from './Tooltip/Popper';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
+export * from './Button/Button';
+
 // Select
 export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
@@ -25,13 +27,17 @@ export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
 export { Switch } from './Switch/Switch';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartDataPoint, PieChartType } from './PieChart/PieChart';
+export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 
 // Visualizations
+export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+export * from './SingleStatShared/shared';
+
+export { CallToActionCard } from './CallToActionCard/CallToActionCard';

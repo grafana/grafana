@@ -38,6 +38,7 @@ import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STAT
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
+import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -192,6 +193,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
     }
   };
 
+  renderEmptyState = () => {
+    return (
+      <div className="explore-container">
+        <NoDataSourceCallToAction />
+      </div>
+    );
+  };
+
   render() {
     const {
       StartPage,
@@ -213,9 +222,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} timepickerRef={this.timepickerRef} onChangeTime={this.onChangeTime} />
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
-        {datasourceMissing ? (
-          <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
-        ) : null}
+        {datasourceMissing ? this.renderEmptyState() : null}
 
         {datasourceError && (
           <div className="explore-container">

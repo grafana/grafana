@@ -2,7 +2,7 @@ import { storiesOf } from '@storybook/react';
 import { number, text, boolean } from '@storybook/addon-knobs';
 import { BarGauge } from './BarGauge';
 import { VizOrientation } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 const getKnobs = () => {
@@ -23,7 +23,7 @@ const getKnobs = () => {
 
 const BarGaugeStories = storiesOf('UI/BarGauge/BarGauge', module);
 
-BarGaugeStories.addDecorator(withCenteredStory);
+BarGaugeStories.addDecorator(withHorizontallyCenteredStory);
 
 BarGaugeStories.add('Simple with basic thresholds', () => {
   const {
@@ -41,9 +41,9 @@ BarGaugeStories.add('Simple with basic thresholds', () => {
   } = getKnobs();
 
   return renderComponentWithTheme(BarGauge, {
-    width: 700,
-    height: 700,
-    value: value,
+    width: 300,
+    height: 300,
+    value: { text: value.toString(), numeric: value },
     minValue: minValue,
     maxValue: maxValue,
     unit: unit,

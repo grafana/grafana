@@ -110,20 +110,23 @@ function watchProps(watchDepth, scope, watchExpressions, listener) {
 
   const watchGroupExpressions = [];
 
-  watchExpressions.forEach(expr => {
+  for (const expr of watchExpressions) {
     const actualExpr = getPropExpression(expr);
     const exprWatchDepth = getPropWatchDepth(watchDepth, expr);
+
+    // ignore empty expressions & expressions with functions
+    if (!actualExpr || actualExpr.match(/\(.*\)/) || exprWatchDepth === 'one-time') {
+      continue;
+    }
 
     if (exprWatchDepth === 'collection' && supportsWatchCollection) {
       scope.$watchCollection(actualExpr, listener);
     } else if (exprWatchDepth === 'reference' && supportsWatchGroup) {
       watchGroupExpressions.push(actualExpr);
-    } else if (exprWatchDepth === 'one-time') {
-      //do nothing because we handle our one time bindings after this
     } else {
       scope.$watch(actualExpr, listener, exprWatchDepth !== 'reference');
     }
-  });
+  }
 
   if (watchDepth === 'one-time') {
     listener();

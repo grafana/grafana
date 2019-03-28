@@ -76,17 +76,17 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		SendEmailCommand: m.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
 			Data: map[string]interface{}{
-				"Title":        evalContext.GetNotificationTitle(),
-				"State":        evalContext.Rule.State,
-				"Name":         evalContext.Rule.Name,
-				"StateModel":   evalContext.GetStateModel(),
-				"Message":      evalContext.Rule.Message,
-				"Error":        error,
-				"RuleUrl":      ruleUrl,
-				"ImageLink":    "",
-				"EmbededImage": "",
-				"AlertPageUrl": setting.AppUrl + "alerting",
-				"EvalMatches":  evalContext.EvalMatches,
+				"Title":         evalContext.GetNotificationTitle(),
+				"State":         evalContext.Rule.State,
+				"Name":          evalContext.Rule.Name,
+				"StateModel":    evalContext.GetStateModel(),
+				"Message":       evalContext.Rule.Message,
+				"Error":         error,
+				"RuleUrl":       ruleUrl,
+				"ImageLink":     "",
+				"EmbeddedImage": "",
+				"AlertPageUrl":  setting.AppUrl + "alerting",
+				"EvalMatches":   evalContext.EvalMatches,
 			},
 			To:           this.Addresses,
 			Template:     "alert_notification.html",
@@ -100,7 +100,7 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		file, err := os.Stat(evalContext.ImageOnDiskPath)
 		if err == nil {
 			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
-			cmd.Data["EmbededImage"] = file.Name()
+			cmd.Data["EmbeddedImage"] = file.Name()
 		}
 	}
 
