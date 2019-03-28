@@ -10,6 +10,7 @@ import {
   FormField,
   SingleStatValueOptions,
   SingleStatValueEditor,
+  StatsFilters,
 } from '@grafana/ui';
 
 // Types
@@ -46,7 +47,11 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            filter={StatsFilters.numeric}
+          />
           <PanelOptionsGroup title="Gauge">
             <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={options.minValue} />
             <FormField label="Max value" labelWidth={8} onChange={this.onMaxValueChange} value={options.maxValue} />

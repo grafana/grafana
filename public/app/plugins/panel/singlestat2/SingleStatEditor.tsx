@@ -9,6 +9,7 @@ import {
   ValueMapping,
   SingleStatValueOptions,
   SingleStatValueEditor,
+  StatsFilters,
 } from '@grafana/ui';
 
 import { SingleStatOptions, SparklineOptions } from './types';
@@ -47,7 +48,11 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            filter={StatsFilters.all}
+          />
           <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />

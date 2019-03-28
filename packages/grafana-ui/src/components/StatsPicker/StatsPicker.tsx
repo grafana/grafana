@@ -5,13 +5,13 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { getStatsCalculators, StatCalculatorInfo } from '../../utils/statsCalculator';
+import { getStatsCalculators, StatCalculatorInfo, StatsFilter } from '../../utils/statsCalculator';
 import { SelectOptionItem } from '../Select/Select';
 
 interface Props {
   placeholder?: string;
   onChange: (stats: string[]) => void;
-  filter?: (stat: StatCalculatorInfo) => boolean;
+  filter?: StatsFilter;
   stats: string[];
   width?: number;
   allowMultiple?: boolean;

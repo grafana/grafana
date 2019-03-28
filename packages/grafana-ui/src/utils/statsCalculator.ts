@@ -33,6 +33,21 @@ export interface ColumnStats {
 // Internal function
 type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
 
+/** Used to limit possible options */
+export type StatsFilter = (stat: StatCalculatorInfo) => boolean;
+
+/** Common Filters */
+export const StatsFilters = {
+  all: (stat: StatCalculatorInfo) => true,
+  numeric: (stat: StatCalculatorInfo) => stat.resultType === FieldType.number,
+};
+
+/** Common Filters */
+export const StatFilters = {
+  all: (stat: StatCalculatorInfo) => true,
+  numeric: (stat: StatCalculatorInfo) => stat.resultType === FieldType.number,
+};
+
 export interface StatCalculatorInfo {
   id: string;
   name: string;

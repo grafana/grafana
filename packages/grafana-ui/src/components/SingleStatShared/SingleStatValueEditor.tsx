@@ -6,10 +6,11 @@ import {
   FormField,
   FormLabel,
   PanelOptionsGroup,
+  StatsFilter,
+  StatsFilters,
   StatsPicker,
   UnitPicker,
   StatID,
-  FieldType,
   SelectOptionItem,
 } from '@grafana/ui';
 
@@ -21,6 +22,7 @@ const labelWidth = 6;
 export interface Props {
   options: SingleStatValueOptions;
   onChange: (valueOptions: SingleStatValueOptions) => void;
+  filter?: StatsFilter;
 }
 
 export class SingleStatValueEditor extends PureComponent<Props> {
@@ -64,7 +66,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
           <FormLabel width={labelWidth}>Show</FormLabel>
           <StatsPicker
             width={12}
-            filter={v => v.resultType !== FieldType.string}
+            filter={this.props.filter || StatsFilters.all}
             placeholder="Choose Stat"
             defaultStat={StatID.mean}
             allowMultiple={false}

@@ -9,6 +9,7 @@ import {
   ValueMapping,
   SingleStatValueOptions,
   SingleStatValueEditor,
+  StatsFilters,
 } from '@grafana/ui';
 
 import { GaugeOptionsBox } from './GaugeOptionsBox';
@@ -39,7 +40,11 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            filter={StatsFilters.numeric}
+          />
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
         </PanelOptionsGrid>
