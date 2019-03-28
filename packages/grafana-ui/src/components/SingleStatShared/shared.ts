@@ -62,12 +62,18 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
       text: 'Unknown Stat',
     });
   } else if (data) {
+    const isNumberStat = calc[0].resultType === FieldType.number;
+
     for (const series of data) {
       for (let i = 0; i < series.fields.length; i++) {
         const field = series.fields[i];
 
+        if (isNumberStat && field.type !== FieldType.number) {
+          continue;
+        }
+
         // Show all fields that are not 'time'
-        if (field.type === FieldType.number) {
+        if (field.type !== FieldType.time) {
           const stats = calculateStats({
             series,
             fieldIndex: i,
