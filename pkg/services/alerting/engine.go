@@ -22,16 +22,15 @@ type AlertingService struct {
 
 	execQueue chan *Job
 	//clock         clock.Clock
-	ticker        *Ticker
-	scheduler     Scheduler
-	evalHandler   EvalHandler
-	ruleReader    RuleReader
-	log           log.Logger
-	resultHandler ResultHandler
-	alertingExcuteCaculateTimeout  int
-	alertingResultHandleTimeout int
-	alertingMaxAttempts   int
-
+	ticker                             *Ticker
+	scheduler                          Scheduler
+	evalHandler                        EvalHandler
+	ruleReader                         RuleReader
+	log                                log.Logger
+	resultHandler                      ResultHandler
+	alertingEvaluationTimeoutSeconds   int
+	alertingNotificationTimeoutSeconds int
+	alertingMaxAttempts                int
 }
 
 func init() {
@@ -54,8 +53,8 @@ func (e *AlertingService) Init() error {
 	e.scheduler = NewScheduler()
 	e.evalHandler = NewEvalHandler()
 	e.ruleReader = NewRuleReader()
-	e.alertingExcuteCaculateTimeout = setting.AlertingExcuteCaculateTimeout
-	e.alertingResultHandleTimeout = setting.AlertingResultHandleTimeout
+	e.alertingEvaluationTimeoutSeconds = setting.AlertingEvaluationTimeoutSeconds
+	e.alertingNotificationTimeoutSeconds = setting.AlertingNotificationTimeoutSeconds
 	e.alertingMaxAttempts = setting.AlertingMaxAttempts
 
 	e.log = log.New("alerting.engine")
@@ -165,7 +164,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), time.Second * time.Duration(e.alertingExcuteCaculateTimeout))
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), time.Second*time.Duration(e.alertingEvaluationTimeoutSeconds))
 	cancelChan <- cancelFn
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
@@ -210,7 +209,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 
 		// create new context with timeout for notifications
-		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(),time.Duration(e.alertingResultHandleTimeout) * time.Second)
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), time.Duration(e.alertingNotificationTimeoutSeconds)*time.Second)
 		cancelChan <- resultHandleCancelFn
 
 		// override the context used for evaluation with a new context for notifications.
