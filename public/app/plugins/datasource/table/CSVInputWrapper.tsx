@@ -15,7 +15,7 @@ interface State {
 }
 
 /**
- * Angular wrapper around the FLux query field
+ * Angular wrapper around TableInputCSV
  */
 class Wraper extends Component<Props, State> {
   constructor(props) {

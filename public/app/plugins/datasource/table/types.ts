@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/ui/src/types';
 
 export interface TableQuery extends DataQuery {
-  // this could hold selectors
+  // TODO, can optionally save data in the query
 }
