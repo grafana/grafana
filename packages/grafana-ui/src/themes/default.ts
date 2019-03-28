@@ -47,6 +47,7 @@ const theme: GrafanaThemeCommons = {
     xl: '1200px',
   },
   spacing: {
+    insetSquishMd: '4px 8px',
     d: '14px',
     xxs: '2px',
     xs: '4px',
