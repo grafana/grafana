@@ -16,6 +16,7 @@
     "@babel/preset-env": "^7.3.4",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.3.3",
+    "@emotion/core": "^10.0.10",
     "@rtsao/plugin-proposal-class-properties": "^7.0.1-patch.1",
     "@types/angular": "^1.6.6",
     "@types/chalk": "^2.2.0",

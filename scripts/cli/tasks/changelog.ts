@@ -1,6 +1,6 @@
+import axios from 'axios';
 import _ from 'lodash';
 import { Task, TaskRunner } from './task';
-import axios from 'axios';
 
 const githubGrafanaUrl = 'https://github.com/grafana/grafana';
 
@@ -9,7 +9,7 @@ interface ChangelogOptions {
 }
 
 const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) => {
-  let client = axios.create({
+  const client = axios.create({
     baseURL: 'https://api.github.com/repos/grafana/grafana',
     timeout: 10000,
   });
@@ -17,6 +17,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
   const res = await client.get('/issues', {
     params: {
       state: 'closed',
+      per_page: 100,
       labels: 'add to changelog',
     },
   });
@@ -42,7 +43,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
     'title'
   );
 
-  const notBugs = _.sortBy(res.data.filter(item => !bugs.find(bug => bug === item)), 'title');
+  const notBugs = _.sortBy(issues.filter(item => !bugs.find(bug => bug === item)), 'title');
 
   let markdown = '### Features / Enhancements\n';
 
@@ -60,7 +61,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
 
 function getMarkdownLineForIssue(item: any) {
   let markdown = '';
-  let title = item.title.replace(/^([^:]*)/, (match, g1) => {
+  const title = item.title.replace(/^([^:]*)/, (match, g1) => {
     return `**${g1}**`;
   });
 

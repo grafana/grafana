@@ -1,0 +1,15 @@
+.big-value {
+  position: relative;
+  display: table;
+}
+
+.big-value__value {
+  line-height: 1;
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  font-size: 3em;
+  font-weight: $font-weight-semi-bold;
+}
