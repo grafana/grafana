@@ -224,7 +224,7 @@ input[type='checkbox'].cr1:checked + label {
 .form-control-success,
 .form-control-warning,
 .form-control-danger {
-  padding-right: ($input-padding-x * 3);
+  padding-right: $space-xl;
   background-repeat: no-repeat;
   background-position: center right ($input-height / 4);
   background-size: ($input-height / 2) ($input-height / 2);
