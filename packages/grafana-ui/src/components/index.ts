@@ -33,9 +33,11 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 
 // Visualizations
+export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+export * from './SingleStatShared/shared';
 
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
