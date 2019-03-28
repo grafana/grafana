@@ -224,7 +224,12 @@ describe('when rendering table', () => {
       expect(html).toBe('<td>1.230 s</td>');
     });
 
-    it('number style should ignore string values', () => {
+    it('number column should format numeric string values', () => {
+      const html = renderer.renderCell(1, 0, '1230');
+      expect(html).toBe('<td>1.230 s</td>');
+    });
+
+    it('number style should ignore string non-numeric values', () => {
       const html = renderer.renderCell(1, 0, 'asd');
       expect(html).toBe('<td>asd</td>');
     });

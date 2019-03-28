@@ -215,7 +215,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
-        value = prometheusSpecialRegexEscape(value);
+        value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
     }, expr);

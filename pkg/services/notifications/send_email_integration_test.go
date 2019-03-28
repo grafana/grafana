@@ -39,7 +39,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 					"RuleUrl":       "http://localhost:3000/dashboard/db/graphite-dashboard",
 					"ImageLink":     "http://localhost:3000/render/dashboard-solo/db/graphite-dashboard?panelId=1&from=1471008499616&to=1471012099617&width=1000&height=500",
 					"AlertPageUrl":  "http://localhost:3000/alerting",
-					"EmbededImage":  "test.png",
+					"EmbeddedImage": "test.png",
 					"EvalMatches": []map[string]string{
 						{
 							"Metric": "desktop",

@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { Input } from '@grafana/ui';
 import { VariableQueryProps } from 'app/types/plugins';
 
 export default class DefaultVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
@@ -19,12 +20,12 @@ export default class DefaultVariableQueryEditor extends PureComponent<VariableQu
     return (
       <div className="gf-form">
         <span className="gf-form-label width-10">Query</span>
-        <input
+        <Input
           type="text"
           className="gf-form-input"
           value={this.state.value}
-          onChange={e => this.handleChange(e)}
-          onBlur={e => this.handleBlur(e)}
+          onChange={this.handleChange}
+          onBlur={this.handleBlur}
           placeholder="metric name or tags query"
           required
         />

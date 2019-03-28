@@ -1,7 +1,9 @@
 import React from 'react';
-import { ColorPickerProps } from './ColorPickerPopover';
 import tinycolor from 'tinycolor2';
 import debounce from 'lodash/debounce';
+
+import { ColorPickerProps } from './ColorPickerPopover';
+import { Input } from '../Input/Input';
 
 interface ColorInputState {
   previousColor: string;
@@ -84,7 +86,7 @@ class ColorInput extends React.PureComponent<ColorInputProps, ColorInputState> {
             flexGrow: 1,
           }}
         >
-          <input className="gf-form-input" value={value} onChange={this.onChange} onBlur={this.onBlur} />
+          <Input className="gf-form-input" value={value} onChange={this.onChange} onBlur={this.onBlur} />
         </div>
       </div>
     );
