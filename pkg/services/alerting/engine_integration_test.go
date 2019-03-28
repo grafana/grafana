@@ -23,7 +23,7 @@ func TestEngineTimeouts(t *testing.T) {
 		Convey("Should trigger as many retries as needed", func() {
 			Convey("pended alert for datasource -> result handler should be worked", func() {
 				// reduce alert timeout to test quickly
-				originAlertTimeout := time.Second * time.Duration(engine.alertingEvaluationTimeoutSeconds)
+				originAlertTimeout := time.Second * 30
 				alertTimeout := 2 * time.Second
 				transportTimeoutInterval := 2 * time.Second
 				serverBusySleepDuration := 1 * time.Second
