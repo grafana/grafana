@@ -17,7 +17,6 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
-
 $space-inset-squish-md: ${theme.spacing.insetSquishMd} !default;
 
 $space-xxs: ${theme.spacing.xxs} !default;
