@@ -42,12 +42,6 @@ export const StatsFilters = {
   numeric: (stat: StatCalculatorInfo) => stat.resultType === FieldType.number,
 };
 
-/** Common Filters */
-export const StatFilters = {
-  all: (stat: StatCalculatorInfo) => true,
-  numeric: (stat: StatCalculatorInfo) => stat.resultType === FieldType.number,
-};
-
 export interface StatCalculatorInfo {
   id: string;
   name: string;
