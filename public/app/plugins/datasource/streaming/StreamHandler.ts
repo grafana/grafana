@@ -12,9 +12,10 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
 
   options: StreamingQueryOptions<T>;
 
-  constructor(options: StreamingQueryOptions<T>, datasource: any) {
+  constructor(query: T, options: StreamingQueryOptions<T>, datasource: any) {
     super();
 
+    this.series.refId = query.refId;
     this.options = options; // _.defaults(options, defaultOptions);
     this.initBuffer(this.options);
   }

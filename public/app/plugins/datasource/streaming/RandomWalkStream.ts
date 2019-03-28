@@ -5,8 +5,8 @@ import { StreamingQuery, StreamingQueryOptions } from './datasource';
 export class RandomWalkStream extends StreamHandler<StreamingQuery> {
   value: number;
 
-  constructor(options: StreamingQueryOptions<StreamingQuery>, datasource: any) {
-    super(options, datasource);
+  constructor(query: StreamingQuery, options: StreamingQueryOptions<StreamingQuery>, datasource: any) {
+    super(query, options, datasource);
 
     this.value = Math.random();
     this.series.rows = this.fillBuffer(options);

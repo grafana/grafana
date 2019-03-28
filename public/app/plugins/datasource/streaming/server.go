@@ -29,6 +29,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if (*r).Method == "OPTIONS" {
 		return
 	}
+	counter = counter + 1
+	id := counter
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -37,19 +39,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain") // or csv
 
+	speed := int64(1000)
+	spread := float64(2.5)
+
 	query := r.URL.Query()
-	speed, err := strconv.ParseInt(query["speed"][0], 10, 64)
-	if err != nil {
-		speed = 100
+	param := query.Get("speed")
+	if param != "" {
+		speed, _ = strconv.ParseInt(param, 10, 64)
 	}
-	spread, err := strconv.ParseFloat(query["spread"][0], 64)
-	if err != nil {
-		spread = 2.5
+	param = query.Get("spread")
+	if param != "" {
+		spread, _ = strconv.ParseFloat(param, 64)
 	}
 
-	counter = counter + 1
-	id := counter
-	fmt.Printf("[%d] Got connection: %s (speed:%v)\n", id, r.URL, speed)
+	fmt.Printf("[%d] Got connection: %s (speed:%v, spread:%v)\n", id, r.URL, speed, spread)
 
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(speed) * time.Millisecond)

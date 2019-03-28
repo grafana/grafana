@@ -9,7 +9,6 @@ export class StreamObserver implements Observer<SeriesData> {
   refId: string;
   stream?: Subscribable<SeriesData>;
   subscription?: Unsubscribable;
-
   closed: boolean;
 
   constructor(series: SeriesData, public onUpdate: SeriesStreamUpdate) {
@@ -19,6 +18,14 @@ export class StreamObserver implements Observer<SeriesData> {
     this.refId = series.refId;
     this.stream = series.stream;
     this.subscription = series.stream.subscribe(this);
+    console.log('SUBSCRIBE', this.refId);
+  }
+
+  isStreaming(series: SeriesData) {
+    if (this.stream !== series.stream) {
+      return false;
+    }
+    return this.subscription && !closed;
   }
 
   unsubscribe = () => {

@@ -126,6 +126,8 @@ export class DataPanel extends Component<Props, State> {
   onStreamSeriesUpdate = (series: SeriesData) => {
     const { data } = this.state;
     let found = false;
+
+    console.log('UPDATE', series, data);
     this.setState({
       loading: LoadingState.Done,
       data: data.map(d => {
@@ -140,31 +142,37 @@ export class DataPanel extends Component<Props, State> {
     return found;
   };
 
-  private processResponseData(resp: DataQueryResponse): SeriesData[] {
+  processResponseData(resp: DataQueryResponse): SeriesData[] {
     const { streams } = this;
-    const keys = new Set(streams.keys());
+
     const data = getProcessedSeriesData(resp.data);
+
+    const streaming = new Set();
     for (const series of data) {
       const { stream, refId } = series;
-      if (stream && refId) {
-        keys.delete(refId);
-
+      if (stream) {
+        if (!refId) {
+          console.warn('Stream data is missing refId', series);
+          continue;
+        }
+        streaming.add(refId);
         const existing = streams.get(refId);
         if (existing) {
-          if (existing.stream === stream) {
+          if (existing.isStreaming(series)) {
             continue;
           }
           existing.unsubscribe(); // The stream changed
         }
-
         streams.set(refId, new StreamObserver(series, this.onStreamSeriesUpdate));
       }
     }
 
     // Clear any open streams that did not come back
-    for (const removed in keys) {
-      streams.get(removed).unsubscribe();
-      streams.delete(removed);
+    for (const ref of streams.keys()) {
+      if (!streaming.has(ref)) {
+        streams.get(ref).unsubscribe();
+        streams.delete(ref);
+      }
     }
 
     return data;

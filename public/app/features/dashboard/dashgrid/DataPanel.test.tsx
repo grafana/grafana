@@ -1,7 +1,9 @@
 // Library
 import React from 'react';
+import { Subject } from 'rxjs';
 
 import { DataPanel, getProcessedSeriesData } from './DataPanel';
+import { SeriesData } from '@grafana/ui';
 
 describe('DataPanel', () => {
   let dataPanel: DataPanel;
@@ -56,5 +58,23 @@ describe('DataPanel', () => {
     expect(getProcessedSeriesData(undefined)).toEqual([]);
     expect(getProcessedSeriesData((null as unknown) as any[])).toEqual([]);
     expect(getProcessedSeriesData([])).toEqual([]);
+  });
+
+  it('Registers a StreamObserver from the response', () => {
+    expect(dataPanel.streams.size).toBe(0);
+
+    const series = dataPanel.processResponseData({
+      data: [
+        {
+          refId: 'A',
+          fields: [],
+          rows: [],
+          stream: new Subject<SeriesData>(),
+        },
+      ],
+    });
+
+    expect(series.length).toBe(1);
+    expect(dataPanel.streams.size).toBe(1);
   });
 });

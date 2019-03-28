@@ -42,7 +42,7 @@ export default class StreamingDatasource {
 
       console.log('OPTIONS', options);
       if (false) {
-        stream = new RandomWalkStream(options, this);
+        stream = new RandomWalkStream(target, options, this);
       }
       stream = new RequestStream(target, options, this);
       openStreams[panelId] = stream;

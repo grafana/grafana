@@ -11,7 +11,7 @@ export class RequestStream extends StreamHandler<StreamingQuery> {
   reader: ReadableStreamReader<Uint8Array>;
 
   constructor(query: StreamingQuery, options: StreamingQueryOptions<StreamingQuery>, datasource: any) {
-    super(options, datasource);
+    super(query, options, datasource);
 
     this.csv = new CSVReader({ callback: this });
 
@@ -43,14 +43,10 @@ export class RequestStream extends StreamHandler<StreamingQuery> {
     return this.reader.read().then(this.processChunk);
   };
 
-  /**
-   * Get a callback before any rows are processed
-   * This can return a modified table to force any
-   * Column configurations
-   */
   onHeader = (series: SeriesData) => {
-    this.series = series; // resets the buffer size
-    console.log('SERIES', this.series);
+    series.refId = this.series.refId;
+    series.stream = this.series.stream;
+    this.series = series;
   };
 
   onRow = (row: any[]) => {
