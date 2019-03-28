@@ -157,7 +157,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout*time.Second)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
@@ -202,7 +202,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 
 		// create new context with timeout for notifications
-		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), setting.AlertingNotificationTimeout*time.Second)
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), setting.AlertingNotificationTimeout)
 		cancelChan <- resultHandleCancelFn
 
 		// override the context used for evaluation with a new context for notifications.

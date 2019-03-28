@@ -18,7 +18,7 @@ import (
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		engine := NewEngine()
-		setting.AlertingNotificationTimeout = 30
+		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
 		job := &Job{Running: true, Rule: &Rule{}}
@@ -26,7 +26,7 @@ func TestEngineTimeouts(t *testing.T) {
 		Convey("Should trigger as many retries as needed", func() {
 			Convey("pended alert for datasource -> result handler should be worked", func() {
 				// reduce alert timeout to test quickly
-				setting.AlertingEvaluationTimeout = 30
+				setting.AlertingEvaluationTimeout = 30 * time.Second
 				transportTimeoutInterval := 2 * time.Second
 				serverBusySleepDuration := 1 * time.Second
 
@@ -41,7 +41,7 @@ func TestEngineTimeouts(t *testing.T) {
 				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)
 
 				// initialize for other tests.
-				setting.AlertingEvaluationTimeout = 2
+				setting.AlertingEvaluationTimeout = 2 * time.Second
 				engine.resultHandler = &FakeResultHandler{}
 			})
 		})
