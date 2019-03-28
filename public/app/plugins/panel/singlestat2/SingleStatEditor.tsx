@@ -7,10 +7,11 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
+  SingleStatValueOptions,
+  SingleStatValueEditor,
 } from '@grafana/ui';
 
-import { SingleStatOptions, SingleStatValueOptions, SparklineOptions } from './types';
-import { SingleStatValueEditor } from './SingleStatValueEditor';
+import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';
 import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';

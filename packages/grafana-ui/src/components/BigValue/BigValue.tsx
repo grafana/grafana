@@ -3,11 +3,10 @@ import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
 
 // Utils
-import { getColorFromHexRgbOrName } from '../../utils/index';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable, DisplayValue } from '../../types/index';
-import { DisplayValueLink } from './DisplayValueLink';
+import { Themeable, DisplayValue } from '../../types';
 
 export interface BigValueSparkline {
   data: any[][]; // [[number,number]]
@@ -121,17 +120,15 @@ export class BigValue extends PureComponent<Props> {
     }
 
     return (
-      <DisplayValueLink value={value}>
-        <div className="big-value" style={{ width, height, backgroundColor }}>
-          <span className="big-value-container">
-            {this.renderText(prefix, '0px 2px 0px 0px')}
-            {this.renderText(value)}
-            {this.renderText(suffix)}
-          </span>
+      <div className="big-value" style={{ width, height, backgroundColor }}>
+        <span className="big-value__value">
+          {this.renderText(prefix, '0px 2px 0px 0px')}
+          {this.renderText(value)}
+          {this.renderText(suffix)}
+        </span>
 
-          {sparkline && <div style={plotCss} ref={element => (this.canvasElement = element)} />}
-        </div>
-      </DisplayValueLink>
+        {sparkline && <div style={plotCss} ref={element => (this.canvasElement = element)} />}
+      </div>
     );
   }
 }

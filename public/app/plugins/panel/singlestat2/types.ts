@@ -1,19 +1,4 @@
-import { VizOrientation, ValueMapping, Threshold, StatID } from '@grafana/ui';
-
-export interface SingleStatBaseOptions {
-  valueMappings: ValueMapping[];
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
-  orientation: VizOrientation;
-}
-
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
-}
+import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface SparklineOptions {
   show: boolean;

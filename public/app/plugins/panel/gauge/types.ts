@@ -1,5 +1,4 @@
-import { SingleStatBaseOptions } from '../singlestat2/types';
-import { VizOrientation, StatID } from '@grafana/ui';
+import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
   maxValue: number;

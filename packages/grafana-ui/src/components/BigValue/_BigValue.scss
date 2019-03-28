@@ -3,7 +3,7 @@
   display: table;
 }
 
-.big-value-container {
+.big-value__value {
   line-height: 1;
   display: table-cell;
   vertical-align: middle;
@@ -12,21 +12,4 @@
   z-index: 1;
   font-size: 3em;
   font-weight: $font-weight-semi-bold;
-}
-
-.display-value-tooltip {
-  background: $body-bg;
-  border: 1px solid $external-link-color;
-  padding: 5px;
-  z-index: 1000;
-  position: absolute;
-}
-
-.display-value-link {
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.display-value-link:hover {
-  border: 1px solid $external-link-color;
 }

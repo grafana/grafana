@@ -1,22 +1,26 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Types
-import { SingleStatOptions, SingleStatBaseOptions } from './types';
+// Utils & Services
+import { config } from 'app/core/config';
+import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
+// Components
+import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
+
+// Types
+import { SingleStatOptions } from './types';
 import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
 import {
   DisplayValue,
   PanelProps,
+  SingleStatBaseOptions,
   getDisplayProcessor,
   NullValueMode,
   FieldType,
   calculateStats,
   getFirstTimeField,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
-import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
 export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
   const { data, replaceVariables, options } = props;
@@ -120,9 +124,11 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
           if (!colorValue) {
             delete v.value.color;
           }
+
           if (colorBackground) {
             v.backgroundColor = color;
           }
+
           if (options.valueFontSize) {
             v.value.fontSize = options.valueFontSize;
           }
