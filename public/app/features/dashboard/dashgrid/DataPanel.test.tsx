@@ -2,6 +2,8 @@
 import React from 'react';
 import { Subject } from 'rxjs';
 
+import { mount } from 'enzyme';
+
 import { DataPanel, getProcessedSeriesData } from './DataPanel';
 import { SeriesData } from '@grafana/ui';
 
@@ -9,17 +11,21 @@ describe('DataPanel', () => {
   let dataPanel: DataPanel;
 
   beforeEach(() => {
-    dataPanel = new DataPanel({
-      queries: [],
-      panelId: 1,
-      widthPixels: 100,
-      refreshCounter: 1,
-      datasource: 'xxx',
-      children: r => {
-        return <div>hello</div>;
-      },
-      onError: (message, error) => {},
-    });
+    // mount lets us call setState()
+    const wrapper = mount(
+      <DataPanel
+        queries={[]}
+        panelId={1}
+        widthPixels={100}
+        refreshCounter={1}
+        datasource={'xxx'}
+        onError={(message, error) => {}}
+        children={r => {
+          return <div>hello</div>;
+        }}
+      />
+    );
+    dataPanel = wrapper.instance() as DataPanel;
   });
 
   it('starts with unloaded state', () => {
@@ -63,18 +69,48 @@ describe('DataPanel', () => {
   it('Registers a StreamObserver from the response', () => {
     expect(dataPanel.streams.size).toBe(0);
 
+    const subject = new Subject<SeriesData>();
     const series = dataPanel.processResponseData({
       data: [
         {
           refId: 'A',
           fields: [],
           rows: [],
-          stream: new Subject<SeriesData>(),
+          stream: subject,
         },
       ],
     });
+    dataPanel.setState({ data: series });
 
     expect(series.length).toBe(1);
     expect(dataPanel.streams.size).toBe(1);
+    expect(subject.observers.length).toBe(1);
+
+    // Post an update and make sure it got into the response
+    const update = {
+      refId: 'A',
+      fields: [{ name: 'a' }],
+      rows: [[1]],
+    };
+    subject.next(update);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        expect(dataPanel.state.data[0]).toEqual(update);
+
+        // Now process something without that stream
+        dataPanel.processResponseData({
+          data: [
+            {
+              refId: 'A',
+              fields: [],
+              rows: [],
+            },
+          ],
+        });
+        expect(dataPanel.streams.size).toBe(0);
+        expect(subject.observers.length).toBe(0);
+        resolve(); // done;
+      }, 250); // there is a 100ms throttle on next!
+    });
   });
 });

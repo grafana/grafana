@@ -127,7 +127,7 @@ export class DataPanel extends Component<Props, State> {
     const { data } = this.state;
     let found = false;
 
-    console.log('UPDATE', series, data);
+    console.log('UPDATE', this.state, series, data);
     this.setState({
       loading: LoadingState.Done,
       data: data.map(d => {
