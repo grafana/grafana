@@ -6,12 +6,12 @@ import { Table, Props } from './Table';
 import moment from 'moment';
 import { ValueFormatter } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
-import { getValueFormat, getColorFromHexRgbOrName, Column } from '@grafana/ui';
+import { getValueFormat, getColorFromHexRgbOrName, Field } from '@grafana/ui';
 import { InterpolateFunction } from '../../types/panel';
 
 export interface TableCellBuilderOptions {
   value: any;
-  column?: Column;
+  column?: Field;
   row?: any[];
   table?: Table;
   className?: string;
@@ -74,7 +74,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: Column, style: ColumnStyle | null, props: Props): TableCellBuilder {
+export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: Props): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }
@@ -154,12 +154,12 @@ class CellBuilderWithStyle {
     private mapper: ValueMapper,
     private style: ColumnStyle,
     private theme: GrafanaTheme,
-    private column: Column,
+    private column: Field,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
   ) {
     //
-    console.log('COLUMN', column.text, theme);
+    console.log('COLUMN', column.name, theme);
   }
 
   getColorForValue = (value: any): string | null => {

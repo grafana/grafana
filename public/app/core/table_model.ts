@@ -9,6 +9,7 @@ interface MutableColumn extends Column {
   title?: string;
   sort?: boolean;
   desc?: boolean;
+  type?: string;
 }
 
 export default class TableModel implements TableData {

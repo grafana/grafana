@@ -19,14 +19,8 @@
 
 .tabbed-view-title {
   float: left;
-  padding-top: 0.5rem;
+  padding-top: $space-sm;
   margin: 0 $spacer * 3 0 0;
-}
-
-.tabbed-view-panel-title {
-  float: left;
-  padding-top: 9px;
-  margin: 0 2rem 0 0;
 }
 
 .tabbed-view-close-btn {
@@ -58,5 +52,5 @@
 
 .section-heading {
   font-size: $font-size-md;
-  margin-bottom: 0.6rem;
+  margin-bottom: $space-sm;
 }

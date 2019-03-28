@@ -81,7 +81,7 @@ export interface PluginExports {
 
   // Panel plugin
   PanelCtrl?: any;
-  reactPanel: ReactPanelPlugin;
+  reactPanel?: ReactPanelPlugin;
 }
 
 export interface PluginMeta {

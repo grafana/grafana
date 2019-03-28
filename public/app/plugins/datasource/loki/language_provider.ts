@@ -21,6 +21,7 @@ const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
+export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label });
 
@@ -46,6 +47,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
+  logLabelFetchTs?: number;
   started: boolean;
 
   constructor(datasource: any, initialValues?: any) {
@@ -226,6 +228,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchLogLabels() {
     const url = '/api/prom/label';
     try {
+      this.logLabelFetchTs = Date.now();
       const res = await this.request(url);
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
@@ -236,11 +239,19 @@ export default class LokiLanguageProvider extends LanguageProvider {
       this.logLabelOptions = labelKeys.map(key => ({ label: key, value: key, isLeaf: false }));
 
       // Pre-load values for default labels
-      return labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key));
+      return Promise.all(
+        labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key))
+      );
     } catch (e) {
       console.error(e);
     }
     return [];
+  }
+
+  async refreshLogLabels() {
+    if (this.labelKeys && Date.now() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) {
+      await this.fetchLogLabels();
+    }
   }
 
   async fetchLabelValues(key: string) {

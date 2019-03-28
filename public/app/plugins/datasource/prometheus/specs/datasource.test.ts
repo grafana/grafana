@@ -5,8 +5,8 @@ import {
   alignRange,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
-  prometheusSpecialRegexEscape,
   prometheusRegularEscape,
+  prometheusSpecialRegexEscape,
 } from '../datasource';
 
 jest.mock('../metric_find_query');
@@ -90,6 +90,25 @@ describe('PrometheusDatasource', () => {
       ];
       const result = ctx.ds.createQuery(target, { interval: '15s' });
       expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
+    });
+
+    it('should add escaping if needed to regex filter expressions', () => {
+      ctx.templateSrvMock.getAdhocFilters = () => [
+        {
+          key: 'k1',
+          operator: '=~',
+          value: 'v.*',
+        },
+        {
+          key: 'k2',
+          operator: '=~',
+          value: `v'.*`,
+        },
+      ];
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({
+        expr: `metric{job="foo",k1=~"v.*",k2=~"v\\\\'.*"} - metric{k1=~"v.*",k2=~"v\\\\'.*"}`,
+      });
     });
   });
 

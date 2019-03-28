@@ -1,5 +1,5 @@
 import React from 'react';
-import _ from 'lodash';
+import { Input } from '@grafana/ui';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -91,7 +91,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         <div className="gf-form gf-form-inline">
           <div className="gf-form">
             <span className="gf-form-label query-keyword width-9">Title</span>
-            <input
+            <Input
               type="text"
               className="gf-form-input width-20"
               value={title}
@@ -100,7 +100,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           </div>
           <div className="gf-form">
             <span className="gf-form-label query-keyword width-9">Text</span>
-            <input
+            <Input
               type="text"
               className="gf-form-input width-20"
               value={text}

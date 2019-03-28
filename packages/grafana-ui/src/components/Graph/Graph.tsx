@@ -3,11 +3,11 @@ import $ from 'jquery';
 import React, { PureComponent } from 'react';
 
 // Types
-import { TimeRange, TimeSeriesVMs } from '../../types';
+import { TimeRange, GraphSeriesXY } from '../../types';
 
 interface GraphProps {
-  timeSeries: TimeSeriesVMs;
-  timeRange: TimeRange;
+  series: GraphSeriesXY[];
+  timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
@@ -37,7 +37,7 @@ export class Graph extends PureComponent<GraphProps> {
       return;
     }
 
-    const { width, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
+    const { width, series, timeRange, showLines, showBars, showPoints } = this.props;
 
     if (!width) {
       return;
@@ -95,9 +95,9 @@ export class Graph extends PureComponent<GraphProps> {
 
     try {
       console.log('Graph render');
-      $.plot(this.element, timeSeries, flotOptions);
+      $.plot(this.element, series, flotOptions);
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, timeSeries);
+      console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
     }
   }

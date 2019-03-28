@@ -175,6 +175,8 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LI
     .reverse()
     .value();
 
+  const hasUniqueLabels = sortedRows && sortedRows.some(row => Object.keys(row.uniqueLabels).length > 0);
+
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -194,6 +196,7 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LI
 
   return {
     id,
+    hasUniqueLabels,
     meta,
     rows: sortedRows,
   };

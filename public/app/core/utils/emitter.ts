@@ -1,7 +1,7 @@
 import { EventEmitter } from 'eventemitter3';
 
 export class Emitter {
-  emitter: any;
+  private emitter: EventEmitter;
 
   constructor() {
     this.emitter = new EventEmitter();
@@ -28,5 +28,9 @@ export class Emitter {
 
   off(name, handler) {
     this.emitter.off(name, handler);
+  }
+
+  getEventCount(): number {
+    return (this.emitter as any)._eventsCount;
   }
 }

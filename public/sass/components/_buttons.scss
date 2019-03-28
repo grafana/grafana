@@ -58,7 +58,7 @@
   padding-bottom: $btn-padding-y-xl - 3;
   .gicon {
     font-size: 31px;
-    margin-right: 1rem;
+    margin-right: $space-md;
   }
 }
 
@@ -182,8 +182,8 @@ $btn-service-icon-width: 35px;
   left: 0;
   height: 100%;
   top: 0;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  padding-left: $space-sm;
+  padding-right: $space-sm;
   width: $btn-service-icon-width;
   text-align: center;
 
