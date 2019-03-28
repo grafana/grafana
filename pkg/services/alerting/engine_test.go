@@ -37,6 +37,9 @@ func (handler *FakeResultHandler) Handle(evalContext *EvalContext) error {
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
 		engine := NewEngine()
+		engine.alertingEvaluationTimeoutSeconds = 30
+		engine.alertingNotificationTimeoutSeconds = 30
+		engine.alertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
 		job := &Job{Running: true, Rule: &Rule{}}
 

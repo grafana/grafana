@@ -17,6 +17,8 @@ import (
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		engine := NewEngine()
+		engine.alertingNotificationTimeoutSeconds = 30
+		engine.alertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
 		job := &Job{Running: true, Rule: &Rule{}}
 
