@@ -14,7 +14,6 @@ export class TableConfigCtrl {
   }
 
   onParsed = (data: SeriesData[]) => {
-    console.log('PPPPPPP', data);
     this.current.jsonData.data = data;
   };
 }

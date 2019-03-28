@@ -35,13 +35,20 @@ export class TableDatasource implements DataSourceApi<TableQuery> {
   }
 
   query(options: DataQueryOptions<TableQuery>): Promise<DataQueryResponse> {
-    const queryTargets = options.targets.filter(target => !target.hide);
-
-    if (queryTargets.length === 0) {
-      return Promise.resolve({ data: [] });
+    const results: SeriesData[] = [];
+    for (const query of options.targets) {
+      if (query.hide) {
+        continue;
+      }
+      for (const series of this.data) {
+        results.push({
+          // TODO add refID after #16233
+          ...series,
+        });
+      }
     }
 
-    return Promise.resolve({ data: this.data });
+    return Promise.resolve({ data: results });
   }
 
   testDatasource() {
@@ -61,7 +68,7 @@ export class TableDatasource implements DataSourceApi<TableQuery> {
       }
       reject({
         status: 'error',
-        message: 'No Rows Entered',
+        message: 'No Data Entered',
       });
     });
   }

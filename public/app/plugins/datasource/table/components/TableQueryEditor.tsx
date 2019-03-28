@@ -11,18 +11,24 @@ type Props = QueryEditorProps<TableDatasource, TableQuery>;
 export class TableQueryEditor extends PureComponent<Props> {
   render() {
     const { datasource } = this.props;
-    console.log('DATASOURCE', datasource);
+
+    // Not sure why using id and name directly is not working
+    const id = (datasource as any).id;
+    const name = (datasource as any).name;
 
     return (
       <div>
         <div className="gf-form">
-          <div className="gf-form-label">Return all fields from the datasource:</div>
+          <div className="btn btn-link">
+            <a href={`datasources/edit/${id}/`}>
+              All data from: {name} &nbsp;&nbsp;
+              <i className="fa fa-pencil-square-o" />
+            </a>
+          </div>
         </div>
       </div>
     );
   }
 }
-
-// <a href={`datasources/edit/${datasource.id}/`}>{datasource.name}</a>
 
 export default TableQueryEditor;
