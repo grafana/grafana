@@ -32,6 +32,7 @@ export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
+export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 
 // Visualizations
 export { Gauge } from './Gauge/Gauge';

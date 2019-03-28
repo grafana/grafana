@@ -16,7 +16,6 @@ export interface Props {
 
 export class RefreshPicker extends PureComponent<Props> {
   emptyItem = { label: EMPTY_ITEM_TEXT, value: undefined };
-  refreshIntervalId: number | undefined = undefined;
 
   constructor(props: Props) {
     super(props);
@@ -32,23 +31,12 @@ export class RefreshPicker extends PureComponent<Props> {
     return options;
   };
 
-  onSelectChanged = (item: SelectOptionItem) => {
-    const { onRefresh } = this.props;
-    this.props.onIntervalChanged(item);
-    window.clearInterval(this.refreshIntervalId);
-
-    if (onRefresh && item.value) {
-      this.refreshIntervalId = window.setInterval(onRefresh, item.value);
+  onChangeSelect = (item: SelectOptionItem) => {
+    const { onIntervalChanged } = this.props;
+    if (onIntervalChanged) {
+      onIntervalChanged(item);
     }
   };
-
-  componentWillUnmount() {
-    if (this.refreshIntervalId) {
-      window.clearInterval(this.refreshIntervalId);
-    }
-  }
-
-  onClickOutside = () => this.setState({ isSelectOpen: false });
 
   render() {
     const { onRefresh, intervals, initialValue } = this.props;
@@ -65,7 +53,7 @@ export class RefreshPicker extends PureComponent<Props> {
             value={selectedValue}
             label={selectedValue.label}
             options={options}
-            onChange={this.onSelectChanged}
+            onChange={this.onChangeSelect}
             maxMenuHeight={380}
           />
         </div>

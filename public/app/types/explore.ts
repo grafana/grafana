@@ -251,13 +251,18 @@ export interface ExploreItemState {
   hiddenLogLevels?: LogLevel[];
 
   /**
-   * How often item should be refreshed
+   * How often query should be refreshed
    */
-  refreshInterval?: SelectOptionItem;
+  refresh: ExploreRefreshIntervalState;
 
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
+}
+
+export interface ExploreRefreshIntervalState {
+  interval: SelectOptionItem;
+  intervalId: number; // setInterval ID
 }
 
 export interface ExploreUpdateState {

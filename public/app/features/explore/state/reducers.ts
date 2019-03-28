@@ -20,6 +20,7 @@ import {
   changeSizeAction,
   changeTimeAction,
   changeRefreshIntervalAction,
+  clearRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
@@ -61,6 +62,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   range: false,
   ui: false,
 });
+
 /**
  * Returns a fresh Explore area state
  */
@@ -79,6 +81,10 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: DEFAULT_RANGE,
+  refresh: {
+    interval: undefined,
+    intervalId: 0,
+  },
   scanning: false,
   scanRange: null,
   showingGraph: true,
@@ -95,10 +101,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
+export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
-  left: makeExploreItemState(),
-  right: makeExploreItemState(),
+  left: initialExploreItemState,
+  right: initialExploreItemState,
 };
 
 /**
@@ -176,9 +183,29 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: clearRefreshIntervalAction,
+    mapper: (state): ExploreItemState => {
+      window.clearInterval(state.refresh.intervalId);
+
+      return {
+        ...state,
+        refresh: initialExploreItemState.refresh,
+      };
+    },
+  })
+  .addMapper({
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, refreshInterval: action.payload.refreshInterval };
+      const { refreshInterval } = action.payload;
+      const nextRefreshInterval = refreshInterval.value ? refreshInterval : initialExploreItemState.refresh.interval;
+      return {
+        ...state,
+        refresh: {
+          ...state.refresh,
+          interval: nextRefreshInterval,
+          intervalId: action.payload.refreshIntervalId,
+        },
+      };
     },
   })
   .addMapper({

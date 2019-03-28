@@ -39,6 +39,8 @@ import {
   changeQueryAction,
   changeRefreshIntervalAction,
   ChangeRefreshIntervalPayload,
+  clearRefreshIntervalAction,
+  ClearRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
   changeTimeAction,
@@ -169,9 +171,17 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
  */
 export function changeRefreshInterval(
   exploreId: ExploreId,
-  refreshInterval: SelectOptionItem
+  refreshInterval: SelectOptionItem,
+  refreshIntervalId: number
 ): ActionOf<ChangeRefreshIntervalPayload> {
-  return changeRefreshIntervalAction({ exploreId, refreshInterval });
+  return changeRefreshIntervalAction({ exploreId, refreshInterval, refreshIntervalId });
+}
+
+/**
+ * Change the time range of Explore. Called from the RefreshPicker.
+ */
+export function clearRefreshInterval(exploreId: ExploreId): ActionOf<ClearRefreshIntervalPayload> {
+  return clearRefreshIntervalAction({ exploreId });
 }
 
 /**
