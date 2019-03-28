@@ -14,62 +14,12 @@ import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue
 import {
   DisplayValue,
   PanelProps,
-  SingleStatBaseOptions,
   getDisplayProcessor,
   NullValueMode,
   FieldType,
   calculateStats,
   getFirstTimeField,
 } from '@grafana/ui';
-
-export const getSingleStatValues = (props: PanelProps<SingleStatBaseOptions>): DisplayValue[] => {
-  const { data, replaceVariables, options } = props;
-  const { valueOptions, valueMappings } = options;
-  const { unit, decimals, stat } = valueOptions;
-
-  const display = getDisplayProcessor({
-    unit,
-    decimals,
-    mappings: valueMappings,
-    thresholds: options.thresholds,
-    prefix: replaceVariables(valueOptions.prefix),
-    suffix: replaceVariables(valueOptions.suffix),
-    theme: config.theme,
-  });
-
-  const values: DisplayValue[] = [];
-
-  for (const series of data) {
-    if (stat === 'name') {
-      values.push(display(series.name));
-    }
-
-    for (let i = 0; i < series.fields.length; i++) {
-      const column = series.fields[i];
-
-      // Show all fields that are not 'time'
-      if (column.type === FieldType.number) {
-        const stats = calculateStats({
-          series,
-          fieldIndex: i,
-          stats: [stat], // The stats to calculate
-          nullValueMode: NullValueMode.Null,
-        });
-        const displayValue = display(stats[stat]);
-        values.push(displayValue);
-      }
-    }
-  }
-
-  if (values.length === 0) {
-    values.push({
-      numeric: 0,
-      text: 'No data',
-    });
-  }
-
-  return values;
-};
 
 interface SingleStatDisplay {
   value: DisplayValue;
