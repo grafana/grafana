@@ -9,9 +9,9 @@
       font-family: inherit;
       background: $theme-bg;
       color: $theme-color;
-      padding: 0.65rem;
+      padding: $space-sm;
       word-wrap: break-word;
-      max-width: 20rem;
+      max-width: 280px;
       border: 1px solid $border-color;
 
       &:before {
@@ -29,7 +29,7 @@
 
     &.drop-wide {
       .drop-content {
-        max-width: 40rem;
+        max-width: 560px;
       }
     }
 

@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Graph, PanelProps, NullValueMode, colors, TimeSeriesVMs, FieldType, getFirstTimeField } from '@grafana/ui';
+import { Graph, PanelProps, NullValueMode, colors, GraphSeriesXY, FieldType, getFirstTimeField } from '@grafana/ui';
 import { Options } from './types';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
@@ -13,42 +13,40 @@ export class GraphPanel extends PureComponent<Props> {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
 
-    const vmSeries: TimeSeriesVMs = [];
-    for (const table of data) {
-      const timeColumn = getFirstTimeField(table);
+    const graphs: GraphSeriesXY[] = [];
+    for (const series of data) {
+      const timeColumn = getFirstTimeField(series);
       if (timeColumn < 0) {
         continue;
       }
 
-      for (let i = 0; i < table.fields.length; i++) {
-        const column = table.fields[i];
+      for (let i = 0; i < series.fields.length; i++) {
+        const field = series.fields[i];
 
         // Show all numeric columns
-        if (column.type === FieldType.number) {
+        if (field.type === FieldType.number) {
           // Use external calculator just to make sure it works :)
           const points = getFlotPairs({
-            rows: table.rows,
+            series,
             xIndex: timeColumn,
             yIndex: i,
             nullValueMode: NullValueMode.Null,
           });
 
-          vmSeries.push({
-            label: column.name,
-            data: points,
-            color: colors[vmSeries.length % colors.length],
-
-            // TODO (calculate somewhere)
-            allIsNull: false,
-            allIsZero: false,
-          });
+          if (points.length > 0) {
+            graphs.push({
+              label: field.name,
+              data: points,
+              color: colors[graphs.length % colors.length],
+            });
+          }
         }
       }
     }
 
     return (
       <Graph
-        timeSeries={vmSeries}
+        series={graphs}
         timeRange={timeRange}
         showLines={showLines}
         showPoints={showPoints}
