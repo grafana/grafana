@@ -2,10 +2,10 @@
 import _ from 'lodash';
 
 // Types
-import { DataQueryOptions, SeriesData, DataQueryResponse } from '@grafana/ui/src/types';
+import { DataQueryOptions, SeriesData, DataQueryResponse, DataSourceApi } from '@grafana/ui/src/types';
 import { TableQuery } from './types';
 
-export class TableDatasource {
+export class TableDatasource implements DataSourceApi<TableQuery> {
   data: SeriesData[];
 
   /** @ngInject */
@@ -17,6 +17,21 @@ export class TableDatasource {
     if (!this.data) {
       this.data = [];
     }
+  }
+
+  metricFindQuery(query: string, options?: any) {
+    return new Promise((resolve, reject) => {
+      const names = [];
+      for (const series of this.data) {
+        for (const field of series.fields) {
+          // TODO, match query/options?
+          names.push({
+            text: field.name,
+          });
+        }
+      }
+      resolve(names);
+    });
   }
 
   query(options: DataQueryOptions<TableQuery>): Promise<DataQueryResponse> {
@@ -31,9 +46,22 @@ export class TableDatasource {
 
   testDatasource() {
     return new Promise((resolve, reject) => {
-      resolve({
-        status: 'success',
-        message: 'Table Data',
+      let rowCount = 0;
+      let info = `${this.data.length} Series:`;
+      for (const series of this.data) {
+        info += ` [${series.fields.length} Fields, ${series.rows.length} Rows]`;
+        rowCount += series.rows.length;
+      }
+
+      if (rowCount > 0) {
+        resolve({
+          status: 'success',
+          message: info,
+        });
+      }
+      reject({
+        status: 'error',
+        message: 'No Rows Entered',
       });
     });
   }

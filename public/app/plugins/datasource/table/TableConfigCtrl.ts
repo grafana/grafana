@@ -1,17 +1,22 @@
+import { SeriesData } from '@grafana/ui';
+
+// Loads the angular wrapping directive
+import './CSVInputWrapper';
+
 export class TableConfigCtrl {
   static templateUrl = 'partials/config.html';
 
-  current: any; // the Current Configuration
+  current: any; // the Current Configuration (set by the plugin infra)
 
   /** @ngInject */
   constructor($scope: any, $injector: any) {
-    console.log('CONFIG Init', this);
-
-    // Set the default value
-    if (!this.current.jsonData.type) {
-      this.current.jsonData.type = 'local';
-    }
+    console.log('TableConfigCtrl Init', this);
   }
+
+  onParsed = (data: SeriesData[]) => {
+    console.log('PPPPPPP', data);
+    this.current.jsonData.data = data;
+  };
 }
 
 export default TableConfigCtrl;

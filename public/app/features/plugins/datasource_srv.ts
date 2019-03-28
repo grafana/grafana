@@ -70,6 +70,7 @@ export class DatasourceSrv {
         const instance: DataSourceApi = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
         instance.meta = pluginDef;
         instance.name = name;
+        instance.id = dsConfig.id;
         instance.pluginExports = plugin;
         this.datasources[name] = instance;
         deferred.resolve(instance);
