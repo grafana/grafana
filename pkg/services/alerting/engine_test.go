@@ -45,9 +45,9 @@ func TestEngineProcessJob(t *testing.T) {
 			Convey("error + not last attempt -> retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(0)
 
-				for i := 1; i < alertMaxAttempts; i++ {
+				for i := 1; i < engine.alertingMaxAttempts; i++ {
 					attemptChan := make(chan int, 1)
-					cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+					cancelChan := make(chan context.CancelFunc, engine.alertingMaxAttempts)
 
 					engine.processJob(i, attemptChan, cancelChan, job)
 					nextAttemptID, more := <-attemptChan
@@ -61,9 +61,9 @@ func TestEngineProcessJob(t *testing.T) {
 			Convey("error + last attempt -> no retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(0)
 				attemptChan := make(chan int, 1)
-				cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+				cancelChan := make(chan context.CancelFunc, engine.alertingMaxAttempts)
 
-				engine.processJob(alertMaxAttempts, attemptChan, cancelChan, job)
+				engine.processJob(engine.alertingMaxAttempts, attemptChan, cancelChan, job)
 				nextAttemptID, more := <-attemptChan
 
 				So(nextAttemptID, ShouldEqual, 0)
@@ -74,7 +74,7 @@ func TestEngineProcessJob(t *testing.T) {
 			Convey("no error -> no retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(1)
 				attemptChan := make(chan int, 1)
-				cancelChan := make(chan context.CancelFunc, alertMaxAttempts)
+				cancelChan := make(chan context.CancelFunc, engine.alertingMaxAttempts)
 
 				engine.processJob(1, attemptChan, cancelChan, job)
 				nextAttemptID, more := <-attemptChan
@@ -88,7 +88,7 @@ func TestEngineProcessJob(t *testing.T) {
 		Convey("Should trigger as many retries as needed", func() {
 
 			Convey("never success -> max retries number", func() {
-				expectedAttempts := alertMaxAttempts
+				expectedAttempts := engine.alertingMaxAttempts
 				evalHandler := NewFakeEvalHandler(0)
 				engine.evalHandler = evalHandler
 
@@ -106,7 +106,7 @@ func TestEngineProcessJob(t *testing.T) {
 			})
 
 			Convey("some errors before success -> some retries", func() {
-				expectedAttempts := int(math.Ceil(float64(alertMaxAttempts) / 2))
+				expectedAttempts := int(math.Ceil(float64(engine.alertingMaxAttempts) / 2))
 				evalHandler := NewFakeEvalHandler(expectedAttempts)
 				engine.evalHandler = evalHandler
 
