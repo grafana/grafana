@@ -2,7 +2,7 @@ import { storiesOf } from '@storybook/react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, Props } from './BarGauge';
 import { VizOrientation } from '../../types';
-import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 const getKnobs = () => {
@@ -20,7 +20,7 @@ const getKnobs = () => {
 
 const BarGaugeStories = storiesOf('UI/BarGauge/BarGauge', module);
 
-BarGaugeStories.addDecorator(withHorizontallyCenteredStory);
+BarGaugeStories.addDecorator(withCenteredStory);
 
 function addBarGaugeStory(name: string, overrides: Partial<Props>) {
   BarGaugeStories.add(name, () => {
@@ -77,6 +77,6 @@ addBarGaugeStory('Gradient Horizontal', {
 addBarGaugeStory('LCD Horizontal', {
   displayMode: 'lcd',
   orientation: VizOrientation.Vertical,
-  height: 100,
-  width: 500,
+  height: 500,
+  width: 100,
 });

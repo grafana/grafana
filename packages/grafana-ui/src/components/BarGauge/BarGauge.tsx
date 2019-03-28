@@ -35,6 +35,30 @@ export class BarGauge extends PureComponent<Props> {
   };
 
   render() {
+    const { title } = this.props.value;
+
+    if (!title) {
+      return this.renderBarAndValue();
+    }
+
+    const titleWrapperStyles: CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column-reverse',
+    };
+
+    if (this.isVertical) {
+      titleWrapperStyles.alignItems = 'center';
+    }
+
+    return (
+      <div style={titleWrapperStyles}>
+        <div>{title}</div>
+        {this.renderBarAndValue()}
+      </div>
+    );
+  }
+
+  renderBarAndValue() {
     switch (this.props.displayMode) {
       case 'lcd':
         return this.renderRetroBars();
@@ -278,7 +302,7 @@ export class BarGauge extends PureComponent<Props> {
         cellStyles.marginRight = `${cellSpacing}px`;
       }
 
-      cells.push(<div style={cellStyles} />);
+      cells.push(<div key={i.toString()} style={cellStyles} />);
     }
 
     return (
