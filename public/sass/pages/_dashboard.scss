@@ -268,7 +268,7 @@ div.flot-text {
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
+    padding: $space-sm $space-sm $space-xxs $space-sm;
   }
 }
 

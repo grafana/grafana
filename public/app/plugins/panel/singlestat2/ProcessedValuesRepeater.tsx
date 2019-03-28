@@ -39,6 +39,7 @@ export class ProcessedValuesRepeater<T> extends PureComponent<Props<T>, State<T>
   render() {
     const { orientation, height, width, renderValue } = this.props;
     const { values } = this.state;
+
     return (
       <VizRepeater height={height} width={width} values={values} orientation={orientation}>
         {({ vizHeight, vizWidth, value }) => renderValue(value, vizWidth, vizHeight)}

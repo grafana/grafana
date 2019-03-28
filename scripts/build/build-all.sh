@@ -8,6 +8,7 @@ set -e
 
 EXTRA_OPTS="$@"
 
+CCARMV6=/opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
 CCARMV7=arm-linux-gnueabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCOSX64=/tmp/osxcross/target/bin/o64-clang
@@ -29,10 +30,11 @@ else
 fi
 
 echo "Build arguments: $OPT"
+echo "current dir: $(pwd)"
 
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
-go run build.go -goarch armv6 -cc ${CCARMV7} ${OPT} build
+  go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
   go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
   go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
@@ -45,12 +47,6 @@ CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
 
-echo "current dir: $(pwd)"
-
-if [ -d "dist" ]; then
-  rm -rf dist
-fi
-
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building frontend and packaging from tag $CIRCLE_TAG"
 else
@@ -58,6 +54,13 @@ else
 fi
 echo "Building frontend"
 go run build.go ${OPT} build-frontend
+
+if [ -d "dist" ]; then
+  rm -rf dist
+fi
+
+mkdir dist
+go run build.go -gen-version ${OPT} > dist/grafana.version
 
 # Load ruby, needed for packing with fpm
 source /etc/profile.d/rvm.sh

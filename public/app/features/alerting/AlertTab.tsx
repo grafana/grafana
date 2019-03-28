@@ -133,7 +133,7 @@ export class AlertTab extends PureComponent<Props> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      icon: 'icon-gf icon-gf-alert',
+      buttonIcon: 'icon-gf icon-gf-alert',
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };
