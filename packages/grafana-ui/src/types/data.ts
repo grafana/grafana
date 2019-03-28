@@ -1,3 +1,5 @@
+import { Subscribable } from 'rxjs';
+
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
@@ -26,10 +28,12 @@ export interface Tags {
 }
 
 export interface SeriesData {
+  refId?: string;
   name?: string;
   fields: Field[];
   rows: any[][];
   tags?: Tags;
+  stream?: Subscribable<SeriesData>;
 }
 
 export interface Column {

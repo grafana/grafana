@@ -49,8 +49,7 @@ export default class StreamingDatasource {
       console.log('MAKE Stream', openStreams);
     }
     return Promise.resolve({
-      data: [],
-      stream,
+      data: [stream.series],
     });
   }
 

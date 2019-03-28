@@ -1,6 +1,9 @@
 // Library
 import React, { Component } from 'react';
 
+import moment from 'moment';
+import * as dateMath from 'app/core/utils/datemath';
+
 // Services
 import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
@@ -16,11 +19,9 @@ import {
   ScopedVars,
   toSeriesData,
   guessFieldTypes,
-  DataQueryResponseData,
 } from '@grafana/ui';
-import throttle from 'lodash/throttle';
 
-import { Subscribable, Unsubscribable } from 'rxjs';
+import { StreamObserver } from './StreamObserver';
 
 interface RenderProps {
   loading: LoadingState;
@@ -41,7 +42,7 @@ export interface Props {
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
-  onDataResponse?: (data: DataQueryResponse) => void;
+  onDataResponse?: (data: SeriesData[]) => void;
   onError: (message: string, error: DataQueryError) => void;
 }
 
@@ -77,9 +78,7 @@ export class DataPanel extends Component<Props, State> {
     dashboardId: 1,
   };
 
-  dataStream: Subscribable<DataQueryResponse>;
-  dataSubscription: Unsubscribable;
-
+  streams = new Map<string, StreamObserver>();
   dataSourceSrv: DatasourceSrv = getDatasourceSrv();
   isUnmounted = false;
 
@@ -101,10 +100,12 @@ export class DataPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.isUnmounted = true;
-    if (this.dataSubscription) {
-      this.dataSubscription.unsubscribe();
-      this.dataSubscription = null;
+
+    // Remove all listeners
+    for (const stream of this.streams.values()) {
+      stream.unsubscribe();
     }
+    this.streams.clear();
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -119,39 +120,55 @@ export class DataPanel extends Component<Props, State> {
     return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
-  private handleDataStream = (stream: Subscribable<DataQueryResponseData>) => {
-    if (this.dataStream) {
-      if (stream === this.dataStream) {
-        return;
-      }
-      console.log('stream handeler changed');
-      if (this.dataSubscription) {
-        console.log('removing existing subscription');
-        this.dataSubscription.unsubscribe();
-        this.dataSubscription = null;
+  /**
+   * Replace the existing series with the streamed result
+   */
+  onStreamSeriesUpdate = (series: SeriesData) => {
+    const { data } = this.state;
+    let found = false;
+    this.setState({
+      loading: LoadingState.Done,
+      data: data.map(d => {
+        if (d.refId === series.refId) {
+          found = true;
+          return series;
+        }
+        return d;
+      }),
+      isFirstLoad: false,
+    });
+    return found;
+  };
+
+  private processResponseData(resp: DataQueryResponse): SeriesData[] {
+    const { streams } = this;
+    const keys = new Set(streams.keys());
+    const data = getProcessedSeriesData(resp.data);
+    for (const series of data) {
+      const { stream, refId } = series;
+      if (stream && refId) {
+        keys.delete(refId);
+
+        const existing = streams.get(refId);
+        if (existing) {
+          if (existing.stream === stream) {
+            continue;
+          }
+          existing.unsubscribe(); // The stream changed
+        }
+
+        streams.set(refId, new StreamObserver(series, this.onStreamSeriesUpdate));
       }
     }
 
-    console.log('init stream', stream);
-    this.dataStream = stream;
-    this.dataSubscription = stream.subscribe({
-      next: throttle((resp: DataQueryResponse) => {
-        this.setState({
-          loading: LoadingState.Done,
-          response: resp,
-          data: getProcessedSeriesData(resp.data),
-          isFirstLoad: false,
-        });
-      }, 100), // Don't ever update faster than 10hz
-      error: (err: any) => {
-        console.log('panel: observer got error', err);
-      },
-      complete: () => {
-        console.log('panel: observer got complete');
-        this.dataStream = null;
-      },
-    });
-  };
+    // Clear any open streams that did not come back
+    for (const removed in keys) {
+      streams.get(removed).unsubscribe();
+      streams.delete(removed);
+    }
+
+    return data;
+  }
 
   private issueQueries = async () => {
     const {
@@ -206,20 +223,16 @@ export class DataPanel extends Component<Props, State> {
         return;
       }
 
-      // check if data source returns a stream
-      if (resp && resp.stream) {
-        this.handleDataStream(resp.stream);
-        return;
-      }
+      const data = this.processResponseData(resp);
 
       if (onDataResponse) {
-        onDataResponse(resp);
+        onDataResponse(data);
       }
 
       this.setState({
         loading: LoadingState.Done,
         response: resp,
-        data: getProcessedSeriesData(resp.data),
+        data,
         isFirstLoad: false,
       });
     } catch (err) {
@@ -242,9 +255,25 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
+  getTimeRange(): TimeRange {
+    const { timeRange } = this.props;
+    const { raw } = timeRange;
+
+    if (moment.isMoment(raw.to) || raw.to.indexOf('now') < 0) {
+      return timeRange;
+    }
+
+    const timezone = 'utc'; //  ??? where can we get it
+    return {
+      from: dateMath.parse(raw.from, false, timezone),
+      to: dateMath.parse(raw.to, true, timezone),
+      raw: raw,
+    };
+  }
+
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, data, response } = this.state;
+    const { loading, isFirstLoad, data } = this.state;
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
@@ -259,12 +288,10 @@ export class DataPanel extends Component<Props, State> {
       );
     }
 
-    // Time from the query or the response
-    const timeRange = response && response.range ? response.range : this.props.timeRange;
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, timeRange, data })}
+        {this.props.children({ loading, timeRange: this.getTimeRange(), data })}
       </>
     );
   }
