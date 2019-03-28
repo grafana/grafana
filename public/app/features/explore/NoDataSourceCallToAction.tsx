@@ -5,13 +5,14 @@ import { ThemeContext, ExtraLargeLinkButton, CallToActionCard } from '@grafana/u
 export const NoDataSourceCallToAction = () => {
   const theme = useContext(ThemeContext);
 
-  const message = 'Please add a datasource that supports Explore (e.g., Prometheus)';
+  const message =
+    'Explore requires at least one data source. Once you have added a data source, you can query it here.';
   const footer = (
     <>
       <i className="fa fa-rocket" />
       <> ProTip: You can also define data sources through configuration files. </>
       <a
-        href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list"
+        href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=explore"
         target="_blank"
         className="text-link"
       >
