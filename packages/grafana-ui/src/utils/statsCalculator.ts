@@ -40,6 +40,11 @@ export type StatsFilter = (stat: StatCalculatorInfo) => boolean;
 export const StatsFilters = {
   all: (stat: StatCalculatorInfo) => true,
   numeric: (stat: StatCalculatorInfo) => stat.resultType === FieldType.number,
+
+  /** Some stats just pass the input value back.  Like `last` or `first` */
+  numericOrInput: (stat: StatCalculatorInfo) => {
+    return !stat.resultType || stat.resultType === FieldType.number;
+  },
 };
 
 export interface StatCalculatorInfo {

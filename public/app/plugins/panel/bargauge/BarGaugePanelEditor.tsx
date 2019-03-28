@@ -50,7 +50,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
           <SingleStatValueEditor
             onChange={this.onValueOptionsChanged}
             options={options.valueOptions}
-            filter={StatsFilters.numeric}
+            filter={StatsFilters.numericOrInput}
           />
           <PanelOptionsGroup title="Gauge">
             <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={options.minValue} />

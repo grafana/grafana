@@ -43,7 +43,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           <SingleStatValueEditor
             onChange={this.onValueOptionsChanged}
             options={options.valueOptions}
-            filter={StatsFilters.numeric}
+            filter={StatsFilters.numericOrInput}
           />
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />

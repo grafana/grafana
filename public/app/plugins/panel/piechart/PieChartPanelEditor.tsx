@@ -6,6 +6,7 @@ import {
   ValueMapping,
   SingleStatValueOptions,
   SingleStatValueEditor,
+  StatsFilters,
 } from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
@@ -30,7 +31,11 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            filter={StatsFilters.all}
+          />
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 
