@@ -157,6 +157,32 @@ export const toSeriesData = (data: any): SeriesData => {
   throw new Error('Unsupported data format');
 };
 
+export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData => {
+  const { fields, rows } = series;
+
+  if (fields.length === 2) {
+    const type = guessFieldTypeFromTable(series, 1);
+    if (type === FieldType.time) {
+      return {
+        target: fields[0].name || series.name,
+        datapoints: rows,
+        unit: fields[0].unit,
+      } as TimeSeries;
+    }
+  }
+
+  return {
+    columns: fields.map(f => {
+      return {
+        text: f.name,
+        filterable: f.filterable,
+        unit: f.unit,
+      };
+    }),
+    rows,
+  };
+};
+
 export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = false): SeriesData {
   if (isNumber(sortIndex)) {
     const copy = {
