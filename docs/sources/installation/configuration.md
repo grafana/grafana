@@ -651,17 +651,17 @@ This limit will protect the server from render overloading and make sure notific
 value is `5`.
 
 
-### execute_caculate_rule_timeout 
+### evaluation_timeout_seconds 
 
-Default setting for how long to perform the calculation of alert rule timeout
+Default setting for alert calculation timeout. Default value is `30` 
 
-### result_handle_timeout
+### notification_timeout_seconds
 
-Default setting for how long to perform the sending alert timeout
+Default setting for alert notification timeout. Default value is `30` 
 
 ### max_attempts
 
-Default setting for max attempts to sending alert notifications
+Default setting for max attempts to sending alert notifications. Default value is `3` 
 
 
 ## [panels]
