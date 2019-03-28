@@ -5,6 +5,8 @@ export { Popper } from './Tooltip/Popper';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
+export * from './Button/Button';
+
 // Select
 export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
@@ -37,3 +39,4 @@ export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
+export { CallToActionCard } from './CallToActionCard/CallToActionCard';

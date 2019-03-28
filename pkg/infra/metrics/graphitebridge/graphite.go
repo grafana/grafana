@@ -11,12 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package graphite provides a bridge to push Prometheus metrics to a Graphite
+// Package graphitebridge provides a bridge to push Prometheus metrics to a Graphite
 // server.
 package graphitebridge
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -26,14 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"context"
-
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-
-	dto "github.com/prometheus/client_model/go"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
