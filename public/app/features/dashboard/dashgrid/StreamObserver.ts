@@ -44,10 +44,12 @@ export class StreamObserver implements Observer<SeriesData> {
   }, 100); // max 10hz
 
   error = (err: any) => {
+    // TODO? tell the dashboard?
     console.log('Error', this.refId, err);
+    this.unsubscribe();
   };
 
   complete = () => {
-    console.log('Done!', this.refId);
+    this.unsubscribe();
   };
 }
