@@ -40,6 +40,10 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 		return nil, err
 	}
 
+	if tsdbQuery.Debug {
+		client.EnableDebug()
+	}
+
 	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)
 	return query.execute()
 }
