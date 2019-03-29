@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-import { FetchStream } from './method/fetch/FetchStream';
-import { RandomWalkStream } from './method/random/RandomWalkStream';
+import { FetchStream, getKeyForFetch } from './method/fetch/FetchStream';
+import { RandomWalkStream, getKeyForRandomWalk } from './method/random/RandomWalkStream';
 import { StreamHandler } from './StreamHandler';
 import { DataQueryOptions, DataQueryResponse, DataSourceApi, SeriesData } from '@grafana/ui';
 import { StreamingQuery, StreamingMethod } from './types';
@@ -12,7 +12,13 @@ import { RandomStreamQuery } from './method/random/types';
  * Return a unique ID based on query properties
  */
 export function getQueryKey(query: StreamingQuery): string {
-  return query.method;
+  if (query.method === StreamingMethod.random) {
+    return getKeyForRandomWalk(query as RandomStreamQuery);
+  }
+  if (query.method === StreamingMethod.fetch) {
+    return getKeyForFetch(query as FetchQuery);
+  }
+  return query.method + '?????';
 }
 
 export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
@@ -61,7 +67,8 @@ export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
         }
 
         const key = getQueryKey(query);
-        if (!streams.has(key)) {
+        const stream = streams.get(key);
+        if (!stream || stream.isStopped || stream.closed) {
           streams.set(key, this.initStreamHandler(query, options));
           console.log('MAKE Stream', key);
         }

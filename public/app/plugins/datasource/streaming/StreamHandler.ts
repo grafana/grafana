@@ -37,14 +37,30 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
     // Can fill this up
   }
 
+  getSubscriberCount(): number {
+    return this.observers.length;
+  }
+
   addRows(add: any[][]) {
     let rows = this.series.rows;
 
-    // Add each row
-    add.forEach(row => {
-      rows.push(row);
-    });
+    this.lastTime = Date.now();
+    if (this.observers.length < 1) {
+      const elapsed = this.lastTime - this.openTime;
+      if (elapsed > 500) {
+        this.complete();
+        console.log('Got rows, but nothign is listening... stopping stream', this);
+        return;
+      }
+    }
 
+    // Add each row
+    for (const row of add) {
+      rows.push(row);
+      this.totalRows++;
+    }
+
+    // Trim the maximum row count
     const extra = this.maxRowCount - rows.length;
     if (extra < 0) {
       rows = rows.slice(extra * -1);
@@ -58,10 +74,5 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
   error(err: any): void {
     super.error(err);
     console.log('GOT AN ERROR!', err, this);
-  }
-
-  complete(): void {
-    super.complete();
-    console.log('COMPLETE', this);
   }
 }

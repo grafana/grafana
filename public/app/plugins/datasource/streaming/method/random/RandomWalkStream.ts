@@ -13,6 +13,11 @@ const defaultQuery: RandomStreamQuery = {
   spread: 3.5,
 };
 
+export function getKeyForRandomWalk(query: RandomStreamQuery) {
+  const q = _.defaults(query, defaultQuery);
+  return StreamingMethod.random + '/' + q.speed + '/' + q.speed;
+}
+
 export class RandomWalkStream extends StreamHandler<RandomStreamQuery> {
   value: number;
 
@@ -50,6 +55,8 @@ export class RandomWalkStream extends StreamHandler<RandomStreamQuery> {
     const { speed, spread } = this.query;
     this.value += (Math.random() - 0.5) * spread;
     this.addRows([[this.value, Date.now()]]);
-    setTimeout(this.looper, speed);
+    if (!this.isStopped) {
+      setTimeout(this.looper, speed);
+    }
   };
 }

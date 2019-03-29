@@ -19,3 +19,4 @@ Eventually it would be great for this to:
 * use all the credentials from backendSrv
 * support websockets
 * support periodic calls to another query using the last recieved time
+

@@ -19,6 +19,21 @@ const defaultQuery: FetchQuery = {
   url: 'http://localhost:7777/',
 };
 
+export function getKeyForFetch(query: FetchQuery) {
+  const q = _.defaults(query, defaultQuery);
+  let url = q.url;
+  if (url.includes('?')) {
+    url += '&speed=' + q.speed;
+  } else {
+    url += '?speed=' + q.speed;
+  }
+  for (const field of q.fields || []) {
+    url += '&field=' + field;
+  }
+  url += '&spread=' + q.spread;
+  return url;
+}
+
 export class FetchStream extends StreamHandler<FetchQuery> {
   csv: CSVReader;
   reader: ReadableStreamReader<Uint8Array>;
@@ -28,31 +43,34 @@ export class FetchStream extends StreamHandler<FetchQuery> {
 
     this.csv = new CSVReader({ callback: this });
 
-    let url = query.url;
-    if (!url.includes('?')) {
-      url += '?x';
-    }
+    const url = getKeyForFetch(this.query);
 
     // TODO! fetch via the datasource config with credentials etc
-    const request = new Request(`${url}&speed=${query.speed}&spread=${query.spread}`);
+    const request = new Request(url);
     fetch(request).then(response => {
       console.log('RESPONSE', response.body);
-
       this.reader = response.body.getReader();
       this.reader.read().then(this.processChunk);
     });
   }
 
   processChunk = (value: ReadableStreamReadResult<Uint8Array>): any => {
+    if (this.isStopped) {
+      this.complete();
+      return; // Nothing more to do
+    }
+
     if (value.value) {
       const text = new TextDecoder().decode(value.value);
       this.csv.readCSV(text);
     }
+
     if (value.done) {
       console.log('Finished stream');
       this.complete();
       return;
     }
+
     return this.reader.read().then(this.processChunk);
   };
 
