@@ -8,13 +8,13 @@ export default class DefaultVariableQueryEditor extends PureComponent<VariableQu
     this.state = { value: props.query };
   }
 
-  handleChange(event) {
-    this.setState({ value: event.target.value });
-  }
+  onChange = (event: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ value: event.currentTarget.value });
+  };
 
-  handleBlur(event) {
-    this.props.onChange(event.target.value, event.target.value);
-  }
+  onBlur = (event: React.FormEvent<HTMLInputElement>) => {
+    this.props.onChange(event.currentTarget.value, event.currentTarget.value);
+  };
 
   render() {
     return (
@@ -24,8 +24,8 @@ export default class DefaultVariableQueryEditor extends PureComponent<VariableQu
           type="text"
           className="gf-form-input"
           value={this.state.value}
-          onChange={this.handleChange}
-          onBlur={this.handleBlur}
+          onChange={this.onChange}
+          onBlur={this.onBlur}
           placeholder="metric name or tags query"
           required
         />

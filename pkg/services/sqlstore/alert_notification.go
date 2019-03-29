@@ -317,6 +317,10 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.SendReminder = cmd.SendReminder
 		current.DisableResolveMessage = cmd.DisableResolveMessage
 
+		if cmd.Uid != "" {
+			current.Uid = cmd.Uid
+		}
+
 		if current.SendReminder {
 			if cmd.Frequency == "" {
 				return m.ErrNotificationFrequencyNotFound
@@ -356,8 +360,13 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 		return fmt.Errorf("Cannot update, alert notification uid %s doesn't exist", cmd.Uid)
 	}
 
+	if cmd.NewUid == "" {
+		cmd.NewUid = cmd.Uid
+	}
+
 	updateNotification := &m.UpdateAlertNotificationCommand{
 		Id:                    current.Id,
+		Uid:                   cmd.NewUid,
 		Name:                  cmd.Name,
 		Type:                  cmd.Type,
 		SendReminder:          cmd.SendReminder,

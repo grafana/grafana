@@ -11,20 +11,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
 		engine := NewEngine()
+		setting.AlertingNotificationTimeout = 30 * time.Second
+		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
 		job := &Job{Running: true, Rule: &Rule{}}
 
 		Convey("Should trigger as many retries as needed", func() {
 			Convey("pended alert for datasource -> result handler should be worked", func() {
 				// reduce alert timeout to test quickly
-				originAlertTimeout := alertTimeout
-				alertTimeout = 2 * time.Second
+				setting.AlertingEvaluationTimeout = 30 * time.Second
 				transportTimeoutInterval := 2 * time.Second
 				serverBusySleepDuration := 1 * time.Second
 
@@ -39,7 +41,7 @@ func TestEngineTimeouts(t *testing.T) {
 				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)
 
 				// initialize for other tests.
-				alertTimeout = originAlertTimeout
+				setting.AlertingEvaluationTimeout = 2 * time.Second
 				engine.resultHandler = &FakeResultHandler{}
 			})
 		})

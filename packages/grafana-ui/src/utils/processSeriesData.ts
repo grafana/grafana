@@ -35,6 +35,7 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
       },
     ],
     rows: timeSeries.datapoints,
+    labels: timeSeries.tags,
   };
 }
 
@@ -88,7 +89,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-function guessFieldTypeFromTable(series: SeriesData, index: number): FieldType | undefined {
+export function guessFieldTypeFromSeries(series: SeriesData, index: number): FieldType | undefined {
   const column = series.fields[index];
 
   // 1. Use the column name to guess
@@ -128,7 +129,7 @@ export const guessFieldTypes = (series: SeriesData): SeriesData => {
           // Replace it with a calculated version
           return {
             ...field,
-            type: guessFieldTypeFromTable(series, index),
+            type: guessFieldTypeFromSeries(series, index),
           };
         }),
       };
@@ -155,6 +156,32 @@ export const toSeriesData = (data: any): SeriesData => {
   // TODO, try to convert JSON/Array to seriesta?
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
+};
+
+export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData => {
+  const { fields, rows } = series;
+
+  if (fields.length === 2) {
+    const type = guessFieldTypeFromSeries(series, 1);
+    if (type === FieldType.time) {
+      return {
+        target: fields[0].name || series.name,
+        datapoints: rows,
+        unit: fields[0].unit,
+      } as TimeSeries;
+    }
+  }
+
+  return {
+    columns: fields.map(f => {
+      return {
+        text: f.name,
+        filterable: f.filterable,
+        unit: f.unit,
+      };
+    }),
+    rows,
+  };
 };
 
 export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = false): SeriesData {
