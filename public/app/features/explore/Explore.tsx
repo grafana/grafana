@@ -234,14 +234,14 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
-        <div className={`explore-container`}>
-          <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
+        <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
+          <div className="explore-container">
             <Alert
               message={`Error connecting to datasource: ${datasourceError}`}
               button={{ text: 'Reconnect', onClick: this.onReconnect }}
             />
-          </FadeIn>
-        </div>
+          </div>
+        </FadeIn>
 
         {datasourceInstance && (
           <div className="explore-container">
