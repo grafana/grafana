@@ -156,6 +156,14 @@ export class ElasticResponse {
             }
             break;
           }
+          case 'percentiles': {
+            const percentiles = bucket[metric.id].values;
+
+            for (const percentileName in percentiles) {
+              addMetricValue(values, `p${percentileName} ${metric.field}`, percentiles[percentileName]);
+            }
+            break;
+          }
           default: {
             let metricName = this.getMetricName(metric.type);
             const otherMetrics = _.filter(target.metrics, { type: metric.type });
