@@ -51,6 +51,7 @@ export interface TimeSeries {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
+  tags?: Labels;
 }
 
 export enum NullValueMode {
