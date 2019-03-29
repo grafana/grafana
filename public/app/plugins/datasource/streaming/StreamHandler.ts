@@ -1,7 +1,9 @@
 import { Subject } from 'rxjs';
 import _ from 'lodash';
 import { SeriesData } from '@grafana/ui';
-import { StreamingQuery, StreamingQueryOptions } from './datasource';
+import { StreamingQuery } from './types';
+import { DataQueryOptions } from '@grafana/ui/src/types';
+import { StreamingDatasource } from './datasource';
 
 export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData> {
   series: SeriesData = {
@@ -10,18 +12,29 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
     stream: this,
   };
 
-  options: StreamingQueryOptions<T>;
+  query: T;
+  maxRowCount: number;
 
-  constructor(query: T, options: StreamingQueryOptions<T>, datasource: any) {
+  openTime: number;
+  lastTime: number;
+  totalRows: number;
+
+  constructor(query: T, options: DataQueryOptions<any>, datasource: StreamingDatasource) {
     super();
 
+    this.query = { ...query }; // copy of the query
+    this.maxRowCount = options.maxDataPoints;
+
+    this.openTime = Date.now();
+    this.lastTime = this.openTime;
+    this.totalRows = 0;
+
     this.series.refId = query.refId;
-    this.options = options; // _.defaults(options, defaultOptions);
-    this.initBuffer(this.options);
+    this.initBuffer(query, options);
   }
 
-  initBuffer(options: StreamingQueryOptions<T>) {
-    // TOTO
+  initBuffer(query: T, options: DataQueryOptions<any>) {
+    // Can fill this up
   }
 
   addRows(add: any[][]) {
@@ -32,7 +45,7 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
       rows.push(row);
     });
 
-    const extra = this.options.maxDataPoints - rows.length;
+    const extra = this.maxRowCount - rows.length;
     if (extra < 0) {
       rows = rows.slice(extra * -1);
       this.series.rows = rows;

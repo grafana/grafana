@@ -1,55 +1,73 @@
 import _ from 'lodash';
 
-import { RequestStream } from './RequestStream';
-import { RandomWalkStream } from './RandomWalkStream';
+import { FetchStream } from './method/fetch/FetchStream';
+import { RandomWalkStream } from './method/random/RandomWalkStream';
 import { StreamHandler } from './StreamHandler';
-import { DataQueryResponse, DataQuery, DataQueryOptions } from '@grafana/ui';
+import { DataQueryOptions, DataQueryResponse, DataSourceApi, SeriesData } from '@grafana/ui';
+import { StreamingQuery, StreamingMethod } from './types';
+import { FetchQuery } from './method/fetch/types';
+import { RandomStreamQuery } from './method/random/types';
 
-export interface StreamingQuery extends DataQuery {
-  url: string;
-  speed: number; // Milliseconds
-  spread: number; // Spread (for random noise)
+/**
+ * Return a unique ID based on query properties
+ */
+export function getQueryKey(query: StreamingQuery): string {
+  return query.method;
 }
 
-export interface StreamingQueryOptions<T extends StreamingQuery> extends DataQueryOptions<T> {}
-
-export default class StreamingDatasource {
+export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
   interval: any;
 
   supportsExplore = true;
   supportAnnotations = false;
   supportMetrics = true;
 
-  openStreams: { [key: string]: StreamHandler<any> } = {};
+  streams = new Map<string, StreamHandler<any>>();
 
   /** @ngInject */
-  constructor(instanceSettings, public backendSrv, public templateSrv) {
+  constructor(instanceSettings) {
     const safeJsonData = instanceSettings.jsonData || {};
-
     this.interval = safeJsonData.timeInterval;
   }
 
-  query(options: StreamingQueryOptions<any>): Promise<DataQueryResponse> {
-    const { panelId } = options;
-    const { openStreams } = this;
-
-    let stream = openStreams[panelId];
-    if (!stream) {
-      const target = options.targets[0];
-      if (!target || !target.url) {
-        return Promise.resolve({ data: [] });
-      }
-
-      console.log('OPTIONS', options);
-      if (false) {
-        stream = new RandomWalkStream(target, options, this);
-      }
-      stream = new RequestStream(target, options, this);
-      openStreams[panelId] = stream;
-      console.log('MAKE Stream', openStreams);
+  initStreamHandler(query: StreamingQuery, options: DataQueryOptions<StreamingQuery>) {
+    if (query.method === StreamingMethod.fetch) {
+      return new FetchStream(query as FetchQuery, options, this);
     }
-    return Promise.resolve({
-      data: [stream.series],
+    if (query.method === StreamingMethod.random) {
+      return new RandomWalkStream(query as RandomStreamQuery, options, this);
+    }
+
+    throw new Error('Unsupported method: ' + query.method);
+  }
+
+  query(options: DataQueryOptions<StreamingQuery>): Promise<DataQueryResponse> {
+    const { targets } = options;
+    if (!targets || targets.length < 1) {
+      return Promise.resolve({ data: [] });
+    }
+
+    return new Promise((resolve, reject) => {
+      const { streams } = this;
+      const series: SeriesData[] = [];
+      for (const query of targets) {
+        if (query.hide) {
+          continue;
+        }
+
+        // Make sure it has a valid method
+        if (!query.method) {
+          query.method = StreamingMethod.random;
+        }
+
+        const key = getQueryKey(query);
+        if (!streams.has(key)) {
+          streams.set(key, this.initStreamHandler(query, options));
+          console.log('MAKE Stream', key);
+        }
+        series.push(streams.get(key).series);
+      }
+      resolve({ data: series });
     });
   }
 
@@ -67,3 +85,5 @@ export default class StreamingDatasource {
     });
   }
 }
+
+export default StreamingDatasource;

@@ -1,5 +1,5 @@
 import StreamingDatasource from './datasource';
-import { StreamingQueryCtrl } from './query_ctrl';
+import { StreamingQueryEditor } from './StreamingQueryEditor';
 import { StreamingConfigCtrl } from './config_ctrl';
 
-export { StreamingDatasource as Datasource, StreamingQueryCtrl as QueryCtrl, StreamingConfigCtrl as ConfigCtrl };
+export { StreamingDatasource as Datasource, StreamingQueryEditor as QueryEditor, StreamingConfigCtrl as ConfigCtrl };

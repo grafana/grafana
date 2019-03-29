@@ -1,17 +1,30 @@
 import _ from 'lodash';
-import { StreamHandler } from './StreamHandler';
-import { StreamingQuery, StreamingQueryOptions } from './datasource';
+import { StreamHandler } from '../../StreamHandler';
 import { SeriesData, CSVReader } from '@grafana/ui';
+import { StreamingDatasource } from '../../datasource';
+import { FetchQuery } from './types';
+
+import { DataQueryOptions } from '@grafana/ui';
 
 // polyfil for TextEncoder/TextDecoder (node & IE)
 import 'fast-text-encoding'; //'text-encoding';  // 'fast-text-encoding';
+import { StreamingMethod } from '../../types';
 
-export class RequestStream extends StreamHandler<StreamingQuery> {
+const defaultQuery: FetchQuery = {
+  refId: 'XXX',
+  method: StreamingMethod.fetch,
+  throttle: 100, // Speed that the
+  speed: 50,
+  spread: 3.5,
+  url: 'http://localhost:7777/',
+};
+
+export class FetchStream extends StreamHandler<FetchQuery> {
   csv: CSVReader;
   reader: ReadableStreamReader<Uint8Array>;
 
-  constructor(query: StreamingQuery, options: StreamingQueryOptions<StreamingQuery>, datasource: any) {
-    super(query, options, datasource);
+  constructor(query: FetchQuery, options: DataQueryOptions<any>, datasource: StreamingDatasource) {
+    super(_.defaults(query, defaultQuery), options, datasource);
 
     this.csv = new CSVReader({ callback: this });
 

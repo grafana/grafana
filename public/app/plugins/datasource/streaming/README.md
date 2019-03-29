@@ -6,10 +6,10 @@ This is a super alpha datasource to explore how to best support streaming data..
 You can run the test backend server using:
 
 ```
-cd public/app/plugins/datasource/streaming/
+cd public/app/plugins/datasource/streaming/method/fetch/
 go run server.go
 ```
-You can test this with:
+You can see the output with:
 ```
 curl --no-buffer 'http://localhost:7777/?speed=250&spread=5'
 ```
