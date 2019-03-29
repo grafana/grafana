@@ -14,6 +14,8 @@ import {
   findCommonLabels,
   getLogLevel,
   FieldType,
+  formatLabels,
+  guessFieldTypeFromSeries,
 } from '@grafana/ui';
 
 export function processEntry(
@@ -117,6 +119,37 @@ export function logStreamToSeriesData(stream: LogsStream): SeriesData {
     fields: [{ name: 'ts', type: FieldType.time }, { name: 'line', type: FieldType.string }],
     rows: stream.entries.map(entry => {
       return [entry.ts || entry.timestamp, entry.line];
+    }),
+  };
+}
+
+export function seriesDataToLogStream(series: SeriesData): LogsStream {
+  let timeIndex = -1;
+  let lineIndex = -1;
+  for (let i = 0; i < series.fields.length; i++) {
+    const field = series.fields[i];
+    const type = field.type || guessFieldTypeFromSeries(series, i);
+    if (timeIndex < 0 && type === FieldType.time) {
+      timeIndex = i;
+    }
+    if (lineIndex < 0 && type === FieldType.string) {
+      lineIndex = i;
+    }
+  }
+  if (timeIndex < 0) {
+    throw new Error('Series does not have a time field');
+  }
+  if (lineIndex < 0) {
+    throw new Error('Series does not have a line field');
+  }
+  return {
+    labels: formatLabels(series.labels),
+    parsedLabels: series.labels,
+    entries: series.rows.map(row => {
+      return {
+        line: row[lineIndex],
+        ts: row[timeIndex],
+      };
     }),
   };
 }

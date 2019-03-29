@@ -1,6 +1,6 @@
 import { LogsStream } from 'app/core/logs_model';
 
-import { mergeStreamsToLogs } from './result_transformer';
+import { mergeStreamsToLogs, logStreamToSeriesData, seriesDataToLogStream } from './result_transformer';
 
 describe('mergeStreamsToLogs()', () => {
   it('returns empty logs given no streams', () => {
@@ -113,5 +113,39 @@ describe('mergeStreamsToLogs()', () => {
         raw: "foo: [32m'bar'[39m",
       },
     ]);
+  });
+});
+
+describe('convert SeriesData to/from LogStream', () => {
+  const streams = [
+    {
+      labels: '{foo="bar"}',
+      entries: [
+        {
+          line: "foo: [32m'bar'[39m",
+          ts: '1970-01-01T00:00:00Z',
+        },
+      ],
+    },
+    {
+      labels: '{bar="foo"}',
+      entries: [
+        {
+          line: "bar: 'foo'",
+          ts: '1970-01-01T00:00:00Z',
+        },
+      ],
+    },
+  ];
+  it('converts streams to series', () => {
+    const data = streams.map(stream => logStreamToSeriesData(stream));
+
+    expect(data.length).toBe(2);
+    expect(data[0].labels['foo']).toEqual('bar');
+    expect(data[0].rows[0][0]).toEqual(streams[0].entries[0].ts);
+
+    const roundtrip = data.map(series => seriesDataToLogStream(series));
+    expect(roundtrip.length).toBe(2);
+    expect(roundtrip[0].labels).toEqual(streams[0].labels);
   });
 });
