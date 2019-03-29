@@ -335,7 +335,6 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
 	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	ss.dbCfg.ClientCertRefreshInterval = sec.Key("client_cert_refresh_interval").MustDuration(0)
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 
@@ -422,7 +421,6 @@ type DatabaseConfig struct {
 	CaCertPath                string
 	ClientKeyPath             string
 	ClientCertPath            string
-	ClientCertRefreshInterval time.Duration
 	ServerCertName            string
 	ConnectionString          string
 	MaxOpenConn               int
