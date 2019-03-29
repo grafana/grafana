@@ -19,6 +19,7 @@ export default class GraphiteQuery {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
+    this.scopedVars = scopedVars;
     this.parseTarget();
 
     this.removeTagValue = '-- remove tag --';
@@ -162,7 +163,9 @@ export default class GraphiteQuery {
 
   updateModelTarget(targets) {
     const wrapFunction = (target: string, func: any) => {
-      return func.render(target, this.templateSrv.replace);
+      return func.render(target, (value: string) => {
+        return this.templateSrv.replace(value, this.scopedVars);
+      });
     };
 
     if (!this.target.textEditor) {
