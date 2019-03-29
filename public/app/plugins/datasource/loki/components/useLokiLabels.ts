@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
+import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
-
-interface RefreshLabelType {
-  refresh: boolean;
-  force?: boolean;
-}
 
 /**
  *
@@ -19,13 +16,19 @@ interface RefreshLabelType {
 export const useLokiLabels = (
   languageProvider: LokiLanguageProvider,
   languageProviderInitialised: boolean,
-  activeOption: CascaderOption[]
+  activeOption: CascaderOption[],
+  datasourceStatus: DatasourceStatus,
+  initialDatasourceStatus?: DatasourceStatus // used for test purposes
 ) => {
   const mounted = useRefMounted();
 
   // State
   const [logLabelOptions, setLogLabelOptions] = useState([]);
-  const [shouldTryRefreshLabels, setRefreshLabels] = useState({ refresh: false, force: false });
+  const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
+  const [prevDatasourceStatus, setPrevDatasourceStatus] = useState(
+    initialDatasourceStatus || DatasourceStatus.Connected
+  );
+  const [shouldForceRefreshLabels, setForceRefreshLabels] = useState(false);
 
   // Async
   const fetchOptionValues = async option => {
@@ -35,14 +38,12 @@ export const useLokiLabels = (
     }
   };
 
-  const tryLabelsRefresh = async (config: RefreshLabelType) => {
-    if (!config.refresh && !config.force) {
-      return;
-    }
+  const tryLabelsRefresh = async () => {
+    await languageProvider.refreshLogLabels(shouldForceRefreshLabels);
 
-    await languageProvider.refreshLogLabels(config.force);
     if (mounted.current) {
-      setRefreshLabels({ refresh: false, force: false });
+      setRefreshLabels(false);
+      setForceRefreshLabels(false);
       setLogLabelOptions(languageProvider.logLabelOptions);
     }
   };
@@ -71,16 +72,27 @@ export const useLokiLabels = (
     }
   }, [activeOption]);
 
-  // This effect is performed on shouldTryRefreshLabels state change only.
+  // This effect is performed on shouldTryRefreshLabels or shouldForceRefreshLabels state change only.
   // Since shouldTryRefreshLabels is reset AFTER the labels are refreshed we are secured in case of trying to refresh
   // when previous refresh hasn't finished yet
   useEffect(() => {
-    tryLabelsRefresh(shouldTryRefreshLabels);
-  }, [shouldTryRefreshLabels]);
+    if (shouldTryRefreshLabels || shouldForceRefreshLabels) {
+      tryLabelsRefresh();
+    }
+  }, [shouldTryRefreshLabels, shouldForceRefreshLabels]);
+
+  // This effect is performed on datasourceStatus state change only.
+  // We want to make sure to only force refresh AFTER a disconnected state thats why we store the previous datasourceStatus in state
+  useEffect(() => {
+    if (datasourceStatus === DatasourceStatus.Connected && prevDatasourceStatus === DatasourceStatus.Disconnected) {
+      setForceRefreshLabels(true);
+    }
+    setPrevDatasourceStatus(datasourceStatus);
+  }, [datasourceStatus]);
 
   return {
     logLabelOptions,
     setLogLabelOptions,
-    refreshLabels: (forceRefresh?: boolean) => setRefreshLabels({ refresh: true, force: forceRefresh === true }),
+    refreshLabels: () => setRefreshLabels(true),
   };
 };

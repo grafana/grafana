@@ -4,6 +4,7 @@ import Prism from 'prismjs';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
+import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
 
 const PRISM_SYNTAX = 'promql';
 
@@ -12,7 +13,7 @@ const PRISM_SYNTAX = 'promql';
  * @param languageProvider
  * @description Initializes given language provider, exposes Loki syntax and enables loading label option values
  */
-export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
+export const useLokiSyntax = (languageProvider: LokiLanguageProvider, datasourceStatus: DatasourceStatus) => {
   const mounted = useRefMounted();
   // State
   const [languageProviderInitialized, setLanguageProviderInitilized] = useState(false);
@@ -28,7 +29,8 @@ export const useLokiSyntax = (languageProvider: LokiLanguageProvider) => {
   const { logLabelOptions, setLogLabelOptions, refreshLabels } = useLokiLabels(
     languageProvider,
     languageProviderInitialized,
-    activeOption
+    activeOption,
+    datasourceStatus
   );
 
   // Async
