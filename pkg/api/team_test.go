@@ -3,6 +3,8 @@ package api
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -20,6 +22,10 @@ func TestTeamApiEndpoint(t *testing.T) {
 			TotalCount: 2,
 		}
 
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		Convey("When searching with no parameters", func() {
 			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 				var sentLimit int
@@ -33,7 +39,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 					return nil
 				})
 
-				sc.handlerFunc = SearchTeams
+				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				So(sentLimit, ShouldEqual, 1000)
@@ -60,7 +66,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 					return nil
 				})
 
-				sc.handlerFunc = SearchTeams
+				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
 				So(sentLimit, ShouldEqual, 10)

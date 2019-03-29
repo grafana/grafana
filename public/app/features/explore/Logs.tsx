@@ -2,10 +2,10 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, Switch } from '@grafana/ui';
+import { RawTimeRange, Switch, LogLevel } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogLevel, LogsMetaKind } from 'app/core/logs_model';
+import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
@@ -64,7 +64,7 @@ interface Props {
 interface State {
   deferLogs: boolean;
   renderAll: boolean;
-  showLabels: boolean | null; // Tristate: null means auto
+  showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
 }
@@ -76,7 +76,7 @@ export default class Logs extends PureComponent<Props, State> {
   state = {
     deferLogs: true,
     renderAll: false,
-    showLabels: null,
+    showLabels: false,
     showLocalTime: true,
     showUtc: false,
   };
@@ -166,12 +166,12 @@ export default class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLocalTime, showUtc } = this.state;
-    let { showLabels } = this.state;
+    const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none;
+    const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
+    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
     const meta = [...data.meta];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
@@ -186,16 +186,6 @@ export default class Logs extends PureComponent<Props, State> {
     const processedRows = dedupedData.rows;
     const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
     const lastRows = processedRows.slice(PREVIEW_LIMIT);
-
-    // Check for labels
-    if (showLabels === null) {
-      if (hasData) {
-        showLabels = data.rows.some(row => _.size(row.uniqueLabels) > 0);
-      } else {
-        showLabels = true;
-      }
-    }
-
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
@@ -258,7 +248,7 @@ export default class Logs extends PureComponent<Props, State> {
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
@@ -273,7 +263,7 @@ export default class Logs extends PureComponent<Props, State> {
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}

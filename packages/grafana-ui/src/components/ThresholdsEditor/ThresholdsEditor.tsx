@@ -1,10 +1,10 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold } from '../../types';
 import { ColorPicker } from '..';
-import { PanelOptionsGroup } from '..';
+import { Input, PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
+import { ThemeContext } from '../../themes';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 export interface Props {
   thresholds: Threshold[];
@@ -166,22 +166,26 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         <div className="thresholds-row-input-inner-color">
           {threshold.color && (
             <div className="thresholds-row-input-inner-color-colorpicker">
-              <ColorPicker color={threshold.color} onChange={color => this.onChangeThresholdColor(threshold, color)} />
+              <ColorPicker
+                color={threshold.color}
+                onChange={color => this.onChangeThresholdColor(threshold, color)}
+                enableNamedColors={true}
+              />
             </div>
           )}
         </div>
         {threshold.index === 0 && (
           <div className="thresholds-row-input-inner-value">
-            <input type="text" value="Base" readOnly />
+            <Input type="text" value="Base" readOnly />
           </div>
         )}
         {threshold.index > 0 && (
           <>
             <div className="thresholds-row-input-inner-value">
-              <input
+              <Input
                 type="number"
                 step="0.0001"
-                onChange={event => this.onChangeThresholdValue(event, threshold)}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
                 value={threshold.value}
                 onBlur={this.onBlur}
                 readOnly={threshold.index === 0}

@@ -2,28 +2,6 @@ import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import { FilterSegments, DefaultFilterValue } from './filter_segments';
 
-export class StackdriverFilter {
-  /** @ngInject */
-  constructor() {
-    return {
-      templateUrl: 'public/app/plugins/datasource/stackdriver/partials/query.filter.html',
-      controller: 'StackdriverFilterCtrl',
-      controllerAs: 'ctrl',
-      bindToController: true,
-      restrict: 'E',
-      scope: {
-        labelData: '<',
-        loading: '<',
-        groupBys: '<',
-        filters: '<',
-        filtersChanged: '&',
-        groupBysChanged: '&',
-        hideGroupBys: '<',
-      },
-    };
-  }
-}
-
 export class StackdriverFilterCtrl {
   defaultRemoveGroupByValue = '-- remove group by --';
   resourceTypeValue = 'resource.type';
@@ -193,5 +171,24 @@ export class StackdriverFilterCtrl {
   }
 }
 
-coreModule.directive('stackdriverFilter', StackdriverFilter);
-coreModule.controller('StackdriverFilterCtrl', StackdriverFilterCtrl);
+/** @ngInject */
+function stackdriverFilter() {
+  return {
+    templateUrl: 'public/app/plugins/datasource/stackdriver/partials/query.filter.html',
+    controller: StackdriverFilterCtrl,
+    controllerAs: 'ctrl',
+    bindToController: true,
+    restrict: 'E',
+    scope: {
+      labelData: '<',
+      loading: '<',
+      groupBys: '<',
+      filters: '<',
+      filtersChanged: '&',
+      groupBysChanged: '&',
+      hideGroupBys: '<',
+    },
+  };
+}
+
+coreModule.directive('stackdriverFilter', stackdriverFilter);

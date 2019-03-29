@@ -398,12 +398,20 @@ Array [
       >
         Alias By
       </label>
-      <input
-        className="gf-form-input width-24"
-        onChange={[Function]}
-        type="text"
-        value=""
-      />
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input width-24"
+          onChange={[Function]}
+          type="text"
+          value=""
+        />
+      </div>
     </div>
     <div
       className="gf-form gf-form--grow"
@@ -424,12 +432,20 @@ Array [
       >
         Project
       </span>
-      <input
-        className="gf-form-input width-15"
-        disabled={true}
-        type="text"
-        value="Loading project..."
-      />
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
+        <input
+          className="gf-form-input gf-form-input width-15"
+          disabled={true}
+          type="text"
+          value="Loading project..."
+        />
+      </div>
     </div>
     <div
       className="gf-form"

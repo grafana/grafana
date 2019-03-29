@@ -3,50 +3,73 @@ import moment from 'moment';
 
 const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-export function parse(text, roundUp?, timezone?) {
+type Timezone = 'utc';
+
+/**
+ * Parses different types input to a moment instance. There is a specific formatting language that can be used
+ * if text arg is string. See unit tests for examples.
+ * @param text
+ * @param roundUp See parseDateMath function.
+ * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
+ */
+export function parse(
+  text: string | moment.Moment | Date,
+  roundUp?: boolean,
+  timezone?: Timezone
+): moment.Moment | undefined {
   if (!text) {
     return undefined;
   }
-  if (moment.isMoment(text)) {
-    return text;
-  }
-  if (_.isDate(text)) {
-    return moment(text);
-  }
 
-  let time;
-  let mathString = '';
-  let index;
-  let parseString;
-
-  if (text.substring(0, 3) === 'now') {
-    if (timezone === 'utc') {
-      time = moment.utc();
-    } else {
-      time = moment();
+  if (typeof text !== 'string') {
+    if (moment.isMoment(text)) {
+      return text;
     }
-    mathString = text.substring('now'.length);
+    if (_.isDate(text)) {
+      return moment(text);
+    }
+    // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
+    return undefined;
   } else {
-    index = text.indexOf('||');
-    if (index === -1) {
-      parseString = text;
-      mathString = ''; // nothing else
+    let time;
+    let mathString = '';
+    let index;
+    let parseString;
+
+    if (text.substring(0, 3) === 'now') {
+      if (timezone === 'utc') {
+        time = moment.utc();
+      } else {
+        time = moment();
+      }
+      mathString = text.substring('now'.length);
     } else {
-      parseString = text.substring(0, index);
-      mathString = text.substring(index + 2);
+      index = text.indexOf('||');
+      if (index === -1) {
+        parseString = text;
+        mathString = ''; // nothing else
+      } else {
+        parseString = text.substring(0, index);
+        mathString = text.substring(index + 2);
+      }
+      // We're going to just require ISO8601 timestamps, k?
+      time = moment(parseString, moment.ISO_8601);
     }
-    // We're going to just require ISO8601 timestamps, k?
-    time = moment(parseString, moment.ISO_8601);
-  }
 
-  if (!mathString.length) {
-    return time;
-  }
+    if (!mathString.length) {
+      return time;
+    }
 
-  return parseDateMath(mathString, time, roundUp);
+    return parseDateMath(mathString, time, roundUp);
+  }
 }
 
-export function isValid(text) {
+/**
+ * Checks if text is a valid date which in this context means that it is either a Moment instance or it can be parsed
+ * by parse function. See parse function to see what is considered acceptable.
+ * @param text
+ */
+export function isValid(text: string | moment.Moment): boolean {
   const date = parse(text);
   if (!date) {
     return false;
@@ -59,7 +82,13 @@ export function isValid(text) {
   return false;
 }
 
-export function parseDateMath(mathString, time, roundUp?) {
+/**
+ * Parses math part of the time string and shifts supplied time according to that math. See unit tests for examples.
+ * @param mathString
+ * @param time
+ * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
+ */
+export function parseDateMath(mathString: string, time: moment.Moment, roundUp?: boolean): moment.Moment | undefined {
   const dateTime = time;
   let i = 0;
   const len = mathString.length;
@@ -80,13 +109,13 @@ export function parseDateMath(mathString, time, roundUp?) {
       return undefined;
     }
 
-    if (isNaN(mathString.charAt(i))) {
+    if (isNaN(parseInt(mathString.charAt(i), 10))) {
       num = 1;
     } else if (mathString.length === 2) {
       num = mathString.charAt(i);
     } else {
       const numFrom = i;
-      while (!isNaN(mathString.charAt(i))) {
+      while (!isNaN(parseInt(mathString.charAt(i), 10))) {
         i++;
         if (i > 10) {
           return undefined;

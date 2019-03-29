@@ -1,10 +1,5 @@
 import { PanelChrome } from './PanelChrome';
 
-jest.mock('sass/_variables.generated.scss', () => ({
-  panelhorizontalpadding: 10,
-  panelVerticalPadding: 10,
-}));
-
 describe('PanelChrome', () => {
   let chrome: PanelChrome;
 

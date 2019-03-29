@@ -1,3 +1,4 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import {
   PanelEditorProps,
@@ -6,11 +7,12 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
+  SingleStatValueOptions,
+  SingleStatValueEditor,
 } from '@grafana/ui';
 
-import { SingleStatValueEditor } from 'app/plugins/panel/gauge/SingleStatValueEditor';
 import { GaugeOptionsBox } from './GaugeOptionsBox';
-import { GaugeOptions, SingleStatValueOptions } from './types';
+import { GaugeOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>

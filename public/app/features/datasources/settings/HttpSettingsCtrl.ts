@@ -9,7 +9,7 @@ coreModule.directive('datasourceHttpSettings', () => {
     },
     templateUrl: 'public/app/features/datasources/partials/http_settings.html',
     link: {
-      pre: ($scope, elem, attrs) => {
+      pre: ($scope: any, elem, attrs) => {
         // do not show access option if direct access is disabled
         $scope.showAccessOption = $scope.noDirectAccess !== 'true';
         $scope.showAccessHelp = false;

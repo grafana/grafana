@@ -1,12 +1,12 @@
 import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> {
-  panelData: PanelData;
+  data?: SeriesData[];
   timeRange: TimeRange;
   loading: LoadingState;
   options: T;
@@ -16,20 +16,37 @@ export interface PanelProps<T = any> {
   replaceVariables: InterpolateFunction;
 }
 
-export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
-}
-
 export interface PanelEditorProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
 }
 
+export interface PanelModel<TOptions = any> {
+  id: number;
+  options: TOptions;
+  pluginVersion?: string;
+}
+
+/**
+ * Called when a panel is first loaded with current panel model
+ */
+export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
+
+/**
+ * Called before a panel is initalized
+ */
+export type PanelTypeChangedHandler<TOptions = any> = (
+  options: Partial<TOptions>,
+  prevPluginId: string,
+  prevOptions: any
+) => Partial<TOptions>;
+
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+  onPanelMigration?: PanelMigrationHandler<TOptions>;
+  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
   constructor(panel: ComponentClass<PanelProps<TOptions>>) {
     this.panel = panel;
@@ -37,10 +54,32 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     this.editor = editor;
+    return this;
   }
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+    return this;
+  }
+
+  /**
+   * This function is called before the panel first loads if
+   * the current version is different than the version that was saved.
+   *
+   * This is a good place to support any changes to the options model
+   */
+  setMigrationHandler(handler: PanelMigrationHandler) {
+    this.onPanelMigration = handler;
+    return this;
+  }
+
+  /**
+   * This function is called when the visualization was changed.  This
+   * passes in the options that were used in the previous visualization
+   */
+  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
+    this.onPanelTypeChanged = handler;
+    return this;
   }
 }
 
@@ -56,17 +95,6 @@ export interface PanelMenuItem {
   onClick?: () => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
-}
-
-export interface Threshold {
-  index: number;
-  value: number;
-  color: string;
-}
-
-export enum BasicGaugeColor {
-  Green = '#299c46',
-  Red = '#d44a3a',
 }
 
 export enum MappingType {
@@ -90,4 +118,10 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export enum VizOrientation {
+  Auto = 'auto',
+  Vertical = 'vertical',
+  Horizontal = 'horizontal',
 }

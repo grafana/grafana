@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
+import { FieldType } from '@grafana/ui';
 
 export default class InfluxSeries {
   series: any;
@@ -156,7 +157,7 @@ export default class InfluxSeries {
         // Check that the first column is indeed 'time'
         if (series.columns[0] === 'time') {
           // Push this now before the tags and with the right type
-          table.columns.push({ text: 'Time', type: 'time' });
+          table.columns.push({ text: 'Time', type: FieldType.time });
           j++;
         }
         _.each(_.keys(series.tags), key => {

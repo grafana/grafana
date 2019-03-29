@@ -93,25 +93,43 @@ function parseHistogramLabel(label: string): number {
   return value;
 }
 
+interface HeatmapCard {
+  x: number;
+  y: number;
+  yBounds: {
+    top: number | null;
+    bottom: number | null;
+  };
+  values: number[];
+  count: number;
+}
+
+interface HeatmapCardStats {
+  min: number;
+  max: number;
+}
+
 /**
  * Convert buckets into linear array of "cards" - objects, represented heatmap elements.
  * @param  {Object} buckets
- * @return {Array}          Array of "card" objects
+ * @return {Object}          Array of "card" objects and stats
  */
-function convertToCards(buckets) {
+function convertToCards(buckets: any, hideZero = false): { cards: HeatmapCard[]; cardStats: HeatmapCardStats } {
   let min = 0,
     max = 0;
-  const cards = [];
+  const cards: HeatmapCard[] = [];
   _.forEach(buckets, xBucket => {
     _.forEach(xBucket.buckets, yBucket => {
-      const card = {
+      const card: HeatmapCard = {
         x: xBucket.x,
         y: yBucket.y,
         yBounds: yBucket.bounds,
         values: yBucket.values,
         count: yBucket.count,
       };
-      cards.push(card);
+      if (!hideZero || card.count !== 0) {
+        cards.push(card);
+      }
 
       if (cards.length === 1) {
         min = yBucket.count;

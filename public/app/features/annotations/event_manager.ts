@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import moment from 'moment';
 import tinycolor from 'tinycolor2';
 import {
   OK_COLOR,
@@ -11,7 +10,7 @@ import {
 } from '@grafana/ui';
 
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { AnnotationEvent } from './event';
+import { AnnotationEvent } from '@grafana/ui';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -31,16 +30,17 @@ export class EventManager {
 
   updateTime(range) {
     if (!this.event) {
-      this.event = new AnnotationEvent();
+      this.event = {};
       this.event.dashboardId = this.panelCtrl.dashboard.id;
       this.event.panelId = this.panelCtrl.panel.id;
     }
 
     // update time
-    this.event.time = moment(range.from);
+    this.event.time = range.from;
     this.event.isRegion = false;
+
     if (range.to) {
-      this.event.timeEnd = moment(range.to);
+      this.event.timeEnd = range.to;
       this.event.isRegion = true;
     }
 
@@ -90,8 +90,8 @@ export class EventManager {
         annotations = [
           {
             isRegion: true,
-            min: this.event.time.valueOf(),
-            timeEnd: this.event.timeEnd.valueOf(),
+            min: this.event.time,
+            timeEnd: this.event.timeEnd,
             text: this.event.text,
             eventType: '$__editing',
             editModel: this.event,
@@ -100,7 +100,7 @@ export class EventManager {
       } else {
         annotations = [
           {
-            min: this.event.time.valueOf(),
+            min: this.event.time,
             text: this.event.text,
             editModel: this.event,
             eventType: '$__editing',

@@ -1,9 +1,9 @@
-import propDeprecationWarning from '../../utils/propDeprecationWarning';
+import deprecationWarning from '../../utils/deprecationWarning';
 import { ColorPickerProps } from './ColorPickerPopover';
 
 export const warnAboutColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
   const { onColorChange } = props;
   if (onColorChange) {
-    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
+    deprecationWarning(componentName, 'onColorChange', 'onChange');
   }
 };
