@@ -14,7 +14,7 @@ const types = [
   { value: StreamingMethod.fetch, label: 'Fetch', description: 'Fetch via HTTP' },
   { value: StreamingMethod.random, label: 'Random', description: 'Random stream (javascript)' },
 ];
-const labelWidth = 8;
+const labelWidth = 6;
 
 export class StreamingQueryEditor extends PureComponent<Props> {
   // TODO!!! nout used
@@ -127,6 +127,11 @@ export class StreamingQueryEditor extends PureComponent<Props> {
         </div>
         {query.method === StreamingMethod.random && this.renderRandomOptions()}
         {query.method === StreamingMethod.fetch && this.renderFetchOptions()}
+
+        <div className="gf-form">
+          <FormLabel width={labelWidth}>Info</FormLabel>
+          <div className="gf-form-label">Listeners: ???, Total Rows: ???, Uptime: ???</div>
+        </div>
       </div>
     );
   }
