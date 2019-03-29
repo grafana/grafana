@@ -9,10 +9,11 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  LogLevel,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export interface CompletionItem {

@@ -152,6 +152,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
@@ -170,7 +171,7 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
@@ -198,6 +199,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
@@ -217,7 +219,7 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
@@ -247,7 +249,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
@@ -267,7 +269,7 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
