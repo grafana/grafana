@@ -13,12 +13,22 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DatasourceStatus } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
+
+function getChooserText(hasSyntax: boolean, datasourceStatus: DatasourceStatus) {
+  if (datasourceStatus === DatasourceStatus.Disconnected) {
+    return '(Disconnected)';
+  }
+  if (!hasSyntax) {
+    return 'Loading metrics...';
+  }
+  return 'Metrics';
+}
 
 export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
   // Filter out recording rules and insert as first option
@@ -127,17 +137,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
-      this.languageProviderInitializationPromise.promise
-        .then(remaining => {
-          remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
-        })
-        .then(() => this.onUpdateLanguage())
-        .catch(({ isCanceled }) => {
-          if (isCanceled) {
-            console.warn('PromQueryField has unmounted, language provider intialization was canceled');
-          }
-        });
+      this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
   }
 
@@ -146,6 +146,37 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       this.languageProviderInitializationPromise.cancel();
     }
   }
+
+  componentDidUpdate(prevProps: PromQueryFieldProps) {
+    const reconnected =
+      prevProps.datasourceStatus === DatasourceStatus.Disconnected &&
+      this.props.datasourceStatus === DatasourceStatus.Connected;
+    if (!reconnected) {
+      return;
+    }
+
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
+    }
+
+    if (this.languageProvider) {
+      this.refreshMetrics(makePromiseCancelable(this.languageProvider.fetchMetrics()));
+    }
+  }
+
+  refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
+    this.languageProviderInitializationPromise = cancelablePromise;
+    this.languageProviderInitializationPromise.promise
+      .then(remaining => {
+        remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
+      })
+      .then(() => this.onUpdateLanguage())
+      .catch(({ isCanceled }) => {
+        if (isCanceled) {
+          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+        }
+      });
+  };
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
@@ -239,17 +270,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, query } = this.props;
+    const { error, hint, query, datasourceStatus } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
+    const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
+    const buttonDisabled = !syntaxLoaded || datasourceStatus === DatasourceStatus.Disconnected;
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
             <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>
             </Cascader>

@@ -72,9 +72,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
+      this.startTask = this.fetchMetrics();
     }
     return this.startTask;
+  };
+
+  fetchMetrics = async () => {
+    return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
   };
 
   // Keep this DOM-free for testing
