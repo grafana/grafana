@@ -1,92 +1,6 @@
-import { LogLevel, LogsStream } from 'app/core/logs_model';
+import { LogsStream } from 'app/core/logs_model';
 
-import {
-  findCommonLabels,
-  findUniqueLabels,
-  formatLabels,
-  getLogLevel,
-  mergeStreamsToLogs,
-  parseLabels,
-} from './result_transformer';
-
-describe('getLoglevel()', () => {
-  it('returns no log level on empty line', () => {
-    expect(getLogLevel('')).toBe(LogLevel.unknown);
-  });
-
-  it('returns no log level on when level is part of a word', () => {
-    expect(getLogLevel('this is information')).toBe(LogLevel.unknown);
-  });
-
-  it('returns same log level for long and short version', () => {
-    expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
-    expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
-    expect(getLogLevel('[Warn]')).toBe('warning');
-  });
-
-  it('returns log level on line contains a log level', () => {
-    expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
-    expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
-  });
-
-  it('returns first log level found', () => {
-    expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
-  });
-});
-
-describe('parseLabels()', () => {
-  it('returns no labels on empty labels string', () => {
-    expect(parseLabels('')).toEqual({});
-    expect(parseLabels('{}')).toEqual({});
-  });
-
-  it('returns labels on labels string', () => {
-    expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: 'bar', baz: '42' });
-  });
-});
-
-describe('formatLabels()', () => {
-  it('returns no labels on empty label set', () => {
-    expect(formatLabels({})).toEqual('');
-    expect(formatLabels({}, 'foo')).toEqual('foo');
-  });
-
-  it('returns label string on label set', () => {
-    expect(formatLabels({ foo: 'bar', baz: '42' })).toEqual('{baz="42", foo="bar"}');
-  });
-});
-
-describe('findCommonLabels()', () => {
-  it('returns no common labels on empty sets', () => {
-    expect(findCommonLabels([{}])).toEqual({});
-    expect(findCommonLabels([{}, {}])).toEqual({});
-  });
-
-  it('returns no common labels on differing sets', () => {
-    expect(findCommonLabels([{ foo: 'bar' }, {}])).toEqual({});
-    expect(findCommonLabels([{}, { foo: 'bar' }])).toEqual({});
-    expect(findCommonLabels([{ baz: '42' }, { foo: 'bar' }])).toEqual({});
-    expect(findCommonLabels([{ foo: '42', baz: 'bar' }, { foo: 'bar' }])).toEqual({});
-  });
-
-  it('returns the single labels set as common labels', () => {
-    expect(findCommonLabels([{ foo: 'bar' }])).toEqual({ foo: 'bar' });
-  });
-});
-
-describe('findUniqueLabels()', () => {
-  it('returns no uncommon labels on empty sets', () => {
-    expect(findUniqueLabels({}, {})).toEqual({});
-  });
-
-  it('returns all labels given no common labels', () => {
-    expect(findUniqueLabels({ foo: '"bar"' }, {})).toEqual({ foo: '"bar"' });
-  });
-
-  it('returns all labels except the common labels', () => {
-    expect(findUniqueLabels({ foo: '"bar"', baz: '"42"' }, { foo: '"bar"' })).toEqual({ baz: '"42"' });
-  });
-});
+import { mergeStreamsToLogs, logStreamToSeriesData, seriesDataToLogStream } from './result_transformer';
 
 describe('mergeStreamsToLogs()', () => {
   it('returns empty logs given no streams', () => {
@@ -199,5 +113,39 @@ describe('mergeStreamsToLogs()', () => {
         raw: "foo: [32m'bar'[39m",
       },
     ]);
+  });
+});
+
+describe('convert SeriesData to/from LogStream', () => {
+  const streams = [
+    {
+      labels: '{foo="bar"}',
+      entries: [
+        {
+          line: "foo: [32m'bar'[39m",
+          ts: '1970-01-01T00:00:00Z',
+        },
+      ],
+    },
+    {
+      labels: '{bar="foo"}',
+      entries: [
+        {
+          line: "bar: 'foo'",
+          ts: '1970-01-01T00:00:00Z',
+        },
+      ],
+    },
+  ];
+  it('converts streams to series', () => {
+    const data = streams.map(stream => logStreamToSeriesData(stream));
+
+    expect(data.length).toBe(2);
+    expect(data[0].labels['foo']).toEqual('bar');
+    expect(data[0].rows[0][0]).toEqual(streams[0].entries[0].ts);
+
+    const roundtrip = data.map(series => seriesDataToLogStream(series));
+    expect(roundtrip.length).toBe(2);
+    expect(roundtrip[0].labels).toEqual(streams[0].labels);
   });
 });

@@ -2,120 +2,27 @@ import ansicolor from 'vendor/ansicolor/ansicolor';
 import _ from 'lodash';
 import moment from 'moment';
 
-import {
-  LogLevel,
-  LogsMetaItem,
-  LogsModel,
-  LogRowModel,
-  LogsStream,
-  LogsStreamEntry,
-  LogsStreamLabels,
-  LogsMetaKind,
-} from 'app/core/logs_model';
+import { LogsMetaItem, LogsModel, LogRowModel, LogsStream, LogsStreamEntry, LogsMetaKind } from 'app/core/logs_model';
 import { hasAnsiCodes } from 'app/core/utils/text';
 import { DEFAULT_MAX_LINES } from './datasource';
 
-/**
- * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
- *
- * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
- */
-export function getLogLevel(line: string): LogLevel {
-  if (!line) {
-    return LogLevel.unknown;
-  }
-  let level: LogLevel;
-  Object.keys(LogLevel).forEach(key => {
-    if (!level) {
-      const regexp = new RegExp(`\\b${key}\\b`, 'i');
-      if (regexp.test(line)) {
-        level = LogLevel[key];
-      }
-    }
-  });
-  if (!level) {
-    level = LogLevel.unknown;
-  }
-  return level;
-}
-
-/**
- * Regexp to extract Prometheus-style labels
- */
-const labelRegexp = /\b(\w+)(!?=~?)"([^"\n]*?)"/g;
-
-/**
- * Returns a map of label keys to value from an input selector string.
- *
- * Example: `parseLabels('{job="foo", instance="bar"}) // {job: "foo", instance: "bar"}`
- */
-export function parseLabels(labels: string): LogsStreamLabels {
-  const labelsByKey: LogsStreamLabels = {};
-  labels.replace(labelRegexp, (_, key, operator, value) => {
-    labelsByKey[key] = value;
-    return '';
-  });
-  return labelsByKey;
-}
-
-/**
- * Returns a map labels that are common to the given label sets.
- */
-export function findCommonLabels(labelsSets: LogsStreamLabels[]): LogsStreamLabels {
-  return labelsSets.reduce((acc, labels) => {
-    if (!labels) {
-      throw new Error('Need parsed labels to find common labels.');
-    }
-    if (!acc) {
-      // Initial set
-      acc = { ...labels };
-    } else {
-      // Remove incoming labels that are missing or not matching in value
-      Object.keys(labels).forEach(key => {
-        if (acc[key] === undefined || acc[key] !== labels[key]) {
-          delete acc[key];
-        }
-      });
-      // Remove common labels that are missing from incoming label set
-      Object.keys(acc).forEach(key => {
-        if (labels[key] === undefined) {
-          delete acc[key];
-        }
-      });
-    }
-    return acc;
-  }, undefined);
-}
-
-/**
- * Returns a map of labels that are in `labels`, but not in `commonLabels`.
- */
-export function findUniqueLabels(labels: LogsStreamLabels, commonLabels: LogsStreamLabels): LogsStreamLabels {
-  const uncommonLabels: LogsStreamLabels = { ...labels };
-  Object.keys(commonLabels).forEach(key => {
-    delete uncommonLabels[key];
-  });
-  return uncommonLabels;
-}
-
-/**
- * Serializes the given labels to a string.
- */
-export function formatLabels(labels: LogsStreamLabels, defaultValue = ''): string {
-  if (!labels || Object.keys(labels).length === 0) {
-    return defaultValue;
-  }
-  const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map(key => `${key}="${labels[key]}"`).join(', ');
-  return ['{', cleanSelector, '}'].join('');
-}
+import {
+  parseLabels,
+  SeriesData,
+  findUniqueLabels,
+  Labels,
+  findCommonLabels,
+  getLogLevel,
+  FieldType,
+  formatLabels,
+  guessFieldTypeFromSeries,
+} from '@grafana/ui';
 
 export function processEntry(
   entry: LogsStreamEntry,
   labels: string,
-  parsedLabels: LogsStreamLabels,
-  uniqueLabels: LogsStreamLabels,
+  parsedLabels: Labels,
+  uniqueLabels: Labels,
   search: string
 ): LogRowModel {
   const { line } = entry;
@@ -199,5 +106,50 @@ export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LI
     hasUniqueLabels,
     meta,
     rows: sortedRows,
+  };
+}
+
+export function logStreamToSeriesData(stream: LogsStream): SeriesData {
+  let labels: Labels = stream.parsedLabels;
+  if (!labels && stream.labels) {
+    labels = parseLabels(stream.labels);
+  }
+  return {
+    labels,
+    fields: [{ name: 'ts', type: FieldType.time }, { name: 'line', type: FieldType.string }],
+    rows: stream.entries.map(entry => {
+      return [entry.ts || entry.timestamp, entry.line];
+    }),
+  };
+}
+
+export function seriesDataToLogStream(series: SeriesData): LogsStream {
+  let timeIndex = -1;
+  let lineIndex = -1;
+  for (let i = 0; i < series.fields.length; i++) {
+    const field = series.fields[i];
+    const type = field.type || guessFieldTypeFromSeries(series, i);
+    if (timeIndex < 0 && type === FieldType.time) {
+      timeIndex = i;
+    }
+    if (lineIndex < 0 && type === FieldType.string) {
+      lineIndex = i;
+    }
+  }
+  if (timeIndex < 0) {
+    throw new Error('Series does not have a time field');
+  }
+  if (lineIndex < 0) {
+    throw new Error('Series does not have a line field');
+  }
+  return {
+    labels: formatLabels(series.labels),
+    parsedLabels: series.labels,
+    entries: series.rows.map(row => {
+      return {
+        line: row[lineIndex],
+        ts: row[timeIndex],
+      };
+    }),
   };
 }

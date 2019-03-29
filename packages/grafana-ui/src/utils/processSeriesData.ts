@@ -89,7 +89,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-function guessFieldTypeFromTable(series: SeriesData, index: number): FieldType | undefined {
+export function guessFieldTypeFromSeries(series: SeriesData, index: number): FieldType | undefined {
   const column = series.fields[index];
 
   // 1. Use the column name to guess
@@ -129,7 +129,7 @@ export const guessFieldTypes = (series: SeriesData): SeriesData => {
           // Replace it with a calculated version
           return {
             ...field,
-            type: guessFieldTypeFromTable(series, index),
+            type: guessFieldTypeFromSeries(series, index),
           };
         }),
       };
@@ -162,7 +162,7 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
   const { fields, rows } = series;
 
   if (fields.length === 2) {
-    const type = guessFieldTypeFromTable(series, 1);
+    const type = guessFieldTypeFromSeries(series, 1);
     if (type === FieldType.time) {
       return {
         target: fields[0].name || series.name,
