@@ -9,6 +9,11 @@ import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
 import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
+const MIN_VALUE_HEIGHT = 30;
+const MAX_VALUE_HEIGHT = 50;
+// const MIN_VALUE_WIDTH = 50;
+// const MAX_VALUE_WIDTH = 200;
+// const LINE_HEIGHT = 1.5;
 
 export interface Props extends Themeable {
   height: number;
@@ -20,6 +25,33 @@ export interface Props extends Themeable {
   orientation: VizOrientation;
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
+
+// let canvasElement: HTMLCanvasElement | null = null;
+//
+// interface TextDimensions {
+//   width: number;
+//   height: number;
+// }
+//
+// /**
+//  * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+//  *
+//  * @param {String} text The text to be rendered.
+//  * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
+//  *
+//  * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+//  */
+// function getTextWidth(text: string): number {
+//   // re-use canvas object for better performance
+//   canvasElement = canvasElement || document.createElement('canvas');
+//   const context = canvasElement.getContext('2d');
+//   if (context) {
+//     context.font = 'normal 16px Roboto';
+//     const metrics = context.measureText(text);
+//     return metrics.width;
+//   }
+//   return 16;
+// }
 
 export class BarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
@@ -44,15 +76,24 @@ export class BarGauge extends PureComponent<Props> {
     const titleWrapperStyles: CSSProperties = {
       display: 'flex',
       flexDirection: 'column-reverse',
+      overflow: 'hidden',
     };
 
     if (this.isVertical) {
       titleWrapperStyles.alignItems = 'center';
     }
 
+    const titleStyles: CSSProperties = {
+      fontSize: '16px',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      width: '100%',
+    };
+
     return (
       <div style={titleWrapperStyles}>
-        <div>{title}</div>
+        <div style={titleStyles}>{title}</div>
         {this.renderBarAndValue()}
       </div>
     );
@@ -115,6 +156,19 @@ export class BarGauge extends PureComponent<Props> {
     return this.props.orientation === VizOrientation.Vertical;
   }
 
+  calculateTitleHeight(): number {
+    const { title } = this.props.value;
+
+    if (!title) {
+      return 0;
+    }
+
+    const lineHeight = 1.5;
+    const titleFontSize = 16;
+
+    return lineHeight * titleFontSize;
+  }
+
   getBarGradient(maxSize: number): string {
     const { minValue, maxValue, thresholds, value } = this.props;
     const cssDirection = this.isVertical ? '0deg' : '90deg';
@@ -146,10 +200,22 @@ export class BarGauge extends PureComponent<Props> {
     const { height, width, displayMode, maxValue, minValue, value } = this.props;
 
     const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
-    const maxSize = this.size * BAR_SIZE_RATIO;
-    const barSize = Math.max(valuePercent * maxSize, 0);
-    const colors = this.getValueColors();
+    const titleHeight = this.calculateTitleHeight();
+
+    let maxBarHeight = height;
+    let maxBarWidth = width;
+    let maxSize = 0;
+    let valueHeight = 0;
+
+    if (this.isVertical) {
+      maxBarHeight -= titleHeight;
+      valueHeight = Math.max(Math.min(maxBarHeight * BAR_SIZE_RATIO, MAX_VALUE_HEIGHT), MIN_VALUE_HEIGHT);
+      console.log('valueHeight', valueHeight);
+      maxBarHeight -= valueHeight;
+    }
+
     const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
+    const colors = this.getValueColors();
     const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText);
     const isBasic = displayMode === 'basic';
 
@@ -164,12 +230,14 @@ export class BarGauge extends PureComponent<Props> {
     };
 
     if (this.isVertical) {
+      const barHeight = Math.max(valuePercent * maxBarHeight, 0);
+
       // Custom styles for vertical orientation
       containerStyles.flexDirection = 'column';
       containerStyles.justifyContent = 'flex-end';
       barStyles.transition = 'height 1s';
-      barStyles.height = `${barSize}px`;
-      barStyles.width = `${width}px`;
+      barStyles.height = `${barHeight}px`;
+      barStyles.width = `${maxBarWidth}px`;
       if (isBasic) {
         // Basic styles
         barStyles.background = `${colors.background}`;
@@ -180,13 +248,15 @@ export class BarGauge extends PureComponent<Props> {
         barStyles.background = this.getBarGradient(maxSize);
       }
     } else {
+      const barWidth = Math.max(valuePercent * maxBarWidth, 0);
+
       // Custom styles for horizontal orientation
       containerStyles.flexDirection = 'row-reverse';
       containerStyles.justifyContent = 'flex-end';
       containerStyles.alignItems = 'center';
       barStyles.transition = 'width 1s';
-      barStyles.height = `${height}px`;
-      barStyles.width = `${barSize}px`;
+      barStyles.height = `${maxBarHeight}px`;
+      barStyles.width = `${barWidth}px`;
       barStyles.marginRight = '10px';
 
       if (isBasic) {
