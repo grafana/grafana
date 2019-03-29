@@ -22,7 +22,6 @@ import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
 import { navbarDirective } from './components/navbar/navbar';
 import { arrayJoin } from './directives/array_join';
-import { liveSrv } from './live/live_srv';
 import { Emitter } from './utils/emitter';
 import { layoutSelector } from './components/layout_selector/layout_selector';
 import { switchDirective } from './components/switch';
@@ -57,7 +56,6 @@ export {
   coreModule,
   navbarDirective,
   searchDirective,
-  liveSrv,
   layoutSelector,
   switchDirective,
   infoPopover,

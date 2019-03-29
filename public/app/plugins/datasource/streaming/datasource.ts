@@ -31,7 +31,7 @@ export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
   streams = new Map<string, StreamHandler<any>>();
 
   /** @ngInject */
-  constructor(instanceSettings) {
+  constructor(instanceSettings: any) {
     const safeJsonData = instanceSettings.jsonData || {};
     this.interval = safeJsonData.timeInterval;
   }
