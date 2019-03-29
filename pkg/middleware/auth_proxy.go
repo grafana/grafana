@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -28,6 +29,23 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 	proxyHeaderValue := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
 	if len(proxyHeaderValue) == 0 {
 		return false
+	}
+
+	jsonHeaderMap := map[string]string{}
+	if setting.AuthProxyJsonHeader {
+		err := json.Unmarshal([]byte(proxyHeaderValue), &jsonHeaderMap)
+		if err != nil {
+			ctx.Handle(500, "Unable to authenticate user", err)
+			return false
+		}
+
+		if val := setting.AuthProxyJsonHeaderProperties["Login"]; val != "" {
+			proxyHeaderValue = jsonHeaderMap[val]
+		} else if val := setting.AuthProxyJsonHeaderProperties["Email"]; val != "" {
+			proxyHeaderValue = jsonHeaderMap[val]
+		} else {
+			return false
+		}
 	}
 
 	// if auth proxy ip(s) defined, check if request comes from one of those
@@ -120,12 +138,27 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 			return true
 		}
 
-		for _, field := range []string{"Name", "Email", "Login"} {
-			if setting.AuthProxyHeaders[field] == "" {
-				continue
+		var takeFromHeader func(string) string
+		// if we are using value mapped from json header
+		if setting.AuthProxyJsonHeader {
+			takeFromHeader = func(field string) string {
+				if setting.AuthProxyJsonHeaderProperties[field] == "" {
+					return ""
+				}
+				return jsonHeaderMap[setting.AuthProxyJsonHeaderProperties[field]]
 			}
+			// we are using header value
+		} else {
+			takeFromHeader = func(field string) string {
+				if setting.AuthProxyHeaders[field] == "" {
+					return ""
+				}
+				return ctx.Req.Header.Get(setting.AuthProxyHeaders[field])
+			}
+		}
 
-			if val := ctx.Req.Header.Get(setting.AuthProxyHeaders[field]); val != "" {
+		for _, field := range []string{"Name", "Email", "Login"} {
+			if val := takeFromHeader(field); val != "" {
 				reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
 			}
 		}

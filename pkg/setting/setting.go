@@ -131,13 +131,15 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderName     string
-	AuthProxyHeaderProperty string
-	AuthProxyAutoSignUp     bool
-	AuthProxyLdapSyncTtl    int
-	AuthProxyWhitelist      string
-	AuthProxyHeaders        map[string]string
+	AuthProxyEnabled              bool
+	AuthProxyHeaderName           string
+	AuthProxyHeaderProperty       string
+	AuthProxyHeaders              map[string]string
+	AuthProxyJsonHeader           bool
+	AuthProxyJsonHeaderProperties map[string]string
+	AuthProxyAutoSignUp           bool
+	AuthProxyLdapSyncTtl          int
+	AuthProxyWhitelist            string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -705,17 +707,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
+	AuthProxyHeaders = parseStringToMap(authProxy.Key("headers").String())
+	AuthProxyJsonHeader = authProxy.Key("json_header").MustBool(false)
+	AuthProxyJsonHeaderProperties = parseStringToMap(authProxy.Key("json_properties").String())
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
-
-	AuthProxyHeaders = make(map[string]string)
-	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {
-		split := strings.SplitN(propertyAndHeader, ":", 2)
-		if len(split) == 2 {
-			AuthProxyHeaders[split[0]] = split[1]
-		}
-	}
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -807,6 +804,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 type RemoteCacheOptions struct {
 	Name    string
 	ConnStr string
+}
+
+func parseStringToMap(str string) map[string]string {
+	m := make(map[string]string)
+	for _, keyAndVal := range util.SplitString(str) {
+		split := strings.SplitN(keyAndVal, ":", 2)
+		if len(split) == 2 {
+			m[split[0]] = split[1]
+		}
+	}
+	return m
 }
 
 func (cfg *Cfg) readSessionConfig() {

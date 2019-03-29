@@ -542,6 +542,74 @@ func TestMiddlewareContext(t *testing.T) {
 				So(called, ShouldBeTrue)
 			})
 		})
+
+		Convey("When using auth proxy json header with username", func() {
+			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyJsonHeaderProperties = map[string]string{"Login": "preferred_username", "Email": "mail", "Name": "full_name"}
+
+			jsonHeaderScenario("Using username",
+				"X-Userinfo", `{"preferred_username":"alice","id":"60f65308-3510-40ca-83f0-e9c0151cc680", "mail":"alice@wonderland.com", "full_name":"Alice Wonder"}`,
+				func(sc *scenarioContext) {
+					Convey("Should init middleware context with username", func() {
+						So(sc.context.Email, ShouldEqual, "alice@wonderland.com")
+						So(sc.context.Login, ShouldEqual, "alice")
+						So(sc.context.Name, ShouldEqual, "Alice Wonder")
+					})
+				})
+		})
+
+		Convey("When using auth proxy json header with email", func() {
+			setting.AuthProxyHeaderProperty = "email"
+			setting.AuthProxyJsonHeaderProperties = map[string]string{"Email": "mail", "Name": "full_name"}
+
+			jsonHeaderScenario("Using email",
+				"X-Userinfo", `{"mail":"alice@wonderland.com", "full_name":"Alice Wonder"}`,
+				func(sc *scenarioContext) {
+					Convey("Should init middleware context with email", func() {
+						So(sc.context.Email, ShouldEqual, "alice@wonderland.com")
+						So(sc.context.Login, ShouldEqual, "alice@wonderland.com")
+						So(sc.context.Name, ShouldEqual, "Alice Wonder")
+					})
+				})
+		})
+	})
+}
+
+func jsonHeaderScenario(desc string, header, headerValue string, fn scenarioFunc) {
+	middlewareScenario(desc, func(sc *scenarioContext) {
+		setting.LdapEnabled = false
+		setting.AuthProxyEnabled = true
+		setting.AuthProxyJsonHeader = true
+		setting.AuthProxyHeaderName = "X-Userinfo"
+
+		var userId = int64(32)
+		var extUser *m.ExternalUserInfo
+
+		bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
+			extUser = query.ExternalUser
+			query.Result = &m.User{Id: userId}
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+			query.Result = &m.SignedInUser{UserId: userId, Name: extUser.Name, Login: extUser.Login, Email: extUser.Email}
+			return nil
+		})
+
+		// create session
+		sc.fakeReq("GET", "/").handler(func(c *m.ReqContext) {
+			c.Session.Set(session.SESS_KEY_USERID, userId)
+		}).exec()
+
+		sc.req.Header.Add(header, headerValue)
+		sc.exec()
+
+		Convey("Should initialize session", func() {
+			So(sc.context.IsSignedIn, ShouldEqual, true)
+			So(sc.context.UserId, ShouldEqual, userId)
+		})
+
+		fn(sc)
 	})
 }
 

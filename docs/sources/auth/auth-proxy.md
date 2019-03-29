@@ -25,6 +25,13 @@ enabled = true
 header_name = X-WEBAUTH-USER
 # HTTP Header property, defaults to `username` but can also be `email`
 header_property = username
+# Optionally define more headers to sync other user attributes
+# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`
+headers =
+# If HTTP Header is a JSON string, set this to true. Defaults to 'false'.
+json_header = true
+# Needed when json_header is used, specifies the JSON key(s) for the user like username, email and/or full name.
+json_header_property = Login:preferred_username, Email:mail, Name:full_name
 # Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
 # If combined with Grafana LDAP integration define sync interval
@@ -33,9 +40,6 @@ ldap_sync_ttl = 60
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 # Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
 whitelist =
-# Optionally define more headers to sync other user attributes
-# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`
-headers =
 ```
 
 ## Interacting with Grafana’s AuthProxy via curl
