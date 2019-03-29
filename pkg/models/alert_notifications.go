@@ -54,6 +54,7 @@ type CreateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationCommand struct {
 	Id                    int64            `json:"id"  binding:"Required"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
@@ -68,6 +69,7 @@ type UpdateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationWithUidCommand struct {
 	Uid                   string           `json:"-"`
+	NewUid                string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
