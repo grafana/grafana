@@ -30,6 +30,7 @@ exports[`Render should render member page if team not empty 1`] = `
     isLoading={true}
   >
     <Connect(TeamMembers)
+      members={Array []}
       syncEnabled={true}
     />
   </PageContents>
@@ -37,6 +38,28 @@ exports[`Render should render member page if team not empty 1`] = `
 `;
 
 exports[`Render should render settings and preferences page 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Connect(TeamSettings) />
+  </PageContents>
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should not render settings page if user is team member 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  />
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render settings page if user is team admin 1`] = `
 <Page
   navModel={Object {}}
 >

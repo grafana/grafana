@@ -354,6 +354,11 @@ options are `Admin` and `Editor`. e.g. :
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
 
+### editors_can_admin
+
+Editors can administrate dashboards, folders and teams they create.
+Defaults to `false`.
+
 ### login_hint
 
 Text used as placeholder text on login page for login/username input.
@@ -644,6 +649,20 @@ Default setting for how Grafana handles nodata or null values in alerting. (aler
 Alert notifications can include images, but rendering many images at the same time can overload the server.
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
+
+
+### evaluation_timeout_seconds 
+
+Default setting for alert calculation timeout. Default value is `30` 
+
+### notification_timeout_seconds
+
+Default setting for alert notification timeout. Default value is `30` 
+
+### max_attempts
+
+Default setting for max attempts to sending alert notifications. Default value is `3` 
+
 
 ## [panels]
 

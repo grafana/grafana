@@ -3,6 +3,8 @@ import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelPlugin } from 'app/types';
+import { RawTimeRange } from '@grafana/ui/src/types';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -26,8 +28,8 @@ export function ControllerTestContext(this: any) {
   };
   this.isUtc = false;
 
-  this.providePhase = mocks => {
-    return angularMocks.module($provide => {
+  this.providePhase = (mocks: any) => {
+    return angularMocks.module(($provide: any) => {
       $provide.value('contextSrv', self.contextSrv);
       $provide.value('datasourceSrv', self.datasourceSrv);
       $provide.value('annotationsSrv', self.annotationsSrv);
@@ -35,14 +37,14 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      _.each(mocks, (value, key) => {
+      _.each(mocks, (value: any, key: any) => {
         $provide.value(key, value);
       });
     });
   };
 
-  this.createPanelController = Ctrl => {
-    return angularMocks.inject(($controller, $rootScope, $q, $location, $browser) => {
+  this.createPanelController = (Ctrl: any) => {
+    return angularMocks.inject(($controller: any, $rootScope: any, $q: any, $location: any, $browser: any) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
@@ -62,7 +64,7 @@ export function ControllerTestContext(this: any) {
         $rootScope.colors.push('#' + i);
       }
 
-      config.panels['test'] = { info: {} };
+      config.panels['test'] = { info: {} } as PanelPlugin;
       self.ctrl = $controller(
         Ctrl,
         { $scope: self.scope },
@@ -74,8 +76,8 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.createControllerPhase = controllerName => {
-    return angularMocks.inject(($controller, $rootScope, $q, $location, $browser) => {
+  this.createControllerPhase = (controllerName: string) => {
+    return angularMocks.inject(($controller: any, $rootScope: any, $q: any, $location: any, $browser: any) => {
       self.scope = $rootScope.$new();
       self.$location = $location;
       self.$browser = $browser;
@@ -114,28 +116,30 @@ export function ServiceTestContext(this: any) {
   self.backendSrv = {};
   self.$routeParams = {};
 
-  this.providePhase = mocks => {
-    return angularMocks.module($provide => {
-      _.each(mocks, key => {
+  this.providePhase = (mocks: any) => {
+    return angularMocks.module(($provide: any) => {
+      _.each(mocks, (key: string) => {
         $provide.value(key, self[key]);
       });
     });
   };
 
-  this.createService = name => {
+  this.createService = (name: string) => {
     // @ts-ignore
-    return angularMocks.inject(($q, $rootScope, $httpBackend, $injector, $location, $timeout) => {
-      self.$q = $q;
-      self.$rootScope = $rootScope;
-      self.$httpBackend = $httpBackend;
-      self.$location = $location;
+    return angularMocks.inject(
+      ($q: any, $rootScope: any, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
+        self.$q = $q;
+        self.$rootScope = $rootScope;
+        self.$httpBackend = $httpBackend;
+        self.$location = $location;
 
-      self.$rootScope.onAppEvent = () => {};
-      self.$rootScope.appEvent = () => {};
-      self.$timeout = $timeout;
+        self.$rootScope.onAppEvent = () => {};
+        self.$rootScope.appEvent = () => {};
+        self.$timeout = $timeout;
 
-      self.service = $injector.get(name);
-    });
+        self.service = $injector.get(name);
+      }
+    );
   };
 }
 
@@ -143,10 +147,16 @@ export function DashboardViewStateStub(this: any) {
   this.registerPanel = () => {};
 }
 
-export function TimeSrvStub(this: any) {
-  this.init = () => {};
-  this.time = { from: 'now-1h', to: 'now' };
-  this.timeRange = function(parse: boolean) {
+export class TimeSrvStub {
+  time: RawTimeRange;
+
+  constructor() {
+    this.time = { from: 'now-1h', to: 'now' };
+  }
+
+  init() {}
+
+  timeRange(parse: boolean) {
     if (parse === false) {
       return this.time;
     }
@@ -154,24 +164,24 @@ export function TimeSrvStub(this: any) {
       from: dateMath.parse(this.time.from, false),
       to: dateMath.parse(this.time.to, true),
     };
-  };
+  }
 
-  this.setTime = function(time: any) {
+  setTime(time: any) {
     this.time = time;
-  };
+  }
 }
 
-export function ContextSrvStub(this: any) {
-  this.hasRole = () => {
+export class ContextSrvStub {
+  hasRole() {
     return true;
-  };
+  }
 }
 
 export function TemplateSrvStub(this: any) {
   this.variables = [];
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
-  this.replace = function(text: string) {
+  this.replace = (text: string) => {
     return _.template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};

@@ -1,20 +1,10 @@
-import { ReactPanelPlugin } from '@grafana/ui';
-
+import { ReactPanelPlugin, sharedSingleStatMigrationCheck, sharedSingleStatOptionsCheck } from '@grafana/ui';
 import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel);
-
-reactPanel.setEditor(GaugePanelEditor);
-reactPanel.setDefaults(defaults);
-reactPanel.setPanelTypeChangedHook((options: GaugeOptions, prevPluginId?: string, prevOptions?: any) => {
-  if (prevOptions && prevOptions.valueOptions) {
-    options.valueOptions = prevOptions.valueOptions;
-    options.thresholds = prevOptions.thresholds;
-    options.maxValue = prevOptions.maxValue;
-    options.minValue = prevOptions.minValue;
-  }
-
-  return options;
-});
+export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel)
+  .setDefaults(defaults)
+  .setEditor(GaugePanelEditor)
+  .setPanelChangeHandler(sharedSingleStatOptionsCheck)
+  .setMigrationHandler(sharedSingleStatMigrationCheck);

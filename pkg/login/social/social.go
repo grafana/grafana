@@ -31,6 +31,7 @@ type SocialConnector interface {
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
+	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
 }
 
 type SocialBase struct {

@@ -12,6 +12,5 @@ export * from './plugins';
 export * from './organization';
 export * from './appNotifications';
 export * from './search';
-export * from './form';
 export * from './explore';
 export * from './store';

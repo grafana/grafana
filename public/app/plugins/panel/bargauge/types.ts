@@ -1,14 +1,16 @@
-import { Threshold, SelectOptionItem, ValueMapping, VizOrientation } from '@grafana/ui';
-import { SingleStatValueOptions } from '../gauge/types';
+import { VizOrientation, SelectOptionItem, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
-export interface BarGaugeOptions {
+export interface BarGaugeOptions extends SingleStatBaseOptions {
   minValue: number;
   maxValue: number;
-  orientation: VizOrientation;
-  valueOptions: SingleStatValueOptions;
-  valueMappings: ValueMapping[];
-  thresholds: Threshold[];
+  displayMode: 'basic' | 'lcd' | 'gradient';
 }
+
+export const displayModes: SelectOptionItem[] = [
+  { value: 'gradient', label: 'Gradient' },
+  { value: 'lcd', label: 'Retro LCD' },
+  { value: 'basic', label: 'Basic' },
+];
 
 export const orientationOptions: SelectOptionItem[] = [
   { value: VizOrientation.Horizontal, label: 'Horizontal' },
@@ -18,10 +20,11 @@ export const orientationOptions: SelectOptionItem[] = [
 export const defaults: BarGaugeOptions = {
   minValue: 0,
   maxValue: 100,
+  displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
   valueOptions: {
     unit: 'none',
-    stat: 'avg',
+    stat: StatID.mean,
     prefix: '',
     suffix: '',
     decimals: null,

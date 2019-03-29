@@ -25,6 +25,7 @@ const model: OptionProps<any> = {
     key: '',
     onClick: jest.fn(),
     onMouseOver: jest.fn(),
+    onMouseMove: jest.fn(),
     tabIndex: 1,
   },
   label: 'Option label',

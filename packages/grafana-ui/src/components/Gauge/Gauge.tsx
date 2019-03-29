@@ -1,28 +1,17 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-
-import { ValueMapping, Threshold, GrafanaThemeType } from '../../types';
-import { getMappedValue } from '../../utils/valueMappings';
-import { getColorFromHexRgbOrName, getValueFormat, getThresholdForValue } from '../../utils';
-import { Themeable } from '../../index';
-
-type GaugeValue = string | number | null;
+import { getColorFromHexRgbOrName } from '../../utils';
+import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
 
 export interface Props extends Themeable {
-  decimals?: number | null;
   height: number;
-  valueMappings: ValueMapping[];
   maxValue: number;
   minValue: number;
-  prefix: string;
   thresholds: Threshold[];
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
-  stat: string;
-  suffix: string;
-  unit: string;
   width: number;
-  value: number;
+  value: DisplayValue;
 }
 
 const FONT_SCALE = 1;
@@ -32,15 +21,10 @@ export class Gauge extends PureComponent<Props> {
 
   static defaultProps: Partial<Props> = {
     maxValue: 100,
-    valueMappings: [],
     minValue: 0,
-    prefix: '',
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    suffix: '',
     thresholds: [],
-    unit: 'none',
-    stat: 'avg',
   };
 
   componentDidMount() {
@@ -49,39 +33,6 @@ export class Gauge extends PureComponent<Props> {
 
   componentDidUpdate() {
     this.draw();
-  }
-
-  formatValue(value: GaugeValue) {
-    const { decimals, valueMappings, prefix, suffix, unit } = this.props;
-
-    if (isNaN(value as number)) {
-      return value;
-    }
-
-    if (valueMappings.length > 0) {
-      const valueMappedValue = getMappedValue(valueMappings, value);
-      if (valueMappedValue) {
-        return `${prefix && prefix + ' '}${valueMappedValue.text}${suffix && ' ' + suffix}`;
-      }
-    }
-
-    const formatFunc = getValueFormat(unit);
-    const formattedValue = formatFunc(value as number, decimals);
-    const handleNoValueValue = formattedValue || 'no value';
-
-    return `${prefix && prefix + ' '}${handleNoValueValue}${suffix && ' ' + suffix}`;
-  }
-
-  getFontColor(value: GaugeValue): string {
-    const { thresholds, theme } = this.props;
-
-    const activeThreshold = getThresholdForValue(thresholds, value);
-
-    if (activeThreshold !== null) {
-      return getColorFromHexRgbOrName(activeThreshold.color, theme.type);
-    }
-
-    return '';
   }
 
   getFormattedThresholds() {
@@ -112,15 +63,13 @@ export class Gauge extends PureComponent<Props> {
   draw() {
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
-    const formattedValue = this.formatValue(value) as string;
     const dimension = Math.min(width, height * 1.3);
     const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize =
-      Math.min(dimension / 5, 100) * (formattedValue !== null ? this.getFontScale(formattedValue.length) : 1);
+    const fontSize = Math.min(dimension / 5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options: any = {
@@ -149,9 +98,9 @@ export class Gauge extends PureComponent<Props> {
             width: thresholdMarkersWidth,
           },
           value: {
-            color: this.getFontColor(value),
+            color: value.color,
             formatter: () => {
-              return formattedValue;
+              return value.text;
             },
             font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
           },
@@ -160,7 +109,7 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
-    const plotSeries = { data: [[0, value]] };
+    const plotSeries = { data: [[0, value.numeric]] };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);

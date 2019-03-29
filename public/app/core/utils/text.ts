@@ -22,10 +22,10 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
     return [];
   }
   const matches = [];
-  const cleaned = cleanNeedle(needle);
+  const { cleaned, flags } = parseFlags(cleanNeedle(needle));
   let regexp: RegExp;
   try {
-    regexp = new RegExp(`(?:${cleaned})`, 'g');
+    regexp = new RegExp(`(?:${cleaned})`, flags);
   } catch (error) {
     return matches;
   }
@@ -42,6 +42,35 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
     return '';
   });
   return matches;
+}
+
+const CLEAR_FLAG = '-';
+const FLAGS_REGEXP = /\(\?([ims-]+)\)/g;
+
+/**
+ * Converts any mode modifers in the text to the Javascript equivalent flag
+ */
+export function parseFlags(text: string): { cleaned: string; flags: string } {
+  const flags: Set<string> = new Set(['g']);
+
+  const cleaned = text.replace(FLAGS_REGEXP, (str, group) => {
+    const clearAll = group.startsWith(CLEAR_FLAG);
+
+    for (let i = 0; i < group.length; ++i) {
+      const flag = group.charAt(i);
+      if (clearAll || group.charAt(i - 1) === CLEAR_FLAG) {
+        flags.delete(flag);
+      } else if (flag !== CLEAR_FLAG) {
+        flags.add(flag);
+      }
+    }
+    return ''; // Remove flag from text
+  });
+
+  return {
+    cleaned: cleaned,
+    flags: Array.from(flags).join(''),
+  };
 }
 
 const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {

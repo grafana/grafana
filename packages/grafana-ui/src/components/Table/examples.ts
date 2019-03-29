@@ -1,4 +1,4 @@
-import { TableData } from '../../types/data';
+import { SeriesData } from '../../types/data';
 import { ColumnStyle } from './TableCellBuilder';
 
 import { getColorDefinitionByName } from '@grafana/ui';
@@ -7,23 +7,23 @@ const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
 
 export const migratedTestTable = {
   type: 'table',
-  columns: [
-    { text: 'Time' },
-    { text: 'Value' },
-    { text: 'Colored' },
-    { text: 'Undefined' },
-    { text: 'String' },
-    { text: 'United', unit: 'bps' },
-    { text: 'Sanitized' },
-    { text: 'Link' },
-    { text: 'Array' },
-    { text: 'Mapping' },
-    { text: 'RangeMapping' },
-    { text: 'MappingColored' },
-    { text: 'RangeMappingColored' },
+  fields: [
+    { name: 'Time' },
+    { name: 'Value' },
+    { name: 'Colored' },
+    { name: 'Undefined' },
+    { name: 'String' },
+    { name: 'United', unit: 'bps' },
+    { name: 'Sanitized' },
+    { name: 'Link' },
+    { name: 'Array' },
+    { name: 'Mapping' },
+    { name: 'RangeMapping' },
+    { name: 'MappingColored' },
+    { name: 'RangeMappingColored' },
   ],
   rows: [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2]],
-} as TableData;
+} as SeriesData;
 
 export const migratedTestStyles: ColumnStyle[] = [
   {
@@ -87,19 +87,19 @@ export const migratedTestStyles: ColumnStyle[] = [
     valueMaps: [
       {
         value: '1',
-        text: 'on',
+        name: 'on',
       },
       {
         value: '0',
-        text: 'off',
+        name: 'off',
       },
       {
         value: 'HELLO WORLD',
-        text: 'HELLO GRAFANA',
+        name: 'HELLO GRAFANA',
       },
       {
         value: 'value1, value2',
-        text: 'value3, value4',
+        name: 'value3, value4',
       },
     ],
   },
@@ -111,12 +111,12 @@ export const migratedTestStyles: ColumnStyle[] = [
       {
         from: '1',
         to: '3',
-        text: 'on',
+        name: 'on',
       },
       {
         from: '3',
         to: '6',
-        text: 'off',
+        name: 'off',
       },
     ],
   },
@@ -127,11 +127,11 @@ export const migratedTestStyles: ColumnStyle[] = [
     valueMaps: [
       {
         value: '1',
-        text: 'on',
+        name: 'on',
       },
       {
         value: '0',
-        text: 'off',
+        name: 'off',
       },
     ],
     colorMode: 'value',
@@ -146,12 +146,12 @@ export const migratedTestStyles: ColumnStyle[] = [
       {
         from: '1',
         to: '3',
-        text: 'on',
+        name: 'on',
       },
       {
         from: '3',
         to: '6',
-        text: 'off',
+        name: 'off',
       },
     ],
     colorMode: 'value',
@@ -162,6 +162,6 @@ export const migratedTestStyles: ColumnStyle[] = [
 
 export const simpleTable = {
   type: 'table',
-  columns: [{ text: 'First' }, { text: 'Second' }, { text: 'Third' }],
+  columns: [{ name: 'First' }, { name: 'Second' }, { name: 'Third' }],
   rows: [[701, 205, 305], [702, 206, 301], [703, 207, 304]],
 };
