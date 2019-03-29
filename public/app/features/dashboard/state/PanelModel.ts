@@ -6,7 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, TimeSeries, Threshold, ScopedVars, TableData } from '@grafana/ui';
+import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
 import { PanelPlugin } from 'app/types';
 import config from 'app/core/config';
 
@@ -92,7 +92,7 @@ export class PanelModel {
   thresholds?: any;
   pluginVersion?: string;
 
-  snapshotData?: TimeSeries[] | [TableData];
+  snapshotData?: DataQueryResponseData[];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;

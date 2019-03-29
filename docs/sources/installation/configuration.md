@@ -650,6 +650,20 @@ Alert notifications can include images, but rendering many images at the same ti
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
 
+
+### evaluation_timeout_seconds 
+
+Default setting for alert calculation timeout. Default value is `30` 
+
+### notification_timeout_seconds
+
+Default setting for alert notification timeout. Default value is `30` 
+
+### max_attempts
+
+Default setting for max attempts to sending alert notifications. Default value is `3` 
+
+
 ## [panels]
 
 ### enable_alpha
