@@ -1,6 +1,8 @@
 // Libraries
 import React from 'react';
+// @ts-ignore
 import Cascader from 'rc-cascader';
+// @ts-ignore
 import PluginPrism from 'slate-prism';
 
 // Components
@@ -79,15 +81,15 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   modifiedSearch: string;
   modifiedQuery: string;
 
-  constructor(props: LokiQueryFieldFormProps, context) {
+  constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
     super(props, context);
 
     this.plugins = [
       BracesPlugin(),
       RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
-        onlyIn: node => node.type === 'code_block',
-        getSyntax: node => 'promql',
+        onlyIn: (node: any) => node.type === 'code_block',
+        getSyntax: (node: any) => 'promql',
       }),
     ];
 
@@ -177,7 +179,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               options={logLabelOptions}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              onPopupVisibleChange={isVisible => {
+              onPopupVisibleChange={(isVisible: boolean) => {
                 if (isVisible && onLabelsRefresh) {
                   onLabelsRefresh();
                 }

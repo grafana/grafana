@@ -5,7 +5,14 @@ import {
   makeInitialUpdateState,
   initialExploreState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, QueryTransaction } from 'app/types/explore';
+import {
+  ExploreId,
+  ExploreItemState,
+  ExploreUrlState,
+  ExploreState,
+  QueryTransaction,
+  RangeScanner,
+} from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
@@ -23,7 +30,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi, DataQuery } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -32,7 +39,7 @@ describe('Explore item reducer', () => {
       const initalState = {
         ...makeExploreItemState(),
         scanning: false,
-        scanner: undefined,
+        scanner: undefined as RangeScanner,
       };
 
       reducerTester()
@@ -87,6 +94,7 @@ describe('Explore item reducer', () => {
     describe('when testDataSourceFailureAction is dispatched', () => {
       it('then it should set correct state', () => {
         const error = 'some error';
+        const queryTransactions: QueryTransaction[] = [];
         const initalState: Partial<ExploreItemState> = {
           datasourceError: null,
           queryTransactions: [{} as QueryTransaction],
@@ -102,10 +110,10 @@ describe('Explore item reducer', () => {
         };
         const expectedState = {
           datasourceError: error,
-          queryTransactions: [],
-          graphResult: undefined,
-          tableResult: undefined,
-          logsResult: undefined,
+          queryTransactions,
+          graphResult: undefined as any[],
+          tableResult: undefined as TableModel,
+          logsResult: undefined as LogsModel,
           update: makeInitialUpdateState(),
         };
 
@@ -132,6 +140,8 @@ describe('Explore item reducer', () => {
               ExploreStartPage: StartPage,
             },
           } as DataSourceApi;
+          const queries: DataQuery[] = [];
+          const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
             supportsGraph: false,
@@ -139,8 +149,8 @@ describe('Explore item reducer', () => {
             supportsTable: false,
             StartPage: null,
             showingStartPage: false,
-            queries: [],
-            queryKeys: [],
+            queries,
+            queryKeys,
           };
           const expectedState = {
             datasourceInstance,
@@ -149,8 +159,8 @@ describe('Explore item reducer', () => {
             supportsTable: true,
             StartPage,
             showingStartPage: true,
-            queries: [],
-            queryKeys: [],
+            queries,
+            queryKeys,
           };
 
           reducerTester()
@@ -309,7 +319,8 @@ describe('Explore reducer', () => {
         describe('but urlState is not set in state', () => {
           it('then it should just add urlState and update in state', () => {
             const { initalState, serializedUrlState } = setup();
-            const stateWithoutUrlState = { ...initalState, left: { urlState: null } };
+            const urlState: ExploreUrlState = null;
+            const stateWithoutUrlState = { ...initalState, left: { urlState } };
             const expectedState = { ...initalState };
 
             reducerTester()

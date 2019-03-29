@@ -6,7 +6,7 @@ import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
 describe('useLokiLabels hook', () => {
   it('should refresh labels', async () => {
     const datasource = {
-      metadataRequest: () => ({ data: { data: [] } }),
+      metadataRequest: () => ({ data: { data: [] as any[] } }),
     };
     const languageProvider = new LanguageProvider(datasource);
     const logLabelOptionsMock = ['Holy mock!'];
@@ -27,7 +27,7 @@ describe('useLokiLabels hook', () => {
 
   it('should force refresh labels after a disconnect', () => {
     const datasource = {
-      metadataRequest: () => ({ data: { data: [] } }),
+      metadataRequest: () => ({ data: { data: [] as any[] } }),
     };
     const languageProvider = new LanguageProvider(datasource);
     languageProvider.refreshLogLabels = jest.fn();
@@ -42,7 +42,7 @@ describe('useLokiLabels hook', () => {
 
   it('should not force refresh labels after a connect', () => {
     const datasource = {
-      metadataRequest: () => ({ data: { data: [] } }),
+      metadataRequest: () => ({ data: { data: [] as any[] } }),
     };
     const languageProvider = new LanguageProvider(datasource);
     languageProvider.refreshLogLabels = jest.fn();

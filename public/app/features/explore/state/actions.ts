@@ -1,4 +1,5 @@
 // Libraries
+// @ts-ignore
 import _ from 'lodash';
 
 // Services & Utils
@@ -32,7 +33,15 @@ import {
   QueryHint,
   QueryFixAction,
 } from '@grafana/ui/src/types';
-import { ExploreId, ExploreUrlState, RangeScanner, ResultType, QueryOptions, ExploreUIState } from 'app/types/explore';
+import {
+  ExploreId,
+  ExploreUrlState,
+  RangeScanner,
+  ResultType,
+  QueryOptions,
+  ExploreUIState,
+  QueryTransaction,
+} from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
   changeQueryAction,
@@ -77,7 +86,7 @@ import { parseTime } from '../TimePicker';
 /**
  * Updates UI state and save it to the URL
  */
-const updateExploreUIState = (exploreId, uiStateFragment: Partial<ExploreUIState>) => {
+const updateExploreUIState = (exploreId: ExploreId, uiStateFragment: Partial<ExploreUIState>): ThunkResult<void> => {
   return dispatch => {
     dispatch(updateUIStateAction({ exploreId, ...uiStateFragment }));
     dispatch(stateSave());
@@ -187,7 +196,7 @@ export function loadExploreDatasourcesAndSetDatasource(
   return dispatch => {
     const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
       .getExternal()
-      .map(ds => ({
+      .map((ds: any) => ({
         value: ds.name,
         name: ds.name,
         meta: ds.meta,
@@ -515,7 +524,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -557,7 +566,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
             instant: true,
             valueWithRefId: true,
           },
-          data => data[0]
+          (data: any) => data[0]
         )
       );
     }
@@ -595,7 +604,7 @@ function runQueriesForType(
   resultType: ResultType,
   queryOptions: QueryOptions,
   resultGetter?: any
-) {
+): ThunkResult<void> {
   return async (dispatch, getState) => {
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
@@ -678,9 +687,10 @@ export function splitOpen(): ThunkResult<void> {
     const leftState = getState().explore[ExploreId.left];
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
+    const queryTransactions: QueryTransaction[] = [];
     const itemState = {
       ...leftState,
-      queryTransactions: [],
+      queryTransactions,
       queries: leftState.queries.slice(),
       exploreId: ExploreId.right,
       urlState,
@@ -694,7 +704,7 @@ export function splitOpen(): ThunkResult<void> {
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
  */
-export function stateSave() {
+export function stateSave(): ThunkResult<void> {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
     const urlStates: { [index: string]: string } = {};
@@ -739,7 +749,7 @@ const togglePanelActionCreator = (
     | ActionCreator<ToggleGraphPayload>
     | ActionCreator<ToggleLogsPayload>
     | ActionCreator<ToggleTablePayload>
-) => (exploreId: ExploreId, isPanelVisible: boolean) => {
+) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
     const shouldRunQueries = !isPanelVisible;
@@ -783,7 +793,7 @@ export const toggleTable = togglePanelActionCreator(toggleTableAction);
 /**
  * Change logs deduplication strategy and update URL.
  */
-export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy) => {
+export const changeDedupStrategy = (exploreId: ExploreId, dedupStrategy: LogsDedupStrategy): ThunkResult<void> => {
   return dispatch => {
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };

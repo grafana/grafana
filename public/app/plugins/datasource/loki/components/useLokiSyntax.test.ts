@@ -7,7 +7,7 @@ import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQuery
 
 describe('useLokiSyntax hook', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as any[] } }),
   };
   const languageProvider = new LanguageProvider(datasource);
   const logLabelOptionsMock = ['Holy mock!'];

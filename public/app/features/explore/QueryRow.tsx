@@ -1,7 +1,9 @@
 // Libraries
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
+// @ts-ignore
 import { connect } from 'react-redux';
 
 // Components
@@ -170,7 +172,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId, index }) {
+function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
   const { datasourceInstance, history, queries, queryTransactions, range, datasourceError } = item;

@@ -1,3 +1,4 @@
+// @ts-ignore
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -14,7 +15,7 @@ export interface ThunkWhen {
 
 export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
   const store = mockStore(initialState);
-  let thunkUnderTest = null;
+  let thunkUnderTest: any = null;
   let dispatchedActions: Array<ActionOf<any>> = [];
 
   const givenThunk = (thunkFunction: any): ThunkWhen => {

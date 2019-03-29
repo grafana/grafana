@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
+// @ts-ignore
 import Prism from 'prismjs';
+import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+
+import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
-import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
 
 const PRISM_SYNTAX = 'promql';
 

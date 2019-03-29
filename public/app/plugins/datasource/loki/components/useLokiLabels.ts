@@ -31,7 +31,7 @@ export const useLokiLabels = (
   const [shouldForceRefreshLabels, setForceRefreshLabels] = useState(false);
 
   // Async
-  const fetchOptionValues = async option => {
+  const fetchOptionValues = async (option: string) => {
     await languageProvider.fetchLabelValues(option);
     if (mounted.current) {
       setLogLabelOptions(languageProvider.logLabelOptions);

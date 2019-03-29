@@ -1,7 +1,11 @@
+// @ts-ignore
 import _ from 'lodash';
 import React from 'react';
+// @ts-ignore
 import Cascader from 'rc-cascader';
+// @ts-ignore
 import PluginPrism from 'slate-prism';
+// @ts-ignore
 import Prism from 'prismjs';
 
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
@@ -46,8 +50,8 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
   const metricsOptions = _.chain(metrics)
-    .filter(metric => !ruleRegex.test(metric))
-    .groupBy(metric => metric.split(delimiter)[0])
+    .filter((metric: string) => !ruleRegex.test(metric))
+    .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
@@ -113,7 +117,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   languageProvider: any;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
-  constructor(props: PromQueryFieldProps, context) {
+  constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -124,8 +128,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       BracesPlugin(),
       RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
-        onlyIn: node => node.type === 'code_block',
-        getSyntax: node => 'promql',
+        onlyIn: (node: any) => node.type === 'code_block',
+        getSyntax: (node: any) => 'promql',
       }),
     ];
 
@@ -168,7 +172,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.languageProviderInitializationPromise = cancelablePromise;
     this.languageProviderInitializationPromise.promise
       .then(remaining => {
-        remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
+        remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
       })
       .then(() => this.onUpdateLanguage())
       .catch(({ isCanceled }) => {
@@ -233,7 +237,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
         ? [

@@ -17,6 +17,7 @@ import {
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
+import { DataQuery } from '@grafana/ui/src/types/datasource';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -46,7 +47,7 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         eventBridge,
         update,
         datasourceInstance: { name: 'some-datasource' },
-        queries: [],
+        queries: [] as DataQuery[],
         range,
         ui,
       },
