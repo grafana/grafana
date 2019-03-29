@@ -14,6 +14,7 @@ import (
 type EvalContext struct {
 	Firing         bool
 	IsTestRun      bool
+	IsDebug        bool
 	EvalMatches    []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error

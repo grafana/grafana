@@ -109,8 +109,16 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
 	result := make(tsdb.TimeSeriesSlice, 0)
+
+	if context.IsDebug {
+		data := simplejson.NewFromAny(req)
+		context.Logs = append(context.Logs, &alerting.ResultLogEntry{
+			Message: fmt.Sprintf("Condition[%d]: Query", c.Index),
+			Data:    data,
+		})
+	}
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
@@ -128,10 +136,20 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 		result = append(result, v.Series...)
 
+		queryResultData := map[string]interface{}{}
+
 		if context.IsTestRun {
+			queryResultData["series"] = v.Series
+		}
+
+		if context.IsDebug && v.Meta != nil {
+			queryResultData["meta"] = v.Meta
+		}
+
+		if context.IsTestRun || context.IsDebug {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Query Result", c.Index),
-				Data:    v.Series,
+				Data:    simplejson.NewFromAny(queryResultData),
 			})
 		}
 	}
@@ -139,7 +157,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange, debug bool) *tsdb.TsdbQuery {
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
@@ -149,6 +167,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 				DataSource: datasource,
 			},
 		},
+		Debug: debug,
 	}
 
 	return req
