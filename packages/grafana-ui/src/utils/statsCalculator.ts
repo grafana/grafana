@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { TableData, NullValueMode } from '../types/index';
+import { SeriesData, NullValueMode } from '../types/index';
 
 export enum StatID {
   sum = 'sum',
@@ -29,7 +29,7 @@ export interface ColumnStats {
 }
 
 // Internal function
-type StatCalculator = (table: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
+type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
 
 export interface StatCalculatorInfo {
   id: string;
@@ -64,8 +64,8 @@ export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
 }
 
 export interface CalculateStatsOptions {
-  table: TableData;
-  columnIndex: number;
+  series: SeriesData;
+  fieldIndex: number;
   stats: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
 }
@@ -74,7 +74,7 @@ export interface CalculateStatsOptions {
  * @returns an object with a key for each selected stat
  */
 export function calculateStats(options: CalculateStatsOptions): ColumnStats {
-  const { table, columnIndex, stats, nullValueMode } = options;
+  const { series, fieldIndex, stats, nullValueMode } = options;
 
   if (!stats || stats.length < 1) {
     return {};
@@ -82,9 +82,9 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 
   const queue = getStatsCalculators(stats);
 
-  // Return early for empty tables
+  // Return early for empty series
   // This lets the concrete implementations assume at least one row
-  if (!table.rows || table.rows.length < 1) {
+  if (!series.rows || series.rows.length < 1) {
     const stats = {} as ColumnStats;
     for (const stat of queue) {
       stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
@@ -97,16 +97,16 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].calculator) {
-    return queue[0].calculator(table, columnIndex, ignoreNulls, nullAsZero);
+    return queue[0].calculator(series, fieldIndex, ignoreNulls, nullAsZero);
   }
 
   // For now everything can use the standard stats
-  let values = standardStatsStat(table, columnIndex, ignoreNulls, nullAsZero);
+  let values = standardStatsStat(series, fieldIndex, ignoreNulls, nullAsZero);
   for (const calc of queue) {
     if (!values.hasOwnProperty(calc.id) && calc.calculator) {
       values = {
         ...values,
-        ...calc.calculator(table, columnIndex, ignoreNulls, nullAsZero),
+        ...calc.calculator(series, fieldIndex, ignoreNulls, nullAsZero),
       };
     }
   }
@@ -223,8 +223,8 @@ function getById(id: string): StatCalculatorInfo | undefined {
 }
 
 function standardStatsStat(
-  data: TableData,
-  columnIndex: number,
+  data: SeriesData,
+  fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
 ): ColumnStats {
@@ -250,7 +250,7 @@ function standardStatsStat(
   } as ColumnStats;
 
   for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][columnIndex];
+    let currentValue = data.rows[i][fieldIndex];
 
     if (currentValue === null) {
       if (ignoreNulls) {
@@ -345,17 +345,17 @@ function standardStatsStat(
   return stats;
 }
 
-function calculateFirst(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
-  return { first: data.rows[0][columnIndex] };
+function calculateFirst(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
+  return { first: data.rows[0][fieldIndex] };
 }
 
-function calculateLast(data: TableData, columnIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
-  return { last: data.rows[data.rows.length - 1][columnIndex] };
+function calculateLast(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
+  return { last: data.rows[data.rows.length - 1][fieldIndex] };
 }
 
 function calculateChangeCount(
-  data: TableData,
-  columnIndex: number,
+  data: SeriesData,
+  fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
 ): ColumnStats {
@@ -363,7 +363,7 @@ function calculateChangeCount(
   let first = true;
   let last: any = null;
   for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][columnIndex];
+    let currentValue = data.rows[i][fieldIndex];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;
@@ -383,14 +383,14 @@ function calculateChangeCount(
 }
 
 function calculateDistinctCount(
-  data: TableData,
-  columnIndex: number,
+  data: SeriesData,
+  fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
 ): ColumnStats {
   const distinct = new Set<any>();
   for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][columnIndex];
+    let currentValue = data.rows[i][fieldIndex];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;

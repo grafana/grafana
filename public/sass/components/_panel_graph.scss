@@ -263,7 +263,7 @@
     text-align: center;
     position: relative;
     top: -3px;
-    padding: 0.2rem;
+    padding: $space-xxs;
     font-weight: bold;
     color: $text-color;
   }
@@ -279,7 +279,7 @@
 
   .graph-tooltip-series-name {
     display: table-cell;
-    padding: 0.15rem;
+    padding: $space-xxs;
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -329,7 +329,7 @@
   }
 
   .graph-annotation__body {
-    padding: 0.65rem;
+    padding: $space-sm;
   }
 
   .graph-annotation__user {
@@ -397,21 +397,23 @@
       top: 0px;
       float: left;
       border-right: 1px solid $btn-divider-left;
-      padding: 0.5rem 0.3rem 0.4rem 0.4rem;
+      padding: 6px 4px 4px 6px;
     }
   }
 
   .alert-handle-value {
     border-left: 1px solid $btn-divider-right;
-    padding: 0.5rem;
-    line-height: 2rem;
+    padding: $space-xs $space-sm;
+    padding: 7px;
+    line-height: 24px;
+    height: 24px;
 
     .alert-handle-grip {
       background: url($btn-drag-image) no-repeat 50% 50%;
       background-size: 8px;
       float: right;
-      width: 1rem;
-      height: 2rem;
+      width: 16px;
+      height: 24px;
       margin-right: 2px;
     }
   }

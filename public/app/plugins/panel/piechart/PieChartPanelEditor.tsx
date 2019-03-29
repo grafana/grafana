@@ -1,12 +1,17 @@
 import React, { PureComponent } from 'react';
-import { PanelEditorProps, PanelOptionsGrid, ValueMappingsEditor, ValueMapping } from '@grafana/ui';
+import {
+  PanelEditorProps,
+  PanelOptionsGrid,
+  ValueMappingsEditor,
+  ValueMapping,
+  SingleStatValueOptions,
+  SingleStatValueEditor,
+} from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
-import { SingleStatValueEditor } from '../singlestat2/SingleStatValueEditor';
-import { SingleStatValueOptions } from '../singlestat2/types';
 
-export default class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
+export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
   onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
     this.props.onOptionsChange({
       ...this.props.options,

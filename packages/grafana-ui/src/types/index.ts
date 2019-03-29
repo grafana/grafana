@@ -4,6 +4,8 @@ export * from './panel';
 export * from './plugin';
 export * from './datasource';
 export * from './theme';
+export * from './graph';
 export * from './threshold';
 export * from './input';
+export * from './logs';
 export * from './displayValue';

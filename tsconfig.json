@@ -31,7 +31,8 @@
     "paths": {
       "app": ["app"],
       "sass": ["sass"]
-    }
+    },
+    "skipLibCheck": true
   },
   "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

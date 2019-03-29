@@ -113,6 +113,8 @@ The resulting image will be tagged as `grafana/grafana:dev`
 
 Notice: If you are using Docker for MacOS, be sure to set the memory limit to be larger than 2 GiB (at docker -> Preferences -> Advanced), otherwise `grunt build` may fail.
 
+## Development
+
 ### Dev config
 
 Create a custom.ini in the conf directory to override default configuration options.
@@ -147,6 +149,11 @@ GRAFANA_TEST_DB=mysql go test ./pkg/...
 # Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
 GRAFANA_TEST_DB=postgres go test ./pkg/...
 ```
+
+### Datasource and dashboard provisioning
+
+[Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
+that will populate your dev environment for quicker testing end experimenting.
 
 ## Contribute
 
