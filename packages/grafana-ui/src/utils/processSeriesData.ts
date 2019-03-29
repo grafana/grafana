@@ -35,6 +35,7 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
       },
     ],
     rows: timeSeries.datapoints,
+    labels: timeSeries.tags,
   };
 }
 
