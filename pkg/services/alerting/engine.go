@@ -104,10 +104,6 @@ func (e *AlertingService) runJobDispatcher(grafanaCtx context.Context) error {
 
 var (
 	unfinishedWorkTimeout = time.Second * 5
-	// TODO: Make alertTimeout and alertMaxAttempts configurable in the config file.
-	alertTimeout        = time.Second * 30
-	resultHandleTimeout = time.Second * 30
-	alertMaxAttempts    = 3
 )
 
 func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
@@ -117,7 +113,7 @@ func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *J
 		}
 	}()
 
-	cancelChan := make(chan context.CancelFunc, alertMaxAttempts*2)
+	cancelChan := make(chan context.CancelFunc, setting.AlertingMaxAttempts*2)
 	attemptChan := make(chan int, 1)
 
 	// Initialize with first attemptID=1
@@ -161,7 +157,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	cancelChan <- cancelFn
 	span := opentracing.StartSpan("alert execution")
 	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
@@ -197,7 +193,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 				tlog.Error(evalContext.Error),
 				tlog.String("message", "alerting execution attempt failed"),
 			)
-			if attemptID < alertMaxAttempts {
+			if attemptID < setting.AlertingMaxAttempts {
 				span.Finish()
 				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
@@ -206,7 +202,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		}
 
 		// create new context with timeout for notifications
-		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), resultHandleTimeout)
+		resultHandleCtx, resultHandleCancelFn := context.WithTimeout(context.Background(), setting.AlertingNotificationTimeout)
 		cancelChan <- resultHandleCancelFn
 
 		// override the context used for evaluation with a new context for notifications.
