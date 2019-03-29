@@ -16,7 +16,7 @@ export class GeneralTab extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 

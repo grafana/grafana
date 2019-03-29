@@ -30,9 +30,9 @@ export interface State {
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
-  specialPanels = {};
+  specialPanels: any = {};
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {

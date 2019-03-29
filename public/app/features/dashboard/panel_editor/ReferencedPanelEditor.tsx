@@ -22,7 +22,7 @@ interface State {
 }
 
 export class ReferencedPanelEditor extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       edit: false,
@@ -103,7 +103,7 @@ export class ReferencedPanelEditor extends PureComponent<Props, State> {
     }
   };
 
-  editKeyPress = event => {
+  editKeyPress = (event: any) => {
     if ('Enter' === event.key) {
       this.loadDashboard();
     }
