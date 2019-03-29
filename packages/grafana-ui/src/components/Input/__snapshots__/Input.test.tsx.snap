@@ -1,7 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Input renders correctly 1`] = `
-<div>
+<div
+  style={
+    Object {
+      "flexGrow": 1,
+    }
+  }
+>
   <input
     className="gf-form-input"
   />

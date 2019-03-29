@@ -21,7 +21,7 @@ export interface Field {
   dateFormat?: string; // Source data format
 }
 
-export interface Tags {
+export interface Labels {
   [key: string]: string;
 }
 
@@ -29,7 +29,7 @@ export interface SeriesData {
   name?: string;
   fields: Field[];
   rows: any[][];
-  tags?: Tags;
+  labels?: Labels;
 }
 
 export interface Column {
@@ -51,6 +51,7 @@ export interface TimeSeries {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
+  tags?: Labels;
 }
 
 export enum NullValueMode {
