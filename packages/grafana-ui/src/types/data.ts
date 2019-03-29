@@ -14,8 +14,8 @@ export enum FieldType {
 }
 
 export interface QueryResponseData {
-  refId?: string;
-  meta?: any; // Already used by query editors... but not sure what type!
+  refId?: string; // Matches the query target refId
+  meta?: any; // Already used by query editors... but not sure its options
 }
 
 export interface Field {
