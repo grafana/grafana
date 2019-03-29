@@ -1,9 +1,9 @@
-import TableDatasource from './datasource';
-import { TableQuery } from './types';
+import InputDatasource from './datasource';
+import { InputQuery } from './types';
 import { readCSV } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
-describe('TableDatasource', () => {
+describe('InputDatasource', () => {
   const data = readCSV('a,b,c\n1,2,3\n4,5,6');
   const instanceSettings: any = {
     jsonData: {
@@ -13,8 +13,8 @@ describe('TableDatasource', () => {
 
   describe('when querying', () => {
     test('should return the saved data with a query', () => {
-      const ds = new TableDatasource(instanceSettings);
-      const options = getQueryOptions<TableQuery>({
+      const ds = new InputDatasource(instanceSettings);
+      const options = getQueryOptions<InputQuery>({
         targets: [{ refId: 'Z' }],
       });
 

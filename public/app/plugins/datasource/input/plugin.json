@@ -1,7 +1,7 @@
 {
   "type": "datasource",
-  "name": "Table",
-  "id": "table",
+  "name": "Input",
+  "id": "input",
   "state": "alpha",
 
   "metrics": true,
@@ -11,14 +11,14 @@
   "explore": false,
 
   "info": {
-    "description": "Table Data Source for Grafana",
+    "description": "User Input Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-table.svg",
-      "large": "img/icn-table.svg"
+      "small": "img/input.png",
+      "large": "img/input.png"
     }
   }
 }

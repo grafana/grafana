@@ -3,12 +3,12 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui/src/types';
-import { TableDatasource } from '../datasource';
-import { TableQuery } from '../types';
+import { InputDatasource } from '../datasource';
+import { InputQuery } from '../types';
 
-type Props = QueryEditorProps<TableDatasource, TableQuery>;
+type Props = QueryEditorProps<InputDatasource, InputQuery>;
 
-export class TableQueryEditor extends PureComponent<Props> {
+export class InputQueryEditor extends PureComponent<Props> {
   render() {
     const { datasource } = this.props;
 
@@ -31,4 +31,4 @@ export class TableQueryEditor extends PureComponent<Props> {
   }
 }
 
-export default TableQueryEditor;
+export default InputQueryEditor;

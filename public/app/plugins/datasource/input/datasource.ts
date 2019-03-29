@@ -3,9 +3,9 @@ import _ from 'lodash';
 
 // Types
 import { DataQueryOptions, SeriesData, DataQueryResponse, DataSourceApi } from '@grafana/ui/src/types';
-import { TableQuery } from './types';
+import { InputQuery } from './types';
 
-export class TableDatasource implements DataSourceApi<TableQuery> {
+export class InputDatasource implements DataSourceApi<InputQuery> {
   data: SeriesData[];
 
   /** @ngInject */
@@ -34,7 +34,7 @@ export class TableDatasource implements DataSourceApi<TableQuery> {
     });
   }
 
-  query(options: DataQueryOptions<TableQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryOptions<InputQuery>): Promise<DataQueryResponse> {
     const results: SeriesData[] = [];
     for (const query of options.targets) {
       if (query.hide) {
@@ -74,4 +74,4 @@ export class TableDatasource implements DataSourceApi<TableQuery> {
   }
 }
 
-export default TableDatasource;
+export default InputDatasource;
