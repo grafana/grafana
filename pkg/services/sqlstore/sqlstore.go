@@ -411,21 +411,21 @@ func IsTestDbPostgres() bool {
 }
 
 type DatabaseConfig struct {
-	Type                      string
-	Host                      string
-	Name                      string
-	User                      string
-	Pwd                       string
-	Path                      string
-	SslMode                   string
-	CaCertPath                string
-	ClientKeyPath             string
-	ClientCertPath            string
-	ServerCertName            string
-	ConnectionString          string
-	MaxOpenConn               int
-	MaxIdleConn               int
-	ConnMaxLifetime           int
-	CacheMode                 string
-	UrlQueryParams            map[string][]string
+	Type             string
+	Host             string
+	Name             string
+	User             string
+	Pwd              string
+	Path             string
+	SslMode          string
+	CaCertPath       string
+	ClientKeyPath    string
+	ClientCertPath   string
+	ServerCertName   string
+	ConnectionString string
+	MaxOpenConn      int
+	MaxIdleConn      int
+	ConnMaxLifetime  int
+	CacheMode        string
+	UrlQueryParams   map[string][]string
 }
