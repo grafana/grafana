@@ -9,11 +9,11 @@ import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
 import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
-const MIN_VALUE_HEIGHT = 30;
+const MIN_VALUE_HEIGHT = 20;
 const MAX_VALUE_HEIGHT = 50;
-// const MIN_VALUE_WIDTH = 50;
-// const MAX_VALUE_WIDTH = 200;
-// const LINE_HEIGHT = 1.5;
+const MIN_VALUE_WIDTH = 50;
+const MAX_VALUE_WIDTH = 200;
+const LINE_HEIGHT = 1.5;
 
 export interface Props extends Themeable {
   height: number;
@@ -75,13 +75,8 @@ export class BarGauge extends PureComponent<Props> {
 
     const titleWrapperStyles: CSSProperties = {
       display: 'flex',
-      flexDirection: 'column-reverse',
       overflow: 'hidden',
     };
-
-    if (this.isVertical) {
-      titleWrapperStyles.alignItems = 'center';
-    }
 
     const titleStyles: CSSProperties = {
       fontSize: '16px',
@@ -90,6 +85,13 @@ export class BarGauge extends PureComponent<Props> {
       textOverflow: 'ellipsis',
       width: '100%',
     };
+
+    if (this.isVertical) {
+      titleWrapperStyles.flexDirection = 'column-reverse';
+      titleStyles.textAlign = 'center';
+    } else {
+      titleWrapperStyles.flexDirection = 'column';
+    }
 
     return (
       <div style={titleWrapperStyles}>
@@ -134,9 +136,10 @@ export class BarGauge extends PureComponent<Props> {
     };
   }
 
-  getValueStyles(value: string, color: string, width: number): CSSProperties {
+  getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
+    const heightFont = height / LINE_HEIGHT;
     const guess = width / (value.length * 1.1);
-    const fontSize = Math.min(Math.max(guess, 14), 40);
+    const fontSize = Math.min(Math.max(guess, 14), heightFont);
 
     return {
       color: color,
@@ -204,24 +207,35 @@ export class BarGauge extends PureComponent<Props> {
 
     let maxBarHeight = height;
     let maxBarWidth = width;
-    let maxSize = 0;
-    let valueHeight = 0;
+    let maxValueHeight = 0;
+    let maxValueWidth = 0;
 
     if (this.isVertical) {
       maxBarHeight -= titleHeight;
-      valueHeight = Math.max(Math.min(maxBarHeight * BAR_SIZE_RATIO, MAX_VALUE_HEIGHT), MIN_VALUE_HEIGHT);
-      console.log('valueHeight', valueHeight);
-      maxBarHeight -= valueHeight;
+      maxValueHeight = Math.min(Math.max(maxBarHeight * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+      maxBarHeight -= maxValueHeight;
+      maxValueWidth = width;
+    } else {
+      maxBarHeight -= titleHeight;
+      maxBarWidth = width;
+      maxValueHeight = Math.min(Math.max(maxBarHeight * 0.2, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+      maxValueWidth = Math.min(Math.max(maxBarHeight * 0.2, MIN_VALUE_WIDTH), MAX_VALUE_WIDTH);
     }
 
-    const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
+    console.log('height', height);
+    console.log('width', width);
+    console.log('titleHeight', titleHeight);
+    console.log('maxBarHeight', maxBarHeight);
+    console.log('maxBarWidth', maxBarWidth);
+    console.log('maxValueHeight', maxValueHeight);
+    console.log('maxValueWidth', maxValueWidth);
+    console.log('valuePercent', valuePercent);
+
     const colors = this.getValueColors();
-    const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText);
+    const valueStyles = this.getValueStyles(value.text, colors.value, maxValueWidth, maxValueHeight);
     const isBasic = displayMode === 'basic';
 
     const containerStyles: CSSProperties = {
-      width: `${width}px`,
-      height: `${height}px`,
       display: 'flex',
     };
 
@@ -230,7 +244,7 @@ export class BarGauge extends PureComponent<Props> {
     };
 
     if (this.isVertical) {
-      const barHeight = Math.max(valuePercent * maxBarHeight, 0);
+      const barHeight = Math.max(valuePercent * maxBarHeight, 1);
 
       // Custom styles for vertical orientation
       containerStyles.flexDirection = 'column';
@@ -245,10 +259,10 @@ export class BarGauge extends PureComponent<Props> {
         barStyles.boxShadow = `0 0 4px ${colors.border}`;
       } else {
         // Gradient styles
-        barStyles.background = this.getBarGradient(maxSize);
+        barStyles.background = this.getBarGradient(maxBarHeight);
       }
     } else {
-      const barWidth = Math.max(valuePercent * maxBarWidth, 0);
+      const barWidth = Math.max(valuePercent * maxBarWidth, 1);
 
       // Custom styles for horizontal orientation
       containerStyles.flexDirection = 'row-reverse';
@@ -266,7 +280,7 @@ export class BarGauge extends PureComponent<Props> {
         barStyles.boxShadow = `0 0 4px ${colors.border}`;
       } else {
         // Gradient styles
-        barStyles.background = this.getBarGradient(maxSize);
+        barStyles.background = this.getBarGradient(maxBarWidth);
       }
     }
 
@@ -328,7 +342,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const colors = this.getValueColors();
     const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
-    const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText);
+    const valueStyles = this.getValueStyles(value.text, colors.value, spaceForText, 30);
 
     const containerStyles: CSSProperties = {
       width: `${width}px`,
