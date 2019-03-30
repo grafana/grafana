@@ -72,7 +72,7 @@ export class Input extends PureComponent<Props> {
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
-      <div>
+      <div style={{ flexGrow: 1 }}>
         <input {...inputElementProps} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>

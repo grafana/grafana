@@ -7,6 +7,7 @@ import {
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
+  LogLevel,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -18,7 +19,6 @@ import {
   ExploreUIState,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
-import { LogLevel } from 'app/core/logs_model';
 
 /**  Higher order actions
  *

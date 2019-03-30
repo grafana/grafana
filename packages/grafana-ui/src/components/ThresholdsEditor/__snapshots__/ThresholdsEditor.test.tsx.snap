@@ -467,7 +467,13 @@ exports[`Render should render with base threshold 1`] = `
                     type="text"
                     value="Base"
                   >
-                    <div>
+                    <div
+                      style={
+                        Object {
+                          "flexGrow": 1,
+                        }
+                      }
+                    >
                       <input
                         className="gf-form-input"
                         readOnly={true}

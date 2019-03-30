@@ -1,6 +1,6 @@
 # 6.1.0 (unreleased)
 
-# 6.1.0-beta1 (unreleased)
+# 6.1.0-beta1 (2019-03-27)
 
 ### New Features
 * **Prometheus**: adhoc filter support [#8253](https://github.com/grafana/grafana/issues/8253), thx [@mtanda](https://github.com/mtanda)
