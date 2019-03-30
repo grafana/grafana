@@ -28,7 +28,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1542303896062,
+  "iteration": 1554310560048,
   "links": [
     {
       "asDropdown": false,
@@ -588,9 +588,82 @@
       "title": "ES Log query",
       "transform": "json",
       "type": "table"
+    },
+    {
+      "circleMaxSize": 30,
+      "circleMinSize": 2,
+      "colors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
+      "datasource": "gdev-elasticsearch-v5-metrics",
+      "decimals": 0,
+      "esGeoPoint": "@location",
+      "esLocationName": "",
+      "esMetric": "Average",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "hideEmpty": false,
+      "hideZero": false,
+      "id": 8,
+      "initialZoom": 1,
+      "links": [],
+      "locationData": "geohash",
+      "mapCenter": "(0°, 0°)",
+      "mapCenterLatitude": 0,
+      "mapCenterLongitude": 0,
+      "maxDataPoints": 1,
+      "mouseWheelZoom": false,
+      "showLegend": true,
+      "stickyLabels": false,
+      "tableQueryOptions": {
+        "geohashField": "geohash",
+        "latitudeField": "latitude",
+        "longitudeField": "longitude",
+        "metricField": "metric",
+        "queryType": "geohash"
+      },
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "fake": true,
+              "field": "@location",
+              "id": "3",
+              "settings": {
+                "precision": 2
+              },
+              "type": "geohash_grid"
+            }
+          ],
+          "metrics": [
+            {
+              "field": "@value",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "avg"
+            }
+          ],
+          "refId": "A",
+          "target": "",
+          "timeField": "@timestamp"
+        }
+      ],
+      "thresholds": "0,10",
+      "title": "World map panel",
+      "type": "grafana-worldmap-panel",
+      "unitPlural": "",
+      "unitSingle": "",
+      "valueName": "total"
     }
   ],
-  "schemaVersion": 16,
+  "schemaVersion": 18,
   "style": "dark",
   "tags": [
     "elasticsearch",
@@ -647,5 +720,5 @@
   "timezone": "browser",
   "title": "Datasource tests - Elasticsearch v5",
   "uid": "8HjT32Bmz",
-  "version": 27
+  "version": 5
 }
