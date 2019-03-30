@@ -2,11 +2,11 @@
 import _ from 'lodash';
 import React, { Component } from 'react';
 import Table, { BaseTableProps } from './Table';
-import { TableData } from '../../types/data';
+import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
 
 interface Props extends BaseTableProps {
-  data: TableData[];
+  data: SeriesData[];
 }
 
 interface State {
@@ -15,6 +15,7 @@ interface State {
 
 export class Tables extends Component<Props, State> {
   static defaultProps = {
+    minColumnWidth: 75,
     showHeader: true,
     fixedHeader: true,
     fixedColumns: 0,
@@ -47,11 +48,11 @@ export class Tables extends Component<Props, State> {
   render() {
     const { data, width, height } = this.props;
     let { selected } = this.state;
-    let table = data[selected];
+    let series = data[selected];
 
-    if (!table && selected >= data.length) {
+    if (!series && selected >= data.length) {
       selected = 0;
-      table = data[selected];
+      series = data[selected];
     }
 
     // TODO, help please :)
@@ -62,7 +63,7 @@ export class Tables extends Component<Props, State> {
       <div className="gf-tables" style={{ width, height }}>
         <div className="gf-tables-table">
           <AutoSizer disableWidth>
-            {({ height }) => <Table {...this.props} data={table} height={height - 50} />}
+            {({ height }) => <Table {...this.props} data={series} height={height - 50} />}
           </AutoSizer>
         </div>
         <div className="gf-tables-toolbar">
@@ -74,7 +75,7 @@ export class Tables extends Component<Props, State> {
                   className={index === selected ? 'selected' : ''}
                   onClick={() => this.onSelectionChange(index)}
                 >
-                  TABLE: {index}
+                  SERIES: {index}
                 </li>
               );
             })}

@@ -179,6 +179,10 @@ var (
 	AlertingErrorOrTimeout     string
 	AlertingNoDataOrNullValues string
 
+	AlertingEvaluationTimeout   time.Duration
+	AlertingNotificationTimeout time.Duration
+	AlertingMaxAttempts         int
+
 	// Explore UI
 	ExploreEnabled bool
 
@@ -239,14 +243,13 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
-	// User
-	EditorsCanOwn bool
-
 	// Dataproxy
 	SendUserHeader bool
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
+
+	EditorsCanAdmin bool
 }
 
 type CommandLineArgs struct {
@@ -670,7 +673,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
-	cfg.EditorsCanOwn = users.Key("editors_can_own").MustBool(false)
+	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")
@@ -760,6 +763,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
 	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
+
+	AlertingEvaluationTimeout = alerting.Key("evaluation_timeout_seconds").MustDuration(time.Second * 30)
+	AlertingNotificationTimeout = alerting.Key("notification_timeout_seconds").MustDuration(time.Second * 30)
+	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)

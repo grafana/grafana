@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import SlideDown from 'app/core/components/Animations/SlideDown';
-import { Tooltip } from '@grafana/ui';
+
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { Input, Tooltip } from '@grafana/ui';
+
 import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
@@ -98,7 +100,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>
               <div className="gf-form">
-                <input
+                <Input
                   type="text"
                   className="gf-form-input width-30"
                   value={newGroupId}

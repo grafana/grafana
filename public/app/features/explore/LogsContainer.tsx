@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
+import { RawTimeRange, TimeRange, LogLevel } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { toggleLogs, changeDedupStrategy } from './state/actions';

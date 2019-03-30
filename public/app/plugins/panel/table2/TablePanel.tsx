@@ -15,18 +15,17 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { panelData, options } = this.props;
+    const { data, options } = this.props;
     const { showToolbar } = options;
 
-    if (!panelData || !panelData.tableData) {
+    if (data.length < 1) {
       return <div>No Table Data...</div>;
     }
 
     if (showToolbar) {
-      const tables = [panelData.tableData];
-      return <Tables {...this.props} {...options} theme={config.theme} data={tables} />;
+      return <Tables {...this.props} {...options} theme={config.theme} data={data} />;
     }
 
-    return <Table {...this.props} {...options} theme={config.theme} data={panelData.tableData} />;
+    return <Table {...this.props} {...options} theme={config.theme} data={data[0]} />;
   }
 }

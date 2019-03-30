@@ -20,7 +20,7 @@ exports[`Render should render component 1`] = `
       >
         Name
       </Component>
-      <input
+      <Input
         className="gf-form-input max-width-23"
         onChange={[Function]}
         placeholder="Name"

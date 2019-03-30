@@ -9,6 +9,7 @@
 // - reactComponent (generic directive for delegating off to React Components)
 // - reactDirective (factory for creating specific directives that correspond to reactComponent directives)
 
+import { kebabCase } from 'lodash';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import angular from 'angular';
@@ -109,20 +110,23 @@ function watchProps(watchDepth, scope, watchExpressions, listener) {
 
   const watchGroupExpressions = [];
 
-  watchExpressions.forEach(expr => {
+  for (const expr of watchExpressions) {
     const actualExpr = getPropExpression(expr);
     const exprWatchDepth = getPropWatchDepth(watchDepth, expr);
+
+    // ignore empty expressions & expressions with functions
+    if (!actualExpr || actualExpr.match(/\(.*\)/) || exprWatchDepth === 'one-time') {
+      continue;
+    }
 
     if (exprWatchDepth === 'collection' && supportsWatchCollection) {
       scope.$watchCollection(actualExpr, listener);
     } else if (exprWatchDepth === 'reference' && supportsWatchGroup) {
       watchGroupExpressions.push(actualExpr);
-    } else if (exprWatchDepth === 'one-time') {
-      //do nothing because we handle our one time bindings after this
     } else {
       scope.$watch(actualExpr, listener, exprWatchDepth !== 'reference');
     }
-  });
+  }
 
   if (watchDepth === 'one-time') {
     listener();
@@ -155,11 +159,17 @@ function getPropExpression(prop) {
   return Array.isArray(prop) ? prop[0] : prop;
 }
 
-// find the normalized attribute knowing that React props accept any type of capitalization
-function findAttribute(attrs, propName) {
-  const index = Object.keys(attrs).filter(attr => {
-    return attr.toLowerCase() === propName.toLowerCase();
-  })[0];
+/**
+ * Finds the normalized attribute knowing that React props accept any type of capitalization and it also handles
+ * kabab case attributes which can be used in case the attribute would also be a standard html attribute and would be
+ * evaluated by the browser as such.
+ * @param attrs All attributes of the component.
+ * @param propName Name of the prop that react component expects.
+ */
+function findAttribute(attrs: string, propName: string): string {
+  const index = Object.keys(attrs).find(attr => {
+    return attr.toLowerCase() === propName.toLowerCase() || attr.toLowerCase() === kebabCase(propName);
+  });
   return attrs[index];
 }
 
@@ -274,7 +284,9 @@ const reactDirective = $injector => {
         // watch each property name and trigger an update whenever something changes,
         // to update scope.props with new values
         const propExpressions = props.map(prop => {
-          return Array.isArray(prop) ? [attrs[getPropName(prop)], getPropConfig(prop)] : attrs[prop];
+          return Array.isArray(prop)
+            ? [findAttribute(attrs, prop[0]), getPropConfig(prop)]
+            : findAttribute(attrs, prop);
         });
 
         // If we don't have any props, then our watch statement won't fire.

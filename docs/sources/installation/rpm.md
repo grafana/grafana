@@ -50,7 +50,7 @@ $ wget https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
 ### On CentOS / Fedora / Redhat:
 
 ```bash
-$ sudo yum install initscripts fontconfig
+$ sudo yum install initscripts urw-fonts
 $ sudo rpm -Uvh <local rpm package>
 ```
 

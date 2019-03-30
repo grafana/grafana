@@ -25,8 +25,10 @@ import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as table2Panel from 'app/plugins/panel/table2/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
+import * as singlestatPanel2 from 'app/plugins/panel/singlestat2/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 
 const builtInPlugins = {
@@ -57,8 +59,10 @@ const builtInPlugins = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table2/module': table2Panel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
+  'app/plugins/panel/singlestat2/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
+  'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
 };
 

@@ -20,12 +20,15 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-inset-squish-md: 4px 8px !default;
+
 $space-xxs: 2px !default;
 $space-xs: 4px !default;
 $space-sm: 8px !default;
 $space-md: 16px !default;
 $space-lg: 24px !default;
 $space-xl: 32px !default;
+
 $spacer: 14px !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
@@ -90,7 +93,7 @@ $grid-gutter-width: 30px !default;
 // Typography
 // -------------------------
 
-$font-family-sans-serif: 'Roboto', Helvetica, Arial, sans-serif;
+$font-family-sans-serif: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 $font-family-monospace: Menlo, Monaco, Consolas, 'Courier New', monospace;
 
 $font-size-root: 14px !default;
@@ -113,7 +116,6 @@ $font-size-h4: 18px !default;
 $font-size-h5: 16px !default;
 $font-size-h6: 14px !default;
 
-$headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-line-height: 1.1 !default;
 
 // Components
@@ -136,15 +138,7 @@ $page-sidebar-margin: 56px;
 $link-decoration: none !default;
 $link-hover-decoration: none !default;
 
-// Tables
-//
-// Customizes the `.table` component with basic values, each used across all table variations.
-
-$table-cell-padding: 4px 10px !default;
-
 // Forms
-$input-padding-x: 10px !default;
-$input-padding-y: 8px !default;
 $input-line-height: 18px !default;
 
 $input-border-radius: 0 $border-radius $border-radius 0 !default;
@@ -153,9 +147,7 @@ $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-x-lg: 20px !default;
-$input-padding-y-lg: 10px !default;
-
+$input-padding: 8px;
 $input-height: 35px !default;
 
 $cursor-disabled: not-allowed !default;
@@ -200,10 +192,8 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$dashboard-padding: 10px * 2;
-$panel-horizontal-padding: 10;
-$panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
+$dashboard-padding: $space-md;
+$panel-padding: 0 $space-md $space-sm $space-md;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

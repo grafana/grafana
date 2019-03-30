@@ -4,11 +4,11 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, TableData, GrafanaThemeType } from '../../types/index';
+import { ScopedVars, SeriesData, GrafanaThemeType } from '../../types/index';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
-import { parseCSV } from '../../utils/processTableData';
 import Tables from './Tables';
+import { readCSV } from '../../utils/csv';
 
 const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
   if (scopedVars) {
@@ -31,19 +31,17 @@ export function columnIndexToLeter(column: number) {
   return String.fromCharCode(A + c2);
 }
 
-export function makeDummyTable(columnCount: number, rowCount: number): TableData {
+export function makeDummyTable(columnCount: number, rowCount: number): SeriesData {
   return {
-    columns: Array.from(new Array(columnCount), (x, i) => {
+    fields: Array.from(new Array(columnCount), (x, i) => {
       return {
-        text: columnIndexToLeter(i),
+        name: columnIndexToLeter(i),
       };
     }),
     rows: Array.from(new Array(rowCount), (x, rowId) => {
       const suffix = (rowId + 1).toString();
       return Array.from(new Array(columnCount), (x, colId) => columnIndexToLeter(colId) + suffix);
     }),
-    type: 'table',
-    columnMap: {},
   };
 }
 
@@ -100,7 +98,7 @@ storiesOf('Alpha/Table', module)
     });
   })
   .add('Multiple Tables', () => {
-    const tables = [parseCSV('A,B,C\n1,2,3\n4,5\n,7,8,9,0'), makeDummyTable(4, 20), makeDummyTable(10, 5)];
+    const tables = [readCSV('A,B,C\n1,2,3\n4,5\n,7,8,9,0'), makeDummyTable(4, 20), makeDummyTable(10, 5)];
 
     const showHeader = boolean('Show Header', true);
     const fixedHeader = boolean('Fixed Header', true);

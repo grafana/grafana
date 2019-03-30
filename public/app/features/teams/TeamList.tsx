@@ -4,11 +4,13 @@ import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { NavModel, Team } from 'app/types';
+import { NavModel, Team, OrgRole } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
-import { getSearchQuery, getTeams, getTeamsCount } from './state/selectors';
+import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { config } from 'app/core/config';
+import { contextSrv, User } from 'app/core/services/context_srv';
 
 export interface Props {
   navModel: NavModel;
@@ -19,6 +21,8 @@ export interface Props {
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
+  editorsCanAdmin?: boolean;
+  signedInUser?: User;
 }
 
 export class TeamList extends PureComponent<Props, any> {
@@ -39,7 +43,10 @@ export class TeamList extends PureComponent<Props, any> {
   };
 
   renderTeam(team: Team) {
+    const { editorsCanAdmin, signedInUser } = this.props;
+    const permission = team.permission;
     const teamUrl = `org/teams/edit/${team.id}`;
+    const canDelete = isPermissionTeamAdmin({ permission, editorsCanAdmin, signedInUser });
 
     return (
       <tr key={team.id}>
@@ -58,7 +65,7 @@ export class TeamList extends PureComponent<Props, any> {
           <a href={teamUrl}>{team.memberCount}</a>
         </td>
         <td className="text-right">
-          <DeleteButton onConfirm={() => this.deleteTeam(team)} />
+          <DeleteButton onConfirm={() => this.deleteTeam(team)} disabled={!canDelete} />
         </td>
       </tr>
     );
@@ -84,7 +91,10 @@ export class TeamList extends PureComponent<Props, any> {
   }
 
   renderTeamList() {
-    const { teams, searchQuery } = this.props;
+    const { teams, searchQuery, editorsCanAdmin, signedInUser } = this.props;
+    const isCanAdminAndViewer = editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer;
+    const disabledClass = isCanAdminAndViewer ? ' disabled' : '';
+    const newTeamHref = isCanAdminAndViewer ? '#' : 'org/teams/new';
 
     return (
       <>
@@ -101,7 +111,7 @@ export class TeamList extends PureComponent<Props, any> {
 
           <div className="page-action-bar__spacer" />
 
-          <a className="btn btn-primary" href="org/teams/new">
+          <a className={`btn btn-primary${disabledClass}`} href={newTeamHref}>
             New team
           </a>
         </div>
@@ -152,6 +162,8 @@ function mapStateToProps(state) {
     searchQuery: getSearchQuery(state.teams),
     teamsCount: getTeamsCount(state.teams),
     hasFetched: state.teams.hasFetched,
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 

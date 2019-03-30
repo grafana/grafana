@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -141,12 +142,17 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Bus: bus.GetBus(),
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(url)
 		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
 
-			return CreateFolder(c, cmd)
+			return hs.CreateFolder(c, cmd)
 		})
 
 		origNewFolderService := dashboards.NewFolderService

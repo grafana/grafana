@@ -1,13 +1,15 @@
+// Libraries
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
+// Utils and services
 import coreModule from 'app/core/core_module';
 import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 
-function WrapInProvider(store, Component, props) {
+function WrapInProvider(store: any, Component: any, props: any) {
   return (
     <Provider store={store}>
       <Component {...props} />
@@ -16,13 +18,13 @@ function WrapInProvider(store, Component, props) {
 }
 
 /** @ngInject */
-export function reactContainer($route, $location, $injector, $rootScope, contextSrv: ContextSrv) {
+export function reactContainer($route: any, $location: any, $injector: any, $rootScope: any, contextSrv: ContextSrv) {
   return {
     restrict: 'E',
     template: '',
-    link(scope, elem) {
+    link(scope: any, elem: JQuery) {
       // Check permissions for this component
-      const { roles } = $route.current.locals;
+      const roles: string[] = $route.current.locals.roles;
       if (roles && roles.length) {
         if (!roles.some(r => contextSrv.hasRole(r))) {
           $location.url('/');
