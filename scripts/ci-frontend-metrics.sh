@@ -16,7 +16,7 @@ if [ $ERROR_COUNT -gt $ERROR_COUNT_LIMIT ]; then
 fi
 
 if [ $DIRECTIVES -gt $DIRECTIVES_LIMIT ]; then
-  echo -e "Directive count $ERROR_COUNT exceeded $DIRECTIVES_LIMIT so failing build"
+  echo -e "Directive count $DIRECTIVES exceeded $DIRECTIVES_LIMIT so failing build"
 	exit -1
 fi
 
