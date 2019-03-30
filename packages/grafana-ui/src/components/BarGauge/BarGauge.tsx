@@ -9,10 +9,10 @@ import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
 import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
 const BAR_SIZE_RATIO = 0.8;
-const MIN_VALUE_HEIGHT = 20;
+const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
 const MIN_VALUE_WIDTH = 50;
-const MAX_VALUE_WIDTH = 200;
+const MAX_VALUE_WIDTH = 100;
 const LINE_HEIGHT = 1.5;
 
 export interface Props extends Themeable {
@@ -78,19 +78,29 @@ export class BarGauge extends PureComponent<Props> {
       overflow: 'hidden',
     };
 
+    const titleDim = this.calculateTitleDimensions();
     const titleStyles: CSSProperties = {
-      fontSize: '16px',
+      fontSize: `${titleDim.fontSize}px`,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       width: '100%',
+      alignItems: 'center',
+      alignSelf: 'center',
     };
 
     if (this.isVertical) {
       titleWrapperStyles.flexDirection = 'column-reverse';
       titleStyles.textAlign = 'center';
     } else {
-      titleWrapperStyles.flexDirection = 'column';
+      if (titleDim.placement === 'above') {
+        titleWrapperStyles.flexDirection = 'column';
+      } else {
+        titleWrapperStyles.flexDirection = 'row';
+        titleStyles.width = `${titleDim.width}px`;
+        titleStyles.textAlign = 'right';
+        titleStyles.marginRight = '5px';
+      }
     }
 
     return (
@@ -159,17 +169,46 @@ export class BarGauge extends PureComponent<Props> {
     return this.props.orientation === VizOrientation.Vertical;
   }
 
-  calculateTitleHeight(): number {
+  calculateTitleDimensions(): TitleDimensions {
     const { title } = this.props.value;
+    const { height, width } = this.props;
 
     if (!title) {
-      return 0;
+      return { fontSize: 0, width: 0, height: 0, placement: 'above' };
     }
 
-    const lineHeight = 1.5;
-    const titleFontSize = 16;
+    if (this.isVertical) {
+      return {
+        fontSize: 16,
+        width: width,
+        height: 16 * LINE_HEIGHT,
+        placement: 'below',
+      };
+    }
 
-    return lineHeight * titleFontSize;
+    // if below 40 put text to left
+    if (height > 40) {
+      const maxTitleHeightRatio = 0.35;
+      const titleHeight = Math.max(Math.min(height * maxTitleHeightRatio, MAX_VALUE_HEIGHT), 17);
+      return {
+        fontSize: titleHeight / LINE_HEIGHT,
+        width: 0,
+        height: titleHeight,
+        placement: 'above',
+      };
+    } else {
+      // title to left of bar scenario
+      const maxTitleHeightRatio = 0.5;
+      const maxTitleWidthRatio = 0.3;
+      const titleHeight = Math.max(height * maxTitleHeightRatio, MIN_VALUE_HEIGHT);
+
+      return {
+        fontSize: titleHeight / LINE_HEIGHT,
+        height: 0,
+        width: Math.max(Math.min(width * maxTitleWidthRatio, 100), 200),
+        placement: 'left',
+      };
+    }
   }
 
   getBarGradient(maxSize: number): string {
@@ -203,28 +242,28 @@ export class BarGauge extends PureComponent<Props> {
     const { height, width, displayMode, maxValue, minValue, value } = this.props;
 
     const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
-    const titleHeight = this.calculateTitleHeight();
+    const titleDim = this.calculateTitleDimensions();
 
-    let maxBarHeight = height;
-    let maxBarWidth = width;
+    let maxBarHeight = 0;
+    let maxBarWidth = 0;
     let maxValueHeight = 0;
     let maxValueWidth = 0;
 
     if (this.isVertical) {
-      maxBarHeight -= titleHeight;
-      maxValueHeight = Math.min(Math.max(maxBarHeight * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
-      maxBarHeight -= maxValueHeight;
+      maxValueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
       maxValueWidth = width;
-    } else {
-      maxBarHeight -= titleHeight;
+      maxBarHeight = height - (titleDim.height + maxValueHeight);
       maxBarWidth = width;
-      maxValueHeight = Math.min(Math.max(maxBarHeight * 0.2, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
-      maxValueWidth = Math.min(Math.max(maxBarHeight * 0.2, MIN_VALUE_WIDTH), MAX_VALUE_WIDTH);
+    } else {
+      maxValueHeight = height - titleDim.height;
+      maxValueWidth = Math.min(Math.max(width * 0.2, MIN_VALUE_WIDTH), MAX_VALUE_WIDTH);
+      maxBarHeight = height - titleDim.height;
+      maxBarWidth = width - maxValueWidth - titleDim.width;
     }
 
     console.log('height', height);
     console.log('width', width);
-    console.log('titleHeight', titleHeight);
+    console.log('titleDim', titleDim);
     console.log('maxBarHeight', maxBarHeight);
     console.log('maxBarWidth', maxBarWidth);
     console.log('maxValueHeight', maxValueHeight);
@@ -411,4 +450,11 @@ interface CellColors {
   backgroundShade?: string;
   border: string;
   isLit?: boolean;
+}
+
+interface TitleDimensions {
+  fontSize: number;
+  placement: 'above' | 'left' | 'below';
+  width: number;
+  height: number;
 }
