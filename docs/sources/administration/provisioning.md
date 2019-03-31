@@ -109,6 +109,8 @@ datasources:
   url: http://localhost:8080
   # <string> database password, if used
   password:
+  # <string> if set populates the database password from the specified file
+  passwordFromFile:
   # <string> database user, if used
   user:
   # <string> database name, if used
@@ -119,6 +121,8 @@ datasources:
   basicAuthUser:
   # <string> basic auth password
   basicAuthPassword:
+  # <string> if set populates the basic auth password from the specified file
+  basicAuthPasswordFromFile:
   # <bool> enable/disable with credentials headers
   withCredentials:
   # <bool> mark as default datasource. Max one per org
@@ -128,11 +132,16 @@ datasources:
      graphiteVersion: "1.1"
      tlsAuth: true
      tlsAuthWithCACert: true
-  # <string> json object of data that will be encrypted.
+  # <map> json object of data that will be encrypted.
   secureJsonData:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
+  # <map> if set populates each secureJsonData field from the specified file paths.
+  secureJsonDataFromFiles:
+    tlsCACert: "/etc/ssl/certs/ca.crt"
+    tlsClientCert: "/etc/ssl/certs/client.crt"
+    tlsClientKey: "/etc/ssl/private/key.pem"
   version: 1
   # <bool> allow users to edit datasources from the UI.
   editable: false

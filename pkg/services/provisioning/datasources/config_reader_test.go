@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	logger log.Logger = log.New("fake.log")
+	logger = log.New("fake.log")
 
 	twoDatasourcesConfig            = "testdata/two-datasources"
 	twoDatasourcesConfigPurgeOthers = "testdata/insert-two-delete-two"
@@ -20,6 +20,7 @@ var (
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
+	withSecretsFiles                = "testdata/with-secrets-files"
 
 	fakeRepo *fakeRepository
 )
@@ -136,8 +137,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("skip invalid directory", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig("./invalid-directory")
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig("./invalid-directory")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -146,8 +147,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 1", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(allProperties)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(allProperties)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -174,8 +175,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 0", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(versionZero)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(versionZero)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -188,6 +189,28 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			validateDatasource(dsCfg)
 			validateDeleteDatasources(dsCfg)
+		})
+
+		Convey("can populate secrets from files on disk", func() {
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(withSecretsFiles)
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
+
+			So(len(cfg), ShouldEqual, 1)
+
+			dsCfg := cfg[0]
+
+			So(len(dsCfg.Datasources), ShouldEqual, 1)
+
+			ds := dsCfg.Datasources[0]
+
+			So(ds.Password, ShouldEqual, "secretvalue")
+			So(ds.BasicAuthPassword, ShouldEqual, "secretvalue")
+			So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "secretvalue")
+			So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "secretvalue")
+			So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "secretvalue")
 		})
 	})
 }
