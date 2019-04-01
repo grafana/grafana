@@ -52,11 +52,6 @@ export class UtilSrv {
   showConfirmModal(payload) {
     const scope = this.$rootScope.$new();
 
-    scope.onConfirm = () => {
-      payload.onConfirm();
-      scope.dismiss();
-    };
-
     scope.updateConfirmText = value => {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
