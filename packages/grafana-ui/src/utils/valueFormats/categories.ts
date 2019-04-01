@@ -54,8 +54,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Degrees (°)', id: 'degree', fn: toFixedUnit('°') },
       { name: 'Radians', id: 'radian', fn: toFixedUnit('rad') },
       { name: 'Gradian', id: 'grad', fn: toFixedUnit('grad') },
-      { name: 'Arc-minutes', id: 'arcmin', fn: toFixedUnit('arcmin') },
-      { name: 'Arc-seconds', id: 'arcsec', fn: toFixedUnit('arcsec') },
+      { name: 'Arc Minutes', id: 'arcmin', fn: toFixedUnit('arcmin') },
+      { name: 'Arc Seconds', id: 'arcsec', fn: toFixedUnit('arcsec') },
     ],
   },
   {
