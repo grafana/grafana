@@ -16,9 +16,8 @@
 
 		<div class="confirm-modal-text">
 			{{text}}
-			<div class="confirm-modal-text2" ng-show="text2">
-				{{text2}}
-			</div>
+			<div ng-if="text2 && text2htmlBind" class="confirm-modal-text2" ng-bind-html="text2"></div>
+      <div ng-if="text2 && !text2htmlBind" class="confirm-modal-text2">{{text2}}</div>
 		</div>
 
 		<div class="modal-content-confirm-text" ng-if="confirmText">
