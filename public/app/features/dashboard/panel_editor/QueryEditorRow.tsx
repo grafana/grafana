@@ -31,8 +31,8 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryError?: DataQueryError;
-  queryResponse?: SeriesData[];
+  queryError: DataQueryError | null;
+  queryResponse: SeriesData[] | null;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -45,6 +45,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
+    queryError: null,
+    queryResponse: null,
   };
 
   componentDidMount() {
@@ -71,7 +73,11 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (this.angularQueryEditor) {
       // for some reason this needs to be done in next tick
       setTimeout(this.angularQueryEditor.digest);
-    } else {
+      return;
+    }
+
+    // if error relates to this query store it in state and pass it on to query editor
+    if (error.refId === this.props.query.refId) {
       this.setState({ queryError: error });
     }
   };
@@ -85,10 +91,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
   };
 
-  // Only used by the React Editors
+  // Only used by the React Query Editors
   onSeriesDataReceived = (data: SeriesData[]) => {
     if (!this.angularQueryEditor) {
-      this.setState({ queryResponse: data });
+      // only pass series related to this query to query editor
+      const filterByRefId = data.filter(series => series.refId === this.props.query.refId);
+      this.setState({ queryResponse: filterByRefId, queryError: null });
     }
   };
 

@@ -13,9 +13,15 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
-export interface QueryResponseData {
-  refId?: string; // Matches the query target refId
-  meta?: any; // Already used by query editors... but not sure its options
+export interface QueryResultBase {
+  /**
+   * Matches the query target refId
+   */
+  refId?: string;
+  /**
+   * Used by some backend datasources to communicate back info about the execution (generated sql, timing)
+   */
+  meta?: any;
 }
 
 export interface Field {
@@ -30,7 +36,7 @@ export interface Labels {
   [key: string]: string;
 }
 
-export interface SeriesData extends QueryResponseData {
+export interface SeriesData extends QueryResultBase {
   name?: string;
   fields: Field[];
   rows: any[][];
@@ -43,7 +49,7 @@ export interface Column {
   unit?: string;
 }
 
-export interface TableData extends QueryResponseData {
+export interface TableData extends QueryResultBase {
   columns: Column[];
   rows: any[][];
 }
@@ -52,7 +58,7 @@ export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
-export interface TimeSeries extends QueryResponseData {
+export interface TimeSeries extends QueryResultBase {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;

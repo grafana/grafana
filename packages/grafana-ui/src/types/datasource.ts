@@ -44,6 +44,7 @@ export interface DataQueryError {
   message?: string;
   status?: string;
   statusText?: string;
+  refId?: string;
 }
 
 export interface ScopedVar {
