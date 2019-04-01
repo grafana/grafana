@@ -34,6 +34,9 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 
+// Renderless
+export { Interval } from './Interval/Interval';
+
 // Visualizations
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
