@@ -95,6 +95,20 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeFalse)
 			})
+
+			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
+				unprovisionCmd := &models.UnprovisionDashboardCommand{
+					Id: dashId,
+				}
+
+				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+
+				query := &models.IsDashboardProvisionedQuery{DashboardId: dashId}
+
+				err = GetProvisionedDataByDashboardId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeFalse)
+			})
 		})
 	})
 }

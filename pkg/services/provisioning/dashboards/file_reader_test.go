@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,6 +21,7 @@ var (
 	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
 	oneDashboard      = "testdata/test-dashboards/one-dashboard"
 	containingId      = "testdata/test-dashboards/containing-id"
+	unprovision       = "testdata/test-dashboards/unprovision"
 
 	fakeService *fakeDashboardProvisioningService
 )
@@ -240,14 +242,45 @@ func TestDashboardFileReader(t *testing.T) {
 			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := createWalkFn(noFiles, nil)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := createWalkFn(noFiles, nil)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
+		})
+
+		Convey("Should unprovision missing dashboard if preventDelete = true", func() {
+			cfg := &DashboardsAsConfig{
+				Name:  "Default",
+				Type:  "file",
+				OrgId: 1,
+				Options: map[string]interface{}{
+					"folder": unprovision,
+				},
+				DisableDeletion: true,
+			}
+
+			reader, err := NewDashboardFileReader(cfg, logger)
+			So(err, ShouldBeNil)
+
+			err = reader.startWalkingDisk()
+			So(err, ShouldBeNil)
+
+			So(len(fakeService.provisioned["Default"]), ShouldEqual, 2)
+			So(len(fakeService.inserted), ShouldEqual, 2)
+
+			reader.fileFilterFunc = func(fileInfo os.FileInfo) bool {
+				return fileInfo.Name() == "dashboard1.json"
+			}
+
+			err = reader.startWalkingDisk()
+			So(err, ShouldBeNil)
+
+			So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
+			So(len(fakeService.inserted), ShouldEqual, 2)
 		})
 
 		Reset(func() {
@@ -316,13 +349,30 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboa
 		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
 	}
 
-	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], provisioning)
+	// Copy the struct as we need to assign some dashboardId to it but do not want to alter outside world.
+	var copyProvisioning = &models.DashboardProvisioning{}
+	*copyProvisioning = *provisioning
+
+	copyProvisioning.DashboardId = rand.Int63n(1000000)
+
+	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], copyProvisioning)
 	return dto.Dashboard, nil
 }
 
 func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
+}
+
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
+	for key, val := range s.provisioned {
+		for index, dashboard := range val {
+			if dashboard.DashboardId == dashboardId {
+				s.provisioned[key] = append(s.provisioned[key][:index], s.provisioned[key][index+1:]...)
+			}
+		}
+	}
+	return nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
