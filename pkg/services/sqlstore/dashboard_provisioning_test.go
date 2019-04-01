@@ -81,7 +81,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(query.Result, ShouldBeFalse)
 			})
 
-			Convey("Deleteing folder should delete provision meta data", func() {
+			Convey("Deleting folder should delete provision meta data", func() {
 				deleteCmd := &models.DeleteDashboardCommand{
 					Id:    folderCmd.Result.Id,
 					OrgId: 1,

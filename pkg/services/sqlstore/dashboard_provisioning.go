@@ -82,7 +82,7 @@ func GetProvisionedDashboardDataQuery(cmd *models.GetProvisionedDashboardDataQue
 
 // UnprovisionDashboard removes row in dashboard_provisioning for the dashboard making it seem as if manually created.
 // The dashboard will still have `created_by = -1` to see it was not created by any particular user.
-func UnprovisionDashboard(cmd *models.UnprovisionDashboard) error {
+func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
 	if _, err := x.Where("dashboard_id = ?", cmd.Id).Delete(&models.DashboardProvisioning{}); err != nil {
 		return err
 	}
