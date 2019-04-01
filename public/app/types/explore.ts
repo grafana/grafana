@@ -253,16 +253,11 @@ export interface ExploreItemState {
   /**
    * How often query should be refreshed
    */
-  refresh: ExploreRefreshIntervalState;
+  refreshInterval: SelectOptionItem;
 
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
-}
-
-export interface ExploreRefreshIntervalState {
-  interval: SelectOptionItem;
-  intervalId: number; // setInterval ID
 }
 
 export interface ExploreUpdateState {

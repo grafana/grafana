@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
-import { ExploreId, ExploreRefreshIntervalState } from 'app/types/explore';
+import { ExploreId } from 'app/types/explore';
 import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper, SelectOptionItem } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
@@ -13,11 +13,9 @@ import {
   runQueries,
   splitOpen,
   changeRefreshInterval,
-  clearRefreshInterval,
 } from './state/actions';
 import TimePicker from './TimePicker';
-import { RefreshPicker } from '@grafana/ui';
-import { initialExploreItemState } from 'app/features/explore/state/reducers';
+import { RefreshPicker, Interval } from '@grafana/ui';
 
 enum IconSide {
   left = 'left',
@@ -60,7 +58,7 @@ interface StateProps {
   range: RawTimeRange;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
-  refresh: ExploreRefreshIntervalState;
+  refreshInterval: SelectOptionItem;
 }
 
 interface DispatchProps {
@@ -70,7 +68,6 @@ interface DispatchProps {
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
   changeRefreshInterval: typeof changeRefreshInterval;
-  clearRefreshInterval: typeof clearRefreshInterval;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -97,14 +94,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   };
 
   onChangeRefreshInterval = (item: SelectOptionItem) => {
-    const { changeRefreshInterval, clearRefreshInterval, exploreId, refresh } = this.props;
-    if ((!refresh.interval && item.value) || (refresh.interval && refresh.interval.label !== item.label)) {
-      clearRefreshInterval(exploreId);
-      const refreshIntervalId = item.value
-        ? window.setInterval(this.onRunQuery, item.value)
-        : initialExploreItemState.refresh.intervalId;
-      changeRefreshInterval(this.props.exploreId, item, refreshIntervalId);
-    }
+    const { changeRefreshInterval, exploreId } = this.props;
+    changeRefreshInterval(exploreId, item);
   };
 
   render() {
@@ -118,7 +109,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       selectedDatasource,
       splitted,
       timepickerRef,
-      refresh,
+      refreshInterval,
       onChangeTime,
       split,
     } = this.props;
@@ -175,8 +166,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 onIntervalChanged={this.onChangeRefreshInterval}
                 onRefresh={this.onRunQuery}
                 initialValue={undefined}
-                value={refresh.interval}
+                value={refreshInterval}
               />
+              {refreshInterval && refreshInterval.value && (
+                <Interval func={this.onRunQuery} delay={refreshInterval.value} />
+              )}
             </div>
 
             <div className="explore-toolbar-content-item">
@@ -204,7 +198,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
   const exploreItem = state.explore[exploreId];
-  const { datasourceInstance, datasourceMissing, exploreDatasources, queryTransactions, range, refresh } = exploreItem;
+  const {
+    datasourceInstance,
+    datasourceMissing,
+    exploreDatasources,
+    queryTransactions,
+    range,
+    refreshInterval,
+  } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
@@ -217,14 +218,13 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     range,
     selectedDatasource,
     splitted,
-    refresh,
+    refreshInterval,
   };
 };
 
 const mapDispatchToProps: DispatchProps = {
   changeDatasource,
   changeRefreshInterval,
-  clearRefreshInterval,
   clearAll: clearQueries,
   runQuery: runQueries,
   closeSplit: splitClose,

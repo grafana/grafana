@@ -70,11 +70,6 @@ export interface ChangeTimePayload {
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: SelectOptionItem;
-  refreshIntervalId: number;
-}
-
-export interface ClearRefreshIntervalPayload {
-  exploreId: ExploreId;
 }
 
 export interface ClearQueriesPayload {
@@ -242,13 +237,6 @@ export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore
  */
 export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshIntervalPayload>(
   'explore/CHANGE_REFRESH_INTERVAL'
-).create();
-
-/**
- * Clear the refresh interval. Called from RefreshPicker or when unmounting some page components.
- */
-export const clearRefreshIntervalAction = actionCreatorFactory<ClearRefreshIntervalPayload>(
-  'explore/CLEAR_REFRESH_INTERVAL'
 ).create();
 
 /**

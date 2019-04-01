@@ -4,6 +4,7 @@ import { stringToMs } from '@grafana/ui/src/utils/string';
 import { RefreshButton } from './RefreshButton';
 
 export const EMPTY_ITEM_TEXT = 'Off';
+export const defaultItem = { label: EMPTY_ITEM_TEXT, value: undefined };
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
 
 export interface Props {
@@ -15,7 +16,7 @@ export interface Props {
 }
 
 export class RefreshPicker extends PureComponent<Props> {
-  emptyItem = { label: EMPTY_ITEM_TEXT, value: undefined };
+  emptyItem = defaultItem;
 
   constructor(props: Props) {
     super(props);

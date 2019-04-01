@@ -11,7 +11,6 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
-
 import { HigherOrderAction, ActionTypes, SplitCloseActionPayload, splitCloseAction } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -20,7 +19,6 @@ import {
   changeSizeAction,
   changeTimeAction,
   changeRefreshIntervalAction,
-  clearRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
@@ -53,6 +51,8 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
+import { defaultItem as defaultRefreshInterval } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
@@ -81,10 +81,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: DEFAULT_RANGE,
-  refresh: {
-    interval: undefined,
-    intervalId: 0,
-  },
+  refreshInterval: defaultRefreshInterval,
   scanning: false,
   scanRange: null,
   showingGraph: true,
@@ -183,28 +180,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: clearRefreshIntervalAction,
-    mapper: (state): ExploreItemState => {
-      window.clearInterval(state.refresh.intervalId);
-
-      return {
-        ...state,
-        refresh: initialExploreItemState.refresh,
-      };
-    },
-  })
-  .addMapper({
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
-      const nextRefreshInterval = refreshInterval.value ? refreshInterval : initialExploreItemState.refresh.interval;
       return {
         ...state,
-        refresh: {
-          ...state.refresh,
-          interval: nextRefreshInterval,
-          intervalId: action.payload.refreshIntervalId,
-        },
+        refreshInterval: refreshInterval.value ? refreshInterval : initialExploreItemState.refreshInterval,
       };
     },
   })
