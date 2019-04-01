@@ -1,11 +1,13 @@
 import { renderHook, act } from 'react-hooks-testing-library';
+import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiSyntax } from './useLokiSyntax';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 
 describe('useLokiSyntax hook', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as any[] } }),
   };
   const languageProvider = new LanguageProvider(datasource);
   const logLabelOptionsMock = ['Holy mock!'];
@@ -28,7 +30,7 @@ describe('useLokiSyntax hook', () => {
   };
 
   it('should provide Loki syntax when used', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, DatasourceStatus.Connected));
     expect(result.current.syntax).toEqual(null);
 
     await waitForNextUpdate();
@@ -37,7 +39,7 @@ describe('useLokiSyntax hook', () => {
   });
 
   it('should fetch labels on first call', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, DatasourceStatus.Connected));
     expect(result.current.isSyntaxReady).toBeFalsy();
     expect(result.current.logLabelOptions).toEqual([]);
 
@@ -48,7 +50,7 @@ describe('useLokiSyntax hook', () => {
   });
 
   it('should try to fetch missing options when active option changes', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider));
+    const { result, waitForNextUpdate } = renderHook(() => useLokiSyntax(languageProvider, DatasourceStatus.Connected));
     await waitForNextUpdate();
     expect(result.current.logLabelOptions).toEqual(logLabelOptionsMock2);
 
