@@ -19,7 +19,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, DataQueryError, SeriesData } from '@grafana/ui';
+import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -33,6 +33,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isEditing: boolean;
 }
 
 export interface State {
@@ -96,15 +97,25 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
-  onDataResponse = (dataQueryResponse: DataQueryResponse) => {
+  onDataResponse = (data?: SeriesData[]) => {
     if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = dataQueryResponse.data;
+      this.props.panel.snapshotData = data;
     }
     // clear error state (if any)
     this.clearErrorState();
 
-    // This event is used by old query editors and panel editor options
-    this.props.panel.events.emit('data-received', dataQueryResponse.data);
+    if (this.props.isEditing) {
+      const events = this.props.panel.events;
+      if (!data) {
+        data = [];
+      }
+
+      // Angular query editors expect TimeSeries|TableData
+      events.emit('data-received', data.map(v => toLegacyResponseData(v)));
+
+      // Notify react query editors
+      events.emit('series-data-received', data);
+    }
   };
 
   onDataError = (message: string, error: DataQueryError) => {
