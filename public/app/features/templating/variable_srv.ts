@@ -52,8 +52,9 @@ export class VariableSrv {
       });
   }
 
-  onTimeRangeUpdated(timeRange: TimeRange) {
-    this.templateSrv.updateTimeRange(timeRange);
+  onTimeRangeUpdated(event: any) {
+
+    this.templateSrv.updateTimeRange(event.timeRange);
     const promises = this.variables
       .filter(variable => variable.refresh === 2)
       .map(variable => {
@@ -67,7 +68,7 @@ export class VariableSrv {
       });
 
     return this.$q.all(promises).then(() => {
-      this.dashboard.startRefresh();
+      this.dashboard.startRefresh(event.auto);
     });
   }
 

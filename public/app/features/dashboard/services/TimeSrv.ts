@@ -130,7 +130,7 @@ export class TimeSrv {
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
           this.startNextRefreshTimer(intervalMs);
-          this.refreshDashboard();
+          this.refreshDashboard(true);
         }, intervalMs)
       );
     }
@@ -145,9 +145,9 @@ export class TimeSrv {
       this.$location.search(params);
     }
   }
-
-  refreshDashboard() {
-    this.dashboard.timeRangeUpdated(this.timeRange());
+  
+  refreshDashboard(auto?: boolean) {
+    this.dashboard.timeRangeUpdated(this.timeRange(), auto);
   }
 
   private startNextRefreshTimer(afterMs) {
@@ -156,7 +156,7 @@ export class TimeSrv {
       this.$timeout(() => {
         this.startNextRefreshTimer(afterMs);
         if (this.contextSrv.isGrafanaVisible()) {
-          this.refreshDashboard();
+          this.refreshDashboard(true);
         } else {
           this.autoRefreshBlocked = true;
         }
