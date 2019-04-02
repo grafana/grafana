@@ -41,7 +41,7 @@ sudo dpkg -i grafana_5.4.2_amd64.deb
 
 ## APT Repository
 
-Instal the repository for stable releases
+Install the repository for stable releases
 
 ```bash
 sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
