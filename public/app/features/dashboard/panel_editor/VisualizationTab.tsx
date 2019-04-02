@@ -14,10 +14,10 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 // Types
-import { PanelModel } from '../state/PanelModel';
-import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state';
+import { DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types/plugins';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { VizPickerSearch } from './VizPickerSearch';
 
 interface Props {
   panel: PanelModel;
@@ -33,50 +33,45 @@ interface State {
   isVizPickerOpen: boolean;
   searchQuery: string;
   scrollTop: number;
+  hasBeenFocused: boolean;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
-  searchInput: HTMLElement;
 
   constructor(props) {
     super(props);
 
     this.state = {
       isVizPickerOpen: this.props.urlOpenVizPicker,
+      hasBeenFocused: false,
       searchQuery: '',
       scrollTop: 0,
     };
   }
 
-  getPanelDefaultOptions = () => {
+  getReactPanelOptions = () => {
     const { panel, plugin } = this.props;
-
-    if (plugin.exports.PanelDefaults) {
-      return panel.getOptions(plugin.exports.PanelDefaults.options);
-    }
-
-    return panel.getOptions(plugin.exports.PanelDefaults);
+    return panel.getOptions(plugin.exports.reactPanel.defaults);
   };
 
   renderPanelOptions() {
     const { plugin, angularPanel } = this.props;
-    const { PanelOptions } = plugin.exports;
 
     if (angularPanel) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    return (
-      <>
-        {PanelOptions ? (
-          <PanelOptions options={this.getPanelDefaultOptions()} onChange={this.onPanelOptionsChanged} />
-        ) : (
-          <p>Visualization has no options</p>
-        )}
-      </>
-    );
+    if (plugin.exports.reactPanel) {
+      const PanelEditor = plugin.exports.reactPanel.editor;
+
+      if (PanelEditor) {
+        return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      }
+    }
+
+    return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {
@@ -168,7 +163,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       this.props.updateLocation({ query: { openVizPicker: null }, partial: true });
     }
 
-    this.setState({ isVizPickerOpen: false });
+    this.setState({ isVizPickerOpen: false, hasBeenFocused: false });
   };
 
   onSearchQueryChange = (value: string) => {
@@ -179,23 +174,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
-    const { searchQuery } = this.state;
+    const { isVizPickerOpen, searchQuery } = this.state;
 
-    if (this.state.isVizPickerOpen) {
+    if (isVizPickerOpen) {
       return (
-        <>
-          <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-13"
-            placeholder=""
-            onChange={this.onSearchQueryChange}
-            value={searchQuery}
-            ref={elem => elem && elem.focus()}
-          />
-          <button className="btn btn-link toolbar__close" onClick={this.onCloseVizPicker}>
-            <i className="fa fa-chevron-up" />
-          </button>
-        </>
+        <VizPickerSearch
+          plugin={plugin}
+          searchQuery={searchQuery}
+          onChange={this.onSearchQueryChange}
+          onClose={this.onCloseVizPicker}
+        />
       );
     } else {
       return (

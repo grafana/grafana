@@ -2,54 +2,58 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
 import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { DisplayValue, PanelProps, getSingleStatDisplayValues } from '@grafana/ui';
+import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
 
-interface Props extends PanelProps<GaugeOptions> {}
-
-export class GaugePanel extends PureComponent<Props> {
-  render() {
-    const { panelData, width, height, onInterpolate, options } = this.props;
-
-    const prefix = onInterpolate(options.prefix);
-    const suffix = onInterpolate(options.suffix);
-    let value: TimeSeriesValue;
-
-    if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      if (vmSeries[0]) {
-        value = vmSeries[0].stats[options.stat];
-      } else {
-        value = null;
-      }
-    } else if (panelData.tableData) {
-      value = panelData.tableData.rows[0].find(prop => prop > 0);
-    }
+export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
 
     return (
-      <ThemeContext.Consumer>
-        {theme => (
-          <Gauge
-            value={value}
-            {...this.props.options}
-            width={width}
-            height={height}
-            prefix={prefix}
-            suffix={suffix}
-            theme={theme}
-          />
-        )}
-      </ThemeContext.Consumer>
+      <Gauge
+        value={value}
+        width={width}
+        height={height}
+        thresholds={options.thresholds}
+        showThresholdLabels={options.showThresholdLabels}
+        showThresholdMarkers={options.showThresholdMarkers}
+        minValue={options.minValue}
+        maxValue={options.maxValue}
+        theme={config.theme}
+      />
+    );
+  };
+
+  getProcessedValues = (): DisplayValue[] => {
+    return getSingleStatDisplayValues({
+      valueMappings: this.props.options.valueMappings,
+      thresholds: this.props.options.thresholds,
+      valueOptions: this.props.options.valueOptions,
+      data: this.props.data,
+      theme: config.theme,
+      replaceVariables: this.props.replaceVariables,
+    });
+  };
+
+  render() {
+    const { height, width, options, data, renderCounter } = this.props;
+    return (
+      <ProcessedValuesRepeater
+        getProcessedValues={this.getProcessedValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={data}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
+      />
     );
   }
 }

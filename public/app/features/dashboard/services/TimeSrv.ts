@@ -227,8 +227,8 @@ export class TimeSrv {
     const timespan = range.to.valueOf() - range.from.valueOf();
     const center = range.to.valueOf() - timespan / 2;
 
-    const to = center + timespan * factor / 2;
-    const from = center - timespan * factor / 2;
+    const to = center + (timespan * factor) / 2;
+    const from = center - (timespan * factor) / 2;
 
     this.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }

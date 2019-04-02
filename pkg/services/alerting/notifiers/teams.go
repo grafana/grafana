@@ -78,6 +78,13 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = evalContext.Rule.Message
 	}
 
+	images := make([]map[string]interface{}, 0)
+	if evalContext.ImagePublicUrl != "" {
+		images = append(images, map[string]interface{}{
+			"image": evalContext.ImagePublicUrl,
+		})
+	}
+
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -88,14 +95,10 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{
 			{
-				"title": "Details",
-				"facts": fields,
-				"images": []map[string]interface{}{
-					{
-						"image": evalContext.ImagePublicUrl,
-					},
-				},
-				"text": message,
+				"title":  "Details",
+				"facts":  fields,
+				"images": images,
+				"text":   message,
 			},
 		},
 		"potentialAction": []map[string]interface{}{

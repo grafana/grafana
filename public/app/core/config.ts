@@ -13,7 +13,7 @@ export interface BuildInfo {
 
 export class Settings {
   datasources: { [str: string]: DataSourcePlugin };
-  panels: PanelPlugin[];
+  panels: { [key: string]: PanelPlugin };
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
@@ -34,8 +34,10 @@ export class Settings {
   oauth: any;
   disableUserSignUp: boolean;
   loginHint: any;
+  passwordHint: any;
   loginError: any;
   viewersCanEdit: boolean;
+  editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
 
@@ -57,6 +59,7 @@ export class Settings {
         isEnterprise: false,
       },
       viewersCanEdit: false,
+      editorsCanAdmin: false,
       disableSanitizeHtml: false,
     };
 

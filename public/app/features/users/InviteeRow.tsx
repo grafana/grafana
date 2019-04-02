@@ -52,6 +52,9 @@ const mapDispatchToProps = {
   revokeInvite,
 };
 
-export default connect(() => {
-  return {};
-}, mapDispatchToProps)(InviteeRow);
+export default connect(
+  () => {
+    return {};
+  },
+  mapDispatchToProps
+)(InviteeRow);

@@ -1,87 +1,14 @@
-import { ComponentClass } from 'react';
-import { PanelProps, PanelOptionsProps } from './panel';
-import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
-
-export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
-  /**
-   *  min interval range
-   */
-  interval?: string;
-
-  /**
-   * Imports queries from a different datasource
-   */
-  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
-
-  /**
-   * Initializes a datasource after instantiation
-   */
-  init?: () => void;
-
-  /**
-   * Main metrics / data query action
-   */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
-
-  /**
-   * Test & verify datasource settings & connection details
-   */
-  testDatasource(): Promise<any>;
-
-  /**
-   *  Get hints for query improvements
-   */
-  getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
-
-  /**
-   *  Set after constructor is called by Grafana
-   */
-  name?: string;
-}
-
-export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
-  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-  getHighlighterExpression?(query: TQuery): string;
-  languageProvider?: any;
-}
-
-export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
-  datasource: DSType;
-  query: TQuery;
-  onRunQuery: () => void;
-  onChange: (value: TQuery) => void;
-}
-
-export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
-  datasource: DSType;
-  query: TQuery;
-  error?: string | JSX.Element;
-  hint?: QueryHint;
-  history: any[];
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: TQuery) => void;
-  onExecuteHint?: (action: QueryFixAction) => void;
-}
-
-export interface ExploreStartPageProps {
-  onClickExample: (query: DataQuery) => void;
-}
+import { ReactPanelPlugin } from './panel';
+import { DataSourcePlugin } from './datasource';
 
 export interface PluginExports {
-  Datasource?: DataSourceApi;
-  QueryCtrl?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, DataQuery>>;
-  ConfigCtrl?: any;
-  AnnotationsQueryCtrl?: any;
-  VariableQueryEditor?: any;
-  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
-  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-
-  // Panel plugin
+  // used  by app plugins
+  ConfigCtrl: any;
+  // used by angular panels
   PanelCtrl?: any;
-  Panel?: ComponentClass<PanelProps>;
-  PanelOptions?: ComponentClass<PanelOptionsProps>;
-  PanelDefaults?: any;
+
+  dsPlugin?: DataSourcePlugin;
+  reactPanel?: ReactPanelPlugin;
 }
 
 export interface PluginMeta {
@@ -89,6 +16,7 @@ export interface PluginMeta {
   name: string;
   info: PluginMetaInfo;
   includes: PluginInclude[];
+  module: string;
 
   // Datasource-specific
   builtIn?: boolean;

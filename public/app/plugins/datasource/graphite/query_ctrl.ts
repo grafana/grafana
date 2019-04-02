@@ -272,6 +272,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.targetChanged();
   }
 
+  moveFunction(func, offset) {
+    this.queryModel.moveFunction(func, offset);
+    this.targetChanged();
+  }
+
   addSeriesByTagFunc(tag) {
     const newFunc = this.datasource.createFuncInstance('seriesByTag', {
       withDefaultParams: false,

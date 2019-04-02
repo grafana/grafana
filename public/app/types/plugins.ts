@@ -6,7 +6,7 @@ export interface PanelPlugin {
   hideFromList?: boolean;
   module: string;
   baseUrl: string;
-  info: any;
+  info: PluginMetaInfo;
   sort: number;
   exports?: PluginExports;
   dataFormats: PanelDataFormat[];

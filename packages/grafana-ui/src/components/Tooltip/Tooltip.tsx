@@ -1,7 +1,7 @@
 import React, { createRef } from 'react';
 import * as PopperJS from 'popper.js';
-import Popper from './Popper';
-import PopperController, { UsingPopperProps } from './PopperController';
+import { Popper } from './Popper';
+import { PopperController, UsingPopperProps } from './PopperController';
 
 interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error';

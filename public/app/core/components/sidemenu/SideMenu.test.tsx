@@ -2,7 +2,6 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { SideMenu } from './SideMenu';
 import appEvents from '../../app_events';
-import { contextSrv } from 'app/core/services/context_srv';
 
 jest.mock('../../app_events', () => ({
   emit: jest.fn(),
@@ -26,7 +25,6 @@ jest.mock('app/core/services/context_srv', () => ({
     isGrafanaAdmin: false,
     isEditor: false,
     hasEditPermissionFolders: false,
-    toggleSideMenu: jest.fn(),
   },
 }));
 
@@ -54,20 +52,6 @@ describe('Render', () => {
 });
 
 describe('Functions', () => {
-  describe('toggle side menu', () => {
-    const wrapper = setup();
-    const instance = wrapper.instance() as SideMenu;
-    instance.toggleSideMenu();
-
-    it('should call contextSrv.toggleSideMenu', () => {
-      expect(contextSrv.toggleSideMenu).toHaveBeenCalled();
-    });
-
-    it('should emit toggle sidemenu event', () => {
-      expect(appEvents.emit).toHaveBeenCalledWith('toggle-sidemenu');
-    });
-  });
-
   describe('toggle side menu on mobile', () => {
     const wrapper = setup();
     const instance = wrapper.instance() as SideMenu;

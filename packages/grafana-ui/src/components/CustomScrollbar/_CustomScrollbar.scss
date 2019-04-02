@@ -1,4 +1,4 @@
-﻿.custom-scrollbars {
+.custom-scrollbar {
   // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
   // make scroll working it should fit outer container size (scroll appears only when inner container size is
   // greater than outer one).
@@ -36,5 +36,12 @@
   .thumb-horizontal {
     @include gradient-horizontal($scrollbarBackground, $scrollbarBackground2);
     border-radius: 6px;
+  }
+
+  // page scrollbar should stick to left side to aid hitting it
+  &--page {
+    .track-vertical {
+      right: 0;
+    }
   }
 }

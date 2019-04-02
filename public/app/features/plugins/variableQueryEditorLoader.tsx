@@ -5,9 +5,9 @@ import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
 
 async function loadComponent(module) {
-  const component = await importPluginModule(module);
-  if (component && component.VariableQueryEditor) {
-    return component.VariableQueryEditor;
+  const pluginExports = await importPluginModule(module);
+  if (pluginExports.dsPlugin && pluginExports.dsPlugin.components.variableQueryEditor) {
+    return pluginExports.dsPlugin.components.variableQueryEditor;
   } else {
     return DefaultVariableQueryEditor;
   }

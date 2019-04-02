@@ -1,9 +1,114 @@
+import { ComponentClass } from 'react';
 import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries } from './data';
+import { TableData, TimeSeries, SeriesData } from './data';
+
+export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
+  datasource: DataSourceApi<TQuery>;
+  components: DataSourcePluginComponents<TQuery>;
+
+  constructor(datasource: DataSourceApi<TQuery>) {
+    this.datasource = datasource;
+    this.components = {};
+  }
+}
+
+export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery> {
+  queryCtrl?: any;
+  configCtrl?: any;
+  annotationsQueryCtrl?: any;
+  variableQueryEditor?: any;
+  queryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
+  exploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
+  exploreStartPage?: ComponentClass<ExploreStartPageProps>;
+}
+
+export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
+  /**
+   *  min interval range
+   */
+  interval?: string;
+
+  /**
+   * Imports queries from a different datasource
+   */
+  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
+
+  /**
+   * Initializes a datasource after instantiation
+   */
+  init?: () => void;
+
+  /**
+   * Main metrics / data query action
+   */
+  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+
+  /**
+   * Test & verify datasource settings & connection details
+   */
+  testDatasource(): Promise<any>;
+
+  /**
+   *  Get hints for query improvements
+   */
+  getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
+
+  /**
+   *  Set after constructor is called by Grafana
+   */
+  name?: string;
+
+  /**
+   * Set after constructor call, as the data source instance is the most common thing to pass around
+   * we attach the components to this instance for easy access
+   */
+  components?: DataSourcePluginComponents;
+}
+
+export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
+  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+  getHighlighterExpression?(query: TQuery): string;
+  languageProvider?: any;
+}
+
+export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
+  datasource: DSType;
+  query: TQuery;
+  onRunQuery: () => void;
+  onChange: (value: TQuery) => void;
+}
+
+export enum DatasourceStatus {
+  Connected,
+  Disconnected,
+}
+
+export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
+  datasource: DSType;
+  datasourceStatus: DatasourceStatus;
+  query: TQuery;
+  error?: string | JSX.Element;
+  hint?: QueryHint;
+  history: any[];
+  onExecuteQuery?: () => void;
+  onQueryChange?: (value: TQuery) => void;
+  onExecuteHint?: (action: QueryFixAction) => void;
+}
+
+export interface ExploreStartPageProps {
+  onClickExample: (query: DataQuery) => void;
+}
+
+/**
+ * Starting in v6.2 SeriesData can represent both TimeSeries and TableData
+ */
+export type LegacyResponseData = TimeSeries | TableData | any;
+
+export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
-  data: TimeSeries[] | [TableData] | any;
+  data: DataQueryResponseData[];
 }
 
 export interface DataQuery {
@@ -39,6 +144,16 @@ export interface DataQueryError {
   statusText?: string;
 }
 
+export interface ScopedVar {
+  text: any;
+  value: any;
+  [key: string]: any;
+}
+
+export interface ScopedVars {
+  [key: string]: ScopedVar;
+}
+
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
@@ -50,7 +165,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
-  scopedVars: object;
+  scopedVars: ScopedVars;
 }
 
 export interface QueryFix {
@@ -97,4 +212,3 @@ export interface DataSourceSelectItem {
   meta: PluginMeta;
   sort: string;
 }
-

@@ -13,7 +13,6 @@
     "logos": {
       "small": "img/icn-text-panel.svg",
       "large": "img/icn-text-panel.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }

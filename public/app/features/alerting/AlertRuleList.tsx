@@ -149,4 +149,9 @@ const mapDispatchToProps = {
   togglePauseAlertRule,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(AlertRuleList));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(AlertRuleList)
+);

@@ -43,6 +43,9 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
           this.props.onQueryChange(target);
           this.props.onExecuteQuery();
         },
+        onQueryChange: () => {
+          this.props.onQueryChange(target);
+        },
         events: exploreEvents,
         panel: { datasource, targets: [target] },
         dashboard: {},

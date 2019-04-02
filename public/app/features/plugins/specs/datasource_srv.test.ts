@@ -2,7 +2,6 @@ import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PluginMeta } from '@grafana/ui/src/types';
-import { DataSourcePlugin } from 'app/types';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv = {
@@ -78,7 +77,7 @@ describe('datasource_srv', () => {
       },
     };
     beforeEach(() => {
-      config.datasources = unsortedDatasources as { [name: string]: DataSourcePlugin };
+      config.datasources = unsortedDatasources as any;
       metricSources = _datasourceSrv.getMetricSources({});
       config.defaultDatasource = 'BBB';
     });

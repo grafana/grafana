@@ -1,6 +1,8 @@
 package models
 
-import "errors"
+import (
+	"errors"
+)
 
 // Typed errors
 var (
@@ -23,11 +25,18 @@ type UserToken struct {
 	UnhashedToken string
 }
 
+type RevokeAuthTokenCmd struct {
+	AuthTokenId int64 `json:"authTokenId"`
+}
+
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
 	CreateToken(userId int64, clientIP, userAgent string) (*UserToken, error)
 	LookupToken(unhashedToken string) (*UserToken, error)
 	TryRotateToken(token *UserToken, clientIP, userAgent string) (bool, error)
 	RevokeToken(token *UserToken) error
+	RevokeAllUserTokens(userId int64) error
 	ActiveTokenCount() (int64, error)
+	GetUserToken(userId, userTokenId int64) (*UserToken, error)
+	GetUserTokens(userId int64) ([]*UserToken, error)
 }

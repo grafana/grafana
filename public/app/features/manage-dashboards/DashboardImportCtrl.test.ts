@@ -31,7 +31,7 @@ describe('DashboardImportCtrl', () => {
       config.datasources = {
         ds: {
           type: 'test-db',
-        },
+        } as any,
       };
 
       ctx.ctrl.onUpload({

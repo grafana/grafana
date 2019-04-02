@@ -1,11 +1,14 @@
 // Libraries
 import _ from 'lodash';
 
-// Types
+// Utils
 import { Emitter } from 'app/core/utils/emitter';
-import { PANEL_OPTIONS_KEY_PREFIX } from 'app/core/constants';
-import { DataQuery, TimeSeries } from '@grafana/ui';
-import { TableData } from '@grafana/ui/src';
+import { getNextRefIdChar } from 'app/core/utils/query';
+
+// Types
+import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
+import { PanelPlugin } from 'app/types';
+import config from 'app/core/config';
 
 export interface GridPos {
   x: number;
@@ -21,6 +24,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   isEditing: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
+  plugin: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -47,8 +51,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   timeFrom: true,
   timeShift: true,
   hideTimeOverride: true,
-  maxDataPoints: true,
-  interval: true,
   description: true,
   links: true,
   fullscreen: true,
@@ -58,6 +60,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cacheTimeout: true,
   cachedPluginOptions: true,
   transparent: true,
+  pluginVersion: true,
 };
 
 const defaults: any = {
@@ -74,7 +77,7 @@ export class PanelModel {
   type: string;
   title: string;
   alert?: any;
-  scopedVars?: any;
+  scopedVars?: ScopedVars;
   repeat?: string;
   repeatIteration?: number;
   repeatPanelId?: number;
@@ -87,11 +90,15 @@ export class PanelModel {
   targets: DataQuery[];
   datasource: string;
   thresholds?: any;
+  pluginVersion?: string;
 
-  snapshotData?: TimeSeries[] | [TableData];
+  snapshotData?: DataQueryResponseData[];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
+  options: {
+    [key: string]: any;
+  };
 
   maxDataPoints?: number;
   interval?: string;
@@ -105,47 +112,56 @@ export class PanelModel {
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
-
-  // cache props between plugins
   cachedPluginOptions?: any;
+  legend?: { show: boolean };
+  plugin?: PanelPlugin;
 
-  constructor(model) {
+  constructor(model: any) {
     this.events = new Emitter();
 
     // copy properties from persisted model
     for (const property in model) {
-      this[property] = model[property];
+      (this as any)[property] = model[property];
     }
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
     // queries must have refId
     this.ensureQueryIds();
+
+    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
-    if (this.targets) {
+    if (this.targets && _.isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
-          query.refId = this.getNextQueryLetter();
+          query.refId = getNextRefIdChar(this.targets);
         }
       }
     }
   }
 
-  getOptions(panelDefaults) {
-    return _.defaultsDeep(this[this.getOptionsKey()] || {}, panelDefaults);
+  restoreInfintyForThresholds() {
+    if (this.options && this.options.thresholds) {
+      this.options.thresholds = this.options.thresholds.map((threshold: Threshold) => {
+        // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
+        if (threshold.index === 0 && threshold.value === null) {
+          return { ...threshold, value: -Infinity };
+        }
+
+        return threshold;
+      });
+    }
+  }
+
+  getOptions(panelDefaults: any) {
+    return _.defaultsDeep(this.options || {}, panelDefaults);
   }
 
   updateOptions(options: object) {
-    const update: any = {};
-    update[this.getOptionsKey()] = options;
-    Object.assign(this, update);
+    this.options = options;
     this.render();
-  }
-
-  private getOptionsKey() {
-    return PANEL_OPTIONS_KEY_PREFIX + this.type;
   }
 
   getSaveModel() {
@@ -216,57 +232,82 @@ export class PanelModel {
       }
       return {
         ...acc,
-        [property]: this[property],
+        [property]: (this as any)[property],
       };
     }, {});
-  }
-
-  private saveCurrentPanelOptions() {
-    this.cachedPluginOptions[this.type] = this.getOptionsToRemember();
   }
 
   private restorePanelOptions(pluginId: string) {
     const prevOptions = this.cachedPluginOptions[pluginId] || {};
 
     Object.keys(prevOptions).map(property => {
-      this[property] = prevOptions[property];
+      (this as any)[property] = prevOptions[property];
     });
   }
 
-  changeType(pluginId: string, fromAngularPanel: boolean) {
-    this.saveCurrentPanelOptions();
-    this.type = pluginId;
+  private getPluginVersion(plugin: PanelPlugin): string {
+    return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
+  }
 
-    // for angular panels only we need to remove all events and let angular panels do some cleanup
-    if (fromAngularPanel) {
-      this.destroy();
+  pluginLoaded(plugin: PanelPlugin) {
+    this.plugin = plugin;
 
-      for (const key of _.keys(this)) {
-        if (mustKeepProps[key]) {
-          continue;
-        }
+    const { reactPanel } = plugin.exports;
 
-        delete this[key];
+    // Call PanelMigration Handler if the version has changed
+    if (reactPanel && reactPanel.onPanelMigration) {
+      const version = this.getPluginVersion(plugin);
+      if (version !== this.pluginVersion) {
+        this.options = reactPanel.onPanelMigration(this);
+        this.pluginVersion = version;
       }
     }
+  }
 
+  changePlugin(newPlugin: PanelPlugin) {
+    const pluginId = newPlugin.id;
+    const oldOptions: any = this.getOptionsToRemember();
+    const oldPluginId = this.type;
+    const reactPanel = newPlugin.exports.reactPanel;
+
+    // for angular panels we must remove all events and let angular panels do some cleanup
+    if (this.plugin.exports.PanelCtrl) {
+      this.destroy();
+    }
+
+    // remove panel type specific  options
+    for (const key of _.keys(this)) {
+      if (mustKeepProps[key]) {
+        continue;
+      }
+
+      delete (this as any)[key];
+    }
+
+    this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
+
+    // switch
+    this.type = pluginId;
+    this.plugin = newPlugin;
+
+    // Let panel plugins inspect options from previous panel and keep any that it can use
+    if (reactPanel) {
+      if (reactPanel.onPanelTypeChanged) {
+        this.options = this.options || {};
+        const old = oldOptions && oldOptions.options ? oldOptions.options : {};
+        Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
+      }
+      if (reactPanel.onPanelMigration) {
+        this.pluginVersion = this.getPluginVersion(newPlugin);
+      }
+    }
   }
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    query.refId = this.getNextQueryLetter();
+    query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
-  }
-
-  getNextQueryLetter(): string {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(this.targets, other => {
-        return other.refId !== refId;
-      });
-    });
   }
 
   changeQuery(query: DataQuery, index: number) {

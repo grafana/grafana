@@ -98,4 +98,9 @@ const mapDispatchToProps = {
   removeDashboard,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourceDashboards));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(DataSourceDashboards)
+);

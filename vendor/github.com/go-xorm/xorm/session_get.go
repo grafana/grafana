@@ -5,7 +5,9 @@
 package xorm
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -30,7 +32,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	}
 
 	if beanValue.Elem().Kind() == reflect.Struct {
-		if err := session.statement.setRefValue(beanValue.Elem()); err != nil {
+		if err := session.statement.setRefBean(bean); err != nil {
 			return false, err
 		}
 	}
@@ -56,7 +58,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	table := session.statement.RefTable
 
 	if session.canCache() && beanValue.Elem().Kind() == reflect.Struct {
-		if cacher := session.engine.getCacher2(table); cacher != nil &&
+		if cacher := session.engine.getCacher(table.Name); cacher != nil &&
 			!session.statement.unscoped {
 			has, err := session.cacheGet(bean, sqlStr, args...)
 			if err != ErrCacheFailed {
@@ -65,7 +67,28 @@ func (session *Session) get(bean interface{}) (bool, error) {
 		}
 	}
 
-	return session.nocacheGet(beanValue.Elem().Kind(), table, bean, sqlStr, args...)
+	context := session.statement.context
+	if context != nil {
+		res := context.Get(fmt.Sprintf("%v-%v", sqlStr, args))
+		if res != nil {
+			structValue := reflect.Indirect(reflect.ValueOf(bean))
+			structValue.Set(reflect.Indirect(reflect.ValueOf(res)))
+			session.lastSQL = ""
+			session.lastSQLArgs = nil
+			return true, nil
+		}
+	}
+
+	has, err := session.nocacheGet(beanValue.Elem().Kind(), table, bean, sqlStr, args...)
+	if err != nil || !has {
+		return has, err
+	}
+
+	if context != nil {
+		context.Put(fmt.Sprintf("%v-%v", sqlStr, args), bean)
+	}
+
+	return true, nil
 }
 
 func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bean interface{}, sqlStr string, args ...interface{}) (bool, error) {
@@ -76,7 +99,17 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 	defer rows.Close()
 
 	if !rows.Next() {
+		if rows.Err() != nil {
+			return false, rows.Err()
+		}
 		return false, nil
+	}
+
+	switch bean.(type) {
+	case sql.NullInt64, sql.NullBool, sql.NullFloat64, sql.NullString:
+		return true, rows.Scan(&bean)
+	case *sql.NullInt64, *sql.NullBool, *sql.NullFloat64, *sql.NullString:
+		return true, rows.Scan(bean)
 	}
 
 	switch beanKind {
@@ -126,8 +159,9 @@ func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interf
 		return false, ErrCacheFailed
 	}
 
-	cacher := session.engine.getCacher2(session.statement.RefTable)
 	tableName := session.statement.TableName()
+	cacher := session.engine.getCacher(tableName)
+
 	session.engine.logger.Debug("[cacheGet] find sql:", newsql, args)
 	table := session.statement.RefTable
 	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)

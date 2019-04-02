@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 
 jest.mock('app/core/app_events', () => {
   return {
-    emit: jest.fn<any>(),
+    emit: jest.fn(),
   };
 });
 

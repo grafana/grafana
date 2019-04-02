@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,6 +52,12 @@ func notAuthorized(c *m.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
+func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
+	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+		accessForbidden(c)
+	}
+}
+
 func RoleAuth(roles ...m.RoleType) macaron.Handler {
 	return func(c *m.ReqContext) {
 		ok := false
@@ -77,6 +83,23 @@ func Auth(options *AuthOptions) macaron.Handler {
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
 			accessForbidden(c)
 			return
+		}
+	}
+}
+
+// AdminOrFeatureEnabled creates a middleware that allows access
+// if the signed in user is either an Org Admin or if the
+// feature flag is enabled.
+// Intended for when feature flags open up access to APIs that
+// are otherwise only available to admins.
+func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
+	return func(c *m.ReqContext) {
+		if c.OrgRole == m.ROLE_ADMIN {
+			return
+		}
+
+		if !enabled {
+			accessForbidden(c)
 		}
 	}
 }

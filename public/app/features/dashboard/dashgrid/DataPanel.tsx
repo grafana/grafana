@@ -11,15 +11,16 @@ import {
   DataQueryResponse,
   DataQueryError,
   LoadingState,
-  PanelData,
-  TableData,
+  SeriesData,
   TimeRange,
-  TimeSeries,
+  ScopedVars,
+  toSeriesData,
+  guessFieldTypes,
 } from '@grafana/ui';
 
 interface RenderProps {
   loading: LoadingState;
-  panelData: PanelData;
+  data: SeriesData[];
 }
 
 export interface Props {
@@ -33,6 +34,7 @@ export interface Props {
   refreshCounter: number;
   minInterval?: string;
   maxDataPoints?: number;
+  scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data: DataQueryResponse) => void;
   onError: (message: string, error: DataQueryError) => void;
@@ -42,6 +44,26 @@ export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
   response: DataQueryResponse;
+  data?: SeriesData[];
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedSeriesData(results?: any[]): SeriesData[] {
+  if (!results) {
+    return [];
+  }
+
+  const series: SeriesData[] = [];
+  for (const r of results) {
+    if (r) {
+      series.push(guessFieldTypes(toSeriesData(r)));
+    }
+  }
+  return series;
 }
 
 export class DataPanel extends Component<Props, State> {
@@ -95,6 +117,7 @@ export class DataPanel extends Component<Props, State> {
       timeRange,
       widthPixels,
       maxDataPoints,
+      scopedVars,
       onDataResponse,
       onError,
     } = this.props;
@@ -111,7 +134,7 @@ export class DataPanel extends Component<Props, State> {
     this.setState({ loading: LoadingState.Loading });
 
     try {
-      const ds = await this.dataSourceSrv.get(datasource);
+      const ds = await this.dataSourceSrv.get(datasource, scopedVars);
 
       // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;
@@ -127,7 +150,7 @@ export class DataPanel extends Component<Props, State> {
         intervalMs: intervalRes.intervalMs,
         targets: queries,
         maxDataPoints: maxDataPoints || widthPixels,
-        scopedVars: {},
+        scopedVars: scopedVars || {},
         cacheTimeout: null,
       };
 
@@ -144,6 +167,7 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         loading: LoadingState.Done,
         response: resp,
+        data: getProcessedSeriesData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {
@@ -162,32 +186,16 @@ export class DataPanel extends Component<Props, State> {
       }
 
       onError(message, err);
-      this.setState({ isFirstLoad: false });
+      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
     }
-  };
-
-  getPanelData = () => {
-    const { response } = this.state;
-
-    if (response.data.length > 0 && (response.data[0] as TableData).type === 'table') {
-      return {
-        tableData: response.data[0] as TableData,
-        timeSeries: null,
-      };
-    }
-
-    return {
-      timeSeries: response.data as TimeSeries[],
-      tableData: null,
-    };
   };
 
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad } = this.state;
-    const panelData = this.getPanelData();
+    const { loading, isFirstLoad, data } = this.state;
 
-    if (isFirstLoad && loading === LoadingState.Loading) {
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
       return this.renderLoadingState();
     }
 
@@ -201,21 +209,17 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {this.renderLoadingState()}
-        {this.props.children({ loading, panelData })}
+        {loading === LoadingState.Loading && this.renderLoadingState()}
+        {this.props.children({ loading, data })}
       </>
     );
   }
 
   private renderLoadingState(): JSX.Element {
-    const { loading } = this.state;
-    if (loading === LoadingState.Loading) {
-      return (
-        <div className="panel-loading">
-          <i className="fa fa-spinner fa-spin" />
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
+    );
   }
 }

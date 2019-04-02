@@ -12,7 +12,7 @@ export class MssqlDatasource {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
   interpolateVariable(value, variable) {

@@ -12,10 +12,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi, TimeRange } from '@grafana/ui';
+import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
   panel: PanelModel;
   query: DataQuery;
+  dashboard: DashboardModel;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
@@ -83,13 +85,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, query } = this.props;
+    const { panel, query, dashboard } = this.props;
     const { datasource } = this.state;
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
+      dashboard: dashboard,
       refresh: () => panel.refresh(),
       render: () => panel.render(),
       events: panel.events,
@@ -265,6 +268,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 export interface AngularQueryComponentScope {
   target: DataQuery;
   panel: PanelModel;
+  dashboard: DashboardModel;
   events: Emitter;
   refresh: () => void;
   render: () => void;

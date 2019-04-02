@@ -82,7 +82,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
               >
                 Key name
               </span>
-              <input
+              <Input
                 className="gf-form-input"
                 onChange={[Function]}
                 placeholder="Name"
