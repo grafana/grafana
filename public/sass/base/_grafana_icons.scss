@@ -26,21 +26,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-gf-check-alt:before {
-  content: '\e603';
-}
-
 .icon-gf-check:before {
   content: '\e604';
 }
-.icon-gf-dashboard:before {
-  content: '\e606';
-}
+
 .icon-gf-panel:before {
   content: '\e904';
-}
-.icon-gf-datasources:before {
-  content: '\e607';
 }
 .icon-gf-endpoint-tiny:before {
   content: '\e608';
@@ -51,7 +42,6 @@
 .icon-gf-online:before {
   content: '\e611';
 }
-
 .icon-gf-apps:before {
   content: '\e902';
 }
