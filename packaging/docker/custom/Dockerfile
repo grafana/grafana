@@ -2,6 +2,17 @@ ARG GRAFANA_VERSION="latest"
 
 FROM grafana/grafana:${GRAFANA_VERSION}
 
+USER root
+
+# Add default provisioning service paths
+RUN mkdir -p /etc/grafana/provisioning/notifiers && \
+    mkdir -p /etc/grafana/provisioning/datasources && \
+    mkdir -p /etc/grafana/provisioning/dashboards && \
+    chmod -R 755 /etc/grafana/provisioning
+
+# Assert permissions for default configuration path
+RUN chown -R grafana:grafana /etc/grafana/
+
 USER grafana
 
 ARG GF_INSTALL_PLUGINS=""
