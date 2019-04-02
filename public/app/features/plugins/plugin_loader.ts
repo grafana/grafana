@@ -141,7 +141,7 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
@@ -150,8 +150,25 @@ export function importPluginModule(path: string): Promise<any> {
 }
 
 export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> {
-  importPluginModule(path).then(pluginExports => {
-    if (!pluginExports.default) {
+  return importPluginModule(path).then(pluginExports => {
+    const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
+    dsPlugin.setComponentsFromLegacyExports(pluginExports);
+    return dsPlugin;
+  });
+}
+
+export function importAppPlugin(path: string): Promise<AppPlugin> {
+  return importPluginModule(path).then(pluginExports => {
+    return new AppPlugin();
+  });
+}
+
+export function importPanelPlugin(path: string): Promise<AngularPanelPlugin | ReactPanelPlugin> {
+  return importPluginModule(path).then(pluginExports => {
+    if (pluginExports.reactPanel) {
+      return pluginExports.reactPanel as ReactPanelPlugin;
+    } else {
+      return new AngularPanelPlugin(pluginExports.PanelCtrl);
     }
   });
 }

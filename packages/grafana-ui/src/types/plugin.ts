@@ -19,7 +19,7 @@ export interface PluginMeta {
 
 export class AppPlugin {
   components: {
-    configCtrl?: any;
+    ConfigCtrl?: any;
     pages: { [str: string]: any };
   };
 

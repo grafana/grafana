@@ -85,11 +85,11 @@ export class ReactPanelPlugin<TOptions = any> {
 
 export class AngularPanelPlugin {
   components: {
-    panelCtrl: any;
+    PanelCtrl: any;
   };
 
-  constructor(panelCtrl: any) {
-    this.components = { panelCtrl: panelCtrl };
+  constructor(PanelCtrl: any) {
+    this.components = { PanelCtrl: PanelCtrl };
   }
 }
 

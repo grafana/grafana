@@ -1,4 +1,4 @@
-import { PluginExports, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
 
 export interface PanelPlugin {
   id: string;
@@ -8,7 +8,7 @@ export interface PanelPlugin {
   baseUrl: string;
   info: PluginMetaInfo;
   sort: number;
-  exports?: PluginExports;
+  exports?: AngularPanelPlugin | ReactPanelPlugin;
   dataFormats: PanelDataFormat[];
 }
 
@@ -21,7 +21,6 @@ export interface DataSourcePlugin {
   type: string;
   name: string;
   meta: PluginMeta;
-  exports?: PluginExports;
 }
 
 export interface Plugin {

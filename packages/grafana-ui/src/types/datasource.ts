@@ -4,25 +4,76 @@ import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
-  datasource: DataSourceApi<TQuery>;
+  DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TQuery>;
 
-  constructor(datasource: DataSourceApi<TQuery>) {
-    this.datasource = datasource;
+  constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
+    this.DataSourceClass = DataSourceClass;
     this.components = {};
+  }
+
+  setConfigCtrl(ConfigCtrl: any) {
+    this.components.ConfigCtrl = ConfigCtrl;
+    return this;
+  }
+
+  setQueryCtrl(QueryCtrl: any) {
+    this.components.QueryCtrl = QueryCtrl;
+    return this;
+  }
+
+  setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
+    this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
+    return this;
+  }
+
+  setQueryEditor(QueryEditor: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>) {
+    this.components.QueryEditor = QueryEditor;
+    return this;
+  }
+
+  setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>) {
+    this.components.ExploreQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreStartPage(ExploreStartPage: ComponentClass<ExploreStartPageProps>) {
+    this.components.ExploreStartPage = ExploreStartPage;
+    return this;
+  }
+
+  setVariableQueryEditor(VariableQueryEditor: any) {
+    this.components.VariableQueryEditor = VariableQueryEditor;
+    return this;
+  }
+
+  setComponentsFromLegacyExports(exports: any) {
+    this.components.ConfigCtrl = exports.ConfigCtrl;
+    this.components.QueryCtrl = exports.QueryCtrl;
+    this.components.AnnotationsQueryCtrl = exports.AnnotationsQueryCtrl;
+    this.components.ExploreQueryField = exports.ExploreQueryField;
+    this.components.ExploreStartPage = exports.ExploreStartPage;
+    this.components.QueryEditor = exports.QueryEditor;
   }
 }
 
 export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery> {
-  queryCtrl?: any;
-  configCtrl?: any;
-  annotationsQueryCtrl?: any;
-  variableQueryEditor?: any;
-  queryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
-  exploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
-  exploreStartPage?: ComponentClass<ExploreStartPageProps>;
+  QueryCtrl?: any;
+  ConfigCtrl?: any;
+  AnnotationsQueryCtrl?: any;
+  VariableQueryEditor?: any;
+  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
+  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
+  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
 }
 
+interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
+    new (): DataSourceApi<TQuery>;
+}
+
+/**
+ * The main data source abstraction interface, represents an intance of a data source
+ */
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    *  min interval range
