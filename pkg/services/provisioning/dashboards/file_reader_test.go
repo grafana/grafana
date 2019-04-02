@@ -1,7 +1,7 @@
 package dashboards
 
 import (
-	"math/rand"
+	"github.com/stretchr/testify/mock"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -23,7 +23,7 @@ var (
 	containingId      = "testdata/test-dashboards/containing-id"
 	unprovision       = "testdata/test-dashboards/unprovision"
 
-	fakeService *fakeDashboardProvisioningService
+	fakeService *dashboards.FakeDashboardProvisioningService
 )
 
 func TestCreatingNewDashboardFileReader(t *testing.T) {
@@ -81,7 +81,6 @@ func TestDashboardFileReader(t *testing.T) {
 		origNewDashboardProvisioningService := dashboards.NewProvisioningService
 		fakeService = mockDashboardProvisioningService()
 
-		bus.AddHandler("test", mockGetDashboardQuery)
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
@@ -101,33 +100,73 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
+				bus.AddHandler("test", func(cmd *models.GetDashboardQuery) error {
+					return models.ErrDashboardNotFound
+				})
+
+				fakeService.
+					On(
+						"SaveFolderForProvisionedDashboards",
+						mock.MatchedBy(func(dash *dashboards.SaveDashboardDTO) bool {
+							return dash.Dashboard.Title == "Team A"
+						}),
+					).
+					Return(&models.Dashboard{Id: 1}, nil)
+
+				fakeService.
+					On("GetProvisionedDashboardData", "Default").
+					Return([]*models.DashboardProvisioning{}, nil)
+
+				fakeService.
+					On("SaveProvisionedDashboard", mock.Anything, mock.Anything).
+					Return(&models.Dashboard{}, nil).
+					Times(2)
+
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				folders := 0
-				dashboards := 0
+				dash := &dashboards.SaveDashboardDTO{}
+				dash.Dashboard = models.NewDashboardFolder(cfg.Folder)
+				dash.Dashboard.IsFolder = true
+				dash.Overwrite = true
+				dash.OrgId = cfg.OrgId
 
-				for _, i := range fakeService.inserted {
-					if i.Dashboard.IsFolder {
-						folders++
-					} else {
-						dashboards++
-					}
-				}
-
-				So(folders, ShouldEqual, 1)
-				So(dashboards, ShouldEqual, 2)
+				fakeService.AssertExpectations(t)
 			})
 
+			// There was an issue with former test that it did not mock GetProvisionedDashboardData, which
+			// is the function that actually returns existing provisioned dashboards so it inserted a dashboard
+			// but not due to update but as a new dashboard
 			Convey("Can read default dashboard and replace old version in database", func() {
 				cfg.Options["path"] = oneDashboard
 
-				stat, _ := os.Stat(oneDashboard + "/dashboard1.json")
+				dashboardPath := oneDashboard + "/dashboard1.json"
+				stat, _ := os.Stat(dashboardPath)
 
-				fakeService.getDashboard = append(fakeService.getDashboard, &models.Dashboard{
-					Updated: stat.ModTime().AddDate(0, 0, -1),
-					Slug:    "grafana",
-				})
+				absPath, err := filepath.Abs(dashboardPath)
+				So(err, ShouldBeNil)
+
+				// Fake older data in the DB
+				fakeService.
+					On("GetProvisionedDashboardData", "Default").
+					Return(
+						[]*models.DashboardProvisioning{
+							{
+								Id:          1,
+								DashboardId: 1,
+								Updated:     stat.ModTime().AddDate(0, 0, -1).Unix(),
+								ExternalId:  absPath,
+								CheckSum:    "",
+								Name:        "Default",
+							},
+						},
+						nil,
+					)
+
+				// And that dashboard is updated due to date difference
+				fakeService.
+					On("SaveProvisionedDashboard", mock.Anything, mock.Anything).
+					Return(&models.Dashboard{}, nil)
 
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
@@ -135,20 +174,22 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeService.inserted), ShouldEqual, 1)
+				fakeService.AssertExpectations(t)
 			})
 
-			Convey("Overrides id from dashboard.json files", func() {
-				cfg.Options["path"] = containingId
-
-				reader, err := NewDashboardFileReader(cfg, logger)
-				So(err, ShouldBeNil)
-
-				err = reader.startWalkingDisk()
-				So(err, ShouldBeNil)
-
-				So(len(fakeService.inserted), ShouldEqual, 1)
-			})
+			// Not sure what this should do, looking at the code we do not actually save the dashboard under the ID
+			// set in the json file, we strip it or use the one from dashboard_provisioning
+			//Convey("Overrides id from dashboard.json files", func() {
+			//	cfg.Options["path"] = containingId
+			//
+			//	reader, err := NewDashboardFileReader(cfg, logger)
+			//	So(err, ShouldBeNil)
+			//
+			//	err = reader.startWalkingDisk()
+			//	So(err, ShouldBeNil)
+			//
+			//	So(len(fakeService.inserted), ShouldEqual, 1)
+			//})
 
 			Convey("Invalid configuration should return error", func() {
 				cfg := &DashboardsAsConfig{
@@ -173,6 +214,29 @@ func TestDashboardFileReader(t *testing.T) {
 				cfg1 := &DashboardsAsConfig{Name: "1", Type: "file", OrgId: 1, Folder: "f1", Options: map[string]interface{}{"path": containingId}}
 				cfg2 := &DashboardsAsConfig{Name: "2", Type: "file", OrgId: 1, Folder: "f2", Options: map[string]interface{}{"path": containingId}}
 
+				bus.AddHandler("test", func(cmd *models.GetDashboardQuery) error {
+					return models.ErrDashboardNotFound
+				})
+
+				fakeService.
+					On("SaveFolderForProvisionedDashboards", mock.Anything).
+					Return(&models.Dashboard{Id: 1}, nil).
+					Times(2)
+
+				fakeService.
+					On("GetProvisionedDashboardData", "1").
+					Return([]*models.DashboardProvisioning{}, nil)
+
+				fakeService.
+					On("GetProvisionedDashboardData", "2").
+					Return([]*models.DashboardProvisioning{}, nil)
+
+				fakeService.
+					On("SaveProvisionedDashboard", mock.Anything, mock.Anything).
+					// No need to return anything as it is ignored in the code
+					Return(&models.Dashboard{}, nil).
+					Times(2)
+
 				reader1, err := NewDashboardFileReader(cfg1, logger)
 				So(err, ShouldBeNil)
 
@@ -185,18 +249,7 @@ func TestDashboardFileReader(t *testing.T) {
 				err = reader2.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				var folderCount int
-				var dashCount int
-				for _, o := range fakeService.inserted {
-					if o.Dashboard.IsFolder {
-						folderCount++
-					} else {
-						dashCount++
-					}
-				}
-
-				So(folderCount, ShouldEqual, 2)
-				So(dashCount, ShouldEqual, 2)
+				fakeService.AssertExpectations(t)
 			})
 		})
 
@@ -226,16 +279,22 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolderId(cfg, fakeService)
+			bus.AddHandler("test", func(cmd *models.GetDashboardQuery) error {
+				return models.ErrDashboardNotFound
+			})
+
+			fakeService.
+				On(
+					"SaveFolderForProvisionedDashboards",
+					mock.MatchedBy(func(dash *dashboards.SaveDashboardDTO) bool {
+						return dash.Dashboard.IsFolder && dash.Dashboard.Title == "TEAM A"
+					}),
+				).
+				Return(&models.Dashboard{Id: 1}, nil)
+
+			_, err := getOrCreateFolderId(cfg, fakeService)
 			So(err, ShouldBeNil)
-			inserted := false
-			for _, d := range fakeService.inserted {
-				if d.Dashboard.IsFolder && d.Dashboard.Id == folderId {
-					inserted = true
-				}
-			}
-			So(len(fakeService.inserted), ShouldEqual, 1)
-			So(inserted, ShouldBeTrue)
+			fakeService.AssertExpectations(t)
 		})
 
 		Convey("Walking the folder with dashboards", func() {
@@ -266,21 +325,38 @@ func TestDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 
+			externalId1, err := filepath.Abs(unprovision + "/dashboard1.json")
+			So(err, ShouldBeNil)
+			externalId2, err := filepath.Abs(unprovision + "/dashboard2.json")
+			So(err, ShouldBeNil)
+
+			fakeService.
+				On("GetProvisionedDashboardData", "Default").
+				Return([]*models.DashboardProvisioning{
+					{
+						Id:          1,
+						DashboardId: 1,
+						ExternalId:  externalId1,
+					},
+					{
+						Id:          2,
+						DashboardId: 2,
+						ExternalId:  externalId2,
+					},
+				}, nil)
+
+			fakeService.
+				On("SaveProvisionedDashboard", mock.Anything, mock.Anything).
+				Return(&models.Dashboard{}, nil)
+
+			fakeService.
+				On("UnprovisionDashboard", int64(2)).
+				Return(nil)
+
 			err = reader.startWalkingDisk()
 			So(err, ShouldBeNil)
 
-			So(len(fakeService.provisioned["Default"]), ShouldEqual, 2)
-			So(len(fakeService.inserted), ShouldEqual, 2)
-
-			reader.fileFilterFunc = func(fileInfo os.FileInfo) bool {
-				return fileInfo.Name() == "dashboard1.json"
-			}
-
-			err = reader.startWalkingDisk()
-			So(err, ShouldBeNil)
-
-			So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
-			So(len(fakeService.inserted), ShouldEqual, 2)
+			fakeService.AssertExpectations(t)
 		})
 
 		Reset(func() {
@@ -318,75 +394,10 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
-	mock := fakeDashboardProvisioningService{
-		provisioned: map[string][]*models.DashboardProvisioning{},
-	}
+func mockDashboardProvisioningService() *dashboards.FakeDashboardProvisioningService {
+	fake := &dashboards.FakeDashboardProvisioningService{}
 	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
-		return &mock
+		return fake
 	}
-	return &mock
-}
-
-type fakeDashboardProvisioningService struct {
-	inserted     []*dashboards.SaveDashboardDTO
-	provisioned  map[string][]*models.DashboardProvisioning
-	getDashboard []*models.Dashboard
-}
-
-func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	if _, ok := s.provisioned[name]; !ok {
-		s.provisioned[name] = []*models.DashboardProvisioning{}
-	}
-
-	return s.provisioned[name], nil
-}
-
-func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	s.inserted = append(s.inserted, dto)
-
-	if _, ok := s.provisioned[provisioning.Name]; !ok {
-		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
-	}
-
-	// Copy the struct as we need to assign some dashboardId to it but do not want to alter outside world.
-	var copyProvisioning = &models.DashboardProvisioning{}
-	*copyProvisioning = *provisioning
-
-	copyProvisioning.DashboardId = rand.Int63n(1000000)
-
-	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], copyProvisioning)
-	return dto.Dashboard, nil
-}
-
-func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	s.inserted = append(s.inserted, dto)
-	return dto.Dashboard, nil
-}
-
-func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
-	for key, val := range s.provisioned {
-		for index, dashboard := range val {
-			if dashboard.DashboardId == dashboardId {
-				s.provisioned[key] = append(s.provisioned[key][:index], s.provisioned[key][index+1:]...)
-			}
-		}
-	}
-	return nil
-}
-
-func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	panic("Should not be called in this test at the moment")
-	return nil
-}
-
-func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
-	for _, d := range fakeService.getDashboard {
-		if d.Slug == cmd.Slug {
-			cmd.Result = d
-			return nil
-		}
-	}
-
-	return models.ErrDashboardNotFound
+	return fake
 }

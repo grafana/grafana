@@ -83,24 +83,24 @@ func (fr *fileReader) startWalkingDisk() error {
 	resolvedPath := fr.resolvePath(fr.Path)
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
-			return err
+			return fmt.Errorf("path %v does not exists: %v", resolvedPath, err)
 		}
 	}
 
 	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardProvisioningService)
 	if err != nil && err != ErrFolderNameMissing {
-		return err
+		return fmt.Errorf("failed getOrCreateFolderId: %v", err)
 	}
 
 	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed getProvisionedDashboardByPath: %v", err)
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
 	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk, fr.fileFilterFunc))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed filepath.Walk: %v", err)
 	}
 
 	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
@@ -225,7 +225,7 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 	err := bus.Dispatch(cmd)
 
 	if err != nil && err != models.ErrDashboardNotFound {
-		return 0, err
+		return 0, fmt.Errorf("failed dispatching GetDashboardQuery: %v", err)
 	}
 
 	// dashboard folder not found. create one.

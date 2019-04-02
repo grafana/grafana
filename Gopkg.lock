@@ -484,6 +484,14 @@
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "NUT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:4759bed95e3a52febc18c071db28790a5c6e9e106ee201a37add6f6a056f8f9c"
   name = "github.com/prometheus/client_golang"
   packages = [
@@ -568,6 +576,27 @@
   pruneopts = "NUT"
   revision = "9e8dc3f972df6c8fcc0375ef492c24d0bb204857"
   version = "1.6.3"
+
+[[projects]]
+  digest = "1:60a46e2410edbf02b419f833372dd1d24d7aa1b916a990a7370e792fada1eadd"
+  name = "github.com/stretchr/objx"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
+  version = "v0.1.1"
+
+[[projects]]
+  digest = "1:ee1d3a6f3750629a4b4d2f58355294670b3db0e564fd709944076a6e802ab7bc"
+  name = "github.com/stretchr/testify"
+  packages = [
+    ".",
+    "assert",
+    "http",
+    "mock",
+  ]
+  pruneopts = "NUT"
+  revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
@@ -885,6 +914,7 @@
     "github.com/aws/aws-sdk-go/service/sts",
     "github.com/benbjohnson/clock",
     "github.com/bmizerany/assert",
+    "github.com/bradfitz/gomemcache/memcache",
     "github.com/codegangsta/cli",
     "github.com/davecgh/go-spew/spew",
     "github.com/denisenkom/go-mssqldb",
@@ -915,7 +945,6 @@
     "github.com/opentracing/opentracing-go/ext",
     "github.com/opentracing/opentracing-go/log",
     "github.com/patrickmn/go-cache",
-    "github.com/pkg/errors",
     "github.com/prometheus/client_golang/api",
     "github.com/prometheus/client_golang/api/prometheus/v1",
     "github.com/prometheus/client_golang/prometheus",
@@ -924,6 +953,7 @@
     "github.com/prometheus/common/expfmt",
     "github.com/prometheus/common/model",
     "github.com/smartystreets/goconvey/convey",
+    "github.com/stretchr/testify",
     "github.com/teris-io/shortid",
     "github.com/uber/jaeger-client-go/config",
     "github.com/yudai/gojsondiff",
@@ -937,6 +967,7 @@
     "gopkg.in/ldap.v3",
     "gopkg.in/macaron.v1",
     "gopkg.in/mail.v2",
+    "gopkg.in/redis.v2",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/yaml.v2",
   ]
