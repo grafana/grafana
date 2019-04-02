@@ -34,6 +34,14 @@
 			checked="ctrl.panel.hideTimeOverride" switch-class="max-width-6" on-change="ctrl.refresh()">
 		</gf-form-switch>
 	</div>
+	<div class="gf-form-inline">
+		<span class="gf-form-label">
+				<i class="fa fa-clock-o"></i>
+		</span>
+		<span class="gf-form-label width-12">Override panel refresh</span>
+		<span class="gf-form-label width-6">Amount</span>
+		<select ng-model="ctrl.refreshOverride.value" class="width-8 gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refreshOverride.options"></select>
+	</div>
 </div>
 
 
