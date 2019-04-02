@@ -10,7 +10,7 @@ describe('TableInputCSV', () => {
       .create(
         <TableInputCSV
           text={'a,b,c\n1,2,3'}
-          onTableParsed={(table: SeriesData, text: string) => {
+          onSeriesParsed={(data: SeriesData[], text: string) => {
             // console.log('Table:', table, 'from:', text);
           }}
         />

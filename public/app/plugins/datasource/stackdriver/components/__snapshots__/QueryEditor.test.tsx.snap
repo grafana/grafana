@@ -406,7 +406,13 @@ Array [
       >
         Alias By
       </label>
-      <div>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
         <input
           className="gf-form-input gf-form-input width-24"
           onChange={[Function]}
@@ -434,7 +440,13 @@ Array [
       >
         Project
       </span>
-      <div>
+      <div
+        style={
+          Object {
+            "flexGrow": 1,
+          }
+        }
+      >
         <input
           className="gf-form-input gf-form-input width-15"
           disabled={true}

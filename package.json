@@ -139,6 +139,7 @@
     "jest": "jest --notify --watch",
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
+    "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",

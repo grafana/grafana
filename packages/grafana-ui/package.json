@@ -11,7 +11,8 @@
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public",
+    "storybook": "start-storybook -p 9001 -c .storybook",
+    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
     "build": "rollup -c rollup.config.ts"
   },

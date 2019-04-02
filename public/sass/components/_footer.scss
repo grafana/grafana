@@ -4,7 +4,7 @@
 
 .footer {
   color: $footer-link-color;
-  padding: 1rem 0 1rem 0;
+  padding: $space-md 0 $space-md 0;
   font-size: $font-size-sm;
   position: relative;
   width: 98%; /* was causing horiz scrollbars - need to examine */
@@ -51,14 +51,14 @@
   .footer {
     bottom: $spacer;
     position: absolute;
-    padding: 1rem 0 1rem 0;
+    padding: $space-md 0 $space-md 0;
   }
 }
 
 @include media-breakpoint-up(sm) {
   .login-page {
     .footer {
-      padding: 5rem 0 1rem 0;
+      padding: 70px 0 $space-md 0;
     }
   }
 }

@@ -1,19 +1,18 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { parseCSV, TableParseOptions, TableParseDetails } from '../../utils/processSeriesData';
 import { SeriesData } from '../../types/data';
 import { AutoSizer } from 'react-virtualized';
+import { CSVConfig, readCSV } from '../../utils/csv';
 
 interface Props {
-  options?: TableParseOptions;
+  config?: CSVConfig;
   text: string;
-  onTableParsed: (table: SeriesData, text: string) => void;
+  onSeriesParsed: (data: SeriesData[], text: string) => void;
 }
 
 interface State {
   text: string;
-  table: SeriesData;
-  details: TableParseDetails;
+  data: SeriesData[];
 }
 
 /**
@@ -23,68 +22,61 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    // Shoud this happen in onComponentMounted?
-    const { text, options, onTableParsed } = props;
-    const details = {};
-    const table = parseCSV(text, options, details);
+    const { text, config } = props;
     this.state = {
       text,
-      table,
-      details,
+      data: readCSV(text, { config }),
     };
-    onTableParsed(table, text);
   }
 
   readCSV = debounce(() => {
-    const details = {};
-    const table = parseCSV(this.state.text, this.props.options, details);
-    this.setState({ table, details });
+    const { config } = this.props;
+    const { text } = this.state;
+
+    this.setState({ data: readCSV(text, { config }) });
   }, 150);
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     const { text } = this.state;
-    if (text !== prevState.text || this.props.options !== prevProps.options) {
+
+    if (text !== prevState.text || this.props.config !== prevProps.config) {
       this.readCSV();
     }
+
     // If the props text has changed, replace our local version
     if (this.props.text !== prevProps.text && this.props.text !== text) {
       this.setState({ text: this.props.text });
     }
 
-    if (this.state.table !== prevState.table) {
-      this.props.onTableParsed(this.state.table, this.state.text);
+    if (this.state.data !== prevState.data) {
+      this.props.onSeriesParsed(this.state.data, this.state.text);
     }
   }
-
-  onFooterClicked = (event: any) => {
-    console.log('Errors', this.state);
-    const message = this.state.details
-      .errors!.map(err => {
-        return err.message;
-      })
-      .join('\n');
-    alert('CSV Parsing Errors:\n' + message);
-  };
 
   onTextChange = (event: any) => {
     this.setState({ text: event.target.value });
   };
 
   render() {
-    const { table, details } = this.state;
-
-    const hasErrors = details.errors && details.errors.length > 0;
-    const footerClassNames = hasErrors ? 'gf-table-input-csv-err' : '';
+    const { data } = this.state;
 
     return (
       <AutoSizer>
         {({ height, width }) => (
           <div className="gf-table-input-csv" style={{ width, height }}>
             <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
-            <footer onClick={this.onFooterClicked} className={footerClassNames}>
-              Rows:{table.rows.length}, Columns:{table.fields.length} &nbsp;
-              {hasErrors ? <i className="fa fa-exclamation-triangle" /> : <i className="fa fa-check-circle" />}
-            </footer>
+            {data && (
+              <footer>
+                {data.map((series, index) => {
+                  return (
+                    <span key={index}>
+                      Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
+                      <i className="fa fa-check-circle" />
+                    </span>
+                  );
+                })}
+              </footer>
+            )}
           </div>
         )}
       </AutoSizer>

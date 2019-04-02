@@ -123,7 +123,7 @@
   @include button-outline-variant($btn-inverse-bg);
 }
 .btn-outline-danger {
-  @include button-outline-variant(green);
+  @include button-outline-variant($btn-danger-bg);
 }
 
 .btn-outline-disabled {
