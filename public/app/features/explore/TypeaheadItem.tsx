@@ -16,6 +16,7 @@ interface Props {
 
 const getStyles = (theme: GrafanaTheme) => ({
   typeaheadItem: css`
+    label: type-ahead-item;
     height: auto;
     font-family: ${theme.typography.fontFamily.monospace};
     padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
@@ -30,15 +31,18 @@ const getStyles = (theme: GrafanaTheme) => ({
       background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
   `,
   typeaheadItemSelected: css`
+    label: type-ahead-item-selected;
     background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.dark9 }, theme.type)};
   `,
   typeaheadMatch: css`
+    label: type-ahead-match;
     color: ${theme.colors.yellow};
     border-bottom: 1px solid ${theme.colors.yellow};
     padding: inherit;
     background: inherit;
   `,
   typeaheadItemHint: css`
+    label: type-ahead-item-hint;
     font-size: ${theme.typography.size.xs};
     color: ${theme.colors.text};
     white-space: normal;
