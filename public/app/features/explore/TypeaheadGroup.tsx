@@ -2,8 +2,8 @@ import React from 'react';
 // @ts-ignore
 import _ from 'lodash';
 import { default as calculateSize } from 'calculate-size';
-import { Themeable, withTheme } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
+import { Themeable, withTheme } from '@grafana/ui';
 
 import { CompletionItem } from 'app/types/explore';
 import { TypeaheadItem } from './TypeaheadItem';
@@ -18,7 +18,9 @@ interface Props extends Themeable {
 }
 
 interface State {
-  longestLabelWidth: number;
+  listWidth: number;
+  listHeight: number;
+  itemSize: number;
 }
 
 export class TypeaheadGroup extends React.PureComponent<Props, State> {
@@ -27,8 +29,8 @@ export class TypeaheadGroup extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const longestLabelWidth = this.calculateWidth(props);
-    this.state = { longestLabelWidth };
+    const { listWidth, listHeight, itemSize } = this.calculateListSizes(props);
+    this.state = { listWidth, listHeight, itemSize };
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -41,47 +43,60 @@ export class TypeaheadGroup extends React.PureComponent<Props, State> {
     }
 
     if (_.isEqual(items, prevProps.items) === false) {
-      const longestLabelWidth = this.calculateWidth(this.props);
-      this.setState({ longestLabelWidth });
+      const { listWidth, listHeight, itemSize } = this.calculateListSizes(this.props);
+      this.setState({ listWidth, listHeight, itemSize });
     }
   }
 
-  calculateWidth = (props: Props) => {
-    const { items, theme } = props;
+  calculateListSizes = (props: Props): State => {
+    const { items, theme, label } = props;
+
+    const hasDocumentation = items.some(item => !!item.documentation);
 
     const longestLabel = items.reduce((longest, current) => {
       return longest.length < current.label.length ? current.label : longest;
-    }, '');
+    }, label);
 
     const size = calculateSize(longestLabel, {
       font: props.theme.typography.fontFamily.monospace,
       fontSize: props.theme.typography.size.sm,
     });
 
-    const padding = parseInt(theme.spacing.sm, 10) + parseInt(theme.spacing.md, 10);
-    const longestLabelWidth = Math.max(size.width + padding, 200);
+    const verticalPadding = parseInt(theme.spacing.sm, 10) + parseInt(theme.spacing.md, 10);
+    const horizontalPadding = parseInt(theme.spacing.sm, 10) * 2;
+    const documentationSize = hasDocumentation ? 15 : 0;
+    const numberOfItemsToShow = Math.min(items.length, 10);
+    const itemSize = size.height + horizontalPadding + documentationSize;
+    const listWidth = Math.min(Math.max(size.width + verticalPadding, 200), 800);
+    const listHeight = Math.max(itemSize * numberOfItemsToShow, 100);
 
-    return longestLabelWidth;
+    return {
+      listWidth,
+      listHeight,
+      itemSize,
+    };
   };
 
   render() {
     const { items, label, selected, onClickItem, prefix } = this.props;
-    const { longestLabelWidth } = this.state;
+    const { listWidth, listHeight, itemSize } = this.state;
 
     return (
       <li className="typeahead-group">
-        <div className="typeahead-group__title">{label}</div>
+        <div className="typeahead-group__title">
+          <span>{label}</span>
+        </div>
         <ul className="typeahead-group__list">
           <FixedSizeList
             ref={this.listRef}
             itemCount={items.length}
-            itemSize={30}
+            itemSize={itemSize}
             itemKey={index => {
               const item = items && items[index];
               return item ? item.label : null;
             }}
-            width={longestLabelWidth}
-            height={300}
+            width={listWidth}
+            height={listHeight}
           >
             {({ index, style }) => {
               const item = items && items[index];

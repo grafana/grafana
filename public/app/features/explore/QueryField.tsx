@@ -360,9 +360,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
           // Select next suggestion
           event.preventDefault();
           const itemsCount = this.state.suggestions[0] ? this.state.suggestions[0].items.length : 0;
-          const nextIndex = typeaheadIndex + 1;
-          const calculatedIndex = nextIndex > itemsCount ? 0 : nextIndex;
-          this.setState({ typeaheadIndex: calculatedIndex });
+          this.setState({ typeaheadIndex: Math.min(itemsCount - 1, typeaheadIndex + 1) });
         }
         break;
       }

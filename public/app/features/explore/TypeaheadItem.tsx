@@ -39,7 +39,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     background: inherit;
   `,
   typeaheadItemHint: css`
-    font-size: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.xs};
     color: ${theme.colors.text};
     white-space: normal;
   `,
