@@ -15,20 +15,36 @@ docker_build () {
     retval=$(docker run --rm $tag cat /usr/share/grafana/VERSION)
 }
 
+CHECK_BETA=$1
+if [ $CHECK_BETA == "beta" ]; then
+  # Testing deb repos
+  docker_build "Dockerfile.deb" "deb-oss-beta.list" "grafana" "gf-oss-deb-repo-test"
+  _oss_deb_v=$retval
 
-# Testing deb repos
-docker_build "Dockerfile.deb" "grafana.list.oss" "grafana" "gf-oss-deb-repo-test"
-_oss_deb_v=$retval
+  docker_build "Dockerfile.deb" "deb-ee-beta.list" "grafana-enterprise" "gf-ee-deb-repo-test"
+  _ee_deb_v=$retval
 
-docker_build "Dockerfile.deb" "grafana.list.ee" "grafana-enterprise" "gf-ee-deb-repo-test"
-_ee_deb_v=$retval
+  # Testing rpm repos
+  docker_build "Dockerfile.rpm" "rpm-oss-beta.list" "grafana" "gf-oss-rpm-repo-test"
+  _oss_rpm_v=$retval
 
-# Testing rpm repos
-docker_build "Dockerfile.rpm" "grafana.repo.oss" "grafana" "gf-oss-rpm-repo-test"
-_oss_rpm_v=$retval
+  docker_build "Dockerfile.rpm" "rpm-ee-beta.list" "grafana-enterprise" "gf-ee-rpm-repo-test"
+  _ee_rpm_v=$retval
+else
+  # Testing deb repos
+  docker_build "Dockerfile.deb" "deb-oss-stable.list" "grafana" "gf-oss-deb-repo-test"
+  _oss_deb_v=$retval
 
-docker_build "Dockerfile.rpm" "grafana.repo.ee" "grafana-enterprise" "gf-ee-rpm-repo-test"
-_ee_rpm_v=$retval
+  docker_build "Dockerfile.deb" "deb-ee-stable.list" "grafana-enterprise" "gf-ee-deb-repo-test"
+  _ee_deb_v=$retval
+
+  # Testing rpm repos
+  docker_build "Dockerfile.rpm" "rpm-oss-stable.list" "grafana" "gf-oss-rpm-repo-test"
+  _oss_rpm_v=$retval
+
+  docker_build "Dockerfile.rpm" "rpm-ee-stable.list" "grafana-enterprise" "gf-ee-rpm-repo-test"
+  _ee_rpm_v=$retval
+fi
 
 echo Versions:
 echo OSS deb = ${_oss_deb_v}
