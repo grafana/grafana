@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { CompletionItem, CompletionItemGroup } from 'app/types/explore';
-import { TypeaheadGroup } from './TypeaheadGroup';
+import { TypeaheadGroupWithTheme } from './TypeaheadGroup';
 
 interface Props {
   groupedItems: CompletionItemGroup[];
@@ -11,13 +11,13 @@ interface Props {
   prefix?: string;
   scrollIndex: number;
 }
-class Typeahead extends React.PureComponent<Props> {
+export class Typeahead extends React.PureComponent<Props> {
   render() {
     const { groupedItems, menuRef, selectedItem, onClickItem, prefix, scrollIndex } = this.props;
     return (
       <ul className="typeahead" ref={menuRef}>
         {groupedItems.map((g, index) => (
-          <TypeaheadGroup
+          <TypeaheadGroupWithTheme
             key={`${index}-${g.label}`}
             onClickItem={onClickItem}
             prefix={prefix}
@@ -30,5 +30,3 @@ class Typeahead extends React.PureComponent<Props> {
     );
   }
 }
-
-export default Typeahead;

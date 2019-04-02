@@ -35,7 +35,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   typeaheadMatch: css`
     color: ${theme.colors.yellow};
     border-bottom: 1px solid ${theme.colors.yellow};
-    // Undoing mark styling
     padding: inherit;
     background: inherit;
   `,

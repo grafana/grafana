@@ -2,12 +2,13 @@ import React from 'react';
 // @ts-ignore
 import _ from 'lodash';
 import { default as calculateSize } from 'calculate-size';
+import { Themeable, withTheme } from '@grafana/ui';
+import { FixedSizeList } from 'react-window';
 
 import { CompletionItem } from 'app/types/explore';
-import { FixedSizeList } from 'react-window';
 import { TypeaheadItem } from './TypeaheadItem';
 
-interface Props {
+interface Props extends Themeable {
   items: CompletionItem[];
   label: string;
   onClickItem: (suggestion: CompletionItem) => void;
@@ -25,25 +26,43 @@ export class TypeaheadGroup extends React.PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    const longestLabel = props.items.reduce((longest, current) => {
-      return longest.length < current.label.length ? current.label : longest;
-    }, '');
-    const size = calculateSize(longestLabel, {
-      font: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-      fontSize: '12px',
-    });
-    this.state = { longestLabelWidth: Math.max(size.width + 24, 100) };
+
+    const longestLabelWidth = this.calculateWidth(props);
+    this.state = { longestLabelWidth };
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { scrollIndex } = this.props;
+    const { scrollIndex, items } = this.props;
 
     if (prevProps.scrollIndex !== scrollIndex) {
       if (this.listRef && this.listRef.current) {
         this.listRef.current.scrollToItem(scrollIndex);
       }
     }
+
+    if (_.isEqual(items, prevProps.items) === false) {
+      const longestLabelWidth = this.calculateWidth(this.props);
+      this.setState({ longestLabelWidth });
+    }
   }
+
+  calculateWidth = (props: Props) => {
+    const { items, theme } = props;
+
+    const longestLabel = items.reduce((longest, current) => {
+      return longest.length < current.label.length ? current.label : longest;
+    }, '');
+
+    const size = calculateSize(longestLabel, {
+      font: props.theme.typography.fontFamily.monospace,
+      fontSize: props.theme.typography.size.sm,
+    });
+
+    const padding = parseInt(theme.spacing.sm, 10) + parseInt(theme.spacing.md, 10);
+    const longestLabelWidth = Math.max(size.width + padding, 200);
+
+    return longestLabelWidth;
+  };
 
   render() {
     const { items, label, selected, onClickItem, prefix } = this.props;
@@ -86,3 +105,5 @@ export class TypeaheadGroup extends React.PureComponent<Props, State> {
     );
   }
 }
+
+export const TypeaheadGroupWithTheme = withTheme(TypeaheadGroup);

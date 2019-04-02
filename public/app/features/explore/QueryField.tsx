@@ -15,7 +15,7 @@ import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
-import Typeahead from './Typeahead';
+import { Typeahead } from './Typeahead';
 import { makeFragment, makeValue } from './Value';
 import PlaceholdersBuffer from './PlaceholdersBuffer';
 
