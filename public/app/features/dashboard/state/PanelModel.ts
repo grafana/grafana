@@ -61,6 +61,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
+  refreshOverride: true
 };
 
 const defaults: any = {
@@ -69,6 +70,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
+  refreshOverride: null
 };
 
 export class PanelModel {
@@ -115,6 +117,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+  refreshOverride?: any;
 
   constructor(model: any) {
     this.events = new Emitter();

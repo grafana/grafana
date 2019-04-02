@@ -40,7 +40,9 @@
 		</span>
 		<span class="gf-form-label width-12">Override panel refresh</span>
 		<span class="gf-form-label width-6">Amount</span>
-		<select ng-model="ctrl.refreshOverride.value" class="width-8 gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refreshOverride.options"></select>
+		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
+			empty-to-null ng-model="ctrl.panel.refreshOverride" valid-time-span
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
 	</div>
 </div>
 
