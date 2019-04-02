@@ -29,7 +29,6 @@ type fileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	dashboardService             dashboards.DashboardService
 	fileFilterFunc               func(fileInfo os.FileInfo) bool
 }
 
@@ -49,7 +48,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardService:             dashboards.NewService(),
 		dashboardProvisioningService: dashboards.NewProvisioningService(),
 	}, nil
 }
@@ -146,8 +144,7 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// delete dashboard that are missing json file
 		for _, dashboardId := range dashboardToDelete {
 			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
-			//err := fr.deleteDashboard(dashboardId)
-			err := fr.dashboardService.DeleteDashboard(dashboardId, fr.Cfg.OrgId)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardId, fr.Cfg.OrgId)
 			if err != nil {
 				fr.log.Error("failed to delete dashboard", "id", dashboardId, "error", err)
 			}

@@ -15,7 +15,6 @@ import (
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(dashboardId int64, orgId int64) error
 }
 
 // DashboardProvisioningService service for operating on provisioned dashboards
@@ -24,6 +23,7 @@ type DashboardProvisioningService interface {
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	UnprovisionDashboard(dashboardId int64) error
+	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
 // NewService factory for creating a new dashboard service
@@ -243,7 +243,9 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
+// DeleteProvisionedDashboard removes dashboard from the DB. At the moment it is the same code that
+// deletes regular dashboards as all the metadata is handled there.
+func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
 	return bus.Dispatch(cmd)
 }
