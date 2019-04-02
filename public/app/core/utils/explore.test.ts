@@ -20,6 +20,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
+  refreshInterval: 'Off',
 };
 
 describe('state functions', () => {

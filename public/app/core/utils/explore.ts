@@ -167,6 +167,7 @@ enum ParseUrlStateIndex {
   RangeTo = 1,
   Datasource = 2,
   SegmentsStart = 3,
+  RefreshInterval = 4,
 }
 
 enum ParseUiStateIndex {
@@ -190,7 +191,13 @@ export const safeParseJson = (text: string) => {
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
-  const errorResult = { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
+  const errorResult = {
+    datasource: null,
+    queries: [],
+    range: DEFAULT_RANGE,
+    ui: DEFAULT_UI_STATE,
+    refreshInterval: null,
+  };
 
   if (!parsed) {
     return errorResult;
@@ -213,6 +220,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(segment => isMetricSegment(segment));
   const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
+  const refreshInterval = parsed[ParseUrlStateIndex.RefreshInterval];
   const ui = uiState
     ? {
         showingGraph: uiState.ui[ParseUiStateIndex.Graph],
@@ -222,7 +230,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  return { datasource, queries, range, ui };
+  return { datasource, queries, range, ui, refreshInterval };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -232,6 +240,7 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
+      urlState.refreshInterval,
       {
         ui: [
           !!urlState.ui.showingGraph,

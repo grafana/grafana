@@ -38,7 +38,6 @@ import {
   updateDatasourceInstanceAction,
   changeQueryAction,
   changeRefreshIntervalAction,
-  ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
   changeTimeAction,
@@ -167,11 +166,11 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
 /**
  * Change the time range of Explore. Called from the RefreshPicker.
  */
-export function changeRefreshInterval(
-  exploreId: ExploreId,
-  refreshInterval: SelectOptionItem
-): ActionOf<ChangeRefreshIntervalPayload> {
-  return changeRefreshIntervalAction({ exploreId, refreshInterval });
+export function changeRefreshInterval(exploreId: ExploreId, refreshInterval: SelectOptionItem): ThunkResult<void> {
+  return dispatch => {
+    dispatch(changeRefreshIntervalAction({ exploreId, refreshInterval }));
+    dispatch(stateSave());
+  };
 }
 
 /**
@@ -689,7 +688,7 @@ export function splitOpen(): ThunkResult<void> {
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
  */
-export function stateSave() {
+export function stateSave(): ThunkResult<void> {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
     const urlStates: { [index: string]: string } = {};
@@ -697,6 +696,7 @@ export function stateSave() {
       datasource: left.datasourceInstance.name,
       queries: left.queries.map(clearQueryKeys),
       range: left.range,
+      refreshInterval: left.refreshInterval.label,
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
@@ -710,6 +710,7 @@ export function stateSave() {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
         range: right.range,
+        refreshInterval: right.refreshInterval.label,
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: right.showingLogs,

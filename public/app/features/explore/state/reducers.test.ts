@@ -70,6 +70,7 @@ export const setup = (urlStateOverrides?: any) => {
       showingTable: false,
       showingLogs: false,
     },
+    refreshInterval: 'Off',
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
   const serializedUrlState = serializeStateToUrlParam(urlState);
