@@ -1,5 +1,5 @@
 import { renderHook, act } from 'react-hooks-testing-library';
-import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+import { DatasourceStatus } from '@grafana/ui/src/types/datasource';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiSyntax } from './useLokiSyntax';

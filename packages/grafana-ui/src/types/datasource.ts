@@ -64,6 +64,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    * we attach the components to this instance for easy access
    */
   components?: DataSourcePluginComponents;
+  meta?: PluginMeta;
 }
 
 export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {

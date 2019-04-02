@@ -138,7 +138,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         const dsMeta = scope.ctrl.datasourceMeta;
         return importPluginModule(dsMeta.module).then(
           (dsModule): any => {
-            if (!dsModule.ConfigCtrl) {
+            if (!dsModule.dsPlugin) {
               return { notFound: true };
             }
 
@@ -155,7 +155,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               name: 'ds-config-' + dsMeta.id,
               bindings: { meta: '=', current: '=' },
               attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-              Component: dsModule.ConfigCtrl,
+              Component: dsModule.datasourcePlugin.components.ConfigCtrl,
             };
           }
         );

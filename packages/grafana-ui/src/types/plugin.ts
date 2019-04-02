@@ -1,16 +1,3 @@
-import { ReactPanelPlugin } from './panel';
-import { DataSourcePlugin } from './datasource';
-
-export interface PluginExports {
-  // used  by app plugins
-  ConfigCtrl: any;
-  // used by angular panels
-  PanelCtrl?: any;
-
-  dsPlugin?: DataSourcePlugin;
-  reactPanel?: ReactPanelPlugin;
-}
-
 export interface PluginMeta {
   id: string;
   name: string;
@@ -28,6 +15,19 @@ export interface PluginMeta {
   mixed?: boolean;
   hasQueryHelp?: boolean;
   queryOptions?: PluginMetaQueryOptions;
+}
+
+export class AppPlugin {
+  components: {
+    configCtrl?: any;
+    pages: { [str: string]: any };
+  };
+
+  constructor() {
+    this.components = {
+      pages: {}
+    };
+  }
 }
 
 interface PluginMetaQueryOptions {

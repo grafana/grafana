@@ -83,6 +83,16 @@ export class ReactPanelPlugin<TOptions = any> {
   }
 }
 
+export class AngularPanelPlugin {
+  components: {
+    panelCtrl: any;
+  };
+
+  constructor(panelCtrl: any) {
+    this.components = { panelCtrl: panelCtrl };
+  }
+}
+
 export interface PanelSize {
   width: number;
   height: number;

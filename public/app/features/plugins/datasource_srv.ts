@@ -52,9 +52,8 @@ export class DatasourceSrv {
     }
 
     const deferred = this.$q.defer();
-    const pluginDef = dsConfig.meta;
 
-    importPluginModule(pluginDef.module)
+    importPluginModule(dsConfig.meta.module)
       .then(pluginExports => {
         // check if its in cache now
         if (this.datasources[name]) {
@@ -70,8 +69,10 @@ export class DatasourceSrv {
         const instance: DataSourceApi = this.$injector.instantiate(pluginExports.dsPlugin.datasource, {
           instanceSettings: dsConfig,
         });
+
         instance.name = name;
         instance.components = pluginExports.dsPlugin.components;
+        instance.meta = dsConfig.meta;
 
         // store in instance cache
         this.datasources[name] = instance;
