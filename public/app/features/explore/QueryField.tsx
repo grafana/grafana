@@ -359,7 +359,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         if (this.menuEl) {
           // Select next suggestion
           event.preventDefault();
-          this.setState({ typeaheadIndex: typeaheadIndex + 1 });
+          const itemsCount = this.state.suggestions[0] ? this.state.suggestions[0].items.length : 0;
+          const nextIndex = typeaheadIndex + 1;
+          const calculatedIndex = nextIndex > itemsCount ? 0 : nextIndex;
+          this.setState({ typeaheadIndex: calculatedIndex });
         }
         break;
       }
@@ -467,6 +470,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
           onClickItem={this.onClickMenu}
           prefix={typeaheadPrefix}
           groupedItems={suggestions}
+          scrollIndex={typeaheadIndex}
         />
       </Portal>
     );
