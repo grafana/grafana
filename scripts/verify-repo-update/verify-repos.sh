@@ -10,6 +10,7 @@ docker_build () {
     --build-arg "REPO_CONFIG=$repo_file" \
     --build-arg "PACKAGE=$package"       \
     --tag $tag                           \
+    --no-cache                           \
     .
 
     retval=$(docker run --rm $tag cat /usr/share/grafana/VERSION)
