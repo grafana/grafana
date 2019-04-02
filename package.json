@@ -181,6 +181,7 @@
     "angular-sanitize": "1.6.6",
     "baron": "^3.0.3",
     "brace": "^0.10.0",
+    "calculate-size": "1.1.1",
     "classnames": "^2.2.6",
     "clipboard": "^2.0.4",
     "d3": "^4.11.0",
