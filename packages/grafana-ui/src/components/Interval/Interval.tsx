@@ -26,7 +26,7 @@ export class Interval extends PureComponent<Props> {
 
   addInterval = () => {
     const { func, delay } = this.props;
-    if (delay > 0) {
+    if (delay && delay > 0) {
       this.intervalId = window.setInterval(func, delay);
     }
   };

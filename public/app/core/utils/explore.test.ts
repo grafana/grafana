@@ -1,5 +1,6 @@
 import {
   DEFAULT_RANGE,
+  DEFAULT_REFRESH_INTERVAL_LABEL,
   serializeStateToUrlParam,
   parseUrlState,
   updateHistory,
@@ -20,7 +21,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
-  refreshInterval: 'Off',
+  refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
 };
 
 describe('state functions', () => {

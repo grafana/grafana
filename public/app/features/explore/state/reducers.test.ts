@@ -13,6 +13,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
+import { DEFAULT_REFRESH_INTERVAL_LABEL } from 'app/core/utils/explore';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -70,7 +71,7 @@ export const setup = (urlStateOverrides?: any) => {
       showingTable: false,
       showingLogs: false,
     },
-    refreshInterval: 'Off',
+    refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
   const serializedUrlState = serializeStateToUrlParam(urlState);
@@ -379,6 +380,44 @@ describe('Explore reducer', () => {
                       ...initalState.left.urlState.ui,
                       showingGraph: true,
                     },
+                  },
+                },
+              };
+
+              reducerTester()
+                .givenReducer(exploreReducer, stateWithDifferentDataSource)
+                .whenActionIsDispatched(
+                  updateLocation({
+                    query: {
+                      left: serializedUrlState,
+                    },
+                    path: '/explore',
+                  })
+                )
+                .thenStateShouldEqual(expectedState);
+            });
+          });
+
+          describe('and refreshInterval differs', () => {
+            it('then it should return update refreshInterval', () => {
+              const { initalState, serializedUrlState } = setup();
+              const expectedState = {
+                ...initalState,
+                left: {
+                  ...initalState.left,
+                  update: {
+                    ...initalState.left.update,
+                    refreshInterval: true,
+                  },
+                },
+              };
+              const stateWithDifferentDataSource = {
+                ...initalState,
+                left: {
+                  ...initalState.left,
+                  urlState: {
+                    ...initalState.left.urlState,
+                    refreshInterval: '5s',
                   },
                 },
               };

@@ -265,6 +265,7 @@ export interface ExploreUpdateState {
   queries: boolean;
   range: boolean;
   ui: boolean;
+  refreshInterval: boolean;
 }
 
 export interface ExploreUIState {

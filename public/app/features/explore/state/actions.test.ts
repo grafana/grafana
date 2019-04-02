@@ -12,6 +12,7 @@ import {
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
+import { DEFAULT_REFRESH_INTERVAL_LABEL } from 'app/core/utils/explore';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -29,7 +30,13 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const eventBridge = {} as Emitter;
   const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const range = { from: 'now', to: 'now' };
-  const urlState: ExploreUrlState = { datasource: 'some-datasource', queries: [], range, ui, refreshInterval: 'Off' };
+  const urlState: ExploreUrlState = {
+    datasource: 'some-datasource',
+    queries: [],
+    range,
+    ui,
+    refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
+  };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
   const initialState = {

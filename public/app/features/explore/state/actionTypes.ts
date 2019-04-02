@@ -88,6 +88,7 @@ export interface InitializeExplorePayload {
   exploreDatasources: DataSourceSelectItem[];
   queries: DataQuery[];
   range: RawTimeRange;
+  refreshInterval: SelectOptionItem;
   ui: ExploreUIState;
 }
 

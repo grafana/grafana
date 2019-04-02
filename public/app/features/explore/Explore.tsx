@@ -31,13 +31,21 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
+import {
+  RawTimeRange,
+  TimeRange,
+  DataQuery,
+  ExploreStartPageProps,
+  ExploreDataSourceApi,
+  SelectOptionItem,
+} from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
+import { getIntervalFromString } from '@grafana/ui/src/utils/string';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -109,12 +117,13 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   componentDidMount() {
     const { exploreId, urlState, initialized } = this.props;
-    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
+    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE, refreshInterval } = (urlState ||
+      {}) as ExploreUrlState;
     const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
     const initialQueries: DataQuery[] = ensureQueries(queries);
     const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
+    const initialRefreshInterval: SelectOptionItem = getIntervalFromString(refreshInterval);
     const width = this.el ? this.el.offsetWidth : 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(
@@ -122,6 +131,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialDatasource,
         initialQueries,
         initialRange,
+        initialRefreshInterval,
         width,
         this.exploreEvents,
         ui
@@ -187,7 +197,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
-    if (update.queries || update.ui || update.range || update.datasource) {
+    if (update.queries || update.ui || update.range || update.datasource || update.refreshInterval) {
       this.props.refreshExplore(exploreId);
     }
   };

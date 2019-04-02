@@ -17,6 +17,7 @@ import {
   serializeStateToUrlParam,
   parseUrlState,
 } from 'app/core/utils/explore';
+import { getIntervalFromString } from '@grafana/ui/src/utils/string';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -193,6 +194,7 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   range: RawTimeRange,
+  refreshInterval: SelectOptionItem,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
@@ -214,6 +216,7 @@ export function initializeExplore(
         exploreDatasources,
         queries,
         range,
+        refreshInterval,
         ui,
       })
     );
@@ -793,15 +796,25 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range, ui } = urlState;
+    const { datasource, queries, range, ui, refreshInterval } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
     const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
-
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
+      dispatch(
+        initializeExplore(
+          exploreId,
+          datasource,
+          initialQueries,
+          initialRange,
+          getIntervalFromString(refreshInterval),
+          containerWidth,
+          eventBridge,
+          ui
+        )
+      );
       return;
     }
 
