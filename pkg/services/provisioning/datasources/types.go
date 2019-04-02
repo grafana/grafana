@@ -36,6 +36,7 @@ type DataSourceFromConfig struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
+	BearerToken       string
 	WithCredentials   bool
 	IsDefault         bool
 	JsonData          map[string]interface{}
@@ -102,6 +103,8 @@ type DataSourceFromConfigV1 struct {
 	BasicAuthUser             string                 `json:"basicAuthUser" yaml:"basicAuthUser"`
 	BasicAuthPassword         string                 `json:"basicAuthPassword" yaml:"basicAuthPassword"`
 	BasicAuthPasswordFromFile string                 `json:"basicAuthPasswordFromFile" yaml:"basicAuthPasswordFromFile"`
+	BearerToken               string                 `json:"bearerToken" yaml:"bearerToken"`
+	BearerTokenFromFile       string                 `json:"bearerTokenFromFile" yaml:"bearerTokenFromFile"`
 	WithCredentials           bool                   `json:"withCredentials" yaml:"withCredentials"`
 	IsDefault                 bool                   `json:"isDefault" yaml:"isDefault"`
 	JsonData                  map[string]interface{} `json:"jsonData" yaml:"jsonData"`
@@ -199,6 +202,7 @@ func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand 
 		BasicAuth:         ds.BasicAuth,
 		BasicAuthUser:     ds.BasicAuthUser,
 		BasicAuthPassword: ds.BasicAuthPassword,
+		BearerToken:       ds.BearerToken,
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
@@ -228,6 +232,7 @@ func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataS
 		BasicAuth:         ds.BasicAuth,
 		BasicAuthUser:     ds.BasicAuthUser,
 		BasicAuthPassword: ds.BasicAuthPassword,
+		BearerToken:       ds.BearerToken,
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
@@ -249,6 +254,7 @@ func populateDataSourceFromV1Config(cfg *DataSourceFromConfigV1) (*DataSourceFro
 		BasicAuth:         cfg.BasicAuth,
 		BasicAuthUser:     cfg.BasicAuthUser,
 		BasicAuthPassword: cfg.BasicAuthPassword,
+		BearerToken:       cfg.BearerToken,
 		WithCredentials:   cfg.WithCredentials,
 		IsDefault:         cfg.IsDefault,
 		JsonData:          cfg.JsonData,
@@ -266,6 +272,12 @@ func populateDataSourceFromV1Config(cfg *DataSourceFromConfigV1) (*DataSourceFro
 	}
 	if cfg.BasicAuthPasswordFromFile != "" {
 		ds.BasicAuthPassword, err = readValueFromFile(cfg.BasicAuthPasswordFromFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cfg.BearerTokenFromFile != "" {
+		ds.BearerToken, err = readValueFromFile(cfg.BearerTokenFromFile)
 		if err != nil {
 			return nil, err
 		}

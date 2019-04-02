@@ -163,6 +163,11 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
 		}
 
+		if proxy.ds.BearerToken != "" {
+			req.Header.Del("Authorization")
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", proxy.ds.BearerToken))
+		}
+
 		// Lookup and use custom headers
 		if proxy.ds.SecureJsonData != nil {
 			proxy.useCustomHeaders(req)

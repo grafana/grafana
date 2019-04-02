@@ -51,6 +51,7 @@ type DataSource struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
+	BearerToken       string
 	WithCredentials   bool
 	IsDefault         bool
 	JsonData          *simplejson.Json
@@ -115,6 +116,7 @@ type AddDataSourceCommand struct {
 	BasicAuth         bool              `json:"basicAuth"`
 	BasicAuthUser     string            `json:"basicAuthUser"`
 	BasicAuthPassword string            `json:"basicAuthPassword"`
+	BearerToken       string            `json:"bearerToken"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
@@ -138,6 +140,7 @@ type UpdateDataSourceCommand struct {
 	BasicAuth         bool              `json:"basicAuth"`
 	BasicAuthUser     string            `json:"basicAuthUser"`
 	BasicAuthPassword string            `json:"basicAuthPassword"`
+	BearerToken       string            `json:"bearerToken"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`

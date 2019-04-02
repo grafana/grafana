@@ -123,6 +123,10 @@ datasources:
   basicAuthPassword:
   # <string> if set populates the basic auth password from the specified file
   basicAuthPasswordFromFile:
+  # bearer token to use for auth, if set 
+  bearerToken:
+  # <string> if set populates the bearer token from the specified file
+  bearerTokenFromFile:
   # <bool> enable/disable with credentials headers
   withCredentials:
   # <bool> mark as default datasource. Max one per org

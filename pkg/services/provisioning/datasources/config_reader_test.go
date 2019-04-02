@@ -206,6 +206,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			ds := dsCfg.Datasources[0]
 
+			So(ds.BearerToken, ShouldEqual, "secretvalue")
 			So(ds.Password, ShouldEqual, "secretvalue")
 			So(ds.BasicAuthPassword, ShouldEqual, "secretvalue")
 			So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "secretvalue")
