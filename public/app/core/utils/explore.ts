@@ -215,6 +215,11 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     return errorResult;
   }
 
+  // Explore versions before refresh picker
+  if (parsed.length === 5) {
+    parsed.splice(ParseUrlStateIndex.RefreshInterval, 0, DEFAULT_REFRESH_INTERVAL_LABEL);
+  }
+
   const range = {
     from: parsed[ParseUrlStateIndex.RangeFrom],
     to: parsed[ParseUrlStateIndex.RangeTo],
