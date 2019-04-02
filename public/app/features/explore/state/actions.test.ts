@@ -51,6 +51,10 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         queries: [],
         range,
         ui,
+        refreshInterval: {
+          label: 'Off',
+          value: 0,
+        },
       },
     },
   };
