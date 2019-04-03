@@ -17,7 +17,7 @@ docker_build () {
 }
 
 CHECK_BETA=$1
-if [ $CHECK_BETA == "beta" ]; then
+if [[ $CHECK_BETA == "beta" ]]; then
   # Testing deb repos
   docker_build "Dockerfile.deb" "deb-oss-beta.list" "grafana" "gf-oss-deb-repo-test"
   _oss_deb_v=$retval
@@ -49,6 +49,6 @@ fi
 
 echo Versions:
 echo OSS deb = ${_oss_deb_v}
-echo EE  deb = ${_ee_deb_v}
 echo OSS rpm = ${_oss_rpm_v}
+echo EE  deb = ${_ee_deb_v}
 echo EE  rpm = ${_ee_rpm_v}
