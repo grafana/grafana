@@ -17,6 +17,7 @@
   vertical-align: middle;
   cursor: pointer;
   border: none;
+  height: $height-md;
 
   @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $border-radius-sm);
 
@@ -67,11 +68,8 @@
 }
 
 .btn-small {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $border-radius-sm);
-}
-
-.btn-mini {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $border-radius-sm);
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
 }
 
 .btn-link {

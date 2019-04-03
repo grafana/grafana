@@ -69,15 +69,11 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     fontWeight = theme.typography.weight.semibold;
 
   switch (size) {
-    case ButtonSize.ExtraSmall:
-      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.xs;
-      iconDistance = theme.spacing.xs;
-      break;
     case ButtonSize.Small:
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.sm;
       iconDistance = theme.spacing.xs;
+      height = theme.height.sm;
       break;
     case ButtonSize.Large:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
@@ -90,6 +86,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       iconDistance = theme.spacing.sm;
       fontSize = theme.typography.size.base;
+      height = theme.height.md;
   }
 
   switch (variant) {

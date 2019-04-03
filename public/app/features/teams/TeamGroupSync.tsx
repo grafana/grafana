@@ -63,7 +63,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-mini" onClick={() => this.onRemoveGroup(group)}>
+          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
             <i className="fa fa-remove" />
           </a>
         </td>
