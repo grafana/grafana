@@ -43,13 +43,15 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
 				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+				So(pagerdutyNotifier.NoDataWarn, ShouldBeFalse)
 			})
 
 			Convey("settings should trigger incident", func() {
 				json := `
 				{
 		  			"integrationKey": "abcdefgh0123456789",
-					"autoResolve": false
+					"autoResolve": false,
+					"noDataWarn": true
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -67,6 +69,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
 				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+				So(pagerdutyNotifier.NoDataWarn, ShouldBeTrue)
 			})
 		})
 	})

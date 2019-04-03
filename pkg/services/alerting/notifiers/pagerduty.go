@@ -41,7 +41,7 @@ func init() {
            label="Treat No Data as Warning"
            label-class="width-14"
            checked="ctrl.model.settings.noDataWarn"
-           tooltip="Alerts in the No Data state will be sent to PagerDuty as a warning.">
+           tooltip="Alerts in the No Data state will be sent to PagerDuty with a severity of warning instead of critical.">
         </gf-form-switch>
       </div>
     `,
