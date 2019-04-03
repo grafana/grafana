@@ -377,7 +377,6 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int6
 
 func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
 	panic("Should not be called in this test at the moment")
-	return nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
