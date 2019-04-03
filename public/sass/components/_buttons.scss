@@ -19,7 +19,7 @@
   border: none;
   height: $height-md;
 
-  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $border-radius-sm);
+  @include button-size($btn-padding-y, $space-md, $font-size-base, $border-radius-sm);
 
   &,
   &:active,
@@ -57,7 +57,7 @@
 
 // Large
 .btn-large {
-  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $border-radius-sm);
+  @include button-size($btn-padding-y-lg, $space-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
   height: $height-lg;
   .gicon {
