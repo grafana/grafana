@@ -120,7 +120,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
-    const QueryField = datasourceInstance.pluginExports.ExploreQueryField;
+    const QueryField = datasourceInstance.components.ExploreQueryField;
 
     return (
       <div className="query-row">

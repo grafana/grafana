@@ -68,11 +68,11 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
 }
 
 interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
-    new (): DataSourceApi<TQuery>;
+  new (): DataSourceApi<TQuery>;
 }
 
 /**
- * The main data source abstraction interface, represents an intance of a data source
+ * The main data source abstraction interface, represents an instance of a data source
  */
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
@@ -129,6 +129,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
+  queryResponse?: SeriesData[];
+  queryError?: DataQueryError;
 }
 
 export enum DatasourceStatus {
@@ -194,6 +196,7 @@ export interface DataQueryError {
   message?: string;
   status?: string;
   statusText?: string;
+  refId?: string;
 }
 
 export interface ScopedVar {

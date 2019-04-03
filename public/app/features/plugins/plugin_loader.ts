@@ -151,6 +151,10 @@ function importPluginModule(path: string): Promise<any> {
 
 export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> {
   return importPluginModule(path).then(pluginExports => {
+    if (!pluginExports.Datasource) {
+      throw new Error('Plugin module is missing Datasource constructor export');
+    }
+
     const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
     dsPlugin.setComponentsFromLegacyExports(pluginExports);
     return dsPlugin;

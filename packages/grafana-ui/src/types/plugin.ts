@@ -20,13 +20,13 @@ export interface PluginMeta {
 export class AppPlugin {
   components: {
     ConfigCtrl?: any;
-    pages: { [str: string]: any };
   };
 
+  pages: { [str: string]: any };
+
   constructor() {
-    this.components = {
-      pages: {}
-    };
+    this.components = {};
+    this.pages = {};
   }
 }
 

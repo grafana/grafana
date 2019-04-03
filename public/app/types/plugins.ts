@@ -8,7 +8,9 @@ export interface PanelPlugin {
   baseUrl: string;
   info: PluginMetaInfo;
   sort: number;
-  exports?: AngularPanelPlugin | ReactPanelPlugin;
+  angularPlugin: AngularPanelPlugin | null;
+  reactPlugin: ReactPanelPlugin | null;
+  hasBeenImported?: boolean;
   dataFormats: PanelDataFormat[];
 }
 
