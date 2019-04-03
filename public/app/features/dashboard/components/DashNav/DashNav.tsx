@@ -7,6 +7,9 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { RefreshPicker, Interval, SelectOptionItem } from '@grafana/ui';
+import { defaultItem as defaultRefreshPickerItem } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { getIntervalFromString } from '@grafana/ui/src/utils/string';
 
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -18,7 +21,7 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 
-export interface Props {
+export interface OwnProps {
   dashboard: DashboardModel;
   editview: string;
   isEditing: boolean;
@@ -27,8 +30,17 @@ export interface Props {
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
 }
+export interface StateProps {
+  location: any;
+}
 
-export class DashNav extends PureComponent<Props> {
+type Props = StateProps & OwnProps;
+
+export interface State {
+  refreshInterval: SelectOptionItem;
+}
+
+export class DashNav extends PureComponent<Props, State> {
   timePickerEl: HTMLElement;
   timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
@@ -36,7 +48,14 @@ export class DashNav extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
+    const { dashboard } = this.props;
+
     this.playlistSrv = this.props.$injector.get('playlistSrv');
+
+    // Copy props to state in constructor while we have DashboardModel
+    this.state = {
+      refreshInterval: dashboard.refresh ? getIntervalFromString(dashboard.refresh) : defaultRefreshPickerItem,
+    };
   }
 
   componentDidMount() {
@@ -57,6 +76,24 @@ export class DashNav extends PureComponent<Props> {
 
   onRefresh = () => {
     this.timeSrv.refreshDashboard();
+  };
+
+  onChangeRefreshInterval = (interval: SelectOptionItem) => {
+    const { dashboard, location, updateLocation } = this.props;
+    const { refreshInterval } = this.state;
+
+    if (interval.label !== refreshInterval.label) {
+      this.setState({
+        refreshInterval: interval,
+      });
+      dashboard.refresh = interval.label;
+
+      const newQuery = {
+        ...location.query,
+        refresh: interval.label,
+      };
+      updateLocation({ query: newQuery });
+    }
   };
 
   onOpenSearch = () => {
@@ -154,6 +191,11 @@ export class DashNav extends PureComponent<Props> {
     return this.props.editview || this.props.isFullscreen;
   }
 
+  get refreshPickerValue(): SelectOptionItem {
+    const { dashboard } = this.props;
+    return dashboard.refresh ? getIntervalFromString(dashboard.refresh) : defaultRefreshPickerItem;
+  }
+
   renderBackButton() {
     return (
       <div className="navbar-edit">
@@ -168,10 +210,12 @@ export class DashNav extends PureComponent<Props> {
 
   render() {
     const { dashboard, onAddPanel } = this.props;
+    const { refreshInterval } = this.state;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
 
+    console.log('render dashnav');
     return (
       <div className="navbar">
         {this.isInFullscreenOrSettings && this.renderBackButton()}
@@ -259,6 +303,23 @@ export class DashNav extends PureComponent<Props> {
             onClick={this.onToggleTVMode}
           />
         </div>
+        <RefreshPicker
+          onIntervalChanged={this.onChangeRefreshInterval}
+          onRefresh={this.onRefresh}
+          initialValue={undefined}
+          value={refreshInterval}
+        />
+        <Interval func={this.onRefresh} delay={this.refreshPickerValue.value} />
+
+        {/*
+        <RefreshPicker
+                onIntervalChanged={this.onChangeRefreshInterval}
+                onRefresh={this.onRunQuery}
+                initialValue={undefined}
+                value={refreshInterval}
+              />
+              <Interval func={this.onRunQuery} delay={refreshInterval.value} />
+*/}
 
         <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
       </div>
@@ -266,7 +327,11 @@ export class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = () => ({});
+const mapStateToProps = state => {
+  return {
+    location: state.location,
+  };
+};
 
 const mapDispatchToProps = {
   updateLocation,
