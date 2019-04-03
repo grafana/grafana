@@ -101,6 +101,7 @@ Setting | Description
 ---------- | -----------
 Integration Key | Integration key for PagerDuty.
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
+Treat No Data as Warning | Alerts in the No Data state will be sent to PagerDuty with a severity of warning instead of critical
 
 ### Webhook
 
