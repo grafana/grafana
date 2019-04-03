@@ -6,6 +6,12 @@ import { GrafanaTheme, ThemeContext, selectThemeVariant } from '@grafana/ui';
 
 import { CompletionItem } from 'app/types/explore';
 
+export const GROUP_TITLE_KIND = 'GroupTitle';
+
+export const isGroupTitle = (item: CompletionItem) => {
+  return item.kind && item.kind === GROUP_TITLE_KIND ? true : false;
+};
+
 interface Props {
   isSelected: boolean;
   item: CompletionItem;
@@ -34,8 +40,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: type-ahead-item-selected;
     background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.dark9 }, theme.type)};
   `,
-  typeaheadMatch: css`
-    label: type-ahead-match;
+  typeaheadItemMatch: css`
+    label: type-ahead-item-match;
     color: ${theme.colors.yellow};
     border-bottom: 1px solid ${theme.colors.yellow};
     padding: inherit;
@@ -47,16 +53,34 @@ const getStyles = (theme: GrafanaTheme) => ({
     color: ${theme.colors.text};
     white-space: normal;
   `,
+  typeaheadItemGroupTitle: css`
+    label: type-ahead-item-group-title;
+    color: ${theme.colors.textWeak};
+    font-size: ${theme.typography.size.sm};
+    line-height: ${theme.typography.lineHeight.lg};
+    padding: ${theme.spacing.sm};
+  `,
 });
 
 export const TypeaheadItem: FunctionComponent<Props> = (props: Props) => {
-  const css = getStyles(useContext(ThemeContext));
+  const theme = useContext(ThemeContext);
+  const styles = getStyles(theme);
+
   const { isSelected, item, prefix, style, onClickItem } = props;
   const onClick = () => onClickItem(item);
-  const className = isSelected ? cx([css.typeaheadItem, css.typeaheadItemSelected]) : cx([css.typeaheadItem]);
-  const highlightClassName = cx([css.typeaheadMatch]);
-  const itemHintClassName = cx([css.typeaheadItemHint]);
+  const className = isSelected ? cx([styles.typeaheadItem, styles.typeaheadItemSelected]) : cx([styles.typeaheadItem]);
+  const highlightClassName = cx([styles.typeaheadItemMatch]);
+  const itemHintClassName = cx([styles.typeaheadItemHint]);
+  const itemGroupTitleClassName = cx([styles.typeaheadItemGroupTitle]);
   const label = item.label || '';
+
+  if (isGroupTitle(item)) {
+    return (
+      <li className={itemGroupTitleClassName} style={style}>
+        <span>{label}</span>
+      </li>
+    );
+  }
 
   return (
     <li className={className} onClick={onClick} style={style}>

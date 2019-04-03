@@ -15,7 +15,7 @@ import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
-import { Typeahead } from './Typeahead';
+import { TypeaheadWithTheme } from './Typeahead';
 import { makeFragment, makeValue } from './Value';
 import PlaceholdersBuffer from './PlaceholdersBuffer';
 
@@ -359,7 +359,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         if (this.menuEl) {
           // Select next suggestion
           event.preventDefault();
-          const itemsCount = this.state.suggestions[0] ? this.state.suggestions[0].items.length : 0;
+          const itemsCount =
+            this.state.suggestions.length > 0
+              ? this.state.suggestions.reduce((totalCount, current) => totalCount + current.items.length, 0)
+              : 0;
           this.setState({ typeaheadIndex: Math.min(itemsCount - 1, typeaheadIndex + 1) });
         }
         break;
@@ -462,13 +465,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     // Create typeahead in DOM root so we can later position it absolutely
     return (
       <Portal origin={portalOrigin}>
-        <Typeahead
+        <TypeaheadWithTheme
           menuRef={this.menuRef}
           selectedItem={selectedItem}
           onClickItem={this.onClickMenu}
           prefix={typeaheadPrefix}
           groupedItems={suggestions}
-          scrollIndex={typeaheadIndex}
+          typeaheadIndex={typeaheadIndex}
         />
       </Portal>
     );
