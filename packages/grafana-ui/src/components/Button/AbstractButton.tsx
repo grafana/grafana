@@ -65,6 +65,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     background,
     fontSize,
     iconDistance,
+    height,
     fontWeight = theme.typography.weight.semibold;
 
   switch (size) {
@@ -83,6 +84,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
       iconDistance = theme.spacing.sm;
+      height = theme.height.lg;
       break;
     case ButtonSize.ExtraLarge:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
@@ -133,7 +135,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
   return {
     button: css`
       label: button;
-      display: inline-block;
+      display: flex;
+      align-items: center;
       font-weight: ${fontWeight};
       font-size: ${fontSize};
       font-family: ${theme.typography.fontFamily.sansSerif};
@@ -143,6 +146,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       vertical-align: middle;
       cursor: pointer;
       border: none;
+      height: ${height};
       border-radius: ${borderRadius};
       ${background};
 
@@ -161,6 +165,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     icon: css`
       label: button-icon;
       margin-right: ${iconDistance};
+      filter: brightness(100);
     `,
   };
 };

@@ -85,7 +85,7 @@ exports[`Render should render component 1`] = `
       onClick={[Function]}
     >
       <i
-        className="gicon gicon-add-team"
+        className="gicon gicon-team"
       />
       Add Group
     </button>

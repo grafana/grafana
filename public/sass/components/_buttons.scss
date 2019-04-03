@@ -7,7 +7,8 @@
 
 // Core
 .btn {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-weight: $btn-font-weight;
   line-height: $btn-line-height;
   font-size: $font-size-base;
@@ -55,10 +56,11 @@
 .btn-xlarge {
   @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $border-radius-sm);
   font-weight: normal;
-  padding-bottom: $btn-padding-y-xl - 3;
+
   .gicon {
-    font-size: 31px;
+    //font-size: 31px;
     margin-right: $space-md;
+    filter: brightness(100);
   }
 }
 
