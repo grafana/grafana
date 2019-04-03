@@ -31,18 +31,21 @@
 			<i class="fa fa-code"></i>
 		</div>
 		<div class="share-modal-content">
-			<p class="share-modal-info-text">
-				The html code below can be pasted and included in another web page. Unless anonymous access
-				is enabled the user viewing that page need to be signed into grafana for the graph to load.
-			</p>
-
 			<div ng-include src="'shareLinkOptions.html'"></div>
 
-			<div class="gf-form-group gf-form--grow">
+      <p class="share-modal-info-text">
+			 The html code below can be pasted and included in another web page. Unless anonymous access
+			 is enabled, the user viewing that page need to be signed into grafana for the graph to load.
+       Grafana server setting <code>cookie_samesite</code> might also need to be changed to support login
+       inside an iframe.
+			/p>
+
+      <div class="gf-form-group gf-form--grow">
 				<div class="gf-form">
 					<textarea rows="5" data-share-panel-url class="gf-form-input" ng-model='iframeHtml'></textarea>
 				</div>
 			</div>
+
 		</div>
 	</div>
 </script>

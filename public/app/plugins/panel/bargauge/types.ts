@@ -1,5 +1,4 @@
-import { VizOrientation, SelectOptionItem, StatID } from '@grafana/ui';
-import { SingleStatBaseOptions } from '../singlestat2/types';
+import { VizOrientation, SelectOptionItem, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   minValue: number;

@@ -13,6 +13,17 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
+export interface QueryResultBase {
+  /**
+   * Matches the query target refId
+   */
+  refId?: string;
+  /**
+   * Used by some backend datasources to communicate back info about the execution (generated sql, timing)
+   */
+  meta?: any;
+}
+
 export interface Field {
   name: string; // The column name
   type?: FieldType;
@@ -21,15 +32,15 @@ export interface Field {
   dateFormat?: string; // Source data format
 }
 
-export interface Tags {
+export interface Labels {
   [key: string]: string;
 }
 
-export interface SeriesData {
+export interface SeriesData extends QueryResultBase {
   name?: string;
   fields: Field[];
   rows: any[][];
-  tags?: Tags;
+  labels?: Labels;
 }
 
 export interface Column {
@@ -38,7 +49,7 @@ export interface Column {
   unit?: string;
 }
 
-export interface TableData {
+export interface TableData extends QueryResultBase {
   columns: Column[];
   rows: any[][];
 }
@@ -47,10 +58,11 @@ export type TimeSeriesValue = number | null;
 
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
-export interface TimeSeries {
+export interface TimeSeries extends QueryResultBase {
   target: string;
   datapoints: TimeSeriesPoints;
   unit?: string;
+  tags?: Labels;
 }
 
 export enum NullValueMode {

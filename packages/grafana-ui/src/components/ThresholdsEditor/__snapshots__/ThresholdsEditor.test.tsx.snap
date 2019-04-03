@@ -184,6 +184,7 @@ exports[`Render should render with base threshold 1`] = `
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
+                              "insetSquishMd": "4px 8px",
                               "lg": "24px",
                               "md": "16px",
                               "sm": "8px",
@@ -341,6 +342,7 @@ exports[`Render should render with base threshold 1`] = `
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",
+                                    "insetSquishMd": "4px 8px",
                                     "lg": "24px",
                                     "md": "16px",
                                     "sm": "8px",
@@ -465,7 +467,13 @@ exports[`Render should render with base threshold 1`] = `
                     type="text"
                     value="Base"
                   >
-                    <div>
+                    <div
+                      style={
+                        Object {
+                          "flexGrow": 1,
+                        }
+                      }
+                    >
                       <input
                         className="gf-form-input"
                         readOnly={true}
