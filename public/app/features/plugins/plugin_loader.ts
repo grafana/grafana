@@ -167,7 +167,7 @@ export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> 
 
 export function importAppPlugin(path: string): Promise<AppPlugin> {
   return importPluginModule(path).then(pluginExports => {
-    return new AppPlugin();
+    return new AppPlugin(pluginExports.ConfigCtrl);
   });
 }
 

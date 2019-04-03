@@ -18,19 +18,6 @@ export interface PluginMeta {
   queryOptions?: PluginMetaQueryOptions;
 }
 
-export class AppPlugin {
-  components: {
-    ConfigCtrl?: any;
-  };
-
-  pages: { [str: string]: any };
-
-  constructor() {
-    this.components = {};
-    this.pages = {};
-  }
-}
-
 interface PluginMetaQueryOptions {
   cacheTimeout?: boolean;
   maxDataPoints?: boolean;
@@ -62,4 +49,19 @@ export interface PluginMetaInfo {
   screenshots: any[];
   updated: string;
   version: string;
+}
+
+export class AppPlugin {
+  components: {
+    ConfigCtrl?: any;
+  };
+
+  pages: { [str: string]: any };
+
+  constructor(ConfigCtrl: any) {
+    this.components = {
+      ConfigCtrl: ConfigCtrl,
+    };
+    this.pages = {};
+  }
 }

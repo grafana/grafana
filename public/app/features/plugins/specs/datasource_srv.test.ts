@@ -26,16 +26,19 @@ describe('datasource_srv', () => {
           type: 'b',
           name: 'buildIn',
           meta: { builtIn: true } as PluginMeta,
+          jsonData: {},
         },
         nonBuildIn: {
           type: 'e',
           name: 'external1',
           meta: { builtIn: false } as PluginMeta,
+          jsonData: {},
         },
         nonExplore: {
           type: 'e2',
           name: 'external2',
           meta: {} as PluginMeta,
+          jsonData: {},
         },
       };
     });

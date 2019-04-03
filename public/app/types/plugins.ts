@@ -1,4 +1,4 @@
-import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo } from '@grafana/ui/src/types';
 
 export interface PanelPlugin {
   id: string;
@@ -17,12 +17,6 @@ export interface PanelPlugin {
 export enum PanelDataFormat {
   Table = 'table',
   TimeSeries = 'time_series',
-}
-
-export interface DataSourcePlugin {
-  type: string;
-  name: string;
-  meta: PluginMeta;
 }
 
 export interface Plugin {

@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { PanelPlugin, DataSourcePlugin } from 'app/types/plugins';
-import { GrafanaTheme, getTheme, GrafanaThemeType } from '@grafana/ui';
+import { PanelPlugin } from 'app/types/plugins';
+import { GrafanaTheme, getTheme, GrafanaThemeType, DataSourceInstanceSettings } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
@@ -12,7 +12,7 @@ export interface BuildInfo {
 }
 
 export class Settings {
-  datasources: { [str: string]: DataSourcePlugin };
+  datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPlugin };
   appSubUrl: string;
   windowTitlePrefix: string;

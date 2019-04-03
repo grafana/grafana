@@ -68,7 +68,7 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
 }
 
 interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
-  new (...args: any[]): DataSourceApi<TQuery>;
+  new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
 }
 
 /**
@@ -241,6 +241,9 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+/**
+ * Data Source instance edit model
+ */
 export interface DataSourceSettings {
   id: number;
   orgId: number;
@@ -259,6 +262,29 @@ export interface DataSourceSettings {
   jsonData: { authType: string; defaultRegion: string };
   readOnly: boolean;
   withCredentials: boolean;
+}
+
+/**
+ * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
+ * as this data model is available to every user who has access to a data source (Viewers+).
+ */
+export interface DataSourceInstanceSettings {
+  type: string;
+  name: string;
+  meta: PluginMeta;
+  url?: string;
+  jsonData: { [str: string]: any };
+  username?: string;
+  password?: string; // when access is direct, for some legacy datasources
+
+  /**
+   * This is the full Authorization header if basic auth is ennabled.
+   * Only available here when access is Browser (direct), when acess is Server (proxy)
+   * The basic auth header, username & password is never exposted to browser/Frontend
+   * so this will be emtpy then.
+   */
+  basicAuth?: string;
+  withCredentials?: boolean;
 }
 
 export interface DataSourceSelectItem {
