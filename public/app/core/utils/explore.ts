@@ -215,8 +215,9 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     return errorResult;
   }
 
-  // Explore versions before refresh picker
-  if (parsed.length === 5) {
+  // SegmentsStart used to be on RefreshInterval's position. Small hack
+  // to avoid breaking legacy URLs until we have it all rewritten.
+  if (typeof parsed[ParseUrlStateIndex.RefreshInterval] === 'object') {
     parsed.splice(ParseUrlStateIndex.RefreshInterval, 0, DEFAULT_REFRESH_INTERVAL_LABEL);
   }
 
