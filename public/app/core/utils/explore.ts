@@ -169,8 +169,8 @@ enum ParseUrlStateIndex {
   RangeFrom = 0,
   RangeTo = 1,
   Datasource = 2,
-  SegmentsStart = 3,
-  RefreshInterval = 4,
+  RefreshInterval = 3,
+  SegmentsStart = 4,
 }
 
 enum ParseUiStateIndex {
@@ -247,8 +247,8 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.from,
       urlState.range.to,
       urlState.datasource,
-      ...urlState.queries,
       urlState.refreshInterval,
+      ...urlState.queries,
       {
         ui: [
           !!urlState.ui.showingGraph,

@@ -15,13 +15,13 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
   queries: [],
   range: DEFAULT_RANGE,
+  refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
   ui: {
     showingGraph: true,
     showingTable: true,
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
-  refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
 };
 
 describe('state functions', () => {
@@ -48,7 +48,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      const paramValue = '%5B"now-1h","now","Local",%7B"expr":"metric"%7D%5D';
+      const paramValue = '%5B"now-1h","now","Local","5m",%7B"expr":"metric"%7D,"ui"%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
@@ -56,6 +56,7 @@ describe('state functions', () => {
           from: 'now-1h',
           to: 'now',
         },
+        refreshInterval: '5m',
       });
     });
   });
@@ -77,11 +78,12 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
+        refreshInterval: '30s',
       };
 
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
+          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},"refreshInterval":"30s",' +
           '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
       );
     });
@@ -102,9 +104,10 @@ describe('state functions', () => {
           from: 'now-5h',
           to: 'now',
         },
+        refreshInterval: '10s',
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
+        '["now-5h","now","foo","10s",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
       );
     });
   });
@@ -126,6 +129,7 @@ describe('state functions', () => {
           from: 'now - 5h',
           to: 'now',
         },
+        refreshInterval: '10s',
       };
       const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
@@ -148,6 +152,7 @@ describe('state functions', () => {
           from: 'now - 5h',
           to: 'now',
         },
+        refreshInterval: '1m',
       };
       const serialized = serializeStateToUrlParam(state, true);
       const parsed = parseUrlState(serialized);
