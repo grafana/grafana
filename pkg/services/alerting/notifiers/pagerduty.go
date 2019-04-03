@@ -34,6 +34,15 @@ func init() {
            checked="ctrl.model.settings.autoResolve"
            tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
         </gf-form-switch>
+			</div>
+			<div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Treat No Data as Warning"
+           label-class="width-14"
+           checked="ctrl.model.settings.noDataWarn"
+           tooltip="Alerts in the No Data state will be sent to PagerDuty as a warning.">
+        </gf-form-switch>
       </div>
     `,
 	})
@@ -45,6 +54,7 @@ var (
 
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
+	noDataWarn := model.Settings.Get("noDataWarn").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
@@ -54,6 +64,7 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 		NotifierBase: NewNotifierBase(model),
 		Key:          key,
 		AutoResolve:  autoResolve,
+		NoDataWarn:   noDataWarn,
 		log:          log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
@@ -62,6 +73,7 @@ type PagerdutyNotifier struct {
 	NotifierBase
 	Key         string
 	AutoResolve bool
+	NoDataWarn  bool
 	log         log.Logger
 }
 
@@ -76,9 +88,16 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
+	eventSeverity := "critical"
+	if this.NoDataWarn && evalContext.Rule.State == m.AlertStateNoData {
+		eventSeverity = "warning"
+	}
 	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
 		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
+	if evalContext.Rule.State == m.AlertStateNoData {
+		customData += "[No Data]\n"
 	}
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
@@ -88,7 +107,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if hostname, err := os.Hostname(); err == nil {
 		payloadJSON.Set("source", hostname)
 	}
-	payloadJSON.Set("severity", "critical")
+	payloadJSON.Set("severity", eventSeverity)
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("custom_details", customData)
