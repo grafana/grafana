@@ -5,9 +5,9 @@ FROM grafana/grafana:${GRAFANA_VERSION}
 USER root
 
 # Add default provisioning service paths
-RUN mkdir -p /etc/grafana/provisioning/notifiers && \
-    mkdir -p /etc/grafana/provisioning/datasources && \
-    mkdir -p /etc/grafana/provisioning/dashboards && \
+RUN mkdir -p /etc/grafana/provisioning/notifiers     \
+             /etc/grafana/provisioning/datasources   \
+             /etc/grafana/provisioning/dashboards && \
     chmod -R 755 /etc/grafana/provisioning
 
 # Assert permissions for default configuration path
