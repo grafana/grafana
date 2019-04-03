@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { AngularPanelPlugin } from '@grafana/ui/src/types/panel';
+import { AngularPanelPlugin, DataSourceApi } from '@grafana/ui/src/types';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 
 /** @ngInject */
@@ -98,11 +98,12 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
-  function getModule(scope, attrs) {
+  function getModule(scope: any, attrs: any) {
     switch (attrs.type) {
       // QueryCtrl
       case 'query-ctrl': {
-        const ds = scope.ctrl.datasource;
+        const ds: DataSourceApi = scope.ctrl.datasource as DataSourceApi;
+
         return $q.when({
           baseUrl: ds.meta.baseUrl,
           name: 'query-ctrl-' + ds.meta.id,
@@ -112,7 +113,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             'panel-ctrl': 'ctrl',
             datasource: 'ctrl.datasource',
           },
-          Component: ds.pluginExports.QueryCtrl,
+          Component: ds.components.QueryCtrl,
         });
       }
       // Annotations

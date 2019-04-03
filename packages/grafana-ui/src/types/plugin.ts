@@ -4,6 +4,7 @@ export interface PluginMeta {
   info: PluginMetaInfo;
   includes: PluginInclude[];
   module: string;
+  baseUrl: string;
 
   // Datasource-specific
   builtIn?: boolean;

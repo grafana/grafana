@@ -68,7 +68,7 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
 }
 
 interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
-  new (): DataSourceApi<TQuery>;
+  new (...args: any[]): DataSourceApi<TQuery>;
 }
 
 /**
