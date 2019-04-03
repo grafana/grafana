@@ -1,4 +1,6 @@
-# 6.1.0 (unreleased)
+# 6.2.0 (unreleased)
+
+# 6.1.0 (2019-04-03)
 
 ### Bug Fixes
 * **CloudWatch**: Fix for dimension value list when changing dimension key. [#16356](https://github.com/grafana/grafana/pull/16356), [@mtanda](https://github.com/mtanda)
