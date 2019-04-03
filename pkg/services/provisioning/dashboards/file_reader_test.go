@@ -242,12 +242,12 @@ func TestDashboardFileReader(t *testing.T) {
 			noFiles := map[string]os.FileInfo{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := createWalkFn(noFiles, nil)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := createWalkFn(noFiles, nil)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
@@ -266,21 +266,26 @@ func TestDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 
-			err = reader.startWalkingDisk()
-			So(err, ShouldBeNil)
+			fakeService.inserted = []*dashboards.SaveDashboardDTO{
+				{}, {},
+			}
 
-			So(len(fakeService.provisioned["Default"]), ShouldEqual, 2)
-			So(len(fakeService.inserted), ShouldEqual, 2)
+			absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
+			// This one does not exist on disc, simulating a deleted file
+			absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
 
-			reader.fileFilterFunc = func(fileInfo os.FileInfo) bool {
-				return fileInfo.Name() == "dashboard1.json"
+			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+				"Default": {
+					{DashboardId: 1, Name: "Default", ExternalId: absPath1},
+					{DashboardId: 2, Name: "Default", ExternalId: absPath2},
+				},
 			}
 
 			err = reader.startWalkingDisk()
 			So(err, ShouldBeNil)
 
 			So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
-			So(len(fakeService.inserted), ShouldEqual, 2)
+			So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
 		})
 
 		Reset(func() {
@@ -347,6 +352,13 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboa
 
 	if _, ok := s.provisioned[provisioning.Name]; !ok {
 		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
+	}
+
+	for _, val := range s.provisioned[provisioning.Name] {
+		if val.DashboardId == dto.Dashboard.Id && val.Name == provisioning.Name {
+			// Do not insert duplicates
+			return dto.Dashboard, nil
+		}
 	}
 
 	// Copy the struct as we need to assign some dashboardId to it but do not want to alter outside world.

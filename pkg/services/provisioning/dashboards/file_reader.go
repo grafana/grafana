@@ -29,7 +29,6 @@ type fileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	fileFilterFunc               func(fileInfo os.FileInfo) bool
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -98,7 +97,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	}
 
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk, fr.fileFilterFunc))
+	err = filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk))
 	if err != nil {
 		return err
 	}
@@ -139,7 +138,6 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardId, "error", err)
 			}
 		}
-		return
 	} else {
 		// delete dashboard that are missing json file
 		for _, dashboardId := range dashboardToDelete {
@@ -264,7 +262,7 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	return fileinfo, err
 }
 
-func createWalkFn(filesOnDisk map[string]os.FileInfo, fileFilterFunc func(fileInfo os.FileInfo) bool) filepath.WalkFunc {
+func createWalkFn(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc {
 	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -275,10 +273,7 @@ func createWalkFn(filesOnDisk map[string]os.FileInfo, fileFilterFunc func(fileIn
 			return err
 		}
 
-		if fileFilterFunc == nil || fileFilterFunc(fileInfo) {
-			filesOnDisk[path] = fileInfo
-		}
-
+		filesOnDisk[path] = fileInfo
 		return nil
 	}
 }
