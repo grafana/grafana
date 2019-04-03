@@ -24,7 +24,7 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { SelectOptionItem } from '@grafana/ui';
-
+import { ResultGetter } from 'app/types/explore';
 import {
   RawTimeRange,
   TimeRange,
@@ -222,7 +222,7 @@ export function initializeExplore(
     );
 
     if (exploreDatasources.length >= 1) {
-      let instance;
+      let instance: DataSourceApi;
 
       if (datasourceName) {
         try {
@@ -256,7 +256,10 @@ export function initializeExplore(
  * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
  * e.g., Prometheus -> Loki queries.
  */
-export const loadDatasourceSuccess = (exploreId: ExploreId, instance: any): ActionOf<LoadDatasourceSuccessPayload> => {
+export const loadDatasourceSuccess = (
+  exploreId: ExploreId,
+  instance: DataSourceApi
+): ActionOf<LoadDatasourceSuccessPayload> => {
   // Capabilities
   const supportsGraph = instance.meta.metrics;
   const supportsLogs = instance.meta.logs;
@@ -286,7 +289,7 @@ export function importQueries(
   queries: DataQuery[],
   sourceDataSource: DataSourceApi,
   targetDataSource: DataSourceApi
-) {
+): ThunkResult<void> {
   return async dispatch => {
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
@@ -518,7 +521,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -554,7 +557,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
             instant: true,
             valueWithRefId: true,
           },
-          data => data[0]
+          (data: any[]) => data[0]
         )
       );
     }
@@ -591,8 +594,8 @@ function runQueriesForType(
   exploreId: ExploreId,
   resultType: ResultType,
   queryOptions: QueryOptions,
-  resultGetter?: any
-) {
+  resultGetter?: ResultGetter
+): ThunkResult<void> {
   return async (dispatch, getState) => {
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
@@ -738,7 +741,7 @@ const togglePanelActionCreator = (
     | ActionCreator<ToggleGraphPayload>
     | ActionCreator<ToggleLogsPayload>
     | ActionCreator<ToggleTablePayload>
-) => (exploreId: ExploreId, isPanelVisible: boolean) => {
+) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
     const shouldRunQueries = !isPanelVisible;
@@ -782,7 +785,7 @@ export const toggleTable = togglePanelActionCreator(toggleTableAction);
 /**
  * Change logs deduplication strategy and update URL.
  */
-export const changeDedupStrategy = (exploreId, dedupStrategy: LogsDedupStrategy) => {
+export const changeDedupStrategy = (exploreId: ExploreId, dedupStrategy: LogsDedupStrategy): ThunkResult<void> => {
   return dispatch => {
     dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
   };

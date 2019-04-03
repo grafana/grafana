@@ -62,7 +62,7 @@ export async function getExploreUrl(
 ) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
-  let url;
+  let url: string;
 
   // Mixed datasources need to choose only one datasource
   if (panelDatasource.meta.id === 'mixed' && panelTargets) {
