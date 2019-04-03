@@ -44,6 +44,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    *  Set after constructor is called by Grafana
    */
+  id?: number;
   name?: string;
   meta?: PluginMeta;
   pluginExports?: PluginExports;
