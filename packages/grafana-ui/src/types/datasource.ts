@@ -133,14 +133,14 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   queryError?: DataQueryError;
 }
 
-export enum DatasourceStatus {
+export enum DataSourceStatus {
   Connected,
   Disconnected,
 }
 
 export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
   datasource: DSType;
-  datasourceStatus: DatasourceStatus;
+  datasourceStatus: DataSourceStatus;
   query: TQuery;
   error?: string | JSX.Element;
   hint?: QueryHint;
