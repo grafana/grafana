@@ -81,7 +81,7 @@ exports[`Render should render component 1`] = `
       There are no external groups to sync with
     </div>
     <button
-      className="empty-list-cta__button btn btn-xlarge btn-primary"
+      className="empty-list-cta__button btn btn-large btn-primary"
       onClick={[Function]}
     >
       <i

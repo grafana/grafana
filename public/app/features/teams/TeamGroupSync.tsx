@@ -121,7 +121,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 && !isAdding && (
           <div className="empty-list-cta">
             <div className="empty-list-cta__title">There are no external groups to sync with</div>
-            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-primary">
+            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-large btn-primary">
               <i className="gicon gicon-team" />
               Add Group
             </button>

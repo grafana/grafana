@@ -7,8 +7,9 @@
 
 // Core
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   font-weight: $btn-font-weight;
   line-height: $btn-line-height;
   font-size: $font-size-base;
@@ -52,22 +53,17 @@
 
 // Button Sizes
 // --------------------------------------------------
-// XLarge
-.btn-xlarge {
-  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $border-radius-sm);
-  font-weight: normal;
-
-  .gicon {
-    //font-size: 31px;
-    margin-right: $space-md;
-    filter: brightness(100);
-  }
-}
 
 // Large
 .btn-large {
   @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
+  height: $height-lg;
+  .gicon {
+    //font-size: 31px;
+    margin-right: $space-sm;
+    filter: brightness(100);
+  }
 }
 
 .btn-small {
