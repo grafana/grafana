@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(dashboardId int64, orgId int64) error
 }
 
 // DashboardProvisioningService service for operating on provisioned dashboards
@@ -243,11 +245,25 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	return cmd.Result, nil
 }
 
-// DeleteProvisionedDashboard removes dashboard from the DB. At the moment it is the same code that
-// deletes regular dashboards as all the metadata is handled there.
-func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
+func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
+	isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
+	err := bus.Dispatch(isDashboardProvisioned)
+	if err != nil {
+		return fmt.Errorf("error while checking if dashboard is provisioned: %v", err)
+	}
+
+	if isDashboardProvisioned.Result {
+		return models.ErrDashboardCannotDeleteProvisionedDashboard
+	}
+
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
 	return bus.Dispatch(cmd)
+}
+
+// DeleteProvisionedDashboard removes dashboard from the DB. At the moment it calls DeleteDashboard as all the metadata
+// is handled there.
+func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
+	return dr.DeleteDashboard(dashboardId, orgId)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
