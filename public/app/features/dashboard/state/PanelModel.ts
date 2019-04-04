@@ -369,3 +369,4 @@ export class PanelModel {
     this.events.removeAllListeners();
   }
 }
+
