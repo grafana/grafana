@@ -22,6 +22,7 @@ export interface Props extends Themeable {
   maxValue: number;
   minValue: number;
   orientation: VizOrientation;
+  outerMargin?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
@@ -34,6 +35,7 @@ export class BarGauge extends PureComponent<Props> {
       numeric: 100,
     },
     displayMode: 'lcd',
+    outerMargin: 10,
     orientation: VizOrientation.Horizontal,
     thresholds: [],
   };
@@ -120,7 +122,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value } = this.props;
+    const { maxValue, minValue, value, outerMargin } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -132,8 +134,8 @@ export class BarGauge extends PureComponent<Props> {
 
     const isVert = isVertical(this.props);
     const valueRange = maxValue - minValue;
-    const cellSpacing = 5;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
+    const cellSpacing = outerMargin;
     const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const valueColor = getValueColor(this.props);
@@ -145,16 +147,14 @@ export class BarGauge extends PureComponent<Props> {
       display: 'flex',
     };
 
-    console.log('maxBarWidth', maxBarWidth);
-
     if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
-      valueStyles.marginBottom = '20px';
+      valueStyles.justifyContent = 'center';
     } else {
       containerStyles.flexDirection = 'row';
       containerStyles.alignItems = 'center';
-      valueStyles.marginLeft = '20px';
+      valueStyles.justifyContent = 'flex-end';
     }
 
     const cells: JSX.Element[] = [];
@@ -167,7 +167,6 @@ export class BarGauge extends PureComponent<Props> {
       };
 
       if (cellColor.isLit) {
-        cellStyles.boxShadow = `0 0 4px ${cellColor.border}`;
         cellStyles.backgroundImage = `radial-gradient(${cellColor.background} 10%, ${cellColor.backgroundShade})`;
       } else {
         cellStyles.backgroundColor = cellColor.background;
@@ -386,6 +385,9 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     barStyles.height = `${barHeight}px`;
     barStyles.width = `${maxBarWidth}px`;
 
+    // value styles centered
+    valueStyles.justifyContent = 'center';
+
     if (isBasic) {
       // Basic styles
       barStyles.background = `${tinycolor(valueColor)
@@ -483,6 +485,10 @@ function getValueStyles(value: string, color: string, width: number, height: num
 
   return {
     color: color,
+    height: `${height}px`,
+    width: `${width}px`,
+    display: 'flex',
+    alignItems: 'center',
     fontSize: fontSize.toFixed(2) + 'px',
   };
 }

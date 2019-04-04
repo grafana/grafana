@@ -1,23 +1,41 @@
 import React, { PureComponent } from 'react';
 import { VizOrientation } from '../../types';
 
-interface RenderProps<T> {
-  vizWidth: number;
-  vizHeight: number;
-  value: T;
-}
-
 interface Props<T> {
-  children: (renderProps: RenderProps<T>) => JSX.Element | JSX.Element[];
+  renderValue: (value: T, width: number, height: number) => JSX.Element;
   height: number;
   width: number;
-  values: T[];
+  source: any; // If this changes, new values will be requested
+  getValues: () => T[];
+  renderCounter: number; // force update of values & render
   orientation: VizOrientation;
+  margin?: number;
 }
 
-const SPACE_BETWEEN = 10;
+interface State<T> {
+  values: T[];
+}
 
-export class VizRepeater<T> extends PureComponent<Props<T>> {
+export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
+  static defaultProps: Partial<Props<any>> = {
+    margin: 10,
+  };
+
+  constructor(props: Props<T>) {
+    super(props);
+
+    this.state = {
+      values: props.getValues(),
+    };
+  }
+
+  componentDidUpdate(prevProps: Props<T>) {
+    const { renderCounter, source } = this.props;
+    if (renderCounter !== prevProps.renderCounter || source !== prevProps.source) {
+      this.setState({ values: this.props.getValues() });
+    }
+  }
+
   getOrientation(): VizOrientation {
     const { orientation, width, height } = this.props;
 
@@ -33,7 +51,8 @@ export class VizRepeater<T> extends PureComponent<Props<T>> {
   }
 
   render() {
-    const { children, height, values, width } = this.props;
+    const { renderValue, height, width, margin } = this.props;
+    const { values } = this.state;
     const orientation = this.getOrientation();
 
     const itemStyles: React.CSSProperties = {
@@ -49,14 +68,14 @@ export class VizRepeater<T> extends PureComponent<Props<T>> {
 
     if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
-      itemStyles.margin = `${SPACE_BETWEEN / 2}px 0`;
+      itemStyles.margin = `${margin / 2}px 0`;
       vizWidth = width;
-      vizHeight = height / values.length - SPACE_BETWEEN;
+      vizHeight = height / values.length - margin;
     } else {
       repeaterStyle.flexDirection = 'row';
-      itemStyles.margin = `0 ${SPACE_BETWEEN / 2}px`;
+      itemStyles.margin = `0 ${margin / 2}px`;
       vizHeight = height;
-      vizWidth = width / values.length - SPACE_BETWEEN;
+      vizWidth = width / values.length - margin;
     }
 
     itemStyles.width = `${vizWidth}px`;
@@ -67,7 +86,7 @@ export class VizRepeater<T> extends PureComponent<Props<T>> {
         {values.map((value, index) => {
           return (
             <div key={index} style={itemStyles}>
-              {children({ vizHeight, vizWidth, value })}
+              {renderValue(value, vizWidth, vizHeight)}
             </div>
           );
         })}
