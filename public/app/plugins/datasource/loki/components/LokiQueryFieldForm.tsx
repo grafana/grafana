@@ -1,6 +1,8 @@
 // Libraries
 import React from 'react';
+// @ts-ignore
 import Cascader from 'rc-cascader';
+// @ts-ignore
 import PluginPrism from 'slate-prism';
 
 // Components
@@ -15,10 +17,13 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DatasourceStatus } from '@grafana/ui';
 
-function getChooserText(hasSytax, hasLogLabels) {
-  if (!hasSytax) {
+function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DatasourceStatus) {
+  if (datasourceStatus === DatasourceStatus.Disconnected) {
+    return '(Disconnected)';
+  }
+  if (!hasSyntax) {
     return 'Loading labels...';
   }
   if (!hasLogLabels) {
@@ -76,15 +81,15 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   modifiedSearch: string;
   modifiedQuery: string;
 
-  constructor(props: LokiQueryFieldFormProps, context) {
+  constructor(props: LokiQueryFieldFormProps, context: React.Context<any>) {
     super(props, context);
 
     this.plugins = [
       BracesPlugin(),
       RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
-        onlyIn: node => node.type === 'code_block',
-        getSyntax: node => 'promql',
+        onlyIn: (node: any) => node.type === 'code_block',
+        getSyntax: (node: any) => 'promql',
       }),
     ];
 
@@ -159,10 +164,12 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       onLoadOptions,
       onLabelsRefresh,
       datasource,
+      datasourceStatus,
     } = this.props;
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
-    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
+    const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
+    const buttonDisabled = !syntaxLoaded || datasourceStatus === DatasourceStatus.Disconnected;
 
     return (
       <>
@@ -172,13 +179,13 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               options={logLabelOptions}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
-              onPopupVisibleChange={isVisible => {
+              onPopupVisibleChange={(isVisible: boolean) => {
                 if (isVisible && onLabelsRefresh) {
                   onLabelsRefresh();
                 }
               }}
             >
-              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>
             </Cascader>

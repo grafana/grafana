@@ -1,7 +1,9 @@
 // Libraries
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
+// @ts-ignore
 import { connect } from 'react-redux';
 
 // Components
@@ -13,7 +15,14 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import { RawTimeRange, DataQuery, ExploreDataSourceApi, QueryHint, QueryFixAction } from '@grafana/ui';
+import {
+  RawTimeRange,
+  DataQuery,
+  ExploreDataSourceApi,
+  QueryHint,
+  QueryFixAction,
+  DatasourceStatus,
+} from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -32,6 +41,7 @@ interface QueryRowProps {
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: ExploreDataSourceApi;
+  datasourceStatus: DatasourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   index: number;
@@ -95,7 +105,16 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }, 500);
 
   render() {
-    const { datasourceInstance, history, index, query, queryTransactions, exploreEvents, range } = this.props;
+    const {
+      datasourceInstance,
+      history,
+      index,
+      query,
+      queryTransactions,
+      exploreEvents,
+      range,
+      datasourceStatus,
+    } = this.props;
     const transactions = queryTransactions.filter(t => t.rowIndex === index);
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
@@ -110,6 +129,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
           {QueryField ? (
             <QueryField
               datasource={datasourceInstance}
+              datasourceStatus={datasourceStatus}
               query={query}
               error={queryError}
               hint={hint}
@@ -152,12 +172,19 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId, index }) {
+function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, queryTransactions, range } = item;
+  const { datasourceInstance, history, queries, queryTransactions, range, datasourceError } = item;
   const query = queries[index];
-  return { datasourceInstance, history, query, queryTransactions, range };
+  return {
+    datasourceInstance,
+    history,
+    query,
+    queryTransactions,
+    range,
+    datasourceStatus: datasourceError ? DatasourceStatus.Disconnected : DatasourceStatus.Connected,
+  };
 }
 
 const mapDispatchToProps = {
