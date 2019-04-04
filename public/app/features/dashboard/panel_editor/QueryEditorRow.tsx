@@ -161,7 +161,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     // give angular time to compile
     setTimeout(() => {
       this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
-    }, 10);
+    }, 100);
   }
 
   onToggleCollapse = () => {
