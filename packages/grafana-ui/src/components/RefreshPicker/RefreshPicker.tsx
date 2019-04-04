@@ -50,7 +50,7 @@ export class RefreshPicker extends PureComponent<Props> {
         <div className="refresh-picker-buttons">
           <RefreshButton onClick={onRefresh} />
           <ButtonSelect
-            className="refresh-picker-button-select"
+            className="refresh-picker-button-select btn--radius-left-0 nav navbar-button--attached"
             value={selectedValue}
             label={selectedValue.label}
             options={options}

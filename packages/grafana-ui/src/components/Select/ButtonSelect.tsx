@@ -12,20 +12,18 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   const { label, className, iconClass } = buttonProps;
 
   return (
-    <div className={`${className}-button`}>
-      <button
-        ref={props.innerRef}
-        className="btn navbar-button navbar-button--tight"
-        onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
-        onBlur={props.selectProps.onMenuClose}
-      >
-        <div className="select-button">
-          {iconClass && <i className={`select-button-icon ${iconClass}`} />}
-          <span className="select-button-value">{label ? label : ''}</span>
-          <i className="fa fa-caret-down fa-fw" />
-        </div>
-      </button>
-    </div>
+    <button
+      ref={props.innerRef}
+      className={`${className} btn navbar-button navbar-button--tight`}
+      onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
+      onBlur={props.selectProps.onMenuClose}
+    >
+      <div className="select-button">
+        {iconClass && <i className={`select-button-icon ${iconClass}`} />}
+        <span className="select-button-value">{label ? label : ''}</span>
+        <i className="fa fa-caret-down fa-fw" />
+      </div>
+    </button>
   );
 };
 
@@ -69,24 +67,22 @@ export class ButtonSelect extends PureComponent<Props> {
       Control: ButtonComponent({ label, className, iconClass }),
     };
     return (
-      <div className={className}>
-        <Select
-          autoFocus
-          backspaceRemovesValue={false}
-          isClearable={false}
-          isSearchable={false}
-          options={options}
-          onChange={this.onChange}
-          defaultValue={value}
-          maxMenuHeight={maxMenuHeight}
-          components={combinedComponents}
-          className="gf-form-select-box-button-select"
-          tooltipContent={tooltipContent}
-          isOpen={isMenuOpen}
-          onOpenMenu={onOpenMenu}
-          onCloseMenu={onCloseMenu}
-        />
-      </div>
+      <Select
+        autoFocus
+        backspaceRemovesValue={false}
+        isClearable={false}
+        isSearchable={false}
+        options={options}
+        onChange={this.onChange}
+        defaultValue={value}
+        maxMenuHeight={maxMenuHeight}
+        components={combinedComponents}
+        className="gf-form-select-box-button-select"
+        tooltipContent={tooltipContent}
+        isOpen={isMenuOpen}
+        onOpenMenu={onOpenMenu}
+        onCloseMenu={onCloseMenu}
+      />
     );
   }
 }

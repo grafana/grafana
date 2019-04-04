@@ -14,14 +14,6 @@
     padding-right: 2px;
   }
 
-  .btn {
-    border-radius: 0;
-  }
-
-  .btn:first-child {
-    border-right: 0;
-  }
-
   .gf-form-input--form-dropdown {
     position: static;
   }
@@ -30,5 +22,11 @@
     position: absolute;
     left: 0;
     width: 100%;
+  }
+}
+
+.refresh-picker-button-select-button {
+  .navbar-button {
+    border-radius: 0 2px 2px 0;
   }
 }

@@ -6,7 +6,7 @@ export interface Props {
 
 export const RefreshButton: FunctionComponent<Props> = (props: Props) => {
   return (
-    <button className="btn navbar-button navbar-button--refresh" onClick={props.onClick}>
+    <button className="btn btn--radius-right-0 navbar-button navbar-button--refresh" onClick={props.onClick}>
       <i className="fa fa-refresh" />
     </button>
   );
