@@ -200,8 +200,61 @@ func TestDashboardService(t *testing.T) {
 			})
 		})
 
+		Convey("Given provisioned dashboard", func() {
+			result := setupDeleteHandlers(true)
+
+			Convey("DeleteProvisionedDashboard should delete it", func() {
+				err := service.DeleteProvisionedDashboard(1, 1)
+				So(err, ShouldBeNil)
+				So(result.deleteWasCalled, ShouldBeTrue)
+			})
+
+			Convey("DeleteDashboard should fail to delete it", func() {
+				err := service.DeleteDashboard(1, 1)
+				So(err, ShouldEqual, models.ErrDashboardCannotDeleteProvisionedDashboard)
+				So(result.deleteWasCalled, ShouldBeFalse)
+			})
+		})
+
+		Convey("Given non provisioned dashboard", func() {
+			result := setupDeleteHandlers(false)
+
+			Convey("DeleteProvisionedDashboard should delete it", func() {
+				err := service.DeleteProvisionedDashboard(1, 1)
+				So(err, ShouldBeNil)
+				So(result.deleteWasCalled, ShouldBeTrue)
+			})
+
+			Convey("DeleteDashboard should delete it", func() {
+				err := service.DeleteDashboard(1, 1)
+				So(err, ShouldBeNil)
+				So(result.deleteWasCalled, ShouldBeTrue)
+			})
+		})
+
 		Reset(func() {
 			guardian.New = origNewDashboardGuardian
 		})
 	})
+}
+
+type Result struct {
+	deleteWasCalled bool
+}
+
+func setupDeleteHandlers(provisioned bool) *Result {
+	bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+		cmd.Result = provisioned
+		return nil
+	})
+
+	result := &Result{}
+	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+		So(cmd.Id, ShouldEqual, 1)
+		So(cmd.OrgId, ShouldEqual, 1)
+		result.deleteWasCalled = true
+		return nil
+	})
+
+	return result
 }

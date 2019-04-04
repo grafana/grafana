@@ -133,6 +133,7 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
 		// so afterwards the dashboard is considered unprovisioned.
 		for _, dashboardId := range dashboardToDelete {
+			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardId)
 			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardId)
 			if err != nil {
 				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardId, "error", err)

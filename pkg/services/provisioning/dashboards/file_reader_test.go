@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"github.com/grafana/grafana/pkg/util"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -252,7 +253,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 		})
 
-		Convey("Should unprovision missing dashboard if preventDelete = true", func() {
+		Convey("Given missing dashboard file", func() {
 			cfg := &DashboardsAsConfig{
 				Name:  "Default",
 				Type:  "file",
@@ -260,19 +261,18 @@ func TestDashboardFileReader(t *testing.T) {
 				Options: map[string]interface{}{
 					"folder": unprovision,
 				},
-				DisableDeletion: true,
 			}
 
-			reader, err := NewDashboardFileReader(cfg, logger)
-			So(err, ShouldBeNil)
-
 			fakeService.inserted = []*dashboards.SaveDashboardDTO{
-				{}, {},
+				{Dashboard: &models.Dashboard{Id: 1}},
+				{Dashboard: &models.Dashboard{Id: 2}},
 			}
 
 			absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
+			So(err, ShouldBeNil)
 			// This one does not exist on disc, simulating a deleted file
 			absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
+			So(err, ShouldBeNil)
 
 			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 				"Default": {
@@ -281,11 +281,32 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			err = reader.startWalkingDisk()
-			So(err, ShouldBeNil)
+			Convey("Missing dashboard should be unprovisioned if DisableDeletion = true", func() {
+				cfg.DisableDeletion = true
 
-			So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
-			So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
+				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+
+			})
+
+			Convey("Missing dashboard should be deleted if DisableDeletion = false", func() {
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
+				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+				So(len(fakeService.inserted), ShouldEqual, 1)
+				So(fakeService.inserted[0].Dashboard.Id, ShouldEqual, 1)
+			})
 		})
 
 		Reset(func() {
@@ -348,6 +369,23 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 }
 
 func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	// Copy the structs as we need to change them but do not want to alter outside world.
+	var copyProvisioning = &models.DashboardProvisioning{}
+	*copyProvisioning = *provisioning
+
+	var copyDto = &dashboards.SaveDashboardDTO{}
+	*copyDto = *dto
+
+	if copyDto.Dashboard.Id == 0 {
+		copyDto.Dashboard.Id = rand.Int63n(1000000)
+	} else {
+		err := s.DeleteProvisionedDashboard(dto.Dashboard.Id, dto.Dashboard.OrgId)
+		// Lets delete existing so we do not have duplicates
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	s.inserted = append(s.inserted, dto)
 
 	if _, ok := s.provisioned[provisioning.Name]; !ok {
@@ -361,11 +399,7 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboa
 		}
 	}
 
-	// Copy the struct as we need to assign some dashboardId to it but do not want to alter outside world.
-	var copyProvisioning = &models.DashboardProvisioning{}
-	*copyProvisioning = *provisioning
-
-	copyProvisioning.DashboardId = rand.Int63n(1000000)
+	copyProvisioning.DashboardId = copyDto.Dashboard.Id
 
 	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], copyProvisioning)
 	return dto.Dashboard, nil
@@ -388,7 +422,17 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int6
 }
 
 func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	panic("Should not be called in this test at the moment")
+	err := s.UnprovisionDashboard(dashboardId)
+	if err != nil {
+		return err
+	}
+
+	for index, val := range s.inserted {
+		if val.Dashboard.Id == dashboardId {
+			s.inserted = append(s.inserted[:index], s.inserted[util.MinInt(index+1, len(s.inserted)):]...)
+		}
+	}
+	return nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {

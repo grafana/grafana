@@ -245,25 +245,31 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	return cmd.Result, nil
 }
 
+// DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
+// operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
-	isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
-	err := bus.Dispatch(isDashboardProvisioned)
-	if err != nil {
-		return fmt.Errorf("error while checking if dashboard is provisioned: %v", err)
-	}
-
-	if isDashboardProvisioned.Result {
-		return models.ErrDashboardCannotDeleteProvisionedDashboard
-	}
-
-	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return dr.deleteDashboard(dashboardId, orgId, true)
 }
 
-// DeleteProvisionedDashboard removes dashboard from the DB. At the moment it calls DeleteDashboard as all the metadata
-// is handled there.
+// DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
 func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	return dr.DeleteDashboard(dashboardId, orgId)
+	return dr.deleteDashboard(dashboardId, orgId, false)
+}
+
+func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
+	if validateProvisionedDashboard {
+		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
+		err := bus.Dispatch(isDashboardProvisioned)
+		if err != nil {
+			return fmt.Errorf("error while checking if dashboard is provisioned: %v", err)
+		}
+
+		if isDashboardProvisioned.Result {
+			return models.ErrDashboardCannotDeleteProvisionedDashboard
+		}
+	}
+	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
+	return bus.Dispatch(cmd)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
