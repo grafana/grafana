@@ -134,7 +134,7 @@ export class BarGauge extends PureComponent<Props> {
         value: color,
         border: color,
         background: tinycolor(color)
-          .setAlpha(0.15)
+          .setAlpha(0.25)
           .toRgbString(),
       };
     }
@@ -294,8 +294,7 @@ export class BarGauge extends PureComponent<Props> {
       if (isBasic) {
         // Basic styles
         barStyles.background = `${colors.background}`;
-        barStyles.border = `1px solid ${colors.border}`;
-        barStyles.boxShadow = `0 0 4px ${colors.border}`;
+        barStyles.borderTop = `2px solid ${colors.border}`;
       } else {
         // Gradient styles
         barStyles.background = this.getBarGradient(maxBarHeight);
@@ -315,8 +314,7 @@ export class BarGauge extends PureComponent<Props> {
       if (isBasic) {
         // Basic styles
         barStyles.background = `${colors.background}`;
-        barStyles.border = `1px solid ${colors.border}`;
-        barStyles.boxShadow = `0 0 4px ${colors.border}`;
+        barStyles.borderRight = `2px solid ${colors.border}`;
       } else {
         // Gradient styles
         barStyles.background = this.getBarGradient(maxBarWidth);
@@ -344,7 +342,7 @@ export class BarGauge extends PureComponent<Props> {
       if (value === null || (positionValue !== null && positionValue > value.numeric)) {
         return {
           background: tinycolor(color)
-            .setAlpha(0.15)
+            .setAlpha(0.18)
             .toRgbString(),
           border: 'transparent',
           isLit: false,
@@ -352,7 +350,7 @@ export class BarGauge extends PureComponent<Props> {
       } else {
         return {
           background: tinycolor(color)
-            .setAlpha(0.85)
+            .setAlpha(0.95)
             .toRgbString(),
           backgroundShade: tinycolor(color)
             .setAlpha(0.55)
