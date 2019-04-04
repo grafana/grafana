@@ -39,14 +39,14 @@ func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
 	for _, ds := range cfg.Datasources {
 		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgId, Name: ds.Name}
 		err := bus.Dispatch(cmd)
-		if err != nil {
-			if err == models.ErrDataSourceNotFound {
-				dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
-				insertCmd := createInsertCommand(ds)
-				if err := bus.Dispatch(insertCmd); err != nil {
-					return err
-				}
-			} else {
+		if err != nil && err != models.ErrDataSourceNotFound {
+			return err
+		}
+
+		if err == models.ErrDataSourceNotFound {
+			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
+			insertCmd := createInsertCommand(ds)
+			if err := bus.Dispatch(insertCmd); err != nil {
 				return err
 			}
 		} else {
