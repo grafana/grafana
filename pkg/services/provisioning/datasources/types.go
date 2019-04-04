@@ -123,6 +123,9 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 		// field and secureJsonData can be used in config. For non core datasources they have to opt in explicitly to
 		// use secureJsonData.
 		if plugins.IsCoreDatasource(ds.Type) {
+			if ds.SecureJsonData == nil {
+				ds.SecureJsonData = make(map[string]string)
+			}
 			ds.SecureJsonData["basicAuthPassword"] = ds.BasicAuthPassword
 			ds.BasicAuthPassword = ""
 
