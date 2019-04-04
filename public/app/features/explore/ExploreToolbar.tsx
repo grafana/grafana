@@ -64,7 +64,7 @@ interface StateProps {
 interface DispatchProps {
   changeDatasource: typeof changeDatasource;
   clearAll: typeof clearQueries;
-  runQuery: typeof runQueries;
+  runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
   changeRefreshInterval: typeof changeRefreshInterval;
@@ -86,7 +86,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   };
 
   onRunQuery = () => {
-    this.props.runQuery(this.props.exploreId);
+    return this.props.runQueries(this.props.exploreId);
   };
 
   onCloseTimePicker = () => {
@@ -168,7 +168,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 initialValue={undefined}
                 value={refreshInterval}
               />
-              <Interval func={this.onRunQuery} delay={refreshInterval.value} />
+              {refreshInterval.value > 0 && <Interval func={this.onRunQuery} delay={refreshInterval.value} />}
             </div>
 
             <div className="explore-toolbar-content-item">
@@ -224,7 +224,7 @@ const mapDispatchToProps: DispatchProps = {
   changeDatasource,
   changeRefreshInterval,
   clearAll: clearQueries,
-  runQuery: runQueries,
+  runQueries,
   closeSplit: splitClose,
   split: splitOpen,
 };

@@ -538,7 +538,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<Promise<any>> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -554,55 +554,62 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     if (datasourceError) {
       // let's not run any queries if data source is in a faulty state
-      return;
+      return Promise.resolve();
     }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
-      return;
+      return Promise.resolve();
     }
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction());
+    const dispatchedRunQueriesAction = dispatch(runQueriesAction());
+    console.log('dispatchedRunQueriesAction', dispatchedRunQueriesAction);
+
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && supportsTable) {
-      dispatch(
-        runQueriesForType(
-          exploreId,
-          'Table',
-          {
-            interval,
-            format: 'table',
-            instant: true,
-            valueWithRefId: true,
-          },
-          (data: any[]) => data[0]
-        )
-      );
-    }
-    if ((ignoreUIState || showingGraph) && supportsGraph) {
-      dispatch(
-        runQueriesForType(
-          exploreId,
-          'Graph',
-          {
-            interval,
-            format: 'time_series',
-            instant: false,
-          },
-          makeTimeSeriesList
-        )
-      );
-    }
-    if ((ignoreUIState || showingLogs) && supportsLogs) {
-      dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
-    }
+    const tableQueriesPromise =
+      (ignoreUIState || showingTable) && supportsTable
+        ? dispatch(
+            runQueriesForType(
+              exploreId,
+              'Table',
+              {
+                interval,
+                format: 'table',
+                instant: true,
+                valueWithRefId: true,
+              },
+              (data: any[]) => data[0]
+            )
+          )
+        : undefined;
+    const typeQueriesPromise =
+      (ignoreUIState || showingGraph) && supportsGraph
+        ? dispatch(
+            runQueriesForType(
+              exploreId,
+              'Graph',
+              {
+                interval,
+                format: 'time_series',
+                instant: false,
+              },
+              makeTimeSeriesList
+            )
+          )
+        : undefined;
+    const logsQueriesPromise =
+      (ignoreUIState || showingLogs) && supportsLogs
+        ? dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }))
+        : undefined;
 
     dispatch(stateSave());
+
+    return Promise.all([tableQueriesPromise, typeQueriesPromise, logsQueriesPromise]);
   };
 }
 
@@ -622,9 +629,8 @@ function runQueriesForType(
   return async (dispatch, getState) => {
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
-
     // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
+    const queryPromises = queries.map(async (query, rowIndex) => {
       const transaction = buildQueryTransaction(
         query,
         rowIndex,
@@ -648,6 +654,8 @@ function runQueriesForType(
         dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
       }
     });
+
+    return Promise.all(queryPromises);
   };
 }
 

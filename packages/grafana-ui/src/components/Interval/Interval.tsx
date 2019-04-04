@@ -1,7 +1,6 @@
 ﻿import { PureComponent } from 'react';
-
 interface Props {
-  func: () => void;
+  func: () => any; // TODO
   delay: number;
 }
 
@@ -26,9 +25,12 @@ export class Interval extends PureComponent<Props> {
 
   addInterval = () => {
     const { func, delay } = this.props;
-    if (delay && delay > 0) {
-      this.intervalId = window.setInterval(func, delay);
-    }
+
+    func().then(() => {
+      this.intervalId = window.setTimeout(() => {
+        this.addInterval();
+      }, delay);
+    });
   };
 
   clearInterval = () => {
