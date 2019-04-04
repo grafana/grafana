@@ -64,7 +64,7 @@ type DataSource struct {
 // DecryptedBasicAuthPassword returns data source basic auth password in plain text. It uses either deprecated
 // basic_auth_password field or encrypted secure_json_data[basicAuthPassword] variable.
 func (ds *DataSource) DecryptedBasicAuthPassword() string {
-	return ds.decryptedValue("password", ds.Password)
+	return ds.decryptedValue("basicAuthPassword", ds.BasicAuthPassword)
 }
 
 // DecryptedPassword returns data source password in plain text. It uses either deprecated password field
