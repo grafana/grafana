@@ -176,12 +176,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { query, onChange } = this.props;
     const { datasource, queryResponse, queryError } = this.state;
 
-    if (datasource.pluginExports.QueryCtrl) {
+    if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (datasource.pluginExports.QueryEditor) {
-      const QueryEditor = datasource.pluginExports.QueryEditor;
+    if (datasource.components.QueryEditor) {
+      const QueryEditor = datasource.components.QueryEditor;
+
       return (
         <QueryEditor
           query={query}
