@@ -11,7 +11,7 @@ describe('parseQuery', () => {
   it('returns regexp for strings without query', () => {
     expect(parseQuery('test')).toEqual({
       query: '',
-      regexp: 'test',
+      regexp: '(?i)test',
     });
   });
 
@@ -25,14 +25,14 @@ describe('parseQuery', () => {
   it('returns query for strings with query and search string', () => {
     expect(parseQuery('x {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: 'x',
+      regexp: '(?i)x',
     });
   });
 
   it('returns query for strings with query and regexp', () => {
     expect(parseQuery('{foo="bar"} x|y')).toEqual({
       query: '{foo="bar"}',
-      regexp: 'x|y',
+      regexp: '(?i)x|y',
     });
   });
 
@@ -46,11 +46,11 @@ describe('parseQuery', () => {
   it('returns query and regexp with quantifiers', () => {
     expect(parseQuery('{foo="bar"} \\.java:[0-9]{1,5}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '\\.java:[0-9]{1,5}',
+      regexp: '(?i)\\.java:[0-9]{1,5}',
     });
     expect(parseQuery('\\.java:[0-9]{1,5} {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '\\.java:[0-9]{1,5}',
+      regexp: '(?i)\\.java:[0-9]{1,5}',
     });
   });
 });

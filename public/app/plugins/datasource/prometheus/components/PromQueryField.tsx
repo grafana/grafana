@@ -1,7 +1,11 @@
+// @ts-ignore
 import _ from 'lodash';
 import React from 'react';
+// @ts-ignore
 import Cascader from 'rc-cascader';
+// @ts-ignore
 import PluginPrism from 'slate-prism';
+// @ts-ignore
 import Prism from 'prismjs';
 
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
@@ -13,12 +17,22 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DatasourceStatus } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
+
+function getChooserText(hasSyntax: boolean, datasourceStatus: DatasourceStatus) {
+  if (datasourceStatus === DatasourceStatus.Disconnected) {
+    return '(Disconnected)';
+  }
+  if (!hasSyntax) {
+    return 'Loading metrics...';
+  }
+  return 'Metrics';
+}
 
 export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): CascaderOption[] {
   // Filter out recording rules and insert as first option
@@ -36,8 +50,8 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   const options = ruleNames.length > 0 ? [rulesOption] : [];
 
   const metricsOptions = _.chain(metrics)
-    .filter(metric => !ruleRegex.test(metric))
-    .groupBy(metric => metric.split(delimiter)[0])
+    .filter((metric: string) => !ruleRegex.test(metric))
+    .groupBy((metric: string) => metric.split(delimiter)[0])
     .map(
       (metricsForPrefix: string[], prefix: string): CascaderOption => {
         const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
@@ -103,7 +117,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   languageProvider: any;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
-  constructor(props: PromQueryFieldProps, context) {
+  constructor(props: PromQueryFieldProps, context: React.Context<any>) {
     super(props, context);
 
     if (props.datasource.languageProvider) {
@@ -114,8 +128,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       BracesPlugin(),
       RunnerPlugin({ handler: props.onExecuteQuery }),
       PluginPrism({
-        onlyIn: node => node.type === 'code_block',
-        getSyntax: node => 'promql',
+        onlyIn: (node: any) => node.type === 'code_block',
+        getSyntax: (node: any) => 'promql',
       }),
     ];
 
@@ -127,17 +141,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidMount() {
     if (this.languageProvider) {
-      this.languageProviderInitializationPromise = makePromiseCancelable(this.languageProvider.start());
-      this.languageProviderInitializationPromise.promise
-        .then(remaining => {
-          remaining.map(task => task.then(this.onUpdateLanguage).catch(() => {}));
-        })
-        .then(() => this.onUpdateLanguage())
-        .catch(({ isCanceled }) => {
-          if (isCanceled) {
-            console.warn('PromQueryField has unmounted, language provider intialization was canceled');
-          }
-        });
+      this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
   }
 
@@ -146,6 +150,37 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       this.languageProviderInitializationPromise.cancel();
     }
   }
+
+  componentDidUpdate(prevProps: PromQueryFieldProps) {
+    const reconnected =
+      prevProps.datasourceStatus === DatasourceStatus.Disconnected &&
+      this.props.datasourceStatus === DatasourceStatus.Connected;
+    if (!reconnected) {
+      return;
+    }
+
+    if (this.languageProviderInitializationPromise) {
+      this.languageProviderInitializationPromise.cancel();
+    }
+
+    if (this.languageProvider) {
+      this.refreshMetrics(makePromiseCancelable(this.languageProvider.fetchMetrics()));
+    }
+  }
+
+  refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
+    this.languageProviderInitializationPromise = cancelablePromise;
+    this.languageProviderInitializationPromise.promise
+      .then(remaining => {
+        remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
+      })
+      .then(() => this.onUpdateLanguage())
+      .catch(({ isCanceled }) => {
+        if (isCanceled) {
+          console.warn('PromQueryField has unmounted, language provider intialization was canceled');
+        }
+      });
+  };
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;
@@ -202,7 +237,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Build metrics tree
     const metricsByPrefix = groupMetricsByPrefix(metrics);
-    const histogramOptions = histogramMetrics.map(hm => ({ label: hm, value: hm }));
+    const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
     const metricsOptions =
       histogramMetrics.length > 0
         ? [
@@ -239,17 +274,18 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, query } = this.props;
+    const { error, hint, query, datasourceStatus } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
-    const chooserText = syntaxLoaded ? 'Metrics' : 'Loading metrics...';
+    const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
+    const buttonDisabled = !syntaxLoaded || datasourceStatus === DatasourceStatus.Disconnected;
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--nowrap">
           <div className="gf-form flex-shrink-0">
             <Cascader options={metricsOptions} onChange={this.onChangeMetrics}>
-              <button className="gf-form-label gf-form-label--btn" disabled={!syntaxLoaded}>
+              <button className="gf-form-label gf-form-label--btn" disabled={buttonDisabled}>
                 {chooserText} <i className="fa fa-caret-down" />
               </button>
             </Cascader>

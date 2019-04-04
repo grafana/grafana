@@ -1,30 +1,39 @@
-import { VizOrientation, ValueMapping, Threshold } from '@grafana/ui';
+import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
-export interface SingleStatBaseOptions {
-  valueMappings: ValueMapping[];
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
-  orientation: VizOrientation;
+export interface SparklineOptions {
+  show: boolean;
+  full: boolean; // full height
+  fillColor: string;
+  lineColor: string;
 }
 
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
-}
-
+// Structure copied from angular
 export interface SingleStatOptions extends SingleStatBaseOptions {
-  // TODO, fill in with options from angular
+  prefixFontSize?: string;
+  valueFontSize?: string;
+  postfixFontSize?: string;
+
+  colorBackground?: boolean;
+  colorValue?: boolean;
+  colorPrefix?: boolean;
+  colorPostfix?: boolean;
+
+  sparkline: SparklineOptions;
 }
 
 export const defaults: SingleStatOptions = {
+  sparkline: {
+    show: true,
+    full: false,
+    lineColor: 'rgb(31, 120, 193)',
+    fillColor: 'rgba(31, 118, 189, 0.18)',
+  },
+
   valueOptions: {
     prefix: '',
     suffix: '',
     decimals: null,
-    stat: 'avg',
+    stat: StatID.mean,
     unit: 'none',
   },
   valueMappings: [],

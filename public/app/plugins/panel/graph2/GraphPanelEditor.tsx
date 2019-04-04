@@ -4,9 +4,9 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { PanelEditorProps, Switch, LegendEditor, LegendOptions, StatID } from '@grafana/ui';
-import { GraphOptions } from './types';
+import { Options } from './types';
 
-export class GraphPanelEditor extends PureComponent<PanelEditorProps<GraphOptions>> {
+export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleLines = () => {
     this.props.onOptionsChange({ ...this.props.options, showLines: !this.props.options.showLines });
   };
@@ -21,7 +21,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<GraphOption
 
   onLegendOptionsChange = (options: LegendOptions) => {
     this.props.onOptionsChange({ ...this.props.options, legend: options });
-  }
+  };
 
   render() {
     const { showBars, showPoints, showLines } = this.props.options;

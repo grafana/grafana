@@ -1,7 +1,7 @@
 +++
 title = "Alerting HTTP API "
-description = "Grafana Alerting HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "alerting"]
+description = "Grafana Alerts HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts"]
 aliases = ["/http_api/alerting/"]
 type = "docs"
 [menu.docs]
@@ -9,13 +9,10 @@ name = "Alerting"
 parent = "http_api"
 +++
 
-
 # Alerting API
 
 You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard json that contains the alerts.
-
-This API can also be used to create, update and delete alert notifications.
 
 ## Get alerts
 
@@ -69,7 +66,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get one alert
+## Get alert by id
 
 `GET /api/alerts/:id`
 
@@ -120,7 +117,7 @@ Content-Type: application/json
 If data from one server triggers the alert first and, before that server is seen leaving alerting state,
 a second server also enters a state that would trigger the alert, the second server will not be visible in "evalMatches" data.
 
-## Pause alert
+## Pause alert by id
 
 `POST /api/alerts/:id/pause`
 
@@ -158,187 +155,4 @@ Content-Type: application/json
 
 ## Pause all alerts
 
-`POST /api/admin/pause-all-alerts`
-
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
-
-**Example Request**:
-
-```http
-POST /api/admin/pause-all-alerts HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-
-{
-  "paused": true
-}
-```
-
-JSON Body Schema:
-
-- **paused** – Can be `true` or `false`. True to pause an alert. False to unpause an alert.
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "state":   "Paused",
-  "message": "alert paused",
-  "alertsAffected": 1
-}
-```
-
-## Get alert notifications
-
-`GET /api/alert-notifications`
-
-**Example Request**:
-
-```http
-GET /api/alert-notifications HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-[
-  {
-    "id": 1,
-    "name": "Team A",
-    "type": "email",
-    "isDefault": false,
-    "sendReminder": false,
-    "settings": {
-      "addresses": "carl@grafana.com;dev@grafana.com"
-    },
-    "created": "2018-04-23T14:44:09+02:00",
-    "updated": "2018-08-20T15:47:49+02:00"
-  }
-]
-
-```
-
-## Create alert notification
-
-You can find the full list of [supported notifiers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page.
-
-`POST /api/alert-notifications`
-
-**Example Request**:
-
-```http
-POST /api/alert-notifications HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{
-  "name": "new alert notification",  //Required
-  "type":  "email", //Required
-  "isDefault": false,
-  "sendReminder": false,
-  "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
-  }
-}
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "id": 1,
-  "name": "new alert notification",
-  "type": "email",
-  "isDefault": false,
-  "sendReminder": false,
-  "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
-  },
-  "created": "2018-04-23T14:44:09+02:00",
-  "updated": "2018-08-20T15:47:49+02:00"
-}
-```
-
-## Update alert notification
-
-`PUT /api/alert-notifications/1`
-
-**Example Request**:
-
-```http
-PUT /api/alert-notifications/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{
-  "id": 1,
-  "name": "new alert notification",  //Required
-  "type":  "email", //Required
-  "isDefault": false,
-  "sendReminder": true,
-  "frequency": "15m",
-  "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
-  }
-}
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "id": 1,
-  "name": "new alert notification",
-  "type": "email",
-  "isDefault": false,
-  "sendReminder": true,
-  "frequency": "15m",
-  "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
-  },
-  "created": "2017-01-01 12:34",
-  "updated": "2017-01-01 12:34"
-}
-```
-
-## Delete alert notification
-
-`DELETE /api/alert-notifications/:notificationId`
-
-**Example Request**:
-
-```http
-DELETE /api/alert-notifications/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "message": "Notification deleted"
-}
-```
+See [Admin API]({{< relref "http_api/admin.md#pause-all-alerts" >}}).

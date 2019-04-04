@@ -28,8 +28,7 @@
 
   & > input {
     max-width: 653px;
-    //padding: 0.5rem 1.5rem 0.5rem 0;
-    padding: 1rem 1rem 0.75rem 1rem;
+    padding: $space-md $space-md $space-sm $space-md;
     height: 51px;
     box-sizing: border-box;
     outline: none;
@@ -45,7 +44,7 @@
 
 .search-field-icon {
   font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1.5rem;
+  padding: $space-md $space-md $space-sm $space-md;
 }
 
 .search-dropdown {
@@ -112,7 +111,7 @@
   padding: $spacer;
   position: relative;
   flex-grow: 10;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 
   // Fix for search scroller in mobile view
   height: unset;
@@ -274,7 +273,7 @@
 
   .search-dropdown__col_2 {
     display: flex;
-    margin-bottom: 1rem;
+    margin-bottom: $space-md;
   }
 }
 

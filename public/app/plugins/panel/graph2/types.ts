@@ -1,19 +1,14 @@
 import { LegendOptions } from '@grafana/ui';
 
-export interface GraphOptions {
+export interface Options {
   showBars: boolean;
   showLines: boolean;
   showPoints: boolean;
-  legend: LegendOptions;
+  legend?: LegendOptions;
 }
 
-export const defaults: GraphOptions = {
-  showLines: true,
+export const defaults: Options = {
   showBars: false,
+  showLines: true,
   showPoints: false,
-  legend: {
-    asTable: false,
-    isVisible: false,
-    placement: 'under',
-  },
 };

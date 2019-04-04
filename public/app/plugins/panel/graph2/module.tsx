@@ -1,9 +1,6 @@
 import { ReactPanelPlugin } from '@grafana/ui';
-
 import { GraphPanelEditor } from './GraphPanelEditor';
 import { GraphPanel } from './GraphPanel';
-import { GraphOptions, defaults } from './types';
+import { Options, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<GraphOptions>(GraphPanel);
-reactPanel.setEditor(GraphPanelEditor);
-reactPanel.setDefaults(defaults);
+export const reactPanel = new ReactPanelPlugin<Options>(GraphPanel).setDefaults(defaults).setEditor(GraphPanelEditor);

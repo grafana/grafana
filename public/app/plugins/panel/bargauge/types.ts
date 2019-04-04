@@ -1,5 +1,4 @@
-import { VizOrientation, SelectOptionItem } from '@grafana/ui';
-import { SingleStatBaseOptions } from '../singlestat2/types';
+import { VizOrientation, SelectOptionItem, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   minValue: number;
@@ -25,7 +24,7 @@ export const defaults: BarGaugeOptions = {
   orientation: VizOrientation.Horizontal,
   valueOptions: {
     unit: 'none',
-    stat: 'avg',
+    stat: StatID.mean,
     prefix: '',
     suffix: '',
     decimals: null,

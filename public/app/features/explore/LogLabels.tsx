@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
 
-import { LogsStreamLabels, LogRowModel } from 'app/core/logs_model';
+import { LogRowModel } from 'app/core/logs_model';
 import { LogLabel } from './LogLabel';
+import { Labels } from '@grafana/ui';
 
 interface Props {
   getRows?: () => LogRowModel[];
-  labels: LogsStreamLabels;
+  labels: Labels;
   plain?: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }

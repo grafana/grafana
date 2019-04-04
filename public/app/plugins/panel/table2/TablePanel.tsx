@@ -14,15 +14,15 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { panelData, options } = this.props;
+    const { data, options } = this.props;
 
-    if (!panelData || !panelData.tableData) {
+    if (data.length < 1) {
       return <div>No Table Data...</div>;
     }
 
     return (
       <ThemeContext.Consumer>
-        {theme => <Table {...this.props} {...options} theme={theme} data={panelData.tableData} />}
+        {theme => <Table {...this.props} {...options} theme={theme} data={data[0]} />}
       </ThemeContext.Consumer>
     );
   }

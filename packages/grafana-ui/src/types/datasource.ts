@@ -1,12 +1,17 @@
 import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries } from './data';
+import { TableData, TimeSeries, SeriesData } from './data';
+
+/**
+ * Starting in v6.2 SeriesData can represent both TimeSeries and TableData
+ */
+export type LegacyResponseData = TimeSeries | TableData | any;
+
+export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
-  data: DataQueryResponseData;
+  data: DataQueryResponseData[];
 }
-
-export type DataQueryResponseData = TimeSeries[] | [TableData] | any;
 
 export interface DataQuery {
   /**
@@ -39,6 +44,7 @@ export interface DataQueryError {
   message?: string;
   status?: string;
   statusText?: string;
+  refId?: string;
 }
 
 export interface ScopedVar {

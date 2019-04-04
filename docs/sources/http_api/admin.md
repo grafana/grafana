@@ -319,7 +319,7 @@ Only works with Basic Authentication (username and password). See [introduction]
 
 **Example Request**:
 
-```json
+```http
 POST /api/admin/pause-all-alerts HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -335,11 +335,15 @@ JSON Body schema:
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
-{"state": "new state", "message": "alerts pause/un paused", "alertsAffected": 100}
+{
+  "state":   "Paused",
+  "message": "alert paused",
+  "alertsAffected": 1
+}
 ```
 
 ## Auth tokens for User
