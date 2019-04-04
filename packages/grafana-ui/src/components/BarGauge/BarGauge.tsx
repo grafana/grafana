@@ -8,7 +8,6 @@ import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
 // Types
 import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
 
-const BAR_SIZE_RATIO = 0.8;
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
 const MIN_VALUE_WIDTH = 50;
@@ -67,29 +66,6 @@ export class BarGauge extends PureComponent<Props> {
     }
   }
 
-  getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
-    const heightFont = height / LINE_HEIGHT;
-    const guess = width / (value.length * 1.1);
-    const fontSize = Math.min(Math.max(guess, 14), heightFont);
-
-    return {
-      color: color,
-      fontSize: fontSize.toFixed(2) + 'px',
-    };
-  }
-
-  /*
-   * Return width or height depending on viz orientation
-   * */
-  get size() {
-    const { height, width } = this.props;
-    return this.isVertical ? height : width;
-  }
-
-  get isVertical() {
-    return this.props.orientation === VizOrientation.Vertical;
-  }
-
   renderBasicAndGradientBars(): ReactNode {
     const { value } = this.props;
 
@@ -144,24 +120,34 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { height, width, maxValue, minValue, value } = this.props;
+    const { maxValue, minValue, value } = this.props;
+    const {
+      valueHeight,
+      valueWidth,
+      maxBarHeight,
+      maxBarWidth,
+      wrapperWidth,
+      wrapperHeight,
+    } = calculateBarAndValueDimensions(this.props);
 
+    const isVert = isVertical(this.props);
     const valueRange = maxValue - minValue;
-    const maxSize = this.size * BAR_SIZE_RATIO;
     const cellSpacing = 5;
+    const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const valueColor = getValueColor(this.props);
-    const spaceForText = this.isVertical ? width : Math.min(this.size - maxSize, height);
-    const valueStyles = this.getValueStyles(value.text, valueColor, spaceForText, 30);
+    const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
 
     const containerStyles: CSSProperties = {
-      width: `${width}px`,
-      height: `${height}px`,
+      width: `${wrapperWidth}px`,
+      height: `${wrapperHeight}px`,
       display: 'flex',
     };
 
-    if (this.isVertical) {
+    console.log('maxBarWidth', maxBarWidth);
+
+    if (isVert) {
       containerStyles.flexDirection = 'column-reverse';
       containerStyles.alignItems = 'center';
       valueStyles.marginBottom = '20px';
@@ -187,13 +173,13 @@ export class BarGauge extends PureComponent<Props> {
         cellStyles.backgroundColor = cellColor.background;
       }
 
-      if (this.isVertical) {
+      if (isVert) {
         cellStyles.height = `${cellSize}px`;
-        cellStyles.width = `${width}px`;
+        cellStyles.width = `${maxBarWidth}px`;
         cellStyles.marginTop = `${cellSpacing}px`;
       } else {
         cellStyles.width = `${cellSize}px`;
-        cellStyles.height = `${height}px`;
+        cellStyles.height = `${maxBarHeight}px`;
         cellStyles.marginRight = `${cellSpacing}px`;
       }
 
@@ -317,43 +303,68 @@ interface BasicAndGradientStyles {
   value: CSSProperties;
 }
 
-/**
- * Only exported to for unit test
- */
-export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { height, width, displayMode, maxValue, minValue, value } = props;
+interface BarAndValueDimensions {
+  valueWidth: number;
+  valueHeight: number;
+  maxBarWidth: number;
+  maxBarHeight: number;
+  wrapperHeight: number;
+  wrapperWidth: number;
+}
 
-  const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
+function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
+  const { height, width } = props;
   const titleDim = calculateTitleDimensions(props);
 
   let maxBarHeight = 0;
   let maxBarWidth = 0;
-  let maxValueHeight = 0;
-  let maxValueWidth = 0;
+  let valueHeight = 0;
+  let valueWidth = 0;
+  let wrapperWidth = 0;
+  let wrapperHeight = 0;
 
   if (isVertical(props)) {
-    maxValueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
-    maxValueWidth = width;
-    maxBarHeight = height - (titleDim.height + maxValueHeight);
+    valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+    valueWidth = width;
+    maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
+    wrapperWidth = width;
+    wrapperHeight = height - titleDim.height;
   } else {
-    maxValueHeight = height - titleDim.height;
-    maxValueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
+    valueHeight = height - titleDim.height;
+    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
     maxBarHeight = height - titleDim.height;
-    maxBarWidth = width - maxValueWidth - titleDim.width;
+    maxBarWidth = width - valueWidth - titleDim.width;
+
+    if (titleDim.placement === 'above') {
+      wrapperWidth = width;
+      wrapperHeight = height - titleDim.height;
+    } else {
+      wrapperWidth = width - titleDim.width;
+      wrapperHeight = height;
+    }
   }
 
-  // console.log('height', height);
-  // console.log('width', width);
-  // console.log('titleDim', titleDim);
-  // console.log('maxBarHeight', maxBarHeight);
-  // console.log('maxBarWidth', maxBarWidth);
-  // console.log('maxValueHeight', maxValueHeight);
-  // console.log('maxValueWidth', maxValueWidth);
-  // console.log('valuePercent', valuePercent);
+  return {
+    valueWidth,
+    valueHeight,
+    maxBarWidth,
+    maxBarHeight,
+    wrapperHeight,
+    wrapperWidth,
+  };
+}
 
+/**
+ * Only exported to for unit test
+ */
+export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
+  const { displayMode, maxValue, minValue, value } = props;
+  const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
+
+  const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
   const valueColor = getValueColor(props);
-  const valueStyles = getValueStyles(value.text, valueColor, maxValueWidth, maxValueHeight);
+  const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
   const isBasic = displayMode === 'basic';
 
   const wrapperStyles: CSSProperties = {
