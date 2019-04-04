@@ -21,6 +21,7 @@ type SocialGenericOAuth struct {
 	apiUrl               string
 	allowSignup          bool
 	emailAttributeName   string
+	emailRequired        bool
 	teamIds              []int
 }
 
@@ -198,7 +199,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	name := s.extractName(&data)
 
 	email := s.extractEmail(&data)
-	if email == "" {
+	if email == "" && s.emailRequired {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
 			return nil, err
@@ -251,7 +252,7 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 	}
 
 	email := s.extractEmail(data)
-	if email == "" {
+	if email == "" && s.emailRequired {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
 		return false
 	}

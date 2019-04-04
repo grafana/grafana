@@ -72,6 +72,7 @@ func NewOAuthService() {
 			ApiUrl:                       sec.Key("api_url").String(),
 			Enabled:                      sec.Key("enabled").MustBool(),
 			EmailAttributeName:           sec.Key("email_attribute_name").String(),
+			EmailRequired:                sec.Key("email_required").MustBool(),
 			AllowedDomains:               util.SplitString(sec.Key("allowed_domains").String()),
 			HostedDomain:                 sec.Key("hosted_domain").String(),
 			AllowSignup:                  sec.Key("allow_sign_up").MustBool(),
@@ -165,6 +166,7 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				emailAttributeName:   info.EmailAttributeName,
+				emailRequired:        info.EmailRequired,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}

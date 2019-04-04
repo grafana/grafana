@@ -151,16 +151,19 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
-	// validate that we got at least an email address
-	if userInfo.Email == "" {
-		hs.redirectWithError(ctx, login.ErrNoEmail)
-		return
-	}
+	// validate emails if configured to
+	if setting.OAuthService.OAuthInfos[name].EmailRequired {
+		// validate that we got at least an email address
+		if userInfo.Email == "" {
+			hs.redirectWithError(ctx, login.ErrNoEmail)
+			return
+		}
 
-	// validate that the email is allowed to login to grafana
-	if !connect.IsEmailAllowed(userInfo.Email) {
-		hs.redirectWithError(ctx, login.ErrEmailNotAllowed)
-		return
+		// validate that the email is allowed to login to grafana
+		if !connect.IsEmailAllowed(userInfo.Email) {
+			hs.redirectWithError(ctx, login.ErrEmailNotAllowed)
+			return
+		}
 	}
 
 	extUser := &m.ExternalUserInfo{
