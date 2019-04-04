@@ -72,6 +72,12 @@
   height: $height-sm;
 }
 
+// Deprecated, only used by old plugins
+.btn-mini {
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
+}
+
 .btn-link {
   color: $btn-link-color;
   background: transparent;
