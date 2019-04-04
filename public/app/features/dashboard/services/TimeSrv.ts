@@ -145,7 +145,7 @@ export class TimeSrv {
       this.$location.search(params);
     }
   }
-  
+
   refreshDashboard(auto?: boolean) {
     this.dashboard.timeRangeUpdated(this.timeRange(), auto);
   }

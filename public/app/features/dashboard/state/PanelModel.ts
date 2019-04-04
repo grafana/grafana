@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
 
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
@@ -62,7 +61,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
-  refreshOverride: true
+  refreshOverride: true,
 };
 
 const defaults: any = {
@@ -71,7 +70,7 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
-  refreshOverride: null
+  refreshOverride: null,
 };
 
 export class PanelModel {
@@ -120,9 +119,9 @@ export class PanelModel {
   plugin?: PanelPlugin;
   refreshOverride?: string;
   refreshTimer: any;
-  
+
   /** @ngInject */
-  constructor(model: any, private $timeout, private timer) {
+  constructor(model: any) {
     this.events = new Emitter();
 
     // copy properties from persisted model
@@ -137,7 +136,7 @@ export class PanelModel {
 
     this.restoreInfintyForThresholds();
 
-    this.setAutoRefresh(this.refreshOverride)
+    this.setAutoRefresh(this.refreshOverride);
   }
 
   ensureQueryIds() {
@@ -337,31 +336,7 @@ export class PanelModel {
 
   setAutoRefresh(interval) {
     this.refreshOverride = interval;
-    this.cancelNextRefresh();
-    if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
-
-      this.refreshTimer = this.timer.register(
-        this.$timeout(() => {
-          this.startNextRefreshTimer(intervalMs);
-          this.events.emit('refresh');
-        }, intervalMs)
-      );
-    }
-  }
-
-  private startNextRefreshTimer(afterMs) {
-    this.cancelNextRefresh();
-    this.refreshTimer = this.timer.register(
-      this.$timeout(() => {
-        this.startNextRefreshTimer(afterMs);
-        this.events.emit('refresh');
-      }, afterMs)
-    );
-  }
-
-  private cancelNextRefresh() {
-    this.timer.cancel(this.refreshTimer);
+    this.events.emit('panel-auto-refresh', this.refreshOverride);
   }
 
   destroy() {
@@ -369,4 +344,3 @@ export class PanelModel {
     this.events.removeAllListeners();
   }
 }
-
