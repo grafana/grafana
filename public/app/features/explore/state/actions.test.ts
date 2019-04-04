@@ -17,7 +17,6 @@ import {
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
-import { DEFAULT_REFRESH_INTERVAL_LABEL } from 'app/core/utils/explore';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
@@ -41,7 +40,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     queries: [],
     range,
     ui,
-    refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
   };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };

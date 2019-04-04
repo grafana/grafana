@@ -76,6 +76,11 @@ export interface ClearQueriesPayload {
   exploreId: ExploreId;
 }
 
+export interface ClearRefreshIntervalPayload {
+  exploreId: ExploreId;
+  refreshInterval: SelectOptionItem;
+}
+
 export interface HighlightLogsExpressionPayload {
   exploreId: ExploreId;
   expressions: string[];
@@ -87,7 +92,6 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: RawTimeRange;
-  refreshInterval: SelectOptionItem;
   ui: ExploreUIState;
 }
 
@@ -254,6 +258,13 @@ export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshInt
  * Clear all queries and results.
  */
 export const clearQueriesAction = actionCreatorFactory<ClearQueriesPayload>('explore/CLEAR_QUERIES').create();
+
+/**
+ * Clear the refresh interval. Called from RefreshPicker or when unmounting some page components.
+ */
+export const clearRefreshIntervalAction = actionCreatorFactory<ClearRefreshIntervalPayload>(
+  'explore/CLEAR_REFRESH_INTERVAL'
+).create();
 
 /**
  * Highlight expressions in the log results

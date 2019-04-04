@@ -169,8 +169,7 @@ enum ParseUrlStateIndex {
   RangeFrom = 0,
   RangeTo = 1,
   Datasource = 2,
-  RefreshInterval = 3,
-  SegmentsStart = 4,
+  SegmentsStart = 3,
 }
 
 enum ParseUiStateIndex {
@@ -199,7 +198,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     queries: [],
     range: DEFAULT_RANGE,
     ui: DEFAULT_UI_STATE,
-    refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
   };
 
   if (!parsed) {
@@ -215,12 +213,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     return errorResult;
   }
 
-  // SegmentsStart used to be on RefreshInterval's position. Small hack
-  // to avoid breaking legacy URLs until we have it all rewritten.
-  if (typeof parsed[ParseUrlStateIndex.RefreshInterval] === 'object') {
-    parsed.splice(ParseUrlStateIndex.RefreshInterval, 0, DEFAULT_REFRESH_INTERVAL_LABEL);
-  }
-
   const range = {
     from: parsed[ParseUrlStateIndex.RangeFrom],
     to: parsed[ParseUrlStateIndex.RangeTo],
@@ -229,7 +221,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(segment => isMetricSegment(segment));
   const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
-  const refreshInterval = parsed[ParseUrlStateIndex.RefreshInterval];
   const ui = uiState
     ? {
         showingGraph: uiState.ui[ParseUiStateIndex.Graph],
@@ -239,7 +230,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  return { datasource, queries, range, ui, refreshInterval };
+  return { datasource, queries, range, ui };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -248,7 +239,6 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.from,
       urlState.range.to,
       urlState.datasource,
-      urlState.refreshInterval,
       ...urlState.queries,
       {
         ui: [

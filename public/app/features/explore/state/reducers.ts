@@ -8,7 +8,6 @@ import {
   getQueryKeys,
   parseUrlState,
   DEFAULT_UI_STATE,
-  DEFAULT_REFRESH_INTERVAL_LABEL,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
@@ -70,7 +69,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   queries: false,
   range: false,
   ui: false,
-  refreshInterval: false,
 });
 
 /**
@@ -222,7 +220,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, ui, refreshInterval } = action.payload;
+      const { containerWidth, eventBridge, queries, range, ui } = action.payload;
       return {
         ...state,
         containerWidth,
@@ -230,7 +228,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         range,
         queries,
         initialized: true,
-        refreshInterval: refreshInterval,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         ...ui,
         update: makeInitialUpdateState(),
@@ -596,7 +593,7 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, ui: false, refreshInterval: false },
+      update: { datasource: false, queries: false, range: false, ui: false },
     };
   }
 
@@ -604,9 +601,6 @@ export const updateChildRefreshState = (
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
   const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
-  const refreshInterval =
-    _.isEqual(urlState ? urlState.refreshInterval : DEFAULT_REFRESH_INTERVAL_LABEL, state.urlState.refreshInterval) ===
-    false;
 
   return {
     ...state,
@@ -617,7 +611,6 @@ export const updateChildRefreshState = (
       queries,
       range,
       ui,
-      refreshInterval,
     },
   };
 };

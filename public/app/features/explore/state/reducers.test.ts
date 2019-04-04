@@ -29,7 +29,6 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
-import { DEFAULT_REFRESH_INTERVAL_LABEL } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery } from '@grafana/ui';
 
@@ -107,7 +106,6 @@ describe('Explore item reducer', () => {
             queries: true,
             range: true,
             ui: true,
-            refreshInterval: true,
           },
         };
         const expectedState = {
@@ -190,7 +188,6 @@ export const setup = (urlStateOverrides?: any) => {
       showingTable: false,
       showingLogs: false,
     },
-    refreshInterval: DEFAULT_REFRESH_INTERVAL_LABEL,
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
   const serializedUrlState = serializeStateToUrlParam(urlState);

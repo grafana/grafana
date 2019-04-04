@@ -18,7 +18,6 @@ import {
   serializeStateToUrlParam,
   parseUrlState,
 } from 'app/core/utils/explore';
-import { getIntervalFromString } from '@grafana/ui/src/utils/string';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
@@ -49,6 +48,7 @@ import {
   updateDatasourceInstanceAction,
   changeQueryAction,
   changeRefreshIntervalAction,
+  ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
   changeTimeAction,
@@ -169,7 +169,7 @@ export function changeSize(
 }
 
 /**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
  */
 export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<void> {
   return dispatch => {
@@ -179,13 +179,13 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
 }
 
 /**
- * Change the time range of Explore. Called from the RefreshPicker.
+ * Change the refresh interval of Explore. Called from the Refresh picker.
  */
-export function changeRefreshInterval(exploreId: ExploreId, refreshInterval: SelectOptionItem): ThunkResult<void> {
-  return dispatch => {
-    dispatch(changeRefreshIntervalAction({ exploreId, refreshInterval }));
-    dispatch(stateSave());
-  };
+export function changeRefreshInterval(
+  exploreId: ExploreId,
+  refreshInterval: SelectOptionItem
+): ActionOf<ChangeRefreshIntervalPayload> {
+  return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
 
 /**
@@ -235,7 +235,6 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   range: RawTimeRange,
-  refreshInterval: SelectOptionItem,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
@@ -249,7 +248,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        refreshInterval,
         ui,
       })
     );
@@ -728,7 +726,6 @@ export function stateSave(): ThunkResult<void> {
       datasource: left.datasourceInstance.name,
       queries: left.queries.map(clearQueryKeys),
       range: left.range,
-      refreshInterval: left.refreshInterval.label,
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
@@ -742,7 +739,6 @@ export function stateSave(): ThunkResult<void> {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
         range: right.range,
-        refreshInterval: right.refreshInterval.label,
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: right.showingLogs,
@@ -825,25 +821,14 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range, ui, refreshInterval } = urlState;
+    const { datasource, queries, range, ui } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
     const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      dispatch(
-        initializeExplore(
-          exploreId,
-          datasource,
-          initialQueries,
-          initialRange,
-          getIntervalFromString(refreshInterval),
-          containerWidth,
-          eventBridge,
-          ui
-        )
-      );
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
       return;
     }
 
