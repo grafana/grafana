@@ -42,6 +42,7 @@ interface State {
   maxDataPoints: string;
   interval: string;
   hideTimeOverride: boolean;
+  refreshOverride: string;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
@@ -94,7 +95,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       maxDataPoints: props.panel.maxDataPoints || '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
-      refreshOverride: props.panel.refreshOverride || null
+      refreshOverride: props.panel.refreshOverride || '',
     };
   }
 
@@ -135,7 +136,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
     if (status === InputStatus.Valid && panel.refreshOverride !== emptyToNullValue) {
-      panel.setAutoRefresh(emptyToNullValue)
+      panel.setAutoRefresh(emptyToNullValue);
     }
   };
 

@@ -10,9 +10,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
-// Types
-import { TimeRange } from '@grafana/ui/src';
-
 export class VariableSrv {
   dashboard: DashboardModel;
   variables: any[];
@@ -53,7 +50,6 @@ export class VariableSrv {
   }
 
   onTimeRangeUpdated(event: any) {
-
     this.templateSrv.updateTimeRange(event.timeRange);
     const promises = this.variables
       .filter(variable => variable.refresh === 2)
