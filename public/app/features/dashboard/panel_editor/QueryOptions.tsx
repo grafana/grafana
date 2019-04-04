@@ -94,6 +94,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       maxDataPoints: props.panel.maxDataPoints || '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
+      refreshOverride: props.panel.refreshOverride || null
     };
   }
 
@@ -126,6 +127,15 @@ export class QueryOptions extends PureComponent<Props, State> {
     if (status === InputStatus.Valid && panel.timeShift !== emptyToNullValue) {
       panel.timeShift = emptyToNullValue;
       panel.refresh();
+    }
+  };
+
+  onRefreshOverride = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+    const { value } = event.target;
+    const { panel } = this.props;
+    const emptyToNullValue = emptyToNull(value);
+    if (status === InputStatus.Valid && panel.refreshOverride !== emptyToNullValue) {
+      panel.setAutoRefresh(emptyToNullValue)
     }
   };
 

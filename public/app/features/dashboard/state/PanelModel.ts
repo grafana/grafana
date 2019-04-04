@@ -1,5 +1,6 @@
 // Libraries
 import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
 
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
@@ -117,9 +118,11 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  refreshOverride?: any;
-
-  constructor(model: any) {
+  refreshOverride?: string;
+  refreshTimer: any;
+  
+  /** @ngInject */
+  constructor(model: any, private $timeout, private timer) {
     this.events = new Emitter();
 
     // copy properties from persisted model
@@ -133,6 +136,8 @@ export class PanelModel {
     this.ensureQueryIds();
 
     this.restoreInfintyForThresholds();
+
+    this.setAutoRefresh(this.refreshOverride)
   }
 
   ensureQueryIds() {
@@ -324,6 +329,39 @@ export class PanelModel {
       }
       return item;
     });
+  }
+
+  hasRefreshOverride() {
+    return !!this.refreshOverride;
+  }
+
+  setAutoRefresh(interval) {
+    this.refreshOverride = interval;
+    this.cancelNextRefresh();
+    if (interval) {
+      const intervalMs = kbn.interval_to_ms(interval);
+
+      this.refreshTimer = this.timer.register(
+        this.$timeout(() => {
+          this.startNextRefreshTimer(intervalMs);
+          this.events.emit('refresh');
+        }, intervalMs)
+      );
+    }
+  }
+
+  private startNextRefreshTimer(afterMs) {
+    this.cancelNextRefresh();
+    this.refreshTimer = this.timer.register(
+      this.$timeout(() => {
+        this.startNextRefreshTimer(afterMs);
+        this.events.emit('refresh');
+      }, afterMs)
+    );
+  }
+
+  private cancelNextRefresh() {
+    this.timer.cancel(this.refreshTimer);
   }
 
   destroy() {

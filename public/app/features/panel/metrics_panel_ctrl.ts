@@ -50,8 +50,9 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onMetricsPanelRefresh(auto?: boolean) {
-    // TODO: Check auto refresh
-    this.refreshPanel();
+    if(!auto || !this.panel.hasRefreshOverride()){
+      this.refreshPanel();
+    }
   }
 
   private refreshPanel(){
