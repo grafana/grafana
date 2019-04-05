@@ -113,7 +113,36 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	result := make(tsdb.TimeSeriesSlice, 0)
 
 	if context.IsDebug {
-		data := simplejson.NewFromAny(req)
+		data := simplejson.New()
+		if req.TimeRange != nil {
+			data.Set("from", req.TimeRange.GetFromAsMsEpoch())
+			data.Set("to", req.TimeRange.GetToAsMsEpoch())
+		}
+
+		type queryDto struct {
+			RefId         string           `json:"refId"`
+			Model         *simplejson.Json `json:"model"`
+			Datasource    *simplejson.Json `json:"datasource"`
+			MaxDataPoints int64            `json:"maxDataPoints"`
+			IntervalMs    int64            `json:"intervalMs"`
+		}
+
+		queries := []*queryDto{}
+		for _, q := range req.Queries {
+			queries = append(queries, &queryDto{
+				RefId: q.RefId,
+				Model: q.Model,
+				Datasource: simplejson.NewFromAny(map[string]interface{}{
+					"id":   q.DataSource.Id,
+					"name": q.DataSource.Name,
+				}),
+				MaxDataPoints: q.MaxDataPoints,
+				IntervalMs:    q.IntervalMs,
+			})
+		}
+
+		data.Set("queries", queries)
+
 		context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 			Message: fmt.Sprintf("Condition[%d]: Query", c.Index),
 			Data:    data,
