@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"testing"
 
+	"bou.ke/monkey"
+	"github.com/grafana/grafana/pkg/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -189,5 +191,29 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
 
+		Convey("session config", func() {
+			Convey("Reading session should log error ", func() {
+				var (
+					called = false
+					msg    = ""
+					cfg    = NewCfg()
+				)
+
+				monkey.Patch(log.Warn, func(testMessage string, v ...interface{}) {
+					called = true
+					msg = testMessage
+				})
+
+				cfg.Load(&CommandLineArgs{
+					HomePath: "../../",
+					Config:   filepath.Join(HomePath, "pkg/setting/testdata/session.ini"),
+				})
+
+				monkey.Unpatch(log.Warn)
+
+				So(called, ShouldEqual, true)
+				So(len(msg), ShouldBeGreaterThan, 0)
+			})
+		})
 	})
 }
