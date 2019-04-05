@@ -136,7 +136,7 @@ describe('Explore item reducer', () => {
               logs: {},
               tables: {},
             },
-            pluginExports: {
+            components: {
               ExploreStartPage: StartPage,
             },
           } as DataSourceApi;
