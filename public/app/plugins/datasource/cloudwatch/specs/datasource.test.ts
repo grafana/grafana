@@ -1,6 +1,8 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
 import * as dateMath from 'app/core/utils/datemath';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 
 describe('CloudWatchDatasource', () => {
@@ -8,12 +10,7 @@ describe('CloudWatchDatasource', () => {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
-  const templateSrv = {
-    data: {},
-    templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
-    replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
-    variableExists: () => false,
-  };
+  const templateSrv = new TemplateSrv();
 
   const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -94,9 +91,18 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query with interval variable', done => {
-      ctx.templateSrv.data = {
-        period: '10m',
-      };
+      templateSrv.init([
+        new CustomVariable(
+          {
+            name: 'period',
+            current: {
+              value: '10m',
+            },
+            multi: false,
+          },
+          {}
+        ),
+      ]);
 
       const query = {
         range: { from: 'now-1h', to: 'now' },
