@@ -366,6 +366,40 @@ describe('CloudWatchDatasource', () => {
         done();
       });
     });
+
+    it('should generate the correct query for multilple template variables, lack scopedVars', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+        scopedVars: {
+          "var1": { selected: true, value: 'var1-foo' },
+        }
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        done();
+      });
+    });
   });
 
   function describeMetricFindQuery(query, func) {
