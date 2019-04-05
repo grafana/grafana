@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
 
+import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { Emitter } from 'app/core/core';
@@ -34,12 +35,15 @@ export class PanelCtrl {
   loading: boolean;
   timing: any;
   maxPanelsPerRowOptions: number[];
+  timer: any;
+  refreshTimer: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
+    this.timer = $injector.get('timer');
     this.editorTabs = [];
     this.events = this.panel.events;
     this.timing = {}; // not used but here to not break plugins
@@ -51,6 +55,12 @@ export class PanelCtrl {
     }
 
     $scope.$on('component-did-mount', () => this.panelDidMount());
+    this.events.on('panel-auto-refresh', this.onPanelAutoRefresh.bind(this));
+    this.init();
+  }
+
+  init() {
+    this.onPanelAutoRefresh(this.panel.refreshOverride);
   }
 
   panelDidMount() {
@@ -275,5 +285,33 @@ export class PanelCtrl {
 
     html += '</div>';
     return sanitize(html);
+  }
+
+  onPanelAutoRefresh(interval) {
+    this.cancelNextRefresh();
+    if (interval) {
+      const intervalMs = kbn.interval_to_ms(interval);
+
+      this.refreshTimer = this.timer.register(
+        this.$timeout(() => {
+          this.startNextRefreshTimer(intervalMs);
+          this.events.emit('refresh');
+        }, intervalMs)
+      );
+    }
+  }
+
+  private startNextRefreshTimer(afterMs) {
+    this.cancelNextRefresh();
+    this.refreshTimer = this.timer.register(
+      this.$timeout(() => {
+        this.startNextRefreshTimer(afterMs);
+        this.events.emit('refresh');
+      }, afterMs)
+    );
+  }
+
+  private cancelNextRefresh() {
+    this.timer.cancel(this.refreshTimer);
   }
 }

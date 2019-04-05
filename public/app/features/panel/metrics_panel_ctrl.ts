@@ -26,8 +26,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataStream: any;
   dataSubscription: any;
   dataList: any;
-  refreshTimer: any;
-  timer: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -37,19 +35,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
-    this.timer = $injector.get('timer');
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
-    this.events.on('panel-auto-refresh', this.onPanelAutoRefresh.bind(this));
-
-    this.init();
-  }
-
-  init() {
-    this.onPanelAutoRefresh(this.panel.refreshOverride);
   }
 
   private onPanelTearDown() {
@@ -260,34 +250,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (url) {
       this.$timeout(() => this.$location.url(url));
     }
-  }
-
-  onPanelAutoRefresh(interval) {
-    this.cancelNextRefresh();
-    if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
-
-      this.refreshTimer = this.timer.register(
-        this.$timeout(() => {
-          this.startNextRefreshTimer(intervalMs);
-          this.refreshPanel();
-        }, intervalMs)
-      );
-    }
-  }
-
-  private startNextRefreshTimer(afterMs) {
-    this.cancelNextRefresh();
-    this.refreshTimer = this.timer.register(
-      this.$timeout(() => {
-        this.startNextRefreshTimer(afterMs);
-        this.refreshPanel();
-      }, afterMs)
-    );
-  }
-
-  private cancelNextRefresh() {
-    this.timer.cancel(this.refreshTimer);
   }
 }
 
