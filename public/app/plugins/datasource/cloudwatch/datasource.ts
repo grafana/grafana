@@ -2,7 +2,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
-import * as templatingVariable from 'app/features/templating/variable';
 // import * as moment from 'moment';
 
 export default class CloudWatchDatasource {
@@ -454,11 +453,7 @@ export default class CloudWatchDatasource {
         });
 
         if (dimensionKey) {
-          const multiVariable = _.find(templateSrv.variables, variable => {
-            return (
-              templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi
-            );
-          });
+          const multiVariable = variableIndex[templateSrv.getVariableName(target.dimensions[dimensionKey])];
           return this.getExpandedVariables(target, dimensionKey, multiVariable, templateSrv);
         } else {
           return [target];
