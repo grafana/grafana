@@ -61,7 +61,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
-  refreshOverride: true,
 };
 
 const defaults: any = {
@@ -70,7 +69,6 @@ const defaults: any = {
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
-  refreshOverride: null,
 };
 
 export class PanelModel {
@@ -101,6 +99,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  refreshOverride?: any;
 
   maxDataPoints?: number;
   interval?: string;
@@ -117,7 +116,6 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  refreshOverride?: string;
   refreshTimer: any;
 
   /** @ngInject */
@@ -135,8 +133,6 @@ export class PanelModel {
     this.ensureQueryIds();
 
     this.restoreInfintyForThresholds();
-
-    this.setAutoRefresh(this.refreshOverride);
   }
 
   ensureQueryIds() {
