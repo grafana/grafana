@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
 
-import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { Emitter } from 'app/core/core';
@@ -15,6 +14,8 @@ import {
 } from 'app/features/dashboard/utils/panel';
 
 import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+// Services
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export class PanelCtrl {
   panel: any;
@@ -35,15 +36,14 @@ export class PanelCtrl {
   loading: boolean;
   timing: any;
   maxPanelsPerRowOptions: number[];
-  timer: any;
-  refreshTimer: any;
+  customTimer: any;
+  timeSrv: TimeSrv = getTimeSrv();
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
-    this.timer = $injector.get('timer');
     this.editorTabs = [];
     this.events = this.panel.events;
     this.timing = {}; // not used but here to not break plugins
@@ -288,33 +288,16 @@ export class PanelCtrl {
   }
 
   onPanelAutoRefresh(interval) {
-    this.cancelNextRefresh();
+    if (this.customTimer) {
+      this.timeSrv.cancelCustomTimer(this.customTimer);
+      this.customTimer = null;
+    }
     if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
-
-      this.refreshTimer = this.timer.register(
-        this.$timeout(() => {
-          this.startNextRefreshTimer(intervalMs);
-          this.events.emit('refresh');
-        }, intervalMs)
-      );
+      this.customTimer = this.timeSrv.setCustomTimer(interval, this.onRefresh.bind(this));
     }
   }
 
-  private startNextRefreshTimer(afterMs) {
-    this.cancelNextRefresh();
-    this.refreshTimer = this.timer.register(
-      this.$timeout(() => {
-        this.startNextRefreshTimer(afterMs);
-        this.events.emit('refresh');
-      }, afterMs)
-    );
-  }
-
-  private cancelNextRefresh() {
-    if (this.refreshTimer) {
-      this.timer.cancel(this.refreshTimer);
-      this.refreshTimer = null;
-    }
+  onRefresh() {
+    this.events.emit('refresh');
   }
 }
