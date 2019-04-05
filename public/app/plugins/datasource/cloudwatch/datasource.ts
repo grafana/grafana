@@ -418,11 +418,11 @@ export default class CloudWatchDatasource {
     const currentVariables = !_.isArray(variable.current.value)
       ? [variable.current]
       : variable.current.value.map(v => {
-        return {
-          text: v,
-          value: v,
-        };
-      });
+          return {
+            text: v,
+            value: v,
+          };
+        });
     const useSelectedVariables =
       selectedVariables.some(s => {
         return s.value === currentVariables[0].value;

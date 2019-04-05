@@ -291,10 +291,7 @@ describe('CloudWatchDatasource', () => {
               { selected: true, value: 'var3-baz' },
             ],
             current: {
-              value: [
-                'var3-foo',
-                'var3-baz',
-              ],
+              value: ['var3-foo', 'var3-baz'],
             },
             multi: true,
           },
@@ -353,9 +350,9 @@ describe('CloudWatchDatasource', () => {
           },
         ],
         scopedVars: {
-          "var1": { selected: true, value: 'var1-foo' },
-          "var2": { selected: true, value: 'var2-foo' },
-        }
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
       };
 
       ctx.ds.query(query).then(() => {
@@ -389,8 +386,8 @@ describe('CloudWatchDatasource', () => {
           },
         ],
         scopedVars: {
-          "var1": { selected: true, value: 'var1-foo' },
-        }
+          var1: { selected: true, value: 'var1-foo' },
+        },
       };
 
       ctx.ds.query(query).then(() => {
@@ -428,7 +425,8 @@ describe('CloudWatchDatasource', () => {
             refId: 'B',
             id: 'id2',
             expression: 'METRICS("id1") * 2',
-            dimensions: { // garbage data for fail test
+            dimensions: {
+              // garbage data for fail test
               dim1: '[[var1]]',
               dim2: '[[var2]]',
               dim3: '[[var3]]',
@@ -437,9 +435,9 @@ describe('CloudWatchDatasource', () => {
           },
         ],
         scopedVars: {
-          "var1": { selected: true, value: 'var1-foo' },
-          "var2": { selected: true, value: 'var2-foo' },
-        }
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
       };
 
       ctx.ds.query(query).then(() => {
@@ -457,7 +455,6 @@ describe('CloudWatchDatasource', () => {
         done();
       });
     });
-
   });
 
   function describeMetricFindQuery(query, func) {
