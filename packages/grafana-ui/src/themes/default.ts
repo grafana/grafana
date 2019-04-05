@@ -68,8 +68,8 @@ const theme: GrafanaThemeCommons = {
     },
   },
   panelPadding: {
-    horizontal: 10,
-    vertical: 5,
+    horizontal: 16,
+    vertical: 8,
   },
   zIndex: {
     dropdown: '1000',

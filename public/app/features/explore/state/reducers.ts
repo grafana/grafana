@@ -226,8 +226,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsGraph = datasourceInstance.meta.metrics;
       const supportsLogs = datasourceInstance.meta.logs;
       const supportsTable = datasourceInstance.meta.tables;
+
       // Custom components
-      const StartPage = datasourceInstance.pluginExports.ExploreStartPage;
+      const StartPage = datasourceInstance.components.ExploreStartPage;
 
       return {
         ...state,

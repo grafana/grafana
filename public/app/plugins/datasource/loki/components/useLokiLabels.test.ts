@@ -1,7 +1,7 @@
 import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
-import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 
 describe('useLokiLabels hook', () => {
   it('should refresh labels', async () => {
@@ -17,7 +17,7 @@ describe('useLokiLabels hook', () => {
     };
 
     const { result, waitForNextUpdate } = renderHook(() =>
-      useLokiLabels(languageProvider, true, [], DatasourceStatus.Connected, DatasourceStatus.Connected)
+      useLokiLabels(languageProvider, true, [], DataSourceStatus.Connected, DataSourceStatus.Connected)
     );
     act(() => result.current.refreshLabels());
     expect(result.current.logLabelOptions).toEqual([]);
@@ -33,7 +33,7 @@ describe('useLokiLabels hook', () => {
     languageProvider.refreshLogLabels = jest.fn();
 
     renderHook(() =>
-      useLokiLabels(languageProvider, true, [], DatasourceStatus.Connected, DatasourceStatus.Disconnected)
+      useLokiLabels(languageProvider, true, [], DataSourceStatus.Connected, DataSourceStatus.Disconnected)
     );
 
     expect(languageProvider.refreshLogLabels).toBeCalledTimes(1);
@@ -48,7 +48,7 @@ describe('useLokiLabels hook', () => {
     languageProvider.refreshLogLabels = jest.fn();
 
     renderHook(() =>
-      useLokiLabels(languageProvider, true, [], DatasourceStatus.Disconnected, DatasourceStatus.Connected)
+      useLokiLabels(languageProvider, true, [], DataSourceStatus.Disconnected, DataSourceStatus.Connected)
     );
 
     expect(languageProvider.refreshLogLabels).not.toBeCalled();

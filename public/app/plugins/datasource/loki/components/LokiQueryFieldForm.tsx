@@ -17,10 +17,10 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DatasourceStatus } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
 
-function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DatasourceStatus) {
-  if (datasourceStatus === DatasourceStatus.Disconnected) {
+function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
+  if (datasourceStatus === DataSourceStatus.Disconnected) {
     return '(Disconnected)';
   }
   if (!hasSyntax) {
@@ -169,7 +169,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DatasourceStatus.Disconnected;
+    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
 
     return (
       <>
