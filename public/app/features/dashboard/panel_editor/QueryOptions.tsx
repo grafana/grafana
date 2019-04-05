@@ -111,6 +111,12 @@ export class QueryOptions extends PureComponent<Props, State> {
     });
   };
 
+  onRefreshOverrideChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      refreshOverride: event.target.value,
+    });
+  };
+
   onOverrideTime = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
     const { value } = event.target;
     const { panel } = this.props;
@@ -184,7 +190,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
   render() {
     const { hideTimeOverride } = this.state;
-    const { relativeTime, timeShift } = this.state;
+    const { relativeTime, timeShift, refreshOverride } = this.state;
     return (
       <div className="gf-form-inline">
         {this.renderOptions()}
@@ -202,7 +208,19 @@ export class QueryOptions extends PureComponent<Props, State> {
             value={relativeTime}
           />
         </div>
-
+        <div className="gf-form">
+          <span className="gf-form-label">Refresh override</span>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder="5m"
+            onChange={this.onRefreshOverrideChange}
+            onBlur={this.onRefreshOverride}
+            validationEvents={timeRangeValidationEvents}
+            hideErrorMessage={true}
+            value={refreshOverride}
+          />
+        </div>
         <div className="gf-form">
           <span className="gf-form-label">Time shift</span>
           <Input
