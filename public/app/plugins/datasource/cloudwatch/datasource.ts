@@ -419,11 +419,11 @@ export default class CloudWatchDatasource {
     const currentVariables = !_.isArray(variable.current.value)
       ? [variable.current]
       : variable.current.value.map(v => {
-          return {
-            text: v,
-            value: v,
-          };
-        });
+        return {
+          text: v,
+          value: v,
+        };
+      });
     const useSelectedVariables =
       selectedVariables.some(s => {
         return s.value === currentVariables[0].value;
@@ -447,8 +447,10 @@ export default class CloudWatchDatasource {
     // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
+        const variableIndex = _.keyBy(templateSrv.variables, 'name');
         const dimensionKey = _.findKey(target.dimensions, v => {
-          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          const variableName = templateSrv.getVariableName(v);
+          return templateSrv.variableExists(v) && !_.has(scopedVars, variableName) && variableIndex[variableName].multi;
         });
 
         if (dimensionKey) {
@@ -457,10 +459,7 @@ export default class CloudWatchDatasource {
               templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi
             );
           });
-          const variable = _.find(templateSrv.variables, variable => {
-            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
-          });
-          return this.getExpandedVariables(target, dimensionKey, multiVariable || variable, templateSrv);
+          return this.getExpandedVariables(target, dimensionKey, multiVariable, templateSrv);
         } else {
           return [target];
         }
