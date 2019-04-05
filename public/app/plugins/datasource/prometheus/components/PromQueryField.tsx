@@ -17,15 +17,15 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DatasourceStatus } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
 const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
-function getChooserText(hasSyntax: boolean, datasourceStatus: DatasourceStatus) {
-  if (datasourceStatus === DatasourceStatus.Disconnected) {
+function getChooserText(hasSyntax: boolean, datasourceStatus: DataSourceStatus) {
+  if (datasourceStatus === DataSourceStatus.Disconnected) {
     return '(Disconnected)';
   }
   if (!hasSyntax) {
@@ -153,8 +153,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
     const reconnected =
-      prevProps.datasourceStatus === DatasourceStatus.Disconnected &&
-      this.props.datasourceStatus === DatasourceStatus.Connected;
+      prevProps.datasourceStatus === DataSourceStatus.Disconnected &&
+      this.props.datasourceStatus === DataSourceStatus.Connected;
     if (!reconnected) {
       return;
     }
@@ -278,7 +278,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
-    const buttonDisabled = !syntaxLoaded || datasourceStatus === DatasourceStatus.Disconnected;
+    const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
 
     return (
       <>

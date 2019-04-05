@@ -1,15 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Render BarGauge with basic options should render 1`] = `
+exports[`BarGauge Render with basic options should render 1`] = `
 <div
   style={
     Object {
       "alignItems": "center",
       "display": "flex",
       "flexDirection": "row-reverse",
-      "height": "300px",
       "justifyContent": "flex-end",
-      "width": "300px",
     }
   }
 >
@@ -17,8 +15,12 @@ exports[`Render BarGauge with basic options should render 1`] = `
     className="bar-gauge__value"
     style={
       Object {
-        "color": "#7EB26D",
-        "fontSize": "27.27272727272727px",
+        "alignItems": "center",
+        "color": "#73BF69",
+        "display": "flex",
+        "fontSize": "27.27px",
+        "height": "300px",
+        "width": "60px",
       }
     }
   >
@@ -27,10 +29,9 @@ exports[`Render BarGauge with basic options should render 1`] = `
   <div
     style={
       Object {
-        "background": "rgba(126, 178, 109, 0.15)",
-        "border": "1px solid #7EB26D",
+        "background": "rgba(115, 191, 105, 0.25)",
         "borderRadius": "3px",
-        "boxShadow": "0 0 4px #7EB26D",
+        "borderRight": "2px solid #73BF69",
         "height": "300px",
         "marginRight": "10px",
         "transition": "width 1s",

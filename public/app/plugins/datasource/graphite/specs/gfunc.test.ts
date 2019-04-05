@@ -31,7 +31,8 @@ describe('when creating func instance from func names', () => {
 });
 
 function replaceVariablesDummy(str: string) {
-  return str;
+  // important that this does replace
+  return str.replace('asdasdas', 'asdsad');
 }
 
 describe('when rendering func instance', () => {
