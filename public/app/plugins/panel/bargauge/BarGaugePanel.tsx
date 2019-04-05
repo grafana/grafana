@@ -23,7 +23,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         orientation={options.orientation}
         thresholds={options.thresholds}
         theme={config.theme}
-        outerMargin={this.getMargin()}
+        itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
       />
     );
@@ -40,7 +40,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     });
   };
 
-  getMargin(): number {
+  getItemSpacing(): number {
     if (this.props.options.displayMode === 'lcd') {
       return 2;
     }
@@ -52,13 +52,13 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { height, width, options, data, renderCounter } = this.props;
     return (
       <VizRepeater
-        margin={this.getMargin()}
+        source={data}
         getValues={this.getValues}
         renderValue={this.renderValue}
+        renderCounter={renderCounter}
         width={width}
         height={height}
-        source={data}
-        renderCounter={renderCounter}
+        itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />
     );

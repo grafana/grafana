@@ -22,7 +22,7 @@ export interface Props extends Themeable {
   maxValue: number;
   minValue: number;
   orientation: VizOrientation;
-  outerMargin?: number;
+  itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
@@ -35,9 +35,9 @@ export class BarGauge extends PureComponent<Props> {
       numeric: 100,
     },
     displayMode: 'lcd',
-    outerMargin: 10,
     orientation: VizOrientation.Horizontal,
     thresholds: [],
+    itemSpacing: 10,
   };
 
   render() {
@@ -122,7 +122,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { maxValue, minValue, value, outerMargin } = this.props;
+    const { maxValue, minValue, value, itemSpacing } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -135,7 +135,7 @@ export class BarGauge extends PureComponent<Props> {
     const isVert = isVertical(this.props);
     const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
-    const cellSpacing = outerMargin;
+    const cellSpacing = itemSpacing!;
     const cellCount = maxSize / 20;
     const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
     const valueColor = getValueColor(this.props);

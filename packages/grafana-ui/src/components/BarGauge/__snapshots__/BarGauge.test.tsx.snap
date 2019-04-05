@@ -15,8 +15,12 @@ exports[`BarGauge Render with basic options should render 1`] = `
     className="bar-gauge__value"
     style={
       Object {
+        "alignItems": "center",
         "color": "#73BF69",
+        "display": "flex",
         "fontSize": "27.27px",
+        "height": "300px",
+        "width": "60px",
       }
     }
   >

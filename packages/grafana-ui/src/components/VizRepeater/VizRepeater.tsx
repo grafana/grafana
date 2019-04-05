@@ -9,16 +9,22 @@ interface Props<T> {
   getValues: () => T[];
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
-  margin?: number;
+  itemSpacing?: number;
 }
+
+interface DefaultProps {
+  itemSpacing: number;
+}
+
+type PropsWithDefaults<T> = Props<T> & DefaultProps;
 
 interface State<T> {
   values: T[];
 }
 
 export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
-  static defaultProps: Partial<Props<any>> = {
-    margin: 10,
+  static defaultProps: DefaultProps = {
+    itemSpacing: 10,
   };
 
   constructor(props: Props<T>) {
@@ -51,7 +57,7 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
   }
 
   render() {
-    const { renderValue, height, width, margin } = this.props;
+    const { renderValue, height, width, itemSpacing } = this.props as PropsWithDefaults<T>;
     const { values } = this.state;
     const orientation = this.getOrientation();
 
@@ -68,14 +74,14 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
 
     if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
-      itemStyles.margin = `${margin / 2}px 0`;
+      itemStyles.margin = `${itemSpacing / 2}px 0`;
       vizWidth = width;
-      vizHeight = height / values.length - margin;
+      vizHeight = height / values.length - itemSpacing;
     } else {
       repeaterStyle.flexDirection = 'row';
-      itemStyles.margin = `0 ${margin / 2}px`;
+      itemStyles.margin = `0 ${itemSpacing / 2}px`;
       vizHeight = height;
-      vizWidth = width / values.length - margin;
+      vizWidth = width / values.length - itemSpacing;
     }
 
     itemStyles.width = `${vizWidth}px`;
