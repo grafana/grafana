@@ -400,6 +400,59 @@ describe('CloudWatchDatasource', () => {
         done();
       });
     });
+
+    it('should generate the correct query for multilple template variables with expression', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            id: 'id1',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+            expression: '',
+          },
+          {
+            id: 'id2',
+            expression: 'METRICS("id1") * 2',
+            dimensions: { // garbage data for fail test
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: [], // dummy
+          },
+        ],
+        scopedVars: {
+          "var1": { selected: true, value: 'var1-foo' },
+          "var2": { selected: true, value: 'var2-foo' },
+        }
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries.length).toBe(3);
+        expect(requestParams.queries[0].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        expect(requestParams.queries[2].id).toMatch(/^id2.*/);
+        expect(requestParams.queries[2].expression).toBe('METRICS("id1") * 2');
+        done();
+      });
+    });
+
   });
 
   function describeMetricFindQuery(query, func) {
