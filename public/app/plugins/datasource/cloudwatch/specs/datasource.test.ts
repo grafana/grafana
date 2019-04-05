@@ -42,6 +42,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/EC2',
           metricName: 'CPUUtilization',
@@ -103,6 +104,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -128,6 +130,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -178,6 +181,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'default',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -203,6 +207,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/ApplicationELB',
           metricName: 'TargetResponseTime',
