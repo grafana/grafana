@@ -446,6 +446,10 @@ export default class CloudWatchDatasource {
     // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
+        if (target.id && target.id.length > 0 && target.expression && target.expression.length > 0) {
+          return [target];
+        }
+
         const variableIndex = _.keyBy(templateSrv.variables, 'name');
         const dimensionKey = _.findKey(target.dimensions, v => {
           const variableName = templateSrv.getVariableName(v);
