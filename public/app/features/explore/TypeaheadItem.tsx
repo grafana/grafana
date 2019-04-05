@@ -18,6 +18,8 @@ interface Props {
   onClickItem: (suggestion: CompletionItem) => void;
   prefix?: string;
   style: any;
+  onMouseEnter: (item: CompletionItem) => void;
+  onMouseLeave: (item: CompletionItem) => void;
 }
 
 const getStyles = (theme: GrafanaTheme) => ({
@@ -47,12 +49,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: inherit;
     background: inherit;
   `,
-  typeaheadItemHint: css`
-    label: type-ahead-item-hint;
-    font-size: ${theme.typography.size.xs};
-    color: ${theme.colors.text};
-    white-space: normal;
-  `,
   typeaheadItemGroupTitle: css`
     label: type-ahead-item-group-title;
     color: ${theme.colors.textWeak};
@@ -68,9 +64,10 @@ export const TypeaheadItem: FunctionComponent<Props> = (props: Props) => {
 
   const { isSelected, item, prefix, style, onClickItem } = props;
   const onClick = () => onClickItem(item);
+  const onMouseEnter = () => props.onMouseEnter(item);
+  const onMouseLeave = () => props.onMouseLeave(item);
   const className = isSelected ? cx([styles.typeaheadItem, styles.typeaheadItemSelected]) : cx([styles.typeaheadItem]);
   const highlightClassName = cx([styles.typeaheadItemMatch]);
-  const itemHintClassName = cx([styles.typeaheadItemHint]);
   const itemGroupTitleClassName = cx([styles.typeaheadItemGroupTitle]);
   const label = item.label || '';
 
@@ -83,9 +80,8 @@ export const TypeaheadItem: FunctionComponent<Props> = (props: Props) => {
   }
 
   return (
-    <li className={className} onClick={onClick} style={style}>
+    <li className={className} onClick={onClick} style={style} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName={highlightClassName} />
-      {item.documentation && isSelected ? <div className={itemHintClassName}>{item.documentation}</div> : null}
     </li>
   );
 };
