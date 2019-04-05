@@ -312,6 +312,9 @@ export class PanelCtrl {
   }
 
   private cancelNextRefresh() {
-    this.timer.cancel(this.refreshTimer);
+    if (this.refreshTimer) {
+      this.timer.cancel(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 }
