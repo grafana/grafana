@@ -528,9 +528,6 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 	period := strconv.Itoa(query.Period)
 	if len(query.Id) > 0 && len(query.Expression) > 0 {
 		if strings.Index(query.Expression, "SEARCH(") == 0 {
-			nIndex1 := strings.Index(query.Expression, "{")
-			nIndex2 := strings.Index(query.Expression, ",")
-			namespace = strings.Trim(query.Expression[nIndex1+1:nIndex2], " ")
 			pIndex := strings.LastIndex(query.Expression, ",")
 			period = strings.Trim(query.Expression[pIndex+1:], " )")
 			sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
