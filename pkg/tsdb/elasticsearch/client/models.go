@@ -2,11 +2,17 @@ package es
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+type response struct {
+	httpResponse *http.Response
+	reqInfo      *SearchRequestInfo
+}
 
 type SearchRequestInfo struct {
 	Method string `json:"method"`

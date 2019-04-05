@@ -115,10 +115,10 @@ type multiRequest struct {
 	interval tsdb.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*SearchRequestInfo, *http.Response, error) {
+func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return c.executeRequest(http.MethodPost, uriPath, bytes)
 }
@@ -153,7 +153,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*SearchRequestInfo, *http.Response, error) {
+func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*response, error) {
 	u, _ := url.Parse(c.ds.Url)
 	u.Path = path.Join(u.Path, uriPath)
 
@@ -165,7 +165,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*S
 		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	clientLog.Debug("Executing request", "url", req.URL.String(), "method", method)
@@ -194,7 +194,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*S
 
 	httpClient, err := newDatasourceHttpClient(c.ds)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	start := time.Now()
@@ -203,17 +203,21 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*S
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	res, err := ctxhttp.Do(c.ctx, httpClient, req)
-	return reqInfo, res, err
+	return &response{
+		httpResponse: res,
+		reqInfo:      reqInfo,
+	}, err
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
-	reqInfo, res, err := c.executeBatchRequest("_msearch", multiRequests)
+	clientRes, err := c.executeBatchRequest("_msearch", multiRequests)
 	if err != nil {
 		return nil, err
 	}
+	res := clientRes.httpResponse
 	defer res.Body.Close()
 
 	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
@@ -255,7 +259,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 
 		msr.DebugInfo = &SearchDebugInfo{
-			Request: reqInfo,
+			Request: clientRes.reqInfo,
 			Response: &SearchResponseInfo{
 				Status: res.StatusCode,
 				Data:   data,
