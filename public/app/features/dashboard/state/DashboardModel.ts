@@ -210,7 +210,7 @@ export class DashboardModel {
   }
 
   timeRangeUpdated(timeRange: TimeRange, auto?: boolean) {
-    this.events.emit('time-range-updated', {timeRange: timeRange, auto: auto});
+    this.events.emit('time-range-updated', { timeRange: timeRange, auto: auto });
   }
 
   startRefresh(auto?: boolean) {
