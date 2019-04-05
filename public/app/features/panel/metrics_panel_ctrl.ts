@@ -37,12 +37,19 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
+    this.timer = $injector.get('timer');
     this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
     this.events.on('panel-auto-refresh', this.onPanelAutoRefresh.bind(this));
+
+    this.init();
+  }
+
+  init() {
+    this.onPanelAutoRefresh(this.panel.refreshOverride);
   }
 
   private onPanelTearDown() {
