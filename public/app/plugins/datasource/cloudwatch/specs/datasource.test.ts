@@ -314,6 +314,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
             metricName: 'TestMetricName',
@@ -338,6 +339,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
             metricName: 'TestMetricName',
@@ -373,6 +375,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'TestNamespace',
             metricName: 'TestMetricName',
@@ -407,6 +410,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             id: 'id1',
             region: 'us-east-1',
             namespace: 'TestNamespace',
@@ -421,6 +425,7 @@ describe('CloudWatchDatasource', () => {
             expression: '',
           },
           {
+            refId: 'B',
             id: 'id2',
             expression: 'METRICS("id1") * 2',
             dimensions: { // garbage data for fail test
