@@ -104,7 +104,8 @@ $input-border: 1px solid $input-border-color;
   font-size: $font-size-sm;
 
   background-color: $input-label-bg;
-  display: block;
+  display: flex;
+  align-items: center;
   height: $input-height;
 
   border: $border-width solid $input-label-border-color;
@@ -164,7 +165,8 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-input {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   height: $input-height;
   padding: $input-padding;

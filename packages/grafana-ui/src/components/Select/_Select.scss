@@ -17,13 +17,14 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__control {
   @include select-control();
+  margin-right: 0;
   border: 1px solid $input-border-color;
   color: $input-color;
   cursor: default;
   display: table;
   border-spacing: 0;
   border-collapse: separate;
-  height: $select-input-height;
+  height: $input-height;
   outline: none;
   overflow: hidden;
   position: relative;
@@ -101,7 +102,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__value-container {
   display: table-cell;
-  padding: 6px 10px;
+  padding: $input-padding;
   vertical-align: middle;
   > div {
     display: inline-block;

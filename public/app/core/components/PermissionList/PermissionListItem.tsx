@@ -15,10 +15,10 @@ function ItemAvatar({ item }) {
     return <img className="filter-table__avatar" src={item.teamAvatarUrl} />;
   }
   if (item.role === 'Editor') {
-    return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-editor" />;
+    return <i style={{ width: '24px', height: '24px' }} className="gicon gicon-editor" />;
   }
 
-  return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-viewer" />;
+  return <i style={{ width: '24px', height: '24px' }} className="gicon gicon-viewer" />;
 }
 
 function ItemDescription({ item }) {
@@ -73,7 +73,7 @@ export default class PermissionsListItem extends PureComponent<Props> {
         </td>
         <td className="query-keyword">Can</td>
         <td>
-          <div className="gf-form">
+          <div className="gf-form-inline">
             <Select
               isSearchable={false}
               options={dashboardPermissionLevels}

@@ -23,32 +23,31 @@
     width: auto;
     padding: $space-inset-squish-md;
     text-align: left;
-    line-height: 30px;
+    line-height: 32px;
     height: 30px;
     white-space: nowrap;
   }
 
   td {
     padding: $space-inset-squish-md;
-    line-height: 30px;
+    line-height: 32px;
     height: 30px;
     white-space: nowrap;
 
     &.filter-table__switch-cell {
       padding: 0;
-      border-right: 3px solid $page-bg;
     }
   }
 
   .link-td {
     padding: 0;
-    line-height: 30px;
-    height: 30px;
+    line-height: 32px;
+    height: 32px;
     white-space: nowrap;
 
     &.filter-table__switch-cell {
       padding: 0;
-      border-right: 3px solid $page-bg;
+      //border-right: 3px solid $page-bg;
     }
 
     a {
@@ -74,8 +73,8 @@
   }
 
   .filter-table__avatar {
-    width: 25px;
-    height: 25px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
   }
 
