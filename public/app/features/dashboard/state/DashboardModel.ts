@@ -209,12 +209,12 @@ export class DashboardModel {
     this.events.emit('view-mode-changed', panel);
   }
 
-  timeRangeUpdated(timeRange: TimeRange) {
-    this.events.emit('time-range-updated', timeRange);
+  timeRangeUpdated(timeRange: TimeRange, auto?: boolean) {
+    this.events.emit('time-range-updated', { timeRange: timeRange, auto: auto });
   }
 
-  startRefresh() {
-    this.events.emit('refresh');
+  startRefresh(auto?: boolean) {
+    this.events.emit('refresh', auto);
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {

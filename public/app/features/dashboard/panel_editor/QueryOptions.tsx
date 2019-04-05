@@ -42,6 +42,7 @@ interface State {
   maxDataPoints: string;
   interval: string;
   hideTimeOverride: boolean;
+  refreshOverride: string;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
@@ -94,6 +95,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       maxDataPoints: props.panel.maxDataPoints || '',
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
+      refreshOverride: props.panel.refreshOverride || '',
     };
   }
 
@@ -106,6 +108,12 @@ export class QueryOptions extends PureComponent<Props, State> {
   onTimeShiftChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       timeShift: event.target.value,
+    });
+  };
+
+  onRefreshOverrideChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      refreshOverride: event.target.value,
     });
   };
 
@@ -126,6 +134,15 @@ export class QueryOptions extends PureComponent<Props, State> {
     if (status === InputStatus.Valid && panel.timeShift !== emptyToNullValue) {
       panel.timeShift = emptyToNullValue;
       panel.refresh();
+    }
+  };
+
+  onRefreshOverride = (event: FocusEvent<HTMLInputElement>, status: InputStatus) => {
+    const { value } = event.target;
+    const { panel } = this.props;
+    const emptyToNullValue = emptyToNull(value);
+    if (status === InputStatus.Valid && panel.refreshOverride !== emptyToNullValue) {
+      panel.setAutoRefresh(emptyToNullValue);
     }
   };
 
@@ -173,7 +190,7 @@ export class QueryOptions extends PureComponent<Props, State> {
 
   render() {
     const { hideTimeOverride } = this.state;
-    const { relativeTime, timeShift } = this.state;
+    const { relativeTime, timeShift, refreshOverride } = this.state;
     return (
       <div className="gf-form-inline">
         {this.renderOptions()}
@@ -191,7 +208,19 @@ export class QueryOptions extends PureComponent<Props, State> {
             value={relativeTime}
           />
         </div>
-
+        <div className="gf-form">
+          <span className="gf-form-label">Refresh override</span>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder="5m"
+            onChange={this.onRefreshOverrideChange}
+            onBlur={this.onRefreshOverride}
+            validationEvents={timeRangeValidationEvents}
+            hideErrorMessage={true}
+            value={refreshOverride}
+          />
+        </div>
         <div className="gf-form">
           <span className="gf-form-label">Time shift</span>
           <Input

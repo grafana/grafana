@@ -99,6 +99,7 @@ export class PanelModel {
   options: {
     [key: string]: any;
   };
+  refreshOverride?: any;
 
   maxDataPoints?: number;
   interval?: string;
@@ -115,7 +116,9 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+  refreshTimer: any;
 
+  /** @ngInject */
   constructor(model: any) {
     this.events = new Emitter();
 
@@ -321,6 +324,15 @@ export class PanelModel {
       }
       return item;
     });
+  }
+
+  hasRefreshOverride() {
+    return !!this.refreshOverride;
+  }
+
+  setAutoRefresh(interval) {
+    this.refreshOverride = interval;
+    this.events.emit('panel-auto-refresh', this.refreshOverride);
   }
 
   destroy() {

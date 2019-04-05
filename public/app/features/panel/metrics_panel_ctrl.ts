@@ -49,7 +49,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
   }
 
-  private onMetricsPanelRefresh() {
+  private onMetricsPanelRefresh(auto?: boolean) {
+    if (!auto || !this.panel.hasRefreshOverride()) {
+      this.refreshPanel();
+    }
+  }
+
+  private refreshPanel() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) {
       return;

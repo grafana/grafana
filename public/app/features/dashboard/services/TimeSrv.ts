@@ -18,11 +18,13 @@ export class TimeSrv {
   dashboard: any;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
+  customTimers: any;
 
   /** @ngInject */
   constructor($rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
+    this.customTimers = {};
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
@@ -130,7 +132,7 @@ export class TimeSrv {
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
           this.startNextRefreshTimer(intervalMs);
-          this.refreshDashboard();
+          this.refreshDashboard(true);
         }, intervalMs)
       );
     }
@@ -146,8 +148,8 @@ export class TimeSrv {
     }
   }
 
-  refreshDashboard() {
-    this.dashboard.timeRangeUpdated(this.timeRange());
+  refreshDashboard(auto?: boolean) {
+    this.dashboard.timeRangeUpdated(this.timeRange(), auto);
   }
 
   private startNextRefreshTimer(afterMs) {
@@ -156,7 +158,7 @@ export class TimeSrv {
       this.$timeout(() => {
         this.startNextRefreshTimer(afterMs);
         if (this.contextSrv.isGrafanaVisible()) {
-          this.refreshDashboard();
+          this.refreshDashboard(true);
         } else {
           this.autoRefreshBlocked = true;
         }
@@ -231,6 +233,33 @@ export class TimeSrv {
     const from = center - (timespan * factor) / 2;
 
     this.setTime({ from: moment.utc(from), to: moment.utc(to) });
+  }
+
+  setCustomTimer(interval, cb) {
+    if (interval) {
+      const timeSrv = this;
+      const customTimer = {
+        intervalMs: kbn.interval_to_ms(interval),
+        refreshTimer: null,
+        cb: cb,
+        run: function() {
+          const oThis = this;
+          this.refreshTimer = timeSrv.timer.register(
+            timeSrv.$timeout(() => {
+              oThis.run();
+              cb();
+            }, oThis.intervalMs)
+          );
+          return this;
+        },
+      };
+      return customTimer.run();
+    }
+    return null;
+  }
+
+  cancelCustomTimer(customTimer) {
+    this.timer.cancel(customTimer.refreshTimer);
   }
 }
 

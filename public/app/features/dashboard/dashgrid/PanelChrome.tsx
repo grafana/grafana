@@ -46,6 +46,7 @@ export interface State {
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
+  customTimer: any;
 
   constructor(props) {
     super(props);
@@ -60,6 +61,9 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentDidMount() {
     this.props.panel.events.on('refresh', this.onRefresh);
     this.props.panel.events.on('render', this.onRender);
+    this.props.panel.events.on('panel-auto-refresh', this.onAutoRefresh);
+    this.onAutoRefresh(this.props.panel.refreshOverride);
+
     this.props.dashboard.panelInitialized(this.props.panel);
   }
 
@@ -67,9 +71,18 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.props.panel.events.off('refresh', this.onRefresh);
   }
 
-  onRefresh = () => {
-    console.log('onRefresh');
-    if (!this.isVisible) {
+  onAutoRefresh = interval => {
+    if (this.customTimer) {
+      this.timeSrv.cancelCustomTimer(this.customTimer);
+      this.customTimer = null;
+    }
+    if (interval) {
+      this.customTimer = this.timeSrv.setCustomTimer(interval, this.onRefresh.bind(this));
+    }
+  };
+
+  onRefresh = (auto?: boolean) => {
+    if (!this.isVisible || (auto && this.customTimer)) {
       return;
     }
 
