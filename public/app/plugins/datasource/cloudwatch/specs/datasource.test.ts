@@ -4,6 +4,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
+import { CloudWatchQuery } from '../types';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
@@ -32,7 +33,7 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch query', () => {
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
 
     const query = {
       range: { from: 'now-1h', to: 'now' },
@@ -170,7 +171,7 @@ describe('CloudWatchDatasource', () => {
       expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
       ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
@@ -259,7 +260,7 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch query with template variables', () => {
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
       templateSrv.init([
         new CustomVariable(

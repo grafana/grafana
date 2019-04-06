@@ -2,9 +2,11 @@ import angular from 'angular';
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
+import { CloudWatchQuery } from './types';
+import { DataSourceApi } from '@grafana/ui/src/types';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource {
+export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
   type: any;
   name: any;
   proxyUrl: any;
