@@ -62,9 +62,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
       updated: '',
       version: '',
     },
-
-    exports: {
-      reactPanel: new ReactPanelPlugin(NotFound),
-    },
+    reactPlugin: new ReactPanelPlugin(NotFound),
+    angularPlugin: null,
   };
 }

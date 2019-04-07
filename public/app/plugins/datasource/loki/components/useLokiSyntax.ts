@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
-import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
@@ -15,7 +15,7 @@ const PRISM_SYNTAX = 'promql';
  * @param languageProvider
  * @description Initializes given language provider, exposes Loki syntax and enables loading label option values
  */
-export const useLokiSyntax = (languageProvider: LokiLanguageProvider, datasourceStatus: DatasourceStatus) => {
+export const useLokiSyntax = (languageProvider: LokiLanguageProvider, datasourceStatus: DataSourceStatus) => {
   const mounted = useRefMounted();
   // State
   const [languageProviderInitialized, setLanguageProviderInitilized] = useState(false);

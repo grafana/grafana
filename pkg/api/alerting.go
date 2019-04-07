@@ -261,6 +261,10 @@ func UpdateAlertNotification(c *m.ReqContext, cmd m.UpdateAlertNotificationComma
 		return Error(500, "Failed to update alert notification", err)
 	}
 
+	if cmd.Result == nil {
+		return Error(404, "Alert notification not found", nil)
+	}
+
 	return JSON(200, dtos.NewAlertNotification(cmd.Result))
 }
 
@@ -270,6 +274,10 @@ func UpdateAlertNotificationByUID(c *m.ReqContext, cmd m.UpdateAlertNotification
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to update alert notification", err)
+	}
+
+	if cmd.Result == nil {
+		return Error(404, "Alert notification not found", nil)
 	}
 
 	return JSON(200, dtos.NewAlertNotification(cmd.Result))
