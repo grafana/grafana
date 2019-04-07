@@ -1,6 +1,5 @@
 import { getCategories } from './categories';
-
-export type DecimalCount = number | null | undefined;
+import { DecimalCount } from '../../types';
 
 export type ValueFormatter = (
   value: number,

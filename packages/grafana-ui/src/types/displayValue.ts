@@ -5,7 +5,9 @@ export interface DisplayValue {
   title?: string;
 }
 
+export type DecimalCount = number | null | undefined;
+
 export interface DecimalInfo {
-  decimals: number;
-  scaledDecimals: number;
+  decimals: DecimalCount;
+  scaledDecimals: DecimalCount;
 }
