@@ -1,6 +1,8 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { ReactPanelPlugin } from '@grafana/ui/src/types/panel';
+import { ReactPanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
+
+class TablePanelCtrl {}
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -28,7 +30,12 @@ describe('PanelModel', () => {
         },
       };
       model = new PanelModel(modelJson);
-      model.pluginLoaded(getPanelPlugin({ id: 'table', exports: { PanelCtrl: {} as any } }));
+      model.pluginLoaded(
+        getPanelPlugin({
+          id: 'table',
+          angularPlugin: new AngularPanelPlugin(TablePanelCtrl),
+        })
+      );
     });
 
     it('should apply defaults', () => {
@@ -79,7 +86,7 @@ describe('PanelModel', () => {
 
     describe('when changing panel type', () => {
       beforeEach(() => {
-        model.changePlugin(getPanelPlugin({ id: 'graph', exports: {} }));
+        model.changePlugin(getPanelPlugin({ id: 'graph' }));
         model.alert = { id: 2 };
       });
 
@@ -88,12 +95,12 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changePlugin(getPanelPlugin({ id: 'table', exports: {} }));
+        model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.showColumns).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
-        model.changePlugin(getPanelPlugin({ id: 'table', exports: {} }));
+        model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
       });
     });
@@ -105,7 +112,7 @@ describe('PanelModel', () => {
         model.events.on('panel-teardown', () => {
           tearDownPublished = true;
         });
-        model.changePlugin(getPanelPlugin({ id: 'graph', exports: {} }));
+        model.changePlugin(getPanelPlugin({ id: 'graph' }));
       });
 
       it('should teardown / destroy panel so angular panels event subscriptions are removed', () => {
@@ -116,15 +123,13 @@ describe('PanelModel', () => {
 
     describe('when changing to react panel', () => {
       const onPanelTypeChanged = jest.fn();
-      const reactPanel = new ReactPanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = new ReactPanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
         model.changePlugin(
           getPanelPlugin({
             id: 'react',
-            exports: {
-              reactPanel,
-            },
+            reactPlugin: reactPlugin,
           })
         );
       });

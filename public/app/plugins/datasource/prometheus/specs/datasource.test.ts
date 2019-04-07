@@ -945,6 +945,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -984,6 +985,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1024,6 +1026,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -1070,6 +1073,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1110,6 +1114,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1155,6 +1160,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',

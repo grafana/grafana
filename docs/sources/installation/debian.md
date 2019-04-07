@@ -41,16 +41,16 @@ sudo dpkg -i grafana_5.4.2_amd64.deb
 
 ## APT Repository
 
-Create a file `/etc/apt/sources.list.d/grafana.list` and add the following to it.
+Install the repository for stable releases
 
 ```bash
-deb https://packages.grafana.com/oss/deb stable main
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
 There is a separate repository if you want beta releases.
 
 ```bash
-deb https://packages.grafana.com/oss/deb beta main
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
 Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.

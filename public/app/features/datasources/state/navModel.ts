@@ -84,6 +84,8 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         version: '',
       },
       includes: [{ type: '', name: '', path: '' }],
+      module: '',
+      baseUrl: '',
     }
   );
 

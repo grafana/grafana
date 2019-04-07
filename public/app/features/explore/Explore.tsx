@@ -28,6 +28,7 @@ import {
   scanStart,
   setQueries,
   refreshExplore,
+  reconnectDatasource,
 } from './state/actions';
 
 // Types
@@ -39,6 +40,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -54,6 +56,7 @@ interface ExploreProps {
   modifyQueries: typeof modifyQueries;
   range: RawTimeRange;
   update: ExploreUpdateState;
+  reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
   scanner?: RangeScanner;
   scanning?: boolean;
@@ -201,6 +204,13 @@ export class Explore extends React.PureComponent<ExploreProps> {
     );
   };
 
+  onReconnect = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const { exploreId, reconnectDatasource } = this.props;
+
+    event.preventDefault();
+    reconnectDatasource(exploreId);
+  };
+
   render() {
     const {
       StartPage,
@@ -224,13 +234,16 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
-        {datasourceError && (
+        <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
           <div className="explore-container">
-            <Alert message={`Error connecting to datasource: ${datasourceError}`} />
+            <Alert
+              message={`Error connecting to datasource: ${datasourceError}`}
+              button={{ text: 'Reconnect', onClick: this.onReconnect }}
+            />
           </div>
-        )}
+        </FadeIn>
 
-        {datasourceInstance && !datasourceError && (
+        {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <AutoSizer onResize={this.onResize} disableHeight>
@@ -315,6 +328,7 @@ const mapDispatchToProps = {
   changeTime,
   initializeExplore,
   modifyQueries,
+  reconnectDatasource,
   refreshExplore,
   scanStart,
   scanStopAction,

@@ -361,6 +361,7 @@ func createPackage(options linuxPackageOptions) {
 	fmt.Printf("pkgArch is set to '%s', generated arch is '%s'\n", pkgArch, options.packageArch)
 	if pkgArch == "armv6" {
 		name += "-rpi"
+		args = append(args, "--replaces", "grafana")
 	}
 	args = append(args, "--name", name)
 
