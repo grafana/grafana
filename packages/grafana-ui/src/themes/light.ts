@@ -65,7 +65,7 @@ const lightTheme: GrafanaTheme = {
     text: basicColors.gray1,
     textStrong: basicColors.dark2,
     textWeak: basicColors.gray2,
-    textEmphasis: basicColors.gray5,
+    textEmphasis: basicColors.dark5,
     textFaint: basicColors.dark4,
     link: basicColors.gray1,
     linkDisabled: new tinycolor(basicColors.gray1).lighten(30).toString(),
