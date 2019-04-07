@@ -136,8 +136,9 @@ export class BarGauge extends PureComponent<Props> {
     const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
-    const cellCount = maxSize / 20;
-    const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
+    const cellWidth = 12;
+    const cellCount = Math.floor(maxSize / cellWidth);
+    const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
     const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
 
