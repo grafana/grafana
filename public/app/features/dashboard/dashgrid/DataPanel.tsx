@@ -8,7 +8,6 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import {
   DataQueryOptions,
-  DataQueryResponse,
   DataQueryError,
   LoadingState,
   SeriesData,
@@ -35,14 +34,13 @@ export interface Props {
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
-  onDataResponse?: (data: DataQueryResponse) => void;
+  onDataResponse?: (data?: SeriesData[]) => void;
   onError: (message: string, error: DataQueryError) => void;
 }
 
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
-  response: DataQueryResponse;
   data?: SeriesData[];
 }
 
@@ -78,9 +76,6 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
-      response: {
-        data: [],
-      },
       isFirstLoad: true,
     };
   }
@@ -153,14 +148,15 @@ export class DataPanel extends Component<Props, State> {
         return;
       }
 
+      // Make sure the data is SeriesData[]
+      const data = getProcessedSeriesData(resp.data);
       if (onDataResponse) {
-        onDataResponse(resp);
+        onDataResponse(data);
       }
 
       this.setState({
+        data,
         loading: LoadingState.Done,
-        response: resp,
-        data: getProcessedSeriesData(resp.data),
         isFirstLoad: false,
       });
     } catch (err) {

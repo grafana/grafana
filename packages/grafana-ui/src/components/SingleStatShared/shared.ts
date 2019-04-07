@@ -31,7 +31,7 @@ export interface SingleStatValueOptions {
 }
 
 export interface GetSingleStatDisplayValueOptions {
-  data: SeriesData[];
+  data?: SeriesData[];
   theme: GrafanaTheme;
   valueMappings: ValueMapping[];
   thresholds: Threshold[];
@@ -55,24 +55,28 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
 
   const values: DisplayValue[] = [];
 
-  for (const series of data) {
-    if (stat === 'name') {
-      values.push(display(series.name));
-    }
+  if (data) {
+    for (const series of data) {
+      if (stat === 'name') {
+        values.push(display(series.name));
+      }
 
-    for (let i = 0; i < series.fields.length; i++) {
-      const column = series.fields[i];
+      for (let i = 0; i < series.fields.length; i++) {
+        const column = series.fields[i];
 
-      // Show all fields that are not 'time'
-      if (column.type === FieldType.number) {
-        const stats = calculateStats({
-          series,
-          fieldIndex: i,
-          stats: [stat], // The stats to calculate
-          nullValueMode: NullValueMode.Null,
-        });
-        const displayValue = display(stats[stat]);
-        values.push(displayValue);
+        // Show all fields that are not 'time'
+        if (column.type === FieldType.number) {
+          const stats = calculateStats({
+            series,
+            fieldIndex: i,
+            stats: [stat], // The stats to calculate
+            nullValueMode: NullValueMode.Null,
+          });
+
+          const displayValue = display(stats[stat]);
+          displayValue.title = series.name;
+          values.push(displayValue);
+        }
       }
     }
   }

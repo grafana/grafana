@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 
 // Services & Utils
 import config from 'app/core/config';
-import { importPluginModule } from './plugin_loader';
+import { importDataSourcePlugin } from './plugin_loader';
 
 // Types
 import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui/src/types';
@@ -52,25 +52,24 @@ export class DatasourceSrv {
     }
 
     const deferred = this.$q.defer();
-    const pluginDef = dsConfig.meta;
 
-    importPluginModule(pluginDef.module)
-      .then(plugin => {
+    importDataSourcePlugin(dsConfig.meta.module)
+      .then(dsPlugin => {
         // check if its in cache now
         if (this.datasources[name]) {
           deferred.resolve(this.datasources[name]);
           return;
         }
 
-        // plugin module needs to export a constructor function named Datasource
-        if (!plugin.Datasource) {
-          throw new Error('Plugin module is missing Datasource constructor');
-        }
+        const instance: DataSourceApi = this.$injector.instantiate(dsPlugin.DataSourceClass, {
+          instanceSettings: dsConfig,
+        });
 
-        const instance: DataSourceApi = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
-        instance.meta = pluginDef;
         instance.name = name;
-        instance.pluginExports = plugin;
+        instance.components = dsPlugin.components;
+        instance.meta = dsConfig.meta;
+
+        // store in instance cache
         this.datasources[name] = instance;
         deferred.resolve(instance);
       })
