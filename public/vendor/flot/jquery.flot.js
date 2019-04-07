@@ -1763,8 +1763,11 @@ Licensed under the MIT license.
             axis.delta = delta;
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
+
             // grafana addition
-            axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+            if (opts.tickDecimals === null && opts.tickDecimals === undefined) {
+              axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+            }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
             // we'll add an especially friendly reminder to make sure they included it.
