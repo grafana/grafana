@@ -138,16 +138,16 @@ export default class CloudWatchDatasource {
       const data = [];
 
       if (res.results) {
-        request.queries.forEach(q => {
-          const queryRes = res.results[q.refId];
-          _.forEach(queryRes.series, series => {
+        for (const query of request.queries) {
+          const queryRes = res.results[query.refId];
+          for (const series of queryRes.series) {
             const s = { target: series.name, datapoints: series.points } as any;
             if (queryRes.meta.unit) {
               s.unit = queryRes.meta.unit;
             }
             data.push(s);
-          });
-        });
+          }
+        }
       }
 
       return { data: data };
