@@ -1,6 +1,9 @@
 // Library
 import React, { Component } from 'react';
 
+import moment from 'moment';
+import * as dateMath from 'app/core/utils/datemath';
+
 // Services
 import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
@@ -22,6 +25,7 @@ import { StreamObserver } from './StreamObserver';
 interface RenderProps {
   loading: LoadingState;
   data: SeriesData[];
+  timeRange?: TimeRange;
 }
 
 export interface Props {
@@ -243,6 +247,22 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
+  getTimeRange(): TimeRange {
+    const { timeRange } = this.props;
+    const { raw } = timeRange;
+
+    if (moment.isMoment(raw.to) || raw.to.indexOf('now') < 0) {
+      return timeRange;
+    }
+
+    const timezone = 'utc'; //  ??? where can we get it
+    return {
+      from: dateMath.parse(raw.from, false, timezone),
+      to: dateMath.parse(raw.to, true, timezone),
+      raw: raw,
+    };
+  }
+
   render() {
     const { queries } = this.props;
     const { loading, isFirstLoad, data } = this.state;
@@ -263,7 +283,7 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, data })}
+        {this.props.children({ loading, timeRange: this.getTimeRange(), data })}
       </>
     );
   }
