@@ -286,7 +286,7 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
 
       titleStyles.width = `${titleDim.width}px`;
       titleStyles.textAlign = 'right';
-      titleStyles.marginRight = '10px';
+      titleStyles.paddingRight = '10px';
     }
   }
 
@@ -343,6 +343,11 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
       wrapperHeight = height;
     }
   }
+
+  // console.log('titleDim', titleDim);
+  // console.log('valueWidth', valueWidth);
+  // console.log('width', width);
+  // console.log('total', titleDim.width + maxBarWidth + valueWidth);
 
   return {
     valueWidth,
@@ -409,7 +414,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     barStyles.transition = 'width 1s';
     barStyles.height = `${maxBarHeight}px`;
     barStyles.width = `${barWidth}px`;
-    barStyles.marginRight = '10px';
+
+    valueStyles.paddingLeft = '10px';
 
     if (isBasic) {
       // Basic styles
