@@ -11,10 +11,7 @@ type Props = QueryEditorProps<InputDatasource, InputQuery>;
 export class InputQueryEditor extends PureComponent<Props> {
   render() {
     const { datasource } = this.props;
-
-    // Not sure why using id and name directly is not working
-    const id = (datasource as any).id;
-    const name = (datasource as any).name;
+    const { id, name } = datasource;
 
     return (
       <div>

@@ -2,14 +2,26 @@
 import _ from 'lodash';
 
 // Types
-import { DataQueryOptions, SeriesData, DataQueryResponse, DataSourceApi } from '@grafana/ui/src/types';
+import {
+  DataQueryOptions,
+  SeriesData,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+} from '@grafana/ui/src/types';
 import { InputQuery } from './types';
 
 export class InputDatasource implements DataSourceApi<InputQuery> {
   data: SeriesData[];
 
+  // Filled in by grafana plugin system
+  name?: string;
+
+  // Filled in by grafana plugin system
+  id?: number;
+
   /** @ngInject */
-  constructor(instanceSettings: any) {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
     if (instanceSettings.jsonData) {
       this.data = instanceSettings.jsonData.data;
     }
@@ -42,7 +54,7 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
       }
       for (const series of this.data) {
         results.push({
-          // TODO add refID after #16233
+          refId: query.refId,
           ...series,
         });
       }

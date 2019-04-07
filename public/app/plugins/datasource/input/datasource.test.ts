@@ -20,7 +20,10 @@ describe('InputDatasource', () => {
 
       return ds.query(options).then(rsp => {
         expect(rsp.data.length).toBe(1);
-        expect(rsp.data[0]).toEqual(data[0]);
+
+        const series = rsp.data[0];
+        expect(series.refId).toBe('Z');
+        expect(series.rows).toEqual(data[0].rows);
       });
     });
   });
