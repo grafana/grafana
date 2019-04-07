@@ -1,4 +1,4 @@
-import { PluginExports, PluginMetaInfo } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo } from '@grafana/ui/src/types';
 
 export interface PanelPlugin {
   id: string;
@@ -6,9 +6,11 @@ export interface PanelPlugin {
   hideFromList?: boolean;
   module: string;
   baseUrl: string;
-  info: any;
+  info: PluginMetaInfo;
   sort: number;
-  exports?: PluginExports;
+  angularPlugin: AngularPanelPlugin | null;
+  reactPlugin: ReactPanelPlugin | null;
+  hasBeenImported?: boolean;
   dataFormats: PanelDataFormat[];
 }
 

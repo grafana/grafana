@@ -12,8 +12,8 @@ describe('DateMath', () => {
   let clock;
 
   describe('errors', () => {
-    it('should return undefined if passed something falsy', () => {
-      expect(dateMath.parse(false)).toBe(undefined);
+    it('should return undefined if passed empty string', () => {
+      expect(dateMath.parse('')).toBe(undefined);
     });
 
     it('should return undefined if I pass an operator besides [+-/]', () => {

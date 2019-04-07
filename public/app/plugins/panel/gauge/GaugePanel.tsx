@@ -9,9 +9,7 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { DisplayValue, PanelProps } from '@grafana/ui';
-import { getSingleStatValues } from '../singlestat2/SingleStatPanel';
-import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
+import { DisplayValue, PanelProps, getSingleStatDisplayValues, VizRepeater } from '@grafana/ui';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
@@ -32,21 +30,28 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     );
   };
 
-  getProcessedValues = (): DisplayValue[] => {
-    return getSingleStatValues(this.props);
+  getValues = (): DisplayValue[] => {
+    return getSingleStatDisplayValues({
+      valueMappings: this.props.options.valueMappings,
+      thresholds: this.props.options.thresholds,
+      valueOptions: this.props.options.valueOptions,
+      data: this.props.data,
+      theme: config.theme,
+      replaceVariables: this.props.replaceVariables,
+    });
   };
 
   render() {
-    const { height, width, options, panelData } = this.props;
-    const { orientation } = options;
+    const { height, width, options, data, renderCounter } = this.props;
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        getValues={this.getValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
-        source={panelData}
-        orientation={orientation}
+        source={data}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
       />
     );
   }

@@ -1,5 +1,4 @@
-import { SingleStatBaseOptions } from '../singlestat2/types';
-import { VizOrientation } from '@grafana/ui';
+import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
   maxValue: number;
@@ -17,7 +16,7 @@ export const defaults: GaugeOptions = {
     prefix: '',
     suffix: '',
     decimals: null,
-    stat: 'avg',
+    stat: StatID.mean,
     unit: 'none',
   },
   valueMappings: [],

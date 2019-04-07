@@ -113,7 +113,25 @@ apiVersion: 1
 datasources:
   - name: Loki
     type: loki
+    access: proxy
     url: http://localhost:3100
+    jsonData:
+      maxLines: 1000
+```
+
+Here's another with basic auth:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    basicAuth: true
+    basicAuthUser: my_user
+    basicAuthPassword: test_password
     jsonData:
       maxLines: 1000
 ```

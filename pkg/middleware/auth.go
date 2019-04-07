@@ -86,3 +86,20 @@ func Auth(options *AuthOptions) macaron.Handler {
 		}
 	}
 }
+
+// AdminOrFeatureEnabled creates a middleware that allows access
+// if the signed in user is either an Org Admin or if the
+// feature flag is enabled.
+// Intended for when feature flags open up access to APIs that
+// are otherwise only available to admins.
+func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
+	return func(c *m.ReqContext) {
+		if c.OrgRole == m.ROLE_ADMIN {
+			return
+		}
+
+		if !enabled {
+			accessForbidden(c)
+		}
+	}
+}

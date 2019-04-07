@@ -1,20 +1,24 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import classNames from 'classnames';
 
+// Utils & Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
-import { importPluginModule } from 'app/features/plugins/plugin_loader';
+import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
+// Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { getPanelPluginNotFound } from './PanelPluginNotFound';
 import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
+import { PanelResizer } from './PanelResizer';
 
+// Types
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { PanelResizer } from './PanelResizer';
-import { PanelTypeChangedHook } from '@grafana/ui';
+import { AngularPanelPlugin, ReactPanelPlugin } from '@grafana/ui/src/types/panel';
 
 export interface Props {
   panel: PanelModel;
@@ -71,37 +75,41 @@ export class DashboardPanel extends PureComponent<Props, State> {
     if (!this.state.plugin || this.state.plugin.id !== pluginId) {
       let plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
 
-      // remember if this is from an angular panel
-      const fromAngularPanel = this.state.angularPanel != null;
-
       // unmount angular panel
       this.cleanUpAngularPanel();
 
-      if (!plugin.exports) {
-        try {
-          plugin.exports = await importPluginModule(plugin.module);
-        } catch (e) {
-          plugin = getPanelPluginNotFound(pluginId);
-        }
-      }
+      // load the actual plugin code
+      plugin = await this.importPanelPluginModule(plugin);
 
       if (panel.type !== pluginId) {
-        if (fromAngularPanel) {
-          // for angular panels only we need to remove all events and let angular panels do some cleanup
-          panel.destroy();
-
-          this.props.panel.changeType(pluginId);
-        } else {
-          let hook: PanelTypeChangedHook | null = null;
-          if (plugin.exports.reactPanel) {
-            hook = plugin.exports.reactPanel.panelTypeChangedHook;
-          }
-          panel.changeType(pluginId, hook);
-        }
+        panel.changePlugin(plugin);
+      } else {
+        panel.pluginLoaded(plugin);
       }
 
       this.setState({ plugin, angularPanel: null });
     }
+  }
+
+  async importPanelPluginModule(plugin: PanelPlugin): Promise<PanelPlugin> {
+    if (plugin.hasBeenImported) {
+      return plugin;
+    }
+
+    try {
+      const importedPlugin = await importPanelPlugin(plugin.module);
+      if (importedPlugin instanceof AngularPanelPlugin) {
+        plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
+      } else if (importedPlugin instanceof ReactPanelPlugin) {
+        plugin.reactPlugin = importedPlugin as ReactPanelPlugin;
+      }
+    } catch (e) {
+      plugin = getPanelPluginNotFound(plugin.id);
+      console.log('Failed to import plugin module', e);
+    }
+
+    plugin.hasBeenImported = true;
+    return plugin;
   }
 
   componentDidMount() {
@@ -141,10 +149,18 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen } = this.props;
+    const { dashboard, panel, isFullscreen, isEditing } = this.props;
     const { plugin } = this.state;
 
-    return <PanelChrome plugin={plugin} panel={panel} dashboard={dashboard} isFullscreen={isFullscreen} />;
+    return (
+      <PanelChrome
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isFullscreen={isFullscreen}
+        isEditing={isEditing}
+      />
+    );
   }
 
   renderAngularPanel() {
@@ -160,7 +176,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
 
     // if we have not loaded plugin exports yet, wait
-    if (!plugin || !plugin.exports) {
+    if (!plugin || !plugin.hasBeenImported) {
       return null;
     }
 
@@ -183,8 +199,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.exports.reactPanel && this.renderReactPanel()}
-              {plugin.exports.PanelCtrl && this.renderAngularPanel()}
+              {plugin.reactPlugin && this.renderReactPanel()}
+              {plugin.angularPlugin && this.renderAngularPanel()}
             </div>
           )}
         />

@@ -17,12 +17,15 @@ $enable-hover-media-query: false !default;
 // Control the default styling of most Bootstrap elements by modifying these
 // variables. Mostly focused on spacing.
 
+$space-inset-squish-md: ${theme.spacing.insetSquishMd} !default;
+
 $space-xxs: ${theme.spacing.xxs} !default;
 $space-xs: ${theme.spacing.xs} !default;
 $space-sm: ${theme.spacing.sm} !default;
 $space-md: ${theme.spacing.md} !default;
 $space-lg: ${theme.spacing.lg} !default;
 $space-xl: ${theme.spacing.xl} !default;
+
 $spacer: ${theme.spacing.d} !default;
 $spacer-x: $spacer !default;
 $spacer-y: $spacer !default;
@@ -110,7 +113,6 @@ $font-size-h4: ${theme.typography.heading.h4} !default;
 $font-size-h5: ${theme.typography.heading.h5} !default;
 $font-size-h6: ${theme.typography.heading.h6} !default;
 
-$headings-font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 $headings-line-height: ${theme.typography.lineHeight.sm} !default;
 
 // Components
@@ -130,18 +132,10 @@ $page-sidebar-margin: 56px;
 
 // Links
 // -------------------------
-$link-decoration: none !default;
-$link-hover-decoration: none !default;
-
-// Tables
-//
-// Customizes the \`.table\` component with basic values, each used across all table variations.
-
-$table-cell-padding: 4px 10px !default;
+$link-decoration: ${theme.typography.link.decoration} !default;
+$link-hover-decoration: ${theme.typography.link.hoverDecoration} !default;
 
 // Forms
-$input-padding-x: 10px !default;
-$input-padding-y: 8px !default;
 $input-line-height: 18px !default;
 
 $input-border-radius: 0 $border-radius $border-radius 0 !default;
@@ -150,9 +144,7 @@ $input-border-radius-sm: 0 $border-radius-sm $border-radius-sm 0 !default;
 $label-border-radius: $border-radius 0 0 $border-radius !default;
 $label-border-radius-sm: $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-x-lg: 20px !default;
-$input-padding-y-lg: 10px !default;
-
+$input-padding: ${theme.spacing.sm};
 $input-height: 35px !default;
 
 $cursor-disabled: not-allowed !default;
@@ -166,13 +158,13 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-$zindex-dropdown: 1000;
-$zindex-navbar-fixed: 1020;
-$zindex-sidemenu: 1025;
-$zindex-tooltip: 1030;
-$zindex-modal-backdrop: 1040;
-$zindex-modal: 1050;
-$zindex-typeahead: 1060;
+$zindex-dropdown: ${theme.zIndex.dropdown};
+$zindex-navbar-fixed: ${theme.zIndex.navbarFixed};
+$zindex-sidemenu: ${theme.zIndex.sidemenu};
+$zindex-tooltip: ${theme.zIndex.tooltip};
+$zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
+$zindex-modal: ${theme.zIndex.modal};
+$zindex-typeahead: ${theme.zIndex.typeahead};
 
 // Buttons
 //
@@ -197,10 +189,10 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$dashboard-padding: 10px * 2;
-$panel-horizontal-padding: 10;
-$panel-vertical-padding: 5;
-$panel-padding: 0px $panel-horizontal-padding + 0px $panel-vertical-padding + 0px $panel-horizontal-padding + 0px;
+$dashboard-padding: $space-md;
+$panel-padding: 0 ${theme.panelPadding.horizontal}px ${theme.panelPadding.vertical}px ${
+    theme.panelPadding.horizontal
+  }px;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

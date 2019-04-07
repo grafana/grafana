@@ -34,9 +34,9 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 
 			cmd.ShowHelp()
 			os.Exit(1)
-		} else {
-			logger.Info("\n\n")
 		}
+
+		logger.Info("\n\n")
 	}
 }
 
@@ -50,9 +50,9 @@ func runPluginCommand(command func(commandLine CommandLine) error) func(context 
 
 			cmd.ShowHelp()
 			os.Exit(1)
-		} else {
-			logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 		}
+
+		logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 	}
 }
 

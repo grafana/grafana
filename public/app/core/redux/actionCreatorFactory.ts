@@ -68,5 +68,9 @@ export const getNoPayloadActionCreatorMock = (creator: NoPayloadActionCreator): 
   return mock;
 };
 
+export const mockActionCreator = (creator: ActionCreator<any>) => {
+  return Object.assign(jest.fn(), creator);
+};
+
 // Should only be used by tests
 export const resetAllActionCreatorTypes = () => (allActionCreators.length = 0);

@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries } from '@grafana/ui';
+import { TimeSeries, FieldType } from '@grafana/ui';
 
 export class ResultTransformer {
   constructor(private templateSrv) {}
@@ -98,7 +98,7 @@ export class ResultTransformer {
 
     // Sort metric labels, create columns for them and record their index
     const sortedLabels = _.keys(metricLabels).sort();
-    table.columns.push({ text: 'Time', type: 'time' });
+    table.columns.push({ text: 'Time', type: FieldType.time });
     _.each(sortedLabels, (label, labelIndex) => {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label, filterable: true });

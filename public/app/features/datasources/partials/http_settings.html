@@ -71,21 +71,24 @@
 	<h3 class="page-heading">Auth</h3>
 	<div class="gf-form-group">
 		<div class="gf-form-inline">
-			<gf-form-checkbox class="gf-form" label="Basic Auth" checked="current.basicAuth" label-class="width-10" switch-class="max-width-6"></gf-form-checkbox>
+			<gf-form-checkbox class="gf-form" label="Basic Auth" checked="current.basicAuth" label-class="width-13" switch-class="max-width-6"></gf-form-checkbox>
 			<gf-form-checkbox class="gf-form" label="With Credentials" tooltip="Whether credentials such as cookies or auth
-			  headers should be sent with cross-site requests." checked="current.withCredentials" label-class="width-11"
+			  headers should be sent with cross-site requests." checked="current.withCredentials" label-class="width-13"
 			  switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 		<div class="gf-form-inline">
-			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-10"
+			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-13"
 			  checked="current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-checkbox>
 			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="With CA Cert" tooltip="Needed for
-			  verifing self-signed TLS Certs" checked="current.jsonData.tlsAuthWithCACert" label-class="width-11"
+			  verifing self-signed TLS Certs" checked="current.jsonData.tlsAuthWithCACert" label-class="width-13"
 			  switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 		<div class="gf-form-inline">
-			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="Skip TLS Verify" label-class="width-10"
+			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="Skip TLS Verify" label-class="width-13"
 			  checked="current.jsonData.tlsSkipVerify" switch-class="max-width-6"></gf-form-checkbox>
+		</div>
+		<div class="gf-form-inline">
+			<gf-form-checkbox class="gf-form" ng-if="current.access=='proxy'" label="Forward OAuth Identity" label-class="width-13" tooltip="Forward the user's upstream OAuth identity to the datasource (Their access token gets passed along)." checked="current.jsonData.oauthPassThru" switch-class="max-width-6"></gf-form-checkbox>
 		</div>
 	</div>
 

@@ -17,7 +17,7 @@ exports[`Render should render with base threshold 1`] = `
       ],
       "results": Array [
         Object {
-          "isThrow": false,
+          "type": "return",
           "value": undefined,
         },
       ],
@@ -83,10 +83,12 @@ exports[`Render should render with base threshold 1`] = `
                   >
                     <WithTheme(ColorPicker)
                       color="#7EB26D"
+                      enableNamedColors={true}
                       onChange={[Function]}
                     >
                       <ColorPicker
                         color="#7EB26D"
+                        enableNamedColors={true}
                         onChange={[Function]}
                         theme={
                           Object {
@@ -176,12 +178,13 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "name": "Grafana Dark",
                             "panelPadding": Object {
-                              "horizontal": 10,
-                              "vertical": 5,
+                              "horizontal": 16,
+                              "vertical": 8,
                             },
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
+                              "insetSquishMd": "4px 8px",
                               "lg": "24px",
                               "md": "16px",
                               "sm": "8px",
@@ -193,7 +196,7 @@ exports[`Render should render with base threshold 1`] = `
                             "typography": Object {
                               "fontFamily": Object {
                                 "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
                               },
                               "heading": Object {
                                 "h1": "28px",
@@ -209,6 +212,10 @@ exports[`Render should render with base threshold 1`] = `
                                 "sm": 1.1,
                                 "xs": 1,
                               },
+                              "link": Object {
+                                "decoration": "none",
+                                "hoverDecoration": "none",
+                              },
                               "size": Object {
                                 "base": "13px",
                                 "lg": "18px",
@@ -223,6 +230,15 @@ exports[`Render should render with base threshold 1`] = `
                                 "semibold": 500,
                               },
                             },
+                            "zIndex": Object {
+                              "dropdown": "1000",
+                              "modal": "1050",
+                              "modalBackdrop": "1040",
+                              "navbarFixed": "1020",
+                              "sidemenu": "1025",
+                              "tooltip": "1030",
+                              "typeahead": "1060",
+                            },
                           }
                         }
                       >
@@ -230,6 +246,7 @@ exports[`Render should render with base threshold 1`] = `
                           content={
                             <ColorPickerPopover
                               color="#7EB26D"
+                              enableNamedColors={true}
                               onChange={[Function]}
                               theme={
                                 Object {
@@ -319,12 +336,13 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "name": "Grafana Dark",
                                   "panelPadding": Object {
-                                    "horizontal": 10,
-                                    "vertical": 5,
+                                    "horizontal": 16,
+                                    "vertical": 8,
                                   },
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",
+                                    "insetSquishMd": "4px 8px",
                                     "lg": "24px",
                                     "md": "16px",
                                     "sm": "8px",
@@ -336,7 +354,7 @@ exports[`Render should render with base threshold 1`] = `
                                   "typography": Object {
                                     "fontFamily": Object {
                                       "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                                      "sansSerif": "'Roboto', Helvetica, Arial, sans-serif",
+                                      "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
                                     },
                                     "heading": Object {
                                       "h1": "28px",
@@ -352,6 +370,10 @@ exports[`Render should render with base threshold 1`] = `
                                       "sm": 1.1,
                                       "xs": 1,
                                     },
+                                    "link": Object {
+                                      "decoration": "none",
+                                      "hoverDecoration": "none",
+                                    },
                                     "size": Object {
                                       "base": "13px",
                                       "lg": "18px",
@@ -365,6 +387,15 @@ exports[`Render should render with base threshold 1`] = `
                                       "regular": 400,
                                       "semibold": 500,
                                     },
+                                  },
+                                  "zIndex": Object {
+                                    "dropdown": "1000",
+                                    "modal": "1050",
+                                    "modalBackdrop": "1040",
+                                    "navbarFixed": "1020",
+                                    "sidemenu": "1025",
+                                    "tooltip": "1030",
+                                    "typeahead": "1060",
                                   },
                                 }
                               }
@@ -430,11 +461,27 @@ exports[`Render should render with base threshold 1`] = `
                 <div
                   className="thresholds-row-input-inner-value"
                 >
-                  <input
+                  <Input
+                    className=""
                     readOnly={true}
                     type="text"
                     value="Base"
-                  />
+                  >
+                    <div
+                      style={
+                        Object {
+                          "flexGrow": 1,
+                        }
+                      }
+                    >
+                      <input
+                        className="gf-form-input"
+                        readOnly={true}
+                        type="text"
+                        value="Base"
+                      />
+                    </div>
+                  </Input>
                 </div>
               </div>
             </div>

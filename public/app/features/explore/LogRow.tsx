@@ -13,7 +13,7 @@ interface Props {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
-  showLabels: boolean | null; // Tristate: null means auto
+  showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
   getRows: () => LogRowModel[];

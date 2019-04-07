@@ -11,7 +11,7 @@ import { DataPanel } from './DataPanel';
 import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
-import { applyPanelTimeOverrides, snapshotDataToPanelData } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import config from 'app/core/config';
@@ -19,10 +19,12 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { DataQueryResponse, TimeRange, LoadingState, PanelData, DataQueryError } from '@grafana/ui';
+import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
+
+import { getProcessedSeriesData } from './DataPanel';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -31,6 +33,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isEditing: boolean;
 }
 
 export interface State {
@@ -94,15 +97,25 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
-  onDataResponse = (dataQueryResponse: DataQueryResponse) => {
+  onDataResponse = (data?: SeriesData[]) => {
     if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = dataQueryResponse.data;
+      this.props.panel.snapshotData = data;
     }
     // clear error state (if any)
     this.clearErrorState();
 
-    // This event is used by old query editors and panel editor options
-    this.props.panel.events.emit('data-received', dataQueryResponse.data);
+    if (this.props.isEditing) {
+      const events = this.props.panel.events;
+      if (!data) {
+        data = [];
+      }
+
+      // Angular query editors expect TimeSeries|TableData
+      events.emit('data-received', data.map(v => toLegacyResponseData(v)));
+
+      // Notify react query editors
+      events.emit('series-data-received', data);
+    }
   };
 
   onDataError = (message: string, error: DataQueryError) => {
@@ -139,13 +152,13 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get getDataForPanel() {
-    return this.hasPanelSnapshot ? snapshotDataToPanelData(this.props.panel) : null;
+    return this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : null;
   }
 
-  renderPanelPlugin(loading: LoadingState, panelData: PanelData, width: number, height: number): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, data: SeriesData[], width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
-    const PanelComponent = plugin.exports.reactPanel.panel;
+    const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -157,9 +170,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       <div className="panel-content">
         <PanelComponent
           loading={loading}
-          panelData={panelData}
+          data={data}
           timeRange={timeRange}
-          options={panel.getOptions(plugin.exports.reactPanel.defaults)}
+          options={panel.getOptions(plugin.reactPlugin.defaults)}
           width={width - 2 * config.theme.panelPadding.horizontal}
           height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
@@ -188,8 +201,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
-            {({ loading, panelData }) => {
-              return this.renderPanelPlugin(loading, panelData, width, height);
+            {({ loading, data }) => {
+              return this.renderPanelPlugin(loading, data, width, height);
             }}
           </DataPanel>
         ) : (

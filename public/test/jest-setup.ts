@@ -24,16 +24,16 @@ global.$ = global.jQuery = $;
 const localStorageMock = (() => {
   let store = {};
   return {
-    getItem: key => {
+    getItem: (key: string) => {
       return store[key];
     },
-    setItem: (key, value) => {
+    setItem: (key: string, value) => {
       store[key] = value.toString();
     },
     clear: () => {
       store = {};
     },
-    removeItem: key => {
+    removeItem: (key: string) => {
       delete store[key];
     },
   };
