@@ -6,11 +6,11 @@ import { config } from 'app/core/config';
 import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
 
 // Components
-import { ProcessedValuesRepeater } from './ProcessedValuesRepeater';
+import { VizRepeater } from '@grafana/ui/src/components';
+import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
 
 // Types
 import { SingleStatOptions } from './types';
-import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
 import {
   DisplayValue,
   PanelProps,
@@ -34,7 +34,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     return <BigValue {...value} width={width} height={height} theme={config.theme} />;
   };
 
-  getProcessedValues = (): SingleStatDisplay[] => {
+  getValues = (): SingleStatDisplay[] => {
     const { data, replaceVariables, options, timeRange } = this.props;
     const { valueOptions, valueMappings } = options;
 
@@ -127,8 +127,8 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
   render() {
     const { height, width, options, data, renderCounter } = this.props;
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        getValues={this.getValues}
         renderValue={this.renderValue}
         width={width}
         height={height}
