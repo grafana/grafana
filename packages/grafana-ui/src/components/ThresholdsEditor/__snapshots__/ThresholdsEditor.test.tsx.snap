@@ -178,8 +178,8 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "name": "Grafana Dark",
                             "panelPadding": Object {
-                              "horizontal": 10,
-                              "vertical": 5,
+                              "horizontal": 16,
+                              "vertical": 8,
                             },
                             "spacing": Object {
                               "d": "14px",
@@ -336,8 +336,8 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "name": "Grafana Dark",
                                   "panelPadding": Object {
-                                    "horizontal": 10,
-                                    "vertical": 5,
+                                    "horizontal": 16,
+                                    "vertical": 8,
                                   },
                                   "spacing": Object {
                                     "d": "14px",

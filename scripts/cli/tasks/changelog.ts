@@ -14,21 +14,21 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
     timeout: 10000,
   });
 
+  if (!/^\d+$/.test(milestone)) {
+    console.log('Use milestone number not title, find number in milestone url');
+    return;
+  }
+
   const res = await client.get('/issues', {
     params: {
       state: 'closed',
       per_page: 100,
       labels: 'add to changelog',
+      milestone: milestone,
     },
   });
 
-  const issues = res.data.filter(item => {
-    if (!item.milestone) {
-      console.log('Item missing milestone', item.number);
-      return false;
-    }
-    return item.milestone.title === milestone;
-  });
+  const issues = res.data;
 
   const bugs = _.sortBy(
     issues.filter(item => {

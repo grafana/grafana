@@ -11,7 +11,8 @@
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public",
+    "storybook": "start-storybook -p 9001 -c .storybook",
+    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
     "build": "rollup -c rollup.config.ts"
   },
@@ -75,7 +76,7 @@
     "rollup-plugin-terser": "^4.0.4",
     "rollup-plugin-typescript2": "^0.19.2",
     "rollup-plugin-visualizer": "^0.9.2",
-    "typescript": "^3.2.2"
+    "typescript": "3.4.1"
   },
   "resolutions": {
     "@types/lodash": "4.14.119"

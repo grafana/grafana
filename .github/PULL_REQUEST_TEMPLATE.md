@@ -5,6 +5,7 @@
 3. If it's a new feature or config option it will need a docs update. Docs are under the docs folder in repo root.
 4. If the PR is unfinished, mark it as a draft PR.
 5. Rebase your PR if it gets out of sync with master
+6. Name your RP as `<FeatureArea>: Describe your change`. If it's a fix or feature relevant for changelog describe the user  impact in the title. The PR title is used in changelog for issues marked with `add to changelog` label. 
 -->
 
 **What this PR does / why we need it**:
@@ -18,10 +19,3 @@ Fixes #
 
 **Special notes for your reviewer**:
 
-**Release note**:
-<!--
-If this is a user facing change and should be mentioned in release note add it below. If no, just write "NONE" below.
--->
-```release-note
-
-```
