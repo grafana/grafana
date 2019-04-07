@@ -1,3 +1,4 @@
+// @ts-ignore
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -9,18 +10,13 @@ export interface ThunkGiven {
 }
 
 export interface ThunkWhen {
-  whenThunkIsDispatched: (...args: any) => ThunkThen;
+  whenThunkIsDispatched: (...args: any) => Promise<Array<ActionOf<any>>>;
 }
 
-export interface ThunkThen {
-  thenDispatchedActionsEqual: (actions: Array<ActionOf<any>>) => ThunkWhen;
-  thenDispatchedActionsAreEqual: (callback: (actions: Array<ActionOf<any>>) => boolean) => ThunkWhen;
-  thenThereAreNoDispatchedActions: () => ThunkWhen;
-}
-
-export const thunkTester = (initialState: any): ThunkGiven => {
+export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
   const store = mockStore(initialState);
-  let thunkUnderTest = null;
+  let thunkUnderTest: any = null;
+  let dispatchedActions: Array<ActionOf<any>> = [];
 
   const givenThunk = (thunkFunction: any): ThunkWhen => {
     thunkUnderTest = thunkFunction;
@@ -28,36 +24,20 @@ export const thunkTester = (initialState: any): ThunkGiven => {
     return instance;
   };
 
-  function whenThunkIsDispatched(...args: any): ThunkThen {
-    store.dispatch(thunkUnderTest(...arguments));
+  const whenThunkIsDispatched = async (...args: any): Promise<Array<ActionOf<any>>> => {
+    await store.dispatch(thunkUnderTest(...args));
 
-    return instance;
-  }
+    dispatchedActions = store.getActions();
+    if (debug) {
+      console.log('resultingActions:', dispatchedActions);
+    }
 
-  const thenDispatchedActionsEqual = (actions: Array<ActionOf<any>>): ThunkWhen => {
-    const resultingActions = store.getActions();
-    expect(resultingActions).toEqual(actions);
-
-    return instance;
-  };
-
-  const thenDispatchedActionsAreEqual = (callback: (dispathedActions: Array<ActionOf<any>>) => boolean): ThunkWhen => {
-    const resultingActions = store.getActions();
-    expect(callback(resultingActions)).toBe(true);
-
-    return instance;
-  };
-
-  const thenThereAreNoDispatchedActions = () => {
-    return thenDispatchedActionsEqual([]);
+    return dispatchedActions;
   };
 
   const instance = {
     givenThunk,
     whenThunkIsDispatched,
-    thenDispatchedActionsEqual,
-    thenDispatchedActionsAreEqual,
-    thenThereAreNoDispatchedActions,
   };
 
   return instance;

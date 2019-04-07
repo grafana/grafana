@@ -1,3 +1,4 @@
+// @ts-ignore
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -60,21 +61,25 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
   // Strip syntax chars
-  cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
   getSyntax() {
     return PromqlSyntax;
   }
 
-  request = url => {
+  request = (url: string) => {
     return this.datasource.metadataRequest(url);
   };
 
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
+      this.startTask = this.fetchMetrics();
     }
     return this.startTask;
+  };
+
+  fetchMetrics = async () => {
+    return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
   };
 
   // Keep this DOM-free for testing
@@ -125,12 +130,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .map(h => h.query.expr)
+        .map((h: any) => h.query.expr)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
-        .map(item => addHistoryMetadata(item, history))
+        .map((item: CompletionItem) => addHistoryMetadata(item, history))
         .value();
 
       suggestions.push({
@@ -184,7 +189,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
-    const queryText = value.document.getBlocks().reduce((text, block) => {
+    const queryText = value.document.getBlocks().reduce((text: string, block: any) => {
       const blockText = block.getText();
       if (value.anchorBlock.key === block.key) {
         // Newline characters are not accounted for but this is irrelevant

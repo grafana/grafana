@@ -9,6 +9,12 @@ import locationUtil from 'app/core/utils/location_util';
 import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
 
+export const queryParamsToPreserve: { [key: string]: boolean } = {
+  kiosk: true,
+  autofitpanels: true,
+  orgId: true,
+};
+
 export class PlaylistSrv {
   private cancelPromise: any;
   private dashboards: Array<{ url: string }>;
@@ -41,9 +47,7 @@ export class PlaylistSrv {
 
     const dash = this.dashboards[this.index];
     const queryParams = this.$location.search();
-    const filteredParams = _.pickBy(queryParams, key => {
-      return key === 'kiosk' || key === 'autofitpanels' || key === 'orgId';
-    });
+    const filteredParams = _.pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
 
     // this is done inside timeout to make sure digest happens after

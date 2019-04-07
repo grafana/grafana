@@ -966,7 +966,6 @@ export class FuncInstance {
     const str = this.def.name + '(';
 
     const parameters = _.map(this.params, (value, index) => {
-      const valueInterpolated = replaceVariables(value);
       let paramType;
 
       if (index < this.def.params.length) {
@@ -979,6 +978,8 @@ export class FuncInstance {
       if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
         return value;
       }
+
+      const valueInterpolated = _.isString(value) ? replaceVariables(value) : value;
 
       // param types that might be quoted
       // To quote variables correctly we need to interpolate it to check if it contains a numeric or string value

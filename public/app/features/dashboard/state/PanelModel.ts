@@ -252,13 +252,10 @@ export class PanelModel {
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
-    const { reactPanel } = plugin.exports;
-
-    // Call PanelMigration Handler if the version has changed
-    if (reactPanel && reactPanel.onPanelMigration) {
+    if (plugin.reactPlugin && plugin.reactPlugin.onPanelMigration) {
       const version = this.getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
-        this.options = reactPanel.onPanelMigration(this);
+        this.options = plugin.reactPlugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
@@ -268,10 +265,9 @@ export class PanelModel {
     const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
-    const reactPanel = newPlugin.exports.reactPanel;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (this.plugin.exports.PanelCtrl) {
+    if (this.plugin.angularPlugin) {
       this.destroy();
     }
 
@@ -292,12 +288,15 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
+    const reactPanel = newPlugin.reactPlugin;
+
     if (reactPanel) {
       if (reactPanel.onPanelTypeChanged) {
         this.options = this.options || {};
         const old = oldOptions && oldOptions.options ? oldOptions.options : {};
         Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
       }
+
       if (reactPanel.onPanelMigration) {
         this.pluginVersion = this.getPluginVersion(newPlugin);
       }
