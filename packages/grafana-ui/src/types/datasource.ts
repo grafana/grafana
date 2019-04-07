@@ -163,11 +163,6 @@ export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-
-  range?: TimeRange;
-
-  // Existing but not documented interface
-  subscribe?: (options: any) => any;
 }
 
 export interface DataQuery {
