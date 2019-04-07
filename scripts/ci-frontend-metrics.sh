@@ -2,9 +2,9 @@
 
 echo -e "Collecting code stats (typescript errors & more)"
 
-ERROR_COUNT_LIMIT=6927
+ERROR_COUNT_LIMIT=6843
 DIRECTIVES_LIMIT=173
-CONTROLLERS_LIMIT=136
+CONTROLLERS_LIMIT=137
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --noImplicitAny true | grep -oP 'Found \K(\d+)')"
 DIRECTIVES="$(grep -r -o  directive public/app/**/*  | wc -l)"
@@ -16,7 +16,7 @@ if [ $ERROR_COUNT -gt $ERROR_COUNT_LIMIT ]; then
 fi
 
 if [ $DIRECTIVES -gt $DIRECTIVES_LIMIT ]; then
-  echo -e "Directive count $ERROR_COUNT exceeded $DIRECTIVES_LIMIT so failing build"
+  echo -e "Directive count $DIRECTIVES exceeded $DIRECTIVES_LIMIT so failing build"
 	exit -1
 fi
 
