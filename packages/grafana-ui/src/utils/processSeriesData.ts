@@ -17,6 +17,8 @@ function convertTableToSeriesData(table: TableData): SeriesData {
       return f;
     }),
     rows: table.rows,
+    refId: table.refId,
+    meta: table.meta,
   };
 }
 
@@ -36,6 +38,8 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
     ],
     rows: timeSeries.datapoints,
     labels: timeSeries.tags,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
   };
 }
 
@@ -168,6 +172,8 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
         target: fields[0].name || series.name,
         datapoints: rows,
         unit: fields[0].unit,
+        refId: series.refId,
+        meta: series.meta,
       } as TimeSeries;
     }
   }
@@ -178,6 +184,8 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
         text: f.name,
         filterable: f.filterable,
         unit: f.unit,
+        refId: series.refId,
+        meta: series.meta,
       };
     }),
     rows,
