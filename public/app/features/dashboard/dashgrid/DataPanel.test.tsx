@@ -70,16 +70,14 @@ describe('DataPanel', () => {
     expect(dataPanel.streams.size).toBe(0);
 
     const subject = new Subject<SeriesData>();
-    const series = dataPanel.processResponseData({
-      data: [
-        {
-          refId: 'A',
-          fields: [],
-          rows: [],
-          stream: subject,
-        },
-      ],
-    });
+    const series = dataPanel.checkStreams([
+      {
+        refId: 'A',
+        fields: [],
+        rows: [],
+        stream: subject,
+      },
+    ]);
     dataPanel.setState({ data: series });
 
     expect(series.length).toBe(1);
@@ -98,15 +96,13 @@ describe('DataPanel', () => {
         expect(dataPanel.state.data[0]).toEqual(update);
 
         // Now process something without that stream
-        dataPanel.processResponseData({
-          data: [
-            {
-              refId: 'A',
-              fields: [],
-              rows: [],
-            },
-          ],
-        });
+        dataPanel.checkStreams([
+          {
+            refId: 'A',
+            fields: [],
+            rows: [],
+          },
+        ]);
         expect(dataPanel.streams.size).toBe(0);
         expect(subject.observers.length).toBe(0);
         resolve(); // done;

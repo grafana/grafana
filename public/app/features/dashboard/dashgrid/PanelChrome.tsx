@@ -19,7 +19,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, DataQueryError, SeriesData } from '@grafana/ui';
+import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -33,6 +33,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isEditing: boolean;
 }
 
 export interface State {
@@ -96,17 +97,25 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
-  onDataResponse = (data: SeriesData[]) => {
+  onDataResponse = (data?: SeriesData[]) => {
     if (this.props.dashboard.isSnapshot()) {
       this.props.panel.snapshotData = data;
     }
     // clear error state (if any)
     this.clearErrorState();
 
-    // This event is used by old query editors and panel editor options
-    // TODO - make sure it is TableData|SeriesData #16266
-    // TODO? check if we are in edit mode before convert+send?
-    this.props.panel.events.emit('data-received', data);
+    if (this.props.isEditing) {
+      const events = this.props.panel.events;
+      if (!data) {
+        data = [];
+      }
+
+      // Angular query editors expect TimeSeries|TableData
+      events.emit('data-received', data.map(v => toLegacyResponseData(v)));
+
+      // Notify react query editors
+      events.emit('series-data-received', data);
+    }
   };
 
   onDataError = (message: string, error: DataQueryError) => {
@@ -146,16 +155,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     return this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : null;
   }
 
-  renderPanelPlugin(
-    loading: LoadingState,
-    data: SeriesData[],
-    timeRange: TimeRange,
-    width: number,
-    height: number
-  ): JSX.Element {
+  renderPanelPlugin(loading: LoadingState, data: SeriesData[], width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { renderCounter } = this.state;
-    const PanelComponent = plugin.exports.reactPanel.panel;
+    const { timeRange, renderCounter } = this.state;
+    const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -169,7 +172,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           loading={loading}
           data={data}
           timeRange={timeRange}
-          options={panel.getOptions(plugin.exports.reactPanel.defaults)}
+          options={panel.getOptions(plugin.reactPlugin.defaults)}
           width={width - 2 * config.theme.panelPadding.horizontal}
           height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
@@ -198,12 +201,12 @@ export class PanelChrome extends PureComponent<Props, State> {
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
-            {({ loading, data, timeRange }) => {
-              return this.renderPanelPlugin(loading, data, timeRange, width, height);
+            {({ loading, data }) => {
+              return this.renderPanelPlugin(loading, data, width, height);
             }}
           </DataPanel>
         ) : (
-          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, timeRange, width, height)
+          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, width, height)
         )}
       </>
     );

@@ -1,9 +1,6 @@
 // Library
 import React, { Component } from 'react';
 
-import moment from 'moment';
-import * as dateMath from 'app/core/utils/datemath';
-
 // Services
 import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 // Utils
@@ -11,7 +8,6 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import {
   DataQueryOptions,
-  DataQueryResponse,
   DataQueryError,
   LoadingState,
   SeriesData,
@@ -26,7 +22,6 @@ import { StreamObserver } from './StreamObserver';
 interface RenderProps {
   loading: LoadingState;
   data: SeriesData[];
-  timeRange?: TimeRange;
 }
 
 export interface Props {
@@ -42,14 +37,13 @@ export interface Props {
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
   children: (r: RenderProps) => JSX.Element;
-  onDataResponse?: (data: SeriesData[]) => void;
+  onDataResponse?: (data?: SeriesData[]) => void;
   onError: (message: string, error: DataQueryError) => void;
 }
 
 export interface State {
   isFirstLoad: boolean;
   loading: LoadingState;
-  response: DataQueryResponse;
   data?: SeriesData[];
 }
 
@@ -87,9 +81,6 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       loading: LoadingState.NotStarted,
-      response: {
-        data: [],
-      },
       isFirstLoad: true,
     };
   }
@@ -100,12 +91,6 @@ export class DataPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.isUnmounted = true;
-
-    // Remove all listeners
-    for (const stream of this.streams.values()) {
-      stream.unsubscribe();
-    }
-    this.streams.clear();
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -140,10 +125,8 @@ export class DataPanel extends Component<Props, State> {
     return found;
   };
 
-  processResponseData(resp: DataQueryResponse): SeriesData[] {
+  checkStreams(data: SeriesData[]): SeriesData[] {
     const { streams } = this;
-
-    const data = getProcessedSeriesData(resp.data);
 
     const streaming = new Set();
     for (const series of data) {
@@ -229,16 +212,15 @@ export class DataPanel extends Component<Props, State> {
         return;
       }
 
-      const data = this.processResponseData(resp);
-
+      // Make sure the data is SeriesData[]
+      const data = this.checkStreams(getProcessedSeriesData(resp.data));
       if (onDataResponse) {
         onDataResponse(data);
       }
 
       this.setState({
-        loading: LoadingState.Done,
-        response: resp,
         data,
+        loading: LoadingState.Done,
         isFirstLoad: false,
       });
     } catch (err) {
@@ -261,22 +243,6 @@ export class DataPanel extends Component<Props, State> {
     }
   };
 
-  getTimeRange(): TimeRange {
-    const { timeRange } = this.props;
-    const { raw } = timeRange;
-
-    if (moment.isMoment(raw.to) || raw.to.indexOf('now') < 0) {
-      return timeRange;
-    }
-
-    const timezone = 'utc'; //  ??? where can we get it
-    return {
-      from: dateMath.parse(raw.from, false, timezone),
-      to: dateMath.parse(raw.to, true, timezone),
-      raw: raw,
-    };
-  }
-
   render() {
     const { queries } = this.props;
     const { loading, isFirstLoad, data } = this.state;
@@ -297,7 +263,7 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, timeRange: this.getTimeRange(), data })}
+        {this.props.children({ loading, data })}
       </>
     );
   }
