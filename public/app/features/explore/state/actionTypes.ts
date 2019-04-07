@@ -79,7 +79,6 @@ export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
   eventBridge: Emitter;
-  exploreDatasources: DataSourceSelectItem[];
   queries: DataQuery[];
   range: RawTimeRange;
   ui: ExploreUIState;
@@ -99,16 +98,22 @@ export interface LoadDatasourcePendingPayload {
   requestedDatasourceName: string;
 }
 
-export interface LoadDatasourceSuccessPayload {
+export interface LoadDatasourceReadyPayload {
   exploreId: ExploreId;
-  StartPage?: any;
-  datasourceInstance: any;
   history: HistoryItem[];
-  logsHighlighterExpressions?: any[];
-  showingStartPage: boolean;
-  supportsGraph: boolean;
-  supportsLogs: boolean;
-  supportsTable: boolean;
+}
+
+export interface TestDatasourcePendingPayload {
+  exploreId: ExploreId;
+}
+
+export interface TestDatasourceFailurePayload {
+  exploreId: ExploreId;
+  error: string;
+}
+
+export interface TestDatasourceSuccessPayload {
+  exploreId: ExploreId;
 }
 
 export interface ModifyQueriesPayload {
@@ -199,6 +204,11 @@ export interface QueriesImportedPayload {
   queries: DataQuery[];
 }
 
+export interface LoadExploreDataSourcesPayload {
+  exploreId: ExploreId;
+  exploreDatasources: DataSourceSelectItem[];
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -247,13 +257,6 @@ export const initializeExploreAction = actionCreatorFactory<InitializeExplorePay
 ).create();
 
 /**
- * Display an error that happened during the selection of a datasource
- */
-export const loadDatasourceFailureAction = actionCreatorFactory<LoadDatasourceFailurePayload>(
-  'explore/LOAD_DATASOURCE_FAILURE'
-).create();
-
-/**
  * Display an error when no datasources have been configured
  */
 export const loadDatasourceMissingAction = actionCreatorFactory<LoadDatasourceMissingPayload>(
@@ -268,12 +271,10 @@ export const loadDatasourcePendingAction = actionCreatorFactory<LoadDatasourcePe
 ).create();
 
 /**
- * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
- * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
- * e.g., Prometheus -> Loki queries.
+ * Datasource loading was completed.
  */
-export const loadDatasourceSuccessAction = actionCreatorFactory<LoadDatasourceSuccessPayload>(
-  'explore/LOAD_DATASOURCE_SUCCESS'
+export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceReadyPayload>(
+  'explore/LOAD_DATASOURCE_READY'
 ).create();
 
 /**
@@ -391,37 +392,21 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
  */
 export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
+export const testDataSourcePendingAction = actionCreatorFactory<TestDatasourcePendingPayload>(
+  'explore/TEST_DATASOURCE_PENDING'
+).create();
+export const testDataSourceSuccessAction = actionCreatorFactory<TestDatasourceSuccessPayload>(
+  'explore/TEST_DATASOURCE_SUCCESS'
+).create();
+export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFailurePayload>(
+  'explore/TEST_DATASOURCE_FAILURE'
+).create();
+export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
+  'explore/LOAD_EXPLORE_DATASOURCES'
+).create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
   | ActionOf<any>;
-
-export type Action =
-  | ActionOf<AddQueryRowPayload>
-  | ActionOf<ChangeQueryPayload>
-  | ActionOf<ChangeSizePayload>
-  | ActionOf<ChangeTimePayload>
-  | ActionOf<ClearQueriesPayload>
-  | ActionOf<HighlightLogsExpressionPayload>
-  | ActionOf<InitializeExplorePayload>
-  | ActionOf<LoadDatasourceFailurePayload>
-  | ActionOf<LoadDatasourceMissingPayload>
-  | ActionOf<LoadDatasourcePendingPayload>
-  | ActionOf<LoadDatasourceSuccessPayload>
-  | ActionOf<ModifyQueriesPayload>
-  | ActionOf<QueryTransactionFailurePayload>
-  | ActionOf<QueryTransactionStartPayload>
-  | ActionOf<QueryTransactionSuccessPayload>
-  | ActionOf<RemoveQueryRowPayload>
-  | ActionOf<ScanStartPayload>
-  | ActionOf<ScanRangePayload>
-  | ActionOf<SetQueriesPayload>
-  | ActionOf<SplitOpenPayload>
-  | ActionOf<ToggleTablePayload>
-  | ActionOf<ToggleGraphPayload>
-  | ActionOf<ToggleLogsPayload>
-  | ActionOf<UpdateDatasourceInstancePayload>
-  | ActionOf<QueriesImportedPayload>
-  | ActionOf<ToggleLogLevelPayload>;

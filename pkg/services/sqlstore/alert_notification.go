@@ -382,6 +382,8 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 		return err
 	}
 
+	cmd.Result = updateNotification.Result
+
 	return nil
 }
 

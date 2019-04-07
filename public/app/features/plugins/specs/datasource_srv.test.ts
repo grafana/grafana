@@ -1,6 +1,7 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PluginMeta } from '@grafana/ui/src/types';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv = {
@@ -22,16 +23,22 @@ describe('datasource_srv', () => {
     beforeEach(() => {
       config.datasources = {
         buildInDs: {
+          type: 'b',
           name: 'buildIn',
-          meta: { builtIn: true },
+          meta: { builtIn: true } as PluginMeta,
+          jsonData: {},
         },
         nonBuildIn: {
+          type: 'e',
           name: 'external1',
-          meta: { builtIn: false },
+          meta: { builtIn: false } as PluginMeta,
+          jsonData: {},
         },
         nonExplore: {
+          type: 'e2',
           name: 'external2',
-          meta: {},
+          meta: {} as PluginMeta,
+          jsonData: {},
         },
       };
     });
@@ -73,7 +80,7 @@ describe('datasource_srv', () => {
       },
     };
     beforeEach(() => {
-      config.datasources = unsortedDatasources;
+      config.datasources = unsortedDatasources as any;
       metricSources = _datasourceSrv.getMetricSources({});
       config.defaultDatasource = 'BBB';
     });
