@@ -9,8 +9,7 @@ import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { DisplayValue, PanelProps, getSingleStatDisplayValues } from '@grafana/ui';
-import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
+import { DisplayValue, PanelProps, getSingleStatDisplayValues, VizRepeater } from '@grafana/ui';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
@@ -31,7 +30,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     );
   };
 
-  getProcessedValues = (): DisplayValue[] => {
+  getValues = (): DisplayValue[] => {
     return getSingleStatDisplayValues({
       valueMappings: this.props.options.valueMappings,
       thresholds: this.props.options.thresholds,
@@ -45,8 +44,8 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   render() {
     const { height, width, options, data, renderCounter } = this.props;
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        getValues={this.getValues}
         renderValue={this.renderValue}
         width={width}
         height={height}

@@ -8,8 +8,15 @@ import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { Threshold, ValueMapping, DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType } from '../types';
-import { DecimalCount } from './valueFormats/valueFormats';
+import {
+  Threshold,
+  ValueMapping,
+  DecimalInfo,
+  DisplayValue,
+  GrafanaTheme,
+  GrafanaThemeType,
+  DecimalCount,
+} from '../types';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -69,18 +76,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
 
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
-          let decimals;
-          let scaledDecimals = 0;
-
-          if (!options.decimals) {
-            const decimalInfo = getDecimalsForValue(value);
-
-            decimals = decimalInfo.decimals;
-            scaledDecimals = decimalInfo.scaledDecimals;
-          } else {
-            decimals = options.decimals;
-          }
-
+          const { decimals, scaledDecimals } = getDecimalsForValue(value, options.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
         if (thresholds && thresholds.length > 0) {
@@ -159,7 +155,12 @@ export function getColorFromThreshold(value: number, thresholds: Threshold[], th
   return getColorFromHexRgbOrName(thresholds[0].color, themeType);
 }
 
-export function getDecimalsForValue(value: number): DecimalInfo {
+export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
+  if (_.isNumber(decimalOverride)) {
+    // It's important that scaledDecimals is null here
+    return { decimals: decimalOverride, scaledDecimals: null };
+  }
+
   const delta = value / 2;
   let dec = -Math.floor(Math.log(delta) / Math.LN10);
 

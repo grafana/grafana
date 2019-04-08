@@ -39,7 +39,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string           `json:"-"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`

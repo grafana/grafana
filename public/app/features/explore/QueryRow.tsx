@@ -21,7 +21,7 @@ import {
   ExploreDataSourceApi,
   QueryHint,
   QueryFixAction,
-  DatasourceStatus,
+  DataSourceStatus,
 } from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -41,7 +41,7 @@ interface QueryRowProps {
   className?: string;
   exploreId: ExploreId;
   datasourceInstance: ExploreDataSourceApi;
-  datasourceStatus: DatasourceStatus;
+  datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
   index: number;
@@ -115,11 +115,13 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       range,
       datasourceStatus,
     } = this.props;
+
     const transactions = queryTransactions.filter(t => t.rowIndex === index);
     const transactionWithError = transactions.find(t => t.error !== undefined);
     const hint = getFirstHintFromTransactions(transactions);
     const queryError = transactionWithError ? transactionWithError.error : null;
-    const QueryField = datasourceInstance.pluginExports.ExploreQueryField;
+    const QueryField = datasourceInstance.components.ExploreQueryField;
+
     return (
       <div className="query-row">
         <div className="query-row-status">
@@ -183,7 +185,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     query,
     queryTransactions,
     range,
-    datasourceStatus: datasourceError ? DatasourceStatus.Disconnected : DatasourceStatus.Connected,
+    datasourceStatus: datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected,
   };
 }
 
