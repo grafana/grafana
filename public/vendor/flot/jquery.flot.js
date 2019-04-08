@@ -1763,9 +1763,8 @@ Licensed under the MIT license.
             axis.delta = delta;
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
-
             // grafana addition
-            if (opts.tickDecimals === null && opts.tickDecimals === undefined) {
+            if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
               axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
             }
 
