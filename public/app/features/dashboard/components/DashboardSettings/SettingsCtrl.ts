@@ -186,7 +186,7 @@ export class SettingsCtrl {
       appEvents.emit('confirm-modal', {
         title: 'Cannot delete provisioned dashboard',
         text: `
-          Provisioned dashboards would be recreated again from the config file. Remove the dashboard from the
+          This dashboard is managed by Grafanas provisioning and cannot be deleted. Remove the dashboard from the
           config file to delete it.
         `,
         text2: `
