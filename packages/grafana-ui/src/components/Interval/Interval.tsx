@@ -34,7 +34,7 @@ export class Interval extends PureComponent<Props> {
   };
 
   clearInterval = () => {
-    window.clearInterval(this.intervalId);
+    window.clearTimeout(this.intervalId);
   };
 
   render() {
