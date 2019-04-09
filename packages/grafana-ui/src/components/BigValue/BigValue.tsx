@@ -1,6 +1,7 @@
 // Library
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
+import { css } from 'emotion';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
@@ -120,9 +121,39 @@ export class BigValue extends PureComponent<Props> {
     const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
 
     return (
-      <div className="big-value" style={{ width, height, backgroundColor }}>
-        {value.title && <div className="big-value__title">{value.title}</div>}
-        <span className="big-value__value">
+      <div
+        className={css({
+          position: 'relative',
+          display: 'table',
+        })}
+        style={{ width, height, backgroundColor }}
+      >
+        {value.title && (
+          <div
+            className={css({
+              lineHeight: 1,
+              textAlign: 'center',
+              zIndex: 1,
+              display: 'block',
+              width: '100%',
+              position: 'absolute',
+            })}
+          >
+            {value.title}
+          </div>
+        )}
+        <span
+          className={css({
+            lineHeight: 1,
+            textAlign: 'center',
+            zIndex: 1,
+            display: 'table-cell',
+            verticalAlign: 'middle',
+            position: 'relative',
+            fontSize: '3em',
+            fontWeight: 500, // TODO: $font-weight-semi-bold
+          })}
+        >
           {this.renderText(prefix, '0px 2px 0px 0px')}
           {this.renderText(value)}
           {this.renderText(suffix)}
