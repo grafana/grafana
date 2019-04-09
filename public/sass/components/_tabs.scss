@@ -11,14 +11,15 @@
 }
 
 .gf-tabs-link {
-  padding: $tabs-padding;
-  margin-right: $spacer/2;
+  padding: $space-sm $space-md;
+  margin-right: $space-sm;
   position: relative;
   display: block;
   border: solid transparent;
-  border-width: 0 1px 1px;
+  border-width: 0 1px;
   border-radius: 3px 3px 0 0;
   color: $text-color;
+  line-height: 24px;
 
   i {
     margin-right: 5px;
