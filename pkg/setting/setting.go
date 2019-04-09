@@ -817,10 +817,8 @@ func (cfg *Cfg) readSessionConfig() {
 	sec, _ := cfg.Raw.GetSection("session")
 
 	if sec != nil {
-		log.Warn("[Removed] Session setting does not exist anymore, use remote_cache option instead")
+		cfg.Logger.Warn("[Removed] Session setting does not exist anymore, use remote_cache option instead")
 	}
-
-	return
 }
 
 func (cfg *Cfg) initLogging(file *ini.File) {
