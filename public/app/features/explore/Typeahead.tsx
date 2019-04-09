@@ -2,12 +2,13 @@ import React, { createRef } from 'react';
 // @ts-ignore
 import _ from 'lodash';
 import { FixedSizeList } from 'react-window';
-import { default as calculateSize } from 'calculate-size';
-import { Themeable, GrafanaTheme, withTheme } from '@grafana/ui';
+
+import { Themeable, withTheme } from '@grafana/ui';
 
 import { CompletionItem, CompletionItemGroup } from 'app/types/explore';
-import { GROUP_TITLE_KIND, TypeaheadItem } from './TypeaheadItem';
+import { TypeaheadItem } from './TypeaheadItem';
 import { TypeaheadInfo } from './TypeaheadInfo';
+import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from './utils/typeahead';
 
 interface Props extends Themeable {
   groupedItems: CompletionItemGroup[];
@@ -32,9 +33,9 @@ export class Typeahead extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const allItems = this.flattenGroupItems(props);
-    const longestLabel = this.calculateLongestLabel(allItems);
-    const { listWidth, listHeight, itemHeight } = this.calculateListSizes(props.theme, allItems, longestLabel);
+    const allItems = flattenGroupItems(props.groupedItems);
+    const longestLabel = calculateLongestLabel(allItems);
+    const { listWidth, listHeight, itemHeight } = calculateListSizes(props.theme, allItems, longestLabel);
     this.state = { listWidth, listHeight, itemHeight, allItems };
   }
 
@@ -51,9 +52,9 @@ export class Typeahead extends React.PureComponent<Props, State> {
     }
 
     if (_.isEqual(prevProps.groupedItems, this.props.groupedItems) === false) {
-      const allItems = this.flattenGroupItems(this.props);
-      const longestLabel = this.calculateLongestLabel(allItems);
-      const { listWidth, listHeight, itemHeight } = this.calculateListSizes(this.props.theme, allItems, longestLabel);
+      const allItems = flattenGroupItems(this.props.groupedItems);
+      const longestLabel = calculateLongestLabel(allItems);
+      const { listWidth, listHeight, itemHeight } = calculateListSizes(this.props.theme, allItems, longestLabel);
       this.setState({ listWidth, listHeight, itemHeight, allItems }, () => this.refreshDocumentation());
     }
   };
@@ -69,65 +70,6 @@ export class Typeahead extends React.PureComponent<Props, State> {
     if (item) {
       this.documentationRef.current.refresh(item);
     }
-  };
-
-  flattenGroupItems = (props: Props): CompletionItem[] => {
-    return props.groupedItems.reduce((all, current) => {
-      const titleItem: CompletionItem = {
-        label: current.label,
-        kind: GROUP_TITLE_KIND,
-      };
-      return all.concat(titleItem, current.items);
-    }, []);
-  };
-
-  calculateLongestLabel = (allItems: CompletionItem[]): string => {
-    return allItems.reduce((longest, current) => {
-      return longest.length < current.label.length ? current.label : longest;
-    }, '');
-  };
-
-  calculateListSizes = (theme: GrafanaTheme, allItems: CompletionItem[], longestLabel: string) => {
-    const size = calculateSize(longestLabel, {
-      font: theme.typography.fontFamily.monospace,
-      fontSize: theme.typography.size.sm,
-      fontWeight: 'normal',
-    });
-
-    const listWidth = this.calculateListWidth(size.width, theme);
-    const itemHeight = this.calculateItemHeight(size.height, theme);
-    const listHeight = this.calculateListHeight(itemHeight, listWidth, theme, allItems);
-
-    return {
-      listWidth,
-      listHeight,
-      itemHeight,
-    };
-  };
-
-  calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme) => {
-    const horizontalPadding = parseInt(theme.spacing.sm, 10) * 2;
-    const itemHeight = longestLabelHeight + horizontalPadding;
-
-    return itemHeight;
-  };
-
-  calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme) => {
-    const verticalPadding = parseInt(theme.spacing.sm, 10) + parseInt(theme.spacing.md, 10);
-    const maxWidth = 800;
-    const listWidth = Math.min(Math.max(longestLabelWidth + verticalPadding, 200), maxWidth);
-
-    return listWidth;
-  };
-
-  calculateListHeight = (itemHeight: number, listWidth: number, theme: GrafanaTheme, allItems: CompletionItem[]) => {
-    const numberOfItemsToShow = Math.min(allItems.length, 10);
-    const minHeight = 100;
-    const itemsInView = allItems.slice(0, numberOfItemsToShow);
-    const totalHeight = itemsInView.length * itemHeight;
-    const listHeight = Math.max(totalHeight, minHeight);
-
-    return listHeight;
   };
 
   onMouseEnter = (item: CompletionItem) => {
