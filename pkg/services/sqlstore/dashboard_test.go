@@ -259,6 +259,35 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.FolderTitle, ShouldEqual, "")
 			})
 
+			Convey("Should be able to limit search", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+			})
+
+			Convey("Should be able to search beyond limit using paging", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Limit:        1,
+					Page:         2,
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+			})
+
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,

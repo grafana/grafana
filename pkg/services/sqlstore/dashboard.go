@@ -202,7 +202,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		limit = 1000
 	}
 
-	sb := NewSearchBuilder(query.SignedInUser, limit, query.Permission).
+	sb := NewSearchBuilder(query.SignedInUser, limit, query.Page, query.Permission).
 		WithTags(query.Tags).
 		WithDashboardIdsIn(query.DashboardIds)
 

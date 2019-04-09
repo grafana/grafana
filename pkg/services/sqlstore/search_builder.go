@@ -11,7 +11,8 @@ type SearchBuilder struct {
 	SqlBuilder
 	tags                []string
 	isStarred           bool
-	limit               int
+	limit               int64
+	page                int64
 	signedInUser        *m.SignedInUser
 	whereDashboardIdsIn []int64
 	whereTitle          string
@@ -21,10 +22,11 @@ type SearchBuilder struct {
 	permission          m.PermissionType
 }
 
-func NewSearchBuilder(signedInUser *m.SignedInUser, limit int, permission m.PermissionType) *SearchBuilder {
+func NewSearchBuilder(signedInUser *m.SignedInUser, limit int64, page int64, permission m.PermissionType) *SearchBuilder {
 	searchBuilder := &SearchBuilder{
 		signedInUser: signedInUser,
 		limit:        limit,
+		page:         page,
 		permission:   permission,
 	}
 
@@ -92,8 +94,17 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 
-	sb.sql.WriteString(" ORDER BY dashboard.title ASC" + dialect.Limit(5000))
+	// Default to page 1
+	if sb.page < 1 {
+		sb.page = 1
+	}
 
+	// do not allow limits beyond 5000
+	if sb.limit > 5000 {
+		sb.limit = 5000
+	}
+
+	sb.sql.WriteString(" ORDER BY dashboard.title ASC " + dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit))
 	return sb.sql.String(), sb.params
 }
 
@@ -135,7 +146,7 @@ func (sb *SearchBuilder) buildTagQuery() {
 	// this ends the inner select (tag filtered part)
 	sb.sql.WriteString(`
 		GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
-		ORDER BY dashboard.id` + dialect.Limit(int64(sb.limit)) + `) as ids
+		ORDER BY dashboard.id as ids
 		INNER JOIN dashboard on ids.id = dashboard.id
 	`)
 
@@ -152,7 +163,7 @@ func (sb *SearchBuilder) buildMainQuery() {
 	sb.sql.WriteString(` WHERE `)
 	sb.buildSearchWhereClause()
 
-	sb.sql.WriteString(` ORDER BY dashboard.title` + dialect.Limit(int64(sb.limit)) + `) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
+	sb.sql.WriteString(` ORDER BY dashboard.title) as ids INNER JOIN dashboard on ids.id = dashboard.id `)
 }
 
 func (sb *SearchBuilder) buildSearchWhereClause() {
