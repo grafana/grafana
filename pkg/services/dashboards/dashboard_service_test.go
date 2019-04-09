@@ -1,13 +1,12 @@
 package dashboards
 
 import (
-	"errors"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/guardian"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/pkg/errors"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
