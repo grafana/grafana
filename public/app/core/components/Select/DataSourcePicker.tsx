@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
 
 // Components
-import { Select } from '@grafana/ui';
+import { Select, SelectOptionItem } from '@grafana/ui';
 
 // Types
 import { DataSourceSelectItem } from '@grafana/ui/src/types';
@@ -14,26 +13,28 @@ export interface Props {
   current: DataSourceSelectItem;
   onBlur?: () => void;
   autoFocus?: boolean;
+  openMenuOnFocus?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
-  static defaultProps = {
+  static defaultProps: Partial<Props> = {
     autoFocus: false,
+    openMenuOnFocus: false,
   };
 
   searchInput: HTMLElement;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
-  onChange = item => {
+  onChange = (item: SelectOptionItem) => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
     this.props.onChange(ds);
   };
 
   render() {
-    const { datasources, current, autoFocus, onBlur } = this.props;
+    const { datasources, current, autoFocus, onBlur, openMenuOnFocus } = this.props;
 
     const options = datasources.map(ds => ({
       value: ds.name,
@@ -58,7 +59,7 @@ export class DataSourcePicker extends PureComponent<Props> {
           options={options}
           autoFocus={autoFocus}
           onBlur={onBlur}
-          openMenuOnFocus={true}
+          openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
           placeholder="Select datasource"
           noOptionsMessage={() => 'No datasources found'}

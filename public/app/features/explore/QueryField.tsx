@@ -408,8 +408,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  handleFocus = () => {};
-
   onClickMenu = (item: CompletionItem) => {
     // Manually triggering change
     const change = this.applyTypeahead(this.state.value.change(), item);
@@ -500,7 +498,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             onBlur={this.handleBlur}
             onKeyDown={this.onKeyDown}
             onChange={this.onChange}
-            onFocus={this.handleFocus}
             onPaste={this.handlePaste}
             placeholder={this.props.placeholder}
             plugins={this.plugins}
