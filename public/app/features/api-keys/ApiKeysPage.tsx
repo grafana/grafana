@@ -113,7 +113,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           <EmptyListCTA
             model={{
               title: "You haven't added any API Keys yet.",
-              buttonIcon: 'fa fa-plus',
+              buttonIcon: 'gicon gicon-apikeys',
               buttonLink: '#',
               onClick: this.onToggleAdding,
               buttonTitle: ' New API Key',

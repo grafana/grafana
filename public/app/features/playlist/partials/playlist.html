@@ -34,13 +34,13 @@
 				</td>
 
 				<td class="selected-playlistitem-settings">
-					<button class="btn btn-inverse btn-mini" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
 						<i class="fa fa-arrow-up"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
 						<i class="fa fa-arrow-down"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-click="ctrl.removePlaylistItem(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-click="ctrl.removePlaylistItem(playlistItem)">
 						<i class="fa fa-remove"></i>
 					</button>
 				</td>
@@ -64,7 +64,7 @@
 						<i class="fa fa-star" ng-show="playlistItem.isStarred"></i>
 					</td>
 					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
+						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
 							<i class="fa fa-plus"></i>
 							Add to playlist
 						</button>
@@ -82,7 +82,7 @@
 						</a>
 					</td>
 					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
+						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
 							<i class="fa fa-plus"></i>
 							Add to playlist
 						</button>

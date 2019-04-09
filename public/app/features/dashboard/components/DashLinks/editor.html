@@ -10,8 +10,8 @@
       <div class="empty-list-cta__title">
         There are no dashboard links added yet
       </div>
-      <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-primary">
-        <i class="gicon gicon-add-link"></i>
+      <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-large btn-primary">
+        <i class="gicon gicon-link"></i>
         Add Dashboard Link
       </a>
       <div class="grafana-info-box">
@@ -61,7 +61,7 @@
             <i ng-click="ctrl.moveLink($index, 1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i>
           </td>
           <td style="width: 1%">
-            <a ng-click="ctrl.deleteLink($index)" class="btn btn-danger btn-mini" ng-hide="annotation.builtIn">
+            <a ng-click="ctrl.deleteLink($index)" class="btn btn-danger btn-small" ng-hide="annotation.builtIn">
               <i class="fa fa-remove"></i>
             </a>
           </td>
