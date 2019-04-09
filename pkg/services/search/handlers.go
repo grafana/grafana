@@ -46,7 +46,7 @@ func (s *SearchService) searchHandler(query *Query) error {
 	sort.Sort(hits)
 
 	if int64(len(hits)) > query.Limit {
-		hits = hits[1:query.Limit]
+		hits = hits[0:query.Limit]
 	}
 
 	// sort tags
