@@ -107,6 +107,11 @@ var adminCommands = []cli.Command{
 			},
 		},
 	},
+	{
+		Name:   "migrate-database",
+		Usage:  "migrate-database",
+		Action: runDbCommand(migrateDatabaseCommand),
+	},
 }
 
 var Commands = []cli.Command{
