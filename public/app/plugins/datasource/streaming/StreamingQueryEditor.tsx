@@ -1,12 +1,14 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
+import moment from 'moment';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui/src/types';
+import { QueryEditorProps, SeriesData } from '@grafana/ui/src/types';
 import { StreamingDatasource } from './datasource';
 import { StreamingQuery, StreamingMethod } from './types';
-import { Select, SelectOptionItem, FormLabel, FormField } from '@grafana/ui';
+import { Select, SelectOptionItem, FormLabel, FormField, findQueryResponse } from '@grafana/ui';
 import { FetchQuery } from './method/fetch/types';
+import { StreamHandler } from './StreamHandler';
 
 type Props = QueryEditorProps<StreamingDatasource, StreamingQuery>;
 
@@ -19,7 +21,7 @@ const labelWidth = 6;
 export class StreamingQueryEditor extends PureComponent<Props> {
   // TODO!!! nout used
   getCollapsedText() {
-    return 'Streming!';
+    return 'Streaming!';
   }
 
   onMethodChanged = (item: SelectOptionItem) => {
@@ -116,9 +118,28 @@ export class StreamingQueryEditor extends PureComponent<Props> {
     );
   }
 
+  renderStreamHandler(series: SeriesData) {
+    if (!series.stream) {
+      return '';
+    }
+
+    const handler = series.stream as StreamHandler<any>;
+
+    return (
+      <div className="gf-form">
+        <FormLabel width={labelWidth}>Info</FormLabel>
+        <div className="gf-form-label">
+          Listeners: {handler.getSubscriberCount()}, Total Rows: {handler.totalRows}, Uptime:{' '}
+          {moment(handler.openTime).fromNow(true)}
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { query } = this.props;
     const current = types.find(v => v.value === query.method);
+
     return (
       <div>
         <div className="gf-form">
@@ -128,10 +149,9 @@ export class StreamingQueryEditor extends PureComponent<Props> {
         {query.method === StreamingMethod.random && this.renderRandomOptions()}
         {query.method === StreamingMethod.fetch && this.renderFetchOptions()}
 
-        <div className="gf-form">
-          <FormLabel width={labelWidth}>Info</FormLabel>
-          <div className="gf-form-label">Listeners: ???, Total Rows: ???, Uptime: ???</div>
-        </div>
+        {findQueryResponse(this.props).map(series => {
+          return this.renderStreamHandler(series);
+        })}
       </div>
     );
   }

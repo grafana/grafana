@@ -134,6 +134,14 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   queryError?: DataQueryError;
 }
 
+export function findQueryResponse(props: QueryEditorProps<any, any>): SeriesData[] {
+  if (!(props.query && props.queryResponse)) {
+    return [];
+  }
+  const refId = props.query.refId;
+  return props.queryResponse.filter(v => v.refId === refId);
+}
+
 export enum DataSourceStatus {
   Connected,
   Disconnected,
