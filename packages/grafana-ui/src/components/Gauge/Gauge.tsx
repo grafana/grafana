@@ -134,12 +134,12 @@ export class Gauge extends PureComponent<Props> {
       >
         {value.title && (
           <div
-            className={css(`
-          text-align:center;
-          bottom:-8px;
-          width:100%;
-          position:absolute;
-        `)}
+            className={css({
+              textAlign: 'center',
+              bottom: -8,
+              width: '100%',
+              position: 'absolute',
+            })}
           >
             {value.title}
           </div>
