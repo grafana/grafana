@@ -3,8 +3,9 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, Switch, LegendEditor, LegendOptions, StatID } from '@grafana/ui';
+import { PanelEditorProps, Switch, LegendOptions, StatID } from '@grafana/ui';
 import { Options } from './types';
+import { GraphLegendEditor } from './GraphLegendEditor';
 
 export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleLines = () => {
@@ -41,7 +42,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
         </div>
         <div className="section gf-form-group">
-          <LegendEditor
+          <GraphLegendEditor
             stats={[StatID.min, StatID.max]}
             options={this.props.options.legend}
             onChange={this.onLegendOptionsChange}

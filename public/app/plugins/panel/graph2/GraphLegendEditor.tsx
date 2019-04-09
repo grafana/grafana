@@ -1,33 +1,15 @@
 import React from 'react';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
-import { Switch } from '../Switch/Switch';
 import capitalize from 'lodash/capitalize';
 import without from 'lodash/without';
-import { StatID } from '../../types/stats';
+import { StatID, LegendOptions, PanelOptionsGroup, Switch } from '@grafana/ui';
 
-export interface LegendBasicOptions {
-  isVisible: boolean;
-  asTable: boolean;
-  hideEmpty?: boolean;
-  hideZero?: boolean;
-}
-
-export interface LegendPlacementOptions {
-  placement: 'under' | 'right' | 'over'; // up to panel to implement the actual placement
-}
-
-export interface LegendOptions extends LegendBasicOptions, LegendPlacementOptions {
-  stats?: StatID[];
-  decimals?: number;
-}
-
-interface LegendEditorProps {
+interface GraphLegendEditorProps {
   stats: StatID[];
   options: LegendOptions;
   onChange: (options: LegendOptions) => void;
 }
 
-export const LegendEditor: React.FunctionComponent<LegendEditorProps> = props => {
+export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> = props => {
   const { stats, options, onChange } = props;
 
   const onStatToggle = (stat: StatID) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
@@ -48,7 +30,7 @@ export const LegendEditor: React.FunctionComponent<LegendEditorProps> = props =>
     });
   };
 
-  const onOptionToggle = (option: keyof LegendBasicOptions) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
+  const onOptionToggle = (option: keyof LegendOptions) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
     const newOption = {};
     if (!event) {
       return;
@@ -73,7 +55,11 @@ export const LegendEditor: React.FunctionComponent<LegendEditorProps> = props =>
         <h4>Values</h4>
         {stats.map(stat => {
           return (
-            <Switch label={capitalize(stat)} checked={!!options.stats && options.stats.indexOf(stat) > -1} onChange={onStatToggle(stat)} />
+            <Switch
+              label={capitalize(stat)}
+              checked={!!options.stats && options.stats.indexOf(stat) > -1}
+              onChange={onStatToggle(stat)}
+            />
           );
         })}
         <h4>Decimals</h4>

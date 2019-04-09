@@ -1,52 +1,12 @@
-// Libraries
-import _ from 'lodash';
-import React, { PureComponent } from 'react';
-
-import { Graph, PanelProps, NullValueMode, colors, GraphSeriesXY, FieldType, getFirstTimeField } from '@grafana/ui';
+import React from 'react';
+import { PanelProps, GraphWithLegend, LegendTable, LegendList } from '@grafana/ui';
 import { Options } from './types';
-import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
+import { getGraphSeriesModel } from './getGraphSeriesModel';
 
-interface Props extends PanelProps<Options> {}
-
-export class GraphPanel extends PureComponent<Props> {
+export class GraphPanel extends React.Component<PanelProps<Options>> {
   render() {
-    const { data, timeRange, width, height } = this.props;
-    const { showLines, showBars, showPoints } = this.props.options;
-
-    const graphs: GraphSeriesXY[] = [];
-    if (data) {
-      for (const series of data) {
-        const timeColumn = getFirstTimeField(series);
-        if (timeColumn < 0) {
-          continue;
-        }
-
-        for (let i = 0; i < series.fields.length; i++) {
-          const field = series.fields[i];
-
-          // Show all numeric columns
-          if (field.type === FieldType.number) {
-            // Use external calculator just to make sure it works :)
-            const points = getFlotPairs({
-              series,
-              xIndex: timeColumn,
-              yIndex: i,
-              nullValueMode: NullValueMode.Null,
-            });
-
-            if (points.length > 0) {
-              graphs.push({
-                label: field.name,
-                data: points,
-                color: colors[graphs.length % colors.length],
-              });
-            }
-          }
-        }
-      }
-    }
-
-    if (graphs.length < 1) {
+    const { data, timeRange, width, height, options } = this.props;
+    if (!data) {
       return (
         <div className="panel-empty">
           <p>No data found in response</p>
@@ -54,15 +14,25 @@ export class GraphPanel extends PureComponent<Props> {
       );
     }
 
+    const { showLines, showBars, showPoints, legend: legendOptions } = options;
+
+    const graphProps = {
+      showBars,
+      showLines,
+      showPoints,
+    };
+    const { asTable, isVisible, ...legendProps } = legendOptions;
+
     return (
-      <Graph
-        series={graphs}
+      <GraphWithLegend
+        series={getGraphSeriesModel(data, legendOptions.stats)}
         timeRange={timeRange}
-        showLines={showLines}
-        showPoints={showPoints}
-        showBars={showBars}
         width={width}
         height={height}
+        renderLegendAs={asTable ? LegendTable : LegendList}
+        isLegendVisible={isVisible}
+        {...graphProps}
+        {...legendProps}
       />
     );
   }

@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 // Types
 import { TimeRange, GraphSeriesXY } from '../../types';
 
-interface GraphProps {
+export interface GraphProps {
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;

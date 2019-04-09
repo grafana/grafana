@@ -1,4 +1,5 @@
 import { DisplayValue } from './displayValue';
+import { ColumnStats } from '../utils/statsCalculator';
 
 export type GraphSeriesValue = number | null;
 
@@ -8,4 +9,6 @@ export interface GraphSeriesXY {
   color: string;
   data: GraphSeriesValue[][]; // [x,y][]
   info?: DisplayValue[]; // Legend info
+  stats: ColumnStats;
+  isVisible: boolean;
 }

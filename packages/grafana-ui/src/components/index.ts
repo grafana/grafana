@@ -36,12 +36,16 @@ export { Input, InputStatus } from './Input/Input';
 export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
+export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 
+export { Legend, LegendOptions, LegendBasicOptions, LegendRenderOptions } from './Legend/Legend';
+export { LegendTable } from './Legend/LegendTable';
+export { LegendList } from './Legend/LegendList';
+
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
-export { LegendEditor, LegendOptions } from './LegendEditor/LegendEditor';
 export * from './SingleStatShared/shared';
 
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';

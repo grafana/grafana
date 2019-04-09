@@ -4,11 +4,16 @@ export interface Options {
   showBars: boolean;
   showLines: boolean;
   showPoints: boolean;
-  legend?: LegendOptions;
+  legend: LegendOptions;
 }
 
 export const defaults: Options = {
   showBars: false,
   showLines: true,
   showPoints: false,
+  legend: {
+    asTable: false,
+    isVisible: true,
+    placement: 'under',
+  },
 };
