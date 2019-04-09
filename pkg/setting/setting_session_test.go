@@ -20,6 +20,8 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 }
 func TestSessionSettings(t *testing.T) {
 	Convey("session config", t, func() {
+		skipStaticRootValidation = true
+
 		Convey("Reading session should log error ", func() {
 			var (
 				cfg      = NewCfg()
