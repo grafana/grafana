@@ -9,7 +9,17 @@
   vertical-align: middle;
   text-align: center;
   position: relative;
+  width: 100%;
   z-index: 1;
   font-size: 3em;
   font-weight: $font-weight-semi-bold;
+}
+
+.big-value__title {
+  line-height: 1;
+  display: block;
+  width: 100%;
+  position: absolute;
+  text-align: center;
+  z-index: 1;
 }

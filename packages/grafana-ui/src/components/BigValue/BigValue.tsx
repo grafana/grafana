@@ -98,36 +98,37 @@ export class BigValue extends PureComponent<Props> {
     return <span style={css}>{value.text}</span>;
   };
 
-  render() {
-    const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
+  renderSparkline(sparkline: BigValueSparkline) {
+    const { height, width } = this.props;
 
     const plotCss: CSSProperties = {};
     plotCss.position = 'absolute';
+    plotCss.bottom = '0px';
+    plotCss.left = '0px';
+    plotCss.width = width + 'px';
 
-    if (sparkline) {
-      if (sparkline.full) {
-        plotCss.bottom = '5px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-        plotCss.height = height - dynamicHeightMargin + 'px';
-      } else {
-        plotCss.bottom = '0px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
-        plotCss.height = Math.floor(height * 0.25) + 'px';
-      }
+    if (sparkline.full) {
+      const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
+      plotCss.height = height - dynamicHeightMargin + 'px';
+    } else {
+      plotCss.height = Math.floor(height * 0.25) + 'px';
     }
+    return <div style={plotCss} ref={element => (this.canvasElement = element)} />;
+  }
+
+  render() {
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
 
     return (
       <div className="big-value" style={{ width, height, backgroundColor }}>
+        {value.title && <div className="big-value__title">{value.title}</div>}
         <span className="big-value__value">
           {this.renderText(prefix, '0px 2px 0px 0px')}
           {this.renderText(value)}
           {this.renderText(suffix)}
         </span>
 
-        {sparkline && <div style={plotCss} ref={element => (this.canvasElement = element)} />}
+        {sparkline && this.renderSparkline(sparkline)}
       </div>
     );
   }
