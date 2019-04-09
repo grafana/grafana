@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  digest = "1:b9f338b6465d1525462428db9ee9a4048f134c44360e03a2367a2e6db905ef2e"
-  name = "bou.ke/monkey"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "bdf6dea004c6fd1cdf4b25da8ad45a606c09409a"
-  version = "v1.0.1"
-
-[[projects]]
   digest = "1:f8ad8a53fa865a70efbe215b0ca34735523f50ea39e0efde319ab6fc80089b44"
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
@@ -863,7 +855,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "bou.ke/monkey",
     "github.com/BurntSushi/toml",
     "github.com/Unknwon/com",
     "github.com/VividCortex/mysqlerr",
