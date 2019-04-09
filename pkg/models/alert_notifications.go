@@ -39,7 +39,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string           `json:"-"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
@@ -54,6 +54,7 @@ type CreateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationCommand struct {
 	Id                    int64            `json:"id"  binding:"Required"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
@@ -67,14 +68,15 @@ type UpdateAlertNotificationCommand struct {
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
-	Uid                   string
-	Name                  string
-	Type                  string
-	SendReminder          bool
-	DisableResolveMessage bool
-	Frequency             string
-	IsDefault             bool
-	Settings              *simplejson.Json
+	Uid                   string           `json:"-"`
+	NewUid                string           `json:"uid"`
+	Name                  string           `json:"name"  binding:"Required"`
+	Type                  string           `json:"type"  binding:"Required"`
+	SendReminder          bool             `json:"sendReminder"`
+	DisableResolveMessage bool             `json:"disableResolveMessage"`
+	Frequency             string           `json:"frequency"`
+	IsDefault             bool             `json:"isDefault"`
+	Settings              *simplejson.Json `json:"settings"  binding:"Required"`
 
 	OrgId  int64
 	Result *AlertNotification

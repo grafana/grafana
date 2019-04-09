@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import React, { Component } from 'react';
+import isNil from 'lodash/isNil';
+import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
 
 interface Props {
-  customClassName?: string;
+  className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHideDuration?: number;
@@ -14,14 +15,14 @@ interface Props {
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
+  updateAfterMountMs?: number;
 }
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class CustomScrollbar extends PureComponent<Props> {
+export class CustomScrollbar extends Component<Props> {
   static defaultProps: Partial<Props> = {
-    customClassName: 'custom-scrollbars',
     autoHide: false,
     autoHideTimeout: 200,
     autoHideDuration: 200,
@@ -41,17 +42,27 @@ export class CustomScrollbar extends PureComponent<Props> {
   updateScroll() {
     const ref = this.ref.current;
 
-    if (ref && !_.isNil(this.props.scrollTop)) {
-      if (this.props.scrollTop > 10000) {
-        ref.scrollToBottom();
-      } else {
-        ref.scrollTop(this.props.scrollTop);
-      }
+    if (ref && !isNil(this.props.scrollTop)) {
+      ref.scrollTop(this.props.scrollTop);
     }
   }
 
   componentDidMount() {
     this.updateScroll();
+
+    // this logic is to make scrollbar visible when content is added body after mount
+    if (this.props.updateAfterMountMs) {
+      setTimeout(() => this.updateAfterMount(), this.props.updateAfterMountMs);
+    }
+  }
+
+  updateAfterMount() {
+    if (this.ref && this.ref.current) {
+      const scrollbar = this.ref.current as any;
+      if (scrollbar.update) {
+        scrollbar.update();
+      }
+    }
   }
 
   componentDidUpdate() {
@@ -60,7 +71,7 @@ export class CustomScrollbar extends PureComponent<Props> {
 
   render() {
     const {
-      customClassName,
+      className,
       children,
       autoHeightMax,
       autoHeightMin,
@@ -75,7 +86,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     return (
       <Scrollbars
         ref={this.ref}
-        className={customClassName}
+        className={classNames('custom-scrollbar', className)}
         onScroll={setScrollTop}
         autoHeight={true}
         autoHide={autoHide}

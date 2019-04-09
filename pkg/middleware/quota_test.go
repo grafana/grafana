@@ -3,10 +3,10 @@ package middleware
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/quota"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -36,13 +36,13 @@ func TestMiddlewareQuota(t *testing.T) {
 			},
 		}
 
-		fakeAuthTokenService := newFakeUserAuthTokenService()
+		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 		qs := &quota.QuotaService{
 			AuthTokenService: fakeAuthTokenService,
 		}
 		QuotaFn := Quota(qs)
 
-		middlewareScenario("with user not logged in", func(sc *scenarioContext) {
+		middlewareScenario(t, "with user not logged in", func(sc *scenarioContext) {
 			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &m.GlobalQuotaDTO{
 					Target: query.Target,
@@ -80,14 +80,14 @@ func TestMiddlewareQuota(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("with user logged in", func(sc *scenarioContext) {
+		middlewareScenario(t, "with user logged in", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",

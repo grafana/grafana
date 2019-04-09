@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/setting"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -37,7 +38,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 	return result, err
 }
 
-func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	targetURL, _ := url.Parse(route.Url)
 
 	director := func(req *http.Request) {
@@ -78,6 +79,10 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		}
 
 		req.Header.Add("X-Grafana-Context", string(ctxJson))
+
+		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
+			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
+		}
 
 		if len(route.Headers) > 0 {
 			headers, err := getHeaders(route, ctx.OrgId, appID)

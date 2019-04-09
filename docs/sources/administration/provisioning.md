@@ -209,7 +209,7 @@ providers:
     path: /var/lib/grafana/dashboards
 ```
 
-When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path and look for updated json files and insert those update/insert those into the database.
+When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
 #### Making changes to a provisioned dashboard
 
@@ -273,6 +273,9 @@ notifiers:
     # or
     org_name: Main Org.
     is_default: true
+    send_reminders: true
+    frequency: 1h
+    disable_resolve_message: false
     # See `Supported Settings` section for settings supporter for each
     # alert notification type.
     settings:
@@ -286,7 +289,7 @@ delete_notifiers:
     uid: notifier1
     # either
     org_id: 2
-    # or 
+    # or
     org_name: Main Org.
   - name: notification-channel-2
     # default org_id: 1
@@ -324,6 +327,7 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | url |
+| autoResolve |
 
 #### Alert notification `kafka`
 
@@ -343,6 +347,7 @@ The following sections detail the supported settings for each alert notification
 | Name |
 | ---- |
 | integrationKey |
+| autoResolve |
 
 #### Alert notification `sensu`
 
@@ -392,6 +397,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | apiKey |
 | apiUrl |
+[ autoClose ]
 
 #### Alert notification `telegram`
 

@@ -31,7 +31,6 @@
         "name": "Graphite 1.1 Release",
         "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
       }
-    ],
-    "version": "5.0.0"
+    ]
   }
 }

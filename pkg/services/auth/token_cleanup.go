@@ -52,6 +52,6 @@ func (srv *UserAuthTokenService) deleteExpiredTokens(maxInactiveLifetime, maxLif
 		return 0, nil
 	}
 
-	srv.log.Info("cleanup of expired auth tokens done", "count", affected)
+	srv.log.Debug("cleanup of expired auth tokens done", "count", affected)
 	return affected, err
 }

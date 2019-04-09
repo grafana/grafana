@@ -11,11 +11,13 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData } from '@grafana/ui';
+import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
   panel: PanelModel;
   query: DataQuery;
+  dashboard: DashboardModel;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
@@ -29,6 +31,8 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
+  queryError: DataQueryError | null;
+  queryResponse: SeriesData[] | null;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -41,6 +45,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
+    queryError: null,
+    queryResponse: null,
   };
 
   componentDidMount() {
@@ -48,19 +54,36 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.props.panel.events.on('refresh', this.onPanelRefresh);
     this.props.panel.events.on('data-error', this.onPanelDataError);
     this.props.panel.events.on('data-received', this.onPanelDataReceived);
+    this.props.panel.events.on('series-data-received', this.onSeriesDataReceived);
   }
 
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onPanelRefresh);
     this.props.panel.events.off('data-error', this.onPanelDataError);
     this.props.panel.events.off('data-received', this.onPanelDataReceived);
+    this.props.panel.events.off('series-data-received', this.onSeriesDataReceived);
 
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
   }
 
-  onPanelDataError = () => {
+  onPanelDataError = (error: DataQueryError) => {
+    // Some query controllers listen to data error events and need a digest
+    if (this.angularQueryEditor) {
+      // for some reason this needs to be done in next tick
+      setTimeout(this.angularQueryEditor.digest);
+      return;
+    }
+
+    // if error relates to this query store it in state and pass it on to query editor
+    if (error.refId === this.props.query.refId) {
+      this.setState({ queryError: error });
+    }
+  };
+
+  // Only used by angular plugins
+  onPanelDataReceived = () => {
     // Some query controllers listen to data error events and need a digest
     if (this.angularQueryEditor) {
       // for some reason this needs to be done in next tick
@@ -68,11 +91,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
   };
 
-  onPanelDataReceived = () => {
-    // Some query controllers listen to data error events and need a digest
-    if (this.angularQueryEditor) {
-      // for some reason this needs to be done in next tick
-      setTimeout(this.angularQueryEditor.digest);
+  // Only used by the React Query Editors
+  onSeriesDataReceived = (data: SeriesData[]) => {
+    if (!this.angularQueryEditor) {
+      // only pass series related to this query to query editor
+      const filterByRefId = data.filter(series => series.refId === this.props.query.refId);
+      this.setState({ queryResponse: filterByRefId, queryError: null });
     }
   };
 
@@ -83,13 +107,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, query } = this.props;
+    const { panel, query, dashboard } = this.props;
     const { datasource } = this.state;
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
+      dashboard: dashboard,
       refresh: () => panel.refresh(),
       render: () => panel.render(),
       events: panel.events,
@@ -136,7 +161,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     // give angular time to compile
     setTimeout(() => {
       this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
-    }, 10);
+    }, 100);
   }
 
   onToggleCollapse = () => {
@@ -149,15 +174,25 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderPluginEditor() {
     const { query, onChange } = this.props;
-    const { datasource } = this.state;
+    const { datasource, queryResponse, queryError } = this.state;
 
-    if (datasource.pluginExports.QueryCtrl) {
+    if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (datasource.pluginExports.QueryEditor) {
-      const QueryEditor = datasource.pluginExports.QueryEditor;
-      return <QueryEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={this.onRunQuery} />;
+    if (datasource.components.QueryEditor) {
+      const QueryEditor = datasource.components.QueryEditor;
+
+      return (
+        <QueryEditor
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          onRunQuery={this.onRunQuery}
+          queryResponse={queryResponse}
+          queryError={queryError}
+        />
+      );
     }
 
     return <div>Data source plugin does not export any Query Editor component</div>;
@@ -265,6 +300,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 export interface AngularQueryComponentScope {
   target: DataQuery;
   panel: PanelModel;
+  dashboard: DashboardModel;
   events: Emitter;
   refresh: () => void;
   render: () => void;

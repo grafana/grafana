@@ -1,4 +1,4 @@
-import { Team, NavModelItem, NavModel } from 'app/types';
+import { Team, NavModelItem, NavModel, TeamPermissionLevel } from 'app/types';
 import config from 'app/core/config';
 
 export function buildNavModel(team: Team): NavModelItem {
@@ -47,6 +47,7 @@ export function getTeamLoadingNav(pageName: string): NavModel {
     name: 'Loading',
     email: 'loading',
     memberCount: 0,
+    permission: TeamPermissionLevel.Member,
   });
 
   let node: NavModelItem;

@@ -57,18 +57,18 @@ export class Help extends React.Component<Props, State> {
             <div className="gf-form-label gf-form-label--grow" />
           </div>
         </div>
-        {rawQuery &&
-          displaRawQuery && (
-            <div className="gf-form">
-              <pre className="gf-form-pre">{rawQuery}</pre>
-            </div>
-          )}
+        {rawQuery && displaRawQuery && (
+          <div className="gf-form">
+            <pre className="gf-form-pre">{rawQuery}</pre>
+          </div>
+        )}
 
         {displayHelp && (
           <div className="gf-form grafana-info-box" style={{ padding: 0 }}>
             <pre className="gf-form-pre alert alert-info" style={{ marginRight: 0 }}>
               <h5>Alias Patterns</h5>Format the legend keys any way you want by using alias patterns. Format the legend
-              keys any way you want by using alias patterns.<br /> <br />
+              keys any way you want by using alias patterns.
+              <br /> <br />
               Example:
               <code>{`${'{{metricDescriptor.name}} - {{metricDescriptor.label.instance_name}}'}`}</code>
               <br />

@@ -29,10 +29,10 @@ const template = `
 					<td>{{org.name}}</td>
 					<td>{{org.role}}</td>
 					<td class="text-right">
-						<span class="btn btn-primary btn-mini" ng-show="org.orgId === ctrl.currentOrgId">
+						<span class="btn btn-primary btn-small" ng-show="org.orgId === ctrl.currentOrgId">
 							Current
 						</span>
-						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== ctrl.currentOrgId">
+						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-small" ng-show="org.orgId !== ctrl.currentOrgId">
 							Switch to
 						</a>
 					</td>

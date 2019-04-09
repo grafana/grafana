@@ -14,7 +14,7 @@ export class QueryRowCtrl {
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
 
-    if (this.hasTextEditMode) {
+    if (this.hasTextEditMode && this.queryCtrl.toggleEditorMode) {
       // expose this function to react parent component
       this.panelCtrl.toggleEditorMode = this.queryCtrl.toggleEditorMode.bind(this.queryCtrl);
     }

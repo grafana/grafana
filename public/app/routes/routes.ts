@@ -81,6 +81,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
@@ -89,6 +90,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       pageClass: 'dashboard-solo',
       routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
       resolve: {
         component: () => SoloPanelPage,
       },
@@ -193,7 +195,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
         component: () => TeamList,
       },
     })
@@ -205,7 +207,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
         component: () => TeamPages,
       },
     })

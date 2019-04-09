@@ -189,7 +189,7 @@ export const aggOptions = [
       ValueTypes.BOOL,
       ValueTypes.STRING,
     ],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
   {
     text: 'count true',
@@ -207,25 +207,25 @@ export const aggOptions = [
     text: '99th percentile',
     value: 'REDUCE_PERCENTILE_99',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
   {
     text: '95th percentile',
     value: 'REDUCE_PERCENTILE_95',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
   {
     text: '50th percentile',
     value: 'REDUCE_PERCENTILE_50',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
   {
     text: '5th percentile',
     value: 'REDUCE_PERCENTILE_05',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
 ];
 

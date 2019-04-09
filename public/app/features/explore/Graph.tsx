@@ -217,11 +217,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     let series = [{ data: [[0, 0]] }];
 
     if (data && data.length > 0) {
-      series = data.filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias)).map((ts: TimeSeries) => ({
-        color: ts.color,
-        label: ts.label,
-        data: ts.getFlotPairs('null'),
-      }));
+      series = data
+        .filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias))
+        .map((ts: TimeSeries) => ({
+          color: ts.color,
+          label: ts.label,
+          data: ts.getFlotPairs('null'),
+        }));
     }
 
     this.dynamicOptions = this.getDynamicOptions();
@@ -242,17 +244,15 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     return (
       <>
-        {this.props.data &&
-          this.props.data.length > MAX_NUMBER_OF_TIME_SERIES &&
-          !this.state.showAllTimeSeries && (
-            <div className="time-series-disclaimer">
-              <i className="fa fa-fw fa-warning disclaimer-icon" />
-              {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-              <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
-                this.props.data.length
-              }`}</span>
-            </div>
-          )}
+        {this.props.data && this.props.data.length > MAX_NUMBER_OF_TIME_SERIES && !this.state.showAllTimeSeries && (
+          <div className="time-series-disclaimer">
+            <i className="fa fa-fw fa-warning disclaimer-icon" />
+            {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
+            <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
+              this.props.data.length
+            }`}</span>
+          </div>
+        )}
         <div id={id} className="explore-graph" style={{ height }} />
         <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
       </>

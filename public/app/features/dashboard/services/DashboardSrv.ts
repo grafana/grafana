@@ -43,6 +43,7 @@ export class DashboardSrv {
         delete urlParams.fullscreen;
         delete urlParams.edit;
         delete urlParams.panelId;
+        delete urlParams.tab;
         this.$location.search(urlParams);
         return;
       }
@@ -58,6 +59,7 @@ export class DashboardSrv {
       urlParams.edit = true;
     } else {
       delete urlParams.edit;
+      delete urlParams.tab;
     }
 
     if (options.panelId || options.panelId === 0) {

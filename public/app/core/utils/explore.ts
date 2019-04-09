@@ -9,9 +9,10 @@ import store from 'app/core/store';
 import { parse as parseDate } from 'app/core/utils/datemath';
 import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { getNextRefIdChar } from './query';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui/src/types';
+import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -20,6 +21,7 @@ import {
   ResultType,
   QueryIntervals,
   QueryOptions,
+  ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 
@@ -153,51 +155,74 @@ export function buildQueryTransaction(
   };
 }
 
-export const clearQueryKeys: ((query: DataQuery) => object) = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
-const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('expr');
+const metricProperties = ['expr', 'target', 'datasource'];
+const isMetricSegment = (segment: { [key: string]: string }) =>
+  metricProperties.some(prop => segment.hasOwnProperty(prop));
 const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
 
-export function parseUrlState(initial: string | undefined): ExploreUrlState {
-  let uiState = DEFAULT_UI_STATE;
+enum ParseUrlStateIndex {
+  RangeFrom = 0,
+  RangeTo = 1,
+  Datasource = 2,
+  SegmentsStart = 3,
+}
 
-  if (initial) {
-    try {
-      const parsed = JSON.parse(decodeURI(initial));
-      if (Array.isArray(parsed)) {
-        if (parsed.length <= 3) {
-          throw new Error('Error parsing compact URL state for Explore.');
-        }
-        const range = {
-          from: parsed[0],
-          to: parsed[1],
-        };
-        const datasource = parsed[2];
-        let queries = [];
+enum ParseUiStateIndex {
+  Graph = 0,
+  Logs = 1,
+  Table = 2,
+  Strategy = 3,
+}
 
-        parsed.slice(3).forEach(segment => {
-          if (isMetricSegment(segment)) {
-            queries = [...queries, segment];
-          }
-
-          if (isUISegment(segment)) {
-            uiState = {
-              showingGraph: segment.ui[0],
-              showingLogs: segment.ui[1],
-              showingTable: segment.ui[2],
-              dedupStrategy: segment.ui[3],
-            };
-          }
-        });
-
-        return { datasource, queries, range, ui: uiState };
-      }
-      return parsed;
-    } catch (e) {
-      console.error(e);
-    }
+export const safeParseJson = (text: string) => {
+  if (!text) {
+    return;
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: uiState };
+
+  try {
+    return JSON.parse(decodeURI(text));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export function parseUrlState(initial: string | undefined): ExploreUrlState {
+  const parsed = safeParseJson(initial);
+  const errorResult = { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
+
+  if (!parsed) {
+    return errorResult;
+  }
+
+  if (!Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
+    console.error('Error parsing compact URL state for Explore.');
+    return errorResult;
+  }
+
+  const range = {
+    from: parsed[ParseUrlStateIndex.RangeFrom],
+    to: parsed[ParseUrlStateIndex.RangeTo],
+  };
+  const datasource = parsed[ParseUrlStateIndex.Datasource];
+  const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
+  const queries = parsedSegments.filter(segment => isMetricSegment(segment));
+  const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
+  const ui = uiState
+    ? {
+        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
+        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
+        showingTable: uiState.ui[ParseUiStateIndex.Table],
+        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
+      }
+    : DEFAULT_UI_STATE;
+
+  return { datasource, queries, range, ui };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -224,12 +249,8 @@ export function generateKey(index = 0): string {
   return `Q-${Date.now()}-${Math.random()}-${index}`;
 }
 
-export function generateRefId(index = 0): string {
-  return `${index + 1}`;
-}
-
-export function generateEmptyQuery(index = 0): { refId: string; key: string } {
-  return { refId: generateRefId(index), key: generateKey(index) };
+export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
+  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
 /**
@@ -237,9 +258,9 @@ export function generateEmptyQuery(index = 0): { refId: string; key: string } {
  */
 export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
   if (queries && typeof queries === 'object' && queries.length > 0) {
-    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(i) }));
+    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(queries, i) }));
   }
-  return [{ ...generateEmptyQuery() }];
+  return [{ ...generateEmptyQuery(queries) }];
 }
 
 /**
@@ -301,11 +322,24 @@ export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: 
   return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
 }
 
-export function makeTimeSeriesList(dataList) {
-  return dataList.map((seriesData, index) => {
+export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
+  // Prevent multiple Graph transactions to have the same colors
+  let colorIndexOffset = 0;
+  for (const other of allTransactions) {
+    // Only need to consider transactions that came before the current one
+    if (other === transaction) {
+      break;
+    }
+    // Count timeseries of previous query results
+    if (other.resultType === 'Graph' && other.done) {
+      colorIndexOffset += other.result.length;
+    }
+  }
+
+  return dataList.map((seriesData, index: number) => {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
-    const colorIndex = index % colors.length;
+    const colorIndex = (colorIndexOffset + index) % colors.length;
     const color = colors[colorIndex];
 
     const series = new TimeSeries({
@@ -317,7 +351,7 @@ export function makeTimeSeriesList(dataList) {
 
     return series;
   });
-}
+};
 
 /**
  * Update the query history. Side-effect: store history in local storage

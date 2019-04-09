@@ -18,7 +18,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { PluginExports } from '@grafana/ui';
+import { DataSourcePlugin, AppPlugin, ReactPanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
@@ -141,12 +141,44 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<PluginExports> {
+function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
   }
   return System.import(path);
+}
+
+export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> {
+  return importPluginModule(path).then(pluginExports => {
+    if (pluginExports.plugin) {
+      return pluginExports.plugin as DataSourcePlugin;
+    }
+
+    if (pluginExports.Datasource) {
+      const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
+      dsPlugin.setComponentsFromLegacyExports(pluginExports);
+      return dsPlugin;
+    }
+
+    throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
+  });
+}
+
+export function importAppPlugin(path: string): Promise<AppPlugin> {
+  return importPluginModule(path).then(pluginExports => {
+    return new AppPlugin(pluginExports.ConfigCtrl);
+  });
+}
+
+export function importPanelPlugin(path: string): Promise<AngularPanelPlugin | ReactPanelPlugin> {
+  return importPluginModule(path).then(pluginExports => {
+    if (pluginExports.reactPanel) {
+      return pluginExports.reactPanel as ReactPanelPlugin;
+    } else {
+      return new AngularPanelPlugin(pluginExports.PanelCtrl);
+    }
+  });
 }
 
 export function loadPluginCss(options) {
