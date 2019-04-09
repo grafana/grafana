@@ -8,6 +8,7 @@ const setup = (propOverrides?: object) => {
     size: { width: 10, height: 20 },
     data: mockData().slice(0, 19),
     range: { from: 'now-6h', to: 'now' },
+    timeZone: { raw: 'browser', isUtc: false },
     ...propOverrides,
   };
 

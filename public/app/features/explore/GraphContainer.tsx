@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeRange, RawTimeRange } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -9,12 +9,14 @@ import { StoreState } from 'app/types';
 import { toggleGraph, changeTime } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
+import { getTimeZone } from '../profile/state/selectors';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
   graphResult?: any[];
   loading: boolean;
   range: RawTimeRange;
+  timeZone: TimeZone;
   showingGraph: boolean;
   showingTable: boolean;
   split: boolean;
@@ -33,7 +35,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   };
 
   render() {
-    const { exploreId, graphResult, loading, showingGraph, showingTable, range, split, width } = this.props;
+    const { exploreId, graphResult, loading, showingGraph, showingTable, range, split, width, timeZone } = this.props;
     const graphHeight = showingGraph && showingTable ? 200 : 400;
 
     if (!graphResult) {
@@ -48,6 +50,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
           id={`explore-graph-${exploreId}`}
           onChangeTime={this.onChangeTime}
           range={range}
+          timeZone={timeZone}
           split={split}
           width={width}
         />
@@ -62,7 +65,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const item: ExploreItemState = explore[exploreId];
   const { graphResult, queryTransactions, range, showingGraph, showingTable } = item;
   const loading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
-  return { graphResult, loading, range, showingGraph, showingTable, split };
+  return { graphResult, loading, range, showingGraph, showingTable, split, timeZone: getTimeZone(state.user) };
 }
 
 const mapDispatchToProps = {

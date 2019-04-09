@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel } from '@grafana/ui';
+import { RawTimeRange, TimeRange, LogLevel, TimeZone } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
@@ -12,6 +12,7 @@ import Logs from './Logs';
 import Panel from './Panel';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
+import { getTimeZone } from '../profile/state/selectors';
 
 interface LogsContainerProps {
   exploreId: ExploreId;
@@ -24,6 +25,7 @@ interface LogsContainerProps {
   onStartScanning: () => void;
   onStopScanning: () => void;
   range: RawTimeRange;
+  timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   showingLogs: boolean;
@@ -64,6 +66,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       onStartScanning,
       onStopScanning,
       range,
+      timeZone,
       showingLogs,
       scanning,
       scanRange,
@@ -88,6 +91,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           onDedupStrategyChange={this.handleDedupStrategyChange}
           onToggleLogLevel={this.hangleToggleLogLevel}
           range={range}
+          timeZone={timeZone}
           scanning={scanning}
           scanRange={scanRange}
           width={width}
@@ -115,6 +119,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     scanRange,
     showingLogs,
     range,
+    timeZone: getTimeZone(state.user),
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,

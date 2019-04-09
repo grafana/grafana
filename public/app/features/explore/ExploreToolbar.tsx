@@ -3,12 +3,13 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, TimeRange, TimeZone } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
 import TimePicker from './TimePicker';
 import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
+import { getTimeZone } from '../profile/state/selectors';
 
 enum IconSide {
   left = 'left',
@@ -49,6 +50,7 @@ interface StateProps {
   exploreDatasources: DataSourceSelectItem[];
   loading: boolean;
   range: RawTimeRange;
+  timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
 }
@@ -91,6 +93,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       exploreId,
       loading,
       range,
+      timeZone,
       selectedDatasource,
       splitted,
       timepickerRef,
@@ -141,7 +144,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
               <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker ref={timepickerRef} range={range} onChangeTime={this.props.onChangeTime} />
+                <TimePicker
+                  ref={timepickerRef}
+                  range={range}
+                  isUtc={timeZone.isUtc}
+                  onChangeTime={this.props.onChangeTime}
+                />
               </ClickOutsideWrapper>
             </div>
             <div className="explore-toolbar-content-item">
@@ -180,6 +188,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     loading,
     range,
+    timeZone: getTimeZone(state.user),
     selectedDatasource,
     splitted,
   };
