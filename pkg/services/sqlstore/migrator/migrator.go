@@ -1,7 +1,6 @@
 package migrator
 
 import (
-	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -80,8 +79,6 @@ func (mg *Migrator) Start() error {
 		return err
 	}
 
-	migrationsCount := 0
-
 	for _, m := range mg.migrations {
 		_, exists := logMap[m.Id()]
 		if exists {
@@ -99,8 +96,6 @@ func (mg *Migrator) Start() error {
 
 		err := mg.inTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
-			migrationsCount += 1
-
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
@@ -116,8 +111,6 @@ func (mg *Migrator) Start() error {
 			return err
 		}
 	}
-
-	mg.Logger.Info(fmt.Sprintf("Executed %v migrations", migrationsCount))
 
 	return nil
 }
