@@ -52,11 +52,6 @@ export class UtilSrv {
   showConfirmModal(payload) {
     const scope = this.$rootScope.$new();
 
-    scope.onConfirm = () => {
-      payload.onConfirm();
-      scope.dismiss();
-    };
-
     scope.updateConfirmText = value => {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
@@ -64,6 +59,7 @@ export class UtilSrv {
     scope.title = payload.title;
     scope.text = payload.text;
     scope.text2 = payload.text2;
+    scope.text2htmlBind = payload.text2htmlBind;
     scope.confirmText = payload.confirmText;
 
     scope.onConfirm = payload.onConfirm;

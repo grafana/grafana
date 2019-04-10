@@ -19,7 +19,6 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-#"github.com/smartystreets/goconvey", 
 required = ["github.com/smartystreets/assertions", "github.com/jtolds/gls"]
 
 ignored = [
@@ -228,5 +227,6 @@ ignored = [
   name = "gopkg.in/ldap.v3"
   version = "3.0.0"
 
-
-
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"

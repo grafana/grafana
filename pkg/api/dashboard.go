@@ -153,7 +153,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 	return query.Result, nil
 }
 
-func DeleteDashboard(c *m.ReqContext) Response {
+func DeleteDashboardBySlug(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -164,29 +164,15 @@ func DeleteDashboard(c *m.ReqContext) Response {
 		return JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to delete dashboard", err)
-	}
-
-	return JSON(200, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
-	})
+	return deleteDashboard(c)
 }
 
 func DeleteDashboardByUID(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
+	return deleteDashboard(c)
+}
+
+func deleteDashboard(c *m.ReqContext) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -196,8 +182,10 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	if err == m.ErrDashboardCannotDeleteProvisionedDashboard {
+		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
+	} else if err != nil {
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
