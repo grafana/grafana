@@ -4,6 +4,7 @@ import { cx, css } from 'emotion';
 export interface ListProps<T> {
   items: T[];
   renderItem: (item: T, index: number) => JSX.Element;
+  getItemKey?: (item: T) => string;
   className?: string;
 }
 
@@ -35,13 +36,13 @@ export class AbstractList<T> extends React.PureComponent<AbstractListProps<T>> {
   }
 
   render() {
-    const { items, renderItem } = this.props;
+    const { items, renderItem, getItemKey } = this.props;
     const styles = this.getListStyles();
     return (
       <ul className={styles.list}>
         {items.map((item, i) => {
           return (
-            <li className={styles.item} key={i}>
+            <li className={styles.item} key={getItemKey ? getItemKey(item) : i}>
               {renderItem(item, i)}
             </li>
           );
