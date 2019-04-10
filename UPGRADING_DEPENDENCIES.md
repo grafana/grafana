@@ -5,14 +5,14 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 ## Go
 
 - CircleCi
-- `grafana/build-container`
+- `/scripts/build/ci-build/Dockerfile`
 - Appveyor
 - Dockerfile
 
 ## Node.js
 
 - CircleCI
-- `grafana/build-container`
+- `scripts/build/ci-build/Dockerfile`
 - Appveyor
 - Dockerfile
 
