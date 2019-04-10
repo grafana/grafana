@@ -10,6 +10,7 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
+import TimeSeries from 'app/core/time_series2';
 import { getColorFromHexRgbOrName, LegacyResponseData } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
@@ -17,7 +18,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   renderError: boolean;
   hiddenSeries: any = {};
-  seriesList: any = [];
+  seriesList: TimeSeries[] = [];
   dataList: LegacyResponseData[] = [];
   annotations: any = [];
   alertState: any;

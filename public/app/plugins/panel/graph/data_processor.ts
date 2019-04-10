@@ -2,11 +2,17 @@ import _ from 'lodash';
 import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
+import { LegacyResponseData, TimeRange } from '@grafana/ui';
+
+type Options = {
+  dataList: LegacyResponseData[];
+  range?: TimeRange;
+};
 
 export class DataProcessor {
   constructor(private panel) {}
 
-  getSeriesList(options) {
+  getSeriesList(options: Options): TimeSeries[] {
     if (!options.dataList || options.dataList.length === 0) {
       return [];
     }
@@ -49,6 +55,8 @@ export class DataProcessor {
         return this.customHandler(firstItem);
       }
     }
+
+    return [];
   }
 
   getAutoDetectXAxisMode(firstItem) {
@@ -102,7 +110,7 @@ export class DataProcessor {
     }
   }
 
-  timeSeriesHandler(seriesData, index, options) {
+  timeSeriesHandler(seriesData: LegacyResponseData, index: number, options: Options) {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
 
@@ -120,7 +128,8 @@ export class DataProcessor {
     if (datapoints && datapoints.length > 0) {
       const last = datapoints[datapoints.length - 1][1];
       const from = options.range.from;
-      if (last - from < -10000) {
+
+      if (last - from.valueOf() < -10000) {
         series.isOutsideRange = true;
       }
     }
