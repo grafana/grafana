@@ -127,8 +127,9 @@ export class DataProcessor {
 
     if (datapoints && datapoints.length > 0) {
       const last = datapoints[datapoints.length - 1][1];
-      const from = options.range.from as any;
-      if (last - from < -10000) {
+      const from = options.range.from;
+
+      if (last - from.valueOf() < -10000) {
         series.isOutsideRange = true;
       }
     }
