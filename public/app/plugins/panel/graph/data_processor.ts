@@ -110,7 +110,7 @@ export class DataProcessor {
     }
   }
 
-  timeSeriesHandler(seriesData: TimeSeries, index: number, options: Options) {
+  timeSeriesHandler(seriesData: LegacyResponseData, index: number, options: Options) {
     const datapoints = seriesData.datapoints || [];
     const alias = seriesData.target;
 

@@ -1,6 +1,6 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat, stringToJsRegex, TimeSeries as TimeSeriesCommon } from '@grafana/ui';
+import { getValueFormat, stringToJsRegex } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -66,7 +66,7 @@ export function getDataMinMax(data: TimeSeries[]) {
   return { datamin, datamax };
 }
 
-export default class TimeSeries implements TimeSeriesCommon {
+export default class TimeSeries {
   datapoints: any;
   id: string;
   label: string;
@@ -97,13 +97,10 @@ export default class TimeSeries implements TimeSeriesCommon {
   flotpairs: any;
   unit: any;
 
-  target: string;
-
-  constructor(opts: any) {
+  constructor(opts) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
     this.id = opts.alias;
-    this.target = opts.target;
     this.alias = opts.alias;
     this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
@@ -115,7 +112,7 @@ export default class TimeSeries implements TimeSeriesCommon {
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
-  applySeriesOverrides(overrides: any) {
+  applySeriesOverrides(overrides) {
     this.lines = {};
     this.dashes = {
       dashLength: [],
@@ -195,7 +192,7 @@ export default class TimeSeries implements TimeSeriesCommon {
     }
   }
 
-  getFlotPairs(fillStyle: any) {
+  getFlotPairs(fillStyle) {
     const result = [];
 
     this.stats.total = 0;
