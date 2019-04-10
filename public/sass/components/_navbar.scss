@@ -112,12 +112,11 @@
   display: flex;
   align-items: center;
   font-weight: $btn-font-weight;
-  padding: 6px 11px;
+  padding: 6px $space-sm;
   line-height: 16px;
-  height: 30px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
-  margin-left: 3px;
+  margin-left: $space-xs;
   white-space: nowrap;
 
   .gicon {

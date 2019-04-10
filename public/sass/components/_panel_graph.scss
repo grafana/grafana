@@ -120,6 +120,10 @@
 
 // fix for phantomjs
 .body--phantomjs {
+  .graph-panel {
+    display: -webkit-box;
+  }
+
   .graph-panel--legend-right {
     .graph-legend {
       display: block;

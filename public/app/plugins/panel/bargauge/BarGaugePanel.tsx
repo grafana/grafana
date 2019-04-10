@@ -2,12 +2,14 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { DisplayValue, PanelProps, BarGauge, getSingleStatDisplayValues } from '@grafana/ui';
 import { config } from 'app/core/config';
+
+// Components
+import { BarGauge, VizRepeater, getSingleStatDisplayValues } from '@grafana/ui/src/components';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
+import { PanelProps, DisplayValue } from '@grafana/ui/src/types';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
@@ -21,12 +23,13 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         orientation={options.orientation}
         thresholds={options.thresholds}
         theme={config.theme}
+        itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
       />
     );
   };
 
-  getProcessedValues = (): DisplayValue[] => {
+  getValues = (): DisplayValue[] => {
     return getSingleStatDisplayValues({
       valueMappings: this.props.options.valueMappings,
       thresholds: this.props.options.thresholds,
@@ -37,16 +40,25 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     });
   };
 
+  getItemSpacing(): number {
+    if (this.props.options.displayMode === 'lcd') {
+      return 2;
+    }
+
+    return 10;
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        source={data}
+        getValues={this.getValues}
         renderValue={this.renderValue}
+        renderCounter={renderCounter}
         width={width}
         height={height}
-        source={data}
-        renderCounter={renderCounter}
+        itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />
     );

@@ -65,35 +65,28 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     background,
     fontSize,
     iconDistance,
+    height,
     fontWeight = theme.typography.weight.semibold;
 
   switch (size) {
-    case ButtonSize.ExtraSmall:
-      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.xs;
-      iconDistance = theme.spacing.xs;
-      break;
     case ButtonSize.Small:
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.sm;
       iconDistance = theme.spacing.xs;
+      height = theme.height.sm;
       break;
     case ButtonSize.Large:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
       iconDistance = theme.spacing.sm;
-      break;
-    case ButtonSize.ExtraLarge:
-      padding = `${theme.spacing.md} ${theme.spacing.lg}`;
-      fontSize = theme.typography.size.lg;
-      fontWeight = theme.typography.weight.regular;
-      iconDistance = theme.spacing.sm;
+      height = theme.height.lg;
       break;
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       iconDistance = theme.spacing.sm;
       fontSize = theme.typography.size.base;
+      height = theme.height.md;
   }
 
   switch (variant) {
@@ -133,7 +126,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
   return {
     button: css`
       label: button;
-      display: inline-block;
+      display: flex;
+      align-items: center;
       font-weight: ${fontWeight};
       font-size: ${fontSize};
       font-family: ${theme.typography.fontFamily.sansSerif};
@@ -143,6 +137,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       vertical-align: middle;
       cursor: pointer;
       border: none;
+      height: ${height};
       border-radius: ${borderRadius};
       ${background};
 
@@ -161,6 +156,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     icon: css`
       label: button-icon;
       margin-right: ${iconDistance};
+      filter: brightness(100);
     `,
   };
 };

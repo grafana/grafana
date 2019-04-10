@@ -287,7 +287,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", Wrap(DeleteDashboardByUID))
 
 			dashboardRoute.Get("/db/:slug", Wrap(GetDashboard))
-			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboard))
+			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
