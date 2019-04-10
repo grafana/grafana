@@ -885,6 +885,7 @@
     "github.com/aws/aws-sdk-go/service/sts",
     "github.com/benbjohnson/clock",
     "github.com/bmizerany/assert",
+    "github.com/bradfitz/gomemcache/memcache",
     "github.com/codegangsta/cli",
     "github.com/davecgh/go-spew/spew",
     "github.com/denisenkom/go-mssqldb",
@@ -937,6 +938,7 @@
     "gopkg.in/ldap.v3",
     "gopkg.in/macaron.v1",
     "gopkg.in/mail.v2",
+    "gopkg.in/redis.v2",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/yaml.v2",
   ]

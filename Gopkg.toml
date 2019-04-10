@@ -215,3 +215,7 @@ ignored = [
 [[constraint]]
   name = "gopkg.in/ldap.v3"
   version = "3.0.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
