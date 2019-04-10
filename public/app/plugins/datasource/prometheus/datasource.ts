@@ -55,7 +55,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     this.loadRules();
   }
 
-  getCollapsedText(query: PromQuery) {
+  getCollapsedQueryText(query: PromQuery) {
     return query.expr;
   }
 

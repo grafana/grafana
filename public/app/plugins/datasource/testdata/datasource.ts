@@ -90,7 +90,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     return this.$q.when(events);
   }
 
-  getCollapsedText(query: TestDataQuery) {
+  getCollapsedQueryText(query: TestDataQuery) {
     if (query.alias) {
       return query.scenarioId + ' as ' + query.alias;
     }
