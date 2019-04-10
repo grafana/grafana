@@ -8,9 +8,11 @@ import {
   calculateStats,
   colors,
   getFlotPairs,
+  getColorFromHexRgbOrName,
 } from '@grafana/ui';
+import { SeriesOptions } from './types';
 
-export const getGraphSeriesModel = (data: SeriesData[], stats: StatID[]) => {
+export const getGraphSeriesModel = (data: SeriesData[], stats: StatID[], seriesOptions: SeriesOptions) => {
   const graphs: GraphSeriesXY[] = [];
 
   for (const series of data) {
@@ -33,12 +35,17 @@ export const getGraphSeriesModel = (data: SeriesData[], stats: StatID[]) => {
         });
 
         if (points.length > 0) {
+          const seriesColor =
+            seriesOptions[field.name] && seriesOptions[field.name].color
+              ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
+              : colors[graphs.length % colors.length];
           graphs.push({
             label: field.name,
             data: points,
-            color: colors[graphs.length % colors.length],
+            color: seriesColor,
             stats: calculateStats({ series, stats, fieldIndex: i }),
             isVisible: true,
+            useRightYAxis: seriesOptions[field.name] && !!seriesOptions[field.name].useRightYAxis,
           });
         }
       }

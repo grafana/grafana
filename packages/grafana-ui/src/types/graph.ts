@@ -11,4 +11,5 @@ export interface GraphSeriesXY {
   info?: DisplayValue[]; // Legend info
   stats: ColumnStats;
   isVisible: boolean;
+  useRightYAxis: boolean;
 }

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import { LegendComponentProps } from './Legend';
+import { LegendComponentProps, LegendItem } from './Legend';
 import { InlineList } from '../List/InlineList';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
 
 const LegendItemStat: React.FunctionComponent<{ statName: string; value: number }> = ({ statName, value }) => {
@@ -30,26 +30,51 @@ LegendStatsList.displayName = 'LegendStatsList';
 export const LegendList: React.FunctionComponent<LegendComponentProps> = ({ items, itemRenderer, statsToDisplay }) => {
   const theme = useContext(ThemeContext);
 
+  const renderItem = (item: LegendItem, index: number) => {
+    return (
+      <span
+        className={css`
+          padding-left: 10px;
+          display: flex;
+          font-size: ${theme.typography.size.sm};
+          white-space: nowrap;
+        `}
+      >
+        <>{itemRenderer ? itemRenderer(item) : item.label}</>
+        {statsToDisplay && (
+          <LegendStatsList stats={item.stats.filter(stat => statsToDisplay.indexOf(stat.statId) > -1)} />
+        )}
+      </span>
+    );
+  };
+
+  const getItemKey = (item: LegendItem) => item.label;
+
+  const styles = {
+    wrapper: css`
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      width: 100%;
+    `,
+    section: css`
+      display: flex;
+    `,
+    sectionRight: css`
+      justify-content: flex-end;
+      flex-grow: 1;
+    `,
+  };
+
   return (
-    <InlineList
-      items={items}
-      renderItem={item => {
-        return (
-          <span
-            className={css`
-              padding-left: 10px;
-              display: flex;
-              font-size: ${theme.typography.size.sm};
-            `}
-          >
-            <>{itemRenderer ? itemRenderer(item) : item.label}</>
-            {statsToDisplay && (
-              <LegendStatsList stats={item.stats.filter(stat => statsToDisplay.indexOf(stat.statId) > -1)} />
-            )}
-          </span>
-        );
-      }}
-    />
+    <div className={styles.wrapper}>
+      <div className={styles.section}>
+        <InlineList items={items.filter(item => !item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
+      </div>
+      <div className={cx(styles.section, styles.sectionRight)}>
+        <InlineList items={items.filter(item => item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
+      </div>
+    </div>
   );
 };
 

@@ -3,18 +3,18 @@ import { storiesOf } from '@storybook/react';
 import { Legend, LegendItem } from './Legend';
 import { LegendList } from './LegendList';
 import tinycolor from 'tinycolor2';
-import { number, select } from '@storybook/addon-knobs';
+import { number, select, text } from '@storybook/addon-knobs';
 import { GraphLegendItem } from '../Graph/GraphLegendItem';
 
-export const generateLegendItems = (numberOfSeries: number) => {
+export const generateLegendItems = (numberOfSeries: number): LegendItem[] => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
   return [...new Array(numberOfSeries)].map((item, i) => {
-    console.log(i);
     return {
       label: `${alphabet[i].toUpperCase()}-series`,
       color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
       isVisible: true,
+      useRightYAxis: false,
       stats: [{ statId: 'min', value: 2 }, { statId: 'max', value: 10 }],
     };
   });
@@ -52,20 +52,37 @@ const getStoriesKnobs = () => {
     'raw'
   );
 
+  const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
+
   return {
     numberOfSeries,
     containerWidth,
     itemRenderer: legendItemRenderer === 'raw' ? rawRenderer : customRenderer,
+    rightAxisSeries,
   };
 };
 
 const LegendStories = storiesOf('UI/Legend/Legend', module);
 
 LegendStories.add('list', () => {
-  const { numberOfSeries, itemRenderer, containerWidth } = getStoriesKnobs();
+  const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries } = getStoriesKnobs();
+  let items = generateLegendItems(numberOfSeries);
+
+  items = items.map(i => {
+    if (
+      rightAxisSeries
+        .split(',')
+        .map(s => s.trim())
+        .indexOf(i.label.split('-')[0]) > -1
+    ) {
+      i.useRightYAxis = true;
+    }
+
+    return i;
+  });
   return (
     <div style={{ width: containerWidth }}>
-      <Legend itemRenderer={itemRenderer} renderLegendAs={LegendList} items={generateLegendItems(numberOfSeries)} />
+      <Legend itemRenderer={itemRenderer} renderLegendAs={LegendList} items={items} />
     </div>
   );
 });

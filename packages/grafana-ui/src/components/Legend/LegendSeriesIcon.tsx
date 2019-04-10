@@ -4,20 +4,20 @@ import { SeriesIcon } from './SeriesIcon';
 
 interface LegendSeriesIconProps {
   color: string;
-  yaxis?: number;
+  useRightYAxis: boolean;
   onColorChange: (color: string) => void;
   onToggleAxis?: () => void;
 }
 
 export const LegendSeriesIcon: React.FunctionComponent<LegendSeriesIconProps> = ({
-  yaxis,
+  useRightYAxis,
   color,
   onColorChange,
   onToggleAxis,
 }) => {
   return (
     <SeriesColorPicker
-      yaxis={yaxis}
+      yaxis={useRightYAxis ? 2 : 1}
       color={color}
       onChange={onColorChange}
       onToggleAxis={onToggleAxis}

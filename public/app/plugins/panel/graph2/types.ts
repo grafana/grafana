@@ -1,7 +1,7 @@
 import { LegendOptions } from '@grafana/ui';
 
 export interface SeriesOptions {
-  color: string;
+  color?: string;
   useRightYAxis?: boolean;
 }
 export interface GraphOptions {

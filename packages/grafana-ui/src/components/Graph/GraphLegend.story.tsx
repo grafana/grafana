@@ -50,11 +50,11 @@ GraphLegendStories.add('list', () => {
         onLabelClick={item => {
           action('Series label clicked')(item);
         }}
-        onSeriesColorChange={color => {
-          action('Series color changed')(color);
+        onSeriesColorChange={(label, color) => {
+          action('Series color changed')(label, color);
         }}
-        onToggleAxis={() => {
-          action('Series axis toggle')();
+        onSeriesAxisToggle={(label, useRightYAxis) => {
+          action('Series axis toggle')(label, useRightYAxis);
         }}
         statsToDisplay={statsToDisplay}
       />
@@ -72,11 +72,11 @@ GraphLegendStories.add('table', () => {
         onLabelClick={item => {
           action('Series label clicked')(item);
         }}
-        onSeriesColorChange={color => {
-          action('Series color changed')(color);
+        onSeriesColorChange={(label, color) => {
+          action('Series color changed')(label, color);
         }}
-        onToggleAxis={() => {
-          action('Series axis toggle')();
+        onSeriesAxisToggle={(label, useRightYAxis) => {
+          action('Series axis toggle')(label, useRightYAxis);
         }}
         statsToDisplay={statsToDisplay}
       />

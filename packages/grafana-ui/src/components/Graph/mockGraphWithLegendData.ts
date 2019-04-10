@@ -5,6 +5,8 @@ import { LegendList } from '../Legend/LegendList';
 export const mockGraphWithLegendData = ({
   renderLegendAs,
   stats,
+  onSeriesColorChange,
+  onSeriesAxisToggle,
 }: Partial<GraphWithLegendProps>): GraphWithLegendProps => ({
   series: [
     {
@@ -1111,6 +1113,7 @@ export const mockGraphWithLegendData = ({
         previousDeltaUp: false,
       },
       isVisible: true,
+      useRightYAxis: false,
     },
     {
       label: 'B-series',
@@ -2216,6 +2219,7 @@ export const mockGraphWithLegendData = ({
         previousDeltaUp: false,
       },
       isVisible: true,
+      useRightYAxis: false,
     },
     {
       label: 'C-series',
@@ -3321,6 +3325,7 @@ export const mockGraphWithLegendData = ({
         previousDeltaUp: false,
       },
       isVisible: true,
+      useRightYAxis: false,
     },
   ],
   timeRange: {
@@ -3338,9 +3343,17 @@ export const mockGraphWithLegendData = ({
   showLines: true,
   showPoints: false,
   placement: 'under',
-
   decimals: 1,
-
+  onSeriesColorChange: (label, color) => {
+    if (onSeriesColorChange) {
+      onSeriesColorChange(label, color);
+    }
+  },
+  onSeriesAxisToggle: (label, useRightYAxis) => {
+    if (onSeriesAxisToggle) {
+      onSeriesAxisToggle(label, useRightYAxis);
+    }
+  },
   renderLegendAs: renderLegendAs || LegendList,
   stats,
 });

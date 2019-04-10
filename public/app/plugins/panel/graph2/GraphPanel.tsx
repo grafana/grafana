@@ -1,9 +1,58 @@
 import React from 'react';
 import { PanelProps, GraphWithLegend, LegendTable, LegendList } from '@grafana/ui';
-import { Options } from './types';
+import { Options, SeriesOptions } from './types';
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 
-export class GraphPanel extends React.Component<PanelProps<Options>> {
+interface GraphPanelProps extends PanelProps<Options> {}
+
+export class GraphPanel extends React.Component<GraphPanelProps> {
+  constructor(props: GraphPanelProps) {
+    super(props);
+    this.onSeriesColorChange = this.onSeriesColorChange.bind(this);
+    this.onSeriesAxisToggle = this.onSeriesAxisToggle.bind(this);
+  }
+
+  onSeriesOptionsUpdate(label: string, optionsUpdate: SeriesOptions) {
+    const { onOptionsChange, options } = this.props;
+    const updatedSeriesOptions: { [label: string]: SeriesOptions } = { ...options.series };
+    updatedSeriesOptions[label] = optionsUpdate;
+    onOptionsChange({
+      ...options,
+      series: updatedSeriesOptions,
+    });
+  }
+
+  onSeriesAxisToggle(label: string, useRightYAxis: boolean) {
+    const {
+      options: { series },
+    } = this.props;
+    const seriesOptionsUpdate: SeriesOptions = series[label]
+      ? {
+          ...series[label],
+          useRightYAxis,
+        }
+      : {
+          useRightYAxis,
+        };
+    this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
+  }
+
+  onSeriesColorChange(label: string, color: string) {
+    const {
+      options: { series },
+    } = this.props;
+    const seriesOptionsUpdate: SeriesOptions = series[label]
+      ? {
+          ...series[label],
+          color,
+        }
+      : {
+          color,
+        };
+
+    this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
+  }
+
   render() {
     const { data, timeRange, width, height, options } = this.props;
     if (!data) {
@@ -17,6 +66,7 @@ export class GraphPanel extends React.Component<PanelProps<Options>> {
     const {
       graph: { showLines, showBars, showPoints },
       legend: legendOptions,
+      series,
     } = options;
 
     const graphProps = {
@@ -28,12 +78,14 @@ export class GraphPanel extends React.Component<PanelProps<Options>> {
 
     return (
       <GraphWithLegend
-        series={getGraphSeriesModel(data, legendOptions.stats)}
+        series={getGraphSeriesModel(data, legendOptions.stats, series)}
         timeRange={timeRange}
         width={width}
         height={height}
         renderLegendAs={asTable ? LegendTable : LegendList}
         isLegendVisible={isVisible}
+        onSeriesColorChange={this.onSeriesColorChange}
+        onSeriesAxisToggle={this.onSeriesAxisToggle}
         {...graphProps}
         {...legendProps}
       />

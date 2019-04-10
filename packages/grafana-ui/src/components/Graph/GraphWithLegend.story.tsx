@@ -1,12 +1,13 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 
-import { select } from '@storybook/addon-knobs';
+import { select, text } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend } from './GraphWithLegend';
 
 import { mockGraphWithLegendData } from './mockGraphWithLegendData';
 import { StatID } from '../../utils/index';
+import { action } from '@storybook/addon-actions';
 const GraphWithLegendStories = storiesOf('UI/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
@@ -39,18 +40,40 @@ const getStoriesKnobs = () => {
     },
     '200px'
   );
+
+  const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
+
   return {
     statsToDisplay,
     containerWidth,
     containerHeight,
+    rightAxisSeries,
   };
 };
 
 GraphWithLegendStories.add('default', () => {
-  const { containerWidth, containerHeight, statsToDisplay } = getStoriesKnobs();
+  const { containerWidth, containerHeight, statsToDisplay, rightAxisSeries } = getStoriesKnobs();
+
+  const props = mockGraphWithLegendData({
+    stats: statsToDisplay,
+    onSeriesColorChange: action('Series color changed'),
+    onSeriesAxisToggle: action('Series y-axis changed'),
+  });
+  const series = props.series.map(s => {
+    if (
+      rightAxisSeries
+        .split(',')
+        .map(s => s.trim())
+        .indexOf(s.label.split('-')[0]) > -1
+    ) {
+      s.useRightYAxis = true;
+    }
+
+    return s;
+  });
   return (
     <div style={{ width: containerWidth, height: containerHeight }}>
-      <GraphWithLegend {...mockGraphWithLegendData({ stats: statsToDisplay })} />
+      <GraphWithLegend {...props} series={series} />,
     </div>
   );
 });
