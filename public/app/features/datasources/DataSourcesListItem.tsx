@@ -21,7 +21,7 @@ export class DataSourcesListItem extends PureComponent<Props> {
             <div className="card-item-details">
               <div className="card-item-name">
                 {dataSource.name}
-                {dataSource.isDefault && <span className="btn btn-secondary btn-mini card-item-label">default</span>}
+                {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
               </div>
               <div className="card-item-sub-name">{dataSource.url}</div>
             </div>

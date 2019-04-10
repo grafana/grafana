@@ -54,6 +54,7 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
     this.components.ExploreQueryField = exports.ExploreQueryField;
     this.components.ExploreStartPage = exports.ExploreStartPage;
     this.components.QueryEditor = exports.QueryEditor;
+    this.components.VariableQueryEditor = exports.VariableQueryEditor;
   }
 }
 

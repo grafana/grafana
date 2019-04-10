@@ -87,6 +87,12 @@ $container-max-widths: (
 $grid-columns: 12 !default;
 $grid-gutter-width: ${theme.spacing.gutter} !default;
 
+// Component heights
+// -------------------------
+$height-sm: ${theme.height.sm};
+$height-md: ${theme.height.md};
+$height-lg: ${theme.height.lg};
+
 // Typography
 // -------------------------
 
