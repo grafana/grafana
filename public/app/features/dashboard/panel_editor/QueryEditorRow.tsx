@@ -182,7 +182,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     if (datasource.components.QueryEditor) {
       const QueryEditor = datasource.components.QueryEditor;
-
+      console.log('QueryEditorRow', datasource);
       return (
         <QueryEditor
           query={query}
@@ -225,10 +225,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderCollapsedText(): string | null {
+    const { datasource } = this.state;
+    if (datasource.getCollapsedText) {
+      return datasource.getCollapsedText(this.props.query);
+    }
+
     if (this.angularScope && this.angularScope.getCollapsedText) {
       return this.angularScope.getCollapsedText();
     }
-
     return null;
   }
 

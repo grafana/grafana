@@ -127,6 +127,9 @@ export class DataPanel extends Component<Props, State> {
     }
 
     this.setState({ loading: LoadingState.Loading });
+    if (datasource === '-- Dashboard --') {
+      return;
+    }
 
     try {
       const ds = await this.dataSourceSrv.get(datasource, scopedVars);

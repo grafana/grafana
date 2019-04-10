@@ -10,7 +10,7 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -18,7 +18,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
-  dataList: any = [];
+  dataList: LegacyResponseData[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -186,7 +186,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: LegacyResponseData[]) {
+    if (!this.range) {
+      console.log('GOT', this, dataList);
+      this.updateTimeRange();
+    }
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({
       dataList: dataList,
@@ -213,6 +217,14 @@ class GraphCtrl extends MetricsPanelCtrl {
           break;
         }
       }
+    }
+
+    if (!this.annotationsPromise) {
+      this.annotationsPromise = this.annotationsSrv.getAnnotations({
+        dashboard: this.dashboard,
+        panel: this.panel,
+        range: this.range,
+      });
     }
 
     this.annotationsPromise.then(

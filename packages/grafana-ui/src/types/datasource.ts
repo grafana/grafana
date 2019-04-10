@@ -107,6 +107,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
 
   /**
+   * Convert a query to a simple text string
+   */
+  getCollapsedText?(query: TQuery): string | null;
+
+  /**
    *  Set after constructor is called by Grafana
    */
   name?: string;
