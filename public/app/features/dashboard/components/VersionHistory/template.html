@@ -1,4 +1,4 @@
-<h3 class="dashboard-settings__header">
+<h2 class="dashboard-settings__header">
   <a ng-click="ctrl.switchMode('list')">Versions</a>
   <span ng-show="ctrl.mode === 'compare'">
     &gt; Comparing {{ctrl.baseInfo.version}}
@@ -6,7 +6,7 @@
     {{ctrl.newInfo.version}}
     <cite class="muted" ng-if="ctrl.isNewLatest">(Latest)</cite>
   </span>
-</h3>
+</h2>
 
 <div ng-if="ctrl.mode === 'list'">
   <div ng-if="ctrl.loading">

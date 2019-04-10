@@ -16,9 +16,9 @@ const theme: GrafanaThemeCommons = {
       lg: '18px',
     },
     heading: {
-      h1: '28px',
-      h2: '24px',
-      h3: '21px',
+      h1: '24px',
+      h2: '21px',
+      h3: '18px',
       h4: '18px',
       h5: '16px',
       h6: '14px',

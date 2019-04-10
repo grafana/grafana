@@ -69,7 +69,7 @@ export class DashboardPermissions extends PureComponent<Props, State> {
       <div>
         <div className="dashboard-settings__header">
           <div className="page-action-bar">
-            <h3 className="d-inline-block">Permissions</h3>
+            <h2 className="d-inline-block">Permissions</h2>
             <Tooltip placement="auto" content={<PermissionsInfo />}>
               <div className="page-sub-heading-icon">
                 <i className="gicon gicon-question gicon--has-hover" />

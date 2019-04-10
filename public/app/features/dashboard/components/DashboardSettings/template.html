@@ -1,8 +1,8 @@
 <aside class="dashboard-settings__aside">
-	<h2 class="dashboard-settings__aside-header">
+	<h1 class="dashboard-settings__aside-header">
 		<i class="fa fa-cog"></i>
 		Settings
-	</h2>
+	</h1>
 
 	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
     <i class="{{::section.icon}}"></i>
@@ -20,9 +20,9 @@
 </aside>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'settings'">
-	<h3 class="dashboard-settings__header">
+	<h2 class="dashboard-settings__header">
 		General
-	</h3>
+	</h2>
 
 	<div class="gf-form-group">
 		<div class="gf-form">
@@ -55,7 +55,7 @@
 
 	<gf-time-picker-settings dashboard="ctrl.dashboard"></gf-time-picker-settings>
 
-	<h5 class="section-heading">Panel Options</h5>
+	<h3 class="page-heading">Panel Options</h3>
 	<div class="gf-form">
 		<label class="gf-form-label width-11">
 			Graph Tooltip
@@ -89,7 +89,7 @@
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'dashboard_json'" >
-	<h3 class="dashboard-settings__header">JSON Model</h3>
+	<h2 class="dashboard-settings__header">JSON Model</h2>
   <div class="dashboard-settings__subheader">
     The JSON Model below is data structure that defines the dashboard. Including settings, panel settings & layout,
     queries etc.
@@ -118,7 +118,7 @@
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">
-  <h3 class="dashboard-settings__header">Settings view not found</h3>
+  <h2 class="dashboard-settings__header">Settings view not found</h2>
 
   <div>
     <h5>The settings page could not be found or you do not have permission to access it</h5>
@@ -126,7 +126,7 @@
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'make_editable'">
-  <h3 class="dashboard-settings__header">Make Editable</h3>
+  <h2 class="dashboard-settings__header">Make Editable</h2>
 
   <button class="btn btn-primary" ng-click="ctrl.makeEditable()">
     Make Editable
