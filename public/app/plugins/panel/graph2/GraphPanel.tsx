@@ -14,7 +14,10 @@ export class GraphPanel extends React.Component<PanelProps<Options>> {
       );
     }
 
-    const { showLines, showBars, showPoints, legend: legendOptions } = options;
+    const {
+      graph: { showLines, showBars, showPoints },
+      legend: legendOptions,
+    } = options;
 
     const graphProps = {
       showBars,
