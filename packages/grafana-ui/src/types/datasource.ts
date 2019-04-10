@@ -109,7 +109,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Convert a query to a simple text string
    */
-  getCollapsedText?(query: TQuery): string | null;
+  getQueryDisplayText?(query: TQuery): string;
 
   /**
    *  Set after constructor is called by Grafana

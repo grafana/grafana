@@ -226,8 +226,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource.getCollapsedText) {
-      return datasource.getCollapsedText(this.props.query);
+    if (datasource.getQueryDisplayText) {
+      return datasource.getQueryDisplayText(this.props.query);
     }
 
     if (this.angularScope && this.angularScope.getCollapsedText) {

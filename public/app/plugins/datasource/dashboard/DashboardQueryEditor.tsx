@@ -23,7 +23,7 @@ type State = {
   defaultDatasource: string;
 };
 
-function getCollapsedText(query: DataQuery): string {
+function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
 }
 
@@ -66,7 +66,7 @@ export class DashboardQueryEditor extends Component<Props, State> {
         .get(ref.datasource)
         .then(ds => {
           const logo = ds.meta.info.logos.small;
-          const fmt = ds.getCollapsedText ? ds.getCollapsedText : getCollapsedText;
+          const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
           this.setState({
             targets: ref.targets.map(query => {
               if (query.datasource) {
