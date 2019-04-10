@@ -25,6 +25,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
+  updateOptions: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -130,6 +131,8 @@ export class PanelModel {
     this.ensureQueryIds();
 
     this.restoreInfintyForThresholds();
+
+    this.updateOptions = this.updateOptions.bind(this);
   }
 
   ensureQueryIds() {

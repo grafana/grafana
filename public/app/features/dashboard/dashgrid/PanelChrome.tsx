@@ -165,7 +165,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (loading === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
     }
-
     return (
       <div className="panel-content">
         <PanelComponent
