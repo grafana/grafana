@@ -16,8 +16,7 @@ type AppPluginCss struct {
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Routes  []*AppPluginRoute `json:"routes"`
-	Preload bool              `json:"preload"`
+	Routes []*AppPluginRoute `json:"routes"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`

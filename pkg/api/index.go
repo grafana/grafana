@@ -200,13 +200,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		return nil, err
 	}
 
-	var preload []string
-
 	for _, plugin := range enabledPlugins.Apps {
-		if plugin.Preload {
-			preload = append(preload, plugin.Id)
-		}
-
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
 				Text: plugin.Name,
@@ -246,10 +240,6 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 				data.NavTree = append(data.NavTree, appLink)
 			}
 		}
-	}
-
-	if len(preload) > 0 {
-		data.Settings["preload"] = preload
 	}
 
 	if c.IsGrafanaAdmin || c.OrgRole == m.ROLE_ADMIN {
