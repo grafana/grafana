@@ -7,7 +7,6 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { toLegacyResponseData, isSeriesData } from '@grafana/ui';
-import { PanelModel } from 'app/features/dashboard/state';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -52,7 +51,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
-    if (this.otherPanelInFullscreenMode() && !this.panel.queryListeners) {
+    if (this.otherPanelInFullscreenMode()) {
       return;
     }
 
@@ -75,11 +74,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     // // ignore if we have data stream
     if (this.dataStream) {
       return;
-    }
-
-    if (this.panel.datasource === '-- Dashboard --') {
-      this.updateTimeRange();
-      return; // wait for other panels to refresh
     }
 
     // clear loading/error state
@@ -203,10 +197,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       return v;
     });
     this.events.emit('data-received', data);
-
-    if (this.panel.queryListeners) {
-      (this.panel as PanelModel).notifyListeners(result, null, data);
-    }
   }
 
   handleDataStream(stream) {
