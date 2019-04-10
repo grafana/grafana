@@ -20,3 +20,12 @@ export interface TimeZone {
   raw: string;
   isUtc: boolean;
 }
+
+export const parseTimeZone = (raw: string): TimeZone => {
+  return {
+    raw: raw,
+    isUtc: raw === 'utc',
+  };
+};
+
+export const DefaultTimeZone = parseTimeZone('browser');
