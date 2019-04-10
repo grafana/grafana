@@ -74,7 +74,9 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
           });
 
           const displayValue = display(stats[stat]);
-          displayValue.title = series.name;
+          if (series.name) {
+            displayValue.title = replaceVariables(series.name);
+          }
           values.push(displayValue);
         }
       }
@@ -86,6 +88,9 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
       numeric: 0,
       text: 'No data',
     });
+  } else if (values.length === 1) {
+    // Don't show title for single item
+    values[0].title = undefined;
   }
 
   return values;

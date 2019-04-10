@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
+import { css } from 'emotion';
 import { getColorFromHexRgbOrName } from '../../utils';
 import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
 
@@ -119,18 +120,31 @@ export class Gauge extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width } = this.props;
+    const { height, width, value } = this.props;
 
     return (
       <div
         style={{
           height: `${Math.min(height, width * 1.3)}px`,
           width: `${Math.min(width, height * 1.3)}px`,
-          top: '10px',
           margin: 'auto',
+          marginTop: '-8px',
         }}
         ref={element => (this.canvasElement = element)}
-      />
+      >
+        {value.title && (
+          <div
+            className={css({
+              textAlign: 'center',
+              bottom: -8,
+              width: '100%',
+              position: 'absolute',
+            })}
+          >
+            {value.title}
+          </div>
+        )}
+      </div>
     );
   }
 }
