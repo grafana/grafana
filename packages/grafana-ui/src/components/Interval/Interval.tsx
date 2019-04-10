@@ -25,12 +25,16 @@ export class Interval extends PureComponent<Props> {
 
   addInterval = () => {
     const { func, delay } = this.props;
-
-    func().then(() => {
-      this.intervalId = window.setTimeout(() => {
-        this.addInterval();
-      }, delay);
-    });
+    if (delay > 0) {
+      func().then(() => {
+        if (delay > 0) {
+          // Need to re-check in case the promise (query) is slow
+          this.intervalId = window.setTimeout(() => {
+            this.addInterval();
+          }, delay);
+        }
+      });
+    }
   };
 
   clearInterval = () => {
