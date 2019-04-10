@@ -19,7 +19,6 @@ import { PanelResizer } from './PanelResizer';
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { AngularPanelPlugin, ReactPanelPlugin } from '@grafana/ui/src/types/panel';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export interface Props {
   panel: PanelModel;
@@ -118,21 +117,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   async componentDidUpdate() {
-    const { panel } = this.props;
-    if (panel.targets && panel.datasource === '-- Dashboard --') {
-      const { dashboard } = this.props;
-
-      const ds = await getDatasourceSrv().get(panel.datasource);
-      (ds as any).dashboard = dashboard;
-
-      for (const query of panel.targets) {
-        const ref = dashboard.getPanelById((query as any).panelId);
-        if (ref) {
-          ref.addQueryResultListener(panel); // TBD
-        }
-      }
-    }
-
     if (!this.element || this.state.angularPanel) {
       return;
     }

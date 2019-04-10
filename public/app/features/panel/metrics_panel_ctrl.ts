@@ -6,8 +6,15 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isSeriesData } from '@grafana/ui';
-import { PanelModel } from 'app/features/dashboard/state';
+import { toLegacyResponseData, isSeriesData, DataQueryResponse, TimeRange } from '@grafana/ui';
+import {
+  QueryResultsObservers,
+  SHARED_DASHBODARD_QUERY,
+  AngularQueryResults,
+  checkQueryResultsObservers,
+} from '../dashboard/state/QueryResultsObservers';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PartialObserver } from 'rxjs';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -50,6 +57,24 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
   }
 
+  sharedQueryObserver: PartialObserver<AngularQueryResults> = {
+    next: (results: AngularQueryResults) => {
+      // Unsubscribe if this is not the query we want
+      if (
+        this.panel.datasource !== SHARED_DASHBODARD_QUERY ||
+        _.get(this.panel, 'targets[0].panelId') !== results.panelId
+      ) {
+        console.log('Not pointed to me! unsubscribing....', this, results);
+        results.unsubscribe(this.panel.id);
+        return;
+      }
+
+      // Still missing time info :(
+      this.range = results.range;
+      this.events.emit('data-received', results.data);
+    },
+  };
+
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode() && !this.panel.queryListeners) {
@@ -77,9 +102,18 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
-    if (this.panel.datasource === '-- Dashboard --') {
-      this.updateTimeRange();
-      return; // wait for other panels to refresh
+    // Make sure we are watching the query results
+    if (this.panel.datasource === SHARED_DASHBODARD_QUERY) {
+      try {
+        checkQueryResultsObservers(
+          this.panel as PanelModel,
+          this.dashboard as DashboardModel,
+          this.sharedQueryObserver
+        );
+      } catch (ex) {
+        console.log('ERRRRR', ex);
+      }
+      return;
     }
 
     // clear loading/error state
@@ -204,8 +238,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
     this.events.emit('data-received', data);
 
-    if (this.panel.queryListeners) {
-      (this.panel as PanelModel).notifyListeners(result, null, data);
+    const listeners = this.panel.queryObservers as QueryResultsObservers;
+    if (listeners) {
+      listeners.broadcastAngularResuls({
+        panelId: this.panel.id,
+        raw: result as DataQueryResponse,
+        range: this.range as TimeRange,
+        data,
+      });
     }
   }
 

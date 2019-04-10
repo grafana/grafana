@@ -18,7 +18,6 @@ type QueryInfo = {
 };
 
 type State = {
-  refresh: number;
   targets?: QueryInfo[];
   defaultDatasource: string;
 };
@@ -32,7 +31,6 @@ export class DashboardQueryEditor extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      refresh: 0,
       defaultDatasource: '',
     };
   }
@@ -46,11 +44,7 @@ export class DashboardQueryEditor extends Component<Props, State> {
     const { query, datasource } = this.props;
     const { dashboard } = datasource;
 
-    // Force an update after the first call
     if (!dashboard) {
-      setTimeout(() => {
-        this.setState({ refresh: this.state.refresh + 1 });
-      }, 100);
       return;
     }
 

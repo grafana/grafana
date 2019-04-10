@@ -13,6 +13,8 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
+import { SHARED_DASHBODARD_QUERY } from '../state/QueryResultsObservers';
+import { DashboardDatasource } from 'app/plugins/datasource/dashboard/module';
 
 interface Props {
   panel: PanelModel;
@@ -123,9 +125,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   async loadDatasource() {
-    const { query, panel } = this.props;
+    const { query, panel, dashboard } = this.props;
     const dataSourceSrv = getDatasourceSrv();
     const datasource = await dataSourceSrv.get(query.datasource || panel.datasource);
+
+    // Set the current dashboard
+    if (datasource.name === SHARED_DASHBODARD_QUERY) {
+      (datasource as DashboardDatasource).dashboard = dashboard;
+    }
 
     this.setState({
       datasource,

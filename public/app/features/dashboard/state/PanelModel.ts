@@ -6,19 +6,10 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import {
-  DataQuery,
-  Threshold,
-  ScopedVars,
-  DataQueryResponseData,
-  DataQueryResponse,
-  SeriesData,
-  LegacyResponseData,
-  isSeriesData,
-  toLegacyResponseData,
-} from '@grafana/ui';
+import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
 import { PanelPlugin } from 'app/types';
 import config from 'app/core/config';
+import { QueryResultsObservers } from './QueryResultsObservers';
 
 export interface GridPos {
   x: number;
@@ -35,7 +26,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
-  queryListeners: true,
+  queryObservers: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -126,7 +117,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  queryListeners?: PanelModel[];
+  queryObservers?: QueryResultsObservers;
 
   constructor(model: any) {
     this.events = new Emitter();
@@ -152,51 +143,6 @@ export class PanelModel {
         }
       }
     }
-  }
-
-  addQueryResultListener(panel: PanelModel) {
-    if (this.queryListeners) {
-      for (const p of this.queryListeners) {
-        if (p.id === panel.id) {
-          return; // already listening
-        }
-      }
-      this.queryListeners = [...this.queryListeners, panel];
-    } else {
-      this.queryListeners = [panel];
-    }
-  }
-
-  notifyListeners(result: DataQueryResponse, series: SeriesData[], legacy: LegacyResponseData[]) {
-    if (!this.queryListeners) {
-      return;
-    }
-    const valid = [];
-    for (const listener of this.queryListeners) {
-      if (
-        listener.datasource === '-- Dashboard --' &&
-        listener.targets &&
-        (listener.targets[0] as any).panelId === this.id
-      ) {
-        valid.push(listener);
-
-        if (listener.plugin.angularPlugin) {
-          if (!legacy) {
-            // Same calculation as metrics_panel_ctrl
-            legacy = result.data.map(v => {
-              if (isSeriesData(v)) {
-                return toLegacyResponseData(v);
-              }
-              return v;
-            });
-          }
-          listener.events.emit('data-received', legacy);
-        } else {
-          console.log('TODO, dispatch to react', listener);
-        }
-      }
-    }
-    this.queryListeners = valid;
   }
 
   restoreInfintyForThresholds() {

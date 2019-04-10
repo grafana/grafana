@@ -17,6 +17,8 @@ import {
   guessFieldTypes,
 } from '@grafana/ui';
 
+import { SHARED_DASHBODARD_QUERY, QueryResultsObservers } from 'app/features/dashboard/state/QueryResultsObservers';
+
 interface RenderProps {
   loading: LoadingState;
   data: SeriesData[];
@@ -34,6 +36,7 @@ export interface Props {
   minInterval?: string;
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
+  queryListeners?: QueryResultsObservers;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data?: SeriesData[]) => void;
   onError: (message: string, error: DataQueryError) => void;
@@ -115,6 +118,7 @@ export class DataPanel extends Component<Props, State> {
       scopedVars,
       onDataResponse,
       onError,
+      queryListeners,
     } = this.props;
 
     if (!isVisible) {
@@ -126,10 +130,12 @@ export class DataPanel extends Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
-    if (datasource === '-- Dashboard --') {
+    if (datasource === SHARED_DASHBODARD_QUERY) {
+      console.log('TODO, register observer', panelId);
       return;
     }
+
+    this.setState({ loading: LoadingState.Loading });
 
     try {
       const ds = await this.dataSourceSrv.get(datasource, scopedVars);
@@ -169,6 +175,15 @@ export class DataPanel extends Component<Props, State> {
         loading: LoadingState.Done,
         isFirstLoad: false,
       });
+
+      if (queryListeners) {
+        queryListeners.broadcastReactResuls({
+          panelId,
+          raw: resp,
+          range: timeRange,
+          series: data,
+        });
+      }
     } catch (err) {
       console.log('DataPanel error', err);
 
