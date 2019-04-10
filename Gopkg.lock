@@ -346,12 +346,11 @@
   revision = "c2b33e84"
 
 [[projects]]
-  digest = "1:6ddab442e52381bab82fb6c07ef3f4b565ff7ec4b8fae96d8dd4b8573a460597"
+  digest = "1:395b1480ae42c3fec6fff19823e66e173819f85826811387f9045c88515a7f0f"
   name = "github.com/jtolds/gls"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "77f18212c9c7edc9bd6a33d383a7b545ce62f064"
-  version = "v4.2.1"
+  revision = "b4936e06046bbecbb94cae9c18127ebe510a2cb9"
 
 [[projects]]
   digest = "1:1da1796a71eb70f1e3e085984d044f67840bb0326816ec8276231aa87b1b9fc3"
@@ -546,19 +545,19 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:1f0b284a6858827de4c27c66b49b2b25df3e16b031c2b57b7892273131e7dd2b"
+  digest = "1:a0509115762ee481fd95b60521b4dcc5ad226c54b741a4924f4f28c0cc6aabc8"
   name = "github.com/smartystreets/assertions"
   packages = [
     ".",
+    "internal/go-diff/diffmatchpatch",
     "internal/go-render/render",
     "internal/oglematchers",
   ]
   pruneopts = "NUT"
-  revision = "7678a5452ebea5b7090a6b163f844c133f523da2"
-  version = "1.8.3"
+  revision = "f487f9de1cd36ebab28235b9373028812fb47cbd"
 
 [[projects]]
-  digest = "1:7efd0b2309cdd6468029fa30c808c50a820c9344df07e1a4bbdaf18f282907aa"
+  digest = "1:4dccd132a83155851c5e9faaa134ee3a931965c666b6b3c076e238fe9b3577a4"
   name = "github.com/smartystreets/goconvey"
   packages = [
     "convey",
@@ -566,8 +565,7 @@
     "convey/reporting",
   ]
   pruneopts = "NUT"
-  revision = "9e8dc3f972df6c8fcc0375ef492c24d0bb204857"
-  version = "1.6.3"
+  revision = "68dc04aab96ae4326137d6b77330c224063a927e"
 
 [[projects]]
   branch = "master"
@@ -909,6 +907,7 @@
     "github.com/hashicorp/go-plugin",
     "github.com/hashicorp/go-version",
     "github.com/inconshreveable/log15",
+    "github.com/jtolds/gls",
     "github.com/lib/pq",
     "github.com/mattn/go-isatty",
     "github.com/mattn/go-sqlite3",
@@ -916,7 +915,6 @@
     "github.com/opentracing/opentracing-go/ext",
     "github.com/opentracing/opentracing-go/log",
     "github.com/patrickmn/go-cache",
-    "github.com/pkg/errors",
     "github.com/prometheus/client_golang/api",
     "github.com/prometheus/client_golang/api/prometheus/v1",
     "github.com/prometheus/client_golang/prometheus",
@@ -924,6 +922,7 @@
     "github.com/prometheus/client_model/go",
     "github.com/prometheus/common/expfmt",
     "github.com/prometheus/common/model",
+    "github.com/smartystreets/assertions",
     "github.com/smartystreets/goconvey/convey",
     "github.com/teris-io/shortid",
     "github.com/uber/jaeger-client-go/config",

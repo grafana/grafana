@@ -19,11 +19,25 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["github.com/smartystreets/assertions", "github.com/jtolds/gls"]
+
 ignored = [
   "github.com/grafana/grafana/data/*",
   "github.com/grafana/grafana/public/*",
   "github.com/grafana/grafana/node_modules/*"
  ]
+
+[[constraint]]
+  name = "github.com/smartystreets/goconvey"
+  revision = "68dc04aab96ae4326137d6b77330c224063a927e"
+
+[[constraint]]
+  name = "github.com/smartystreets/assertions"
+  revision = "f487f9de1cd36ebab28235b9373028812fb47cbd"
+
+[[constraint]]
+  name = "github.com/jtolds/gls"
+  revision = "b4936e06046bbecbb94cae9c18127ebe510a2cb9"
 
 [[constraint]]
   name = "github.com/BurntSushi/toml"
@@ -151,9 +165,6 @@ ignored = [
   branch = "master"
   name = "github.com/prometheus/common"
 
-[[constraint]]
-  name = "github.com/smartystreets/goconvey"
-  version = "1.6.3"
 
 [[constraint]]
   name = "github.com/uber/jaeger-client-go"
