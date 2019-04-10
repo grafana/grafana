@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
@@ -87,23 +88,23 @@ type DataSourceFromConfigV0 struct {
 }
 
 type DataSourceFromConfigV1 struct {
-	OrgId             int64                  `json:"orgId" yaml:"orgId"`
-	Version           int                    `json:"version" yaml:"version"`
-	Name              string                 `json:"name" yaml:"name"`
-	Type              string                 `json:"type" yaml:"type"`
-	Access            string                 `json:"access" yaml:"access"`
-	Url               string                 `json:"url" yaml:"url"`
-	Password          string                 `json:"password" yaml:"password"`
-	User              string                 `json:"user" yaml:"user"`
-	Database          string                 `json:"database" yaml:"database"`
-	BasicAuth         bool                   `json:"basicAuth" yaml:"basicAuth"`
-	BasicAuthUser     string                 `json:"basicAuthUser" yaml:"basicAuthUser"`
-	BasicAuthPassword string                 `json:"basicAuthPassword" yaml:"basicAuthPassword"`
-	WithCredentials   bool                   `json:"withCredentials" yaml:"withCredentials"`
-	IsDefault         bool                   `json:"isDefault" yaml:"isDefault"`
-	JsonData          map[string]interface{} `json:"jsonData" yaml:"jsonData"`
-	SecureJsonData    map[string]string      `json:"secureJsonData" yaml:"secureJsonData"`
-	Editable          bool                   `json:"editable" yaml:"editable"`
+	OrgId             values.Int64Value     `json:"orgId" yaml:"orgId"`
+	Version           values.IntValue       `json:"version" yaml:"version"`
+	Name              values.StringValue    `json:"name" yaml:"name"`
+	Type              values.StringValue    `json:"type" yaml:"type"`
+	Access            values.StringValue    `json:"access" yaml:"access"`
+	Url               values.StringValue    `json:"url" yaml:"url"`
+	Password          values.StringValue    `json:"password" yaml:"password"`
+	User              values.StringValue    `json:"user" yaml:"user"`
+	Database          values.StringValue    `json:"database" yaml:"database"`
+	BasicAuth         values.BoolValue      `json:"basicAuth" yaml:"basicAuth"`
+	BasicAuthUser     values.StringValue    `json:"basicAuthUser" yaml:"basicAuthUser"`
+	BasicAuthPassword values.StringValue    `json:"basicAuthPassword" yaml:"basicAuthPassword"`
+	WithCredentials   values.BoolValue      `json:"withCredentials" yaml:"withCredentials"`
+	IsDefault         values.BoolValue      `json:"isDefault" yaml:"isDefault"`
+	JsonData          values.JSONValue      `json:"jsonData" yaml:"jsonData"`
+	SecureJsonData    values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
+	Editable          values.BoolValue      `json:"editable" yaml:"editable"`
 }
 
 func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *DatasourcesAsConfig {
@@ -117,23 +118,23 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 
 	for _, ds := range cfg.Datasources {
 		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
-			OrgId:             ds.OrgId,
-			Name:              ds.Name,
-			Type:              ds.Type,
-			Access:            ds.Access,
-			Url:               ds.Url,
-			Password:          ds.Password,
-			User:              ds.User,
-			Database:          ds.Database,
-			BasicAuth:         ds.BasicAuth,
-			BasicAuthUser:     ds.BasicAuthUser,
-			BasicAuthPassword: ds.BasicAuthPassword,
-			WithCredentials:   ds.WithCredentials,
-			IsDefault:         ds.IsDefault,
-			JsonData:          ds.JsonData,
-			SecureJsonData:    ds.SecureJsonData,
-			Editable:          ds.Editable,
-			Version:           ds.Version,
+			OrgId:             ds.OrgId.Value(),
+			Name:              ds.Name.Value(),
+			Type:              ds.Type.Value(),
+			Access:            ds.Access.Value(),
+			Url:               ds.Url.Value(),
+			Password:          ds.Password.Value(),
+			User:              ds.User.Value(),
+			Database:          ds.Database.Value(),
+			BasicAuth:         ds.BasicAuth.Value(),
+			BasicAuthUser:     ds.BasicAuthUser.Value(),
+			BasicAuthPassword: ds.BasicAuthPassword.Value(),
+			WithCredentials:   ds.WithCredentials.Value(),
+			IsDefault:         ds.IsDefault.Value(),
+			JsonData:          ds.JsonData.Value(),
+			SecureJsonData:    ds.SecureJsonData.Value(),
+			Editable:          ds.Editable.Value(),
+			Version:           ds.Version.Value(),
 		})
 	}
 
