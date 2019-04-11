@@ -489,16 +489,17 @@ workflows:
           filters: *filter-only-master
       - postgres-integration-test:
           filters: *filter-only-master
-      - build-oss-msi:
-          requires:
-            - build-all
-            - test-backend
-            - test-frontend
-            - codespell
-            - gometalinter
-            - mysql-integration-test
-            - postgres-integration-test
-          filters: *filter-only-master
+      # TODO: uncomment before merging
+      #- build-oss-msi:
+      #    requires:
+      #      - build-all
+      #      - test-backend
+      #      - test-frontend
+      #      - codespell
+      #      - gometalinter
+      #      - mysql-integration-test
+      #      - postgres-integration-test
+      #    filters: *filter-only-master
       - deploy-master:
           requires:
             - build-all
@@ -550,16 +551,17 @@ workflows:
           filters: *filter-only-release
       - postgres-integration-test:
           filters: *filter-only-release
-      - build-oss-msi:
-          requires:
-            - build-all
-            - test-backend
-            - test-frontend
-            - codespell
-            - gometalinter
-            - mysql-integration-test
-            - postgres-integration-test
-          filters: *filter-only-release
+      # TODO: uncomment before merging
+      #- build-oss-msi:
+      #    requires:
+      #      - build-all
+      #      - test-backend
+      #      - test-frontend
+      #      - codespell
+      #      - gometalinter
+      #      - mysql-integration-test
+      #      - postgres-integration-test
+      #    filters: *filter-only-release
       - deploy-release:
           requires:
             - build-all
@@ -611,6 +613,16 @@ workflows:
             filters: *filter-not-release-or-master
         - cache-server-test:
             filters: *filter-not-release-or-master
+        # TODO: REMOVE BEFORE MERGING! This is just testing
+        - build-oss-msi:
+            requires:
+              - build-all
+              - test-backend
+              - test-frontend
+              - codespell
+              - gometalinter
+              - mysql-integration-test
+              - postgres-integration-test
         - grafana-docker-pr:
             requires:
               - build
