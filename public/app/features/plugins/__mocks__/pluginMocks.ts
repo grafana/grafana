@@ -36,6 +36,7 @@ export const getMockPlugins = (amount: number): Plugin[] => {
 export const getPanelPlugin = (options: Partial<PanelPlugin>): PanelPlugin => {
   return {
     id: options.id,
+    type: 'panel',
     name: options.id,
     sort: options.sort || 1,
     dataFormats: [PanelDataFormat.TimeSeries],
@@ -81,9 +82,9 @@ export const getMockPlugin = () => {
     },
     latestVersion: '1',
     name: 'pretty cool plugin 1',
+    baseUrl: 'path/to/plugin',
     pinned: false,
-    state: '',
     type: '',
-    module: {},
-  };
+    module: 'path/to/module',
+  } as Plugin;
 };

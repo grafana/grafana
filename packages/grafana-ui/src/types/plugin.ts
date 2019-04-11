@@ -3,32 +3,15 @@ export enum PluginState {
   beta = 'beta',
 }
 
-export function getPluginStateInfoText(state?: PluginState): string | null {
-  switch (state) {
-    case PluginState.alpha:
-      return (
-        'This plugin is marked as being in alpha state, which means it is in early development phase and updates' +
-        ' will include breaking changes.'
-      );
-
-    case PluginState.beta:
-      return (
-        'This plugin is marked as being in a beta development state. This means it is in currently in active' +
-        ' development and could be missing important features.'
-      );
-  }
-  return null;
-}
-
 export interface PluginMeta {
   id: string;
   name: string;
   info: PluginMetaInfo;
-  includes: PluginInclude[];
   module: string;
-  baseUrl: string;
+  includes?: PluginInclude[];
+  baseUrl?: string;
 
-  type: string;
+  type: string; // panel|app|datasource
   enabled?: boolean;
   state?: PluginState;
 
