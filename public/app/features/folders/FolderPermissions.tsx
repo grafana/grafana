@@ -88,7 +88,7 @@ export class FolderPermissions extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents>
           <div className="page-action-bar">
-            <h3 className="page-sub-heading">Folder Permissions</h3>
+            <h2 className="page-sub-heading">Folder Permissions</h2>
             <Tooltip placement="auto" content={<PermissionsInfo />}>
               <div className="page-sub-heading-icon">
                 <i className="gicon gicon-question gicon--has-hover" />

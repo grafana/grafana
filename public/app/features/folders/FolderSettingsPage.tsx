@@ -68,7 +68,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={this.state.isLoading}>
-          <h3 className="page-sub-heading">Folder Settings</h3>
+          <h2 className="page-sub-heading">Folder Settings</h2>
 
           <div className="section gf-form-group">
             <form name="folderSettingsForm" onSubmit={this.onSave}>

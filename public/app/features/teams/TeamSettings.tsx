@@ -48,7 +48,7 @@ export class TeamSettings extends React.Component<Props, State> {
 
     return (
       <div>
-        <h3 className="page-sub-heading">Team Settings</h3>
+        <h2 className="page-sub-heading">Team Settings</h2>
         <form name="teamDetailsForm" className="gf-form-group" onSubmit={this.onUpdate}>
           <div className="gf-form max-width-30">
             <FormLabel>Name</FormLabel>

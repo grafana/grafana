@@ -102,7 +102,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
-        <h4 className="page-heading">Preferences</h4>
+        <h3 className="page-heading">Preferences</h3>
         <div className="gf-form">
           <span className="gf-form-label width-11">UI Theme</span>
           <Select

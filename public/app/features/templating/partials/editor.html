@@ -74,7 +74,7 @@
 	</div>
 
 	<form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
-		<h5 class="section-heading">General</h5>
+		<h3 class="section-heading">General</h3>
 		<div class="gf-form-group">
 			<div class="gf-form-inline">
 				<div class="gf-form max-width-19">
@@ -116,7 +116,7 @@
 		</div>
 
 		<div ng-if="current.type === 'interval'" class="gf-form-group">
-			<h5 class="section-heading">Interval Options</h5>
+			<h3 class="section-heading">Interval Options</h3>
 
 			<div class="gf-form">
 				<span class="gf-form-label width-9">Values</span>
@@ -148,7 +148,7 @@
 		</div>
 
 		<div ng-if="current.type === 'custom'" class="gf-form-group">
-			<h5 class="section-heading">Custom Options</h5>
+			<h3 class="section-heading">Custom Options</h3>
 			<div class="gf-form">
 				<span class="gf-form-label width-14">Values separated by comma</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue, escaped\,value"
@@ -157,7 +157,7 @@
 		</div>
 
 		<div ng-if="current.type === 'constant'" class="gf-form-group">
-			<h5 class="section-heading">Constant options</h5>
+			<h3 class="section-heading">Constant options</h3>
 			<div class="gf-form">
 				<span class="gf-form-label">Value</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="your metric prefix"></input>
@@ -165,7 +165,7 @@
 		</div>
 
 		<div ng-if="current.type === 'textbox'" class="gf-form-group">
-			<h5 class="section-heading">Text options</h5>
+			<h3 class="section-heading">Text options</h3>
 			<div class="gf-form">
 				<span class="gf-form-label">Default value</span>
 				<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="default value, if any"></input>
@@ -173,7 +173,7 @@
 		</div>
 
 		<div ng-if="current.type === 'query'" class="gf-form-group">
-			<h5 class="section-heading">Query Options</h5>
+			<h3 class="section-heading">Query Options</h3>
 
 			<div class="gf-form-inline">
 				<div class="gf-form max-width-21">
@@ -229,7 +229,7 @@
 		</div>
 
 		<div ng-show="current.type === 'datasource'" class="gf-form-group">
-			<h5 class="section-heading">Data source options</h5>
+			<h3 class="section-heading">Data source options</h3>
 
 			<div class="gf-form">
 				<label class="gf-form-label width-12">Type</label>
@@ -256,7 +256,7 @@
 		</div>
 
 		<div ng-if="current.type === 'adhoc'" class="gf-form-group">
-			<h5 class="section-heading">Options</h5>
+			<h3 class="section-heading">Options</h3>
 			<div class="gf-form max-width-21">
 				<span class="gf-form-label width-8">Data source</span>
 				<div class="gf-form-select-wrapper max-width-14">
@@ -269,7 +269,7 @@
 		</div>
 
 		<div class="section gf-form-group" ng-show="variableTypes[current.type].supportsMulti">
-			<h5 class="section-heading">Selection Options</h5>
+			<h3 class="section-heading">Selection Options</h3>
 			<div class="section">
 				<gf-form-switch class="gf-form" label="Multi-value" label-class="width-10" tooltip="Enables multiple values to be selected at the same time"
 				 checked="current.multi" on-change="runQuery()">
@@ -285,7 +285,7 @@
 		</div>
 
 		<div class="gf-form-group" ng-if="current.type === 'query'">
-			<h5>Value groups/tags (Experimental feature)</h5>
+			<h3 class="section-heading">Value groups/tags (Experimental feature)</h3>
 			<gf-form-switch class="gf-form" label="Enabled" label-class="width-10" checked="current.useTags" on-change="runQuery()">
 			</gf-form-switch>
 			<div class="gf-form last" ng-if="current.useTags">
@@ -301,7 +301,7 @@
 		</div>
 
 		<div class="gf-form-group" ng-show="current.options.length">
-			<h5>Preview of values</h5>
+			<h3 class="section-heading">Preview of values</h3>
 			<div class="gf-form-inline">
 				<div class="gf-form" ng-repeat="option in current.options | limitTo: optionsLimit">
 					<span class="gf-form-label">{{option.text}}</span>

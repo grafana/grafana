@@ -10,7 +10,7 @@ export interface Props {
 const OrgProfile: FC<Props> = ({ onSubmit, onOrgNameChange, orgName }) => {
   return (
     <div>
-      <h3 className="page-sub-heading">Organization profile</h3>
+      <h2 className="page-sub-heading">Organization profile</h2>
       <form
         name="orgForm"
         className="gf-form-group"

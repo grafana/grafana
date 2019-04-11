@@ -8,7 +8,7 @@
       <dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
     </form>
 
-    <h5 class="section-heading">Grafana.com Dashboard</h5>
+    <h4 class="section-heading">Grafana.com Dashboard</h4>
 
     <div class="gf-form-group">
       <div class="gf-form gf-form--grow">
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <h5 class="section-heading">Or paste JSON</h5>
+    <h4 class="section-heading">Or paste JSON</h4>
 
     <div class="gf-form-group">
       <div class="gf-form">
@@ -41,10 +41,10 @@
 
   <div ng-if="ctrl.step === 2">
     <div class="gf-form-group" ng-if="ctrl.dash.gnetId">
-      <h3 class="section-heading">
+      <h4 class="section-heading">
         Importing Dashboard from
         <a href="https://grafana.com/dashboards/{{ctrl.dash.gnetId}}" class="external-link" target="_blank">Grafana.com</a>
-      </h3>
+      </h4>
 
       <div class="gf-form">
         <label class="gf-form-label width-15">Published by</label>
@@ -56,9 +56,9 @@
       </div>
     </div>
 
-    <h3 class="section-heading">
+    <h4 class="section-heading">
       Options
-    </h3>
+    </h4>
 
     <div class="gf-form-group">
       <div class="gf-form-inline">
