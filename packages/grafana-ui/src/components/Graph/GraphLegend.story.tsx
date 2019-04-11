@@ -59,8 +59,8 @@ GraphLegendStories.add('list', () => {
       <GraphLegend
         items={generateLegendItems(numberOfSeries)}
         renderLegendAs={LegendList}
-        onLabelClick={item => {
-          action('Series label clicked')(item);
+        onLabelClick={(item, event) => {
+          action('Series label clicked')(item, event);
         }}
         onSeriesColorChange={(label, color) => {
           action('Series color changed')(label, color);

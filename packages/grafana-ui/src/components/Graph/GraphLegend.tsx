@@ -7,7 +7,7 @@ interface GraphLegendProps extends LegendProps {
   onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onToggleSort?: (sortBy: string, sortDesc: boolean) => void;
-  onLabelClick: (item: LegendItem) => void;
+  onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
