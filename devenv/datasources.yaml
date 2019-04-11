@@ -95,6 +95,16 @@ datasources:
       timeField: "@timestamp"
       esVersion: 60
 
+  - name: gdev-elasticsearch-v6-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-6.2.4-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
