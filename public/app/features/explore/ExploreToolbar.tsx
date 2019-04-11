@@ -15,7 +15,7 @@ import {
   changeRefreshInterval,
 } from './state/actions';
 import TimePicker from './TimePicker';
-import { RefreshPicker, Interval } from '@grafana/ui';
+import { RefreshPicker, SetInterval } from '@grafana/ui';
 
 enum IconSide {
   left = 'left',
@@ -169,7 +169,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 value={refreshInterval}
                 tooltip="Refresh"
               />
-              {refreshInterval.value > 0 && <Interval func={this.onRunQuery} delay={refreshInterval.value} />}
+              {refreshInterval.value > 0 && <SetInterval func={this.onRunQuery} delay={refreshInterval.value} />}
             </div>
 
             <div className="explore-toolbar-content-item">

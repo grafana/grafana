@@ -35,7 +35,7 @@ export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 
 // Renderless
-export { Interval } from './Interval/Interval';
+export { SetInterval } from './SetInterval/SetInterval';
 
 // Visualizations
 export { BigValue } from './BigValue/BigValue';

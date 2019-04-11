@@ -4,7 +4,7 @@ interface Props {
   delay: number;
 }
 
-export class Interval extends PureComponent<Props> {
+export class SetInterval extends PureComponent<Props> {
   private intervalId = 0;
 
   componentDidMount() {
