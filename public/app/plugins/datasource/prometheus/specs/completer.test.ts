@@ -26,6 +26,10 @@ describe('Prometheus editor completer', () => {
   });
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
+  datasourceStub.querySeries = jest.fn(() =>
+    Promise.resolve({ data: { data: [{ metric: { job: 'node', instance: 'localhost:9100' } }] } })
+  );
+
   const templateSrv = {
     variables: [
       {

@@ -102,6 +102,21 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     return this._request(url, null, { method: 'GET', silent: true });
   }
 
+  querySeries(match: string, start?: string | number, end?: string | number) {
+    let url = '/api/v1/series';
+    let data = {};
+    if (this.httpMethod === 'GET') {
+      url = url + '?match[]=' + encodeURIComponent(match) + '&start=' + start + '&end=' + end;
+    } else {
+      data = {
+        'match[]': match,
+        start: start,
+        end: end,
+      };
+    }
+    return this._request(url, data, { method: this.httpMethod, silent: true });
+  }
+
   interpolateQueryExpr(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {

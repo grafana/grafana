@@ -277,8 +277,7 @@ export class PromCompleter {
       query = '{__name__' + op + '"' + expr + '"}';
     }
     const { start, end } = this.datasource.getTimeRange();
-    const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
-    return this.datasource.metadataRequest(url).then(response => {
+    return this.datasource.querySeries(query, start, end).then(response => {
       this.labelQueryCache[expr] = response.data.data;
       return response.data.data;
     });
