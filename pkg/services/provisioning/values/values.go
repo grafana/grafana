@@ -1,5 +1,13 @@
 // A set of value types to use in provisioning. They add custom unmarshaling logic that puts the string values
 // through os.ExpandEnv.
+// Usage:
+// type Data struct {
+//   Field StringValue `yaml:"field"` // Instead of string
+// }
+// d := &Data{}
+// // unmarshal into d
+// d.Field.Value() // returns the final interpolated value from the yaml file
+//
 package values
 
 import (
