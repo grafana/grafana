@@ -573,6 +573,7 @@ workflows:
       jobs:
         - build:
             filters: *filter-not-release-or-master
+        # TODO: REMOVE build-all BEFORE MERGING! This is just for testing
         - build-all:
             filters: *filter-not-release-or-master
         - codespell:
@@ -589,19 +590,12 @@ workflows:
             filters: *filter-not-release-or-master
         - cache-server-test:
             filters: *filter-not-release-or-master
-        # TODO: REMOVE BEFORE MERGING! This is just testing
+        # TODO: REMOVE build-oss-msi BEFORE MERGING! This is just testing
         # NOTE: build-all is needed since build does not
         #  produce the windows zip file
         - build-oss-msi:
             requires:
               - build-all
-              - test-backend
-              - test-frontend
-              - codespell
-              - backend-lint
-              - mysql-integration-test
-              - postgres-integration-test
-              - cache-server-test
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
@@ -624,4 +618,5 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
+              - build-oss-msi
             filters: *filter-not-release-or-master
