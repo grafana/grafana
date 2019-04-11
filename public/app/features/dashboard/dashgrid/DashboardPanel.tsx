@@ -116,7 +116,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin(this.props.panel.type);
   }
 
-  async componentDidUpdate() {
+  componentDidUpdate() {
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -137,6 +137,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
+    this.props.panel.clearQueryListener();
     this.cleanUpAngularPanel();
   }
 

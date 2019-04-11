@@ -65,7 +65,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         _.get(this.panel, 'targets[0].panelId') !== results.panelId
       ) {
         console.log('Not pointed to me! unsubscribing....', this, results);
-        results.unsubscribe(this.panel.id);
+        (this.panel as PanelModel).clearQueryListener();
         return;
       }
 
@@ -104,15 +104,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // Make sure we are watching the query results
     if (this.panel.datasource === SHARED_DASHBODARD_QUERY) {
-      try {
-        checkQueryResultsObservers(
-          this.panel as PanelModel,
-          this.dashboard as DashboardModel,
-          this.sharedQueryObserver
-        );
-      } catch (ex) {
-        console.log('ERRRRR', ex);
-      }
+      checkQueryResultsObservers(this.panel as PanelModel, this.dashboard as DashboardModel, this.sharedQueryObserver);
       return;
     }
 

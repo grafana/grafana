@@ -8,7 +8,7 @@ import {
   TimeRange,
 } from '@grafana/ui';
 import { PanelModel } from './PanelModel';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+import { Subject, PartialObserver } from 'rxjs';
 import { getProcessedSeriesData } from '../dashgrid/DataPanel';
 import { DashboardModel } from './DashboardModel';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
@@ -19,7 +19,6 @@ type PanelQueryResults = {
   panelId: number;
   raw: DataQueryResponse;
   range: TimeRange;
-  unsubscribe?: (panelId: number) => void;
 };
 
 export type ReactQueryResults = PanelQueryResults & {
@@ -54,8 +53,6 @@ export function checkQueryResultsObservers(
 export class QueryResultsObservers {
   reactPanels = new Subject<ReactQueryResults>();
   angularPanels = new Subject<AngularQueryResults>();
-  byId = new Map<number, Unsubscribable>();
-
   constructor(private parent: PanelModel) {}
 
   private closeIfNoListeners() {
@@ -76,31 +73,24 @@ export class QueryResultsObservers {
   }
 
   subscribe = (panel: PanelModel, observer: PartialObserver<AngularQueryResults | ReactQueryResults>): boolean => {
-    const { byId } = this;
-    if (byId.has(panel.id)) {
-      return false;
+    if (panel.queryListener) {
+      return false; // already listenting to somthing
     }
+
     const isAngular: boolean = !!panel.plugin.angularPlugin;
     if (isAngular) {
-      byId.set(panel.id, this.angularPanels.subscribe(observer));
+      panel.queryListener = this.angularPanels.subscribe(observer);
     } else {
-      byId.set(panel.id, this.reactPanels.subscribe(observer));
+      panel.queryListener = this.reactPanels.subscribe(observer);
     }
     return true;
   };
 
-  unsubscribe = (panelId: number) => {
-    if (this.byId.has(panelId)) {
-      this.byId.get(panelId).unsubscribe();
-    }
-  };
-
   broadcastReactResuls(res: ReactQueryResults) {
-    this.reactPanels.next({ ...res, unsubscribe: this.unsubscribe });
+    this.reactPanels.next(res);
     if (this.angularPanels.observers.length > 0) {
       this.angularPanels.next({
         ...res,
-        unsubscribe: this.unsubscribe,
 
         // Same calculation as metrics_panel_ctrl
         data: res.raw.data.map(v => {
@@ -115,11 +105,10 @@ export class QueryResultsObservers {
   }
 
   broadcastAngularResuls(res: AngularQueryResults) {
-    this.angularPanels.next({ ...res, unsubscribe: this.unsubscribe });
+    this.angularPanels.next(res);
     if (this.reactPanels.observers.length > 0) {
       this.reactPanels.next({
         ...res,
-        unsubscribe: this.unsubscribe,
 
         // Same calculation as DataPanel
         series: getProcessedSeriesData(res.raw.data),

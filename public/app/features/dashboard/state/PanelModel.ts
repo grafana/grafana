@@ -10,6 +10,7 @@ import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafan
 import { PanelPlugin } from 'app/types';
 import config from 'app/core/config';
 import { QueryResultsObservers } from './QueryResultsObservers';
+import { Unsubscribable } from 'rxjs';
 
 export interface GridPos {
   x: number;
@@ -117,6 +118,8 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+
+  queryListener?: Unsubscribable;
   queryObservers?: QueryResultsObservers;
 
   constructor(model: any) {
@@ -264,10 +267,19 @@ export class PanelModel {
     }
   }
 
+  clearQueryListener() {
+    if (this.queryListener) {
+      this.queryListener.unsubscribe();
+      this.queryListener = null;
+    }
+  }
+
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
+
+    this.clearQueryListener();
 
     // for angular panels we must remove all events and let angular panels do some cleanup
     if (this.plugin.angularPlugin) {

@@ -17,7 +17,11 @@ import {
   guessFieldTypes,
 } from '@grafana/ui';
 
-import { SHARED_DASHBODARD_QUERY, QueryResultsObservers } from 'app/features/dashboard/state/QueryResultsObservers';
+import {
+  SHARED_DASHBODARD_QUERY,
+  QueryResultsObservers,
+  ReactQueryResults,
+} from 'app/features/dashboard/state/QueryResultsObservers';
 
 interface RenderProps {
   loading: LoadingState;
@@ -36,7 +40,8 @@ export interface Props {
   minInterval?: string;
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
-  queryListeners?: QueryResultsObservers;
+  registerQueryObserver?: (observer: (results: ReactQueryResults) => void) => void; // EEEEP!
+  queryObservers?: QueryResultsObservers;
   children: (r: RenderProps) => JSX.Element;
   onDataResponse?: (data?: SeriesData[]) => void;
   onError: (message: string, error: DataQueryError) => void;
@@ -105,6 +110,16 @@ export class DataPanel extends Component<Props, State> {
     return this.props.refreshCounter !== prevProps.refreshCounter;
   }
 
+  // Assume we have already checked that it is valid
+  sharedQueryObserver = (results: ReactQueryResults) => {
+    // TODO, use the time
+    this.setState({
+      data: results.series,
+      loading: LoadingState.Done,
+      isFirstLoad: false,
+    });
+  };
+
   private issueQueries = async () => {
     const {
       isVisible,
@@ -118,7 +133,8 @@ export class DataPanel extends Component<Props, State> {
       scopedVars,
       onDataResponse,
       onError,
-      queryListeners,
+      registerQueryObserver,
+      queryObservers,
     } = this.props;
 
     if (!isVisible) {
@@ -131,7 +147,9 @@ export class DataPanel extends Component<Props, State> {
     }
 
     if (datasource === SHARED_DASHBODARD_QUERY) {
-      console.log('TODO, register observer', panelId);
+      if (registerQueryObserver) {
+        registerQueryObserver(this.sharedQueryObserver);
+      }
       return;
     }
 
@@ -176,8 +194,8 @@ export class DataPanel extends Component<Props, State> {
         isFirstLoad: false,
       });
 
-      if (queryListeners) {
-        queryListeners.broadcastReactResuls({
+      if (queryObservers) {
+        queryObservers.broadcastReactResuls({
           panelId,
           raw: resp,
           range: timeRange,

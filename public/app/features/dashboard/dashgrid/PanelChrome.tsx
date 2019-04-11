@@ -24,6 +24,11 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
+import {
+  ReactQueryResults,
+  checkQueryResultsObservers,
+  SHARED_DASHBODARD_QUERY,
+} from 'app/features/dashboard/state/QueryResultsObservers';
 import { getProcessedSeriesData } from './DataPanel';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -86,6 +91,26 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRender = () => {
     this.setState({
       renderCounter: this.state.renderCounter + 1,
+    });
+  };
+
+  registerQueryObserver = (observer: (results: ReactQueryResults) => void) => {
+    const { panel, dashboard } = this.props;
+    console.log('REGISTER Observer', panel);
+    checkQueryResultsObservers(panel, dashboard, {
+      next: (results: ReactQueryResults) => {
+        const { panel } = this.props;
+        const { datasource, targets } = panel;
+        const query = targets[0] as any;
+
+        // Unsubscribe if this is not the query we want
+        if (datasource !== SHARED_DASHBODARD_QUERY || query.panelId !== results.panelId) {
+          console.log('Not pointed to me! unsubscribing....', this, results);
+          panel.clearQueryListener();
+          return;
+        }
+        observer(results);
+      },
     });
   };
 
@@ -185,7 +210,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanelBody = (width: number, height: number): JSX.Element => {
     const { panel } = this.props;
     const { refreshCounter, timeRange } = this.state;
-    const { datasource, targets } = panel;
+    const { datasource, targets, queryObservers } = panel;
     return (
       <>
         {this.needsQueryExecution ? (
@@ -200,6 +225,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             scopedVars={panel.scopedVars}
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
+            registerQueryObserver={this.registerQueryObserver}
+            queryObservers={queryObservers}
           >
             {({ loading, data }) => {
               return this.renderPanelPlugin(loading, data, width, height);

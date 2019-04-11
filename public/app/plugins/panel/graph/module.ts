@@ -188,10 +188,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList: LegacyResponseData[]) {
-    if (!this.range) {
-      console.log('GOT', this, dataList);
-      this.updateTimeRange();
-    }
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({
       dataList: dataList,
@@ -220,6 +216,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     }
 
+    // This really only happens if `onDataReceived` is called without issueQuery
+    // This happens with the QueryResultsObservers
     if (!this.annotationsPromise) {
       this.annotationsPromise = this.annotationsSrv.getAnnotations({
         dashboard: this.dashboard,

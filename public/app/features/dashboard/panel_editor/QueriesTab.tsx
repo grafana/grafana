@@ -20,8 +20,6 @@ import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem } from '@grafana/ui/src/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { SHARED_DASHBODARD_QUERY } from '../state/QueryResultsObservers';
-import { DashboardDatasource } from 'app/plugins/datasource/dashboard/module';
 
 interface Props {
   panel: PanelModel;
@@ -77,12 +75,6 @@ export class QueriesTab extends PureComponent<Props, State> {
         // we are changing data source type, clear queries
         panel.targets = [{ refId: 'A' }];
       }
-    }
-
-    console.log('CHANGE', this);
-    // Set the dashboard for shared queries
-    if (panel.datasource === SHARED_DASHBODARD_QUERY) {
-      (datasource as DashboardDatasource).dashboard = this.props.dashboard;
     }
 
     panel.datasource = datasource.value;
