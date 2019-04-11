@@ -48,12 +48,15 @@ export class DashNavTimeControls extends Component<Props> {
   }
 
   render() {
+    const { dashboard } = this.props;
+    const intervals = dashboard.timepicker.refresh_intervals;
     return (
       <RefreshPicker
         onIntervalChanged={this.onChangeRefreshInterval}
         onRefresh={this.onRefresh}
         initialValue={undefined}
         value={this.refreshPickerValue}
+        intervals={intervals}
         tooltip="Refresh dashboard"
       />
     );
