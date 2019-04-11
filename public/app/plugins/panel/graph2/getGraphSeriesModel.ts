@@ -9,11 +9,25 @@ import {
   colors,
   getFlotPairs,
   getColorFromHexRgbOrName,
+  getDisplayProcessor,
+  LegendOptions,
 } from '@grafana/ui';
-import { SeriesOptions } from './types';
+import capitalize from 'lodash/capitalize';
+import { SeriesOptions, GraphOptions } from './types';
+import { StatDisplayValue } from '@grafana/ui/src/components/Legend/Legend';
 
-export const getGraphSeriesModel = (data: SeriesData[], stats: StatID[], seriesOptions: SeriesOptions) => {
+export const getGraphSeriesModel = (
+  data: SeriesData[],
+  stats: StatID[],
+  seriesOptions: SeriesOptions,
+  graphOptions: GraphOptions,
+  legendOptions: LegendOptions
+) => {
   const graphs: GraphSeriesXY[] = [];
+
+  const displayProcessor = getDisplayProcessor({
+    decimals: legendOptions.decimals,
+  });
 
   for (const series of data) {
     const timeColumn = getFirstTimeField(series);
@@ -35,15 +49,27 @@ export const getGraphSeriesModel = (data: SeriesData[], stats: StatID[], seriesO
         });
 
         if (points.length > 0) {
+          const seriesStats = calculateStats({ series, stats, fieldIndex: i });
+          const statsDisplayValues = stats.map<StatDisplayValue>(stat => {
+            const statDisplayValue = displayProcessor(seriesStats[stat]);
+
+            return {
+              ...statDisplayValue,
+              text: `${capitalize(stat)}: ${statDisplayValue.text}`,
+              statId: stat,
+            };
+          });
+
           const seriesColor =
             seriesOptions[field.name] && seriesOptions[field.name].color
               ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
               : colors[graphs.length % colors.length];
+
           graphs.push({
             label: field.name,
             data: points,
             color: seriesColor,
-            stats: calculateStats({ series, stats, fieldIndex: i }),
+            info: statsDisplayValues,
             isVisible: true,
             useRightYAxis: seriesOptions[field.name] && !!seriesOptions[field.name].useRightYAxis,
           });

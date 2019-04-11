@@ -1,5 +1,4 @@
-import { DisplayValue } from './displayValue';
-import { ColumnStats } from '../utils/statsCalculator';
+import { StatDisplayValue } from '../components/Legend/Legend';
 
 export type GraphSeriesValue = number | null;
 
@@ -8,8 +7,7 @@ export interface GraphSeriesXY {
   label: string;
   color: string;
   data: GraphSeriesValue[][]; // [x,y][]
-  info?: DisplayValue[]; // Legend info
-  stats: ColumnStats;
+  info?: StatDisplayValue[]; // Legend info
   isVisible: boolean;
   useRightYAxis: boolean;
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import capitalize from 'lodash/capitalize';
 import without from 'lodash/without';
-import { StatID, LegendOptions, PanelOptionsGroup, Switch } from '@grafana/ui';
+import { StatID, LegendOptions, PanelOptionsGroup, Switch, Input } from '@grafana/ui';
 
 interface GraphLegendEditorProps {
   stats: StatID[];
@@ -59,14 +59,16 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
               label={capitalize(stat)}
               checked={!!options.stats && options.stats.indexOf(stat) > -1}
               onChange={onStatToggle(stat)}
+              key={stat}
             />
           );
         })}
         <h4>Decimals</h4>
-        <input
+        <Input
           className="gf-form-input width-5"
           type="number"
           value={options.decimals}
+          placeholder="Auto"
           onChange={event => {
             onChange({
               ...options,

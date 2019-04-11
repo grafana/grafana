@@ -19,7 +19,7 @@ const getStoriesKnobs = () => {
       'single (min)': ['min'],
       'multiple (min, max)': ['min', 'max'],
     },
-    ['min', 'max']
+    []
   );
 
   const numberOfSeries = number('Number of series', 3);

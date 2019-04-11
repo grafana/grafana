@@ -78,7 +78,7 @@ export class GraphPanel extends React.Component<GraphPanelProps> {
 
     return (
       <GraphWithLegend
-        series={getGraphSeriesModel(data, legendOptions.stats, series)}
+        series={getGraphSeriesModel(data, legendOptions.stats || [], series, options.graph, legendOptions)}
         timeRange={timeRange}
         width={width}
         height={height}

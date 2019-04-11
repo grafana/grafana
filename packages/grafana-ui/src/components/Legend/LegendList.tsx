@@ -1,28 +1,28 @@
 import React, { useContext } from 'react';
-import { LegendComponentProps, LegendItem } from './Legend';
+import { LegendComponentProps, LegendItem, StatDisplayValue } from './Legend';
 import { InlineList } from '../List/InlineList';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
 
-const LegendItemStat: React.FunctionComponent<{ statName: string; value: number }> = ({ statName, value }) => {
+const LegendItemStat: React.FunctionComponent<{ stat: StatDisplayValue }> = ({ stat }) => {
   return (
     <div
       className={css`
         margin-left: 6px;
       `}
     >
-      {statName}: {value}
+      {stat.text}
     </div>
   );
 };
 
 LegendItemStat.displayName = 'LegendItemStat';
 
-const LegendStatsList: React.FunctionComponent<{ stats: Array<{ statId: string; value: number }> }> = ({ stats }) => {
+const LegendStatsList: React.FunctionComponent<{ stats: StatDisplayValue[] }> = ({ stats }) => {
   if (stats.length === 0) {
     return null;
   }
-  return <InlineList items={stats} renderItem={stat => <LegendItemStat statName={stat.statId} value={stat.value} />} />;
+  return <InlineList items={stats} renderItem={stat => <LegendItemStat stat={stat} />} />;
 };
 
 LegendStatsList.displayName = 'LegendStatsList';

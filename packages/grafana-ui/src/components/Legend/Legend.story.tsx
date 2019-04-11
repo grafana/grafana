@@ -5,6 +5,7 @@ import { LegendList } from './LegendList';
 import tinycolor from 'tinycolor2';
 import { number, select, text } from '@storybook/addon-knobs';
 import { GraphLegendItem } from '../Graph/GraphLegendItem';
+import { action } from '@storybook/addon-actions';
 
 export const generateLegendItems = (numberOfSeries: number): LegendItem[] => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
@@ -15,7 +16,7 @@ export const generateLegendItems = (numberOfSeries: number): LegendItem[] => {
       color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
       isVisible: true,
       useRightYAxis: false,
-      stats: [{ statId: 'min', value: 2 }, { statId: 'max', value: 10 }],
+      stats: [{ statId: 'min', text: 'Min: 10', numeric: 10 }, { statId: 'max', text: 'Min: 100', numeric: 100 }],
     };
   });
 };
@@ -40,7 +41,12 @@ const getStoriesKnobs = () => {
   );
 
   const customRenderer = (item: LegendItem) => (
-    <GraphLegendItem item={item} onLabelClick={() => {}} onSeriesColorChange={() => {}} onToggleAxis={() => {}} />
+    <GraphLegendItem
+      item={item}
+      onLabelClick={action('GraphLegendItem label clicked')}
+      onSeriesColorChange={action('Series color changed')}
+      onToggleAxis={action('Y-axis toggle')}
+    />
   );
 
   const legendItemRenderer = select(

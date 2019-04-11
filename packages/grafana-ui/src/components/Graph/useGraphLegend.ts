@@ -33,12 +33,7 @@ export const useGraphLegend = (data: GraphSeriesXY[]) => {
       color: series.color,
       isVisible: seriesVisibilityAPI.isSeriesVisible(series.label),
       useRightYAxis: series.useRightYAxis,
-      stats: Object.keys(series.stats).map(statId => {
-        return {
-          statId,
-          value: series.stats[statId],
-        };
-      }),
+      stats: series.info || [],
     };
   });
 

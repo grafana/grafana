@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { StatID } from '../../utils/statsCalculator';
+import { DisplayValue } from '../../types/index';
 
 export interface LegendBasicOptions {
   isVisible: boolean;
@@ -20,12 +21,16 @@ export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {
   decimals?: number;
 }
 
+export interface StatDisplayValue extends DisplayValue {
+  statId: string;
+}
+
 export interface LegendItem {
   label: string;
   color: string;
   isVisible: boolean;
   useRightYAxis: boolean;
-  stats: Array<{ statId: string; value: number }>;
+  stats: StatDisplayValue[];
 }
 
 export interface LegendComponentProps {
