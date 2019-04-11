@@ -20,8 +20,8 @@ cp ./scripts/build/ci-msi-build/oss/cache/nssm-2.24.zip /tmp/cache
 cd ./scripts/build/ci-msi-build/oss
 echo "Building MSI"
 python3 generator/build.py "$@"
-chmod a+x /tmp/a/*.msi
+chmod a+x /tmp/scratch/*.msi
 echo "MSI: Copy to $WORKING_DIRECTORY/dist"
-cp /tmp/a/*.msi $WORKING_DIRECTORY/dist
+cp /tmp/scratch/*.msi $WORKING_DIRECTORY/dist
 echo "MSI: contents of $WORKING_DIRECTORY/dist"
 ls -al $WORKING_DIRECTORY/dist
