@@ -7,7 +7,7 @@
 		<i class="fa fa-clock-o"></i>
 		<span ng-bind="ctrl.rangeString"></span>
 		<span ng-show="ctrl.isUtc" class="gf-timepicker-utc">UTC</span>
-		<span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span>
+		<!-- <span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span> -->
 	</button>
 
   <button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)' ng-if="ctrl.isAbsolute">
@@ -18,9 +18,9 @@
 		<i class="fa fa-search-minus"></i>
 	</button>
 
-  <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
+  <!-- <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
 		<i class="fa fa-refresh"></i>
-	</button>
+	</button> -->
 </div>
 
 <div ng-if="ctrl.isOpen" class="gf-timepicker-dropdown">
@@ -75,7 +75,7 @@
         <datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" starting-day="ctrl.firstDayOfWeek" ng-change="ctrl.absoluteToChanged()"></datepicker>
       </div>
 
-      <label class="small">Refreshing every:</label>
+      <!-- <label class="small">Refreshing every:</label>
       <div class="gf-form-inline">
         <div class="gf-form max-width-28">
           <select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
@@ -83,7 +83,7 @@
         <div class="gf-form">
           <button type="submit" class="btn gf-form-btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
         </div>
-      </div>
+      </div> -->
     </form>
   </div>
 </div>

@@ -7,9 +7,10 @@ import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoa
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { RefreshPicker, Interval, SelectOptionItem } from '@grafana/ui';
+import { RefreshPicker, Interval, SelectOptionItem, objRemoveUndefined } from '@grafana/ui';
 import { defaultItem as defaultRefreshPickerItem } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { getIntervalFromString } from '@grafana/ui/src/utils/string';
+import { EMPTY_ITEM_TEXT as defaultRefreshIntervalLabel } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -76,6 +77,7 @@ export class DashNav extends PureComponent<Props, State> {
 
   onRefresh = () => {
     this.timeSrv.refreshDashboard();
+    return Promise.resolve();
   };
 
   onChangeRefreshInterval = (interval: SelectOptionItem) => {
@@ -83,15 +85,17 @@ export class DashNav extends PureComponent<Props, State> {
     const { refreshInterval } = this.state;
 
     if (interval.label !== refreshInterval.label) {
+      const nextIntervalValue = interval.label === defaultRefreshIntervalLabel ? undefined : interval.label;
       this.setState({
         refreshInterval: interval,
       });
-      dashboard.refresh = interval.label;
+      dashboard.refresh = nextIntervalValue;
 
-      const newQuery = {
+      const newQuery = objRemoveUndefined({
         ...location.query,
-        refresh: interval.label,
-      };
+        refresh: nextIntervalValue,
+      });
+
       updateLocation({ query: newQuery });
     }
   };
@@ -303,13 +307,6 @@ export class DashNav extends PureComponent<Props, State> {
             onClick={this.onToggleTVMode}
           />
         </div>
-        <RefreshPicker
-          onIntervalChanged={this.onChangeRefreshInterval}
-          onRefresh={this.onRefresh}
-          initialValue={undefined}
-          value={refreshInterval}
-        />
-        <Interval func={this.onRefresh} delay={this.refreshPickerValue.value} />
 
         {/*
         <RefreshPicker
@@ -321,7 +318,16 @@ export class DashNav extends PureComponent<Props, State> {
               <Interval func={this.onRunQuery} delay={refreshInterval.value} />
 */}
 
-        <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+        <div className="navbar-buttons">
+          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+          <RefreshPicker
+            onIntervalChanged={this.onChangeRefreshInterval}
+            onRefresh={this.onRefresh}
+            initialValue={undefined}
+            value={refreshInterval}
+          />
+          <Interval func={this.onRefresh} delay={this.refreshPickerValue.value} />
+        </div>
       </div>
     );
   }
