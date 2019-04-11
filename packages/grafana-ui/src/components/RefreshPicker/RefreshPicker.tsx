@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { SelectOptionItem, ButtonSelect } from '@grafana/ui';
+import { SelectOptionItem, ButtonSelect, Tooltip } from '@grafana/ui';
 import { stringToMs } from '@grafana/ui/src/utils/string';
 import { RefreshButton } from './RefreshButton';
 
@@ -13,6 +13,7 @@ export interface Props {
   onRefresh: () => any; // Promise<any> | ThunkAction<Promise<any>>
   onIntervalChanged: (item: SelectOptionItem) => void;
   value?: SelectOptionItem;
+  tooltip: string;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
@@ -40,7 +41,7 @@ export class RefreshPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { onRefresh, intervals, initialValue } = this.props;
+    const { onRefresh, intervals, initialValue, tooltip } = this.props;
     const options = this.intervalsToOptions(intervals);
     const selectedValue =
       this.props.value || (initialValue ? this.mapStringToSelectOptionItem(initialValue) : this.emptyItem);
@@ -48,7 +49,11 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <div className="refresh-picker">
         <div className="refresh-picker-buttons">
-          <RefreshButton onClick={onRefresh} />
+          <Tooltip placement="top" content={tooltip}>
+            <span>
+              <RefreshButton onClick={onRefresh} />
+            </span>
+          </Tooltip>
           <ButtonSelect
             className="refresh-picker-button-select btn--radius-left-0 nav navbar-button--attached"
             value={selectedValue}
