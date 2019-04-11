@@ -1,14 +1,16 @@
 import zipfile
 import os
-import wget
 import glob
 import re
 import shutil
+import wget
+from jinja2 import Template, Environment, FileSystemLoader
+
 
 
 def extract_zip(filename, target_dir):
-    with zipfile.ZipFile(filename,"r") as zip_ref:
-      zip_ref.extractall(target_dir)
+    with zipfile.ZipFile(filename, 'r') as zip_ref:
+        zip_ref.extractall(target_dir)
 
 
 def get_nssm(tmpPath, version):
@@ -79,7 +81,7 @@ def detect_version(dist_path):
 def generate_product_wxs(env, config, features, scratch_file, target_dir):
     template = env.get_template('common/product.wxs.j2')
     output = template.render(config=config, features=features)
-    fh = open(scratch_file,'w')
+    fh = open(scratch_file, 'w')
     fh.write(output)
     fh.close()
     shutil.copy2(scratch_file, target_dir)
@@ -87,7 +89,7 @@ def generate_product_wxs(env, config, features, scratch_file, target_dir):
 def generate_service_wxs(env, grafana_version, scratch_file, target_dir, nssm_version='2.24'):
     template = env.get_template('common/grafana-service.wxs.j2')
     output = template.render(grafana_version=grafana_version, nssm_version=nssm_version)
-    fh = open(scratch_file,'w')
+    fh = open(scratch_file, 'w')
     fh.write(output)
     fh.close()
     shutil.copy2(scratch_file, target_dir)
@@ -96,7 +98,7 @@ def generate_firewall_wxs(env, grafana_version, scratch_file, target_dir):
     os.system("ls -al templates")
     template = env.get_template('common/grafana-firewall.wxs.j2')
     output = template.render(grafana_version=grafana_version)
-    fh = open(scratch_file,'w')
+    fh = open(scratch_file, 'w')
     fh.write(output)
     fh.close()
     shutil.copy2(scratch_file, target_dir)
@@ -105,7 +107,7 @@ def generate_firewall_wxs(env, grafana_version, scratch_file, target_dir):
 def generate_oracle_environment_wxs(env, instant_client_version, scratch_file, target_dir):
     template = env.get_template('oracle/oracle-environment.wxs.j2')
     output = template.render(instant_client_version=instant_client_version)
-    fh = open(scratch_file,'w')
+    fh = open(scratch_file, 'w')
     fh.write(output)
     fh.close()
     shutil.copy2(scratch_file, target_dir)

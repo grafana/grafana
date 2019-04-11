@@ -2,8 +2,9 @@
 #
 # Creates .wxs files to be used to generate multiple MSI targets
 #
-# by default the script will check for dist and enterprise-dist, and parse the version as needed
-# options are provided to give a build version that will download the zip, drop in to dist/enterprise-dist and do the same thing
+# by default the script will check for dist and enterprise-dist, and parse
+# the version as needed options are provided to give a build version that will
+# download the zip, drop in to dist/enterprise-dist and do the same thing
 #
 # Expected paths and names
 # /tmp/dist/grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
@@ -14,21 +15,18 @@
 #   -e,--enterprise add this flag to specify enterprise
 #   -p,--premium, add this flag to include premium plugins
 #
-# When using the build option, the zip file is created in either dist or dist-enterprise according to the -e flag toggle.
+# When using the build option, the zip file is created in either dist or
+# dist-enterprise according to the -e flag toggle.
 #
-# https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-{}.windows-amd64.zip
+# https://s3-us-west-2.amazonaws.com/grafana-releases/release/
+#   grafana-{}.windows-amd64.zip
 #
-# https://dl.grafana.com/enterprise/release/grafana-enterprise-{}.windows-amd64.zip
+# https://dl.grafana.com/enterprise/release/
+#   grafana-enterprise-{}.windows-amd64.zip
 #
 import os
-import zipfile
-import tempfile
-import subprocess
 import shutil
 import argparse
-import glob
-import re
-import wget
 from jinja2 import Template, Environment, FileSystemLoader
 
 from utils import *
@@ -99,14 +97,16 @@ def remove_long_paths():
 
 
 def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
-    # keep reference to source directory, will need to switch back and forth during the process
+    # keep reference to source directory, will need to switch back and
+    # forth during the process
     src_dir = os.getcwd()
     #  target_dir = tempfile.TemporaryDirectory()
     if not os.path.isdir('/tmp/a'):
         os.mkdir('/tmp/a')
     target_dir_name = '/tmp/a'
     extract_zip(zip_file, target_dir_name)
-    # the zip file contains a version, which will not work when upgrading, and ends up with paths longer
+    # the zip file contains a version, which will not work when upgrading,
+    # and ends up with paths longer
     # than light.exe can parse (windows issue)
     # Once extracted, rename it to grafana without the version included
     zip_file_path = '{}/{}'.format(target_dir_name, extracted_name)
@@ -132,7 +132,8 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     os.chdir('/tmp/scratch')
     outfile = 'grafana-oss.wxs'
     # important flags
-    # -srd - prevents the parent directory name from being included in the harvest
+    # -srd - prevents the parent directory name from being included in the
+    #        harvest
     # -cg - component group to be referenced in main wxs file
     # -fr - directory ref to be used in main wxs file
     try:
@@ -273,10 +274,20 @@ def main(file_loader, env, grafana_version, zip_file, extracted_name):
 if __name__ == '__main__':
     print('MSI Generator Version: {}'.format(MSI_GENERATOR_VERSION))
 
-    parser = argparse.ArgumentParser(description='Grafana MSI Generator',
+    parser = argparse.ArgumentParser(
+        description='Grafana MSI Generator',
         formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=90, width=110), add_help=True)
-    parser.add_argument('-p', '--premium', help='Include premium plugins', dest='premium', action='store_true')
-    parser.add_argument('-e', '--enterprise', help='Use Enterprise build', dest='enterprise', action='store_true')
+    parser.add_argument(
+        '-p',
+        '--premium',
+        help='Include premium plugins',
+        dest='premium', action='store_true')
+    parser.add_argument(
+        '-e',
+        '--enterprise',
+        help='Use Enterprise build',
+        dest='enterprise',
+        action='store_true')
     parser.set_defaults(enterprise=False, premium=False)
     parser.add_argument('-b', '--build', help='build to download')
     args = parser.parse_args()
@@ -292,14 +303,14 @@ if __name__ == '__main__':
         grafana_version = args.build
         print('Version Specified: {}'.format(grafana_version))
     else:
-        grafana_version, grafana_hash, is_enterprise = detect_version('/home/xclient/repo/dist')
+        grafana_version, grafana_hash, is_enterprise = detect_version(DIST_LOCATION)
 
     # check for enterprise flag
-    if (args.enterprise):
+    if args.enterprise:
         grafana_version = 'enterprise-{}'.format(args.build)
     #
     print('Detected Version: {}'.format(grafana_version))
-    if (grafana_hash):
+    if grafana_hash:
         print('Detected Hash: {}'.format(grafana_hash))
     print('Enterprise: {}'.format(is_enterprise))
     if is_enterprise:
