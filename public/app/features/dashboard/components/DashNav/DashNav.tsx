@@ -219,7 +219,6 @@ export class DashNav extends PureComponent<Props, State> {
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
 
-    console.log('render dashnav');
     return (
       <div className="navbar">
         {this.isInFullscreenOrSettings && this.renderBackButton()}
@@ -308,18 +307,7 @@ export class DashNav extends PureComponent<Props, State> {
           />
         </div>
 
-        {/*
-        <RefreshPicker
-                onIntervalChanged={this.onChangeRefreshInterval}
-                onRefresh={this.onRunQuery}
-                initialValue={undefined}
-                value={refreshInterval}
-              />
-              <Interval func={this.onRunQuery} delay={refreshInterval.value} />
-*/}
-
         <div className="navbar-buttons">
-          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
           <RefreshPicker
             onIntervalChanged={this.onChangeRefreshInterval}
             onRefresh={this.onRefresh}
@@ -327,6 +315,7 @@ export class DashNav extends PureComponent<Props, State> {
             value={refreshInterval}
           />
           <Interval func={this.onRefresh} delay={this.refreshPickerValue.value} />
+          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
         </div>
       </div>
     );

@@ -1,5 +1,6 @@
 .refresh-picker {
   position: relative;
+  display: none;
 
   .refresh-picker-buttons {
     display: flex;
@@ -22,6 +23,10 @@
     position: absolute;
     left: 0;
     width: 100%;
+  }
+
+  @include media-breakpoint-up(md) {
+    display: block;
   }
 }
 
