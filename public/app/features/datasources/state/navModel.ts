@@ -1,5 +1,5 @@
 import { NavModel, NavModelItem } from 'app/types';
-import { PluginMeta, DataSourceSettings } from '@grafana/ui/src/types';
+import { PluginMeta, DataSourceSettings, PluginType } from '@grafana/ui/src/types';
 import config from 'app/core/config';
 
 export function buildNavModel(dataSource: DataSourceSettings, pluginMeta: PluginMeta): NavModelItem {
@@ -67,7 +67,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     },
     {
       id: '1',
-      type: 'datasource',
+      type: PluginType.datasource,
       name: '',
       info: {
         author: {
@@ -84,7 +84,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         updated: '',
         version: '',
       },
-      includes: [{ type: '', name: '', path: '' }],
+      includes: [],
       module: '',
       baseUrl: '',
     }

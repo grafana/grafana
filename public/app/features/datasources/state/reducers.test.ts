@@ -15,7 +15,7 @@ import {
 import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { DataSourcesState, Plugin } from 'app/types';
-import { PluginMetaInfo } from '@grafana/ui';
+import { PluginMetaInfo, PluginType } from '@grafana/ui';
 
 const mockPlugin = () =>
   ({
@@ -27,7 +27,7 @@ const mockPlugin = () =>
     latestVersion: 'latestVersion',
     name: 'name',
     pinned: true,
-    type: 'type',
+    type: PluginType.datasource,
     module: 'path/to/module',
   } as Plugin);
 

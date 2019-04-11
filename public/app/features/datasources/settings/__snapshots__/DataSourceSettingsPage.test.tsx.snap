@@ -81,7 +81,7 @@ exports[`Render should render alpha info text 1`] = `
               "name": "pretty cool plugin 1",
               "pinned": false,
               "state": "alpha",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
@@ -182,7 +182,7 @@ exports[`Render should render beta info text 1`] = `
               "name": "pretty cool plugin 1",
               "pinned": false,
               "state": "beta",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
@@ -280,7 +280,7 @@ exports[`Render should render component 1`] = `
               "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
@@ -383,7 +383,7 @@ exports[`Render should render is ready only message 1`] = `
               "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
