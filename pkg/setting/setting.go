@@ -233,7 +233,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
-	EnableAlphaPanels                bool
+	EnableAlphaPlugins               bool
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
@@ -772,7 +772,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
 	panels := iniFile.Section("panels")
-	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
+	cfg.EnableAlphaPlugins = panels.Key("enable_alpha").MustBool(false)
 	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
 
 	cfg.readSessionConfig()

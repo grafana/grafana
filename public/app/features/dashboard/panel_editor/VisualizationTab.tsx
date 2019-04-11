@@ -222,8 +222,6 @@ export class VisualizationTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    console.log('XXX', plugin);
-
     return (
       <EditorTabBody
         heading="Visualization"
