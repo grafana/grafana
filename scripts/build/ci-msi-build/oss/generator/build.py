@@ -79,7 +79,7 @@ grafana_oss = {
 # Grafana 6 includes new datasources with long paths
 #
 def remove_long_paths():
-    print "Removing long pathed files - these are not needed to run grafana"
+    print('Removing long pathed files - these are not needed to run grafana')
     long_files = [
         '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.test.ts',
         '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.ts',
@@ -113,9 +113,9 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     rename_to = '{}/grafana'.format(target_dir_name)
     print('Renaming extracted path {} to {}'.format(zip_file_path, rename_to))
     os.system('ls -al /tmp/a')
-    print 'Before:'
+    print('Before:')
     os.rename(zip_file_path, rename_to)
-    print 'After:'
+    print('After:')
     os.system('ls -al /tmp/a')
     # cleanup due to MSI API limitation
     remove_long_paths()
@@ -124,7 +124,7 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     #
     # Collects the files from the path given and generates wxs file
     #
-    print 'Heat Harvesting'
+    print('Heat Harvesting')
     cgname = 'GrafanaX64'
     cgdir = 'GrafanaX64Dir'
     if not os.path.isdir('/tmp/scratch'):
@@ -147,31 +147,31 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
           -dr {} \
           -template fragment \
           -out {}'''.strip().format(HEAT, target_dir_name, cgname, cgdir, outfile)
-        print cmd
+        print(cmd)
         os.system(cmd)
     except Exception as ex:
-        print ex
+        print(ex)
 
     shutil.copy2(outfile, target_dir_name)
     nssm_file = get_nssm('/tmp/cache', NSSM_VERSION)
     if not os.path.isdir(target_dir_name + '/nssm'):
         os.mkdir(target_dir_name + '/nssm')
     extract_zip(nssm_file, target_dir_name + '/nssm')
-    print 'HARVEST COMPLETE'
+    print('HARVEST COMPLETE')
     os.chdir(src_dir)
     generate_firewall_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-firewall.wxs', target_dir_name)
     generate_service_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
     generate_product_wxs(env, config, features, '/tmp/scratch/product.wxs', target_dir_name)
-    print 'GENERATE COMPLETE'
+    print('GENERATE COMPLETE')
     copy_static_files(target_dir_name)
-    print 'COPY STATIC COMPLETE'
+    print('COPY STATIC COMPLETE')
     #
     # CANDLE needs to run in the scratch dir
     os.chdir('/tmp/scratch')
     try:
         filename = 'grafana-service.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(CANDLE, filename)
-        print cmd
+        print(cmd)
         os.system(cmd)
         shutil.copy2('grafana-service.wixobj', target_dir_name)
         #
@@ -179,7 +179,7 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
             CANDLE,
             filename)
-        print cmd
+        print(cmd)
         os.system(cmd)
         shutil.copy2('grafana-firewall.wixobj', target_dir_name)
         #
@@ -187,7 +187,7 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
             CANDLE,
             filename)
-        print cmd
+        print(cmd)
         os.system(cmd)
         shutil.copy2('grafana-oss.wixobj', target_dir_name)
         #
@@ -195,12 +195,12 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
             CANDLE,
             filename)
-        print cmd
+        print(cmd)
         os.system(cmd)
         shutil.copy2('product.wixobj', target_dir_name)
     except Exception as ex:
-        print ex
-    print 'CANDLE COMPLETE'
+        print(ex)
+    print('CANDLE COMPLETE')
     ############################
     # LIGHT - Assemble the MSI
     ############################
@@ -217,15 +217,15 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
           grafana-oss.wixobj \
           product.wixobj \
           -out grafana.msi'''.strip().format(LIGHT)
-        print cmd
+        print(cmd)
         os.system(cmd)
     except Exception as ex:
-        print ex
+        print(ex)
     # copy to scratch with version included
     msi_filename = '/tmp/scratch/{}.windows-amd64.msi'.format(extracted_name)
     shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al /tmp/scratch')
-    print "LIGHT COMPLETE"
+    print('LIGHT COMPLETE')
     # finally cleanup
     # extract_dir.cleanup()
 
@@ -234,8 +234,9 @@ def main(file_loader, env, grafana_version, zip_file, extracted_name):
     UPGRADE_VERSION = OSS_UPGRADE_VERSION
     GRAFANA_VERSION = grafana_version
     PRODUCT_NAME = OSS_PRODUCT_NAME
-    #PRODUCT_VERSION=GRAFANA_VERSION
-    # MSI version cannot have anything other than a x.x.x.x format, numbers only
+    # PRODUCT_VERSION=GRAFANA_VERSION
+    # MSI version cannot have anything other
+    # than a x.x.x.x format, numbers only
     PRODUCT_VERSION = GRAFANA_VERSION.split('-')[0]
 
     config = {
