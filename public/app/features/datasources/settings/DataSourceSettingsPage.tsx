@@ -22,7 +22,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
 import { NavModel, Plugin, StoreState } from 'app/types/';
-import { DataSourceSettings } from '@grafana/ui/src/types/';
+import { DataSourceSettings, PluginState } from '@grafana/ui/src/types/';
 import { getDataSourceLoadingNav } from '../state/navModel';
 
 export interface Props {
@@ -42,11 +42,6 @@ interface State {
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
-}
-
-enum DataSourceStates {
-  Alpha = 'alpha',
-  Beta = 'beta',
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
@@ -113,20 +108,20 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   shouldRenderInfoBox() {
     const { state } = this.props.dataSourceMeta;
 
-    return state === DataSourceStates.Alpha || state === DataSourceStates.Beta;
+    return state === PluginState.alpha || state === PluginState.beta;
   }
 
   getInfoText() {
     const { dataSourceMeta } = this.props;
 
     switch (dataSourceMeta.state) {
-      case DataSourceStates.Alpha:
+      case PluginState.alpha:
         return (
           'This plugin is marked as being in alpha state, which means it is in early development phase and updates' +
           ' will include breaking changes.'
         );
 
-      case DataSourceStates.Beta:
+      case PluginState.beta:
         return (
           'This plugin is marked as being in a beta development state. This means it is in currently in active' +
           ' development and could be missing important features.'
