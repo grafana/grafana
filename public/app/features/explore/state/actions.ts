@@ -536,6 +536,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
       supportsLogs,
       supportsTable,
       datasourceError,
+      containerWidth,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -579,6 +580,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
             interval,
             format: 'time_series',
             instant: false,
+            maxDataPoints: containerWidth,
           },
           makeTimeSeriesList
         )
