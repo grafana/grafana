@@ -1,7 +1,7 @@
 $input-border: 1px solid $input-border-color;
 
 .gf-form {
-  margin-bottom: $space-xxs;
+  margin-bottom: $space-xs;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -168,7 +168,7 @@ $input-border: 1px solid $input-border-color;
   display: flex;
   align-items: center;
   width: 100%;
-  height: $input-height;
+  height: $input-height !important;
   padding: $input-padding;
   font-size: $font-size-md;
   line-height: $input-line-height;
