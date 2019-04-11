@@ -602,7 +602,7 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
-              filters: *filter-not-release-or-master
+            filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
               - build
