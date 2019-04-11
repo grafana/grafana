@@ -27,20 +27,13 @@ export interface Props {
 
 export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
-  defaultItem = {
-    ...defaultRefreshPickerItem,
-    value: undefined,
-  };
 
   onChangeRefreshInterval = (interval: SelectOptionItem) => {
     const { dashboard } = this.props;
     const nextRefreshValue = interval.label === defaultRefreshIntervalLabel ? undefined : interval.label;
     if (nextRefreshValue !== dashboard.refresh) {
       this.timeSrv.setAutoRefresh(nextRefreshValue);
-      if (nextRefreshValue) {
-        // Refresh unless set to 'Off'
-        this.onRefresh();
-      }
+      this.onRefresh(); // We need to refresh even when setting the value to 'Off' to update the model
     }
   };
 
@@ -51,7 +44,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   get refreshPickerValue(): SelectOptionItem {
     const { dashboard } = this.props;
-    return dashboard.refresh ? getIntervalFromString(dashboard.refresh) : this.defaultItem;
+    return dashboard.refresh ? getIntervalFromString(dashboard.refresh) : defaultRefreshPickerItem;
   }
 
   render() {
