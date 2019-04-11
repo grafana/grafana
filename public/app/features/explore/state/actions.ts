@@ -525,7 +525,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction());
+    dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(

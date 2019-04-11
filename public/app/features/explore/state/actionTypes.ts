@@ -199,6 +199,15 @@ export interface QueriesImportedPayload {
   queries: DataQuery[];
 }
 
+export interface LoadExploreDataSourcesPayload {
+  exploreId: ExploreId;
+  exploreDatasources: DataSourceSelectItem[];
+}
+
+export interface RunQueriesPayload {
+  exploreId: ExploreId;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -323,7 +332,8 @@ export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransacti
  * Remove query row of the given index, as well as associated query results.
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
-export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
+
+export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
 
 /**
  * Start a scan for more results using the given scanner.

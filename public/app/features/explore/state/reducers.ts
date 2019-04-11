@@ -12,7 +12,14 @@ import {
 import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 
-import { HigherOrderAction, ActionTypes, SplitCloseActionPayload, splitCloseAction } from './actionTypes';
+import {
+  HigherOrderAction,
+  ActionTypes,
+  SplitCloseActionPayload,
+  splitCloseAction,
+  runQueriesAction,
+} from './actionTypes';
+
 import { reducerFactory } from 'app/core/redux';
 import {
   addQueryRowAction,
@@ -158,14 +165,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
-      const { range, datasourceInstance } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
       const containerWidth = action.payload.width;
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return { ...state, containerWidth, queryIntervals };
+      return { ...state, containerWidth };
     },
   })
   .addMapper({
@@ -250,7 +251,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: loadDatasourceSuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, range } = state;
       const {
         StartPage,
         datasourceInstance,
@@ -260,11 +260,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         supportsLogs,
         supportsTable,
       } = action.payload;
-      const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
 
       return {
         ...state,
-        queryIntervals,
         StartPage,
         datasourceInstance,
         history,
@@ -514,6 +512,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         hiddenLogLevels: Array.from(hiddenLogLevels),
+      };
+    },
+  })
+  .addMapper({
+    filter: runQueriesAction,
+    mapper: (state): ExploreItemState => {
+      const { range, datasourceInstance, containerWidth } = state;
+      let interval = '1s';
+      if (datasourceInstance && datasourceInstance.interval) {
+        interval = datasourceInstance.interval;
+      }
+      const queryIntervals = getIntervals(range, interval, containerWidth);
+      return {
+        ...state,
+        queryIntervals,
       };
     },
   })
