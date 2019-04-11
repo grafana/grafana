@@ -46,6 +46,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		return nil, err
 	}
 
+	pluginsToPreload := []string{}
+
+	for _, app := range enabledPlugins.Apps {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
+	}
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
@@ -64,6 +72,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		if !exists {
 			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
+		}
+
+		if meta.Preload {
+			pluginsToPreload = append(pluginsToPreload, meta.Module)
 		}
 
 		dsMap["meta"] = meta
@@ -137,6 +149,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			continue
 		}
 
+		if panel.Preload {
+			pluginsToPreload = append(pluginsToPreload, panel.Module)
+		}
+
 		panels[panel.Id] = map[string]interface{}{
 			"module":       panel.Module,
 			"baseUrl":      panel.BaseUrl,
@@ -169,6 +185,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"viewersCanEdit":             setting.ViewersCanEdit,
 		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
