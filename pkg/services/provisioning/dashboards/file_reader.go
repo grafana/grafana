@@ -25,10 +25,10 @@ var (
 )
 
 type fileReader struct {
-	Cfg              *DashboardsAsConfig
-	Path             string
-	log              log.Logger
-	dashboardService dashboards.DashboardProvisioningService
+	Cfg                          *DashboardsAsConfig
+	Path                         string
+	log                          log.Logger
+	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -44,10 +44,10 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:              cfg,
-		Path:             path,
-		log:              log,
-		dashboardService: dashboards.NewProvisioningService(),
+		Cfg:                          cfg,
+		Path:                         path,
+		log:                          log,
+		dashboardProvisioningService: dashboards.NewProvisioningService(),
 	}, nil
 }
 
@@ -86,12 +86,12 @@ func (fr *fileReader) startWalkingDisk() error {
 		}
 	}
 
-	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardService)
+	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardProvisioningService)
 	if err != nil && err != ErrFolderNameMissing {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardService, fr.Cfg.Name)
+	provisionedDashboardRefs, err := getProvisionedDashboardByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		return err
 	}
 
-	fr.deleteDashboardIfFileIsMissing(provisionedDashboardRefs, filesFoundOnDisk)
+	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
 
 	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
 
@@ -119,11 +119,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	return nil
 }
 
-func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
-	if fr.Cfg.DisableDeletion {
-		return
-	}
-
+func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
@@ -132,13 +128,25 @@ func (fr *fileReader) deleteDashboardIfFileIsMissing(provisionedDashboardRefs ma
 			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
 		}
 	}
-	// delete dashboard that are missing json file
-	for _, dashboardId := range dashboardToDelete {
-		fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
-		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
-		err := bus.Dispatch(cmd)
-		if err != nil {
-			fr.log.Error("failed to delete dashboard", "id", cmd.Id, "error", err)
+
+	if fr.Cfg.DisableDeletion {
+		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
+		// so afterwards the dashboard is considered unprovisioned.
+		for _, dashboardId := range dashboardToDelete {
+			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardId)
+			err := fr.dashboardProvisioningService.UnprovisionDashboard(dashboardId)
+			if err != nil {
+				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardId, "error", err)
+			}
+		}
+	} else {
+		// delete dashboard that are missing json file
+		for _, dashboardId := range dashboardToDelete {
+			fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
+			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(dashboardId, fr.Cfg.OrgId)
+			if err != nil {
+				fr.log.Error("failed to delete dashboard", "id", dashboardId, "error", err)
+			}
 		}
 	}
 }
@@ -189,7 +197,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		CheckSum:   jsonFile.checkSum,
 	}
 
-	_, err = fr.dashboardService.SaveProvisionedDashboard(dash, dp)
+	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
 

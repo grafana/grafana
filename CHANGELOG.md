@@ -1,6 +1,6 @@
 # 6.2.0 (unreleased)
 
-# 6.1.3 (unreleased)
+# 6.1.3 (2019-04-09)
 
 ### Bug Fixes
   * **Graph**: Fixed auto decimals in legend values for some units like `ms` and `s`. [#16455](https://github.com/grafana/grafana/pull/16455), [@torkelo](https://github.com/torkelo)
