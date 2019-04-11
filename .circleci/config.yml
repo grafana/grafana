@@ -485,17 +485,6 @@ workflows:
           filters: *filter-only-master
       - postgres-integration-test:
           filters: *filter-only-master
-      # TODO: uncomment before merging
-      #- build-oss-msi:
-      #    requires:
-      #      - build-all
-      #      - test-backend
-      #      - test-frontend
-      #      - codespell
-      #      - gometalinter
-      #      - mysql-integration-test
-      #      - postgres-integration-test
-      #    filters: *filter-only-master
       - deploy-master:
           requires:
             - build-all
@@ -547,17 +536,6 @@ workflows:
           filters: *filter-only-release
       - postgres-integration-test:
           filters: *filter-only-release
-      # TODO: uncomment before merging
-      #- build-oss-msi:
-      #    requires:
-      #      - build-all
-      #      - test-backend
-      #      - test-frontend
-      #      - codespell
-      #      - gometalinter
-      #      - mysql-integration-test
-      #      - postgres-integration-test
-      #    filters: *filter-only-release
       - deploy-release:
           requires:
             - build-all
@@ -595,6 +573,8 @@ workflows:
       jobs:
         - build:
             filters: *filter-not-release-or-master
+        - build-all:
+            filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
         - backend-lint:
@@ -610,15 +590,19 @@ workflows:
         - cache-server-test:
             filters: *filter-not-release-or-master
         # TODO: REMOVE BEFORE MERGING! This is just testing
+        # NOTE: build-all is needed since build does not
+        #  produce the windows zip file
         - build-oss-msi:
             requires:
               - build-all
               - test-backend
               - test-frontend
               - codespell
-              - gometalinter
+              - backend-lint
               - mysql-integration-test
               - postgres-integration-test
+              - cache-server-test
+              filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
               - build
