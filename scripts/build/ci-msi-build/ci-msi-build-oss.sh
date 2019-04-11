@@ -13,10 +13,10 @@ cp ./scripts/build/ci-msi-build/oss/cache/nssm-2.24.zip /tmp/cache
 # a build can be specified, which will be pulled down
 #python3 generator/build.py --build 5.4.3
 echo "LIGHT config"
-ls -al /home/xclient/wix/light.exe.config
-cat /home/xclient/wix/light.exe.config
-cp ./scripts/build/ci-msi-build/oss/light.exe.config /home/xclient/wix/light.exe.config
-cat /home/xclient/wix/light.exe.config
+#ls -al /home/xclient/wix/light.exe.config
+#cat /home/xclient/wix/light.exe.config
+#cp ./scripts/build/ci-msi-build/oss/light.exe.config /home/xclient/wix/light.exe.config
+#cat /home/xclient/wix/light.exe.config
 cd ./scripts/build/ci-msi-build/oss
 echo "Building MSI"
 python3 generator/build.py "$@"

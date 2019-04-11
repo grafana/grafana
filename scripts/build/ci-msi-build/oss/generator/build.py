@@ -79,16 +79,16 @@ grafana_oss = {
 # Grafana 6 includes new datasources with long paths
 #
 def remove_long_paths():
-    print("Removing long pathed files - these are not needed to run grafana")
+    print "Removing long pathed files - these are not needed to run grafana"
     long_files = [
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.test.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.test.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.test.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.test.ts',
-      '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.ts'
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.test.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.test.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.test.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.test.ts',
+        '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.ts'
     ]
     for file in long_files:
         if os.path.isfile(file):
@@ -111,7 +111,7 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     # Once extracted, rename it to grafana without the version included
     zip_file_path = '{}/{}'.format(target_dir_name, extracted_name)
     rename_to = '{}/grafana'.format(target_dir_name)
-    print 'Renaming extracted path {} to {}'.format(zip_file_path, rename_to)
+    print('Renaming extracted path {} to {}'.format(zip_file_path, rename_to))
     os.system('ls -al /tmp/a')
     print 'Before:'
     os.rename(zip_file_path, rename_to)
@@ -177,24 +177,24 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
         #
         filename = 'grafana-firewall.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
-          CANDLE,
-          filename)
+            CANDLE,
+            filename)
         print cmd
         os.system(cmd)
         shutil.copy2('grafana-firewall.wixobj', target_dir_name)
         #
         filename = 'grafana-oss.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
-          CANDLE,
-          filename)
+            CANDLE,
+            filename)
         print cmd
         os.system(cmd)
         shutil.copy2('grafana-oss.wixobj', target_dir_name)
         #
         filename = 'product.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
-          CANDLE,
-          filename)
+            CANDLE,
+            filename)
         print cmd
         os.system(cmd)
         shutil.copy2('product.wixobj', target_dir_name)
@@ -231,40 +231,40 @@ def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
 
 
 def main(file_loader, env, grafana_version, zip_file, extracted_name):
-    UPGRADE_VERSION=OSS_UPGRADE_VERSION
-    GRAFANA_VERSION=grafana_version
-    PRODUCT_NAME=OSS_PRODUCT_NAME
+    UPGRADE_VERSION = OSS_UPGRADE_VERSION
+    GRAFANA_VERSION = grafana_version
+    PRODUCT_NAME = OSS_PRODUCT_NAME
     #PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other than a x.x.x.x format, numbers only
-    PRODUCT_VERSION=GRAFANA_VERSION.split('-')[0]
+    PRODUCT_VERSION = GRAFANA_VERSION.split('-')[0]
 
     config = {
-      'grafana_version': PRODUCT_VERSION,
-      'upgrade_code': UPGRADE_VERSION,
-      'product_name': PRODUCT_NAME,
-      'manufacturer': 'Grafana Labs'
+        'grafana_version': PRODUCT_VERSION,
+        'upgrade_code': UPGRADE_VERSION,
+        'product_name': PRODUCT_NAME,
+        'manufacturer': 'Grafana Labs'
     }
     features = [
-      {
-        'name': 'GrafanaOSS',
-        'title': PRODUCT_NAME,
-        'component_groups': [
-          {
-          'ref_id': 'GrafanaX64',
-          'directory': 'GrafanaX64Dir'
-          }
-        ]
-      },
-      {
-        'name': 'GrafanaService',
-        'title': 'Run Grafana as a Service',
-        'component_groups': [
-          {
-          'ref_id': 'GrafanaServiceX64',
-          'directory': 'GrafanaServiceX64Dir'
-          }
-        ]
-      }
+        {
+            'name': 'GrafanaOSS',
+            'title': PRODUCT_NAME,
+            'component_groups': [
+                {
+                    'ref_id': 'GrafanaX64',
+                    'directory': 'GrafanaX64Dir'
+                }
+            ]
+        },
+        {
+            'name': 'GrafanaService',
+            'title': 'Run Grafana as a Service',
+            'component_groups': [
+                {
+                    'ref_id': 'GrafanaServiceX64',
+                    'directory': 'GrafanaServiceX64Dir'
+                }
+            ]
+        }
     ]
     build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features)
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     print('MSI Generator Version: {}'.format(MSI_GENERATOR_VERSION))
 
     parser = argparse.ArgumentParser(description='Grafana MSI Generator',
-        formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=90, width=110),add_help=True)
+        formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=90, width=110), add_help=True)
     parser.add_argument('-p', '--premium', help='Include premium plugins', dest='premium', action='store_true')
     parser.add_argument('-e', '--enterprise', help='Use Enterprise build', dest='enterprise', action='store_true')
     parser.set_defaults(enterprise=False, premium=False)
