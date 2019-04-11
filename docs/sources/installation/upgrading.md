@@ -123,7 +123,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
 
-## Upgrading to v6.x
+## Upgrading to v6.2
 
 Datasources store passwords and basic auth passwords in secureJsonData encrypted by default. Existing datasource 
 will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing datasources
