@@ -141,7 +141,7 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-function importPluginModule(path: string): Promise<any> {
+export function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
