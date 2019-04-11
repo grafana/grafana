@@ -16,6 +16,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   statsToDisplay,
   onToggleSort,
   onSeriesAxisToggle,
+  placement,
   ...graphLegendItemProps
 }) => {
   return (
@@ -35,6 +36,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
       onToggleSort={onToggleSort}
       renderLegendAs={renderLegendAs}
       statsToDisplay={statsToDisplay}
+      placement={placement}
     />
   );
 };

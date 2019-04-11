@@ -1,6 +1,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { Legend, LegendItem } from './Legend';
+import { Legend, LegendItem, LegendPlacement } from './Legend';
 import { LegendList } from './LegendList';
 import tinycolor from 'tinycolor2';
 import { number, select, text } from '@storybook/addon-knobs';
@@ -60,18 +60,28 @@ const getStoriesKnobs = () => {
 
   const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
 
+  const legendPlacement = select<LegendPlacement>(
+    'Legend placement',
+    {
+      under: 'under',
+      right: 'right',
+    },
+    'under'
+  );
+
   return {
     numberOfSeries,
     containerWidth,
     itemRenderer: legendItemRenderer === 'raw' ? rawRenderer : customRenderer,
     rightAxisSeries,
+    legendPlacement,
   };
 };
 
 const LegendStories = storiesOf('UI/Legend/Legend', module);
 
 LegendStories.add('list', () => {
-  const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries } = getStoriesKnobs();
+  const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries, legendPlacement } = getStoriesKnobs();
   let items = generateLegendItems(numberOfSeries);
 
   items = items.map(i => {
@@ -88,7 +98,7 @@ LegendStories.add('list', () => {
   });
   return (
     <div style={{ width: containerWidth }}>
-      <Legend itemRenderer={itemRenderer} renderLegendAs={LegendList} items={items} />
+      <Legend itemRenderer={itemRenderer} renderLegendAs={LegendList} items={items} placement={legendPlacement} />
     </div>
   );
 });

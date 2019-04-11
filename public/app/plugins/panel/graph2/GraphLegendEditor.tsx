@@ -35,8 +35,14 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
     if (!event) {
       return;
     }
+    // TODO: fix the ignores
     // @ts-ignore
     newOption[option] = event.target.checked;
+    if (option === 'placement') {
+      // @ts-ignore
+      newOption[option] = event.target.checked ? 'right' : 'under';
+    }
+
     onChange({
       ...options,
       ...newOption,
@@ -49,6 +55,7 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
         <h4>Legend options</h4>
         <Switch label="Show legend" checked={options.isVisible} onChange={onOptionToggle('isVisible')} />
         <Switch label="Display as table" checked={options.asTable} onChange={onOptionToggle('asTable')} />
+        <Switch label="To the right" checked={options.placement === 'right'} onChange={onOptionToggle('placement')} />
       </>
 
       <>

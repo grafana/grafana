@@ -1,33 +1,17 @@
 import React, { useContext } from 'react';
-import { LegendComponentProps, LegendItem, StatDisplayValue } from './Legend';
+import { LegendComponentProps, LegendItem } from './Legend';
 import { InlineList } from '../List/InlineList';
+import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
+import { LegendStatsList } from './LegendStatsList';
 
-const LegendItemStat: React.FunctionComponent<{ stat: StatDisplayValue }> = ({ stat }) => {
-  return (
-    <div
-      className={css`
-        margin-left: 6px;
-      `}
-    >
-      {stat.text}
-    </div>
-  );
-};
-
-LegendItemStat.displayName = 'LegendItemStat';
-
-const LegendStatsList: React.FunctionComponent<{ stats: StatDisplayValue[] }> = ({ stats }) => {
-  if (stats.length === 0) {
-    return null;
-  }
-  return <InlineList items={stats} renderItem={stat => <LegendItemStat stat={stat} />} />;
-};
-
-LegendStatsList.displayName = 'LegendStatsList';
-
-export const LegendList: React.FunctionComponent<LegendComponentProps> = ({ items, itemRenderer, statsToDisplay }) => {
+export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
+  items,
+  itemRenderer,
+  statsToDisplay,
+  placement,
+}) => {
   const theme = useContext(ThemeContext);
 
   const renderItem = (item: LegendItem, index: number) => {
@@ -66,7 +50,7 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({ item
     `,
   };
 
-  return (
+  return placement === 'under' ? (
     <div className={styles.wrapper}>
       <div className={styles.section}>
         <InlineList items={items.filter(item => !item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
@@ -75,6 +59,8 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({ item
         <InlineList items={items.filter(item => item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
       </div>
     </div>
+  ) : (
+    <List items={items} renderItem={renderItem} getItemKey={getItemKey} />
   );
 };
 

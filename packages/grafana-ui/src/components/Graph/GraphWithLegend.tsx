@@ -47,6 +47,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     isLegendVisible,
     renderLegendAs,
     stats,
+    placement,
     onSeriesColorChange,
     onSeriesAxisToggle,
   } = props;
@@ -84,6 +85,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             items={legendItems}
             renderLegendAs={renderLegendAs}
             statsToDisplay={stats}
+            placement={placement}
             onLabelClick={item => {
               // TODO: handle keyboard
               const action = item.isVisible ? hideSeries : showSeries;

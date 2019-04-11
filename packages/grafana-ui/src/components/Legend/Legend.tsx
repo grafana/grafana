@@ -37,6 +37,7 @@ export interface LegendComponentProps {
   items: LegendItem[];
   // Array of stat ids to be displayed in legend
   statsToDisplay?: string[];
+  placement: LegendPlacement;
   // Function to render given item
   itemRenderer?: (item: LegendItem) => JSX.Element;
   onToggleSort?: (sortBy: string, sortDesc: boolean) => void;

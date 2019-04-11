@@ -7,6 +7,7 @@ import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { generateLegendItems } from '../Legend/Legend.story';
+import { LegendPlacement } from '../Legend/Legend';
 
 const GraphLegendStories = storiesOf('UI/Graph/GraphLegend', module);
 GraphLegendStories.addDecorator(withHorizontallyCenteredStory);
@@ -33,15 +34,26 @@ const getStoriesKnobs = () => {
     },
     '100%'
   );
+
+  const legendPlacement = select<LegendPlacement>(
+    'Legend placement',
+    {
+      under: 'under',
+      right: 'right',
+    },
+    'under'
+  );
+
   return {
     statsToDisplay,
     numberOfSeries,
     containerWidth,
+    legendPlacement,
   };
 };
 
 GraphLegendStories.add('list', () => {
-  const { statsToDisplay, numberOfSeries, containerWidth } = getStoriesKnobs();
+  const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs();
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
@@ -57,6 +69,7 @@ GraphLegendStories.add('list', () => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
         statsToDisplay={statsToDisplay}
+        placement={legendPlacement}
       />
     </div>
   );
