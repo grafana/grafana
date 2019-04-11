@@ -38,7 +38,7 @@ func TestMiddlewareContext(t *testing.T) {
 		ctx := &models.ReqContext{
 			Context: &macaron.Context{
 				Req: macaron.Request{
-					req,
+					Request: req,
 				},
 			},
 		}
@@ -64,7 +64,7 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("gets data from the LDAP", func() {
 				login.LdapCfg = login.LdapConfig{
 					Servers: []*login.LdapServerConf{
-						&login.LdapServerConf{},
+						{},
 					},
 				}
 
