@@ -67,6 +67,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
     },
     {
       id: '1',
+      type: 'datasource',
       name: '',
       info: {
         author: {

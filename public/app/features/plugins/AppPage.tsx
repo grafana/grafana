@@ -4,15 +4,13 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, UrlQueryMap } from 'app/types';
-import { importAppPlugin } from '../plugins/plugin_loader';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { StoreState } from 'app/types';
+import { importAppPlugin } from './plugin_loader';
 import { AppPlugin } from '@grafana/ui';
+import { getPluginSettings } from './PluginSettingsCache';
 
 interface Props {
   pluginId: string; // From the angular router
-  path: string; // From the react router
-  query: UrlQueryMap;
 }
 
 interface State {
@@ -20,11 +18,6 @@ interface State {
   notFound: boolean;
   app?: AppPlugin;
 }
-
-type PluginCache = {
-  [key: string]: any;
-};
-const pluginInfoCache: PluginCache = {};
 
 export class AppPage extends Component<Props, State> {
   constructor(props: Props) {
@@ -48,32 +41,18 @@ export class AppPage extends Component<Props, State> {
       console.log('Change the APP'); // does not really happen since it reloads
       //  this.loadApp();
     }
-    if (this.props.path !== prevProps.path) {
-      console.log('Path Changed');
-    }
   }
 
   async loadApp() {
     const { pluginId } = this.props;
 
     this.setState({ loading: true });
-    let info = pluginInfoCache[pluginId];
-    if (!info) {
-      await getBackendSrv()
-        .get(`/api/plugins/${pluginId}/settings`)
-        .then(settings => {
-          info = settings;
-        })
-        .catch(err => {
-          err.isHandled = true;
-          console.log('Unknown APP: ', pluginId);
-        });
-    }
+    const info = await getPluginSettings(pluginId);
     if (!info || info.type !== 'app' || !info.enabled) {
       this.setState({ loading: false, notFound: true, app: null });
       return;
     }
-    pluginInfoCache[pluginId] = info;
+
     importAppPlugin(info.module)
       .then(app => {
         this.setState({ loading: false, notFound: false, app });
@@ -84,7 +63,7 @@ export class AppPage extends Component<Props, State> {
   }
 
   render() {
-    const { pluginId, path } = this.props;
+    const { pluginId } = this.props;
     const { app } = this.state;
 
     // if (notFound) {
@@ -96,8 +75,6 @@ export class AppPage extends Component<Props, State> {
     return (
       <div>
         APP: {pluginId}
-        <br />
-        PATH: {path}
         <br />
         <ul>
           <li>
@@ -121,8 +98,6 @@ export class AppPage extends Component<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   pluginId: state.location.routeParams.pluginId,
-  path: state.location.routeParams.path,
-  query: state.location.query,
 });
 
 const mapDispatchToProps = {

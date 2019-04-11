@@ -6,6 +6,9 @@ export interface PluginMeta {
   module: string;
   baseUrl: string;
 
+  type: string;
+  enabled?: boolean; // only care about 'false'
+
   // Datasource-specific
   builtIn?: boolean;
   metrics?: boolean;

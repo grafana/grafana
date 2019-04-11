@@ -22,7 +22,7 @@ import DataSourceSettingsPage from '../features/datasources/settings/DataSourceS
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
-import AppPage from '../features/app-plugin/AppPage';
+import AppPage from '../features/plugins/AppPage';
 import config from 'app/core/config';
 
 // Types
@@ -165,7 +165,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
-    .when('/a/:pluginId/:path*', {
+    .when('/a/:pluginId/', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
