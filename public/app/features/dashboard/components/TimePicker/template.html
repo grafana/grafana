@@ -1,27 +1,25 @@
-<div class="navbar-buttons">
-  <button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(-1)' ng-if="ctrl.isAbsolute">
-		<i class="fa fa-chevron-left"></i>
-	</button>
+<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(-1)' ng-if="ctrl.isAbsolute">
+  <i class="fa fa-chevron-left"></i>
+</button>
 
-	<button bs-tooltip="ctrl.tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()" class="btn navbar-button gf-timepicker-nav-btn">
-		<i class="fa fa-clock-o"></i>
-		<span ng-bind="ctrl.rangeString"></span>
-		<span ng-show="ctrl.isUtc" class="gf-timepicker-utc">UTC</span>
-		<!-- <span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span> -->
-	</button>
+<button bs-tooltip="ctrl.tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()" class="btn navbar-button gf-timepicker-nav-btn">
+  <i class="fa fa-clock-o"></i>
+  <span ng-bind="ctrl.rangeString"></span>
+  <span ng-show="ctrl.isUtc" class="gf-timepicker-utc">UTC</span>
+  <!-- <span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span> -->
+</button>
 
-  <button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)' ng-if="ctrl.isAbsolute">
-		<i class="fa fa-chevron-right"></i>
-	</button>
+<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)' ng-if="ctrl.isAbsolute">
+  <i class="fa fa-chevron-right"></i>
+</button>
 
-  <button class="btn navbar-button navbar-button--zoom" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
-		<i class="fa fa-search-minus"></i>
-	</button>
+<button class="btn navbar-button navbar-button--zoom" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
+  <i class="fa fa-search-minus"></i>
+</button>
 
-  <!-- <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
-		<i class="fa fa-refresh"></i>
-	</button> -->
-</div>
+<!-- <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
+  <i class="fa fa-refresh"></i>
+</button> -->
 
 <div ng-if="ctrl.isOpen" class="gf-timepicker-dropdown">
   <div class="popover-box">

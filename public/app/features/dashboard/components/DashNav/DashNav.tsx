@@ -264,8 +264,8 @@ export class DashNav extends PureComponent<Props> {
         </div>
 
         <div className="navbar-buttons">
-          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
           <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
         </div>
       </div>
     );
