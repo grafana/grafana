@@ -513,6 +513,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
       supportsGraph,
       supportsLogs,
       supportsTable,
+      containerWidth,
     } = getState().explore[exploreId];
 
     if (!hasNonEmptyQuery(queries)) {
@@ -551,6 +552,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
             interval,
             format: 'time_series',
             instant: false,
+            maxDataPoints: containerWidth,
           },
           makeTimeSeriesList
         )
