@@ -108,6 +108,10 @@ func TestValues(t *testing.T) {
                    four:
                      nested:
                        onemore: $INT
+                   multiline: >
+                     Some text with $STRING
+                   anchor: &label $INT
+                   anchored: *label
                `
 				unmarshalingTest(doc, d)
 
@@ -127,6 +131,9 @@ func TestValues(t *testing.T) {
 							"onemore": "1",
 						},
 					},
+					"multiline": "Some text with test\n",
+					"anchor":    "1",
+					"anchored":  "1",
 				})
 
 			})
