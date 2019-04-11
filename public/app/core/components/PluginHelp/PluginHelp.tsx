@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Remarkable from 'remarkable';
-import { getBackendSrv } from '../../services/backend_srv';
+import { getBackendSrv } from '@grafana/ui';
 
 interface Props {
   plugin: {

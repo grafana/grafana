@@ -7,12 +7,11 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup } from '@grafana/ui';
+import { PanelOptionsGroup, getBackendSrv } from '@grafana/ui';
 import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 
 // Types
@@ -37,7 +36,7 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
 
   state: State = {
     isLoadingHelp: false,

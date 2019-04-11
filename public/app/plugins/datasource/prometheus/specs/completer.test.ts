@@ -2,7 +2,7 @@ import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
 import { BackendSrv } from 'app/core/services/backend_srv';
 jest.mock('../datasource');
-jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/ui');
 
 describe('Prometheus editor completer', () => {
   function getSessionStub(data) {
