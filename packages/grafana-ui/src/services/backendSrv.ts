@@ -15,7 +15,7 @@ export type BackendSrvRequest = {
   [key: string]: any;
 };
 
-export interface BackendService {
+export interface BackendSrv {
   get(url: string, params?: any): Promise<any>;
 
   delete(url: string): Promise<any>;
@@ -31,12 +31,12 @@ export interface BackendService {
   request(options: BackendSrvRequest): Promise<any>;
 }
 
-let singletonInstance: BackendService;
+let singletonInstance: BackendSrv;
 
-export function setBackendSrv(instance: BackendService) {
+export function setBackendSrv(instance: BackendSrv) {
   singletonInstance = instance;
 }
 
-export function getBackendSrv(): BackendService {
+export function getBackendSrv(): BackendSrv {
   return singletonInstance;
 }
