@@ -46,8 +46,8 @@ export class FetchStream extends StreamHandler<FetchQuery> {
     const url = getKeyForFetch(this.query);
 
     // TODO! fetch via the datasource config with credentials etc
-    const request = new Request(url);
-    fetch(request).then(response => {
+    // Support errors and reconnects!
+    fetch(new Request(url)).then(response => {
       console.log('RESPONSE', response.body);
       this.reader = response.body.getReader();
       this.reader.read().then(this.processChunk);
@@ -81,6 +81,7 @@ export class FetchStream extends StreamHandler<FetchQuery> {
   };
 
   onRow = (row: any[]) => {
+    // TODO?? this will send an event for each row, even if the chunk passed a bunch of them
     this.addRows([row]);
   };
 }
