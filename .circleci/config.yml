@@ -152,13 +152,12 @@ jobs:
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
-      # TODO: commented out for testing MSI
-      #- run:
-      #    name: verify signed packages
-      #    command: |
-      #      mkdir -p ~/.rpmdb/pubkeys
-      #      curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
-      #      ./scripts/build/verify_signed_packages.sh dist/*.rpm
+      - run:
+          name: verify signed packages
+          command: |
+            mkdir -p ~/.rpmdb/pubkeys
+            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -518,6 +517,16 @@ workflows:
             - postgres-integration-test
             - build-all-enterprise
           filters: *filter-only-master
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
 
   release:
     jobs:
@@ -569,13 +578,20 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
 
   build-branches-and-prs:
       jobs:
         - build:
-            filters: *filter-not-release-or-master
-        # TODO: REMOVE build-all BEFORE MERGING! This is just for testing
-        - build-all:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
@@ -590,13 +606,6 @@ workflows:
         - postgres-integration-test:
             filters: *filter-not-release-or-master
         - cache-server-test:
-            filters: *filter-not-release-or-master
-        # TODO: REMOVE build-oss-msi BEFORE MERGING! This is just testing
-        # NOTE: build-all is needed since build does not
-        #  produce the windows zip file
-        - build-oss-msi:
-            requires:
-              - build-all
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
