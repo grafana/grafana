@@ -1,5 +1,5 @@
 #!/bin/bash
-
+WORKING_DIRECTORY=`pwd`
 # copy oss files to /master
 mkdir -p /tmp/dist
 cp ./dist/*.zip /tmp/dist
@@ -24,3 +24,8 @@ cat /home/xclient/wix/light.exe.config
 cd /master
 echo "Building MSI"
 python3 generator/build.py "$@"
+chmod a+x /tmp/a/*.msi
+echo "MSI: Copy to $WORKING_DIRECTORY/dist"
+cp /tmp/a/*.msi $WORKING_DIRECTORY/dist
+echo "MSI: contents of $WORKING_DIRECTORY/dist"
+ls -al $WORKING_DIRECTORY/dist

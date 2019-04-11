@@ -451,14 +451,10 @@ jobs:
       - run:
           name: Build OSS MSI
           command: './scripts/build/ci-msi-build/ci-msi-build-oss.sh'
-      # script creates the final msi in /tmp/a
       - persist_to_workspace:
-        root: /tmp/a
-        paths:
-        - grafana-*.msi
-      # TODO: REMOVE BEFORE MERGING
-      - store_artifacts:
-          path: /tmp/a
+          root: .
+          paths:
+            - dist/grafana-*.msi
 
   store-build-artifacts:
     docker:
