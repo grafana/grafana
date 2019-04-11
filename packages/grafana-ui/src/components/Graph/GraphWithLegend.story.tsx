@@ -8,6 +8,7 @@ import { GraphWithLegend } from './GraphWithLegend';
 import { mockGraphWithLegendData } from './mockGraphWithLegendData';
 import { StatID } from '../../utils/index';
 import { action } from '@storybook/addon-actions';
+import { LegendPlacement } from '../Legend/Legend';
 const GraphWithLegendStories = storiesOf('UI/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
@@ -43,16 +44,26 @@ const getStoriesKnobs = () => {
 
   const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
 
+  const legendPlacement = select<LegendPlacement>(
+    'Legend placement',
+    {
+      under: 'under',
+      right: 'right',
+    },
+    'under'
+  );
+
   return {
     statsToDisplay,
     containerWidth,
     containerHeight,
     rightAxisSeries,
+    legendPlacement,
   };
 };
 
 GraphWithLegendStories.add('default', () => {
-  const { containerWidth, containerHeight, statsToDisplay, rightAxisSeries } = getStoriesKnobs();
+  const { containerWidth, containerHeight, statsToDisplay, rightAxisSeries, legendPlacement } = getStoriesKnobs();
 
   const props = mockGraphWithLegendData({
     stats: statsToDisplay,
@@ -73,7 +84,7 @@ GraphWithLegendStories.add('default', () => {
   });
   return (
     <div style={{ width: containerWidth, height: containerHeight }}>
-      <GraphWithLegend {...props} series={series} />,
+      <GraphWithLegend {...props} placement={legendPlacement} series={series} />,
     </div>
   );
 });

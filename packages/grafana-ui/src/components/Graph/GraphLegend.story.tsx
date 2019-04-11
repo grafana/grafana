@@ -76,7 +76,7 @@ GraphLegendStories.add('list', () => {
 });
 
 GraphLegendStories.add('table', () => {
-  const { statsToDisplay, numberOfSeries, containerWidth } = getStoriesKnobs();
+  const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs();
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
@@ -92,6 +92,7 @@ GraphLegendStories.add('table', () => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
         statsToDisplay={statsToDisplay}
+        placement={legendPlacement}
       />
     </div>
   );
