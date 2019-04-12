@@ -94,6 +94,11 @@ exposeToPlugin('app/features/dashboard/impression_store', {
   __esModule: true,
 });
 
+/**
+ * NOTE: this is added temporarily while we explore a long term solution
+ * If you use this export, only use the:
+ *  get/delete/post/patch/request methods
+ */
 exposeToPlugin('app/core/services/backend_srv', {
   BackendSrv,
   getBackendSrv,
