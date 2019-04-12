@@ -31,7 +31,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onSourceChange = (item: SelectOptionItem) => {
     const { datasource, query, onChange, onRunQuery } = this.props;
-    let data: SeriesData[];
+    let data: SeriesData[] | undefined = undefined;
     if (item.value === 'panel') {
       if (query.data) {
         return;
