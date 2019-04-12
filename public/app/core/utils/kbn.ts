@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex } from '@grafana/ui';
+import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex, TimeRange } from '@grafana/ui';
 import deprecationWarning from '@grafana/ui/src/utils/deprecationWarning';
 
 const kbn: any = {};
@@ -169,9 +169,14 @@ kbn.intervals_in_seconds = {
   ms: 0.001,
 };
 
-kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
+export interface IntervalInfo {
+  interval: string; //
+  intervalMs: number;
+}
+
+kbn.calculateInterval = (range: TimeRange, resolution: number, lowLimitInterval?: any): IntervalInfo => {
   let lowLimitMs = 1; // 1 millisecond default low limit
-  let intervalMs;
+  let intervalMs = 0;
 
   if (lowLimitInterval) {
     if (lowLimitInterval[0] === '>') {

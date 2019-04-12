@@ -1,14 +1,33 @@
 import { ComponentClass } from 'react';
 import { LoadingState, SeriesData } from './data';
+import { ScopedVars, DataQueryError, DataQueryOptions, LegacyResponseData } from './datasource';
 import { TimeRange } from './time';
-import { ScopedVars } from './datasource';
+
+/**
+ * Information about where the data came from
+ */
+export interface QueryRequestInfo extends DataQueryOptions {
+  startTime: number;
+  finishTime?: number;
+}
+
+export interface QueryResponseData {
+  loading: LoadingState;
+  data: SeriesData[];
+  annotations: any[]; // TODO, or represent in SeriesData with a special type
+
+  request?: QueryRequestInfo;
+  error?: DataQueryError; // ignored unless LoadingState.error
+
+  // For angular panels
+  legacy?: LegacyResponseData[];
+}
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
-export interface PanelProps<T = any> {
-  data?: SeriesData[];
-  timeRange: TimeRange;
-  loading: LoadingState;
+export interface PanelProps<T = any> extends QueryResponseData {
+  timeRange: TimeRange; // may or may not be from the query
+
   options: T;
   renderCounter: number;
   width: number;
