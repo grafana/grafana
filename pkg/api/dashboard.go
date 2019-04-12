@@ -407,8 +407,15 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 	}
 
 	dashVersionMeta := &m.DashboardVersionMeta{
-		DashboardVersion: *query.Result,
-		CreatedBy:        creator,
+		Id:            query.Result.Id,
+		DashboardId:   query.Result.DashboardId,
+		ParentVersion: query.Result.ParentVersion,
+		RestoredFrom:  query.Result.RestoredFrom,
+		Version:       query.Result.Version,
+		Created:       query.Result.Created,
+		Message:       query.Result.Message,
+		Data:          query.Result.Data,
+		CreatedBy:     creator,
 	}
 
 	return JSON(200, dashVersionMeta)
