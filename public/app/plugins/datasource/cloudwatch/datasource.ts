@@ -2,10 +2,11 @@ import angular from 'angular';
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
-import * as templatingVariable from 'app/features/templating/variable';
+import { CloudWatchQuery } from './types';
+import { DataSourceApi } from '@grafana/ui/src/types';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource {
+export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
   type: any;
   name: any;
   proxyUrl: any;
@@ -448,20 +449,19 @@ export default class CloudWatchDatasource {
     // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
+        if (target.id && target.id.length > 0 && target.expression && target.expression.length > 0) {
+          return [target];
+        }
+
+        const variableIndex = _.keyBy(templateSrv.variables, 'name');
         const dimensionKey = _.findKey(target.dimensions, v => {
-          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          const variableName = templateSrv.getVariableName(v);
+          return templateSrv.variableExists(v) && !_.has(scopedVars, variableName) && variableIndex[variableName].multi;
         });
 
         if (dimensionKey) {
-          const multiVariable = _.find(templateSrv.variables, variable => {
-            return (
-              templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi
-            );
-          });
-          const variable = _.find(templateSrv.variables, variable => {
-            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
-          });
-          return this.getExpandedVariables(target, dimensionKey, multiVariable || variable, templateSrv);
+          const multiVariable = variableIndex[templateSrv.getVariableName(target.dimensions[dimensionKey])];
+          return this.getExpandedVariables(target, dimensionKey, multiVariable, templateSrv);
         } else {
           return [target];
         }

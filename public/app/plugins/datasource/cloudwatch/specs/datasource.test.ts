@@ -1,19 +1,17 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
 import * as dateMath from 'app/core/utils/datemath';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
+import { CloudWatchQuery } from '../types';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
-  const templateSrv = {
-    data: {},
-    templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
-    replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
-    variableExists: () => false,
-  };
+  const templateSrv = new TemplateSrv();
 
   const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -35,7 +33,7 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch query', () => {
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
 
     const query = {
       range: { from: 'now-1h', to: 'now' },
@@ -95,9 +93,18 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query with interval variable', done => {
-      ctx.templateSrv.data = {
-        period: '10m',
-      };
+      templateSrv.init([
+        new CustomVariable(
+          {
+            name: 'period',
+            current: {
+              value: '10m',
+            },
+            multi: false,
+          },
+          {}
+        ),
+      ]);
 
       const query = {
         range: { from: 'now-1h', to: 'now' },
@@ -167,7 +174,7 @@ describe('CloudWatchDatasource', () => {
       expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
       ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
@@ -252,6 +259,205 @@ describe('CloudWatchDatasource', () => {
       ctx.ds.query(query).then(result => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
+        done();
+      });
+    });
+  });
+
+  describe('When performing CloudWatch query with template variables', () => {
+    let requestParams: { queries: CloudWatchQuery[] };
+    beforeEach(() => {
+      templateSrv.init([
+        new CustomVariable(
+          {
+            name: 'var1',
+            current: {
+              value: 'var1-foo',
+            },
+            multi: false,
+          },
+          {}
+        ),
+        new CustomVariable(
+          {
+            name: 'var2',
+            current: {
+              value: 'var2-foo',
+            },
+            multi: false,
+          },
+          {}
+        ),
+        new CustomVariable(
+          {
+            name: 'var3',
+            options: [
+              { selected: true, value: 'var3-foo' },
+              { selected: false, value: 'var3-bar' },
+              { selected: true, value: 'var3-baz' },
+            ],
+            current: {
+              value: ['var3-foo', 'var3-baz'],
+            },
+            multi: true,
+          },
+          {}
+        ),
+      ]);
+
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+        requestParams = params.data;
+        return Promise.resolve({ data: {} });
+      });
+    });
+
+    it('should generate the correct query for single template variable', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim2: '[[var2]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables, lack scopedVars', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables with expression', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            id: 'id1',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+            expression: '',
+          },
+          {
+            refId: 'B',
+            id: 'id2',
+            expression: 'METRICS("id1") * 2',
+            dimensions: {
+              // garbage data for fail test
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: [], // dummy
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries.length).toBe(3);
+        expect(requestParams.queries[0].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        expect(requestParams.queries[2].id).toMatch(/^id2.*/);
+        expect(requestParams.queries[2].expression).toBe('METRICS("id1") * 2');
         done();
       });
     });
