@@ -112,43 +112,50 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 	}
 
 	for id, lr := range mdr {
-		queryRes := tsdb.NewQueryResult()
-		queryRes.RefId = queries[id].RefId
-		query := queries[id]
-
-		for label, r := range lr {
-			if *r.StatusCode != "Complete" {
-				return queryResponses, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
-			}
-
-			series := tsdb.TimeSeries{
-				Tags:   map[string]string{},
-				Points: make([]tsdb.TimePoint, 0),
-			}
-			for _, d := range query.Dimensions {
-				series.Tags[*d.Name] = *d.Value
-			}
-			s := ""
-			if len(query.Statistics) == 1 {
-				s = *query.Statistics[0]
-			} else {
-				s = *query.ExtendedStatistics[0]
-			}
-			series.Name = formatAlias(query, s, series.Tags, label)
-
-			for j, t := range r.Timestamps {
-				expectedTimestamp := r.Timestamps[j].Add(time.Duration(query.Period) * time.Second)
-				if j > 0 && expectedTimestamp.Before(*t) {
-					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
-				}
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*r.Values[j]), float64((*t).Unix())*1000))
-			}
-
-			queryRes.Series = append(queryRes.Series, &series)
-			queryRes.Meta = simplejson.New()
+		queryRes, err := parseGetMetricDataResponse(lr, queries[id])
+		if err != nil {
+			return queryResponses, err
 		}
 		queryResponses = append(queryResponses, queryRes)
 	}
 
 	return queryResponses, nil
+}
+
+func parseGetMetricDataResponse(lr map[string]*cloudwatch.MetricDataResult, query *CloudWatchQuery) (*tsdb.QueryResult, error) {
+	queryRes := tsdb.NewQueryResult()
+	queryRes.RefId = query.RefId
+
+	for label, r := range lr {
+		if *r.StatusCode != "Complete" {
+			return queryRes, fmt.Errorf("Part of query is failed: %s", *r.StatusCode)
+		}
+
+		series := tsdb.TimeSeries{
+			Tags:   map[string]string{},
+			Points: make([]tsdb.TimePoint, 0),
+		}
+		for _, d := range query.Dimensions {
+			series.Tags[*d.Name] = *d.Value
+		}
+		s := ""
+		if len(query.Statistics) == 1 {
+			s = *query.Statistics[0]
+		} else {
+			s = *query.ExtendedStatistics[0]
+		}
+		series.Name = formatAlias(query, s, series.Tags, label)
+
+		for j, t := range r.Timestamps {
+			expectedTimestamp := r.Timestamps[j].Add(time.Duration(query.Period) * time.Second)
+			if j > 0 && expectedTimestamp.Before(*t) {
+				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+			}
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*r.Values[j]), float64((*t).Unix())*1000))
+		}
+
+		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Meta = simplejson.New()
+	}
+	return queryRes, nil
 }
