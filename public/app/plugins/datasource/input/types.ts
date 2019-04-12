@@ -1,5 +1,6 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery, SeriesData } from '@grafana/ui/src/types';
 
 export interface InputQuery extends DataQuery {
-  // TODO, can optionally save data in the query
+  // Save data in the panel
+  data?: SeriesData[];
 }

@@ -31,6 +31,30 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
     }
   }
 
+  getDescription(data: SeriesData[]): string {
+    if (!data) {
+      return '';
+    }
+    if (data.length > 1) {
+      const count = data.reduce((acc, series) => {
+        return acc + series.rows.length;
+      }, 0);
+      return `${data.length} Series, ${count} Rows`;
+    }
+    const series = data[0];
+    return `${series.fields.length} Fields, ${series.rows.length} Rows`;
+  }
+
+  /**
+   * Convert a query to a simple text string
+   */
+  getQueryDisplayText?(query: InputQuery): string {
+    if (query.data) {
+      return 'Panel Data: ' + this.getDescription(query.data);
+    }
+    return `Shared Data From: ${this.name} (${this.getDescription(this.data)})`;
+  }
+
   metricFindQuery(query: string, options?: any) {
     return new Promise((resolve, reject) => {
       const names = [];
@@ -52,14 +76,14 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
       if (query.hide) {
         continue;
       }
-      for (const series of this.data) {
+      const data = query.data ? query.data : this.data;
+      for (const series of data) {
         results.push({
           refId: query.refId,
           ...series,
         });
       }
     }
-
     return Promise.resolve({ data: results });
   }
 

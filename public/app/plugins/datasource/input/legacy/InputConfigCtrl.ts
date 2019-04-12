@@ -4,7 +4,7 @@ import { SeriesData } from '@grafana/ui';
 import './CSVInputWrapper';
 
 export class TableConfigCtrl {
-  static templateUrl = 'partials/config.html';
+  static templateUrl = 'legacy/config.html';
 
   current: any; // the Current Configuration (set by the plugin infra)
 

@@ -1,6 +1,6 @@
 import Datasource from './datasource';
 
-import InputQueryEditor from './components/InputQueryEditor';
-import InputConfigCtrl from './InputConfigCtrl';
+import InputQueryEditor from './InputQueryEditor';
+import InputConfigCtrl from './legacy/InputConfigCtrl';
 
 export { Datasource, InputQueryEditor as QueryEditor, InputConfigCtrl as ConfigCtrl };
