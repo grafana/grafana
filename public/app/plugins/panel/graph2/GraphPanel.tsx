@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelProps, GraphWithLegend, LegendTable, LegendList } from '@grafana/ui';
+import { PanelProps, GraphWithLegend } from '@grafana/ui';
 import { Options, SeriesOptions } from './types';
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 
@@ -10,6 +10,7 @@ export class GraphPanel extends React.Component<GraphPanelProps> {
     super(props);
     this.onSeriesColorChange = this.onSeriesColorChange.bind(this);
     this.onSeriesAxisToggle = this.onSeriesAxisToggle.bind(this);
+    this.onToggleSort = this.onToggleSort.bind(this);
   }
 
   onSeriesOptionsUpdate(label: string, optionsUpdate: SeriesOptions) {
@@ -53,6 +54,18 @@ export class GraphPanel extends React.Component<GraphPanelProps> {
     this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
   }
 
+  onToggleSort(sortBy: string, sortDesc: boolean) {
+    const { onOptionsChange, options } = this.props;
+    onOptionsChange({
+      ...options,
+      legend: {
+        ...options.legend,
+        sortBy,
+        sortDesc,
+      },
+    });
+  }
+
   render() {
     const { data, timeRange, width, height, options } = this.props;
     if (!data) {
@@ -78,14 +91,17 @@ export class GraphPanel extends React.Component<GraphPanelProps> {
 
     return (
       <GraphWithLegend
-        series={getGraphSeriesModel(data, legendOptions.stats || [], series, options.graph, legendOptions)}
+        series={getGraphSeriesModel(data, series, options.graph, legendOptions)}
         timeRange={timeRange}
         width={width}
         height={height}
-        renderLegendAs={asTable ? LegendTable : LegendList}
+        renderLegendAsTable={asTable}
         isLegendVisible={isVisible}
+        sortLegendBy={legendOptions.sortBy}
+        sortLegendDesc={legendOptions.sortDesc}
         onSeriesColorChange={this.onSeriesColorChange}
         onSeriesAxisToggle={this.onSeriesAxisToggle}
+        onToggleSort={this.onToggleSort}
         {...graphProps}
         {...legendProps}
       />

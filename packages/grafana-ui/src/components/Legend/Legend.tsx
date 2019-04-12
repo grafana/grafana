@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { StatID } from '../../utils/statsCalculator';
 import { DisplayValue } from '../../types/index';
+import { LegendList } from './LegendList';
 
 export interface LegendBasicOptions {
   isVisible: boolean;
@@ -16,21 +16,14 @@ export interface LegendRenderOptions {
 
 export type LegendPlacement = 'under' | 'right' | 'over'; // Over used by piechart
 
-export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {
-  stats?: StatID[];
-  decimals?: number;
-}
-
-export interface StatDisplayValue extends DisplayValue {
-  statId: string;
-}
+export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {}
 
 export interface LegendItem {
   label: string;
   color: string;
   isVisible: boolean;
   useRightYAxis: boolean;
-  stats: StatDisplayValue[];
+  info?: DisplayValue[];
 }
 
 export interface LegendComponentProps {
@@ -40,18 +33,18 @@ export interface LegendComponentProps {
   placement: LegendPlacement;
   // Function to render given item
   itemRenderer?: (item: LegendItem) => JSX.Element;
-  onToggleSort?: (sortBy: string, sortDesc: boolean) => void;
+  // onToggleSort?: (sortBy: string, sortDesc: boolean) => void;
 }
 
 export interface LegendProps extends LegendComponentProps {
   // Component to be used to render legend
-  renderLegendAs: React.ComponentType<LegendComponentProps>;
+  // renderLegendAs: React.ComponentType<LegendComponentProps>;
 }
 
-export const Legend: React.FunctionComponent<LegendProps> = ({ renderLegendAs, ...legendComponentProps }) => {
-  const LegendComponent = renderLegendAs;
+export const Legend: React.FunctionComponent<LegendProps> = ({ ...legendComponentProps }) => {
+  // const LegendComponent = renderLegendAs;
 
-  return <LegendComponent {...legendComponentProps} />;
+  return <LegendList {...legendComponentProps} />;
 };
 
 Legend.displayName = 'Legend';

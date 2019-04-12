@@ -3,10 +3,17 @@ import capitalize from 'lodash/capitalize';
 import without from 'lodash/without';
 import { StatID, LegendOptions, PanelOptionsGroup, Switch, Input } from '@grafana/ui';
 
+export interface GraphLegendEditorLegendOptions extends LegendOptions {
+  stats?: StatID[];
+  decimals?: number;
+  sortBy?: string;
+  sortDesc?: boolean;
+}
+
 interface GraphLegendEditorProps {
   stats: StatID[];
-  options: LegendOptions;
-  onChange: (options: LegendOptions) => void;
+  options: GraphLegendEditorLegendOptions;
+  onChange: (options: GraphLegendEditorLegendOptions) => void;
 }
 
 export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> = props => {

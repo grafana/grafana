@@ -1,6 +1,5 @@
 import {
   SeriesData,
-  StatID,
   GraphSeriesXY,
   getFirstTimeField,
   FieldType,
@@ -10,18 +9,17 @@ import {
   getFlotPairs,
   getColorFromHexRgbOrName,
   getDisplayProcessor,
-  LegendOptions,
+  DisplayValue,
 } from '@grafana/ui';
 import capitalize from 'lodash/capitalize';
 import { SeriesOptions, GraphOptions } from './types';
-import { StatDisplayValue } from '@grafana/ui/src/components/Legend/Legend';
+import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export const getGraphSeriesModel = (
   data: SeriesData[],
-  stats: StatID[],
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
-  legendOptions: LegendOptions
+  legendOptions: GraphLegendEditorLegendOptions
 ) => {
   const graphs: GraphSeriesXY[] = [];
 
@@ -49,16 +47,20 @@ export const getGraphSeriesModel = (
         });
 
         if (points.length > 0) {
-          const seriesStats = calculateStats({ series, stats, fieldIndex: i });
-          const statsDisplayValues = stats.map<StatDisplayValue>(stat => {
-            const statDisplayValue = displayProcessor(seriesStats[stat]);
+          const seriesStats = calculateStats({ series, stats: legendOptions.stats, fieldIndex: i });
+          let statsDisplayValues;
 
-            return {
-              ...statDisplayValue,
-              text: `${capitalize(stat)}: ${statDisplayValue.text}`,
-              statId: stat,
-            };
-          });
+          if (legendOptions.stats) {
+            statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
+              const statDisplayValue = displayProcessor(seriesStats[stat]);
+
+              return {
+                ...statDisplayValue,
+                text: legendOptions.asTable ? statDisplayValue.text : `${capitalize(stat)}: ${statDisplayValue.text}`,
+                title: stat,
+              };
+            });
+          }
 
           const seriesColor =
             seriesOptions[field.name] && seriesOptions[field.name].color

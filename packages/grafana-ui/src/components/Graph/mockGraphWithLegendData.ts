@@ -1,10 +1,9 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
 import moment from 'moment';
-import { LegendList } from '../Legend/LegendList';
+// import { LegendList } from '../Legend/LegendList';
 
 export const mockGraphWithLegendData = ({
-  renderLegendAs,
-  stats,
+  renderLegendAsTable,
   onSeriesColorChange,
   onSeriesAxisToggle,
 }: Partial<GraphWithLegendProps>): GraphWithLegendProps => ({
@@ -1094,10 +1093,7 @@ export const mockGraphWithLegendData = ({
         [1554814854247, 22.21301416289505],
       ],
       color: '#7EB26D',
-      info: [
-        { text: 'Min: 14.42', numeric: 14.427101844163694, statId: 'min' },
-        { text: 'Max: 18.42', numeric: 18.427101844163694, statId: 'max' },
-      ],
+      info: [{ text: 'Min: 14.42', numeric: 14.427101844163694 }, { text: 'Max: 18.42', numeric: 18.427101844163694 }],
       isVisible: true,
       useRightYAxis: false,
     },
@@ -2186,10 +2182,7 @@ export const mockGraphWithLegendData = ({
         [1554814854247, 0.2283837169989657],
       ],
       color: '#EAB839',
-      info: [
-        { text: 'Min: 14.42', numeric: 14.427101844163694, statId: 'min' },
-        { text: 'Max: 18.42', numeric: 18.427101844163694, statId: 'max' },
-      ],
+      info: [{ text: 'Min: 14.42', numeric: 14.427101844163694 }, { text: 'Max: 18.42', numeric: 18.427101844163694 }],
       isVisible: true,
       useRightYAxis: false,
     },
@@ -3278,10 +3271,7 @@ export const mockGraphWithLegendData = ({
         [1554814854247, 40.97696657263369],
       ],
       color: '#6ED0E0',
-      info: [
-        { text: 'Min: 14.42', numeric: 14.427101844163694, statId: 'min' },
-        { text: 'Max: 18.42', numeric: 18.427101844163694, statId: 'max' },
-      ],
+      info: [{ text: 'Min: 14.42', numeric: 14.427101844163694 }, { text: 'Max: 18.42', numeric: 18.427101844163694 }],
       isVisible: true,
       useRightYAxis: false,
     },
@@ -3312,6 +3302,6 @@ export const mockGraphWithLegendData = ({
       onSeriesAxisToggle(label, useRightYAxis);
     }
   },
-  renderLegendAs: renderLegendAs || LegendList,
-  stats,
+  onToggleSort: () => {},
+  renderLegendAsTable: renderLegendAsTable || false,
 });

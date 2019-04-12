@@ -4,14 +4,9 @@ import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { LegendStatsList } from './LegendStatsList';
+// import { LegendStatsList } from './LegendStatsList';
 
-export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
-  items,
-  itemRenderer,
-  statsToDisplay,
-  placement,
-}) => {
+export const LegendList: React.FunctionComponent<LegendComponentProps> = ({ items, itemRenderer, placement }) => {
   const theme = useContext(ThemeContext);
 
   const renderItem = (item: LegendItem, index: number) => {
@@ -24,10 +19,7 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
           white-space: nowrap;
         `}
       >
-        <>{itemRenderer ? itemRenderer(item) : item.label}</>
-        {statsToDisplay && (
-          <LegendStatsList stats={item.stats.filter(stat => statsToDisplay.indexOf(stat.statId) > -1)} />
-        )}
+        {itemRenderer ? itemRenderer(item) : item.label}
       </span>
     );
   };

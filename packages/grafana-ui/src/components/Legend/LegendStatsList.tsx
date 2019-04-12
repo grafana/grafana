@@ -1,9 +1,9 @@
 import React from 'react';
-import { StatDisplayValue } from './Legend';
 import { InlineList } from '../List/InlineList';
 import { css } from 'emotion';
+import { DisplayValue } from '../../types/displayValue';
 
-const LegendItemStat: React.FunctionComponent<{ stat: StatDisplayValue }> = ({ stat }) => {
+const LegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat }) => {
   return (
     <div
       className={css`
@@ -17,7 +17,7 @@ const LegendItemStat: React.FunctionComponent<{ stat: StatDisplayValue }> = ({ s
 
 LegendItemStat.displayName = 'LegendItemStat';
 
-export const LegendStatsList: React.FunctionComponent<{ stats: StatDisplayValue[] }> = ({ stats }) => {
+export const LegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
   if (stats.length === 0) {
     return null;
   }

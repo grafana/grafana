@@ -1,4 +1,5 @@
 import { LegendOptions } from '@grafana/ui';
+import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export interface SeriesOptions {
   color?: string;
@@ -12,7 +13,7 @@ export interface GraphOptions {
 
 export interface Options {
   graph: GraphOptions;
-  legend: LegendOptions;
+  legend: LegendOptions & GraphLegendEditorLegendOptions;
   series: {
     [alias: string]: SeriesOptions;
   };

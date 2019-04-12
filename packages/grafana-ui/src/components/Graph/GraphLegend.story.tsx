@@ -2,7 +2,6 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 
 import { GraphLegend } from './GraphLegend';
-import { LegendList } from '../Legend/LegendList';
 import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -12,13 +11,16 @@ import { LegendPlacement } from '../Legend/Legend';
 const GraphLegendStories = storiesOf('UI/Graph/GraphLegend', module);
 GraphLegendStories.addDecorator(withHorizontallyCenteredStory);
 
-const getStoriesKnobs = () => {
+const getStoriesKnobs = (isList = false) => {
   const statsToDisplay = select(
     'Stats to display',
     {
       none: [],
-      'single (min)': ['min'],
-      'multiple (min, max)': ['min', 'max'],
+      'single (min)': [{ text: `${isList ? 'Min: ' : ''}10`, title: 'min', numeric: 10 }],
+      'multiple (min, max)': [
+        { text: `${isList ? 'Min: ' : ''}10`, title: 'min', numeric: 10 },
+        { text: `${isList ? 'Max: ' : ''}10`, title: 'max', numeric: 100 },
+      ],
     },
     []
   );
@@ -53,12 +55,11 @@ const getStoriesKnobs = () => {
 };
 
 GraphLegendStories.add('list', () => {
-  const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs();
+  const { statsToDisplay, numberOfSeries, containerWidth, legendPlacement } = getStoriesKnobs(true);
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
-        items={generateLegendItems(numberOfSeries)}
-        renderLegendAs={LegendList}
+        items={generateLegendItems(numberOfSeries, statsToDisplay)}
         onLabelClick={(item, event) => {
           action('Series label clicked')(item, event);
         }}
@@ -68,7 +69,9 @@ GraphLegendStories.add('list', () => {
         onSeriesAxisToggle={(label, useRightYAxis) => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
-        statsToDisplay={statsToDisplay}
+        onToggleSort={(sortBy, sortDesc) => {
+          action('Toggle legend sort')(sortBy, sortDesc);
+        }}
         placement={legendPlacement}
       />
     </div>
@@ -80,8 +83,8 @@ GraphLegendStories.add('table', () => {
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
-        items={generateLegendItems(numberOfSeries)}
-        renderLegendAs={LegendList}
+        items={generateLegendItems(numberOfSeries, statsToDisplay)}
+        renderLegendAsTable
         onLabelClick={item => {
           action('Series label clicked')(item);
         }}
@@ -91,7 +94,9 @@ GraphLegendStories.add('table', () => {
         onSeriesAxisToggle={(label, useRightYAxis) => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
-        statsToDisplay={statsToDisplay}
+        onToggleSort={(sortBy, sortDesc) => {
+          action('Toggle legend sort')(sortBy, sortDesc);
+        }}
         placement={legendPlacement}
       />
     </div>
