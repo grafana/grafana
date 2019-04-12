@@ -4,6 +4,7 @@ providers:
 - name: 'general dashboards'
   orgId: 2
   folder: 'developers'
+  folderUid: 'xyz'
   editable: true
   disableDeletion: true
   updateIntervalSeconds: 15
