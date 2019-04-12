@@ -1,21 +1,9 @@
 apiVersion: 1
 
 providers:
- - name: 'GDev Dashboards'
-   folder: 'GDev Dashboards'
+ - name: 'gdev dashboards'
+   folder: 'gdev dashboards'
    type: file
    updateIntervalSeconds: 60
    options:
      path: devenv/dev-dashboards
- - name: 'GDev Bar Gauge'
-   folder: 'GDev Bar Gauge'
-   type: file
-   updateIntervalSeconds: 60
-   options:
-     path: devenv/dev-dashboards-bargauge
- - name: 'GDev Templating'
-   folder: 'GDev Templating'
-   type: file
-   updateIntervalSeconds: 60
-   options:
-     path: devenv/dev-dashboards-templating

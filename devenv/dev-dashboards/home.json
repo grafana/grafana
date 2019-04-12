@@ -20,9 +20,53 @@
     {
       "folderId": null,
       "gridPos": {
-        "h": 20,
-        "w": 5,
+        "h": 26,
+        "w": 6,
         "x": 0,
+        "y": 0
+      },
+      "headings": false,
+      "id": 7,
+      "limit": 100,
+      "links": [],
+      "query": "",
+      "recent": false,
+      "search": false,
+      "starred": true,
+      "tags": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Starred",
+      "type": "dashlist"
+    },
+    {
+      "folderId": null,
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "headings": false,
+      "id": 8,
+      "limit": 1000,
+      "links": [],
+      "query": "",
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["panel-demo"],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "tag: panel-demo",
+      "type": "dashlist"
+    },
+    {
+      "folderId": null,
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 12,
         "y": 0
       },
       "headings": false,
@@ -36,59 +80,15 @@
       "tags": ["panel-tests"],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Panel Tests",
+      "title": "tag: panel-tests",
       "type": "dashlist"
     },
     {
       "folderId": null,
       "gridPos": {
-        "h": 20,
-        "w": 5,
-        "x": 5,
-        "y": 0
-      },
-      "headings": false,
-      "id": 3,
-      "limit": 1000,
-      "links": [],
-      "query": "",
-      "recent": false,
-      "search": true,
-      "starred": false,
-      "tags": ["panel-demo"],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Panel Demos",
-      "type": "dashlist"
-    },
-    {
-      "folderId": null,
-      "gridPos": {
-        "h": 20,
-        "w": 5,
-        "x": 10,
-        "y": 0
-      },
-      "headings": false,
-      "id": 4,
-      "limit": 1000,
-      "links": [],
-      "query": "",
-      "recent": false,
-      "search": true,
-      "starred": false,
-      "tags": ["templating"],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Templating",
-      "type": "dashlist"
-    },
-    {
-      "folderId": null,
-      "gridPos": {
-        "h": 20,
-        "w": 5,
-        "x": 15,
+        "h": 26,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
       "headings": false,
@@ -104,11 +104,55 @@
       "timeShift": null,
       "title": "Data source tests",
       "type": "dashlist"
+    },
+    {
+      "folderId": null,
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 6,
+        "y": 13
+      },
+      "headings": false,
+      "id": 3,
+      "limit": 1000,
+      "links": [],
+      "query": "",
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["gdev", "demo"],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "tag: dashboard-demo",
+      "type": "dashlist"
+    },
+    {
+      "folderId": null,
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 12,
+        "y": 13
+      },
+      "headings": false,
+      "id": 4,
+      "limit": 1000,
+      "links": [],
+      "query": "",
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["templating", "gdev"],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "tag: templating",
+      "type": "dashlist"
     }
   ],
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["gdev"],
+  "tags": [],
   "templating": {
     "list": []
   },
@@ -122,6 +166,6 @@
   },
   "timezone": "",
   "title": "Grafana Dev Overview & Home",
-  "uid": "w1c4zvgWza",
+  "uid": "j6T00KRZz",
   "version": 5
 }
