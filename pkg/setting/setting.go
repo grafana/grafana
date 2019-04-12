@@ -153,9 +153,6 @@ var (
 	AuthJwtEmailClaim      string
 	AuthJwtAutoSignup      bool
 
-	// Plugin settings
-	PluginAppsSkipVerifyTLS bool
-
 	// Session settings.
 	SessionOptions         session.Options
 	SessionConnMaxLifetime int64
@@ -757,9 +754,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AuthJwtLoginClaim = jwtAuth.Key("login_claim").String()
 	AuthJwtEmailClaim = jwtAuth.Key("email_claim").String()
 	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
-
-	// global plugin settings
-	PluginAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// Rendering
 	renderSec := iniFile.Section("rendering")
