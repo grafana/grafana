@@ -1,34 +1,23 @@
 export enum PluginState {
-  alpha = 'alpha',
-  beta = 'beta',
+  alpha = 'alpha', // Only included it `enable_alpha` is true
+  beta = 'beta', // Will show a warning banner
 }
 
-export function getPluginStateInfoText(state?: PluginState): string | null {
-  switch (state) {
-    case PluginState.alpha:
-      return (
-        'This plugin is marked as being in alpha state, which means it is in early development phase and updates' +
-        ' will include breaking changes.'
-      );
-
-    case PluginState.beta:
-      return (
-        'This plugin is marked as being in a beta development state. This means it is in currently in active' +
-        ' development and could be missing important features.'
-      );
-  }
-  return null;
+export enum PluginType {
+  panel = 'panel',
+  datasource = 'datasource',
+  app = 'app',
 }
 
 export interface PluginMeta {
   id: string;
   name: string;
   info: PluginMetaInfo;
-  includes: PluginInclude[];
   module: string;
-  baseUrl: string;
+  includes?: PluginInclude[];
+  baseUrl?: string;
 
-  type: string;
+  type: PluginType;
   enabled?: boolean;
   state?: PluginState;
 
@@ -50,8 +39,17 @@ interface PluginMetaQueryOptions {
   minInterval?: boolean;
 }
 
+export enum PluginIncludeType {
+  dashboard = 'dashboard',
+  page = 'page',
+
+  // Only valid for apps
+  panel = 'panel',
+  datasource = 'datasource',
+}
+
 export interface PluginInclude {
-  type: string;
+  type: PluginIncludeType;
   name: string;
   path: string;
 }
@@ -75,4 +73,19 @@ export interface PluginMetaInfo {
   screenshots: any[];
   updated: string;
   version: string;
+}
+
+export class AppPlugin {
+  components: {
+    ConfigCtrl?: any;
+  };
+
+  pages: { [str: string]: any };
+
+  constructor(ConfigCtrl: any) {
+    this.components = {
+      ConfigCtrl: ConfigCtrl,
+    };
+    this.pages = {};
+  }
 }

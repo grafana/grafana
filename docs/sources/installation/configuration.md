@@ -651,26 +651,29 @@ This limit will protect the server from render overloading and make sure notific
 value is `5`.
 
 
-### evaluation_timeout_seconds 
+### evaluation_timeout_seconds
 
-Default setting for alert calculation timeout. Default value is `30` 
+Default setting for alert calculation timeout. Default value is `30`
 
 ### notification_timeout_seconds
 
-Default setting for alert notification timeout. Default value is `30` 
+Default setting for alert notification timeout. Default value is `30`
 
 ### max_attempts
 
-Default setting for max attempts to sending alert notifications. Default value is `3` 
+Default setting for max attempts to sending alert notifications. Default value is `3`
 
 
 ## [panels]
 
-### enable_alpha
-Set to true if you want to test panels that are not yet ready for general usage.
-
 ### disable_sanitize_html
+
 If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
 is false. This settings was introduced in Grafana v6.0.
 
+## [plugins]
+
+### enable_alpha
+
+Set to true if you want to test alpha plugins that are not yet ready for general usage.
 
