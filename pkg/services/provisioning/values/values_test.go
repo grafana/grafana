@@ -3,19 +3,15 @@ package values
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/yaml.v2"
+	"os"
 	"testing"
 )
 
 func TestValues(t *testing.T) {
 	Convey("Values", t, func() {
-		oldGetEnv := getEnv
-		getEnv = func(key string) string {
-			return map[string]string{
-				"INT":    "1",
-				"STRING": "test",
-				"BOOL":   "true",
-			}[key]
-		}
+		os.Setenv("INT", "1")
+		os.Setenv("STRING", "test")
+		os.Setenv("BOOL", "true")
 
 		Convey("IntValue", func() {
 			type Data struct {
@@ -165,7 +161,9 @@ func TestValues(t *testing.T) {
 		})
 
 		Reset(func() {
-			getEnv = oldGetEnv
+			os.Unsetenv("INT")
+			os.Unsetenv("STRING")
+			os.Unsetenv("BOOL")
 		})
 	})
 }

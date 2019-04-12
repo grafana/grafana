@@ -17,9 +17,6 @@ import (
 	"strconv"
 )
 
-// Can be changed for testing
-var getEnv = os.Getenv
-
 type IntValue struct {
 	value int
 }
@@ -170,7 +167,7 @@ func transformMap(i map[interface{}]interface{}) interface{} {
 // interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
 // here but in the future something like interpolation from file could be also done here.
 func interpolateValue(val string) string {
-	return os.Expand(val, getEnv)
+	return os.ExpandEnv(val)
 }
 
 // getInterpolated unmarshals the value as string and runs interpolation on it. It is the responsibility of each
