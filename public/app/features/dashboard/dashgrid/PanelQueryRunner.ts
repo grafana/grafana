@@ -38,7 +38,7 @@ export interface QueryRunnerOptions {
   scopedVars?: ScopedVars;
 }
 
-export class QueryRunner extends Subject<QueryResponseEvent> {
+export class PanelQueryRunner extends Subject<QueryResponseEvent> {
   private counter = 0;
 
   includeLegacyFormats = false;

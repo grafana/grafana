@@ -3,6 +3,8 @@ import { LoadingState, SeriesData } from './data';
 import { ScopedVars, DataQueryError, DataQueryOptions, LegacyResponseData } from './datasource';
 import { TimeRange } from './time';
 
+export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
+
 /**
  * Information about where the data came from
  */
@@ -22,8 +24,6 @@ export interface QueryResponseData {
   // For angular panels
   legacy?: LegacyResponseData[];
 }
-
-export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelProps<T = any> extends QueryResponseData {
   timeRange: TimeRange; // may or may not be from the query

@@ -1,17 +1,16 @@
 import { PanelChrome } from './PanelChrome';
-import { PanelModel } from '../state/index';
 
 describe('PanelChrome', () => {
   let chrome: PanelChrome;
 
   beforeEach(() => {
     chrome = new PanelChrome({
-      panel: ({
+      panel: {
         scopedVars: {
           aaa: { value: 'AAA', text: 'upperA' },
           bbb: { value: 'BBB', text: 'upperB' },
         },
-      } as any) as PanelModel,
+      },
       isFullscreen: false,
     } as any);
   });

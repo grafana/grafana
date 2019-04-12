@@ -1,4 +1,4 @@
-import { getProcessedSeriesData } from './QueryRunner';
+import { getProcessedSeriesData } from './PanelQueryRunner';
 
 describe('QueryRunner', () => {
   it('converts timeseries to table skipping nulls', () => {

@@ -23,7 +23,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData, QueryRunner, QueryResponseEvent } from './QueryRunner';
+import { getProcessedSeriesData, PanelQueryRunner, QueryResponseEvent } from './PanelQueryRunner';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Unsubscribable } from 'rxjs';
 
@@ -50,7 +50,7 @@ export interface State {
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
-  queryRunner = new QueryRunner(getDatasourceSrv());
+  queryRunner = new PanelQueryRunner(getDatasourceSrv());
   querySubscription: Unsubscribable;
   queryWidthPixels = 100; // Default value for width
 
