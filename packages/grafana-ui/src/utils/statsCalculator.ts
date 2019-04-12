@@ -26,12 +26,12 @@ export enum StatID {
   name = 'name', // The column name.  Not really a stat
 }
 
-export interface ColumnStats {
+export interface FieldStats {
   [key: string]: any;
 }
 
 // Internal function
-type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => ColumnStats;
+type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldStats;
 
 /** Used to limit possible options */
 export type StatsFilter = (stat: StatCalculatorInfo) => boolean;
@@ -90,7 +90,7 @@ export interface CalculateStatsOptions {
 /**
  * @returns an object with a key for each selected stat
  */
-export function calculateStats(options: CalculateStatsOptions): ColumnStats {
+export function calculateStats(options: CalculateStatsOptions): FieldStats {
   const { series, fieldIndex, stats, nullValueMode } = options;
 
   if (!stats || stats.length < 1) {
@@ -102,7 +102,7 @@ export function calculateStats(options: CalculateStatsOptions): ColumnStats {
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   if (!series.rows || series.rows.length < 1) {
-    const stats = {} as ColumnStats;
+    const stats = {} as FieldStats;
     for (const stat of queue) {
       stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
     }
@@ -268,7 +268,7 @@ function standardStatsStat(
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
-): ColumnStats {
+): FieldStats {
   const stats = {
     sum: 0,
     max: -Number.MAX_VALUE,
@@ -288,7 +288,7 @@ function standardStatsStat(
 
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
-  } as ColumnStats;
+  } as FieldStats;
 
   for (let i = 0; i < data.rows.length; i++) {
     let currentValue = data.rows[i][fieldIndex];
@@ -386,21 +386,16 @@ function standardStatsStat(
   return stats;
 }
 
-function getFieldName(series: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
+function getFieldName(series: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldStats {
   return { name: series.fields[fieldIndex].name };
 }
 
-function calculateFirst(
-  series: SeriesData,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): ColumnStats {
-  return { first: series.rows[0][fieldIndex] };
+function calculateFirst(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldStats {
+  return { first: data.rows[0][fieldIndex] };
 }
 
-function calculateLast(series: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): ColumnStats {
-  return { last: series.rows[series.rows.length - 1][fieldIndex] };
+function calculateLast(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldStats {
+  return { last: data.rows[data.rows.length - 1][fieldIndex] };
 }
 
 function calculateChangeCount(
@@ -408,7 +403,7 @@ function calculateChangeCount(
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
-): ColumnStats {
+): FieldStats {
   let count = 0;
   let first = true;
   let last: any = null;
@@ -437,7 +432,7 @@ function calculateDistinctCount(
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
-): ColumnStats {
+): FieldStats {
   const distinct = new Set<any>();
   for (let i = 0; i < data.rows.length; i++) {
     let currentValue = data.rows[i][fieldIndex];
