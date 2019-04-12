@@ -24,10 +24,11 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 	}
 
 	apiVersion := &ConfigVersion{ApiVersion: 0}
-	yaml.Unmarshal(yamlFile, &apiVersion)
+	if err := yaml.Unmarshal(yamlFile, &apiVersion); err != nil {
+		cr.log.Warn("can't unmarshal dashboard provisioning file", "filename", yamlFile, "error", err)
+	}
 
 	if apiVersion.ApiVersion > 0 {
-
 		v1 := &DashboardAsConfigV1{}
 		err := yaml.Unmarshal(yamlFile, &v1)
 		if err != nil {
@@ -37,7 +38,6 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 		if v1 != nil {
 			return v1.mapToDashboardAsConfig(), nil
 		}
-
 	} else {
 		var v0 []*DashboardsAsConfigV0
 		err := yaml.Unmarshal(yamlFile, &v0)
