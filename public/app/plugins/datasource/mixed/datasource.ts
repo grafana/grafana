@@ -13,9 +13,17 @@ class MixedDatasource {
         return this.$q([]);
       }
 
+      const filtered = _.filter(targets, t => {
+        return !t.hide;
+      });
+
+      if (filtered.length === 0) {
+        return { data: [] };
+      }
+
       return this.datasourceSrv.get(dsName).then(ds => {
         const opt = angular.copy(options);
-        opt.targets = targets;
+        opt.targets = filtered;
         return ds.query(opt);
       });
     });

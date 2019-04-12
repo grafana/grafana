@@ -54,6 +54,7 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
     this.components.ExploreQueryField = exports.ExploreQueryField;
     this.components.ExploreStartPage = exports.ExploreStartPage;
     this.components.QueryEditor = exports.QueryEditor;
+    this.components.VariableQueryEditor = exports.VariableQueryEditor;
   }
 }
 
@@ -104,6 +105,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *  Get hints for query improvements
    */
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
+
+  /**
+   * Convert a query to a simple text string
+   */
+  getQueryDisplayText?(query: TQuery): string;
 
   /**
    *  Set after constructor is called by Grafana

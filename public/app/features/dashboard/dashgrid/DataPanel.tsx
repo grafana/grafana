@@ -15,6 +15,7 @@ import {
   ScopedVars,
   toSeriesData,
   guessFieldTypes,
+  DataQuery,
 } from '@grafana/ui';
 
 interface RenderProps {
@@ -24,7 +25,7 @@ interface RenderProps {
 
 export interface Props {
   datasource: string | null;
-  queries: any[];
+  queries: DataQuery[];
   panelId: number;
   dashboardId?: number;
   isVisible?: boolean;
