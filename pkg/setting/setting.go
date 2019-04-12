@@ -244,7 +244,8 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
-	EnableAlphaPanels                bool
+	PluginsEnableAlpha               bool
+	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
@@ -807,9 +808,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	explore := iniFile.Section("explore")
 	ExploreEnabled = explore.Key("enabled").MustBool(true)
 
-	panels := iniFile.Section("panels")
-	cfg.EnableAlphaPanels = panels.Key("enable_alpha").MustBool(false)
-	cfg.DisableSanitizeHtml = panels.Key("disable_sanitize_html").MustBool(false)
+	panelsSection := iniFile.Section("panels")
+	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
+
+	pluginsSection := iniFile.Section("plugins")
+	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
+	cfg.PluginsAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
+
+	// check old location for this option
+	if panelsSection.Key("enable_alpha").MustBool(false) {
+		cfg.PluginsEnableAlpha = true
+	}
 
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
