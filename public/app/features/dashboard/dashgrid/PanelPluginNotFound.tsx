@@ -7,7 +7,7 @@ import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 
 // Types
 import { PanelPlugin, AppNotificationSeverity } from 'app/types';
-import { PanelProps, ReactPanelPlugin } from '@grafana/ui';
+import { PanelProps, ReactPanelPlugin, PluginType } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
@@ -45,6 +45,7 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     id: id,
     name: id,
     sort: 100,
+    type: PluginType.panel,
     module: '',
     baseUrl: '',
     dataFormats: [],

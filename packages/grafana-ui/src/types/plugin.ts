@@ -1,10 +1,25 @@
+export enum PluginState {
+  alpha = 'alpha', // Only included it `enable_alpha` is true
+  beta = 'beta', // Will show a warning banner
+}
+
+export enum PluginType {
+  panel = 'panel',
+  datasource = 'datasource',
+  app = 'app',
+}
+
 export interface PluginMeta {
   id: string;
   name: string;
   info: PluginMetaInfo;
-  includes: PluginInclude[];
   module: string;
-  baseUrl: string;
+  includes?: PluginInclude[];
+  baseUrl?: string;
+
+  type: PluginType;
+  enabled?: boolean;
+  state?: PluginState;
 
   // Datasource-specific
   builtIn?: boolean;
@@ -24,8 +39,17 @@ interface PluginMetaQueryOptions {
   minInterval?: boolean;
 }
 
+export enum PluginIncludeType {
+  dashboard = 'dashboard',
+  page = 'page',
+
+  // Only valid for apps
+  panel = 'panel',
+  datasource = 'datasource',
+}
+
 export interface PluginInclude {
-  type: string;
+  type: PluginIncludeType;
   name: string;
   path: string;
 }
