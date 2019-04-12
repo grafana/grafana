@@ -1,6 +1,3 @@
-// Libraries
-import _ from 'lodash';
-
 // Types
 import {
   DataQueryOptions,
@@ -48,7 +45,7 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
   /**
    * Convert a query to a simple text string
    */
-  getQueryDisplayText?(query: InputQuery): string {
+  getQueryDisplayText(query: InputQuery): string {
     if (query.data) {
       return 'Panel Data: ' + this.getDescription(query.data);
     }

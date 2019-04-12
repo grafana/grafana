@@ -25,7 +25,6 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onComponentDidMount() {
     const { query } = this.props;
-    console.log('MOUNT!');
     const text = query.data ? toCSV(query.data) : '';
     this.setState({ text });
   }
