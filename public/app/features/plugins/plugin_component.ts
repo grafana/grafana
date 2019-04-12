@@ -168,7 +168,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // App Page
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
-        console.log('XXX', appModel);
         return importAppPlugin(appModel.module).then(appPlugin => {
           return {
             baseUrl: appModel.baseUrl,
