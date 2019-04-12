@@ -18,6 +18,7 @@ import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
+import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 
 interface Props {
   panel: PanelModel;
@@ -238,6 +239,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
               onClose={this.onCloseVizPicker}
             />
           </FadeIn>
+          <PluginStateinfo state={plugin.state} />
           {this.renderPanelOptions()}
         </>
       </EditorTabBody>
