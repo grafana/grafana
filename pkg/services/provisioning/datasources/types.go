@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	"io/ioutil"
 )
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
@@ -26,22 +25,23 @@ type DataSourceFromConfig struct {
 	OrgId   int64
 	Version int
 
-	Name              string
-	Type              string
-	Access            string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	BearerToken       string
-	WithCredentials   bool
-	IsDefault         bool
-	JsonData          map[string]interface{}
-	SecureJsonData    map[string]string
-	Editable          bool
+	Name                  string
+	Type                  string
+	Access                string
+	Url                   string
+	Password              string
+	User                  string
+	Database              string
+	BasicAuth             bool
+	BasicAuthUser         string
+	BasicAuthPassword     string
+	BasicAuthPasswordFile string
+	BearerTokenFile       string
+	WithCredentials       bool
+	IsDefault             bool
+	JsonData              map[string]interface{}
+	SecureJsonData        map[string]string
+	Editable              bool
 }
 
 type DatasourcesAsConfigV0 struct {
@@ -89,28 +89,26 @@ type DataSourceFromConfigV0 struct {
 }
 
 type DataSourceFromConfigV1 struct {
-	OrgId                     int64                  `json:"orgId" yaml:"orgId"`
-	Version                   int                    `json:"version" yaml:"version"`
-	Name                      string                 `json:"name" yaml:"name"`
-	Type                      string                 `json:"type" yaml:"type"`
-	Access                    string                 `json:"access" yaml:"access"`
-	Url                       string                 `json:"url" yaml:"url"`
-	Password                  string                 `json:"password" yaml:"password"`
-	PasswordFromFile          string                 `json:"passwordFromFile" yaml:"passwordFromFile"`
-	User                      string                 `json:"user" yaml:"user"`
-	Database                  string                 `json:"database" yaml:"database"`
-	BasicAuth                 bool                   `json:"basicAuth" yaml:"basicAuth"`
-	BasicAuthUser             string                 `json:"basicAuthUser" yaml:"basicAuthUser"`
-	BasicAuthPassword         string                 `json:"basicAuthPassword" yaml:"basicAuthPassword"`
-	BasicAuthPasswordFromFile string                 `json:"basicAuthPasswordFromFile" yaml:"basicAuthPasswordFromFile"`
-	BearerToken               string                 `json:"bearerToken" yaml:"bearerToken"`
-	BearerTokenFromFile       string                 `json:"bearerTokenFromFile" yaml:"bearerTokenFromFile"`
-	WithCredentials           bool                   `json:"withCredentials" yaml:"withCredentials"`
-	IsDefault                 bool                   `json:"isDefault" yaml:"isDefault"`
-	JsonData                  map[string]interface{} `json:"jsonData" yaml:"jsonData"`
-	SecureJsonData            map[string]string      `json:"secureJsonData" yaml:"secureJsonData"`
-	SecureJsonDataFromFiles   map[string]string      `json:"secureJsonDataFromFiles" yaml:"secureJsonDataFromFiles"`
-	Editable                  bool                   `json:"editable" yaml:"editable"`
+	OrgId                 int64                  `json:"orgId" yaml:"orgId"`
+	Version               int                    `json:"version" yaml:"version"`
+	Name                  string                 `json:"name" yaml:"name"`
+	Type                  string                 `json:"type" yaml:"type"`
+	Access                string                 `json:"access" yaml:"access"`
+	Url                   string                 `json:"url" yaml:"url"`
+	Password              string                 `json:"password" yaml:"password"`
+	PasswordFromFile      string                 `json:"passwordFromFile" yaml:"passwordFromFile"`
+	User                  string                 `json:"user" yaml:"user"`
+	Database              string                 `json:"database" yaml:"database"`
+	BasicAuth             bool                   `json:"basicAuth" yaml:"basicAuth"`
+	BasicAuthUser         string                 `json:"basicAuthUser" yaml:"basicAuthUser"`
+	BasicAuthPassword     string                 `json:"basicAuthPassword" yaml:"basicAuthPassword"`
+	BasicAuthPasswordFile string                 `json:"basicAuthPasswordFile" yaml:"basicAuthPasswordFile"`
+	BearerTokenFile       string                 `json:"bearerTokenFile" yaml:"bearerTokenFile"`
+	WithCredentials       bool                   `json:"withCredentials" yaml:"withCredentials"`
+	IsDefault             bool                   `json:"isDefault" yaml:"isDefault"`
+	JsonData              map[string]interface{} `json:"jsonData" yaml:"jsonData"`
+	SecureJsonData        map[string]string      `json:"secureJsonData" yaml:"secureJsonData"`
+	Editable              bool                   `json:"editable" yaml:"editable"`
 }
 
 func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) (*DatasourcesAsConfig, error) {
@@ -123,12 +121,27 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) (*
 	}
 
 	for _, ds := range cfg.Datasources {
-		populatedDataSource, err := populateDataSourceFromV1Config(ds)
-		if err != nil {
-			return nil, err
-		}
-
-		r.Datasources = append(r.Datasources, populatedDataSource)
+		r.Datasources = append(r.Datasources, &DataSourceFromConfig{
+			OrgId:                 ds.OrgId,
+			Name:                  ds.Name,
+			Type:                  ds.Type,
+			Access:                ds.Access,
+			Url:                   ds.Url,
+			Password:              ds.Password,
+			User:                  ds.User,
+			Database:              ds.Database,
+			BasicAuth:             ds.BasicAuth,
+			BasicAuthUser:         ds.BasicAuthUser,
+			BasicAuthPassword:     ds.BasicAuthPassword,
+			BasicAuthPasswordFile: ds.BasicAuthPasswordFile,
+			BearerTokenFile:       ds.BearerTokenFile,
+			WithCredentials:       ds.WithCredentials,
+			IsDefault:             ds.IsDefault,
+			JsonData:              ds.JsonData,
+			SecureJsonData:        ds.SecureJsonData,
+			Editable:              ds.Editable,
+			Version:               ds.Version,
+		})
 	}
 
 	for _, ds := range cfg.DeleteDatasources {
@@ -191,23 +204,24 @@ func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand 
 	}
 
 	return &models.AddDataSourceCommand{
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            models.DsAccess(ds.Access),
-		Url:               ds.Url,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		BearerToken:       ds.BearerToken,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJsonData,
-		ReadOnly:          !ds.Editable,
+		OrgId:                 ds.OrgId,
+		Name:                  ds.Name,
+		Type:                  ds.Type,
+		Access:                models.DsAccess(ds.Access),
+		Url:                   ds.Url,
+		Password:              ds.Password,
+		User:                  ds.User,
+		Database:              ds.Database,
+		BasicAuth:             ds.BasicAuth,
+		BasicAuthUser:         ds.BasicAuthUser,
+		BasicAuthPassword:     ds.BasicAuthPassword,
+		BasicAuthPasswordFile: ds.BasicAuthPasswordFile,
+		BearerTokenFile:       ds.BearerTokenFile,
+		WithCredentials:       ds.WithCredentials,
+		IsDefault:             ds.IsDefault,
+		JsonData:              jsonData,
+		SecureJsonData:        ds.SecureJsonData,
+		ReadOnly:              !ds.Editable,
 	}
 }
 
@@ -220,87 +234,24 @@ func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataS
 	}
 
 	return &models.UpdateDataSourceCommand{
-		Id:                id,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            models.DsAccess(ds.Access),
-		Url:               ds.Url,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		BearerToken:       ds.BearerToken,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          jsonData,
-		SecureJsonData:    ds.SecureJsonData,
-		ReadOnly:          !ds.Editable,
+		Id:                    id,
+		OrgId:                 ds.OrgId,
+		Name:                  ds.Name,
+		Type:                  ds.Type,
+		Access:                models.DsAccess(ds.Access),
+		Url:                   ds.Url,
+		Password:              ds.Password,
+		User:                  ds.User,
+		Database:              ds.Database,
+		BasicAuth:             ds.BasicAuth,
+		BasicAuthUser:         ds.BasicAuthUser,
+		BasicAuthPassword:     ds.BasicAuthPassword,
+		BasicAuthPasswordFile: ds.BasicAuthPasswordFile,
+		BearerTokenFile:       ds.BearerTokenFile,
+		WithCredentials:       ds.WithCredentials,
+		IsDefault:             ds.IsDefault,
+		JsonData:              jsonData,
+		SecureJsonData:        ds.SecureJsonData,
+		ReadOnly:              !ds.Editable,
 	}
-}
-
-func populateDataSourceFromV1Config(cfg *DataSourceFromConfigV1) (*DataSourceFromConfig, error) {
-	ds := &DataSourceFromConfig{
-		OrgId:             cfg.OrgId,
-		Name:              cfg.Name,
-		Type:              cfg.Type,
-		Access:            cfg.Access,
-		Url:               cfg.Url,
-		Password:          cfg.Password,
-		User:              cfg.User,
-		Database:          cfg.Database,
-		BasicAuth:         cfg.BasicAuth,
-		BasicAuthUser:     cfg.BasicAuthUser,
-		BasicAuthPassword: cfg.BasicAuthPassword,
-		BearerToken:       cfg.BearerToken,
-		WithCredentials:   cfg.WithCredentials,
-		IsDefault:         cfg.IsDefault,
-		JsonData:          cfg.JsonData,
-		SecureJsonData:    cfg.SecureJsonData,
-		Editable:          cfg.Editable,
-		Version:           cfg.Version,
-	}
-
-	var err error
-	if cfg.PasswordFromFile != "" {
-		ds.Password, err = readValueFromFile(cfg.PasswordFromFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if cfg.BasicAuthPasswordFromFile != "" {
-		ds.BasicAuthPassword, err = readValueFromFile(cfg.BasicAuthPasswordFromFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if cfg.BearerTokenFromFile != "" {
-		ds.BearerToken, err = readValueFromFile(cfg.BearerTokenFromFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(cfg.SecureJsonDataFromFiles) != 0 {
-		if ds.SecureJsonData == nil {
-			ds.SecureJsonData = make(map[string]string, len(cfg.SecureJsonDataFromFiles))
-		}
-		for k, v := range cfg.SecureJsonDataFromFiles {
-			ds.SecureJsonData[k], err = readValueFromFile(v)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return ds, nil
-}
-
-func readValueFromFile(filename string) (string, error) {
-	val, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-	return string(val), nil
 }

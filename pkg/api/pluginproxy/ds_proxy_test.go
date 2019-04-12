@@ -282,6 +282,40 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a data source with a secret file specified for bearer token auth", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				BearerTokenFile: "test-data/secretfile",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
+			proxy.getDirector()(&req)
+
+			Convey("The authorization header should be set with the correct secret", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, "Bearer secretvalue")
+			})
+		})
+
+		Convey("When proxying a data source with a secret file specified for basic auth", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				BasicAuth:             true,
+				BasicAuthUser:         "dsuser",
+				BasicAuthPasswordFile: "test-data/secretfile",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+			requestURL, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestURL, Header: make(http.Header)}
+			proxy.getDirector()(&req)
+
+			Convey("The authorization header should be encoded using the correct secret", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, util.GetBasicAuthHeader("dsuser", "secretvalue"))
+			})
+		})
+
 		Convey("When proxying a data source with no keepCookies specified", func() {
 			plugin := &plugins.DataSourcePlugin{}
 

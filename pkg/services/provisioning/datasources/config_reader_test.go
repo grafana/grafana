@@ -190,29 +190,6 @@ func TestDatasourceAsConfig(t *testing.T) {
 			validateDatasource(dsCfg)
 			validateDeleteDatasources(dsCfg)
 		})
-
-		Convey("can populate secrets from files on disk", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig(withSecretsFiles)
-			if err != nil {
-				t.Fatalf("readConfig return an error %v", err)
-			}
-
-			So(len(cfg), ShouldEqual, 1)
-
-			dsCfg := cfg[0]
-
-			So(len(dsCfg.Datasources), ShouldEqual, 1)
-
-			ds := dsCfg.Datasources[0]
-
-			So(ds.BearerToken, ShouldEqual, "secretvalue")
-			So(ds.Password, ShouldEqual, "secretvalue")
-			So(ds.BasicAuthPassword, ShouldEqual, "secretvalue")
-			So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "secretvalue")
-			So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "secretvalue")
-			So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "secretvalue")
-		})
 	})
 }
 func validateDeleteDatasources(dsCfg *DatasourcesAsConfig) {

@@ -159,13 +159,29 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 		if proxy.ds.BasicAuth {
+			if proxy.ds.BasicAuthPasswordFile != "" {
+				password, err := ioutil.ReadFile(proxy.ds.BasicAuthPasswordFile)
+				if err != nil {
+					logger.Error("Failed to read basic auth password from file. Requests to the data source may fail to be authorized.",
+						"error", err,
+						"path", proxy.ds.BasicAuthPasswordFile)
+				} else {
+					proxy.ds.BasicAuthPassword = string(password)
+				}
+			}
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
 		}
-
-		if proxy.ds.BearerToken != "" {
-			req.Header.Del("Authorization")
-			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", proxy.ds.BearerToken))
+		if proxy.ds.BearerTokenFile != "" {
+			token, err := ioutil.ReadFile(proxy.ds.BearerTokenFile)
+			if err != nil {
+				logger.Error("Failed to read bearer token from file. Requests to the data source may fail to be authorized.",
+					"error", err,
+					"path", proxy.ds.BearerTokenFile)
+			} else {
+				req.Header.Del("Authorization")
+				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+			}
 		}
 
 		// Lookup and use custom headers
