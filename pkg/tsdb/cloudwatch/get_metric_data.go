@@ -155,9 +155,11 @@ func parseGetMetricDataResponse(lr map[string]*cloudwatch.MetricDataResult, quer
 		series.Name = formatAlias(query, s, series.Tags, label)
 
 		for j, t := range r.Timestamps {
-			expectedTimestamp := r.Timestamps[j].Add(time.Duration(query.Period) * time.Second)
-			if j > 0 && expectedTimestamp.Before(*t) {
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+			if j > 0 {
+				expectedTimestamp := r.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+				if expectedTimestamp.Before(*t) {
+					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+				}
 			}
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*r.Values[j]), float64((*t).Unix())*1000))
 		}
