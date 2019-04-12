@@ -40,12 +40,14 @@ export class DataSourcePicker extends PureComponent<Props> {
       value: ds.name,
       label: ds.name,
       imgUrl: ds.meta.info.logos.small,
+      description: ds.meta.info.description,
     }));
 
     const value = current && {
       label: current.name,
       value: current.name,
       imgUrl: current.meta.info.logos.small,
+      description: current.meta.info.description,
     };
 
     return (
