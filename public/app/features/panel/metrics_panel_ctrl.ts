@@ -6,7 +6,6 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isSeriesData, DataQueryResponse, TimeRange } from '@grafana/ui';
 import {
   QueryResultsObservers,
   SHARED_DASHBODARD_QUERY,
@@ -14,7 +13,8 @@ import {
   checkQueryResultsObservers,
 } from '../dashboard/state/QueryResultsObservers';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { PartialObserver } from 'rxjs';
+import { PartialObserver, Unsubscribable } from 'rxjs';
+import { toLegacyResponseData, isSeriesData, LegacyResponseData, TimeRange, DataQueryResponse } from '@grafana/ui';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -25,15 +25,15 @@ class MetricsPanelCtrl extends PanelCtrl {
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  range: any;
+  range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
-  timeInfo: any;
+  timeInfo?: string;
   skipDataOnInit: boolean;
   dataStream: any;
-  dataSubscription: any;
-  dataList: any;
+  dataSubscription?: Unsubscribable;
+  dataList: LegacyResponseData[];
 
   constructor($scope, $injector) {
     super($scope, $injector);

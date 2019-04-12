@@ -317,6 +317,7 @@ export interface QueryOptions {
   hinting?: boolean;
   instant?: boolean;
   valueWithRefId?: boolean;
+  maxDataPoints?: number;
 }
 
 export interface QueryTransaction {

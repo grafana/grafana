@@ -32,6 +32,9 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 
+export { Table } from './Table/Table';
+export { TableInputCSV } from './Table/TableInputCSV';
+
 // Visualizations
 export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
