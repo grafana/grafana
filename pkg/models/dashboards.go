@@ -13,25 +13,26 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound                       = errors.New("Dashboard not found")
-	ErrDashboardFolderNotFound                 = errors.New("Folder not found")
-	ErrDashboardSnapshotNotFound               = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameUIDExists              = errors.New("A dashboard with the same uid already exists")
-	ErrDashboardWithSameNameInFolderExists     = errors.New("A dashboard with the same name in the folder already exists")
-	ErrDashboardVersionMismatch                = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty                     = errors.New("Dashboard title cannot be empty")
-	ErrDashboardFolderCannotHaveParent         = errors.New("A Dashboard Folder cannot be added to another folder")
-	ErrDashboardsWithSameSlugExists            = errors.New("Multiple dashboards with the same slug exists")
-	ErrDashboardFailedGenerateUniqueUid        = errors.New("Failed to generate unique dashboard id")
-	ErrDashboardTypeMismatch                   = errors.New("Dashboard cannot be changed to a folder")
-	ErrDashboardFolderWithSameNameAsDashboard  = errors.New("Folder name cannot be the same as one of its dashboards")
-	ErrDashboardWithSameNameAsFolder           = errors.New("Dashboard name cannot be the same as folder")
-	ErrDashboardFolderNameExists               = errors.New("A folder with that name already exists")
-	ErrDashboardUpdateAccessDenied             = errors.New("Access denied to save dashboard")
-	ErrDashboardInvalidUid                     = errors.New("uid contains illegal characters")
-	ErrDashboardUidToLong                      = errors.New("uid to long. max 40 characters")
-	ErrDashboardCannotSaveProvisionedDashboard = errors.New("Cannot save provisioned dashboard")
-	RootFolderName                             = "General"
+	ErrDashboardNotFound                         = errors.New("Dashboard not found")
+	ErrDashboardFolderNotFound                   = errors.New("Folder not found")
+	ErrDashboardSnapshotNotFound                 = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameUIDExists                = errors.New("A dashboard with the same uid already exists")
+	ErrDashboardWithSameNameInFolderExists       = errors.New("A dashboard with the same name in the folder already exists")
+	ErrDashboardVersionMismatch                  = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty                       = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent           = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardsWithSameSlugExists              = errors.New("Multiple dashboards with the same slug exists")
+	ErrDashboardFailedGenerateUniqueUid          = errors.New("Failed to generate unique dashboard id")
+	ErrDashboardTypeMismatch                     = errors.New("Dashboard cannot be changed to a folder")
+	ErrDashboardFolderWithSameNameAsDashboard    = errors.New("Folder name cannot be the same as one of its dashboards")
+	ErrDashboardWithSameNameAsFolder             = errors.New("Dashboard name cannot be the same as folder")
+	ErrDashboardFolderNameExists                 = errors.New("A folder with that name already exists")
+	ErrDashboardUpdateAccessDenied               = errors.New("Access denied to save dashboard")
+	ErrDashboardInvalidUid                       = errors.New("uid contains illegal characters")
+	ErrDashboardUidToLong                        = errors.New("uid to long. max 40 characters")
+	ErrDashboardCannotSaveProvisionedDashboard   = errors.New("Cannot save provisioned dashboard")
+	ErrDashboardCannotDeleteProvisionedDashboard = errors.New("provisioned dashboard cannot be deleted")
+	RootFolderName                               = "General"
 )
 
 type UpdatePluginDashboardError struct {
@@ -355,4 +356,8 @@ type DashboardRef struct {
 type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
+}
+
+type UnprovisionDashboardCommand struct {
+	Id int64
 }

@@ -58,7 +58,7 @@ http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panel
 
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
 
-> *Notice* This sharing require either anonymous access or setting [cookie_samesite]({{< relref "installation/configuration/#cookie-samesite" >}}) to none
+> *Notice* This sharing require either anonymous access or setting [cookie_samesite]({{< relref "installation/configuration.md#cookie-samesite" >}}) to none
 
 Example:
 

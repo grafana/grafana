@@ -536,6 +536,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
       supportsLogs,
       supportsTable,
       datasourceError,
+      containerWidth,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -553,7 +554,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction());
+    dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
@@ -579,6 +580,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
             interval,
             format: 'time_series',
             instant: false,
+            maxDataPoints: containerWidth,
           },
           makeTimeSeriesList
         )
