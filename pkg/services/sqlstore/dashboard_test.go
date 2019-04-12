@@ -285,7 +285,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
 			})
 
 			Convey("Should be able to search for a dashboard folder's children", func() {

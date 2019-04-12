@@ -23,7 +23,7 @@ func Search(c *m.ReqContext) Response {
 	}
 
 	if limit > 5000 {
-		return Error(422, "Limit is above maxium allowed (5000), use page parameter to access hits beyond 5000", nil)
+		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
