@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -78,11 +79,17 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
-	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
+	var (
+		tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert    bool
+		tlsClientCertFile, tlsClientKeyFile, tlsCACertFile string
+	)
 	if ds.JsonData != nil {
 		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		tlsClientCertFile = ds.JsonData.Get("tlsClientCertFile").MustString("")
+		tlsClientKeyFile = ds.JsonData.Get("tlsClientKeyFile").MustString("")
+		tlsCACertFile = ds.JsonData.Get("tlsCACertFile").MustString("")
 	}
 
 	tlsConfig := &tls.Config{
@@ -91,9 +98,19 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 
 	if tlsClientAuth || tlsAuthWithCACert {
 		decrypted := ds.SecureJsonData.Decrypt()
-		if tlsAuthWithCACert && len(decrypted["tlsCACert"]) > 0 {
+		if tlsAuthWithCACert {
+			var caCert []byte
+			var err error
+			if tlsCACertFile != "" {
+				caCert, err = ioutil.ReadFile(tlsCACertFile)
+				if err != nil {
+					return nil, err
+				}
+			} else if len(decrypted["tlsCACert"]) > 0 {
+				caCert = []byte(decrypted["tlsCACert"])
+			}
 			caPool := x509.NewCertPool()
-			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
+			ok := caPool.AppendCertsFromPEM(caCert)
 			if !ok {
 				return nil, errors.New("Failed to parse TLS CA PEM certificate")
 			}
@@ -101,7 +118,22 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 		}
 
 		if tlsClientAuth {
-			cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
+			var clientCert, clientKey []byte
+			var err error
+			if tlsClientCertFile != "" && tlsClientKeyFile != "" {
+				clientCert, err = ioutil.ReadFile(tlsClientCertFile)
+				if err != nil {
+					return nil, err
+				}
+				clientKey, err = ioutil.ReadFile(tlsClientKeyFile)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				clientCert = []byte(decrypted["tlsClientCert"])
+				clientKey = []byte(decrypted["tlsClientKey"])
+			}
+			cert, err := tls.X509KeyPair(clientCert, clientKey)
 			if err != nil {
 				return nil, err
 			}

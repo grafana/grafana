@@ -132,6 +132,9 @@ datasources:
      graphiteVersion: "1.1"
      tlsAuth: true
      tlsAuthWithCACert: true
+     tlsClientKeyFile: "/path/to/key.pem"
+     tlsClientCertFile: "/path/to/cert.crt"
+     tlsCACertFile: "/path/to/ca.crt"
   # <map> json object of data that will be encrypted.
   secureJsonData:
     tlsCACert: "..."
@@ -157,6 +160,9 @@ Since not all datasources have the same configuration settings we only have the 
 | ---- | ---- | ---- | ---- |
 | tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
 | tlsAuthWithCACert | boolean | *All* | Enable TLS authentication using CA cert |
+| tlsCACertFile | string | CA cert file for outgoing requests |
+| tlsClientCertFile | string | TLS Client cert file for outgoing requests |
+| tlsClientKeyFile | string | TLS Client key file for outgoing requests |
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |

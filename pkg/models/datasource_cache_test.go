@@ -89,30 +89,54 @@ func TestDataSourceCache(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
-		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
-		So(err, ShouldBeNil)
-		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
-		So(err, ShouldBeNil)
+		Convey("When the client certificate and key are stored in secure JSON data", func() {
+			tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
+			So(err, ShouldBeNil)
+			tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+			So(err, ShouldBeNil)
 
-		ds := DataSource{
-			Id:       1,
-			Url:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: json,
-			SecureJsonData: map[string][]byte{
-				"tlsClientCert": tlsClientCert,
-				"tlsClientKey":  tlsClientKey,
-			},
-		}
+			ds := DataSource{
+				Id:       1,
+				Url:      "http://k8s:8001",
+				Type:     "Kubernetes",
+				JsonData: json,
+				SecureJsonData: map[string][]byte{
+					"tlsClientCert": tlsClientCert,
+					"tlsClientKey":  tlsClientKey,
+				},
+			}
 
-		tr, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+			tr, err := ds.GetHttpTransport()
+			So(err, ShouldBeNil)
 
-		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			Convey("Should verify TLS by default", func() {
+				So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			})
+			Convey("Should have a TLS client certificate configured", func() {
+				So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+			})
 		})
-		Convey("Should have a TLS client certificate configured", func() {
-			So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+
+		Convey("When the client certificate and key are stored in files on disk", func() {
+			json.Set("tlsClientCertFile", "testdata/secretfile")
+			json.Set("tlsClientKeyFile", "testdata/secretfile")
+
+			ds := DataSource{
+				Id:       1,
+				Url:      "http://k8s:8001",
+				Type:     "Kubernetes",
+				JsonData: json,
+			}
+
+			tr, err := ds.GetHttpTransport()
+			So(err, ShouldBeNil)
+
+			Convey("Should verify TLS by default", func() {
+				So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			})
+			Convey("Should have a TLS client certificate configured", func() {
+				So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+			})
 		})
 	})
 
@@ -123,25 +147,48 @@ func TestDataSourceCache(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
-		So(err, ShouldBeNil)
+		Convey("When the TLS CA is stored in secure JSON data", func() {
+			tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+			So(err, ShouldBeNil)
 
-		ds := DataSource{
-			Id:             1,
-			Url:            "http://k8s:8001",
-			Type:           "Kubernetes",
-			JsonData:       json,
-			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
-		}
+			ds := DataSource{
+				Id:             1,
+				Url:            "http://k8s:8001",
+				Type:           "Kubernetes",
+				JsonData:       json,
+				SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
+			}
 
-		tr, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+			tr, err := ds.GetHttpTransport()
+			So(err, ShouldBeNil)
 
-		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			Convey("Should verify TLS by default", func() {
+				So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			})
+			Convey("Should have a TLS CA configured", func() {
+				So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+			})
 		})
-		Convey("Should have a TLS CA configured", func() {
-			So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+
+		Convey("When the TLS CA is stored in a file on disk", func() {
+			json.Set("tlsCACertFile", "testdata/secretfile")
+
+			ds := DataSource{
+				Id:       1,
+				Url:      "http://k8s:8001",
+				Type:     "Kubernetes",
+				JsonData: json,
+			}
+
+			tr, err := ds.GetHttpTransport()
+			So(err, ShouldBeNil)
+
+			Convey("Should verify TLS by default", func() {
+				So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			})
+			Convey("Should have a TLS CA configured", func() {
+				So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+			})
 		})
 	})
 
