@@ -7,7 +7,8 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, getBackendSrv } from '@grafana/ui';
+import { PanelOptionsGroup } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 import { QueryEditorRow } from './QueryEditorRow';
 
 // Services

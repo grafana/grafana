@@ -1,6 +1,6 @@
 import { ThunkAction } from 'redux-thunk';
 import { Organization, StoreState } from 'app/types';
-import { getBackendSrv } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, any>;
 

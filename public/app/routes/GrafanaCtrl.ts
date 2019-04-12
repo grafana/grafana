@@ -4,7 +4,8 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 
 // Utils and servies
-import { colors, setBackendSrv } from '@grafana/ui';
+import { colors } from '@grafana/ui';
+import { setBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';

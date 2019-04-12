@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Services & Utils
-import { getBackendSrv } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 
 // Components
 import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';

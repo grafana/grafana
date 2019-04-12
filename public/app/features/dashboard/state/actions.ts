@@ -1,5 +1,5 @@
 // Services & Utils
-import { getBackendSrv } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 

@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
 
 export interface ServerStat {
   name: string;
