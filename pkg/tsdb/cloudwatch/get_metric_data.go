@@ -17,68 +17,14 @@ import (
 func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, region string, queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) ([]*tsdb.QueryResult, error) {
 	queryResponses := make([]*tsdb.QueryResult, 0)
 
-	// validate query
-	for _, query := range queries {
-		if !(len(query.Statistics) == 1 && len(query.ExtendedStatistics) == 0) &&
-			!(len(query.Statistics) == 0 && len(query.ExtendedStatistics) == 1) {
-			return queryResponses, errors.New("Statistics count should be 1")
-		}
-	}
-
 	client, err := e.getClient(region)
 	if err != nil {
 		return queryResponses, err
 	}
 
-	startTime, err := queryContext.TimeRange.ParseFrom()
+	params, err := parseGetMetricDataQuery(queries, queryContext)
 	if err != nil {
 		return queryResponses, err
-	}
-
-	endTime, err := queryContext.TimeRange.ParseTo()
-	if err != nil {
-		return queryResponses, err
-	}
-
-	params := &cloudwatch.GetMetricDataInput{
-		StartTime: aws.Time(startTime),
-		EndTime:   aws.Time(endTime),
-		ScanBy:    aws.String("TimestampAscending"),
-	}
-	for _, query := range queries {
-		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
-		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
-			return queryResponses, errors.New("too long query period")
-		}
-
-		mdq := &cloudwatch.MetricDataQuery{
-			Id:         aws.String(query.Id),
-			ReturnData: aws.Bool(query.ReturnData),
-		}
-		if query.Expression != "" {
-			mdq.Expression = aws.String(query.Expression)
-		} else {
-			mdq.MetricStat = &cloudwatch.MetricStat{
-				Metric: &cloudwatch.Metric{
-					Namespace:  aws.String(query.Namespace),
-					MetricName: aws.String(query.MetricName),
-				},
-				Period: aws.Int64(int64(query.Period)),
-			}
-			for _, d := range query.Dimensions {
-				mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
-					&cloudwatch.Dimension{
-						Name:  d.Name,
-						Value: d.Value,
-					})
-			}
-			if len(query.Statistics) == 1 {
-				mdq.MetricStat.Stat = query.Statistics[0]
-			} else {
-				mdq.MetricStat.Stat = query.ExtendedStatistics[0]
-			}
-		}
-		params.MetricDataQueries = append(params.MetricDataQueries, mdq)
 	}
 
 	nextToken := ""
@@ -120,6 +66,68 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 	}
 
 	return queryResponses, nil
+}
+
+func parseGetMetricDataQuery(queries map[string]*CloudWatchQuery, queryContext *tsdb.TsdbQuery) (*cloudwatch.GetMetricDataInput, error) {
+	// validate query
+	for _, query := range queries {
+		if !(len(query.Statistics) == 1 && len(query.ExtendedStatistics) == 0) &&
+			!(len(query.Statistics) == 0 && len(query.ExtendedStatistics) == 1) {
+			return nil, errors.New("Statistics count should be 1")
+		}
+	}
+
+	startTime, err := queryContext.TimeRange.ParseFrom()
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := queryContext.TimeRange.ParseTo()
+	if err != nil {
+		return nil, err
+	}
+
+	params := &cloudwatch.GetMetricDataInput{
+		StartTime: aws.Time(startTime),
+		EndTime:   aws.Time(endTime),
+		ScanBy:    aws.String("TimestampAscending"),
+	}
+	for _, query := range queries {
+		// 1 minutes resolution metrics is stored for 15 days, 15 * 24 * 60 = 21600
+		if query.HighResolution && (((endTime.Unix() - startTime.Unix()) / int64(query.Period)) > 21600) {
+			return nil, errors.New("too long query period")
+		}
+
+		mdq := &cloudwatch.MetricDataQuery{
+			Id:         aws.String(query.Id),
+			ReturnData: aws.Bool(query.ReturnData),
+		}
+		if query.Expression != "" {
+			mdq.Expression = aws.String(query.Expression)
+		} else {
+			mdq.MetricStat = &cloudwatch.MetricStat{
+				Metric: &cloudwatch.Metric{
+					Namespace:  aws.String(query.Namespace),
+					MetricName: aws.String(query.MetricName),
+				},
+				Period: aws.Int64(int64(query.Period)),
+			}
+			for _, d := range query.Dimensions {
+				mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,
+					&cloudwatch.Dimension{
+						Name:  d.Name,
+						Value: d.Value,
+					})
+			}
+			if len(query.Statistics) == 1 {
+				mdq.MetricStat.Stat = query.Statistics[0]
+			} else {
+				mdq.MetricStat.Stat = query.ExtendedStatistics[0]
+			}
+		}
+		params.MetricDataQueries = append(params.MetricDataQueries, mdq)
+	}
+	return params, nil
 }
 
 func parseGetMetricDataResponse(lr map[string]*cloudwatch.MetricDataResult, query *CloudWatchQuery) (*tsdb.QueryResult, error) {
