@@ -1,6 +1,9 @@
 package notifiers
 
 import (
+	"context"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,7 +35,8 @@ func TestPushoverNotifier(t *testing.T) {
 					"apiToken": "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve",
 					"userKey": "tzNZYf36y0ohWwXo4XoUrB61rz1A4o",
 					"priority": "1",
-					"sound": "pushover"
+					"sound": "pushover",
+					"okSound": "magic"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -51,8 +55,43 @@ func TestPushoverNotifier(t *testing.T) {
 				So(pushoverNotifier.ApiToken, ShouldEqual, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve")
 				So(pushoverNotifier.UserKey, ShouldEqual, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o")
 				So(pushoverNotifier.Priority, ShouldEqual, 1)
-				So(pushoverNotifier.Sound, ShouldEqual, "pushover")
+				So(pushoverNotifier.AlertingSound, ShouldEqual, "pushover")
+				So(pushoverNotifier.OkSound, ShouldEqual, "magic")
 			})
 		})
+	})
+}
+
+func TestGenPushoverBody(t *testing.T) {
+	Convey("Pushover body generation tests", t, func() {
+
+		Convey("Given common sounds", func() {
+			sirenSound := "siren_sound_tst"
+			successSound := "success_sound_tst"
+			notifier := &PushoverNotifier{AlertingSound: sirenSound, OkSound: successSound}
+
+			Convey("When alert is firing - should use siren sound", func() {
+				evalContext := alerting.NewEvalContext(context.Background(),
+					&alerting.Rule{
+						State: m.AlertStateAlerting,
+					})
+				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
+
+				So(err, ShouldBeNil)
+				So(strings.Contains(pushoverBody.String(), sirenSound), ShouldBeTrue)
+			})
+
+			Convey("When alert is ok - should use success sound", func() {
+				evalContext := alerting.NewEvalContext(context.Background(),
+					&alerting.Rule{
+						State: m.AlertStateOK,
+					})
+				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
+
+				So(err, ShouldBeNil)
+				So(strings.Contains(pushoverBody.String(), successSound), ShouldBeTrue)
+			})
+		})
+
 	})
 }
