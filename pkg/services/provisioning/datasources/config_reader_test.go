@@ -20,7 +20,6 @@ var (
 	versionZero                     = "testdata/version-0"
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
-	withSecretsFiles                = "testdata/with-secrets-files"
 
 	fakeRepo *fakeRepository
 )

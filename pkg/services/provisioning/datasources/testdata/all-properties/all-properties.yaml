@@ -12,14 +12,17 @@ datasources:
     basicAuth: true
     basicAuthUser: basic_auth_user
     basicAuthPassword: basic_auth_password
-    basicAuthPasswordFile: /path/to/secret
-    bearerTokenFile: /path/to/secret
     withCredentials: true
     isDefault: true
     jsonData:
       graphiteVersion: "1.1"
       tlsAuth: true
       tlsAuthWithCACert: true
+      basicAuthPasswordFile: /path/to/secret
+      bearerTokenFile: /path/to/secret
+      tlsCACertFile: /path/to/ca.crt
+      tlsClientCertFile: /path/to/cert.crt
+      tlsClientKeyFile: /path/to/key.pem
     secureJsonData:
       tlsCACert: "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA=="
       tlsClientCert: "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ=="

@@ -285,7 +285,9 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying a data source with a secret file specified for bearer token auth", func() {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{
-				BearerTokenFile: "test-data/secretfile",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"bearerTokenFile": "test-data/secretfile",
+				}),
 			}
 			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
@@ -301,9 +303,11 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying a data source with a secret file specified for basic auth", func() {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &m.DataSource{
-				BasicAuth:             true,
-				BasicAuthUser:         "dsuser",
-				BasicAuthPasswordFile: "test-data/secretfile",
+				BasicAuth:     true,
+				BasicAuthUser: "dsuser",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"basicAuthPasswordFile": "test-data/secretfile",
+				}),
 			}
 			ctx := &m.ReqContext{}
 			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})

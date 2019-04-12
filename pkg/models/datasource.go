@@ -41,23 +41,21 @@ type DataSource struct {
 	OrgId   int64
 	Version int
 
-	Name                  string
-	Type                  string
-	Access                DsAccess
-	Url                   string
-	Password              string
-	User                  string
-	Database              string
-	BasicAuth             bool
-	BasicAuthUser         string
-	BasicAuthPassword     string
-	BasicAuthPasswordFile string
-	BearerTokenFile       string
-	WithCredentials       bool
-	IsDefault             bool
-	JsonData              *simplejson.Json
-	SecureJsonData        securejsondata.SecureJsonData
-	ReadOnly              bool
+	Name              string
+	Type              string
+	Access            DsAccess
+	Url               string
+	Password          string
+	User              string
+	Database          string
+	BasicAuth         bool
+	BasicAuthUser     string
+	BasicAuthPassword string
+	WithCredentials   bool
+	IsDefault         bool
+	JsonData          *simplejson.Json
+	SecureJsonData    securejsondata.SecureJsonData
+	ReadOnly          bool
 
 	Created time.Time
 	Updated time.Time
@@ -107,23 +105,21 @@ func IsKnownDataSourcePlugin(dsType string) bool {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name                  string            `json:"name" binding:"Required"`
-	Type                  string            `json:"type" binding:"Required"`
-	Access                DsAccess          `json:"access" binding:"Required"`
-	Url                   string            `json:"url"`
-	Password              string            `json:"password"`
-	Database              string            `json:"database"`
-	User                  string            `json:"user"`
-	BasicAuth             bool              `json:"basicAuth"`
-	BasicAuthUser         string            `json:"basicAuthUser"`
-	BasicAuthPassword     string            `json:"basicAuthPassword"`
-	BasicAuthPasswordFile string            `json:"basicAuthPasswordFile"`
-	BearerTokenFile       string            `json:"bearerTokenFile"`
-	WithCredentials       bool              `json:"withCredentials"`
-	IsDefault             bool              `json:"isDefault"`
-	JsonData              *simplejson.Json  `json:"jsonData"`
-	SecureJsonData        map[string]string `json:"secureJsonData"`
-	ReadOnly              bool              `json:"readOnly"`
+	Name              string            `json:"name" binding:"Required"`
+	Type              string            `json:"type" binding:"Required"`
+	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	Database          string            `json:"database"`
+	User              string            `json:"user"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData"`
+	SecureJsonData    map[string]string `json:"secureJsonData"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 
@@ -132,24 +128,22 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Name                  string            `json:"name" binding:"Required"`
-	Type                  string            `json:"type" binding:"Required"`
-	Access                DsAccess          `json:"access" binding:"Required"`
-	Url                   string            `json:"url"`
-	Password              string            `json:"password"`
-	User                  string            `json:"user"`
-	Database              string            `json:"database"`
-	BasicAuth             bool              `json:"basicAuth"`
-	BasicAuthUser         string            `json:"basicAuthUser"`
-	BasicAuthPassword     string            `json:"basicAuthPassword"`
-	BasicAuthPasswordFile string            `json:"basicAuthPasswordFile"`
-	BearerTokenFile       string            `json:"bearerTokenFile"`
-	WithCredentials       bool              `json:"withCredentials"`
-	IsDefault             bool              `json:"isDefault"`
-	JsonData              *simplejson.Json  `json:"jsonData"`
-	SecureJsonData        map[string]string `json:"secureJsonData"`
-	Version               int               `json:"version"`
-	ReadOnly              bool              `json:"readOnly"`
+	Name              string            `json:"name" binding:"Required"`
+	Type              string            `json:"type" binding:"Required"`
+	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	User              string            `json:"user"`
+	Database          string            `json:"database"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData"`
+	SecureJsonData    map[string]string `json:"secureJsonData"`
+	Version           int               `json:"version"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 	Id    int64 `json:"-"`

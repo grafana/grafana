@@ -143,6 +143,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		reqQueryVals := req.URL.Query()
 
+		var bearerTokenFile, basicAuthPasswordFile string
+		if proxy.ds.JsonData != nil {
+			bearerTokenFile = proxy.ds.JsonData.Get("bearerTokenFile").MustString()
+			basicAuthPasswordFile = proxy.ds.JsonData.Get("basicAuthPasswordFile").MustString()
+		}
+
 		if proxy.ds.Type == m.DS_INFLUXDB_08 {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
@@ -159,12 +165,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 		if proxy.ds.BasicAuth {
-			if proxy.ds.BasicAuthPasswordFile != "" {
-				password, err := ioutil.ReadFile(proxy.ds.BasicAuthPasswordFile)
+			if basicAuthPasswordFile != "" {
+				password, err := ioutil.ReadFile(basicAuthPasswordFile)
 				if err != nil {
 					logger.Error("Failed to read basic auth password from file. Requests to the data source may fail to be authorized.",
 						"error", err,
-						"path", proxy.ds.BasicAuthPasswordFile)
+						"path", basicAuthPasswordFile)
 				} else {
 					proxy.ds.BasicAuthPassword = string(password)
 				}
@@ -172,12 +178,12 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.BasicAuthPassword))
 		}
-		if proxy.ds.BearerTokenFile != "" {
-			token, err := ioutil.ReadFile(proxy.ds.BearerTokenFile)
+		if bearerTokenFile != "" {
+			token, err := ioutil.ReadFile(bearerTokenFile)
 			if err != nil {
 				logger.Error("Failed to read bearer token from file. Requests to the data source may fail to be authorized.",
 					"error", err,
-					"path", proxy.ds.BearerTokenFile)
+					"path", bearerTokenFile)
 			} else {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))

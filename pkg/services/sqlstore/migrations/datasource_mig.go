@@ -133,14 +133,4 @@ func addDataSourceMigration(mg *Migrator) {
 
 	const setEmptyJSONWhereNullJSON = `UPDATE data_source SET json_data = '{}' WHERE json_data is null`
 	mg.AddMigration("Update json_data with nulls", NewRawSqlMigration(setEmptyJSONWhereNullJSON))
-
-	// add column that can store a bearer token file
-	mg.AddMigration("Add bearer token file column", NewAddColumnMigration(tableV2, &Column{
-		Name: "bearer_token_file", Type: DB_NVarchar, Length: 255, Nullable: true,
-	}))
-
-	// add column that can store a basic auth password file
-	mg.AddMigration("Add basic auth password file column", NewAddColumnMigration(tableV2, &Column{
-		Name: "basic_auth_password_file", Type: DB_NVarchar, Length: 255, Nullable: true,
-	}))
 }

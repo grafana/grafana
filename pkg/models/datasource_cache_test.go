@@ -118,8 +118,8 @@ func TestDataSourceCache(t *testing.T) {
 		})
 
 		Convey("When the client certificate and key are stored in files on disk", func() {
-			json.Set("tlsClientCertFile", "testdata/secretfile")
-			json.Set("tlsClientKeyFile", "testdata/secretfile")
+			json.Set("tlsClientCertFile", "testdata/client.crt")
+			json.Set("tlsClientKeyFile", "testdata/key.pem")
 
 			ds := DataSource{
 				Id:       1,
@@ -171,7 +171,7 @@ func TestDataSourceCache(t *testing.T) {
 		})
 
 		Convey("When the TLS CA is stored in a file on disk", func() {
-			json.Set("tlsCACertFile", "testdata/secretfile")
+			json.Set("tlsCACertFile", "testdata/ca.crt")
 
 			ds := DataSource{
 				Id:       1,
