@@ -1,6 +1,6 @@
 {
   "type": "datasource",
-  "name": "Input",
+  "name": "Direct Input",
   "id": "input",
   "state": "alpha",
 
