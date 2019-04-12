@@ -65,6 +65,7 @@ export class DatasourceSrv {
           instanceSettings: dsConfig,
         });
 
+        instance.id = dsConfig.id;
         instance.name = name;
         instance.components = dsPlugin.components;
         instance.meta = dsConfig.meta;

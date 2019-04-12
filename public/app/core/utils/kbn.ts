@@ -170,7 +170,7 @@ kbn.intervals_in_seconds = {
 };
 
 export interface IntervalInfo {
-  interval: string; //
+  interval: string;
   intervalMs: number;
 }
 
