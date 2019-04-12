@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { FormLabel, Switch } from '@grafana/ui';
+import { FormLabel, Input, Switch } from '@grafana/ui';
 
 export interface Props {
   dataSourceName: string;
@@ -21,7 +21,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
           >
             Name
           </FormLabel>
-          <input
+          <Input
             className="gf-form-input max-width-23"
             type="text"
             value={dataSourceName}

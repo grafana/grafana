@@ -7,7 +7,7 @@ aliases = ["/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
-weight = 3
+weight = 2
 +++
 
 # Using InfluxDB in Grafana

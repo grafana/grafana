@@ -52,7 +52,7 @@ export default class MysqlQuery {
   }
 
   escapeLiteral(value) {
-    return value.replace(/'/g, "''");
+    return String(value).replace(/'/g, "''");
   }
 
   hasTimeGroup() {

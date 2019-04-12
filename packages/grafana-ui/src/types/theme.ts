@@ -3,40 +3,39 @@ export enum GrafanaThemeType {
   Dark = 'dark',
 }
 
-export interface GrafanaTheme {
-  type: GrafanaThemeType;
+export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
-  brakpoints: {
+  breakpoints: {
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
     xl: string;
   };
   typography: {
     fontFamily: {
       sansSerif: string;
-      serif: string;
       monospace: string;
     };
     size: {
+      root: string;
       base: string;
       xs: string;
-      s: string;
-      m: string;
-      l: string;
+      sm: string;
+      md: string;
+      lg: string;
     };
     weight: {
       light: number;
-      normal: number;
+      regular: number;
       semibold: number;
     };
     lineHeight: {
       xs: number; //1
-      s: number; //1.1
-      m: number; // 4/3
-      l: number; // 1.5
+      sm: number; //1.1
+      md: number; // 4/3
+      lg: number; // 1.5
     };
     // TODO: Refactor to use size instead of custom defs
     heading: {
@@ -47,21 +46,54 @@ export interface GrafanaTheme {
       h5: string;
       h6: string;
     };
+    link: {
+      decoration: string;
+      hoverDecoration: string;
+    };
   };
   spacing: {
+    insetSquishMd: string;
+    d: string;
+    xxs: string;
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
     gutter: string;
   };
   border: {
     radius: {
-      xs: string;
-      s: string;
-      m: string;
+      sm: string;
+      md: string;
+      lg: string;
+    };
+    width: {
+      sm: string;
     };
   };
+  height: {
+    sm: string;
+    md: string;
+    lg: string;
+  };
+  panelPadding: {
+    horizontal: number;
+    vertical: number;
+  };
+  zIndex: {
+    dropdown: string;
+    navbarFixed: string;
+    sidemenu: string;
+    tooltip: string;
+    modalBackdrop: string;
+    modal: string;
+    typeahead: string;
+  };
+}
+
+export interface GrafanaTheme extends GrafanaThemeCommons {
+  type: GrafanaThemeType;
   background: {
     dropdown: string;
     scrollbar: string;
@@ -75,6 +107,11 @@ export interface GrafanaTheme {
     dark3: string;
     dark4: string;
     dark5: string;
+    dark6: string;
+    dark7: string;
+    dark8: string;
+    dark9: string;
+    dark10: string;
     gray1: string;
     gray2: string;
     gray3: string;
@@ -87,12 +124,16 @@ export interface GrafanaTheme {
 
     // Accent colors
     blue: string;
+    blueBase: string;
+    blueShade: string;
     blueLight: string;
-    blueDark: string;
-    green: string;
+    blueFaint: string;
+    redBase: string;
+    redShade: string;
+    greenBase: string;
+    greenShade: string;
     red: string;
     yellow: string;
-    pink: string;
     purple: string;
     variable: string;
     orange: string;
@@ -101,25 +142,33 @@ export interface GrafanaTheme {
     queryPurple: string;
     queryKeyword: string;
     queryOrange: string;
+    brandPrimary: string;
+    brandSuccess: string;
+    brandWarning: string;
+    brandDanger: string;
 
     // Status colors
     online: string;
     warn: string;
     critical: string;
 
+    // Link colors
+    link: string;
+    linkDisabled: string;
+    linkHover: string;
+    linkExternal: string;
+
+    // Text colors
+    body: string;
+    text: string;
+    textStrong: string;
+    textWeak: string;
+    textFaint: string;
+    textEmphasis: string;
+
     // TODO: move to background section
     bodyBg: string;
     pageBg: string;
-    bodyColor: string;
-    textColor: string;
-    textColorStrong: string;
-    textColorWeak: string;
-    textColorFaint: string;
-    textColorEmphasis: string;
-    linkColor: string;
-    linkColorDisabled: string;
-    linkColorHover: string;
-    linkColorExternal: string;
     headingColor: string;
   };
 }

@@ -13,3 +13,11 @@
     environment:
       FD_DATASOURCE: elasticsearch6
       FD_PORT: 11200
+
+  filebeat6:
+    image: docker.elastic.co/beats/filebeat:6.2.4
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./docker/blocks/elastic6/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro
+      - ../data/log:/var/log/grafana:ro

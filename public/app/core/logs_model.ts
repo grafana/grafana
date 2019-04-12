@@ -1,29 +1,7 @@
 import _ from 'lodash';
 
-import { colors, TimeSeries } from '@grafana/ui';
+import { colors, TimeSeries, Labels, LogLevel } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-
-/**
- * Mapping of log level abbreviation to canonical log level.
- * Supported levels are reduce to limit color variation.
- */
-export enum LogLevel {
-  emerg = 'critical',
-  alert = 'critical',
-  crit = 'critical',
-  critical = 'critical',
-  warn = 'warning',
-  warning = 'warning',
-  err = 'error',
-  eror = 'error',
-  error = 'error',
-  info = 'info',
-  notice = 'info',
-  dbug = 'debug',
-  debug = 'debug',
-  trace = 'trace',
-  unkown = 'unkown',
-}
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -32,7 +10,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unkown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
 export interface LogSearchMatch {
@@ -44,15 +22,17 @@ export interface LogSearchMatch {
 export interface LogRowModel {
   duplicates?: number;
   entry: string;
+  hasAnsi: boolean;
   key: string; // timestamp + labels
-  labels: LogsStreamLabels;
+  labels: Labels;
   logLevel: LogLevel;
+  raw: string;
   searchWords?: string[];
   timestamp: string; // ISO with nanosec precision
   timeFromNow: string;
   timeEpochMs: number;
   timeLocal: string;
-  uniqueLabels?: LogsStreamLabels;
+  uniqueLabels?: Labels;
 }
 
 export interface LogLabelStatsModel {
@@ -70,11 +50,12 @@ export enum LogsMetaKind {
 
 export interface LogsMetaItem {
   label: string;
-  value: string | number | LogsStreamLabels;
+  value: string | number | Labels;
   kind: LogsMetaKind;
 }
 
 export interface LogsModel {
+  hasUniqueLabels: boolean;
   id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
@@ -85,8 +66,8 @@ export interface LogsStream {
   labels: string;
   entries: LogsStreamEntry[];
   search?: string;
-  parsedLabels?: LogsStreamLabels;
-  uniqueLabels?: LogsStreamLabels;
+  parsedLabels?: Labels;
+  uniqueLabels?: Labels;
 }
 
 export interface LogsStreamEntry {
@@ -94,10 +75,6 @@ export interface LogsStreamEntry {
   ts: string;
   // Legacy, was renamed to ts
   timestamp?: string;
-}
-
-export interface LogsStreamLabels {
-  [key: string]: string;
 }
 
 export enum LogsDedupDescription {
@@ -243,12 +220,13 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   }
 
   const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
+    const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
       previous.duplicates++;
     } else {
-      row.duplicates = 0;
-      result.push(row);
+      rowCopy.duplicates = 0;
+      result.push(rowCopy);
     }
     return result;
   }, []);

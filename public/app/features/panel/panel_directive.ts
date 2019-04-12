@@ -34,7 +34,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: (scope, elem) => {
+    link: (scope: any, elem) => {
       const panelContainer = elem.find('.panel-container');
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
@@ -80,7 +80,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass('panel-transparent', true);
+        panelContainer.addClass('panel-transparent');
       }
 
       // update scrollbar after mounting

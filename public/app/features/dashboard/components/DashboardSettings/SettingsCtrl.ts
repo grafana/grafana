@@ -182,6 +182,24 @@ export class SettingsCtrl {
     let confirmText = '';
     let text2 = this.dashboard.title;
 
+    if (this.dashboard.meta.provisioned) {
+      appEvents.emit('confirm-modal', {
+        title: 'Cannot delete provisioned dashboard',
+        text: `
+          This dashboard is managed by Grafanas provisioning and cannot be deleted. Remove the dashboard from the
+          config file to delete it.
+        `,
+        text2: `
+          <i>See <a class="external-link" href="http://docs.grafana.org/administration/provisioning/#dashboards" target="_blank">
+          documentation</a> for more information about provisioning.</i>
+        `,
+        text2htmlBind: true,
+        icon: 'fa-trash',
+        noText: 'OK',
+      });
+      return;
+    }
+
     const alerts = _.sumBy(this.dashboard.panels, panel => {
       return panel.alert ? 1 : 0;
     });

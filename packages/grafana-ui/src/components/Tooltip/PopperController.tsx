@@ -7,7 +7,7 @@ export interface PopperContentProps {
   updatePopperPosition?: () => void;
 }
 
-export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T>;
+export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T> | ((props: T) => JSX.Element);
 
 export interface UsingPopperProps {
   show?: boolean;
@@ -101,4 +101,4 @@ class PopperController extends React.Component<Props, State> {
   }
 }
 
-export default PopperController;
+export { PopperController };

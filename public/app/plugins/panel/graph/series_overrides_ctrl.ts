@@ -11,7 +11,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
     const option = {
       text: name,
       propertyName: propertyName,
-      index: $scope.overrideMenu.lenght,
+      index: $scope.overrideMenu.length,
       values: values,
       submenu: _.map(values, value => {
         return { text: String(value), value: value };

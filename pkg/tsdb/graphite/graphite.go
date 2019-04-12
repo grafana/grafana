@@ -49,7 +49,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	for _, query := range tsdbQuery.Queries {
-		glog.Info("graphite", "query", query.Model)
+		glog.Debug("graphite", "query", query.Model)
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {

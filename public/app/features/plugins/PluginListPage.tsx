@@ -81,4 +81,9 @@ const mapDispatchToProps = {
   setPluginsSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(PluginListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(PluginListPage)
+);

@@ -70,6 +70,7 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
+    dataSourceTypeSearchQuery: state.dataSources.dataSourceTypeSearchQuery,
     isLoading: state.dataSources.isLoadingDataSources,
   };
 }
@@ -80,4 +81,9 @@ const mapDispatchToProps = {
   setDataSourceTypeSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NewDataSourcePage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(NewDataSourcePage)
+);

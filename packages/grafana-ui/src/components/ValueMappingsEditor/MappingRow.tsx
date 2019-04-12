@@ -1,7 +1,8 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 
+import { FormField, FormLabel, Input, Select } from '..';
+
 import { MappingType, ValueMapping } from '../../types';
-import { FormField, FormLabel, Select } from '..';
 
 export interface Props {
   valueMapping: ValueMapping;
@@ -79,7 +80,7 @@ export default class MappingRow extends PureComponent<Props, State> {
           />
           <div className="gf-form gf-form--grow">
             <FormLabel width={4}>Text</FormLabel>
-            <input
+            <Input
               className="gf-form-input"
               onBlur={this.updateMapping}
               value={text}
@@ -102,7 +103,7 @@ export default class MappingRow extends PureComponent<Props, State> {
         />
         <div className="gf-form gf-form--grow">
           <FormLabel width={4}>Text</FormLabel>
-          <input
+          <Input
             className="gf-form-input"
             onBlur={this.updateMapping}
             value={text}

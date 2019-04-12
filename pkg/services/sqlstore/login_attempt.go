@@ -44,6 +44,10 @@ func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
 			return err
 		}
 
+		if result == nil || len(result) == 0 || result[0] == nil {
+			return nil
+		}
+
 		maxId = toInt64(result[0]["id"])
 
 		if maxId == 0 {

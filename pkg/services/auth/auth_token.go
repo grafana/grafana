@@ -221,6 +221,57 @@ func (s *UserAuthTokenService) RevokeToken(token *models.UserToken) error {
 	return nil
 }
 
+func (s *UserAuthTokenService) RevokeAllUserTokens(userId int64) error {
+	sql := `DELETE from user_auth_token WHERE user_id = ?`
+	res, err := s.SQLStore.NewSession().Exec(sql, userId)
+	if err != nil {
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	s.log.Debug("all user tokens for user revoked", "userId", userId, "count", affected)
+
+	return nil
+}
+
+func (s *UserAuthTokenService) GetUserToken(userId, userTokenId int64) (*models.UserToken, error) {
+	var token userAuthToken
+	exists, err := s.SQLStore.NewSession().Where("id = ? AND user_id = ?", userTokenId, userId).Get(&token)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return nil, models.ErrUserTokenNotFound
+	}
+
+	var result models.UserToken
+	token.toUserToken(&result)
+
+	return &result, nil
+}
+
+func (s *UserAuthTokenService) GetUserTokens(userId int64) ([]*models.UserToken, error) {
+	var tokens []*userAuthToken
+	err := s.SQLStore.NewSession().Where("user_id = ? AND created_at > ? AND rotated_at > ?", userId, s.createdAfterParam(), s.rotatedAfterParam()).Find(&tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []*models.UserToken{}
+	for _, token := range tokens {
+		var userToken models.UserToken
+		token.toUserToken(&userToken)
+		result = append(result, &userToken)
+	}
+
+	return result, nil
+}
+
 func (s *UserAuthTokenService) createdAfterParam() int64 {
 	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
 	return getTime().Add(-tokenMaxLifetime).Unix()

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"

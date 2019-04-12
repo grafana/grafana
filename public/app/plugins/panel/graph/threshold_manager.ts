@@ -216,12 +216,6 @@ export class ThresholdManager {
           break;
         }
         case 'custom': {
-          if (!threshold.fillColor) {
-            threshold.fillColor = 'rgba(255, 255, 255, 1)';
-          }
-          if (!threshold.lineColor) {
-            threshold.lineColor = 'rgba(255, 255, 255, 0)';
-          }
           fillColor = threshold.fillColor;
           lineColor = threshold.lineColor;
           break;

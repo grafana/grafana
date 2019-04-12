@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, TimeRange } from '@grafana/ui';
+import { Input, RawTimeRange, TimeRange } from '@grafana/ui';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const DEFAULT_RANGE = {
@@ -120,7 +120,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     } else if (direction === 1) {
       nextTo = to.valueOf() + timespan;
       nextFrom = from.valueOf() + timespan;
-      if (nextTo > Date.now() && to < Date.now()) {
+      if (nextTo > Date.now() && to.valueOf() < Date.now()) {
         nextTo = Date.now();
         nextFrom = from.valueOf();
       }
@@ -260,7 +260,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
             <label className="small">From:</label>
             <div className="gf-form-inline">
               <div className="gf-form max-width-28">
-                <input
+                <Input
                   type="text"
                   className="gf-form-input input-large timepicker-from"
                   value={fromRaw}
@@ -272,7 +272,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
             <label className="small">To:</label>
             <div className="gf-form-inline">
               <div className="gf-form max-width-28">
-                <input
+                <Input
                   type="text"
                   className="gf-form-input input-large timepicker-to"
                   value={toRaw}

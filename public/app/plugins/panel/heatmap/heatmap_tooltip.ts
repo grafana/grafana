@@ -114,7 +114,9 @@ export class HeatmapTooltip {
           };
 
           boundBottom = tickFormatter(yBucketIndex);
-          boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
+          if (this.panel.yBucketBound !== 'middle') {
+            boundTop = yBucketIndex < data.tsBuckets.length - 1 ? tickFormatter(yBucketIndex + 1) : '';
+          }
         } else {
           // Display 0 if bucket is a special 'zero' bucket
           const bottom = yData.y ? yData.bounds.bottom : 0;
@@ -122,8 +124,9 @@ export class HeatmapTooltip {
           boundTop = bucketBoundFormatter(yData.bounds.top);
         }
         valuesNumber = countValueFormatter(yData.count);
+        const boundStr = boundTop && boundBottom ? `${boundBottom} - ${boundTop}` : boundBottom || boundTop;
         tooltipHtml += `<div>
-          bucket: <b>${boundBottom} - ${boundTop}</b> <br>
+          bucket: <b>${boundStr}</b> <br>
           count: <b>${valuesNumber}</b> <br>
         </div>`;
       } else {
@@ -205,10 +208,10 @@ export class HeatmapTooltip {
 
     let barWidth;
     if (this.panel.yAxis.logBase === 1) {
-      barWidth = Math.floor(HISTOGRAM_WIDTH / (max - min) * yBucketSize * 0.9);
+      barWidth = Math.floor((HISTOGRAM_WIDTH / (max - min)) * yBucketSize * 0.9);
     } else {
       const barNumberFactor = yBucketSize ? yBucketSize : 1;
-      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / barNumberFactor * 0.9);
+      barWidth = Math.floor((HISTOGRAM_WIDTH / ticks / barNumberFactor) * 0.9);
     }
     barWidth = Math.max(barWidth, 1);
 

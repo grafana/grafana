@@ -7,7 +7,9 @@
 
 // Core
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: $btn-font-weight;
   line-height: $btn-line-height;
   font-size: $font-size-base;
@@ -15,8 +17,9 @@
   vertical-align: middle;
   cursor: pointer;
   border: none;
+  height: $height-md;
 
-  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
+  @include button-size($btn-padding-y, $space-md, $font-size-base, $border-radius-sm);
 
   &,
   &:active,
@@ -51,29 +54,28 @@
 
 // Button Sizes
 // --------------------------------------------------
-// XLarge
-.btn-xlarge {
-  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $btn-border-radius);
-  font-weight: normal;
-  padding-bottom: $btn-padding-y-xl - 3;
-  .gicon {
-    font-size: 31px;
-    margin-right: 1rem;
-  }
-}
 
 // Large
 .btn-large {
-  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+  @include button-size($btn-padding-y-lg, $space-lg, $font-size-lg, $border-radius-sm);
   font-weight: normal;
+  height: $height-lg;
+  .gicon {
+    //font-size: 31px;
+    margin-right: $space-sm;
+    filter: brightness(100);
+  }
 }
 
 .btn-small {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
 }
 
+// Deprecated, only used by old plugins
 .btn-mini {
-  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
+  @include button-size($btn-padding-y-sm, $space-sm, $font-size-sm, $border-radius-sm);
+  height: $height-sm;
 }
 
 .btn-link {
@@ -123,7 +125,7 @@
   @include button-outline-variant($btn-inverse-bg);
 }
 .btn-outline-danger {
-  @include button-outline-variant(green);
+  @include button-outline-variant($btn-danger-bg);
 }
 
 .btn-outline-disabled {
@@ -182,8 +184,8 @@ $btn-service-icon-width: 35px;
   left: 0;
   height: 100%;
   top: 0;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  padding-left: $space-sm;
+  padding-right: $space-sm;
   width: $btn-service-icon-width;
   text-align: center;
 

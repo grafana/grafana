@@ -1,8 +1,12 @@
+// @ts-ignore
 import _ from 'lodash';
-import React from 'react';
+import React, { Context } from 'react';
 import ReactDOM from 'react-dom';
+// @ts-ignore
 import { Change, Value } from 'slate';
+// @ts-ignore
 import { Editor } from 'slate-react';
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 import classnames from 'classnames';
 
@@ -11,7 +15,7 @@ import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/
 import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
-import Typeahead from './Typeahead';
+import { TypeaheadWithTheme } from './Typeahead';
 import { makeFragment, makeValue } from './Value';
 import PlaceholdersBuffer from './PlaceholdersBuffer';
 
@@ -75,7 +79,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   resetTimer: any;
   mounted: boolean;
 
-  constructor(props: QueryFieldProps, context) {
+  constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
     this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
@@ -137,7 +141,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
-  onChange = ({ value }, invokeParentOnValueChanged?: boolean) => {
+  onChange = ({ value }: Change, invokeParentOnValueChanged?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
 
@@ -227,7 +231,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             }
 
             if (!group.skipSort) {
-              group.items = _.sortBy(group.items, item => item.sortText || item.label);
+              group.items = _.sortBy(group.items, (item: CompletionItem) => item.sortText || item.label);
             }
           }
           return group;
@@ -294,7 +298,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       .focus();
   }
 
-  handleEnterAndTabKey = change => {
+  handleEnterAndTabKey = (event: KeyboardEvent, change: Change) => {
     const { typeaheadIndex, suggestions } = this.state;
     if (this.menuEl) {
       // Dont blur input
@@ -306,7 +310,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
       const nextChange = this.applyTypeahead(change, suggestion);
 
-      const insertTextOperation = nextChange.operations.find(operation => operation.type === 'insert_text');
+      const insertTextOperation = nextChange.operations.find((operation: any) => operation.type === 'insert_text');
       if (insertTextOperation) {
         const suggestionText = insertTextOperation.text;
         this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
@@ -323,7 +327,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  onKeyDown = (event, change) => {
+  onKeyDown = (event: KeyboardEvent, change: Change) => {
     const { typeaheadIndex } = this.state;
 
     switch (event.key) {
@@ -347,7 +351,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       }
       case 'Enter':
       case 'Tab': {
-        return this.handleEnterAndTabKey(change);
+        return this.handleEnterAndTabKey(event, change);
         break;
       }
 
@@ -355,7 +359,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         if (this.menuEl) {
           // Select next suggestion
           event.preventDefault();
-          this.setState({ typeaheadIndex: typeaheadIndex + 1 });
+          const itemsCount =
+            this.state.suggestions.length > 0
+              ? this.state.suggestions.reduce((totalCount, current) => totalCount + current.items.length, 0)
+              : 0;
+          this.setState({ typeaheadIndex: Math.min(itemsCount - 1, typeaheadIndex + 1) });
         }
         break;
       }
@@ -384,7 +392,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  handleBlur = (event, change) => {
+  handleBlur = (event: FocusEvent, change: Change) => {
     const { lastExecutedValue } = this.state;
     const previousValue = lastExecutedValue ? Plain.serialize(this.state.lastExecutedValue) : null;
     const currentValue = Plain.serialize(change.value);
@@ -399,8 +407,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       this.executeOnQueryChangeAndExecuteQueries();
     }
   };
-
-  handleFocus = () => {};
 
   onClickMenu = (item: CompletionItem) => {
     // Manually triggering change
@@ -441,7 +447,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  menuRef = el => {
+  menuRef = (el: HTMLElement) => {
     this.menuEl = el;
   };
 
@@ -457,12 +463,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     // Create typeahead in DOM root so we can later position it absolutely
     return (
       <Portal origin={portalOrigin}>
-        <Typeahead
+        <TypeaheadWithTheme
           menuRef={this.menuRef}
           selectedItem={selectedItem}
           onClickItem={this.onClickMenu}
           prefix={typeaheadPrefix}
           groupedItems={suggestions}
+          typeaheadIndex={typeaheadIndex}
         />
       </Portal>
     );
@@ -491,7 +498,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             onBlur={this.handleBlur}
             onKeyDown={this.onKeyDown}
             onChange={this.onChange}
-            onFocus={this.handleFocus}
             onPaste={this.handlePaste}
             placeholder={this.props.placeholder}
             plugins={this.plugins}
@@ -504,10 +510,15 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 }
 
-class Portal extends React.PureComponent<{ index?: number; origin: string }, {}> {
+interface PortalProps {
+  index?: number;
+  origin: string;
+}
+
+class Portal extends React.PureComponent<PortalProps, {}> {
   node: HTMLElement;
 
-  constructor(props) {
+  constructor(props: PortalProps) {
     super(props);
     const { index = 0, origin = 'query' } = props;
     this.node = document.createElement('div');

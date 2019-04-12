@@ -4,14 +4,16 @@ import {
   RawTimeRange,
   TimeRange,
   DataQuery,
+  DataQueryResponseData,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  LogLevel,
 } from '@grafana/ui';
 
-import { Emitter } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy, LogLevel } from 'app/core/logs_model';
+import { Emitter, TimeSeries } from 'app/core/core';
+import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export interface CompletionItem {
@@ -247,6 +249,17 @@ export interface ExploreItemState {
    * Currently hidden log series
    */
   hiddenLogLevels?: LogLevel[];
+
+  urlState: ExploreUrlState;
+
+  update: ExploreUpdateState;
+}
+
+export interface ExploreUpdateState {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+  ui: boolean;
 }
 
 export interface ExploreUIState {
@@ -304,6 +317,7 @@ export interface QueryOptions {
   hinting?: boolean;
   instant?: boolean;
   valueWithRefId?: boolean;
+  maxDataPoints?: number;
 }
 
 export interface QueryTransaction {
@@ -321,6 +335,12 @@ export interface QueryTransaction {
 }
 
 export type RangeScanner = () => RawTimeRange;
+
+export type ResultGetter = (
+  result: DataQueryResponseData,
+  transaction: QueryTransaction,
+  allTransactions: QueryTransaction[]
+) => TimeSeries;
 
 export interface TextMatch {
   text: string;

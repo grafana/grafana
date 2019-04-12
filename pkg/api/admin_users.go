@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -109,4 +109,27 @@ func AdminDeleteUser(c *m.ReqContext) {
 	}
 
 	c.JsonOK("User deleted")
+}
+
+// POST /api/admin/users/:id/logout
+func (server *HTTPServer) AdminLogoutUser(c *m.ReqContext) Response {
+	userID := c.ParamsInt64(":id")
+
+	if c.UserId == userID {
+		return Error(400, "You cannot logout yourself", nil)
+	}
+
+	return server.logoutUserFromAllDevicesInternal(userID)
+}
+
+// GET /api/admin/users/:id/auth-tokens
+func (server *HTTPServer) AdminGetUserAuthTokens(c *m.ReqContext) Response {
+	userID := c.ParamsInt64(":id")
+	return server.getUserAuthTokensInternal(c, userID)
+}
+
+// POST /api/admin/users/:id/revoke-auth-token
+func (server *HTTPServer) AdminRevokeUserAuthToken(c *m.ReqContext, cmd m.RevokeAuthTokenCmd) Response {
+	userID := c.ParamsInt64(":id")
+	return server.revokeUserAuthTokenInternal(c, userID, cmd)
 }

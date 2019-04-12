@@ -4,6 +4,7 @@ exports[`SelectOption renders correctly 1`] = `
 <div
   id=""
   onClick={[MockFunction]}
+  onMouseMove={[MockFunction]}
   onMouseOver={[MockFunction]}
   tabIndex={1}
 >

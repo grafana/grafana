@@ -1,7 +1,6 @@
-import kbn from 'app/core/utils/kbn';
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, stringToJsRegex } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
@@ -9,7 +8,7 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   }
 
   if (aliasOrRegex[0] === '/') {
-    const regex = kbn.stringToJsRegex(aliasOrRegex);
+    const regex = stringToJsRegex(aliasOrRegex);
     return seriesAlias.match(regex) != null;
   }
 

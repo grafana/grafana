@@ -35,7 +35,7 @@ jobs:
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
             name: mysql integration tests
-            command: 'GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/... ./pkg/tsdb/mysql/... '
+            command: './scripts/circle-test-mysql.sh'
 
   postgres-integration-test:
     docker:
@@ -54,7 +54,21 @@ jobs:
         - run: 'PGPASSWORD=grafanatest psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql'
         - run:
             name: postgres integration tests
-            command: 'GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/... ./pkg/tsdb/postgres/...'
+            command: './scripts/circle-test-postgres.sh'
+
+  cache-server-test:
+    docker:
+      - image: circleci/golang:1.11.5
+      - image: circleci/redis:4-alpine
+      - image: memcached
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+        - checkout
+        - run: dockerize -wait tcp://127.0.0.1:11211 -timeout 120s
+        - run: dockerize -wait tcp://127.0.0.1:6379 -timeout 120s
+        - run:
+            name: cache server tests
+            command: './scripts/circle-test-cache-servers.sh'
 
   codespell:
     docker:
@@ -72,7 +86,7 @@ jobs:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  gometalinter:
+  backend-lint:
     docker:
       - image: circleci/golang:1.11.5
         environment:
@@ -82,8 +96,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Gometalinter tests
-          command: './scripts/gometalinter.sh'
+          name: backend lint
+          command: './scripts/backend-lint.sh'
 
   test-frontend:
     docker:
@@ -116,7 +130,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -153,14 +167,14 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
             - scripts/*.sh
             - scripts/build/release_publisher/release_publisher
             - scripts/build/publish.sh
 
   build:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -182,7 +196,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/grafana*
+            - dist/*
 
   grafana-docker-master:
     machine:
@@ -229,7 +243,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.3
+     - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -257,11 +271,11 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - enterprise-dist/grafana-enterprise*
+            - enterprise-dist/*
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.3
+    - image: grafana/build-container:1.2.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -304,11 +318,11 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - enterprise-dist/grafana-enterprise*
+        - enterprise-dist/*
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - attach_workspace:
           at: .
@@ -326,12 +340,14 @@ jobs:
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
       - run:
           name: Deploy to grafana.com
-          command: 'cd enterprise-dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -from-local'
+          command: |
+            cd enterprise-dist
+            ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -enterprise -version "v$(cat grafana.version)" --nightly
 
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.0
+    - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - checkout
       - attach_workspace:
@@ -364,7 +380,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - attach_workspace:
           at: .
@@ -391,11 +407,11 @@ jobs:
           command: |
             rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
             rm dist/*latest*
-            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -from-local
+            cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.0
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - checkout
       - attach_workspace:
@@ -425,6 +441,15 @@ jobs:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
+  store-build-artifacts:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - attach_workspace:
+          at: .
+      - store_artifacts:
+          path: ./dist
+
 workflows:
   version: 2
   build-master:
@@ -435,7 +460,7 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - gometalinter:
+      - backend-lint:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -451,7 +476,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -462,7 +487,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -472,7 +497,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -486,7 +511,7 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - gometalinter:
+      - backend-lint:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -502,7 +527,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -513,7 +538,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -524,7 +549,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - gometalinter
+            - backend-lint
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -535,7 +560,7 @@ workflows:
             filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
-        - gometalinter:
+        - backend-lint:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -545,13 +570,27 @@ workflows:
             filters: *filter-not-release-or-master
         - postgres-integration-test:
             filters: *filter-not-release-or-master
+        - cache-server-test:
+            filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
               - build
               - test-backend
               - test-frontend
               - codespell
-              - gometalinter
+              - backend-lint
               - mysql-integration-test
               - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
+        - store-build-artifacts:
+            requires:
+              - build
+              - test-backend
+              - test-frontend
+              - codespell
+              - backend-lint
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
             filters: *filter-not-release-or-master

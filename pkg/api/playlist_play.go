@@ -52,8 +52,10 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 			for _, item := range searchQuery.Result {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.Id,
+					Slug:  item.Slug,
 					Title: item.Title,
 					Uri:   item.Uri,
+					Url:   m.GetDashboardUrl(item.Uid, item.Slug),
 					Order: dashboardTagOrder[tag],
 				})
 			}
