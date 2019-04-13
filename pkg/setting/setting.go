@@ -262,7 +262,7 @@ func init() {
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
-	appUrl := section.Key("root_url").MustString("http://localhost:3000/")
+	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 	if appUrl[len(appUrl)-1] != '/' {
 		appUrl += "/"
 	}
@@ -498,7 +498,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	evalConfigValues(parsedFile)
 
 	// update data path and logging config
-	cfg.DataPath = makeAbsolute(parsedFile.Section("paths").Key("data").String(), HomePath)
+	cfg.DataPath = makeAbsolute(valueAsString(parsedFile.Section("paths"), "data", ""), HomePath)
 	cfg.initLogging(parsedFile)
 
 	return parsedFile, err
@@ -571,34 +571,34 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ApplicationName = APP_NAME_ENTERPRISE
 	}
 
-	Env = iniFile.Section("").Key("app_mode").MustString("development")
-	InstanceName = iniFile.Section("").Key("instance_name").MustString("unknown_instance_name")
-	PluginsPath = makeAbsolute(iniFile.Section("paths").Key("plugins").String(), HomePath)
-	cfg.ProvisioningPath = makeAbsolute(iniFile.Section("paths").Key("provisioning").String(), HomePath)
+	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
+	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
+	PluginsPath = makeAbsolute(valueAsString(iniFile.Section("paths"), "plugins", ""), HomePath)
+	cfg.ProvisioningPath = makeAbsolute(valueAsString(iniFile.Section("paths"), "provisioning", ""), HomePath)
 	server := iniFile.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 	cfg.AppUrl = AppUrl
 	cfg.AppSubUrl = AppSubUrl
 
 	Protocol = HTTP
-	if server.Key("protocol").MustString("http") == "https" {
+	if valueAsString(server, "protocol", "http") == "https" {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
-	if server.Key("protocol").MustString("http") == "socket" {
+	if valueAsString(server, "protocol", "http") == "socket" {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
 	}
 
-	Domain = server.Key("domain").MustString("localhost")
-	HttpAddr = server.Key("http_addr").MustString(DEFAULT_HTTP_ADDR)
-	HttpPort = server.Key("http_port").MustString("3000")
+	Domain = valueAsString(server, "domain", "localhost")
+	HttpAddr = valueAsString(server, "http_addr", DEFAULT_HTTP_ADDR)
+	HttpPort = valueAsString(server, "http_port", "3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
 
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
-	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
+	StaticRootPath = makeAbsolute(valueAsString(server, "static_root_path", ""), HomePath)
 
 	if err := validateStaticRootPath(); err != nil {
 		return err
@@ -612,7 +612,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// read security settings
 	security := iniFile.Section("security")
-	SecretKey = security.Key("secret_key").String()
+	SecretKey = valueAsString(security, "secret_key", "")
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
@@ -620,7 +620,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
 
-	samesiteString := security.Key("cookie_samesite").MustString("lax")
+	samesiteString := valueAsString(security, "cookie_samesite", "lax")
 	validSameSiteValues := map[string]http.SameSite{
 		"lax":    http.SameSiteLaxMode,
 		"strict": http.SameSiteStrictMode,
@@ -637,8 +637,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
-	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
-	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
+	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 
@@ -648,13 +648,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
-	for _, hostAndIp := range util.SplitString(security.Key("data_source_proxy_whitelist").String()) {
+	for _, hostAndIp := range util.SplitString(valueAsString(security, "data_source_proxy_whitelist", "")) {
 		DataProxyWhiteList[hostAndIp] = true
 	}
 
 	// admin
-	AdminUser = security.Key("admin_user").String()
-	AdminPassword = security.Key("admin_password").String()
+	AdminUser = valueAsString(security, "admin_user", "")
+	AdminPassword = valueAsString(security, "admin_password", "")
 
 	// users
 	users := iniFile.Section("users")
@@ -664,19 +664,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
-	LoginHint = users.Key("login_hint").String()
-	PasswordHint = users.Key("password_hint").String()
-	DefaultTheme = users.Key("default_theme").String()
-	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
-	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
-	ExternalUserMngInfo = users.Key("external_manage_info").String()
+	LoginHint = valueAsString(users, "login_hint", "")
+	PasswordHint = valueAsString(users, "password_hint", "")
+	DefaultTheme = valueAsString(users, "default_theme", "")
+	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
+	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
+	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	// auth
 	auth := iniFile.Section("auth")
 
-	LoginCookieName = auth.Key("login_cookie_name").MustString("grafana_session")
+	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
 	cfg.LoginCookieName = LoginCookieName
 	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
 
@@ -691,24 +691,24 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
-	SignoutRedirectUrl = auth.Key("signout_redirect_url").String()
+	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	AnonymousOrgName = iniFile.Section("auth.anonymous").Key("org_name").String()
-	AnonymousOrgRole = iniFile.Section("auth.anonymous").Key("org_role").String()
+	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
+	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	AuthProxyHeaderName = authProxy.Key("header_name").String()
-	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
+	AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
+	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
-	AuthProxyWhitelist = authProxy.Key("whitelist").String()
+	AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
 
 	AuthProxyHeaders = make(map[string]string)
-	for _, propertyAndHeader := range util.SplitString(authProxy.Key("headers").String()) {
+	for _, propertyAndHeader := range util.SplitString(valueAsString(authProxy, "headers", "")) {
 		split := strings.SplitN(propertyAndHeader, ":", 2)
 		if len(split) == 2 {
 			AuthProxyHeaders[split[0]] = split[1]
@@ -721,8 +721,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	// Rendering
 	renderSec := iniFile.Section("rendering")
-	cfg.RendererUrl = renderSec.Key("server_url").String()
-	cfg.RendererCallbackUrl = renderSec.Key("callback_url").String()
+	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
+	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
 	if cfg.RendererCallbackUrl == "" {
 		cfg.RendererCallbackUrl = AppUrl
 	} else {
@@ -738,26 +738,26 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
-	cfg.MetricsEndpointBasicAuthUsername = iniFile.Section("metrics").Key("basic_auth_username").String()
-	cfg.MetricsEndpointBasicAuthPassword = iniFile.Section("metrics").Key("basic_auth_password").String()
+	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
+	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
-	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
-	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	GoogleAnalyticsId = valueAsString(analytics, "google_analytics_ua_id", "")
+	GoogleTagManagerId = valueAsString(analytics, "google_tag_manager_id", "")
 
 	ldapSec := iniFile.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapConfigFile = valueAsString(ldapSec, "config_file", "")
 	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
-	AlertingErrorOrTimeout = alerting.Key("error_or_timeout").MustString("alerting")
-	AlertingNoDataOrNullValues = alerting.Key("nodata_or_nullvalues").MustString("no_data")
+	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
+	AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
 
 	AlertingEvaluationTimeout = alerting.Key("evaluation_timeout_seconds").MustDuration(time.Second * 30)
 	AlertingNotificationTimeout = alerting.Key("notification_timeout_seconds").MustDuration(time.Second * 30)
@@ -787,24 +787,34 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// check old key  name
-	GrafanaComUrl = iniFile.Section("grafana_net").Key("url").MustString("")
+	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
 	if GrafanaComUrl == "" {
-		GrafanaComUrl = iniFile.Section("grafana_com").Key("url").MustString("https://grafana.com")
+		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
 	}
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
-	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
+	ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
 	enterprise := iniFile.Section("enterprise")
-	cfg.EnterpriseLicensePath = enterprise.Key("license_path").MustString(filepath.Join(cfg.DataPath, "license.jwt"))
+	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
 
 	cacheServer := iniFile.Section("remote_cache")
 	cfg.RemoteCacheOptions = &RemoteCacheOptions{
-		Name:    cacheServer.Key("type").MustString("database"),
-		ConnStr: cacheServer.Key("connstr").MustString(""),
+		Name:    valueAsString(cacheServer, "type", "database"),
+		ConnStr: valueAsString(cacheServer, "connstr", ""),
 	}
 
 	return nil
+}
+
+func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Fatal(4, "Invalid value for key '%s' in configuration file", keyName)
+		}
+	}()
+
+	return section.Key(keyName).MustString(defaultValue)
 }
 
 type RemoteCacheOptions struct {
@@ -816,8 +826,8 @@ func (cfg *Cfg) readSessionConfig() {
 	sec := cfg.Raw.Section("session")
 	SessionOptions = session.Options{}
 	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
-	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
-	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
+	SessionOptions.ProviderConfig = strings.Trim(valueAsString(sec, "provider_config", ""), "\" ")
+	SessionOptions.CookieName = valueAsString(sec, "cookie_name", "grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
 	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
 	SessionOptions.Gclifetime = cfg.Raw.Section("session").Key("gc_interval_time").MustInt64(86400)
@@ -838,12 +848,12 @@ func (cfg *Cfg) readSessionConfig() {
 
 func (cfg *Cfg) initLogging(file *ini.File) {
 	// split on comma
-	logModes := strings.Split(file.Section("log").Key("mode").MustString("console"), ",")
+	logModes := strings.Split(valueAsString(file.Section("log"), "mode", "console"), ",")
 	// also try space
 	if len(logModes) == 1 {
-		logModes = strings.Split(file.Section("log").Key("mode").MustString("console"), " ")
+		logModes = strings.Split(valueAsString(file.Section("log"), "mode", "console"), " ")
 	}
-	cfg.LogsPath = makeAbsolute(file.Section("paths").Key("logs").String(), HomePath)
+	cfg.LogsPath = makeAbsolute(valueAsString(file.Section("paths"), "logs", ""), HomePath)
 	log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
