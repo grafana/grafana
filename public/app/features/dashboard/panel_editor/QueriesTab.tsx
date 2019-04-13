@@ -113,6 +113,10 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const index = _.indexOf(panel.targets, query);
     panel.targets.splice(index, 1);
+
+    if ('series' in panel.options) {
+      // remove series specific settings...
+    }
     panel.refresh();
 
     this.forceUpdate();

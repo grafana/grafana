@@ -12,7 +12,6 @@ export class GraphPanel extends PureComponent<Props> {
   render() {
     const { data, timeRange, width, height } = this.props;
     const { showLines, showBars, showPoints } = this.props.options;
-
     const graphs: GraphSeriesXY[] = [];
     if (data) {
       for (const series of data) {

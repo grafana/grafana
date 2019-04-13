@@ -173,6 +173,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           data={data}
           timeRange={timeRange}
           options={panel.getOptions(plugin.reactPlugin.defaults)}
+          onOptionsChange={panel.updateOptions}
           width={width - 2 * config.theme.panelPadding.horizontal}
           height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
