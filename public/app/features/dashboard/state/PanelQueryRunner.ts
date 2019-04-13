@@ -14,6 +14,7 @@ import {
   DataQueryError,
   toLegacyResponseData,
   isSeriesData,
+  DataSourceApi,
 } from '@grafana/ui';
 
 import kbn from 'app/core/utils/kbn';
@@ -27,15 +28,18 @@ export interface QueryResponseEvent extends Partial<QueryResponseData> {
 }
 
 export interface QueryRunnerOptions {
+  ds?: DataSourceApi; // if they already have the datasource, don't look it up
   datasource: string | null;
   queries: DataQuery[];
   panelId: number;
   dashboardId?: number;
+  timezone?: string;
   timeRange?: TimeRange;
   widthPixels: number;
   minInterval?: string;
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
+  cacheTimeout?: string;
 }
 
 export class PanelQueryRunner extends Subject<QueryResponseEvent> {
@@ -48,12 +52,23 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
   }
 
   async run(options: QueryRunnerOptions) {
-    const { queries, datasource, panelId, dashboardId, timeRange, widthPixels, maxDataPoints, scopedVars } = options;
+    const {
+      queries,
+      timezone,
+      datasource,
+      panelId,
+      dashboardId,
+      timeRange,
+      cacheTimeout,
+      widthPixels,
+      maxDataPoints,
+      scopedVars,
+    } = options;
 
     const request: QueryRequestInfo = {
-      timezone: 'browser',
-      panelId: panelId,
-      dashboardId: dashboardId,
+      timezone,
+      panelId,
+      dashboardId,
       range: timeRange,
       rangeRaw: timeRange.raw,
       interval: '',
@@ -61,7 +76,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
       targets: queries,
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
-      cacheTimeout: null,
+      cacheTimeout,
       startTime: Date.now(),
     };
 
@@ -77,13 +92,19 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
     }
 
     try {
-      const ds = await this.dataSourceSrv.get(datasource, scopedVars);
+      const ds = options.ds ? options.ds : await this.dataSourceSrv.get(datasource, request.scopedVars);
 
-      // TODO interpolate variables
       const minInterval = options.minInterval || ds.interval;
-      const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
-      request.interval = intervalRes.interval;
-      request.intervalMs = intervalRes.intervalMs;
+      const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+
+      // make shallow copy of scoped vars,
+      // and add built in variables interval and interval_ms
+      request.scopedVars = Object.assign({}, request.scopedVars, {
+        __interval: { text: norm.interval, value: norm.interval },
+        __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
+      });
+      request.interval = norm.interval;
+      request.intervalMs = norm.intervalMs;
 
       // Start loading spinner
       this.next({

@@ -16,6 +16,7 @@ jest.mock('app/core/config', () => {
 import q from 'q';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
+import { DataSourceApi } from '@grafana/ui';
 
 describe('MetricsPanelCtrl', () => {
   describe('when getting additional menu items', () => {
@@ -30,7 +31,7 @@ describe('MetricsPanelCtrl', () => {
     describe('and has datasource set that supports explore and user does not have access to explore', () => {
       it('should not return any items', () => {
         const ctrl = setupController({ hasAccessToExplore: false });
-        ctrl.datasource = { meta: { explore: true } };
+        ctrl.datasource = { meta: { explore: true } } as DataSourceApi;
 
         expect(ctrl.getAdditionalMenuItems().length).toBe(0);
       });
@@ -39,7 +40,7 @@ describe('MetricsPanelCtrl', () => {
     describe('and has datasource set that supports explore and user has access to explore', () => {
       it('should return one item', () => {
         const ctrl = setupController({ hasAccessToExplore: true });
-        ctrl.datasource = { meta: { explore: true } };
+        ctrl.datasource = { meta: { explore: true } } as DataSourceApi;
 
         expect(ctrl.getAdditionalMenuItems().length).toBe(1);
       });

@@ -23,7 +23,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData, PanelQueryRunner, QueryResponseEvent } from './PanelQueryRunner';
+import { getProcessedSeriesData, PanelQueryRunner, QueryResponseEvent } from '../state/PanelQueryRunner';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Unsubscribable } from 'rxjs';
 
@@ -50,7 +50,6 @@ export interface State {
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
-  queryRunner = new PanelQueryRunner(getDatasourceSrv());
   querySubscription: Unsubscribable;
   queryWidthPixels = 100; // Default value for width
 
@@ -68,8 +67,11 @@ export class PanelChrome extends PureComponent<Props, State> {
       },
     };
 
-    // Currently all internal to this component, but eventually can be external
-    this.querySubscription = this.queryRunner.subscribe(this.queryResponseListener);
+    const { panel } = this.props;
+    if (!panel.queryRunner) {
+      panel.queryRunner = new PanelQueryRunner(getDatasourceSrv());
+    }
+    this.querySubscription = panel.queryRunner.subscribe(this.queryResponseListener);
   }
 
   // Updates the response with information from the stream
@@ -161,16 +163,18 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // Issue Query
     if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
-      this.queryRunner.run({
+      panel.queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
         dashboardId: this.props.dashboard.id,
+        timezone: this.props.dashboard.timezone,
         timeRange: timeData.timeRange,
         widthPixels: this.queryWidthPixels,
-        minInterval: undefined, // Currently not passed in DataPanel
+        minInterval: undefined, // Currently not passed in DataPanel?
         maxDataPoints: panel.maxDataPoints,
         scopedVars: panel.scopedVars,
+        cacheTimeout: panel.cacheTimeout,
       });
     }
   };

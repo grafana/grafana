@@ -6,12 +6,14 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isSeriesData, LegacyResponseData, TimeRange } from '@grafana/ui';
+import { LegacyResponseData, TimeRange, DataSourceApi, DataQueryResponse, LoadingState } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
+import { PanelQueryRunner, QueryResponseEvent } from '../dashboard/state/PanelQueryRunner';
+import { PanelModel } from 'app/features/dashboard/state';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
-  datasource: any;
+  datasource: DataSourceApi;
   $q: any;
   $timeout: any;
   contextSrv: ContextSrv;
@@ -24,11 +26,10 @@ class MetricsPanelCtrl extends PanelCtrl {
   resolution: any;
   timeInfo?: string;
   skipDataOnInit: boolean;
-  dataStream: any;
-  dataSubscription?: Unsubscribable;
   dataList: LegacyResponseData[];
+  querySubscription?: Unsubscribable;
 
-  constructor($scope, $injector) {
+  constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
     this.$q = $injector.get('$q');
@@ -41,12 +42,28 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
+
+    // Setup the query runner
+    const panelModel = this.panel as PanelModel;
+    if (!panelModel.queryRunner) {
+      panelModel.queryRunner = new PanelQueryRunner(this.datasourceSrv);
+    }
+    panelModel.queryRunner.includeLegacyFormats = true;
+    this.querySubscription = panelModel.queryRunner.subscribe(this.queryResponseListener);
   }
 
+  // Respond to the query response
+  queryResponseListener = (event: QueryResponseEvent) => {
+    const { loading, legacy } = event;
+    if (legacy && loading !== LoadingState.Loading) {
+      this.handleQueryResult({ data: legacy });
+    }
+  };
+
   private onPanelTearDown() {
-    if (this.dataSubscription) {
-      this.dataSubscription.unsubscribe();
-      this.dataSubscription = null;
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
     }
   }
 
@@ -72,11 +89,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       });
     }
 
-    // // ignore if we have data stream
-    if (this.dataStream) {
-      return;
-    }
-
     // clear loading/error state
     delete this.error;
     this.loading = true;
@@ -86,7 +98,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       .get(this.panel.datasource, this.panel.scopedVars)
       .then(this.updateTimeRange.bind(this))
       .then(this.issueQueries.bind(this))
-      .then(this.handleQueryResult.bind(this))
       .catch(err => {
         // if canceled  keep loading set to true
         if (err.cancelled) {
@@ -112,7 +123,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       });
   }
 
-  updateTimeRange(datasource?) {
+  updateTimeRange(datasource?: DataSourceApi) {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
     this.resolution = getResolution(this.panel);
@@ -141,45 +152,36 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.intervalMs = res.intervalMs;
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: DataSourceApi) {
     this.datasource = datasource;
 
-    if (!this.panel.targets || this.panel.targets.length === 0) {
-      return this.$q.when([]);
-    }
+    // No longer passed in:
+    // interval: this.interval,
+    // intervalMs: this.intervalMs,
 
-    // make shallow copy of scoped vars,
-    // and add built in variables interval and interval_ms
-    const scopedVars = Object.assign({}, this.panel.scopedVars, {
-      __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: this.intervalMs, value: this.intervalMs },
-    });
-
-    const metricsQuery = {
+    const runner = this.panel.queryRunner as PanelQueryRunner;
+    runner.run({
+      ds: datasource,
+      datasource: this.panel.datasource, // The name
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       dashboardId: this.dashboard.id,
-      range: this.range,
-      rangeRaw: this.range.raw,
-      interval: this.interval,
-      intervalMs: this.intervalMs,
-      targets: this.panel.targets,
-      maxDataPoints: this.resolution,
-      scopedVars: scopedVars,
+      timeRange: this.range,
+      queries: this.panel.targets,
+      scopedVars: this.panel.scopedVars,
       cacheTimeout: this.panel.cacheTimeout,
-    };
 
-    return datasource.query(metricsQuery);
+      maxDataPoints: this.resolution,
+      widthPixels: 1000, // Not used -- it is the resolution above
+    });
+
+    // ???? shoud we wait for the data to finish before return ????
+    // It is not necessary in this structure, but some plugins may care?
   }
 
-  handleQueryResult(result) {
+  // since Grafana 6.2, this is called from `queryResponseListener` above
+  handleQueryResult(result: DataQueryResponse) {
     this.loading = false;
-
-    // check for if data source returns subject
-    if (result && result.subscribe) {
-      this.handleDataStream(result);
-      return;
-    }
 
     if (this.dashboard.snapshot) {
       this.panel.snapshotData = result.data;
@@ -190,41 +192,8 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
-    // Make sure the data is TableData | TimeSeries
-    const data = result.data.map(v => {
-      if (isSeriesData(v)) {
-        return toLegacyResponseData(v);
-      }
-      return v;
-    });
-    this.events.emit('data-received', data);
-  }
-
-  handleDataStream(stream) {
-    // if we already have a connection
-    if (this.dataStream) {
-      console.log('two stream observables!');
-      return;
-    }
-
-    this.dataStream = stream;
-    this.dataSubscription = stream.subscribe({
-      next: data => {
-        console.log('dataSubject next!');
-        if (data.range) {
-          this.range = data.range;
-        }
-        this.events.emit('data-received', data.data);
-      },
-      error: error => {
-        this.events.emit('data-error', error);
-        console.log('panel: observer got error');
-      },
-      complete: () => {
-        console.log('panel: observer got complete');
-        this.dataStream = null;
-      },
-    });
+    // The results are already converted to LegacyResponseData[]
+    this.events.emit('data-received', result.data);
   }
 
   getAdditionalMenuItems() {
