@@ -628,5 +628,4 @@ workflows:
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
-              - build-oss-msi
             filters: *filter-not-release-or-master
