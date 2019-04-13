@@ -5,11 +5,16 @@ import { ScopedVars } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
-export interface PanelProps<T = any> {
+export type PanelOptions<T extends {}, S> = T & {
+  series?: { [key: string]: S };
+};
+
+export interface PanelProps<T = any, S = void> {
   data?: SeriesData[];
   timeRange: TimeRange;
   loading: LoadingState;
-  options: T;
+  options: PanelOptions<T, S>;
+  onOptionsChange: (options: PanelOptions<T, S>) => void;
   renderCounter: number;
   width: number;
   height: number;
