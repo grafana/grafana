@@ -39,6 +39,32 @@ command line. If you want to run Grafana as windows service, download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows
 service using that tool.
 
+Alternatively to run without [NSSM](https://nssm.cc/) it can be run
+in the background as a process using the Windows Task Scheduler and
+`PowerShell`.  This assumes the files are copied to
+`C:\Program Files\grafana`.
+
+* Open **Task Scheduler**
+* On the right hand **Actions** menu, click on _`Create Task`_
+* On the _General_ Tab
+    * Set the _Name_ to **_`Grafana Server`_**.
+    * Select **_Run whether user is logged on or not_**.
+    * Click on **Change User or Group** button.
+    * Enter **`SYSTEM`** for the name and click OK.
+* On the _Triggers_ Tab
+    * _Begin the task_ to **_On a schedule_.**
+    * Select _Daily_ and set to **_Recur every `1` days_**.
+    * Check _Repeat task every_ and set to **_every 15 minutes_** for a duration **_of `1` day_**.
+* On the _Actions_ Tab
+    * Configure the _Action_ to **_Start a Program_**.
+    * Set the _Program/Script_ to **_`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`_**.
+    * Configure the _Add Arguments (Optional)_ to:
+    ```powershell
+    -Command "& { if(!(Get-Process 'grafana-server' -ErrorAction 'SilentlyContinue' )) { Set-Location 'C:\Program Files\grafana'; Start-Process -FilePath 'C:\Program Files\grafana\bin\grafana-server.exe' -NoNewWindow  } } "
+    ```
+* Click `OK` until all windows are closed.
+* On the right hand **Actions** menu, click on _`Run`_.
+
 Read more about the [configuration options]({{< relref "configuration.md" >}}).
 
 ## Logging in for the first time
