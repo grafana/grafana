@@ -63,7 +63,7 @@ func TestCloudWatchGetMetricData(t *testing.T) {
 		Convey("can parse cloudwatch response", func() {
 			timestamp := time.Unix(0, 0)
 			resp := map[string]*cloudwatch.MetricDataResult{
-				"label": &cloudwatch.MetricDataResult{
+				"label": {
 					Id:    aws.String("id1"),
 					Label: aws.String("label"),
 					Timestamps: []*time.Time{
