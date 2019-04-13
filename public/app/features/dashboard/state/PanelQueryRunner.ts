@@ -1,5 +1,5 @@
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { Subject } from 'rxjs';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import {
   guessFieldTypes,
   toSeriesData,
@@ -42,16 +42,26 @@ export interface QueryRunnerOptions {
   cacheTimeout?: string;
 }
 
-export class PanelQueryRunner extends Subject<QueryResponseEvent> {
+export class PanelQueryRunner {
   private counter = 0;
+  private subject?: Subject<QueryResponseEvent>;
+  private includeLegacyFormats = false;
 
-  includeLegacyFormats = false;
-
-  constructor(private dataSourceSrv: DatasourceSrv) {
-    super();
+  subscribe(observer: PartialObserver<QueryResponseEvent>, includeLegacyFormats = false): Unsubscribable {
+    if (!this.subject) {
+      this.subject = new Subject();
+    }
+    if (includeLegacyFormats) {
+      this.includeLegacyFormats = true;
+    }
+    return this.subject.subscribe(observer);
   }
 
   async run(options: QueryRunnerOptions) {
+    if (!this.subject || !this.subject.observers.length) {
+      return; // Don't run if nobody cares!
+    }
+
     const {
       queries,
       timezone,
@@ -81,7 +91,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
     };
 
     if (!queries) {
-      this.next({
+      this.subject.next({
         eventId: this.counter++,
         loading: LoadingState.Done,
         data: [], // Clear the data
@@ -92,7 +102,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
     }
 
     try {
-      const ds = options.ds ? options.ds : await this.dataSourceSrv.get(datasource, request.scopedVars);
+      const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
       const minInterval = options.minInterval || ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
@@ -107,7 +117,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
       request.intervalMs = norm.intervalMs;
 
       // Start loading spinner
-      this.next({
+      this.subject.next({
         eventId: this.counter++,
         loading: LoadingState.Loading,
         request,
@@ -129,7 +139,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
       }
 
       // Start loading spinner
-      this.next({
+      this.subject.next({
         eventId: this.counter++,
         loading: LoadingState.Done,
         request,
@@ -144,7 +154,7 @@ export class PanelQueryRunner extends Subject<QueryResponseEvent> {
         err.message = 'Query Error';
       }
 
-      this.next({
+      this.subject.next({
         eventId: this.counter++,
         loading: LoadingState.Error,
         error: error,

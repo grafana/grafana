@@ -46,18 +46,19 @@ class MetricsPanelCtrl extends PanelCtrl {
     // Setup the query runner
     const panelModel = this.panel as PanelModel;
     if (!panelModel.queryRunner) {
-      panelModel.queryRunner = new PanelQueryRunner(this.datasourceSrv);
+      panelModel.queryRunner = new PanelQueryRunner();
     }
-    panelModel.queryRunner.includeLegacyFormats = true;
-    this.querySubscription = panelModel.queryRunner.subscribe(this.queryResponseListener);
+    this.querySubscription = panelModel.queryRunner.subscribe(this.queryResponseObserver, true);
   }
 
   // Respond to the query response
-  queryResponseListener = (event: QueryResponseEvent) => {
-    const { loading, legacy } = event;
-    if (legacy && loading !== LoadingState.Loading) {
-      this.handleQueryResult({ data: legacy });
-    }
+  queryResponseObserver = {
+    next: (event: QueryResponseEvent) => {
+      const { loading, legacy } = event;
+      if (legacy && loading !== LoadingState.Loading) {
+        this.handleQueryResult({ data: legacy });
+      }
+    },
   };
 
   private onPanelTearDown() {

@@ -23,8 +23,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData, PanelQueryRunner, QueryResponseEvent } from '../state/PanelQueryRunner';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getProcessedSeriesData, QueryResponseEvent, PanelQueryRunner } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -69,52 +68,54 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const { panel } = this.props;
     if (!panel.queryRunner) {
-      panel.queryRunner = new PanelQueryRunner(getDatasourceSrv());
+      panel.queryRunner = new PanelQueryRunner();
     }
-    this.querySubscription = panel.queryRunner.subscribe(this.queryResponseListener);
+    this.querySubscription = panel.queryRunner.subscribe(this.queryResponseObserver);
   }
 
   // Updates the response with information from the stream
-  queryResponseListener = (event: QueryResponseEvent) => {
-    let { response } = this.state;
-    this.setState({
-      response: {
-        ...response,
-        ...event,
-      },
-    });
+  queryResponseObserver = {
+    next: (event: QueryResponseEvent) => {
+      let { response } = this.state;
+      this.setState({
+        response: {
+          ...response,
+          ...event,
+        },
+      });
 
-    response = this.state.response;
-    if (response.loading === LoadingState.Error) {
-      const { error } = response;
-      if (error) {
-        if (this.state.errorMessage !== error.message) {
-          this.setState({ errorMessage: error.message });
+      response = this.state.response;
+      if (response.loading === LoadingState.Error) {
+        const { error } = response;
+        if (error) {
+          if (this.state.errorMessage !== error.message) {
+            this.setState({ errorMessage: error.message });
+          }
+          // this event is used by old query editors
+          this.props.panel.events.emit('data-error', error);
         }
-        // this event is used by old query editors
-        this.props.panel.events.emit('data-error', error);
+      } else {
+        this.clearErrorState();
       }
-    } else {
-      this.clearErrorState();
-    }
 
-    if (this.props.isEditing && response.loading !== LoadingState.Loading) {
-      const events = this.props.panel.events;
+      if (this.props.isEditing && response.loading !== LoadingState.Loading) {
+        const events = this.props.panel.events;
 
-      const data = response.data ? response.data : [];
-      const legacy = response.legacy ? response.legacy : data.map(v => toLegacyResponseData(v));
+        const data = response.data ? response.data : [];
+        const legacy = response.legacy ? response.legacy : data.map(v => toLegacyResponseData(v));
 
-      // Angular query editors expect TimeSeries|TableData
-      events.emit('data-received', legacy);
+        // Angular query editors expect TimeSeries|TableData
+        events.emit('data-received', legacy);
 
-      // Notify react query editors
-      events.emit('series-data-received', data);
-    }
+        // Notify react query editors
+        events.emit('series-data-received', data);
+      }
 
-    // Save the query response into the panel
-    if (response.data && this.props.dashboard.snapshot) {
-      this.props.panel.snapshotData = response.data;
-    }
+      // Save the query response into the panel
+      if (response.data && this.props.dashboard.snapshot) {
+        this.props.panel.snapshotData = response.data;
+      }
+    },
   };
 
   componentDidMount() {

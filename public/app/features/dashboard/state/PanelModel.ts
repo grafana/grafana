@@ -117,7 +117,6 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-
   queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
