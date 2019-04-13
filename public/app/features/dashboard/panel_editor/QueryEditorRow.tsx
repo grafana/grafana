@@ -11,8 +11,18 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData } from '@grafana/ui';
+import {
+  DataQuery,
+  DataSourceApi,
+  TimeRange,
+  DataQueryError,
+  SeriesData,
+  QueryResponseData,
+  LoadingState,
+} from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
+import { Unsubscribable } from 'rxjs';
+import { QueryResponseEvent, PanelQueryRunner } from '../state/PanelQueryRunner';
 
 interface Props {
   panel: PanelModel;
@@ -31,73 +41,80 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryError: DataQueryError | null;
-  queryResponse: SeriesData[] | null;
+  response: QueryResponseData;
+  queryResponse?: SeriesData[]; // Only the series we asked for
+  queryError?: DataQueryError;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope | null;
   angularQueryEditor: AngularComponent | null = null;
+  querySubscription: Unsubscribable;
 
   state: State = {
     datasource: null,
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    queryError: null,
-    queryResponse: null,
+    response: {
+      loading: LoadingState.NotStarted,
+      data: [],
+      annotations: [],
+    },
   };
 
   componentDidMount() {
     this.loadDatasource();
-    this.props.panel.events.on('refresh', this.onPanelRefresh);
-    this.props.panel.events.on('data-error', this.onPanelDataError);
-    this.props.panel.events.on('data-received', this.onPanelDataReceived);
-    this.props.panel.events.on('series-data-received', this.onSeriesDataReceived);
+
+    const { panel } = this.props;
+
+    panel.events.on('refresh', this.onPanelRefresh);
+
+    if (!panel.queryRunner) {
+      panel.queryRunner = new PanelQueryRunner();
+    }
+    this.querySubscription = panel.queryRunner.subscribe(this.queryResponseObserver, !!this.angularQueryEditor);
   }
 
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onPanelRefresh);
-    this.props.panel.events.off('data-error', this.onPanelDataError);
-    this.props.panel.events.off('data-received', this.onPanelDataReceived);
-    this.props.panel.events.off('series-data-received', this.onSeriesDataReceived);
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+    }
 
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
   }
 
-  onPanelDataError = (error: DataQueryError) => {
-    // Some query controllers listen to data error events and need a digest
-    if (this.angularQueryEditor) {
-      // for some reason this needs to be done in next tick
-      setTimeout(this.angularQueryEditor.digest);
-      return;
-    }
+  // Updates the response with information from the stream
+  queryResponseObserver = {
+    next: (event: QueryResponseEvent) => {
+      const response = {
+        ...this.state.response,
+        ...event,
+      };
+      this.setState({ response });
 
-    // if error relates to this query store it in state and pass it on to query editor
-    if (error.refId === this.props.query.refId) {
-      this.setState({ queryError: error });
-    }
-  };
+      const isError = response.loading === LoadingState.Error;
+      if (isError && response.error) {
+        // if error relates to this query store it in state and pass it on to query editor
+        if (response.error.refId === this.props.query.refId) {
+          this.setState({ queryError: response.error });
+        }
+      }
 
-  // Only used by angular plugins
-  onPanelDataReceived = () => {
-    // Some query controllers listen to data error events and need a digest
-    if (this.angularQueryEditor) {
-      // for some reason this needs to be done in next tick
-      setTimeout(this.angularQueryEditor.digest);
-    }
-  };
-
-  // Only used by the React Query Editors
-  onSeriesDataReceived = (data: SeriesData[]) => {
-    if (!this.angularQueryEditor) {
-      // only pass series related to this query to query editor
-      const filterByRefId = data.filter(series => series.refId === this.props.query.refId);
-      this.setState({ queryResponse: filterByRefId, queryError: null });
-    }
+      // Some query controllers listen to data error events and need a digest
+      if (this.angularQueryEditor) {
+        // for some reason this needs to be done in next tick
+        setTimeout(this.angularQueryEditor.digest);
+      } else if (!isError) {
+        // only pass series related to this query to query editor
+        const filterByRefId = response.data.filter(series => series.refId === this.props.query.refId);
+        this.setState({ queryResponse: filterByRefId, queryError: null });
+      }
+    },
   };
 
   onPanelRefresh = () => {

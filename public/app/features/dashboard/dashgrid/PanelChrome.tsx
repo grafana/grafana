@@ -18,7 +18,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, toLegacyResponseData, QueryResponseData } from '@grafana/ui';
+import { TimeRange, LoadingState, QueryResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -50,7 +50,7 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
-  queryWidthPixels = 100; // Default value for width
+  queryWidthPixels = 20; // first pass? TODO??? wait till 2nd render?
 
   constructor(props: Props) {
     super(props);
@@ -96,19 +96,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
       } else {
         this.clearErrorState();
-      }
-
-      if (this.props.isEditing && response.loading !== LoadingState.Loading) {
-        const events = this.props.panel.events;
-
-        const data = response.data ? response.data : [];
-        const legacy = response.legacy ? response.legacy : data.map(v => toLegacyResponseData(v));
-
-        // Angular query editors expect TimeSeries|TableData
-        events.emit('data-received', legacy);
-
-        // Notify react query editors
-        events.emit('series-data-received', data);
       }
 
       // Save the query response into the panel
