@@ -50,7 +50,7 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
-  queryWidthPixels = 20; // first pass? TODO??? wait till 2nd render?
+  queryWidthPixels = -1; // used to set maxDataPoints in query
 
   constructor(props: Props) {
     super(props);
@@ -151,6 +151,10 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // Issue Query
     if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
+      if (this.queryWidthPixels < 0) {
+        console.log('No width yet... wait till we know');
+        return;
+      }
       panel.queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -256,8 +260,13 @@ export class PanelChrome extends PureComponent<Props, State> {
           if (width === 0) {
             return null;
           }
-          this.queryWidthPixels = width;
+          if (this.queryWidthPixels < 0 && this.wantsQueryExecution) {
+            this.queryWidthPixels = width;
+            setTimeout(() => this.onRefresh(), 1);
+            return null;
+          }
 
+          this.queryWidthPixels = width;
           return (
             <div className={containerClassNames}>
               <PanelHeader
