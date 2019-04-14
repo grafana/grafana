@@ -53,7 +53,7 @@ export class AppPage extends Component<Props, State> {
       return;
     }
 
-    importAppPlugin(info.module)
+    importAppPlugin(info)
       .then(app => {
         this.setState({ loading: false, notFound: false, app });
       })
