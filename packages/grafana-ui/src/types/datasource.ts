@@ -54,6 +54,7 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
     this.components.ExploreQueryField = exports.ExploreQueryField;
     this.components.ExploreStartPage = exports.ExploreStartPage;
     this.components.QueryEditor = exports.QueryEditor;
+    this.components.VariableQueryEditor = exports.VariableQueryEditor;
   }
 }
 
@@ -106,9 +107,19 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
 
   /**
+   * Convert a query to a simple text string
+   */
+  getQueryDisplayText?(query: TQuery): string;
+
+  /**
    *  Set after constructor is called by Grafana
    */
   name?: string;
+
+  /**
+   *  Set after constructor is called by Grafana
+   */
+  id?: number;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -269,6 +280,7 @@ export interface DataSourceSettings {
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
 export interface DataSourceInstanceSettings {
+  id: number;
   type: string;
   name: string;
   meta: PluginMeta;

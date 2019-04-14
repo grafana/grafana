@@ -63,10 +63,10 @@
           <td>{{org.name}}</td>
           <td>{{org.role}}</td>
           <td class="text-right">
-            <span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
+            <span class="btn btn-primary btn-small" ng-show="org.orgId === contextSrv.user.orgId">
               Current
             </span>
-            <a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+            <a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-small" ng-show="org.orgId !== contextSrv.user.orgId">
               Select
             </a>
           </td>

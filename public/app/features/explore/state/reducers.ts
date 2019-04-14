@@ -20,6 +20,7 @@ import {
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
+  runQueriesAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -165,14 +166,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
-      const { range, datasourceInstance } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
       const containerWidth = action.payload.width;
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return { ...state, containerWidth, queryIntervals };
+      return { ...state, containerWidth };
     },
   })
   .addMapper({
@@ -266,13 +261,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: loadDatasourceReadyAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, range, datasourceInstance } = state;
       const { history } = action.payload;
-      const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
-
       return {
         ...state,
-        queryIntervals,
         history,
         datasourceLoading: false,
         datasourceMissing: false,
@@ -556,6 +547,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         exploreDatasources: action.payload.exploreDatasources,
+      };
+    },
+  })
+  .addMapper({
+    filter: runQueriesAction,
+    mapper: (state): ExploreItemState => {
+      const { range, datasourceInstance, containerWidth } = state;
+      let interval = '1s';
+      if (datasourceInstance && datasourceInstance.interval) {
+        interval = datasourceInstance.interval;
+      }
+      const queryIntervals = getIntervals(range, interval, containerWidth);
+      return {
+        ...state,
+        queryIntervals,
       };
     },
   })

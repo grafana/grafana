@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"github.com/grafana/grafana/pkg/util"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,6 +22,7 @@ var (
 	brokenDashboards  = "testdata/test-dashboards/broken-dashboards"
 	oneDashboard      = "testdata/test-dashboards/one-dashboard"
 	containingId      = "testdata/test-dashboards/containing-id"
+	unprovision       = "testdata/test-dashboards/unprovision"
 
 	fakeService *fakeDashboardProvisioningService
 )
@@ -250,6 +253,62 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 		})
 
+		Convey("Given missing dashboard file", func() {
+			cfg := &DashboardsAsConfig{
+				Name:  "Default",
+				Type:  "file",
+				OrgId: 1,
+				Options: map[string]interface{}{
+					"folder": unprovision,
+				},
+			}
+
+			fakeService.inserted = []*dashboards.SaveDashboardDTO{
+				{Dashboard: &models.Dashboard{Id: 1}},
+				{Dashboard: &models.Dashboard{Id: 2}},
+			}
+
+			absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
+			So(err, ShouldBeNil)
+			// This one does not exist on disc, simulating a deleted file
+			absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
+			So(err, ShouldBeNil)
+
+			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+				"Default": {
+					{DashboardId: 1, Name: "Default", ExternalId: absPath1},
+					{DashboardId: 2, Name: "Default", ExternalId: absPath2},
+				},
+			}
+
+			Convey("Missing dashboard should be unprovisioned if DisableDeletion = true", func() {
+				cfg.DisableDeletion = true
+
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
+				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+
+			})
+
+			Convey("Missing dashboard should be deleted if DisableDeletion = false", func() {
+				reader, err := NewDashboardFileReader(cfg, logger)
+				So(err, ShouldBeNil)
+
+				err = reader.startWalkingDisk()
+				So(err, ShouldBeNil)
+
+				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
+				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+				So(len(fakeService.inserted), ShouldEqual, 1)
+				So(fakeService.inserted[0].Dashboard.Id, ShouldEqual, 1)
+			})
+		})
+
 		Reset(func() {
 			dashboards.NewProvisioningService = origNewDashboardProvisioningService
 		})
@@ -310,19 +369,70 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 }
 
 func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	// Copy the structs as we need to change them but do not want to alter outside world.
+	var copyProvisioning = &models.DashboardProvisioning{}
+	*copyProvisioning = *provisioning
+
+	var copyDto = &dashboards.SaveDashboardDTO{}
+	*copyDto = *dto
+
+	if copyDto.Dashboard.Id == 0 {
+		copyDto.Dashboard.Id = rand.Int63n(1000000)
+	} else {
+		err := s.DeleteProvisionedDashboard(dto.Dashboard.Id, dto.Dashboard.OrgId)
+		// Lets delete existing so we do not have duplicates
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	s.inserted = append(s.inserted, dto)
 
 	if _, ok := s.provisioned[provisioning.Name]; !ok {
 		s.provisioned[provisioning.Name] = []*models.DashboardProvisioning{}
 	}
 
-	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], provisioning)
+	for _, val := range s.provisioned[provisioning.Name] {
+		if val.DashboardId == dto.Dashboard.Id && val.Name == provisioning.Name {
+			// Do not insert duplicates
+			return dto.Dashboard, nil
+		}
+	}
+
+	copyProvisioning.DashboardId = copyDto.Dashboard.Id
+
+	s.provisioned[provisioning.Name] = append(s.provisioned[provisioning.Name], copyProvisioning)
 	return dto.Dashboard, nil
 }
 
 func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
+}
+
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
+	for key, val := range s.provisioned {
+		for index, dashboard := range val {
+			if dashboard.DashboardId == dashboardId {
+				s.provisioned[key] = append(s.provisioned[key][:index], s.provisioned[key][index+1:]...)
+			}
+		}
+	}
+	return nil
+}
+
+func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
+	err := s.UnprovisionDashboard(dashboardId)
+	if err != nil {
+		return err
+	}
+
+	for index, val := range s.inserted {
+		if val.Dashboard.Id == dashboardId {
+			s.inserted = append(s.inserted[:index], s.inserted[util.MinInt(index+1, len(s.inserted)):]...)
+		}
+	}
+	return nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
