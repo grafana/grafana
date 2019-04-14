@@ -1,7 +1,68 @@
 import { ComponentClass } from 'react';
-import { LoadingState, SeriesData } from './data';
+import { LoadingState, SeriesData, Field } from './data';
 import { TimeRange } from './time';
 import { ScopedVars } from './datasource';
+
+/**
+ * Represents options and an object to help pick it
+ * selector: could be a string regex, maybe Field regex on name/type etc, maybe
+ * cares about SeriesData#meta?
+ */
+export interface OptionsOverride<O extends any, S extends any> {
+  selector: S;
+  options: Partial<O>;
+}
+
+/**
+ * Base options and an ordered list of overrides
+ */
+export interface PanelOptionsConfig<O extends any, S extends any> {
+  options: Partial<O>;
+  override?: OptionsOverride<O, S>[];
+}
+
+/**
+ * Check if an override selection should be applied based on a field and series
+ */
+export type PanelOverrideTest<S extends any> = (
+  selection: S, // null gives the default w/o overrids
+  field: Field,
+  series?: SeriesData
+) => boolean;
+
+export interface PanelConfigQuery<O extends any, S extends any> {
+  // hardcoded of the PanelPlugin
+  defaults: O;
+  applies: PanelOverrideTest<S>;
+
+  // List of configs to check
+  configs: PanelOptionsConfig<O, S>[];
+
+  // The variation of the query you want.  nothing for defaults
+  field?: Field;
+  series?: SeriesData;
+}
+
+/**
+ * This function would be managed by the the DashGrid
+ */
+export function getPanelOptions<O extends any, S extends any>(query: PanelConfigQuery<O, S>): O {
+  const { defaults, applies, configs, field, series } = query;
+  let options = { ...defaults };
+  for (const config of configs) {
+    if (config.options) {
+      options = { ...options, ...config.options };
+    }
+    if (config.override && field) {
+      for (const override of config.override) {
+        if (applies(override.selector, field, series)) {
+          options = { ...options, ...config.options };
+        }
+      }
+    }
+  }
+  return options;
+}
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -9,7 +70,8 @@ export interface PanelProps<T = any> {
   data?: SeriesData[];
   timeRange: TimeRange;
   loading: LoadingState;
-  options: T;
+  options: T; // The options without any overrid
+  getOption: (field: Field, series?: SeriesData) => T;
   renderCounter: number;
   width: number;
   height: number;
@@ -17,8 +79,20 @@ export interface PanelProps<T = any> {
 }
 
 export interface PanelEditorProps<T = any> {
-  options: T;
-  onOptionsChange: (options: T) => void;
+  default: Partial<T>; // The union of PanelProps & ones saved in the shared config
+  options: Partial<T>; // Saved in the PanelModel
+  onOptionsChange: (options: Partial<T>) => void;
+}
+
+export interface PanelOverrideProps<T = any> {
+  options: Partial<T>; // The panel props (default+shared+panel)
+  override: Partial<T>; // What could get applied
+  onOverrideChange: (override: Partial<T>) => void;
+}
+
+export interface PanelOverrideSelectionProps<S = any> {
+  selection: S;
+  onSelectionChange: (selection: S) => void;
 }
 
 export interface PanelModel<TOptions = any> {
@@ -41,10 +115,17 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class ReactPanelPlugin<TOptions = any> {
+export class ReactPanelPlugin<TOptions = any, TSelector = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
+
+  overrideTest?: PanelOverrideTest<TSelector>;
+  overrideEditor?: ComponentClass<PanelOverrideProps<TOptions>>;
+  overrideDisplay?: ComponentClass<PanelOverrideProps<TOptions>>;
+  overrideSelectionDisplay?: ComponentClass<PanelOverrideSelectionProps<TSelector>>;
+  overrideSelectionEditor?: ComponentClass<PanelOverrideSelectionProps<TSelector>>;
+
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
