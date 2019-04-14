@@ -17,6 +17,7 @@ const (
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
+	DS_THANOS        = "thanos"
 	DS_POSTGRES      = "postgres"
 	DS_MYSQL         = "mysql"
 	DS_MSSQL         = "mssql"
@@ -69,6 +70,7 @@ var knownDatasourcePlugins = map[string]bool{
 	DS_KAIROSDB:                           true,
 	DS_CLOUDWATCH:                         true,
 	DS_PROMETHEUS:                         true,
+	DS_THANOS:                             true,
 	DS_OPENTSDB:                           true,
 	DS_POSTGRES:                           true,
 	DS_MYSQL:                              true,

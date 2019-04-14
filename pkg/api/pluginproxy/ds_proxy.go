@@ -75,6 +75,37 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		FlushInterval: time.Millisecond * 200,
 	}
 
+	if proxy.ds.Type == m.DS_THANOS {
+		query := proxy.ctx.Req.Request.URL.Query()
+
+		dsParams := proxy.ds.SecureJsonData.Decrypt()
+		if dedup, ok := dsParams["dedup"]; ok {
+			if queryParam := query.Get("dedup"); queryParam == "" {
+				query.Add("dedup", dedup)
+			}
+		}
+
+		if maxSourceResolution, ok := dsParams["max_source_resolution"]; ok {
+			if queryParam := query.Get("max_source_resolution"); queryParam == "" {
+				query.Add("max_source_resolution", maxSourceResolution)
+			}
+		}
+
+		if partialResponse, ok := dsParams["partial_response"]; ok {
+			if queryParam := query.Get("partial_response"); queryParam == "" {
+				query.Add("partial_response", partialResponse)
+			}
+		}
+
+		if timeout, ok := dsParams["timeout"]; ok {
+			if queryParam := query.Get("timeout"); queryParam == "" {
+				query.Add("timeout", timeout)
+			}
+		}
+
+		proxy.ctx.Req.Request.URL.RawQuery = query.Encode()
+	}
+
 	var err error
 	reverseProxy.Transport, err = proxy.ds.GetHttpTransport()
 	if err != nil {
@@ -245,6 +276,18 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
 			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
+		}
+	}
+
+	if proxy.ds.Type == m.DS_THANOS {
+		if proxy.ctx.Req.Request.Method == "DELETE" {
+			return errors.New("Deletes not allowed on proxied Thanos datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "PUT" {
+			return errors.New("Puts not allowed on proxied Thanos datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
+			return errors.New("Posts not allowed on proxied Thanos datasource except on /query and /query_range")
 		}
 	}
 

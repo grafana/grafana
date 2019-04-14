@@ -120,7 +120,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			dsMap["database"] = ds.Database
 		}
 
-		if ds.Type == m.DS_PROMETHEUS {
+		if ds.Type == m.DS_PROMETHEUS || ds.Type == m.DS_THANOS {
 			// add unproxied server URL for link to Prometheus web UI
 			dsMap["directUrl"] = ds.Url
 		}
