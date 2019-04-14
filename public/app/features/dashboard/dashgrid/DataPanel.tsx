@@ -7,7 +7,6 @@ import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource
 import kbn from 'app/core/utils/kbn';
 // Types
 import {
-  DataQueryOptions,
   DataQueryError,
   LoadingState,
   SeriesData,
@@ -16,6 +15,8 @@ import {
   toSeriesData,
   guessFieldTypes,
   DataQuery,
+  DataRequestInfo,
+  QueryResponseData,
 } from '@grafana/ui';
 
 interface RenderProps {
@@ -42,8 +43,7 @@ export interface Props {
 
 export interface State {
   isFirstLoad: boolean;
-  loading: LoadingState;
-  data?: SeriesData[];
+  response: QueryResponseData;
 }
 
 /**
@@ -78,8 +78,11 @@ export class DataPanel extends Component<Props, State> {
     super(props);
 
     this.state = {
-      loading: LoadingState.NotStarted,
       isFirstLoad: true,
+      response: {
+        loading: LoadingState.NotStarted,
+        data: [],
+      },
     };
   }
 
@@ -123,11 +126,21 @@ export class DataPanel extends Component<Props, State> {
     }
 
     if (!queries.length) {
-      this.setState({ loading: LoadingState.Done });
+      this.setState({
+        response: {
+          loading: LoadingState.Done,
+          data: [],
+        },
+      });
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
+    this.setState({
+      response: {
+        ...this.state.response,
+        loading: LoadingState.Loading,
+      },
+    });
 
     try {
       const ds = await this.dataSourceSrv.get(datasource, scopedVars);
@@ -142,7 +155,7 @@ export class DataPanel extends Component<Props, State> {
         __interval_ms: { text: intervalRes.intervalMs.toString(), value: intervalRes.intervalMs },
       });
 
-      const queryOptions: DataQueryOptions = {
+      const request: DataRequestInfo = {
         timezone: 'browser',
         panelId: panelId,
         dashboardId: dashboardId,
@@ -154,9 +167,11 @@ export class DataPanel extends Component<Props, State> {
         maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: scopedVarsWithInterval,
         cacheTimeout: null,
+        startTime: Date.now(),
       };
 
-      const resp = await ds.query(queryOptions);
+      const resp = await ds.query(request);
+      request.finishTime = Date.now();
 
       if (this.isUnmounted) {
         return;
@@ -169,9 +184,12 @@ export class DataPanel extends Component<Props, State> {
       }
 
       this.setState({
-        data,
-        loading: LoadingState.Done,
         isFirstLoad: false,
+        response: {
+          loading: LoadingState.Done,
+          data,
+          request,
+        },
       });
     } catch (err) {
       console.log('DataPanel error', err);
@@ -189,13 +207,21 @@ export class DataPanel extends Component<Props, State> {
       }
 
       onError(message, err);
-      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
+
+      this.setState({
+        isFirstLoad: false,
+        response: {
+          ...this.state.response,
+          loading: LoadingState.Error,
+        },
+      });
     }
   };
 
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, data } = this.state;
+    const { isFirstLoad, response } = this.state;
+    const { loading, data } = response;
 
     // do not render component until we have first data
     if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
