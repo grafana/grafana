@@ -1,7 +1,6 @@
 package dashboards
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -49,33 +48,6 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log:                          log,
 		dashboardProvisioningService: dashboards.NewProvisioningService(),
 	}, nil
-}
-
-func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	if err := fr.startWalkingDisk(); err != nil {
-		fr.log.Error("failed to search for dashboards", "error", err)
-	}
-
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
-
-	running := false
-
-	for {
-		select {
-		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
-				running = true
-				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
-						fr.log.Error("failed to search for dashboards", "error", err)
-					}
-					running = false
-				}()
-			}
-		case <-ctx.Done():
-			return nil
-		}
-	}
 }
 
 func (fr *fileReader) startWalkingDisk() error {

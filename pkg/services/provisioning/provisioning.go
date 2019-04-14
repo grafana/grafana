@@ -2,7 +2,8 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/pkg/errors"
 	"path"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,31 +18,83 @@ func init() {
 }
 
 type ProvisioningService struct {
-	Cfg *setting.Cfg `inject:""`
+	Cfg                 *setting.Cfg `inject:""`
+	log                 log.Logger
+	dashProvisionerChan chan *dashboards.DashboardProvisioner
+	pauseChan           chan interface{}
+	running             bool
+
+	runCtxCancel context.CancelFunc
 }
 
 func (ps *ProvisioningService) Init() error {
-	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
-	if err := datasources.Provision(datasourcePath); err != nil {
-		return fmt.Errorf("Datasource provisioning error: %v", err)
+	ps.log = log.New("provisioning")
+	ps.dashProvisionerChan = make(chan *dashboards.DashboardProvisioner, 1)
+	ps.pauseChan = make(chan interface{})
+
+	err := ps.ProvisionDatasources()
+	if err != nil {
+		return err
 	}
 
-	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	if err := notifiers.Provision(alertNotificationsPath); err != nil {
-		return fmt.Errorf("Alert notification provisioning error: %v", err)
+	err = ps.ProvisionNotifications()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionDashboards()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (ps *ProvisioningService) Run(ctx context.Context) error {
+	for {
+		select {
+		case provisioner := <-ps.dashProvisionerChan:
+			ps.log.Debug("Start polling")
+			if ps.runCtxCancel != nil {
+				ps.runCtxCancel()
+			}
+
+			childContext, cancelFun := context.WithCancel(ctx)
+			ps.runCtxCancel = cancelFun
+			ps.running = true
+			provisioner.PollChanges(childContext)
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ps.pauseChan:
+			ps.log.Debug("Polling canceled")
+			ps.runCtxCancel()
+			ps.running = false
+		}
+	}
+}
+
+func (ps *ProvisioningService) ProvisionDatasources() error {
+	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
+	err := datasources.Provision(datasourcePath)
+	return errors.Wrap(err, "Datasource provisioning error")
+}
+
+func (ps *ProvisioningService) ProvisionNotifications() error {
+	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
+	err := notifiers.Provision(alertNotificationsPath)
+	return errors.Wrap(err, "Alert notification provisioning error")
+}
+
+func (ps *ProvisioningService) ProvisionDashboards() error {
 	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
 	dashProvisioner := dashboards.NewDashboardProvisioner(dashboardPath)
 
-	if err := dashProvisioner.Provision(ctx); err != nil {
-		return err
+	if ps.running {
+		ps.pauseChan <- nil
 	}
-
-	<-ctx.Done()
-	return ctx.Err()
+	if err := dashProvisioner.Provision(); err != nil {
+		return errors.Wrap(err, "Dashboard provisioning error")
+	}
+	ps.dashProvisionerChan <- dashProvisioner
+	return nil
 }
