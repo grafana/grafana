@@ -103,6 +103,19 @@ func TestClient(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(c.GetVersion(), ShouldEqual, 60)
 			})
+
+			Convey("When version 70 should return v7.0 client", func() {
+				ds := &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 70,
+						"timeField": "@timestamp",
+					}),
+				}
+
+				c, err := NewClient(context.Background(), ds, nil)
+				So(err, ShouldBeNil)
+				So(c.GetVersion(), ShouldEqual, 70)
+			})
 		})
 
 		Convey("Given a fake http client", func() {
