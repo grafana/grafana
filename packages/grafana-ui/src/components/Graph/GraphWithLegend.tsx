@@ -1,16 +1,15 @@
 // Libraries
 import _ from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { css } from 'emotion';
 import { Graph, GraphProps } from './Graph';
-import { useGraphLegend } from './useGraphLegend';
-import { GraphSeriesXY } from '../../types/graph';
 import { LegendRenderOptions } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
 
-export type SeriesColorChangeHandler = (label: string, color: string) => void;
-export type SeriesAxisToggleHandler = (label: string, useRightYAxis: boolean) => void;
+export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
+export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
+export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<boolean>;
 
 export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   decimals?: number;
@@ -20,6 +19,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   sortLegendDesc?: boolean;
   onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
+  onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string, sortDesc: boolean) => void;
 }
 
@@ -52,29 +52,18 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     isLegendVisible,
     renderLegendAsTable,
     placement,
-    onSeriesColorChange,
     onSeriesAxisToggle,
+    onSeriesColorChange,
+    onSeriesToggle,
     onToggleSort,
   } = props;
-  const [graphSeriesModel, setGraphSeriesModel] = useState<GraphSeriesXY[]>(series);
-  const { legendItems, hiddenSeries, showSeries, hideSeries, isSeriesVisible } = useGraphLegend(graphSeriesModel);
-
-  useEffect(() => {
-    setGraphSeriesModel(
-      series.map(s => ({
-        ...s,
-        isVisible: isSeriesVisible(s.label),
-      }))
-    );
-  }, [hiddenSeries, series]);
-
-  const { graphContainer, legendContainer, wrapper } = getGraphWithLegendStyles(props);
+  const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
   return (
     <div className={wrapper}>
       <div className={graphContainer}>
         <Graph
-          series={graphSeriesModel.filter(s => !!s.isVisible)}
+          series={series.filter(s => !!s.isVisible)}
           timeRange={timeRange}
           showLines={showLines}
           showPoints={showPoints}
@@ -88,14 +77,21 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       {isLegendVisible && (
         <div className={legendContainer}>
           <GraphLegend
-            items={legendItems}
+            items={series.map(s => ({
+              label: s.label,
+              color: s.color,
+              isVisible: s.isVisible,
+              useRightYAxis: s.useRightYAxis,
+              info: s.info || [],
+            }))}
             renderLegendAsTable={renderLegendAsTable}
             placement={placement}
             sortBy={sortLegendBy}
             sortDesc={sortLegendDesc}
-            onLabelClick={item => {
-              const action = item.isVisible ? hideSeries : showSeries;
-              action([item.label]);
+            onLabelClick={(item, event) => {
+              if (onSeriesToggle) {
+                onSeriesToggle(item.label, event);
+              }
             }}
             onSeriesColorChange={onSeriesColorChange}
             onSeriesAxisToggle={onSeriesAxisToggle}
