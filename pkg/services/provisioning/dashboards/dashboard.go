@@ -26,36 +26,33 @@ func NewDashboardProvisioner(configDirectory string) *DashboardProvisioner {
 }
 
 func (provider *DashboardProvisioner) Provision() error {
-	cfgs, err := provider.cfgReader.readConfig()
+	readers, err := provider.getFileReaders()
 	if err != nil {
 		return err
 	}
 
-	for _, cfg := range cfgs {
-		switch cfg.Type {
-		case "file":
-			fileReader, err := NewDashboardFileReader(cfg, provider.log.New("type", cfg.Type, "name", cfg.Name))
-			if err != nil {
-				return err
-			}
-			provider.fileReaders = append(provider.fileReaders, fileReader)
-
-			err = fileReader.startWalkingDisk()
-			if err != nil {
-				return errors.Wrapf(err, "Failed walking disc for config %v", cfg.Name)
-			}
-		default:
-			return fmt.Errorf("type %s is not supported", cfg.Type)
+	for _, reader := range readers {
+		err = reader.startWalkingDisk()
+		if err != nil {
+			return errors.Wrapf(err, "Failed walking disc for config %v", reader.Cfg.Name)
 		}
 	}
 
 	return nil
 }
 
-func (provider *DashboardProvisioner) PollChanges(ctx context.Context) {
-	for _, fr := range provider.fileReaders {
-		go provider.pollChangesForFileReader(ctx, fr)
+// PollChanges starts polling for changes in dashboard definition files. It creates goruotine for each provider
+// defined in the config and walks the file system each UpdateIntervalSeconds as defined in the provider config.
+func (provider *DashboardProvisioner) PollChanges(ctx context.Context) error {
+	readers, err := provider.getFileReaders()
+	if err != nil {
+		return err
 	}
+
+	for _, reader := range readers {
+		go provider.pollChangesForFileReader(ctx, reader)
+	}
+	return nil
 }
 
 func (provider *DashboardProvisioner) pollChangesForFileReader(ctx context.Context, fileReader *fileReader) {
@@ -80,4 +77,28 @@ func (provider *DashboardProvisioner) pollChangesForFileReader(ctx context.Conte
 			return
 		}
 	}
+}
+
+func (provider *DashboardProvisioner) getFileReaders() ([]*fileReader, error) {
+	configs, err := provider.cfgReader.readConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	var readers []*fileReader
+
+	for _, config := range configs {
+		switch config.Type {
+		case "file":
+			fileReader, err := NewDashboardFileReader(config, provider.log.New("type", config.Type, "name", config.Name))
+			if err != nil {
+				return nil, err
+			}
+			readers = append(readers, fileReader)
+		default:
+			return nil, fmt.Errorf("type %s is not supported", config.Type)
+		}
+	}
+
+	return readers, nil
 }
