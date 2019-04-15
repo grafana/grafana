@@ -561,7 +561,7 @@
   "refresh": false,
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph"],
   "templating": {
     "list": []
   },
@@ -574,7 +574,7 @@
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
-  "title": "Panel Tests - Graph (Time Regions)",
+  "title": "Panel Tests - Graph Time Regions",
   "uid": "XMjIZPmik",
   "version": 9
 }

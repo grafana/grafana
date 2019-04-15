@@ -277,7 +277,7 @@
   ],
   "schemaVersion": 17,
   "style": "dark",
-  "tags": [],
+  "tags": ["panel-tests", "gdev", "gauge"],
   "templating": {
     "list": []
   },
@@ -290,7 +290,7 @@
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
-  "title": "Multi series gauges",
+  "title": "Panel Tests - Gauge Multi Series",
   "uid": "szkuR1umk",
   "version": 7
 }
