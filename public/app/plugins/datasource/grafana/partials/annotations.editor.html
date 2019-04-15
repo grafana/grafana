@@ -7,7 +7,7 @@
 				<info-popover mode="right-normal">
 					<ul>
 						<li>Dashboard: This will fetch annotation and alert state changes for whole dashboard and show them only on the event's originating panel.</li>
-						<li>All: This will fetch any annotation events that match the tags filter.</li>
+						<li>Tags: This will fetch any annotation events that match the tags filter.</li>
 					</ul>
 				</info-popover>
 			</span>
@@ -33,6 +33,14 @@
 				checked="ctrl.annotation.matchAny"
 				on-change="ctrl.refresh()"
 				tooltip="By default Grafana will only show annotation that matches all tags in the query. Enabling this will make Grafana return any annotation with the tags you specify."></gf-form-switch>
+           	<gf-form-switch
+				class="gf-form"
+				label="Filter per dashboard"
+				label-class="width-9"
+				checked="ctrl.annotation.matchDashboards"
+				on-change="ctrl.refresh()"
+				tooltip="By default Grafana will show annotation that matches all tags in the on all dashbaord. Enabling this will make Grafana show tags only on specifc dashboards."></gf-form-switch>
+
 		</div>
 		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
 			<span class="gf-form-label">Tags</span>

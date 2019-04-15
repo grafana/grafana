@@ -53,6 +53,9 @@ class GrafanaDatasource {
       // remove tags filter if any
       delete params.tags;
     } else {
+      if (options.annotation.matchDashboards) {
+        params.dashboardId = options.dashboard.id;
+      }
       // require at least one tag
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);

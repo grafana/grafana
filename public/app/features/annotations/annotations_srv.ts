@@ -42,8 +42,12 @@ export class AnnotationsSrv {
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
+          // if it's a annotations table, we want to see all annotations
+          if (options.panel.transform === 'annotations' && item.source.matchDashboards) {
+            return true;
+          }
           // if event has panel id and query is of type dashboard then panel and requesting panel id must match
-          if (item.panelId && item.source.type === 'dashboard') {
+          if (item.panelId && (item.source.type === 'dashboard' || item.source.matchDashboards)) {
             return item.panelId === options.panel.id;
           }
           return true;
