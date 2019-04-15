@@ -56,7 +56,7 @@ export interface PluginInclude {
   type: PluginIncludeType;
   name: string;
   path?: string;
-
+  icon?: string;
   // Angular app pages
   component?: string;
 }
