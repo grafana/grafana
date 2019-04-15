@@ -30,33 +30,19 @@ Checkout the [configuration](/installation/configuration) page for more informat
 
 ### Using Environment Variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
+of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+configuration.
+Example:
 
-```bash
-GF_<SectionName>_<KeyName>
-```
-
-Where the section name is the text within the brackets. Everything
-should be upper case and `.` should be replaced by `_`. For example, given these configuration settings:
-
-```bash
-# default section
-instance_name = ${HOSTNAME}
-
-[security]
-admin_user = admin
-
-[auth.google]
-client_secret = 0ldS3cretKey
-```
-
-Overriding will be done like so:
-
-```bash
-export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
-export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```yaml
+datasources:
+- name: Graphite
+  url: http://localhost:$PORT
+  user: $USER
+  secureJsonData:
+    password: $PASSWORD
 ```
 
 <hr />
