@@ -2,11 +2,12 @@ package pluginproxy
 
 import (
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/setting"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -38,6 +39,29 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 	return result, err
 }
 
+func UpdateURL(route *plugins.AppPluginRoute, orgId int64, appID string) error {
+	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
+	if err := bus.Dispatch(&query); err != nil {
+		return err
+	}
+
+	data := templateData{
+		JsonData:       query.Result.JsonData,
+		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
+	}
+	interpolated, err := InterpolateString(route.Url, data)
+	if err != nil {
+		return err
+	}
+	// update the url of the route
+	route.Url = interpolated
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// NewApiPluginProxy create a plugin proxy
 func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	targetURL, _ := url.Parse(route.Url)
 
@@ -48,7 +72,6 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		req.Host = targetURL.Host
 
 		req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
-
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
@@ -72,13 +95,13 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		}
 
 		// Create a HTTP header with the context in it.
-		ctxJson, err := json.Marshal(ctx.SignedInUser)
+		ctxJSON, err := json.Marshal(ctx.SignedInUser)
 		if err != nil {
 			ctx.JsonApiErr(500, "failed to marshal context to json.", err)
 			return
 		}
 
-		req.Header.Add("X-Grafana-Context", string(ctxJson))
+		req.Header.Add("X-Grafana-Context", string(ctxJSON))
 
 		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
 			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
@@ -94,6 +117,15 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 			for key, value := range headers {
 				log.Trace("setting key %v value <redacted>", key)
 				req.Header.Set(key, value[0])
+			}
+		}
+
+		if len(route.Url) > 0 {
+			err := UpdateURL(route, ctx.OrgId, appID)
+
+			if err != nil {
+				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
+				return
 			}
 		}
 
