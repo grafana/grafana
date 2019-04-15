@@ -15,8 +15,14 @@ export enum PasswordFieldEnum {
  */
 export type Ctrl = {
   current: {
-    secureJsonFields: {};
-    secureJsonData?: {};
+    secureJsonFields: {
+      [key: string]: boolean;
+    };
+    secureJsonData?: {
+      [key: string]: string;
+    };
+    password?: string;
+    basicAuthPassword?: string;
   };
 };
 
