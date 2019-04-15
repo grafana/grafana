@@ -193,7 +193,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody
-        heading="Queries to"
+        heading="Query"
         renderToolbar={this.renderToolbar}
         toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
