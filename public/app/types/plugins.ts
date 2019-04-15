@@ -24,7 +24,6 @@ export interface Plugin extends PluginMeta {
   hasUpdate: boolean;
   latestVersion: string;
   pinned: boolean;
-  icon?: string;
 }
 
 export interface PluginDashboard {
