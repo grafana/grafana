@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import React, { Context } from 'react';
 import ReactDOM from 'react-dom';

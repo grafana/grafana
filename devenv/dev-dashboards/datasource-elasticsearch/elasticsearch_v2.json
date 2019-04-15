@@ -645,7 +645,7 @@
   ],
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["elasticsearch", "gdev"],
+  "tags": ["elasticsearch", "gdev", "datasource-test"],
   "templating": {
     "list": [
       {

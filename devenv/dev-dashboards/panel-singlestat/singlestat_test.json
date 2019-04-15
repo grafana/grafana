@@ -21,11 +21,7 @@
       "cacheTimeout": null,
       "colorBackground": false,
       "colorValue": true,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
+      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -106,11 +102,7 @@
       "colorBackground": false,
       "colorPrefix": false,
       "colorValue": true,
-      "colors": [
-        "#d44a3a",
-        "rgba(237, 129, 40, 0.89)",
-        "#299c46"
-      ],
+      "colors": ["#d44a3a", "rgba(237, 129, 40, 0.89)", "#299c46"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -191,11 +183,7 @@
       "colorBackground": true,
       "colorPrefix": false,
       "colorValue": false,
-      "colors": [
-        "#d44a3a",
-        "rgba(237, 129, 40, 0.89)",
-        "#299c46"
-      ],
+      "colors": ["#d44a3a", "rgba(237, 129, 40, 0.89)", "#299c46"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -276,11 +264,7 @@
       "colorBackground": false,
       "colorPrefix": false,
       "colorValue": true,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
+      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -361,11 +345,7 @@
       "colorBackground": false,
       "colorPrefix": false,
       "colorValue": true,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
+      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -446,11 +426,7 @@
       "colorBackground": false,
       "colorPrefix": false,
       "colorValue": true,
-      "colors": [
-        "#299c46",
-        "rgba(237, 129, 40, 0.89)",
-        "#d44a3a"
-      ],
+      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
       "datasource": "gdev-testdata",
       "decimals": null,
       "description": "",
@@ -531,10 +507,7 @@
   "revision": 8,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [
-    "gdev",
-    "panel-tests"
-  ],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },
@@ -543,29 +516,8 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
   "title": "Panel Tests - Singlestat",

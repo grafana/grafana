@@ -1,0 +1,475 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 7,
+        "w": 18,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "vertical",
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "orange",
+            "index": 1,
+            "value": 40
+          },
+          {
+            "color": "red",
+            "index": 2,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": null,
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "watt"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10003,33333"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "P",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "Q",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Usage",
+      "type": "bargauge"
+    },
+    {
+      "gridPos": {
+        "h": 22,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 8,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "green",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "orange",
+            "index": 1,
+            "value": 55
+          },
+          {
+            "color": "red",
+            "index": 2,
+            "value": 95
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": null,
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "watt"
+        }
+      },
+      "targets": [
+        {
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "P",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "Q",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "R",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "S",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Usage",
+      "type": "bargauge"
+    },
+    {
+      "gridPos": {
+        "h": 15,
+        "w": 11,
+        "x": 0,
+        "y": 7
+      },
+      "id": 6,
+      "links": [],
+      "options": {
+        "displayMode": "gradient",
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "blue",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "green",
+            "index": 1,
+            "value": 20
+          },
+          {
+            "color": "orange",
+            "index": 2,
+            "value": 40
+          },
+          {
+            "color": "red",
+            "index": 3,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": null,
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "celsius"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Inside",
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Area B",
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Basement",
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Garage",
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Attic",
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Temperature",
+      "type": "bargauge"
+    },
+    {
+      "gridPos": {
+        "h": 15,
+        "w": 7,
+        "x": 11,
+        "y": 7
+      },
+      "id": 9,
+      "links": [],
+      "options": {
+        "displayMode": "basic",
+        "maxValue": 100,
+        "minValue": 0,
+        "orientation": "horizontal",
+        "thresholds": [
+          {
+            "color": "blue",
+            "index": 0,
+            "value": null
+          },
+          {
+            "color": "green",
+            "index": 1,
+            "value": 20
+          },
+          {
+            "color": "orange",
+            "index": 2,
+            "value": 40
+          },
+          {
+            "color": "red",
+            "index": 3,
+            "value": 80
+          }
+        ],
+        "valueMappings": [],
+        "valueOptions": {
+          "decimals": null,
+          "prefix": "",
+          "stat": "mean",
+          "suffix": "",
+          "unit": "celsius"
+        }
+      },
+      "targets": [
+        {
+          "alias": "Inside",
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Area B",
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Basement",
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Garage",
+          "refId": "D",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Attic",
+          "refId": "E",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "L",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Temperature",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 18,
+  "style": "dark",
+  "tags": ["gdev", "bargauge", "panel-demo"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["1s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+  },
+  "timezone": "",
+  "title": "Bar Gauge Animated Demo",
+  "uid": "k5IUwQeikaa",
+  "version": 4
+}

@@ -99,7 +99,7 @@ export class ShareSnapshotCtrl {
         .filter(annotation => {
           return annotation.enable;
         })
-        .map(annotation => {
+        .map((annotation: any) => {
           return {
             name: annotation.name,
             enable: annotation.enable,
