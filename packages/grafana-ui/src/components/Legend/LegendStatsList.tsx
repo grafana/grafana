@@ -2,6 +2,7 @@ import React from 'react';
 import { InlineList } from '../List/InlineList';
 import { css } from 'emotion';
 import { DisplayValue } from '../../types/displayValue';
+import capitalize from 'lodash/capitalize';
 
 const LegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat }) => {
   return (
@@ -10,7 +11,7 @@ const LegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat 
         margin-left: 6px;
       `}
     >
-      {stat.text}
+      {stat.title && `${capitalize(stat.title)}:`} {stat.text}
     </div>
   );
 };

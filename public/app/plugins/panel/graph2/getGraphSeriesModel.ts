@@ -11,7 +11,6 @@ import {
   getDisplayProcessor,
   DisplayValue,
 } from '@grafana/ui';
-import capitalize from 'lodash/capitalize';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
@@ -56,7 +55,7 @@ export const getGraphSeriesModel = (
 
               return {
                 ...statDisplayValue,
-                text: legendOptions.asTable ? statDisplayValue.text : `${capitalize(stat)}: ${statDisplayValue.text}`,
+                text: statDisplayValue.text,
                 title: stat,
               };
             });

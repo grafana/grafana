@@ -16,10 +16,10 @@ const getStoriesKnobs = (isList = false) => {
     'Stats to display',
     {
       none: [],
-      'single (min)': [{ text: `${isList ? 'Min: ' : ''}10`, title: 'min', numeric: 10 }],
+      'single (min)': [{ text: '10ms', title: 'min', numeric: 10 }],
       'multiple (min, max)': [
-        { text: `${isList ? 'Min: ' : ''}10`, title: 'min', numeric: 10 },
-        { text: `${isList ? 'Max: ' : ''}10`, title: 'max', numeric: 100 },
+        { text: '10ms', title: 'min', numeric: 10 },
+        { text: '100ms', title: 'max', numeric: 100 },
       ],
     },
     []
