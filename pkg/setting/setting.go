@@ -817,7 +817,9 @@ func (cfg *Cfg) readSessionConfig() {
 	sec, _ := cfg.Raw.GetSection("session")
 
 	if sec != nil {
-		cfg.Logger.Warn("[Removed] Session setting does not exist anymore, use remote_cache option instead")
+		cfg.Logger.Warn(
+			"[Removed] Session setting was removed in v6.2, use remote_cache option instead",
+		)
 	}
 }
 
