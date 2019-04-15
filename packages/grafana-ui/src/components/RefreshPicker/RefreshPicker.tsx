@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 import { SelectOptionItem, ButtonSelect, Tooltip } from '@grafana/ui';
-import { RefreshButton } from './RefreshButton';
 
 export const offOption = { label: 'Off', value: '' };
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -62,9 +61,9 @@ export class RefreshPicker extends PureComponent<Props> {
       <div className={cssClasses}>
         <div className="refresh-picker-buttons">
           <Tooltip placement="top" content={tooltip}>
-            <span>
-              <RefreshButton onClick={onRefresh} />
-            </span>
+            <button className="btn btn--radius-right-0 navbar-button navbar-button--refresh" onClick={onRefresh}>
+              <i className="fa fa-refresh" />
+            </button>
           </Tooltip>
           <ButtonSelect
             className="navbar-button--attached btn--radius-left-0"
