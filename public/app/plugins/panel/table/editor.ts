@@ -52,7 +52,7 @@ export class TablePanelEditorCtrl {
 
   addColumn() {
     const columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    const column = _.find(columns, { text: this.addColumnSegment.value });
+    const column: any = _.find(columns, { text: this.addColumnSegment.value });
 
     if (column) {
       this.panel.columns.push(column);

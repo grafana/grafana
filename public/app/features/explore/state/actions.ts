@@ -1,5 +1,4 @@
 // Libraries
-// @ts-ignore
 import _ from 'lodash';
 
 // Services & Utils
@@ -196,11 +195,14 @@ export function loadExploreDatasourcesAndSetDatasource(
   return dispatch => {
     const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
       .getExternal()
-      .map((ds: any) => ({
-        value: ds.name,
-        name: ds.name,
-        meta: ds.meta,
-      }));
+      .map(
+        (ds: any) =>
+          ({
+            value: ds.name,
+            name: ds.name,
+            meta: ds.meta,
+          } as DataSourceSelectItem)
+      );
 
     dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
 
