@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import Remarkable from 'remarkable';
+import { getPluginSettings } from './PluginSettingsCache';
 
 export class PluginEditCtrl {
   model: any;
@@ -77,7 +78,7 @@ export class PluginEditCtrl {
   }
 
   init() {
-    return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
+    return getPluginSettings(this.pluginId).then(result => {
       this.model = result;
       this.pluginIcon = this.getPluginIcon(this.model.type);
 

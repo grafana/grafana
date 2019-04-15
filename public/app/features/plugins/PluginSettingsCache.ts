@@ -1,13 +1,13 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { PluginMeta } from '@grafana/ui';
+import { Plugin } from 'app/types';
 
 type PluginCache = {
-  [key: string]: PluginMeta;
+  [key: string]: Plugin;
 };
 
 const pluginInfoCache: PluginCache = {};
 
-export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
+export function getPluginSettings(pluginId: string): Promise<Plugin> {
   const v = pluginInfoCache[pluginId];
   if (v) {
     return Promise.resolve(v);
@@ -19,7 +19,7 @@ export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
       return settings;
     })
     .catch(err => {
-      err.isHandled = true;
+      // err.isHandled = true;
       return Promise.reject('Unknown Plugin');
     });
 }

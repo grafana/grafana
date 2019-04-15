@@ -12,14 +12,18 @@ export enum PluginType {
 export interface PluginMeta {
   id: string;
   name: string;
-  info: PluginMetaInfo;
-  module: string;
-  includes?: PluginInclude[];
-  baseUrl?: string;
-
   type: PluginType;
-  enabled?: boolean;
+  info: PluginMetaInfo;
+  includes?: PluginInclude[];
   state?: PluginState;
+
+  // System.load & relative URLS
+  module: string;
+  baseUrl: string;
+
+  // Filled in by the backend
+  jsonData?: { [str: string]: any };
+  enabled?: boolean;
 
   // Datasource-specific
   builtIn?: boolean;

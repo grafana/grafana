@@ -20,6 +20,8 @@ export class ExampleConfigCtrl {
     if (!appModel.jsonData) {
       appModel.jsonData = {};
     }
+
+    console.log('ExampleConfigCtrl', this);
   }
 
   postUpdate() {
