@@ -3,7 +3,6 @@ import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-// @ts-ignore
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
 

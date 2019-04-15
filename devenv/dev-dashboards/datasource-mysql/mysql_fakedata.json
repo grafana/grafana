@@ -16,7 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1532620601931,
+  "iteration": 1532620738041,
   "links": [],
   "panels": [
     {
@@ -26,7 +26,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-postgres",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -68,14 +68,14 @@
           "alias": "",
           "format": "time_series",
           "hide": false,
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  avg(value) as \"value\",\n  hostname as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'logins.count' AND\n  hostname IN($host)\nGROUP BY time, metric\nORDER BY time",
+          "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count' AND\n  hostname IN($host)\nGROUP BY 1, 3\nORDER BY 1",
           "refId": "A",
           "target": ""
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  min(value) as \"value\",\n  'total avg' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'logins.count'\nGROUP BY time\nORDER BY time",
+          "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  min(value) as value,\n  'total avg' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'logins.count'\nGROUP BY 1\nORDER BY 1",
           "refId": "B"
         }
       ],
@@ -124,7 +124,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-postgres",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 18,
@@ -158,14 +158,14 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  avg(value) as \"value\",\n  'started' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'payment.started'\nGROUP BY time, metric\nORDER BY time",
+          "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  'started' as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.started'\nGROUP BY 1, 3\nORDER BY 1",
           "refId": "A",
           "target": ""
         },
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  avg(value) as \"value\",\n  'ended' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'payment.ended'\nGROUP BY time, metric\nORDER BY time",
+          "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  avg(value) as value,\n  'ended' as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'payment.ended'\nGROUP BY 1, 3\nORDER BY 1",
           "refId": "B"
         }
       ],
@@ -214,7 +214,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-postgres",
+      "datasource": "gdev-mysql",
       "fill": 2,
       "gridPos": {
         "h": 9,
@@ -248,7 +248,7 @@
         {
           "alias": "",
           "format": "time_series",
-          "rawSql": "SELECT\n  $__timeGroup(\"createdAt\",'$summarize'),\n  max(value) as \"value\",\n  hostname as \"metric\"\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(\"createdAt\") AND\n  measurement = 'cpu' AND\n  hostname IN($host)\nGROUP BY time, metric\nORDER BY time",
+          "rawSql": "SELECT\n  $__timeGroup(createdAt,'$summarize') as time_sec,\n  max(value) as value,\n  hostname as metric\nFROM \n  grafana_metric\nWHERE\n  $__timeFilter(createdAt) AND\n  measurement = 'cpu' AND\n  hostname IN($host)\nGROUP BY 1, 3\nORDER BY 1",
           "refId": "A",
           "target": ""
         }
@@ -295,7 +295,7 @@
     },
     {
       "columns": [],
-      "datasource": "gdev-postgres",
+      "datasource": "gdev-mysql",
       "fontSize": "100%",
       "gridPos": {
         "h": 9,
@@ -335,11 +335,12 @@
         {
           "alias": "",
           "format": "table",
-          "rawSql": "SELECT \"createdAt\" as \"Time\", source, datacenter, hostname, value FROM grafana_metric WHERE hostname in($host)",
+          "rawSql": "SELECT createdAt as Time, source, datacenter, hostname, value FROM grafana_metric WHERE hostname in($host)",
           "refId": "A",
           "target": ""
         }
       ],
+      "timeShift": null,
       "title": "Values",
       "transform": "table",
       "type": "table"
@@ -347,7 +348,7 @@
   ],
   "schemaVersion": 16,
   "style": "dark",
-  "tags": ["gdev", "fake-data-gen", "postgres"],
+  "tags": ["gdev", "mysql", "datasource-tags"],
   "templating": {
     "list": [
       {
@@ -356,7 +357,7 @@
           "text": "America",
           "value": "America"
         },
-        "datasource": "gdev-postgres",
+        "datasource": "gdev-mysql",
         "hide": 0,
         "includeAll": false,
         "label": "Datacenter",
@@ -380,7 +381,7 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": "gdev-postgres",
+        "datasource": "gdev-mysql",
         "hide": 0,
         "includeAll": true,
         "label": "Hostname",
@@ -497,7 +498,7 @@
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
-  "title": "Datasource tests - Postgres",
-  "uid": "JYola5qzz",
-  "version": 4
+  "title": "Datasource tests - MySQL",
+  "uid": "DGsCac3kz",
+  "version": 8
 }

@@ -253,7 +253,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.lastQueryMeta = null;
     this.lastQueryError = null;
 
-    const anySeriesFromQuery = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery) {
       this.lastQueryMeta = anySeriesFromQuery.meta;
     }

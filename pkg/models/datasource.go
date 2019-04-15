@@ -61,6 +61,26 @@ type DataSource struct {
 	Updated time.Time
 }
 
+// DecryptedBasicAuthPassword returns data source basic auth password in plain text. It uses either deprecated
+// basic_auth_password field or encrypted secure_json_data[basicAuthPassword] variable.
+func (ds *DataSource) DecryptedBasicAuthPassword() string {
+	return ds.decryptedValue("basicAuthPassword", ds.BasicAuthPassword)
+}
+
+// DecryptedPassword returns data source password in plain text. It uses either deprecated password field
+// or encrypted secure_json_data[password] variable.
+func (ds *DataSource) DecryptedPassword() string {
+	return ds.decryptedValue("password", ds.Password)
+}
+
+// decryptedValue returns decrypted value from secureJsonData
+func (ds *DataSource) decryptedValue(field string, fallback string) string {
+	if value, ok := ds.SecureJsonData.DecryptedValue(field); ok {
+		return value
+	}
+	return fallback
+}
+
 var knownDatasourcePlugins = map[string]bool{
 	DS_ES:                                 true,
 	DS_GRAPHITE:                           true,

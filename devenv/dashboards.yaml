@@ -4,6 +4,6 @@ providers:
  - name: 'gdev dashboards'
    folder: 'gdev dashboards'
    type: file
-   updateIntervalSeconds: 15
+   updateIntervalSeconds: 60
    options:
      path: devenv/dev-dashboards

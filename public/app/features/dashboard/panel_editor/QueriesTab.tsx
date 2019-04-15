@@ -122,6 +122,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     const index = _.indexOf(panel.targets, query);
+    // @ts-ignore
     _.move(panel.targets, index, index + direction);
 
     this.forceUpdate();
@@ -193,7 +194,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody
-        heading="Queries to"
+        heading="Query"
         renderToolbar={this.renderToolbar}
         toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
