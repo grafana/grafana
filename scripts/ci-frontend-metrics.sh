@@ -2,7 +2,7 @@
 
 echo -e "Collecting code stats (typescript errors & more)"
 
-ERROR_COUNT_LIMIT=6676
+ERROR_COUNT_LIMIT=5977
 DIRECTIVES_LIMIT=175
 CONTROLLERS_LIMIT=138
 
