@@ -6,10 +6,6 @@
     display: flex;
   }
 
-  .navbar-button {
-    margin-right: 0;
-  }
-
   .gf-form-input--form-dropdown {
     position: static;
   }
@@ -20,13 +16,13 @@
     width: 100%;
   }
 
+  &--refreshing {
+    .select-button-value {
+      color: $orange;
+    }
+  }
+
   @include media-breakpoint-up(md) {
     display: block;
-  }
-}
-
-.refresh-picker-button-select-button {
-  .navbar-button {
-    border-radius: 0 2px 2px 0;
   }
 }

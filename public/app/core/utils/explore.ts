@@ -10,7 +10,6 @@ import { parse as parseDate } from 'app/core/utils/datemath';
 import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
-import { EMPTY_ITEM_TEXT as defaultRefreshIntervalLabel } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Types
 import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
@@ -30,8 +29,6 @@ export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
-
-export const DEFAULT_REFRESH_INTERVAL_LABEL = defaultRefreshIntervalLabel;
 
 export const DEFAULT_UI_STATE = {
   showingTable: true,

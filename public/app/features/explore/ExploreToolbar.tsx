@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper, SelectOptionItem } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -58,7 +58,7 @@ interface StateProps {
   range: RawTimeRange;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
-  refreshInterval: SelectOptionItem;
+  refreshInterval: string;
 }
 
 interface DispatchProps {
@@ -93,7 +93,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     this.props.timepickerRef.current.setState({ isOpen: false });
   };
 
-  onChangeRefreshInterval = (item: SelectOptionItem) => {
+  onChangeRefreshInterval = (item: string) => {
     const { changeRefreshInterval, exploreId } = this.props;
     changeRefreshInterval(exploreId, item);
   };
@@ -165,11 +165,10 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               <RefreshPicker
                 onIntervalChanged={this.onChangeRefreshInterval}
                 onRefresh={this.onRunQuery}
-                initialValue={undefined}
                 value={refreshInterval}
                 tooltip="Refresh"
               />
-              {refreshInterval.value > 0 && <SetInterval func={this.onRunQuery} delay={refreshInterval.value} />}
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} />}
             </div>
 
             <div className="explore-toolbar-content-item">

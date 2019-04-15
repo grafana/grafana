@@ -23,7 +23,6 @@ import {
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { SelectOptionItem } from '@grafana/ui';
 import { ResultGetter } from 'app/types/explore';
 import { ThunkResult } from 'app/types';
 import {
@@ -183,7 +182,7 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
  */
 export function changeRefreshInterval(
   exploreId: ExploreId,
-  refreshInterval: SelectOptionItem
+  refreshInterval: string
 ): ActionOf<ChangeRefreshIntervalPayload> {
   return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }

@@ -1,7 +1,9 @@
-﻿import { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import { stringToMs } from '../../utils/string';
+
 interface Props {
   func: () => any; // TODO
-  delay: number;
+  interval: string;
 }
 
 export class SetInterval extends PureComponent<Props> {
@@ -12,8 +14,8 @@ export class SetInterval extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { delay } = this.props;
-    if (delay !== prevProps.delay) {
+    const { interval } = this.props;
+    if (interval !== prevProps.interval) {
       this.clearInterval();
       this.addInterval();
     }
@@ -24,14 +26,14 @@ export class SetInterval extends PureComponent<Props> {
   }
 
   addInterval = () => {
-    const { func, delay } = this.props;
-    if (delay > 0) {
+    const { func, interval } = this.props;
+
+    if (interval) {
       func().then(() => {
-        if (delay > 0) {
-          // Need to re-check in case the promise (query) is slow
+        if (interval) {
           this.intervalId = window.setTimeout(() => {
             this.addInterval();
-          }, delay);
+          }, stringToMs(interval));
         }
       });
     }

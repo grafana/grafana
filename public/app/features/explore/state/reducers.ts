@@ -60,8 +60,6 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
-import { defaultItem as defaultRefreshInterval } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
@@ -90,7 +88,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: DEFAULT_RANGE,
-  refreshInterval: defaultRefreshInterval,
   scanning: false,
   scanRange: null,
   showingGraph: true,
@@ -188,7 +185,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { refreshInterval } = action.payload;
       return {
         ...state,
-        refreshInterval: refreshInterval.value ? refreshInterval : initialExploreItemState.refreshInterval,
+        refreshInterval: refreshInterval,
       };
     },
   })

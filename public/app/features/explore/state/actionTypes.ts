@@ -1,6 +1,5 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { SelectOptionItem } from '@grafana/ui';
 import {
   RawTimeRange,
   TimeRange,
@@ -69,7 +68,7 @@ export interface ChangeTimePayload {
 
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
-  refreshInterval: SelectOptionItem;
+  refreshInterval: string;
 }
 
 export interface ClearQueriesPayload {
@@ -78,7 +77,6 @@ export interface ClearQueriesPayload {
 
 export interface ClearRefreshIntervalPayload {
   exploreId: ExploreId;
-  refreshInterval: SelectOptionItem;
 }
 
 export interface HighlightLogsExpressionPayload {
@@ -262,13 +260,6 @@ export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshInt
  * Clear all queries and results.
  */
 export const clearQueriesAction = actionCreatorFactory<ClearQueriesPayload>('explore/CLEAR_QUERIES').create();
-
-/**
- * Clear the refresh interval. Called from RefreshPicker or when unmounting some page components.
- */
-export const clearRefreshIntervalAction = actionCreatorFactory<ClearRefreshIntervalPayload>(
-  'explore/CLEAR_REFRESH_INTERVAL'
-).create();
 
 /**
  * Highlight expressions in the log results

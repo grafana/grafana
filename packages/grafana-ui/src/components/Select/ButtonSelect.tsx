@@ -14,7 +14,7 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   return (
     <button
       ref={props.innerRef}
-      className={`${className} btn navbar-button navbar-button--tight`}
+      className={`btn navbar-button navbar-button--tight ${className}`}
       onClick={props.selectProps.menuIsOpen ? props.selectProps.onMenuClose : props.selectProps.onMenuOpen}
       onBlur={props.selectProps.onMenuClose}
     >

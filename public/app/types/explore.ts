@@ -9,7 +9,6 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  SelectOptionItem,
   LogLevel,
 } from '@grafana/ui';
 
@@ -254,7 +253,7 @@ export interface ExploreItemState {
   /**
    * How often query should be refreshed
    */
-  refreshInterval: SelectOptionItem;
+  refreshInterval?: string;
 
   urlState: ExploreUrlState;
 

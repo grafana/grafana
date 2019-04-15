@@ -6,7 +6,6 @@ import { connect } from 'react-redux';
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
@@ -29,6 +28,7 @@ export interface OwnProps {
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
 }
+
 export interface StateProps {
   location: any;
 }
@@ -39,7 +39,6 @@ export class DashNav extends PureComponent<Props> {
   timePickerEl: HTMLElement;
   timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
-  timeSrv: TimeSrv = getTimeSrv();
 
   constructor(props: Props) {
     super(props);
@@ -272,11 +271,9 @@ export class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  return {
-    location: state.location,
-  };
-};
+const mapStateToProps = (state: StoreState) => ({
+  location: state.location,
+});
 
 const mapDispatchToProps = {
   updateLocation,
