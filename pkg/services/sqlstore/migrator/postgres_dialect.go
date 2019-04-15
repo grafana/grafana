@@ -110,7 +110,7 @@ func (db *Postgres) IndexCheckSql(tableName, indexName string) (string, []interf
 func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
-	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
+	return fmt.Sprintf("DROP INDEX %v CASCADE", quote(idxName))
 }
 
 func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
