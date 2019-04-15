@@ -97,6 +97,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
+  onOptionsChange = (options: any) => {
+    this.props.panel.updateOptions(options);
+  };
+
   onDataResponse = (data?: SeriesData[]) => {
     if (this.props.dashboard.isSnapshot()) {
       this.props.panel.snapshotData = data;
@@ -172,7 +176,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           data={data}
           timeRange={timeRange}
           options={panel.getOptions(plugin.reactPlugin.defaults)}
-          onOptionsChange={panel.updateOptions}
+          onOptionsChange={this.onOptionsChange}
           width={width - 2 * config.theme.panelPadding.horizontal}
           height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
           renderCounter={renderCounter}
