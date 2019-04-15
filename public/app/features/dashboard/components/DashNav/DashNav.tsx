@@ -48,7 +48,6 @@ export class DashNav extends PureComponent<Props> {
 
   componentDidMount() {
     const loader = getAngularLoader();
-
     const template =
       '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
     const scopeProps = { dashboard: this.props.dashboard };
@@ -174,7 +173,6 @@ export class DashNav extends PureComponent<Props> {
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     return (
       <div className="navbar">
         {this.isInFullscreenOrSettings && this.renderBackButton()}
@@ -263,10 +261,12 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
-        <div className="navbar-buttons">
-          <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
-          <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
-        </div>
+        {!dashboard.timepicker.hidden && (
+          <div className="navbar-buttons">
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+          </div>
+        )}
       </div>
     );
   }
