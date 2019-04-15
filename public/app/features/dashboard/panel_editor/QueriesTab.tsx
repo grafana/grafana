@@ -152,6 +152,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         current={null}
         autoFocus={true}
         onBlur={this.onMixedPickerBlur}
+        openMenuOnFocus={true}
       />
     );
   };

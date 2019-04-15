@@ -9,18 +9,19 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	AUTH_PROXY_SESSION_VAR = "authProxyHeaderValue"
+const (
+
+	// cachePrefix is a prefix for the cache key
+	cachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
-func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
+func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *m.ReqContext, orgID int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -36,46 +37,17 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		return true
 	}
 
-	// initialize session
-	if err := ctx.Session.Start(ctx.Context); err != nil {
-		log.Error(3, "Failed to start session. error %v", err)
-		return false
-	}
-
-	defer func() {
-		if err := ctx.Session.Release(); err != nil {
-			ctx.Logger.Error("failed to save session data", "error", err)
-		}
-	}()
-
 	query := &m.GetSignedInUserQuery{OrgId: orgID}
+	cacheKey := fmt.Sprintf(cachePrefix, proxyHeaderValue)
+	userID, err := store.Get(cacheKey)
+	inCache := err == nil
 
-	// if this session has already been authenticated by authProxy just load the user
-	sessProxyValue := ctx.Session.Get(AUTH_PROXY_SESSION_VAR)
-	if sessProxyValue != nil && sessProxyValue.(string) == proxyHeaderValue && getRequestUserId(ctx) > 0 {
-		// if we're using ldap, sync user periodically
-		if setting.LdapEnabled {
-			syncQuery := &m.LoginUserQuery{
-				ReqContext: ctx,
-				Username:   proxyHeaderValue,
-			}
+	// load the user if we have them
+	if inCache {
+		query.UserId = userID.(int64)
 
-			if err := syncGrafanaUserWithLdapUser(syncQuery); err != nil {
-				if err == login.ErrInvalidCredentials {
-					ctx.Handle(500, "Unable to authenticate user", err)
-					return false
-				}
-
-				ctx.Handle(500, "Failed to sync user", err)
-				return false
-			}
-		}
-
-		query.UserId = getRequestUserId(ctx)
 		// if we're using ldap, pass authproxy login name to ldap user sync
 	} else if setting.LdapEnabled {
-		ctx.Session.Delete(session.SESS_KEY_LASTLDAPSYNC)
-
 		syncQuery := &m.LoginUserQuery{
 			ReqContext: ctx,
 			Username:   proxyHeaderValue,
@@ -86,9 +58,6 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 				ctx.Handle(500, "Unable to authenticate user", err)
 				return false
 			}
-
-			ctx.Handle(500, "Failed to sync user", err)
-			return false
 		}
 
 		if syncQuery.User == nil {
@@ -149,65 +118,38 @@ func initContextWithAuthProxy(ctx *m.ReqContext, orgID int64) bool {
 		ctx.Handle(500, "Failed to find user", err)
 		return true
 	}
-
-	// Make sure that we cannot share a session between different users!
-	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
-		// remove session
-		if err := ctx.Session.Destory(ctx.Context); err != nil {
-			log.Error(3, "Failed to destroy session. error: %v", err)
-		}
-
-		// initialize a new session
-		if err := ctx.Session.Start(ctx.Context); err != nil {
-			log.Error(3, "Failed to start session. error: %v", err)
-		}
-	}
-
-	ctx.Session.Set(AUTH_PROXY_SESSION_VAR, proxyHeaderValue)
-
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.Session.Set(session.SESS_KEY_USERID, ctx.UserId)
+
+	expiration := time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute
+	value := query.UserId
+
+	// This <if> is here to make sure we do not
+	// rewrite the expiration all the time
+	if inCache == false {
+		if err = store.Set(cacheKey, value, expiration); err != nil {
+			ctx.Handle(500, "Couldn't write a user in cache key", err)
+			return true
+		}
+	}
 
 	return true
 }
 
 var syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-	expireEpoch := time.Now().Add(time.Duration(-setting.AuthProxyLdapSyncTtl) * time.Minute).Unix()
-
-	var lastLdapSync int64
-	if lastLdapSyncInSession := query.ReqContext.Session.Get(session.SESS_KEY_LASTLDAPSYNC); lastLdapSyncInSession != nil {
-		lastLdapSync = lastLdapSyncInSession.(int64)
+	ldapCfg := login.LdapCfg
+	if len(ldapCfg.Servers) < 1 {
+		return fmt.Errorf("No LDAP servers available")
 	}
 
-	if lastLdapSync < expireEpoch {
-		ldapCfg := login.LdapCfg
-
-		if len(ldapCfg.Servers) < 1 {
-			return fmt.Errorf("No LDAP servers available")
+	for _, server := range ldapCfg.Servers {
+		author := login.NewLdapAuthenticator(server)
+		if err := author.SyncUser(query); err != nil {
+			return err
 		}
-
-		for _, server := range ldapCfg.Servers {
-			author := login.NewLdapAuthenticator(server)
-			if err := author.SyncUser(query); err != nil {
-				return err
-			}
-		}
-
-		query.ReqContext.Session.Set(session.SESS_KEY_LASTLDAPSYNC, time.Now().Unix())
 	}
 
 	return nil
-}
-
-func getRequestUserId(c *m.ReqContext) int64 {
-	userID := c.Session.Get(session.SESS_KEY_USERID)
-
-	if userID != nil {
-		return userID.(int64)
-	}
-
-	return 0
 }
 
 func checkAuthenticationProxy(remoteAddr string, proxyHeaderValue string) error {

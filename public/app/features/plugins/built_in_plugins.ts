@@ -11,6 +11,7 @@ import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
 import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
 import * as mssqlPlugin from 'app/plugins/datasource/mssql/module';
 import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
+import * as inputDatasourcePlugin from 'app/plugins/datasource/input/module';
 import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
 import * as azureMonitorPlugin from 'app/plugins/datasource/grafana-azure-monitor-datasource/module';
 
@@ -45,6 +46,7 @@ const builtInPlugins = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
+  'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 

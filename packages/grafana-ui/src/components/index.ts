@@ -37,6 +37,9 @@ export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 // Renderless
 export { Interval } from './Interval/Interval';
 
+export { Table } from './Table/Table';
+export { TableInputCSV } from './Table/TableInputCSV';
+
 // Visualizations
 export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';

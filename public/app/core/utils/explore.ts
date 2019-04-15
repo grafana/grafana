@@ -144,6 +144,7 @@ export function buildQueryTransaction(
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
+    maxDataPoints: queryOptions.maxDataPoints,
   };
 
   return {

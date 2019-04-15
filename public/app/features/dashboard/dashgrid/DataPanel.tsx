@@ -15,6 +15,7 @@ import {
   ScopedVars,
   toSeriesData,
   guessFieldTypes,
+  DataQuery,
 } from '@grafana/ui';
 
 interface RenderProps {
@@ -24,7 +25,7 @@ interface RenderProps {
 
 export interface Props {
   datasource: string | null;
-  queries: any[];
+  queries: DataQuery[];
   panelId: number;
   dashboardId?: number;
   isVisible?: boolean;
@@ -131,9 +132,15 @@ export class DataPanel extends Component<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(datasource, scopedVars);
 
-      // TODO interpolate variables
       const minInterval = this.props.minInterval || ds.interval;
       const intervalRes = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+
+      // make shallow copy of scoped vars,
+      // and add built in variables interval and interval_ms
+      const scopedVarsWithInterval = Object.assign({}, scopedVars, {
+        __interval: { text: intervalRes.interval, value: intervalRes.interval },
+        __interval_ms: { text: intervalRes.intervalMs.toString(), value: intervalRes.intervalMs },
+      });
 
       const queryOptions: DataQueryOptions = {
         timezone: 'browser',
@@ -145,7 +152,7 @@ export class DataPanel extends Component<Props, State> {
         intervalMs: intervalRes.intervalMs,
         targets: queries,
         maxDataPoints: maxDataPoints || widthPixels,
-        scopedVars: scopedVars || {},
+        scopedVars: scopedVarsWithInterval,
         cacheTimeout: null,
       };
 
