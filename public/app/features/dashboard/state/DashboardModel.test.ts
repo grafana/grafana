@@ -1,3 +1,4 @@
+// @ts-ignore
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
@@ -6,7 +7,7 @@ jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({}, {});
@@ -27,7 +28,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when getting next panel id', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -69,7 +70,7 @@ describe('DashboardModel', () => {
   });
 
   describe('row and panel manipulation', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({});
@@ -112,7 +113,7 @@ describe('DashboardModel', () => {
   });
 
   describe('Given editable false dashboard', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({ editable: false });
@@ -130,8 +131,8 @@ describe('DashboardModel', () => {
   });
 
   describe('when loading dashboard with old influxdb query schema', () => {
-    let model;
-    let target;
+    let model: DashboardModel;
+    let target: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -197,7 +198,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when creating dashboard model with missing list for annoations or templating', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -222,7 +223,7 @@ describe('DashboardModel', () => {
   });
 
   describe('Formatting epoch timestamp when timezone is set as utc', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({ timezone: 'utc' });
@@ -242,7 +243,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with empty lists', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
@@ -255,7 +256,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with annotation', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -272,7 +273,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with template var', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -289,7 +290,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with hidden template var', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -306,7 +307,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with hidden annotation toggle', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -323,7 +324,7 @@ describe('DashboardModel', () => {
   });
 
   describe('When collapsing row', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -365,7 +366,7 @@ describe('DashboardModel', () => {
   });
 
   describe('When expanding row', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -637,7 +638,7 @@ describe('DashboardModel', () => {
   });
 
   describe('Given a dashboard with one panel legend on and two off', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       const data = {

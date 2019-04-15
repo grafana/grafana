@@ -1,14 +1,13 @@
-import { PluginExports, PluginMetaInfo } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
 
-export interface PanelPlugin {
-  id: string;
-  name: string;
+export interface PanelPlugin extends PluginMeta {
   hideFromList?: boolean;
-  module: string;
   baseUrl: string;
   info: PluginMetaInfo;
   sort: number;
-  exports?: PluginExports;
+  angularPlugin: AngularPanelPlugin | null;
+  reactPlugin: ReactPanelPlugin | null;
+  hasBeenImported?: boolean;
   dataFormats: PanelDataFormat[];
 }
 
@@ -17,18 +16,11 @@ export enum PanelDataFormat {
   TimeSeries = 'time_series',
 }
 
-export interface Plugin {
+export interface Plugin extends PluginMeta {
   defaultNavUrl: string;
-  enabled: boolean;
   hasUpdate: boolean;
-  id: string;
-  info: PluginMetaInfo;
   latestVersion: string;
-  name: string;
   pinned: boolean;
-  state: string;
-  type: string;
-  module: any;
 }
 
 export interface PluginDashboard {

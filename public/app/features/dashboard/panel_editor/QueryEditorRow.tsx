@@ -161,7 +161,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     // give angular time to compile
     setTimeout(() => {
       this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
-    }, 10);
+    }, 100);
   }
 
   onToggleCollapse = () => {
@@ -176,12 +176,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { query, onChange } = this.props;
     const { datasource, queryResponse, queryError } = this.state;
 
-    if (datasource.pluginExports.QueryCtrl) {
+    if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (datasource.pluginExports.QueryEditor) {
-      const QueryEditor = datasource.pluginExports.QueryEditor;
+    if (datasource.components.QueryEditor) {
+      const QueryEditor = datasource.components.QueryEditor;
+
       return (
         <QueryEditor
           query={query}
@@ -224,10 +225,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderCollapsedText(): string | null {
+    const { datasource } = this.state;
+    if (datasource.getQueryDisplayText) {
+      return datasource.getQueryDisplayText(this.props.query);
+    }
+
     if (this.angularScope && this.angularScope.getCollapsedText) {
       return this.angularScope.getCollapsedText();
     }
-
     return null;
   }
 

@@ -63,7 +63,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-mini" onClick={() => this.onRemoveGroup(group)}>
+          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
             <i className="fa fa-remove" />
           </a>
         </td>
@@ -121,8 +121,8 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 && !isAdding && (
           <div className="empty-list-cta">
             <div className="empty-list-cta__title">There are no external groups to sync with</div>
-            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-primary">
-              <i className="gicon gicon-add-team" />
+            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-large btn-primary">
+              <i className="gicon gicon-team" />
               Add Group
             </button>
             <div className="empty-list-cta__pro-tip">
