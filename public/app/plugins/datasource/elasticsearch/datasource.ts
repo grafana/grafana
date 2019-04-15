@@ -234,8 +234,12 @@ export class ElasticDatasource {
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
-    if (this.esVersion >= 56) {
+    if (this.esVersion >= 56 && this.esVersion < 70) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
+    } else if (this.esVersion >= 70) {
+      queryHeader['preference'] = {
+        max_concurrent_shard_requests: this.maxConcurrentShardRequests,
+      };
     }
     return angular.toJson(queryHeader);
   }
