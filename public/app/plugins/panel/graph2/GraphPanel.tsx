@@ -14,8 +14,8 @@ export class GraphPanel extends PureComponent<Props> {
     const { showLines, showBars, showPoints } = this.props.options;
 
     const graphs: GraphSeriesXY[] = [];
-    if (data) {
-      for (const series of data) {
+    if (data && data.series) {
+      for (const series of data.series) {
         const timeColumn = getFirstTimeField(series);
         if (timeColumn < 0) {
           continue;

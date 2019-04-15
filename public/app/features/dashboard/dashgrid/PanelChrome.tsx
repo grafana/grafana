@@ -19,7 +19,14 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData } from '@grafana/ui';
+import {
+  TimeRange,
+  LoadingState,
+  DataQueryError,
+  SeriesData,
+  toLegacyResponseData,
+  QueryResponseData,
+} from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -152,24 +159,29 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get getDataForPanel() {
-    return this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : null;
+    if (this.hasPanelSnapshot) {
+      return {
+        state: LoadingState.Done,
+        series: getProcessedSeriesData(this.props.panel.snapshotData),
+      };
+    }
+    return null;
   }
 
-  renderPanelPlugin(loading: LoadingState, data: SeriesData[], width: number, height: number): JSX.Element {
+  renderPanelPlugin(data: QueryResponseData, width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { timeRange, renderCounter } = this.state;
     const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
-    if (loading === LoadingState.Done) {
+    if (!data || data.state === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
     }
 
     return (
       <div className="panel-content">
         <PanelComponent
-          loading={loading}
           data={data}
           timeRange={timeRange}
           options={panel.getOptions(plugin.reactPlugin.defaults)}
@@ -201,12 +213,12 @@ export class PanelChrome extends PureComponent<Props, State> {
             onDataResponse={this.onDataResponse}
             onError={this.onDataError}
           >
-            {({ loading, data }) => {
-              return this.renderPanelPlugin(loading, data, width, height);
+            {({ data }) => {
+              return this.renderPanelPlugin(data, width, height);
             }}
           </DataPanel>
         ) : (
-          this.renderPanelPlugin(LoadingState.Done, this.getDataForPanel, width, height)
+          this.renderPanelPlugin(this.getDataForPanel, width, height)
         )}
       </>
     );

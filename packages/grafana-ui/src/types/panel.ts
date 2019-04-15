@@ -6,17 +6,16 @@ import { ScopedVars, DataRequestInfo, DataQueryError } from './datasource';
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface QueryResponseData {
-  loading: LoadingState;
-  data: SeriesData[];
-  // TODO: annotation support. either:
-  // - add annotation property
-  // - pass annotations as SeriesData with a special flag
-
+  state: LoadingState;
+  series: SeriesData[];
   request?: DataRequestInfo;
   error?: DataQueryError;
 }
 
-export interface PanelProps<T = any> extends QueryResponseData {
+export interface PanelProps<T = any> {
+  data?: QueryResponseData;
+  // TODO: annotation?: QueryResponseData;
+
   timeRange: TimeRange;
   options: T;
   renderCounter: number;

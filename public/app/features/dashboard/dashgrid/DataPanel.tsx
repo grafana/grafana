@@ -20,8 +20,7 @@ import {
 } from '@grafana/ui';
 
 interface RenderProps {
-  loading: LoadingState;
-  data: SeriesData[];
+  data?: QueryResponseData;
 }
 
 export interface Props {
@@ -80,8 +79,8 @@ export class DataPanel extends Component<Props, State> {
     this.state = {
       isFirstLoad: true,
       response: {
-        loading: LoadingState.NotStarted,
-        data: [],
+        state: LoadingState.NotStarted,
+        series: [],
       },
     };
   }
@@ -128,8 +127,8 @@ export class DataPanel extends Component<Props, State> {
     if (!queries.length) {
       this.setState({
         response: {
-          loading: LoadingState.Done,
-          data: [],
+          state: LoadingState.Done,
+          series: [],
         },
       });
       return;
@@ -186,8 +185,8 @@ export class DataPanel extends Component<Props, State> {
       this.setState({
         isFirstLoad: false,
         response: {
-          loading: LoadingState.Done,
-          data,
+          state: LoadingState.Done,
+          series: data,
           request,
         },
       });
@@ -221,10 +220,10 @@ export class DataPanel extends Component<Props, State> {
   render() {
     const { queries } = this.props;
     const { isFirstLoad, response } = this.state;
-    const { loading, data } = response;
+    const { state } = response;
 
     // do not render component until we have first data
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (isFirstLoad && (state === LoadingState.Loading || state === LoadingState.NotStarted)) {
       return this.renderLoadingState();
     }
 
@@ -238,8 +237,8 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, data })}
+        {state === LoadingState.Loading && this.renderLoadingState()}
+        {this.props.children({ data: response })}
       </>
     );
   }
