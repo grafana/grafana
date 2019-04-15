@@ -9,15 +9,20 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 )
 
-type DashboardProvisioner struct {
+type DashboardProvisioner interface {
+	Provision() error
+	PollChanges(ctx context.Context) error
+}
+
+type DashboardProvisionerImpl struct {
 	cfgReader   *configReader
 	log         log.Logger
 	fileReaders []*fileReader
 }
 
-func NewDashboardProvisioner(configDirectory string) *DashboardProvisioner {
+func NewDashboardProvisionerImpl(configDirectory string) *DashboardProvisionerImpl {
 	log := log.New("provisioning.dashboard")
-	d := &DashboardProvisioner{
+	d := &DashboardProvisionerImpl{
 		cfgReader: &configReader{path: configDirectory, log: log},
 		log:       log,
 	}
@@ -25,7 +30,7 @@ func NewDashboardProvisioner(configDirectory string) *DashboardProvisioner {
 	return d
 }
 
-func (provider *DashboardProvisioner) Provision() error {
+func (provider *DashboardProvisionerImpl) Provision() error {
 	readers, err := provider.getFileReaders()
 	if err != nil {
 		return err
@@ -43,7 +48,7 @@ func (provider *DashboardProvisioner) Provision() error {
 
 // PollChanges starts polling for changes in dashboard definition files. It creates goruotine for each provider
 // defined in the config and walks the file system each UpdateIntervalSeconds as defined in the provider config.
-func (provider *DashboardProvisioner) PollChanges(ctx context.Context) error {
+func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) error {
 	readers, err := provider.getFileReaders()
 	if err != nil {
 		return err
@@ -55,7 +60,7 @@ func (provider *DashboardProvisioner) PollChanges(ctx context.Context) error {
 	return nil
 }
 
-func (provider *DashboardProvisioner) pollChangesForFileReader(ctx context.Context, fileReader *fileReader) {
+func (provider *DashboardProvisionerImpl) pollChangesForFileReader(ctx context.Context, fileReader *fileReader) {
 	ticker := time.NewTicker(time.Duration(int64(time.Second) * fileReader.Cfg.UpdateIntervalSeconds))
 
 	running := false
@@ -79,7 +84,7 @@ func (provider *DashboardProvisioner) pollChangesForFileReader(ctx context.Conte
 	}
 }
 
-func (provider *DashboardProvisioner) getFileReaders() ([]*fileReader, error) {
+func (provider *DashboardProvisionerImpl) getFileReaders() ([]*fileReader, error) {
 	configs, err := provider.cfgReader.readConfig()
 	if err != nil {
 		return nil, err

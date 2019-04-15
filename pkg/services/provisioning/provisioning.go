@@ -14,22 +14,48 @@ import (
 )
 
 func init() {
-	registry.RegisterService(&ProvisioningService{})
+	registry.RegisterService(NewProvisioningServiceImpl(
+		func(path string) dashboards.DashboardProvisioner {
+			return dashboards.NewDashboardProvisionerImpl(path)
+		},
+		notifiers.Provision,
+		datasources.Provision,
+	))
 }
 
-type ProvisioningService struct {
-	Cfg                 *setting.Cfg `inject:""`
-	log                 log.Logger
-	dashProvisionerChan chan *dashboards.DashboardProvisioner
-	pollingCtxCancel    context.CancelFunc
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
 }
 
-func (ps *ProvisioningService) Init() error {
-	ps.log = log.New("provisioning")
-	// Channel to send new provisioner and start polling with it. Needs to have 1 buffering to allow creating the
-	// the provisioner here in init and let the polling start later in Run().
-	ps.dashProvisionerChan = make(chan *dashboards.DashboardProvisioner, 1)
+func NewProvisioningServiceImpl(
+	newDashboardProvisioner func(string) dashboards.DashboardProvisioner,
+	provisionNotifiers func(string) error,
+	provisionDatasources func(string) error,
+) *provisioningServiceImpl {
+	return &provisioningServiceImpl{
+		log:                     log.New("provisioning"),
+		newDashboardProvisioner: newDashboardProvisioner,
+		provisionNotifiers:      provisionNotifiers,
+		provisionDatasources:    provisionDatasources,
+		// Channel to send new provisioner and start polling with it. Needs to have 1 buffering to allow creating the
+		// the provisioner in Init and let the polling start later in Run().
+		dashProvisionerChan: make(chan dashboards.DashboardProvisioner, 1),
+	}
+}
 
+type provisioningServiceImpl struct {
+	Cfg                     *setting.Cfg `inject:""`
+	log                     log.Logger
+	dashProvisionerChan     chan dashboards.DashboardProvisioner
+	pollingCtxCancel        context.CancelFunc
+	newDashboardProvisioner func(string) dashboards.DashboardProvisioner
+	provisionNotifiers      func(string) error
+	provisionDatasources    func(string) error
+}
+
+func (ps *provisioningServiceImpl) Init() error {
 	err := ps.ProvisionDatasources()
 	if err != nil {
 		return err
@@ -48,7 +74,7 @@ func (ps *ProvisioningService) Init() error {
 	return nil
 }
 
-func (ps *ProvisioningService) Run(ctx context.Context) error {
+func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	for {
 		// We do not have to check for cancellation of the pollingContext in the select statement as there is
 		// nothing to do with that, just wait for new provisioner to start polling again.
@@ -77,21 +103,21 @@ func (ps *ProvisioningService) Run(ctx context.Context) error {
 	}
 }
 
-func (ps *ProvisioningService) ProvisionDatasources() error {
+func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := datasources.Provision(datasourcePath)
+	err := ps.provisionDatasources(datasourcePath)
 	return errors.Wrap(err, "Datasource provisioning error")
 }
 
-func (ps *ProvisioningService) ProvisionNotifications() error {
+func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := notifiers.Provision(alertNotificationsPath)
+	err := ps.provisionNotifiers(alertNotificationsPath)
 	return errors.Wrap(err, "Alert notification provisioning error")
 }
 
-func (ps *ProvisioningService) ProvisionDashboards() error {
+func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner := dashboards.NewDashboardProvisioner(dashboardPath)
+	dashProvisioner := ps.newDashboardProvisioner(dashboardPath)
 	ps.cancelPolling()
 
 	if err := dashProvisioner.Provision(); err != nil {
@@ -101,7 +127,7 @@ func (ps *ProvisioningService) ProvisionDashboards() error {
 	return nil
 }
 
-func (ps *ProvisioningService) cancelPolling() {
+func (ps *provisioningServiceImpl) cancelPolling() {
 	if ps.pollingCtxCancel != nil {
 		ps.log.Debug("Stop polling for dashboard changes")
 		ps.pollingCtxCancel()
