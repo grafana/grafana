@@ -70,4 +70,32 @@
 			checked="ctrl.panel.legend.hideZero" on-change="ctrl.render()">
 		</gf-form-switch>
 	</div>
+
+	<div class="section gf-form-group">
+		<h5 class="section-heading">Interaction</h5>
+		<div class="gf-form">
+			<label class="gf-form-label width-5">Click</label>
+			<span class="gf-form-select-wrapper">
+				<select 
+					type="text" 
+					class="gf-form-input max-width-12"
+					ng-model="ctrl.panel.legend.clickAction"
+					ng-change="ctrl.render()"
+					placeholder="Toggle Visibility"
+					>
+					<option value="toggle">Toggle Visibility</option>
+					<option value="drilldown">Drilldown Link</option>
+				</select>
+			</span>
+		</div>
+	</div>
+
+
+	<div class="editor-row" ng-if="ctrl.panel.legend.clickAction === 'drilldown'">
+		<h4>Drilldown Link</h4>
+		TODO... make it only allow one and add a template variable
+		<panel-links-editor panel="ctrl.panel"></panel-links-editor>
+	</div>
+	
 </div>
+

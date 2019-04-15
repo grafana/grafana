@@ -12,7 +12,7 @@ import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
 import { tickStep } from 'app/core/utils/ticks';
-import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
+import { appEvents, coreModule, updateLegendValues, TimeSeries } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
@@ -75,6 +75,10 @@ class GraphElement {
     }
   }
 
+  onSeriesDrilldown = (series: TimeSeries) => {
+    alert('TODO change the URL and add template for: ' + series.alias);
+  };
+
   onRender(renderData) {
     this.data = renderData || this.data;
     if (!this.data) {
@@ -95,7 +99,7 @@ class GraphElement {
     }
 
     const { values, min, max, avg, current, total } = this.panel.legend;
-    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero, clickAction } = this.panel.legend;
     const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
     const valueOptions = { values, min, max, avg, current, total };
     const legendProps: GraphLegendProps = {
@@ -103,6 +107,7 @@ class GraphElement {
       hiddenSeries: this.ctrl.hiddenSeries,
       ...legendOptions,
       ...valueOptions,
+      onSeriesClick: clickAction === 'drilldown' ? this.onSeriesDrilldown : null,
       onToggleSeries: this.ctrl.onToggleSeries,
       onToggleSort: this.ctrl.onToggleSort,
       onColorChange: this.ctrl.onColorChange,

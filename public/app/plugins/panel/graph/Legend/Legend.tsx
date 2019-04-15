@@ -6,6 +6,7 @@ import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
   seriesList: TimeSeries[];
+  onSeriesClick?: (series: TimeSeries) => void; // Optionally passed in externally
   optionalClass?: string;
 }
 
@@ -169,6 +170,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       avg,
       current,
       total,
+      onSeriesClick,
     } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const hiddenSeries = this.state.hiddenSeries;
@@ -189,7 +191,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     const legendProps: LegendComponentProps = {
       seriesList: seriesList,
       hiddenSeries: hiddenSeries,
-      onToggleSeries: this.onToggleSeries,
+      onToggleSeries: onSeriesClick ? onSeriesClick : this.onToggleSeries,
       onToggleAxis: this.props.onToggleAxis,
       onToggleSort: this.props.onToggleSort,
       onColorChange: this.props.onColorChange,
