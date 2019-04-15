@@ -35,7 +35,7 @@ export function graphiteAddFunc($compile) {
           minLength: 1,
           items: 10,
           updater: value => {
-            let funcDef = ctrl.datasource.getFuncDef(value);
+            let funcDef: any = ctrl.datasource.getFuncDef(value);
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();

@@ -34,7 +34,7 @@ export function buildNavModel(ds: DataSourceSettings, plugin: PluginMeta, curren
     ],
   };
 
-  const hasDashboards = _.find(plugin.includes, { type: 'dashboard' }) !== undefined;
+  const hasDashboards: any = _.find(plugin.includes, { type: 'dashboard' }) !== undefined;
   if (hasDashboards && ds.id) {
     main.children.push({
       active: currentPage === 'datasource-dashboards',

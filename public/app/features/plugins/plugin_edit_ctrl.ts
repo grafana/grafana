@@ -53,7 +53,7 @@ export class PluginEditCtrl {
         url: `plugins/${this.model.id}/edit?tab=config`,
       });
 
-      const hasDashboards = _.find(model.includes, { type: 'dashboard' });
+      const hasDashboards: any = _.find(model.includes, { type: 'dashboard' });
 
       if (hasDashboards) {
         this.navModel.main.children.push({

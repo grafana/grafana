@@ -72,6 +72,7 @@ export enum NullValueMode {
 }
 
 export interface AnnotationEvent {
+  id?: string;
   annotation?: any;
   dashboardId?: number;
   panelId?: number;
@@ -82,5 +83,5 @@ export interface AnnotationEvent {
   title?: string;
   text?: string;
   type?: string;
-  tags?: string;
+  tags?: string[];
 }

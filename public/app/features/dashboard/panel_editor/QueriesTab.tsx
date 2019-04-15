@@ -122,6 +122,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     const index = _.indexOf(panel.targets, query);
+    // @ts-ignore
     _.move(panel.targets, index, index + direction);
 
     this.forceUpdate();
