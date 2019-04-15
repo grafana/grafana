@@ -283,6 +283,9 @@ export class ElasticDatasource {
   }
 
   getFields(query) {
+    // XXX: code-smell, I don't really know how to access the `this` closure
+    // value
+    const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then(result => {
       const typeMap = {
         float: 'number',
@@ -347,8 +350,16 @@ export class ElasticDatasource {
         const index = result[indexName];
         if (index && index.mappings) {
           const mappings = index.mappings;
-          for (const typeName in mappings) {
-            const properties = mappings[typeName].properties;
+
+          if (configuredEsVersion < 70) {
+            for (const typeName in mappings) {
+              const properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
+            }
+          } else {
+            // ES 7 finally removed types in indices, and it also removed
+            // them from the API
+            const properties = mappings.properties;
             getFieldsRecursively(properties);
           }
         }
