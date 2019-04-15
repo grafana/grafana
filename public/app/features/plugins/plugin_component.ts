@@ -155,26 +155,26 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // AppConfigCtrl
       case 'app-config-ctrl': {
         const model = scope.ctrl.model;
-        return importAppPlugin(model.module).then(appPlugin => {
+        return importAppPlugin(model).then(appPlugin => {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
             bindings: { appModel: '=', appEditCtrl: '=' },
             attrs: { 'app-model': 'ctrl.model', 'app-edit-ctrl': 'ctrl' },
-            Component: appPlugin.components.ConfigCtrl,
+            Component: appPlugin.angular.ConfigCtrl,
           };
         });
       }
       // App Page
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
-        return importAppPlugin(appModel.module).then(appPlugin => {
+        return importAppPlugin(appModel).then(appPlugin => {
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: { appModel: '=' },
             attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appPlugin.pages[scope.ctrl.page.component],
+            Component: appPlugin.angular.pages[scope.ctrl.page.component],
           };
         });
       }
