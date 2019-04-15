@@ -8,7 +8,9 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface QueryResponseData {
   loading: LoadingState;
   data: SeriesData[];
-  // TODO: annotations: ???[]; pass annotation data to panels
+  // TODO: annotation support. either:
+  // - add annotation property
+  // - pass annotations as SeriesData with a special flag
 
   request?: DataRequestInfo;
   error?: DataQueryError;

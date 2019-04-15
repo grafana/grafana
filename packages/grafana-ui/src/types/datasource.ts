@@ -239,7 +239,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
  */
 export interface DataRequestInfo extends DataQueryOptions {
   startTime: number;
-  finishTime?: number;
+  endTime?: number;
 }
 
 export interface QueryFix {

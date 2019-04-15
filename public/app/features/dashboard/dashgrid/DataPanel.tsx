@@ -171,7 +171,7 @@ export class DataPanel extends Component<Props, State> {
       };
 
       const resp = await ds.query(request);
-      request.finishTime = Date.now();
+      request.endTime = Date.now();
 
       if (this.isUnmounted) {
         return;
