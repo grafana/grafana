@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 // Types
 import { SelectOptionItem } from '@grafana/ui';
 import { DashboardModel } from '../../state';
+import { LocationState } from 'app/types';
 
 // State
 import { updateLocation } from 'app/core/actions';
@@ -22,11 +23,31 @@ import {
 export interface Props {
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
-  location: any;
+  location: LocationState;
 }
 
 export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
+
+  get refreshParamInUrl(): string {
+    return this.props.location.query.refresh as string;
+  }
+
+  get refreshPickerValue(): SelectOptionItem {
+    const { dashboard } = this.props;
+    return dashboard.refresh ? getIntervalFromString(dashboard.refresh) : defaultRefreshPickerItem;
+  }
+
+  componentDidUpdate(props: Props) {
+    if (this.refreshParamInUrl !== props.dashboard.refresh) {
+      if (this.refreshParamInUrl) {
+        this.onChangeRefreshInterval(getIntervalFromString(this.refreshParamInUrl));
+      } else {
+        this.onChangeRefreshInterval(defaultRefreshPickerItem);
+      }
+      this.forceUpdate();
+    }
+  }
 
   onChangeRefreshInterval = (interval: SelectOptionItem) => {
     const { dashboard } = this.props;
@@ -41,11 +62,6 @@ export class DashNavTimeControls extends Component<Props> {
     this.timeSrv.refreshDashboard();
     return Promise.resolve();
   };
-
-  get refreshPickerValue(): SelectOptionItem {
-    const { dashboard } = this.props;
-    return dashboard.refresh ? getIntervalFromString(dashboard.refresh) : defaultRefreshPickerItem;
-  }
 
   render() {
     const { dashboard } = this.props;
