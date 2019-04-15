@@ -107,7 +107,7 @@ datasources:
   orgId: 1
   # <string> url
   url: http://localhost:8080
-  # <string> database password, if used
+  # <string> Deprecated, use secureJsonData.password
   password:
   # <string> database user, if used
   user:
@@ -117,7 +117,7 @@ datasources:
   basicAuth:
   # <string> basic auth username
   basicAuthUser:
-  # <string> basic auth password
+  # <string> Deprecated, use secureJsonData.basicAuthPassword
   basicAuthPassword:
   # <bool> enable/disable with credentials headers
   withCredentials:
@@ -133,6 +133,10 @@ datasources:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
+    # <string> database password, if used
+    password:
+    # <string> basic auth password
+    basicAuthPassword:
   version: 1
   # <bool> allow users to edit datasources from the UI.
   editable: false
@@ -184,8 +188,8 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | PostgreSQL | password |
-| user | string | PostgreSQL | user |
+| password | string | *All* | password |
+| basicAuthPassword | string | *All* | password for basic authentication |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
