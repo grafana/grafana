@@ -1,7 +1,7 @@
-import React from 'react';
-
 import { DisplayValue } from '../../types/index';
+
 import { LegendList } from './LegendList';
+import { LegendTable } from './LegendTable';
 
 export interface LegendBasicOptions {
   isVisible: boolean;
@@ -27,24 +27,13 @@ export interface LegendItem {
 }
 
 export interface LegendComponentProps {
+  className?: string;
   items: LegendItem[];
-  // Array of stat ids to be displayed in legend
-  statsToDisplay?: string[];
   placement: LegendPlacement;
   // Function to render given item
-  itemRenderer?: (item: LegendItem) => JSX.Element;
-  // onToggleSort?: (sortBy: string, sortDesc: boolean) => void;
+  itemRenderer?: (item: LegendItem, index: number) => JSX.Element;
 }
 
-export interface LegendProps extends LegendComponentProps {
-  // Component to be used to render legend
-  // renderLegendAs: React.ComponentType<LegendComponentProps>;
-}
+export interface LegendProps extends LegendComponentProps {}
 
-export const Legend: React.FunctionComponent<LegendProps> = ({ ...legendComponentProps }) => {
-  // const LegendComponent = renderLegendAs;
-
-  return <LegendList {...legendComponentProps} />;
-};
-
-Legend.displayName = 'Legend';
+export { LegendList, LegendTable };

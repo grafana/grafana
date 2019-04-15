@@ -1,38 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import sortBy from 'lodash/sortBy';
-import { LegendComponentProps, LegendItem } from './Legend';
-import { css } from 'emotion';
+import React, { useContext } from 'react';
+import { css, cx } from 'emotion';
+import { LegendComponentProps } from './Legend';
+import { ThemeContext } from '../../themes/ThemeContext';
 
 interface LegendTableProps extends LegendComponentProps {
-  onToggleSort?: (sortBy: string, sortDesc: boolean) => void;
   columns: string[];
   sortBy?: string;
   sortDesc?: boolean;
+  onToggleSort?: (sortBy: string) => void;
 }
-
-const useLegendTableSort = (items: LegendItem[], sortByKey?: string, sortDesc?: boolean) => {
-  const [sortedItems, setSortedItems] = useState(items);
-
-  useEffect(() => {
-    if (sortByKey) {
-      const sortedItems = sortBy(items, item => {
-        if (item.info) {
-          const stat = item.info.filter(stat => stat.title === sortByKey)[0];
-          return stat && stat.numeric;
-        }
-        return undefined;
-      });
-
-      if (sortDesc) {
-        sortedItems.reverse();
-      }
-
-      setSortedItems(sortedItems);
-    }
-  }, [sortByKey, sortDesc]);
-
-  return sortedItems;
-};
 
 export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
   items,
@@ -40,40 +16,65 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
   sortBy,
   sortDesc,
   itemRenderer,
+  className,
   onToggleSort,
 }) => {
-  const sortedItems = useLegendTableSort(items, sortBy, sortDesc);
+  const theme = useContext(ThemeContext);
 
   return (
     <table
-      className={css`
-        width: 100%;
-        td {
-          padding: 2px 10px;
-        }
-      `}
+      className={cx(
+        css`
+          width: 100%;
+          td {
+            padding: 2px 10px;
+          }
+        `,
+        className
+      )}
     >
       <thead>
         <tr>
           {columns.map(columnHeader => {
             return (
-              <td
+              <th
+                className={css`
+                  color: ${theme.colors.blue};
+                  font-weight: bold;
+                  text-align: right;
+                  cursor: pointer;
+                `}
                 onClick={() => {
                   if (onToggleSort) {
-                    onToggleSort(columnHeader, sortDesc ? false : true);
+                    onToggleSort(columnHeader);
                   }
                 }}
               >
                 {columnHeader}
-              </td>
+                {sortBy === columnHeader && (
+                  <span
+                    className={cx(
+                      `fa fa-caret-${sortDesc ? 'down' : 'up'}`,
+                      css`
+                        margin-left: ${theme.spacing.sm};
+                      `
+                    )}
+                  />
+                )}
+              </th>
             );
           })}
         </tr>
       </thead>
       <tbody>
-        {sortedItems.map((item, index) => {
-          console.log(item);
-          return <tr key={`${item.label}-${index}`}>{itemRenderer ? itemRenderer(item) : <td>{item.label}</td>}</tr>;
+        {items.map((item, index) => {
+          return itemRenderer ? (
+            itemRenderer(item, index)
+          ) : (
+            <tr key={`${item.label}-${index}`}>
+              <td>{item.label}</td>
+            </tr>
+          );
         })}
       </tbody>
     </table>

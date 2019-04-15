@@ -69,8 +69,8 @@ GraphLegendStories.add('list', () => {
         onSeriesAxisToggle={(label, useRightYAxis) => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
-        onToggleSort={(sortBy, sortDesc) => {
-          action('Toggle legend sort')(sortBy, sortDesc);
+        onToggleSort={sortBy => {
+          action('Toggle legend sort')(sortBy);
         }}
         placement={legendPlacement}
       />
@@ -94,8 +94,8 @@ GraphLegendStories.add('table', () => {
         onSeriesAxisToggle={(label, useRightYAxis) => {
           action('Series axis toggle')(label, useRightYAxis);
         }}
-        onToggleSort={(sortBy, sortDesc) => {
-          action('Toggle legend sort')(sortBy, sortDesc);
+        onToggleSort={sortBy => {
+          action('Toggle legend sort')(sortBy);
         }}
         placement={legendPlacement}
       />

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { LegendSeriesIcon } from '../Legend/LegendSeriesIcon';
 import { LegendItem } from '../Legend/Legend';
 import { SeriesColorChangeHandler } from './GraphWithLegend';
@@ -8,6 +8,7 @@ import { ThemeContext } from '../../themes/ThemeContext';
 
 interface GraphLegendItemProps {
   item: LegendItem;
+  className?: string;
   onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange: SeriesColorChangeHandler;
   onToggleAxis: () => void;
@@ -42,21 +43,32 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
   );
 };
 
-export const GraphLegendTableItem: React.FunctionComponent<GraphLegendItemProps> = ({
+export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> = ({
   item,
   onSeriesColorChange,
   onToggleAxis,
   onLabelClick,
+  className,
 }) => {
   const theme = useContext(ThemeContext);
   return (
-    <>
+    <tr
+      className={cx(
+        css`
+          font-size: ${theme.typography.size.sm};
+          td {
+            padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+            white-space: nowrap;
+          }
+        `,
+        className
+      )}
+    >
       <td>
         <span
           className={css`
             padding-left: 10px;
             display: flex;
-            font-size: ${theme.typography.size.sm};
             white-space: nowrap;
           `}
         >
@@ -73,14 +85,31 @@ export const GraphLegendTableItem: React.FunctionComponent<GraphLegendItemProps>
               white-space: nowrap;
             `}
           >
-            {item.label}
+            {item.label}{' '}
+            {item.useRightYAxis && (
+              <span
+                className={css`
+                  color: ${theme.colors.gray2};
+                `}
+              >
+                (right y-axis)
+              </span>
+            )}
           </div>
         </span>
       </td>
       {item.info &&
         item.info.map(stat => {
-          return <td>{stat.text}</td>;
+          return (
+            <td
+              className={css`
+                text-align: right;
+              `}
+            >
+              {stat.text}
+            </td>
+          );
         })}
-    </>
+    </tr>
   );
 };

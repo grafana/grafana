@@ -8,17 +8,17 @@ import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/s
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];
-  onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
-  onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesAxisToggle: SeriesAxisToggleHandler;
-  onToggleSort: (sortBy: string, sortDesc: boolean) => void;
+  onSeriesColorChange: SeriesColorChangeHandler;
+  onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
+  onToggleSort: (sortBy: string) => void;
 }
 
 interface GraphPanelControllerProps {
   children: (api: GraphPanelControllerAPI) => JSX.Element;
   options: Options;
-  onOptionsChange: (options: Options) => void;
   data: SeriesData[];
+  onOptionsChange: (options: Options) => void;
 }
 
 interface GraphPanelControllerState {
@@ -101,14 +101,14 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
   }
 
-  onToggleSort(sortBy: string, sortDesc: boolean) {
+  onToggleSort(sortBy: string) {
     const { onOptionsChange, options } = this.props;
     onOptionsChange({
       ...options,
       legend: {
         ...options.legend,
         sortBy,
-        sortDesc,
+        sortDesc: sortBy === options.legend.sortBy ? !options.legend.sortDesc : false,
       },
     });
   }

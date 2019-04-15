@@ -40,9 +40,7 @@ export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
 
-export { Legend, LegendOptions, LegendBasicOptions, LegendRenderOptions } from './Legend/Legend';
-export { LegendTable } from './Legend/LegendTable';
-export { LegendList } from './Legend/LegendList';
+export { LegendOptions, LegendBasicOptions, LegendRenderOptions, LegendList, LegendTable } from './Legend/Legend';
 
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';

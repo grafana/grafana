@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { LegendProps, LegendItem } from '../Legend/Legend';
-import { GraphLegendListItem, GraphLegendTableItem } from './GraphLegendItem';
+import { GraphLegendListItem, GraphLegendTableRow } from './GraphLegendItem';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from './GraphWithLegend';
 import { LegendTable } from '../Legend/LegendTable';
 import { LegendList } from '../Legend/LegendList';
 import union from 'lodash/union';
+import sortBy from 'lodash/sortBy';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { css } from 'emotion';
+import { selectThemeVariant } from '../../themes/index';
 
 interface GraphLegendProps extends LegendProps {
   renderLegendAsTable?: boolean;
@@ -12,20 +16,23 @@ interface GraphLegendProps extends LegendProps {
   sortDesc?: boolean;
   onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
-  onToggleSort: (sortBy: string, sortDesc: boolean) => void;
+  onToggleSort: (sortBy: string) => void;
   onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   items,
   renderLegendAsTable,
-  sortBy,
+  sortBy: sortKey,
   sortDesc,
   onToggleSort,
   onSeriesAxisToggle,
   placement,
+  className,
   ...graphLegendItemProps
 }) => {
+  const theme = useContext(ThemeContext);
+
   if (renderLegendAsTable) {
     const columns = items
       .map(item => {
@@ -41,21 +48,48 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
         ['']
       ) as string[];
 
+    const sortedItems = sortKey
+      ? sortBy(items, item => {
+          if (item.info) {
+            const stat = item.info.filter(stat => stat.title === sortKey)[0];
+            return stat && stat.numeric;
+          }
+          return undefined;
+        })
+      : items;
+
+    const legendTableEvenRowBackground = selectThemeVariant(
+      {
+        dark: theme.colors.dark6,
+        light: theme.colors.gray5,
+      },
+      theme.type
+    );
+
     return (
       <LegendTable
-        items={items}
+        className={css`
+          font-size: ${theme.typography.size.sm};
+          th {
+            padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+          }
+        `}
+        items={sortDesc ? sortedItems.reverse() : sortedItems}
         columns={columns}
         placement={placement}
-        sortBy={sortBy}
+        sortBy={sortKey}
         sortDesc={sortDesc}
-        itemRenderer={item => (
-          <GraphLegendTableItem
+        itemRenderer={(item, index) => (
+          <GraphLegendTableRow
             item={item}
             onToggleAxis={() => {
               if (onSeriesAxisToggle) {
                 onSeriesAxisToggle(item.label, !item.useRightYAxis);
               }
             }}
+            className={css`
+              background: ${index % 2 === 0 ? legendTableEvenRowBackground : 'none'};
+            `}
             {...graphLegendItemProps}
           />
         )}
@@ -79,22 +113,5 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
         />
       )}
     />
-    // <Legend
-    //   items={items}
-    // itemRenderer={item => (
-    //   <GraphLegendListItem
-    //     item={item}
-    //     onToggleAxis={() => {
-    //       if (onSeriesAxisToggle) {
-    //         onSeriesAxisToggle(item.label, !item.useRightYAxis);
-    //       }
-    //     }}
-    //     {...graphLegendItemProps}
-    //   />
-    // )}
-    //   onToggleSort={onToggleSort}
-    //   renderLegendAs={renderLegendAs}
-    //   placement={placement}
-    // />
   );
 };
