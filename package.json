@@ -52,7 +52,7 @@
     "enzyme": "3.9.0",
     "enzyme-adapter-react-16": "1.11.2",
     "enzyme-to-json": "3.3.5",
-    "es6-promise": "4.2.6",
+    "es6-promise": "3.3.1",
     "es6-shim": "0.35.5",
     "execa": "1.0.0",
     "expect.js": "0.2.0",
