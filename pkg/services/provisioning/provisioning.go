@@ -30,7 +30,7 @@ type ProvisioningService interface {
 }
 
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner func(string) (dashboards.DashboardProvisioner, error),
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -50,7 +50,7 @@ type provisioningServiceImpl struct {
 	log                     log.Logger
 	dashProvisionerChan     chan dashboards.DashboardProvisioner
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner func(string) (dashboards.DashboardProvisioner, error)
+	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 }

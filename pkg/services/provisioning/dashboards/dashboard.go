@@ -17,6 +17,8 @@ type DashboardProvisionerImpl struct {
 	fileReaders []*fileReader
 }
 
+type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
