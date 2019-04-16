@@ -12,6 +12,7 @@ export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
+export { ButtonSelect } from './Select/ButtonSelect';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
@@ -31,6 +32,10 @@ export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
+export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+
+// Renderless
+export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
@@ -41,6 +46,6 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/shared';
-
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';

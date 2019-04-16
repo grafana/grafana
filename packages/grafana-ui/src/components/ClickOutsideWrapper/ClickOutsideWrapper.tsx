@@ -22,7 +22,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     window.removeEventListener('click', this.onOutsideClick, false);
   }
 
-  onOutsideClick = event => {
+  onOutsideClick = (event: any) => {
     const domNode = ReactDOM.findDOMNode(this) as Element;
 
     if (!domNode || !domNode.contains(event.target)) {
