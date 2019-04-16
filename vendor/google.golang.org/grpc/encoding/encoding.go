@@ -82,7 +82,7 @@ type Codec interface {
 	Name() string
 }
 
-var registeredCodecs = make(map[string]Codec, 0)
+var registeredCodecs = make(map[string]Codec)
 
 // RegisterCodec registers the provided Codec for use with all gRPC clients and
 // servers.

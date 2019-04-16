@@ -156,6 +156,26 @@ func (p Proc) Executable() (string, error) {
 	return exe, err
 }
 
+// Cwd returns the absolute path to the current working directory of the process.
+func (p Proc) Cwd() (string, error) {
+	wd, err := os.Readlink(p.path("cwd"))
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+
+	return wd, err
+}
+
+// RootDir returns the absolute path to the process's root directory (as set by chroot)
+func (p Proc) RootDir() (string, error) {
+	rdir, err := os.Readlink(p.path("root"))
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+
+	return rdir, err
+}
+
 // FileDescriptors returns the currently open file descriptors of a process.
 func (p Proc) FileDescriptors() ([]uintptr, error) {
 	names, err := p.fileDescriptors()
