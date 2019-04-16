@@ -10,10 +10,10 @@ weight = 5
 
 # Backend plugins
 
-Backend plugin is a new type of plugin in Grafana. Once Grafana introduced an alerting feature, external plugins need a backend component that the Grafana server can query for evaluating alert rules. So the main purpose and motivation for backend plugins is alerting. But this new plugin type can be used for achieving different goals such as queries cache, proxy, custom authentication methods and others.
+Backend plugins are a new type of plugin in Grafana. Once Grafana introduced the alerting feature, external plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules. So the main purpose and motivation for backend plugins was alerting. But this new plugin type can be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
 
 ## General information
-Backend plugin feature implemented with [HashiCorp plugin system](https://github.com/hashicorp/go-plugin) which is a is a Go plugin system over RPC. Grafana server is launching plugin as a subprocesses and communicating over RPC. This approach has a number of benefits from Grafana perspective:
+The backend plugin feature is implemented with the [HashiCorp plugin system](https://github.com/hashicorp/go-plugin) which is a is a Go plugin system over RPC. Grafana server launches each plugin as a subprocesses and communicates with it over RPC. This approach has a number of benefits:
 
 - Plugins can't crash your grafana process: a panic in a plugin doesn't panic the server.
 - Plugins are easy to develop: just write a Go application and go build (or use any other language which supports gRPC).
@@ -21,7 +21,7 @@ Backend plugin feature implemented with [HashiCorp plugin system](https://github
 
 ## Plugin interface
 
-Plugin interface is very simple and described as a Go interface type in [Grafana](https://github.com/grafana/grafana/blob/6724aaeff9a332dc73b4ee0f8abe0621f7253142/pkg/tsdb/query_endpoint.go#L10-L12) and as a general [RPC service](https://github.com/grafana/grafana-plugin-model/blob/84176c64269d8060f99e750ee8aba6f062753336/datasource.proto#L96-L98) in corresponding `.proto` (protocol buffer file):
+The plugin interface is very simple and described as a Go interface type in [Grafana](https://github.com/grafana/grafana/blob/6724aaeff9a332dc73b4ee0f8abe0621f7253142/pkg/tsdb/query_endpoint.go#L10-L12) and as a general [RPC service](https://github.com/grafana/grafana-plugin-model/blob/84176c64269d8060f99e750ee8aba6f062753336/datasource.proto#L96-L98) in the corresponding `.proto` (protocol buffer file):
 
 ```go
 type TsdbQueryEndpoint interface {
@@ -35,15 +35,15 @@ service DatasourcePlugin {
 }
 ```
 
-Thus, datasource plugin should only implement `Query()` method.
+Thus, a datasource plugin should only implement the `Query()` method.
 
 ## Introduction to building a backend component for a plugin
 
-[Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) datasource is a good example for writing simple backend plugin in golang. Let's take a look at some key points.
+The [Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) datasource is a good example for writing simple backend plugin in golang. Let's take a look at some key points.
 
 ### Metadata
 
-The plugin needs to know it has a backend component, this is done in the `plugin.json` file by setting two fields: `backend` and `executable`. If you want to enable alerting for your datasource, set `alerting` field to `true` as well.
+The plugin needs to know it has a backend component, this is done in the `plugin.json` file by setting two fields: `backend` and `executable`. If you want to enable alerting for your datasource, set the `alerting` field to `true` as well.
 
 ```json
 {
@@ -69,7 +69,7 @@ When Grafana loads the plugin binary, it use the executable field plus the curre
 - `simple-json-plugin_linux_amd64`
 - `simple-json-plugin_windows_amd64.exe`
 
-So resulting directory will look like this:
+The resulting plugin directory will look like this:
 
 ```text
 simple-json-backend-datasource/
@@ -87,7 +87,7 @@ simple-json-backend-datasource/
 
 A `pkg/` directory contains three `.go` files:
 
-- `plugin.go` - an entry point of the plugin. This file would be very similar for your datasource - just need to change some details like the plugin name etc.
+- `plugin.go` - an entry point of the plugin. This file would be very similar for your datasource - you just need to change some details like the plugin name etc.
 - `datasource.go` - contains `Query()` method implementation and other plugin logic.
 - `models.go` - types for request and response specific to your datasource.
 
