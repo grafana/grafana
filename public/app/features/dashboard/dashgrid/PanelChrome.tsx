@@ -152,13 +152,10 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get getDataForPanel() {
-    if (this.hasPanelSnapshot) {
-      return {
-        state: LoadingState.Done,
-        series: getProcessedSeriesData(this.props.panel.snapshotData),
-      };
-    }
-    return null;
+    return {
+      state: LoadingState.Done,
+      series: this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : [],
+    };
   }
 
   renderPanelPlugin(data: PanelData, width: number, height: number): JSX.Element {
@@ -168,7 +165,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
-    if (!data || data.state === LoadingState.Done) {
+    if (data.state === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
     }
 
