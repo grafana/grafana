@@ -112,13 +112,13 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
 	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath)
 	if err != nil {
-		return errors.Wrap(err, "Could not create provisioner")
+		return errors.Wrap(err, "Failed to create provisioner")
 	}
 	// Lets cancel first so we do not get new config temporary overwritten by the polling process.
 	ps.cancelPolling()
 
 	if err := dashProvisioner.Provision(); err != nil {
-		return errors.Wrap(err, "Could not provision dashboards")
+		return errors.Wrap(err, "Failed to provision dashboards")
 	}
 	ps.dashProvisionerChan <- dashProvisioner
 	return nil

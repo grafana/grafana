@@ -23,13 +23,13 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	configs, err := cfgReader.readConfig()
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Could not read dashboards config")
+		return nil, errors.Wrap(err, "Failed to read dashboards config")
 	}
 
 	fileReaders, err := getFileReaders(configs, logger)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Could initialize file readers")
+		return nil, errors.Wrap(err, "Failed to initialize file readers")
 	}
 
 	d := &DashboardProvisionerImpl{
@@ -67,7 +67,7 @@ func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileRe
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
 			if err != nil {
-				return nil, errors.Wrapf(err, "Could not create file reader for config %v", config.Name)
+				return nil, errors.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}
 			readers = append(readers, fileReader)
 		default:
