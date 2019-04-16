@@ -64,6 +64,7 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	assert.Equal(t, err, nil, "expected nil. got: ", err)
 
 	data, err := client.Get("key1")
+	assert.Equal(t, err, nil)
 	s, ok := data.(CacheableStruct)
 
 	assert.Equal(t, ok, true)

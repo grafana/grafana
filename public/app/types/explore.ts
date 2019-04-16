@@ -250,6 +250,11 @@ export interface ExploreItemState {
    */
   hiddenLogLevels?: LogLevel[];
 
+  /**
+   * How often query should be refreshed
+   */
+  refreshInterval?: string;
+
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;

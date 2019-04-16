@@ -1,0 +1,189 @@
+.time-picker {
+  display: flex;
+  flex-flow: column nowrap;
+
+  .time-picker-buttons {
+    display: flex;
+  }
+}
+.time-picker-popover-popper {
+  z-index: $zindex-timepicker-popover;
+}
+
+.time-picker-popover {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  border: 1px solid $popover-border-color;
+  border-radius: $border-radius;
+  background-color: $popover-border-color;
+  color: $popover-color;
+
+  .time-picker-popover-box {
+    max-width: 500px;
+    padding: 20px;
+
+    ul {
+      padding-right: $spacer;
+      padding-top: $spacer;
+      list-style-type: none;
+
+      li {
+        line-height: 22px;
+        display: list-item;
+        text-align: left;
+      }
+
+      li.active {
+        border-bottom: 1px solid $blue;
+        font-weight: $font-weight-semi-bold;
+      }
+    }
+
+    .time-picker-popover-box-body {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-around;
+    }
+  }
+
+  .time-picker-popover-box-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semi-bold;
+  }
+
+  .time-picker-popover-box:first-child {
+    border-right: 1px ridge;
+  }
+
+  .time-picker-popover-box-body-custom-ranges:first-child {
+    margin-right: $spacer;
+  }
+
+  .time-picker-popover-box-body-custom-ranges-input {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin: $spacer 0;
+
+    .our-custom-wrapper-class {
+      margin-left: $spacer;
+      width: 100%;
+
+      .time-picker-input-error {
+        box-shadow: inset 0 0px 5px $red;
+      }
+    }
+  }
+
+  .time-picker-popover-box-footer {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+    margin-top: $spacer;
+  }
+}
+
+.time-picker-calendar {
+  border: 1px solid $popover-border-color;
+  max-width: 220px;
+  color: $black;
+
+  .react-calendar__navigation__label,
+  .react-calendar__navigation__arrow,
+  .react-calendar__navigation {
+    color: $input-color;
+    background-color: $input-bg;
+    border: 0;
+  }
+
+  .react-calendar__month-view__weekdays {
+    background-color: $popover-border-color;
+    text-align: center;
+
+    abbr {
+      border: 0;
+      text-decoration: none;
+      cursor: default;
+      color: $popover-color;
+      font-weight: $font-weight-semi-bold;
+    }
+  }
+
+  .time-picker-calendar-tile {
+    color: $input-color;
+    background-color: $input-bg;
+    border: 0;
+    line-height: 22px;
+  }
+
+  button.time-picker-calendar-tile:hover {
+    font-weight: $font-weight-semi-bold;
+  }
+
+  .react-calendar__navigation__label,
+  .react-calendar__navigation > button:focus,
+  .time-picker-calendar-tile:focus {
+    outline: 0;
+  }
+
+  .react-calendar__tile--now {
+    color: $orange;
+  }
+
+  .react-calendar__tile--active {
+    color: $blue;
+    font-weight: $font-weight-semi-bold;
+  }
+}
+
+@media only screen and (max-width: 1116px) {
+  .time-picker-popover {
+    margin-left: $spacer;
+    display: flex;
+    flex-flow: column nowrap;
+
+    .time-picker-popover-box {
+      padding: $spacer / 2 $spacer;
+
+      .time-picker-popover-box-title {
+        font-size: $font-size-md;
+        font-weight: $font-weight-semi-bold;
+      }
+    }
+
+    .time-picker-popover-box:first-child {
+      border-right: none;
+      border-bottom: 1px ridge;
+    }
+
+    .time-picker-popover-box:last-child {
+      .time-picker-popover-box-body {
+        display: flex;
+        flex-flow: column nowrap;
+
+        .time-picker-popover-box-body-custom-ranges:first-child {
+          margin: 0;
+        }
+      }
+    }
+
+    .time-picker-popover-box-footer {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: flex-end;
+      margin-top: $spacer;
+    }
+  }
+
+  .time-picker-calendar {
+    max-width: 500px;
+    width: 100%;
+  }
+}
+
+@media only screen and (max-width: 746px) {
+  .time-picker-popover {
+    margin-top: 48px;
+  }
+}

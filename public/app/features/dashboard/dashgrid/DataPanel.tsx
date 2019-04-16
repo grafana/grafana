@@ -7,7 +7,6 @@ import { DatasourceSrv, getDatasourceSrv } from 'app/features/plugins/datasource
 import kbn from 'app/core/utils/kbn';
 // Types
 import {
-  DataQueryOptions,
   DataQueryError,
   LoadingState,
   SeriesData,
@@ -16,11 +15,12 @@ import {
   toSeriesData,
   guessFieldTypes,
   DataQuery,
+  PanelData,
+  DataRequestInfo,
 } from '@grafana/ui';
 
 interface RenderProps {
-  loading: LoadingState;
-  data: SeriesData[];
+  data: PanelData;
 }
 
 export interface Props {
@@ -42,8 +42,7 @@ export interface Props {
 
 export interface State {
   isFirstLoad: boolean;
-  loading: LoadingState;
-  data?: SeriesData[];
+  data: PanelData;
 }
 
 /**
@@ -78,8 +77,11 @@ export class DataPanel extends Component<Props, State> {
     super(props);
 
     this.state = {
-      loading: LoadingState.NotStarted,
       isFirstLoad: true,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+      },
     };
   }
 
@@ -123,11 +125,21 @@ export class DataPanel extends Component<Props, State> {
     }
 
     if (!queries.length) {
-      this.setState({ loading: LoadingState.Done });
+      this.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+        },
+      });
       return;
     }
 
-    this.setState({ loading: LoadingState.Loading });
+    this.setState({
+      data: {
+        ...this.state.data,
+        loading: LoadingState.Loading,
+      },
+    });
 
     try {
       const ds = await this.dataSourceSrv.get(datasource, scopedVars);
@@ -142,7 +154,7 @@ export class DataPanel extends Component<Props, State> {
         __interval_ms: { text: intervalRes.intervalMs.toString(), value: intervalRes.intervalMs },
       });
 
-      const queryOptions: DataQueryOptions = {
+      const request: DataRequestInfo = {
         timezone: 'browser',
         panelId: panelId,
         dashboardId: dashboardId,
@@ -154,24 +166,29 @@ export class DataPanel extends Component<Props, State> {
         maxDataPoints: maxDataPoints || widthPixels,
         scopedVars: scopedVarsWithInterval,
         cacheTimeout: null,
+        startTime: Date.now(),
       };
 
-      const resp = await ds.query(queryOptions);
+      const resp = await ds.query(request);
+      request.endTime = Date.now();
 
       if (this.isUnmounted) {
         return;
       }
 
       // Make sure the data is SeriesData[]
-      const data = getProcessedSeriesData(resp.data);
+      const series = getProcessedSeriesData(resp.data);
       if (onDataResponse) {
-        onDataResponse(data);
+        onDataResponse(series);
       }
 
       this.setState({
-        data,
-        loading: LoadingState.Done,
         isFirstLoad: false,
+        data: {
+          state: LoadingState.Done,
+          series,
+          request,
+        },
       });
     } catch (err) {
       console.log('DataPanel error', err);
@@ -189,16 +206,24 @@ export class DataPanel extends Component<Props, State> {
       }
 
       onError(message, err);
-      this.setState({ isFirstLoad: false, loading: LoadingState.Error });
+
+      this.setState({
+        isFirstLoad: false,
+        data: {
+          ...this.state.data,
+          loading: LoadingState.Error,
+        },
+      });
     }
   };
 
   render() {
     const { queries } = this.props;
-    const { loading, isFirstLoad, data } = this.state;
+    const { isFirstLoad, data } = this.state;
+    const { state } = data;
 
     // do not render component until we have first data
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (isFirstLoad && (state === LoadingState.Loading || state === LoadingState.NotStarted)) {
       return this.renderLoadingState();
     }
 
@@ -212,8 +237,8 @@ export class DataPanel extends Component<Props, State> {
 
     return (
       <>
-        {loading === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ loading, data })}
+        {state === LoadingState.Loading && this.renderLoadingState()}
+        {this.props.children({ data })}
       </>
     );
   }
