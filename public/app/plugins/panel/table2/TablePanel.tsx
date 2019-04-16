@@ -16,7 +16,7 @@ export class TablePanel extends Component<Props> {
   render() {
     const { data, options } = this.props;
 
-    if (!data || data.series.length < 1) {
+    if (data.series.length < 1) {
       return <div>No Table Data...</div>;
     }
 

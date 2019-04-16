@@ -13,7 +13,7 @@ export interface PanelData {
 }
 
 export interface PanelProps<T = any> {
-  data?: PanelData;
+  data: PanelData;
   // TODO: annotation?: PanelData;
 
   timeRange: TimeRange;

@@ -36,7 +36,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       ...options,
       replaceVariables,
       theme: config.theme,
-      data: data ? data.series : [],
+      data: data.series,
     });
   };
 

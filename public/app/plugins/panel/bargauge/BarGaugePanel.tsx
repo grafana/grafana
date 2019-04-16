@@ -35,7 +35,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       ...options,
       replaceVariables,
       theme: config.theme,
-      data: data ? data.series : undefined,
+      data: data.series,
     });
   };
 
