@@ -1,14 +1,22 @@
 import { ComponentClass } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
-import { ScopedVars } from './datasource';
+import { ScopedVars, DataRequestInfo, DataQueryError } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
+export interface PanelData {
+  state: LoadingState;
+  series: SeriesData[];
+  request?: DataRequestInfo;
+  error?: DataQueryError;
+}
+
 export interface PanelProps<T = any> {
-  data?: SeriesData[];
+  data: PanelData;
+  // TODO: annotation?: PanelData;
+
   timeRange: TimeRange;
-  loading: LoadingState;
   options: T;
   renderCounter: number;
   width: number;
