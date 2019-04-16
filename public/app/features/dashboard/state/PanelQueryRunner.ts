@@ -51,7 +51,8 @@ export class PanelQueryRunner {
   } as PanelData;
 
   /**
-   * Listen for updates to the PanelData
+   * Listen for updates to the PanelData.  If a query has already run for this panel,
+   * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
     if (!this.subject) {
