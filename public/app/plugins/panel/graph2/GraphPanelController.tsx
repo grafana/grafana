@@ -1,6 +1,5 @@
 import React from 'react';
 import { GraphSeriesXY, SeriesData } from '@grafana/ui';
-import union from 'lodash/union';
 import difference from 'lodash/difference';
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
@@ -31,8 +30,6 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     super(props);
 
     this.onSeriesToggle = this.onSeriesToggle.bind(this);
-    this.onSeriesHide = this.onSeriesHide.bind(this);
-    this.onSeriesShow = this.onSeriesShow.bind(this);
     this.onSeriesColorChange = this.onSeriesColorChange.bind(this);
     this.onSeriesAxisToggle = this.onSeriesAxisToggle.bind(this);
     this.onToggleSort = this.onToggleSort.bind(this);
@@ -113,28 +110,11 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     });
   }
 
-  onSeriesHide(seriesToHide: string[]) {
-    const hiddenSeries = union(this.state.hiddenSeries, seriesToHide);
-    this.setState({
-      hiddenSeries,
-      graphSeriesModel: this.state.graphSeriesModel.map(series => {
-        return {
-          ...series,
-          isVisible: hiddenSeries.indexOf(series.label) === -1,
-        };
-      }),
-    });
-  }
-
-  onSeriesShow(seriesToShow: string[]) {
-    this.setState({
-      hiddenSeries: difference(this.state.hiddenSeries, seriesToShow),
-    });
-  }
-
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
-    const { hiddenSeries } = this.state;
+    const { hiddenSeries, graphSeriesModel } = this.state;
+
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      // Toggling series with key makes the series itself to toggle
       if (hiddenSeries.indexOf(label) > -1) {
         this.setState({
           hiddenSeries: hiddenSeries.filter(series => series !== label),
@@ -145,7 +125,16 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
         });
       }
     } else {
-      // TODO
+      // Toggling series with out key toggles all the series but the clicked one
+      const allSeriesLabels = graphSeriesModel.map(series => series.label);
+
+      if (hiddenSeries.length + 1 === allSeriesLabels.length) {
+        this.setState({ hiddenSeries: [] });
+      } else {
+        this.setState({
+          hiddenSeries: difference(allSeriesLabels, [label]),
+        });
+      }
     }
   }
 
