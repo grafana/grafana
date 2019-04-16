@@ -11,12 +11,12 @@ function exit_if_fail {
   fi
 }
 
-# go get -u github.com/alecthomas/gometalinter
-# go get -u github.com/jgautheron/goconst/cmd/goconst
-# go get -u honnef.co/go/tools/cmd/staticcheck
-# go get -u github.com/mgechev/revive
-# go get -u github.com/securego/gosec/cmd/gosec/...
-# go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+go get -u github.com/alecthomas/gometalinter
+go get -u github.com/jgautheron/goconst/cmd/goconst
+go get -u honnef.co/go/tools/cmd/staticcheck
+go get -u github.com/mgechev/revive
+go get -u github.com/securego/gosec/cmd/gosec/...
+go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
 # use gometalinter when lints are not available in golangci or
 # when gometalinter is better. Eg. goconst for gometalinter does not lint test files
