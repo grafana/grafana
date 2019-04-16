@@ -114,6 +114,7 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	if err != nil {
 		return errors.Wrap(err, "Could not create provisioner")
 	}
+	// Lets cancel first so we do not get new config temporary overwritten by the polling process.
 	ps.cancelPolling()
 
 	if err := dashProvisioner.Provision(); err != nil {
