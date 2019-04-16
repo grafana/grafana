@@ -6,6 +6,7 @@ import { css } from 'emotion';
 import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
@@ -35,6 +36,7 @@ const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
   `,
   legendContainer: css`
     padding: 10px 0;
+    max-height: ${placement === 'under' ? '35%' : 'none'};
   `,
 });
 
@@ -76,27 +78,29 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
 
       {isLegendVisible && (
         <div className={legendContainer}>
-          <GraphLegend
-            items={series.map(s => ({
-              label: s.label,
-              color: s.color,
-              isVisible: s.isVisible,
-              useRightYAxis: s.useRightYAxis,
-              info: s.info || [],
-            }))}
-            renderLegendAsTable={renderLegendAsTable}
-            placement={placement}
-            sortBy={sortLegendBy}
-            sortDesc={sortLegendDesc}
-            onLabelClick={(item, event) => {
-              if (onSeriesToggle) {
-                onSeriesToggle(item.label, event);
-              }
-            }}
-            onSeriesColorChange={onSeriesColorChange}
-            onSeriesAxisToggle={onSeriesAxisToggle}
-            onToggleSort={onToggleSort}
-          />
+          <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
+            <GraphLegend
+              items={series.map(s => ({
+                label: s.label,
+                color: s.color,
+                isVisible: s.isVisible,
+                useRightYAxis: s.useRightYAxis,
+                info: s.info || [],
+              }))}
+              renderLegendAsTable={renderLegendAsTable}
+              placement={placement}
+              sortBy={sortLegendBy}
+              sortDesc={sortLegendDesc}
+              onLabelClick={(item, event) => {
+                if (onSeriesToggle) {
+                  onSeriesToggle(item.label, event);
+                }
+              }}
+              onSeriesColorChange={onSeriesColorChange}
+              onSeriesAxisToggle={onSeriesAxisToggle}
+              onToggleSort={onToggleSort}
+            />
+          </CustomScrollbar>
         </div>
       )}
     </div>

@@ -69,7 +69,6 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
       <td>
         <span
           className={css`
-            padding-left: 10px;
             display: flex;
             white-space: nowrap;
           `}

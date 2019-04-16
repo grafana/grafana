@@ -49,7 +49,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
         </div>
         <div className="section gf-form-group">
           <GraphLegendEditor
-            stats={[StatID.min, StatID.max]}
+            stats={[StatID.min, StatID.max, StatID.mean, StatID.last, StatID.sum]}
             options={this.props.options.legend}
             onChange={this.onLegendOptionsChange}
           />
