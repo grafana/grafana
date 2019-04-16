@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -89,6 +90,29 @@ func (fr *fileReader) startWalkingDisk() error {
 	sanityChecker.logWarnings(fr.log)
 
 	return nil
+}
+
+func (fr *fileReader) pollChanges(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+
+	running := false
+
+	for {
+		select {
+		case <-ticker.C:
+			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
+				running = true
+				go func() {
+					if err := fr.startWalkingDisk(); err != nil {
+						fr.log.Error("failed to search for dashboards", "error", err)
+					}
+					running = false
+				}()
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {

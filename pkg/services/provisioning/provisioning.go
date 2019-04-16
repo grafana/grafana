@@ -15,7 +15,7 @@ import (
 
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) dashboards.DashboardProvisioner {
+		func(path string) (dashboards.DashboardProvisioner, error) {
 			return dashboards.NewDashboardProvisionerImpl(path)
 		},
 		notifiers.Provision,
@@ -30,7 +30,7 @@ type ProvisioningService interface {
 }
 
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner func(string) dashboards.DashboardProvisioner,
+	newDashboardProvisioner func(string) (dashboards.DashboardProvisioner, error),
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -50,7 +50,7 @@ type provisioningServiceImpl struct {
 	log                     log.Logger
 	dashProvisionerChan     chan dashboards.DashboardProvisioner
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner func(string) dashboards.DashboardProvisioner
+	newDashboardProvisioner func(string) (dashboards.DashboardProvisioner, error)
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 }
@@ -117,11 +117,14 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner := ps.newDashboardProvisioner(dashboardPath)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath)
+	if err != nil {
+		return errors.Wrap(err, "Could not create provisioner")
+	}
 	ps.cancelPolling()
 
 	if err := dashProvisioner.Provision(); err != nil {
-		return errors.Wrap(err, "Dashboard provisioning error")
+		return errors.Wrap(err, "Could not provision dashboards")
 	}
 	ps.dashProvisionerChan <- dashProvisioner
 	return nil

@@ -3,10 +3,8 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"time"
-
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/pkg/errors"
 )
 
 type DashboardProvisioner interface {
@@ -15,19 +13,25 @@ type DashboardProvisioner interface {
 }
 
 type DashboardProvisionerImpl struct {
-	cfgReader   *configReader
 	log         log.Logger
 	fileReaders []*fileReader
+	configs     []*DashboardsAsConfig
 }
 
-func NewDashboardProvisionerImpl(configDirectory string) *DashboardProvisionerImpl {
-	log := log.New("provisioning.dashboard")
-	d := &DashboardProvisionerImpl{
-		cfgReader: &configReader{path: configDirectory, log: log},
-		log:       log,
+func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
+	logger := log.New("provisioning.dashboard")
+	cfgReader := &configReader{path: configDirectory, log: logger}
+	configs, err := cfgReader.readConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not read dashboards config")
 	}
 
-	return d
+	d := &DashboardProvisionerImpl{
+		configs: configs,
+		log:     logger,
+	}
+
+	return d, nil
 }
 
 func (provider *DashboardProvisionerImpl) Provision() error {
@@ -39,7 +43,7 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 	for _, reader := range readers {
 		err = reader.startWalkingDisk()
 		if err != nil {
-			return errors.Wrapf(err, "Failed walking disc for config %v", reader.Cfg.Name)
+			return errors.Wrap(err, "Failed to provision config")
 		}
 	}
 
@@ -47,7 +51,7 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 }
 
 // PollChanges starts polling for changes in dashboard definition files. It creates goruotine for each provider
-// defined in the config and walks the file system each UpdateIntervalSeconds as defined in the provider config.
+// defined in the config.
 func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) error {
 	readers, err := provider.getFileReaders()
 	if err != nil {
@@ -55,49 +59,20 @@ func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) error
 	}
 
 	for _, reader := range readers {
-		go provider.pollChangesForFileReader(ctx, reader)
+		go reader.pollChanges(ctx)
 	}
 	return nil
 }
 
-func (provider *DashboardProvisionerImpl) pollChangesForFileReader(ctx context.Context, fileReader *fileReader) {
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fileReader.Cfg.UpdateIntervalSeconds))
-
-	running := false
-
-	for {
-		select {
-		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
-				running = true
-				go func() {
-					fileReader.log.Debug("Tick start walking disc", "fileReader", fileReader.Cfg.Name)
-					if err := fileReader.startWalkingDisk(); err != nil {
-						fileReader.log.Error("failed to search for dashboards", "error", err)
-					}
-					running = false
-				}()
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (provider *DashboardProvisionerImpl) getFileReaders() ([]*fileReader, error) {
-	configs, err := provider.cfgReader.readConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	var readers []*fileReader
 
-	for _, config := range configs {
+	for _, config := range provider.configs {
 		switch config.Type {
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, provider.log.New("type", config.Type, "name", config.Name))
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrapf(err, "Could not create file reader for config %v", config.Name)
 			}
 			readers = append(readers, fileReader)
 		default:
