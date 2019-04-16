@@ -81,8 +81,8 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 		select {
 		case provisioner := <-ps.dashProvisionerChan:
 			// There is new dashboard provisioner config so we need to start polling for it.
-			// Make sure the old polling process is cancelled even though this should be called before to prevent
-			// race conditions.
+			// Make sure the old polling process is cancelled even though this should be called before by the code
+			// creating new provisioner to prevent race conditions.
 			ps.cancelPolling()
 
 			pollingContext, cancelFun := context.WithCancel(ctx)
