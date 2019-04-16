@@ -56,7 +56,8 @@ The plugin needs to know it has a backend component, this is done in the `plugin
   "backend": true,
   "alerting": true,
   "executable": "simple-json-plugin",
-...
+  ...
+}
 ```
 
 `executable` should be the the the first part of the binary filename. The actual binary filename has 3 possible endings:
@@ -209,7 +210,7 @@ type QueryResult struct {
 }
 ```
 
-Resulting JSON response which frontend will receive looks like this:
+The resulting JSON response which the frontend will receive looks like this:
 
 ```js
 results: {
@@ -232,7 +233,7 @@ results: {
 
 ### Logging
 
-Logs from the plugin will be automatically sent to the Grafana server and will appear in its log flow. Grafana server reads logs from plugins `stderr` stream, so with the standard `log` package you have to set output to `os.Stderr` first:
+Logs from the plugin will be automatically sent to the Grafana server and will appear in its log flow. Grafana server reads logs from the plugin's `stderr` stream, so with the standard `log` package you have to set output to `os.Stderr` first:
 
 ```go
 func main() {
