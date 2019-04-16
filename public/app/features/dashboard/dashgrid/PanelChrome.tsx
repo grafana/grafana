@@ -7,7 +7,7 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -23,7 +23,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { PanelQueryRunner, PanelDataEvent } from '../state/PanelQueryRunner';
+import { PanelQueryRunner, PanelDataEvent, getProcessedSeriesData } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -70,9 +70,20 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.props.panel.events.on('refresh', this.onRefresh);
-    this.props.panel.events.on('render', this.onRender);
-    this.props.dashboard.panelInitialized(this.props.panel);
+    const { panel, dashboard } = this.props;
+    panel.events.on('refresh', this.onRefresh);
+    panel.events.on('render', this.onRender);
+    dashboard.panelInitialized(this.props.panel);
+
+    // Move snapshot data into the query response
+    if (this.hasPanelSnapshot) {
+      this.setState({
+        data: {
+          state: LoadingState.Done,
+          series: getProcessedSeriesData(panel.snapshotData),
+        },
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -102,6 +113,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
       // Save the query response into the panel
       if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
+        console.log('TAKE Snapshot', this);
         this.props.panel.snapshotData = data.series;
       }
 
