@@ -18,14 +18,6 @@ import {
 
 import kbn from 'app/core/utils/kbn';
 
-/**
- * Query response may come as events. any null|missing value just means
- * that is unknown info in the request
- */
-export interface PanelDataEvent extends Partial<PanelData> {
-  eventId: number;
-}
-
 export interface QueryRunnerOptions {
   ds?: DataSourceApi; // if they already have the datasource, don't look it up
   datasource: string | null;
@@ -48,27 +40,42 @@ export enum PanelQueryRunnerFormat {
 }
 
 export class PanelQueryRunner {
-  private counter = 0;
-  private subject?: Subject<PanelDataEvent>;
+  private subject?: Subject<PanelData>;
 
   private sendSeries = false;
   private sendLegacy = false;
 
-  subscribe(observer: PartialObserver<PanelDataEvent>, format = PanelQueryRunnerFormat.series): Unsubscribable {
+  private data = {
+    state: LoadingState.NotStarted,
+    series: [],
+  } as PanelData;
+
+  /**
+   * Listen for updates to the PanelData
+   */
+  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
     if (!this.subject) {
-      this.subject = new Subject();
+      this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
+
     if (format === PanelQueryRunnerFormat.legacy) {
       this.sendLegacy = true;
     } else {
       this.sendSeries = true;
     }
+
+    // Send the last result
+    if (this.data.state !== LoadingState.NotStarted) {
+      // TODO: make sure it has legacy if necessary
+      observer.next(this.data);
+    }
+
     return this.subject.subscribe(observer);
   }
 
-  async run(options: QueryRunnerOptions) {
-    if (!this.subject || !this.subject.observers.length) {
-      return; // Don't run if nobody cares!
+  async run(options: QueryRunnerOptions): Promise<PanelData> {
+    if (!this.subject) {
+      this.subject = new Subject();
     }
 
     const {
@@ -101,14 +108,14 @@ export class PanelQueryRunner {
     };
 
     if (!queries) {
-      this.subject.next({
-        eventId: this.counter++,
+      this.data = {
         state: LoadingState.Done,
         series: [], // Clear the data
         legacy: [],
         request,
-      });
-      return;
+      };
+      this.subject.next(this.data);
+      return this.data;
     }
 
     try {
@@ -129,11 +136,12 @@ export class PanelQueryRunner {
       // Send a loading status event on slower queries
       setTimeout(() => {
         if (!request.endTime) {
-          this.subject.next({
-            eventId: this.counter++,
+          this.data = {
+            ...this.data,
             state: LoadingState.Loading,
             request,
-          });
+          };
+          this.subject.next(this.data);
         }
       }, delayStateNotification || 100);
 
@@ -151,29 +159,28 @@ export class PanelQueryRunner {
           })
         : undefined;
 
-      // Notify results
-      this.subject.next({
-        eventId: this.counter++,
+      // The Result
+      this.data = {
         state: LoadingState.Done,
-        request,
         series,
         legacy,
-      });
+        request,
+      };
+      this.subject.next(this.data);
+      return this.data;
     } catch (err) {
-      request.endTime = Date.now();
-
       const error = err as DataQueryError;
       if (!error.message) {
         err.message = 'Query Error';
       }
 
-      this.subject.next({
-        eventId: this.counter++,
+      this.data = {
+        ...this.data, // ?? Should we keep existing data, or clear it ???
         state: LoadingState.Error,
         error: error,
-        request,
-        // ?? Should an error clear the last data ???
-      });
+      };
+      this.subject.next(this.data);
+      return this.data;
     }
   }
 }

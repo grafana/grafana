@@ -23,7 +23,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { PanelQueryRunner, PanelDataEvent, getProcessedSeriesData } from '../state/PanelQueryRunner';
+import { PanelQueryRunner, getProcessedSeriesData } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -92,12 +92,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   // Updates the response with information from the stream
   panelDataObserver = {
-    next: (event: PanelDataEvent) => {
-      const data = {
-        ...this.state.data,
-        ...event,
-      };
-
+    next: (data: PanelData) => {
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
@@ -113,7 +108,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
       // Save the query response into the panel
       if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
-        console.log('TAKE Snapshot', this);
         this.props.panel.snapshotData = data.series;
       }
 
