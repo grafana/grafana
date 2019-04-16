@@ -9,7 +9,7 @@ import (
 
 type DashboardProvisioner interface {
 	Provision() error
-	PollChanges(ctx context.Context) error
+	PollChanges(ctx context.Context)
 }
 
 type DashboardProvisionerImpl struct {
@@ -22,28 +22,31 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig()
+
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not read dashboards config")
 	}
 
+	fileReaders, err := getFileReaders(configs, logger)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "Could initialize file readers")
+	}
+
 	d := &DashboardProvisionerImpl{
-		configs: configs,
-		log:     logger,
+		configs:     configs,
+		log:         logger,
+		fileReaders: fileReaders,
 	}
 
 	return d, nil
 }
 
 func (provider *DashboardProvisionerImpl) Provision() error {
-	readers, err := provider.getFileReaders()
-	if err != nil {
-		return err
-	}
-
-	for _, reader := range readers {
-		err = reader.startWalkingDisk()
+	for _, reader := range provider.fileReaders {
+		err := reader.startWalkingDisk()
 		if err != nil {
-			return errors.Wrap(err, "Failed to provision config")
+			return errors.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
 		}
 	}
 
@@ -52,25 +55,19 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 
 // PollChanges starts polling for changes in dashboard definition files. It creates goruotine for each provider
 // defined in the config.
-func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) error {
-	readers, err := provider.getFileReaders()
-	if err != nil {
-		return err
-	}
-
-	for _, reader := range readers {
+func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
+	for _, reader := range provider.fileReaders {
 		go reader.pollChanges(ctx)
 	}
-	return nil
 }
 
-func (provider *DashboardProvisionerImpl) getFileReaders() ([]*fileReader, error) {
+func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {
 	var readers []*fileReader
 
-	for _, config := range provider.configs {
+	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, provider.log.New("type", config.Type, "name", config.Name))
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
 			if err != nil {
 				return nil, errors.Wrapf(err, "Could not create file reader for config %v", config.Name)
 			}

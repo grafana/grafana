@@ -51,7 +51,25 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}, nil
 }
 
+// pollChanges periodically runs startWalkingDisk based on interval specified in the config.
+func (fr *fileReader) pollChanges(ctx context.Context) {
+	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+	for {
+		select {
+		case <-ticker:
+			if err := fr.startWalkingDisk(); err != nil {
+				fr.log.Error("failed to search for dashboards", "error", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
+// to the database.
 func (fr *fileReader) startWalkingDisk() error {
+	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvePath(fr.Path)
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
@@ -90,29 +108,6 @@ func (fr *fileReader) startWalkingDisk() error {
 	sanityChecker.logWarnings(fr.log)
 
 	return nil
-}
-
-func (fr *fileReader) pollChanges(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
-
-	running := false
-
-	for {
-		select {
-		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
-				running = true
-				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
-						fr.log.Error("failed to search for dashboards", "error", err)
-					}
-					running = false
-				}()
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {

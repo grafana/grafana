@@ -10,7 +10,7 @@ type Calls struct {
 type DashboardProvisionerMock struct {
 	Calls       *Calls
 	provision   func() error
-	pollChanges func(ctx context.Context) error
+	pollChanges func(ctx context.Context)
 }
 
 func NewDashboardProvisionerMock() *DashboardProvisionerMock {
@@ -28,11 +28,9 @@ func (dpm *DashboardProvisionerMock) Provision() error {
 	}
 }
 
-func (dpm *DashboardProvisionerMock) PollChanges(ctx context.Context) error {
+func (dpm *DashboardProvisionerMock) PollChanges(ctx context.Context) {
 	dpm.Calls.PollChanges = append(dpm.Calls.PollChanges, ctx)
 	if dpm.pollChanges != nil {
-		return dpm.pollChanges(ctx)
-	} else {
-		return nil
+		dpm.pollChanges(ctx)
 	}
 }

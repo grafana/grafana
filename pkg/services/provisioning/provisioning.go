@@ -88,14 +88,7 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 			pollingContext, cancelFun := context.WithCancel(ctx)
 			ps.pollingCtxCancel = cancelFun
 
-			err := provisioner.PollChanges(pollingContext)
-			if err != nil {
-				// This should not happen. If it was an issue in config files during startup it should have been caught
-				// in Init as there the initial provisioning happens. In case of reload API it should also do sync
-				// initial provisioning where this error should be caught and we should not start polling.
-				ps.cancelPolling()
-				ps.log.Error("Polling for changes did not start", "error", err)
-			}
+			provisioner.PollChanges(pollingContext)
 		case <-ctx.Done():
 			// Root server context was cancelled so just leave.
 			return ctx.Err()
