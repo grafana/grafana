@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { ScopedVars } from '@grafana/ui';
 
-import { PanelHeaderCorner } from './PanelHeaderCorner';
+import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import templateSrv from 'app/features/templating/template_srv';
 

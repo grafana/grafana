@@ -98,3 +98,5 @@ export class PanelHeaderCorner extends Component<Props> {
     return null;
   }
 }
+
+export default PanelHeaderCorner;
