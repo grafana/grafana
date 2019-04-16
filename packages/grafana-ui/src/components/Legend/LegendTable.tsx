@@ -38,6 +38,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
           {columns.map(columnHeader => {
             return (
               <th
+                key={columnHeader}
                 className={css`
                   color: ${theme.colors.blue};
                   font-weight: bold;

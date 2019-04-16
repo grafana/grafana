@@ -81,6 +81,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
         sortDesc={sortDesc}
         itemRenderer={(item, index) => (
           <GraphLegendTableRow
+            key={`${item.label}-${index}`}
             item={item}
             onToggleAxis={() => {
               if (onSeriesAxisToggle) {

@@ -7,6 +7,7 @@ import { LegendStatsList } from '../Legend/LegendStatsList';
 import { ThemeContext } from '../../themes/ThemeContext';
 
 interface GraphLegendItemProps {
+  key?: React.Key;
   item: LegendItem;
   className?: string;
   onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
@@ -51,6 +52,7 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
   className,
 }) => {
   const theme = useContext(ThemeContext);
+
   return (
     <tr
       className={cx(
@@ -99,12 +101,13 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
         </span>
       </td>
       {item.info &&
-        item.info.map(stat => {
+        item.info.map((stat, index) => {
           return (
             <td
               className={css`
                 text-align: right;
               `}
+              key={`${stat.title}-${index}`}
             >
               {stat.text}
             </td>
