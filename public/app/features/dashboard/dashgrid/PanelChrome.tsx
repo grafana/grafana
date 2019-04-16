@@ -18,7 +18,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, DataQueryError, PanelData } from '@grafana/ui';
+import { TimeRange, LoadingState, PanelData, toLegacyResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -106,6 +106,21 @@ export class PanelChrome extends PureComponent<Props, State> {
       }
 
       this.setState({ data });
+
+      // Notify query editors that the results have changed
+      if (this.props.isEditing) {
+        const events = this.props.panel.events;
+        let legacy = data.legacy;
+        if (!legacy) {
+          legacy = data.series.map(v => toLegacyResponseData(v));
+        }
+
+        // Angular query editors expect TimeSeries|TableData
+        events.emit('data-received', legacy);
+
+        // Notify react query editors
+        events.emit('series-data-received', data);
+      }
     },
   };
 
@@ -158,14 +173,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
     return templateSrv.replace(value, vars, format);
-  };
-
-  onDataError = (message: string, error: DataQueryError) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
-    }
-    // this event is used by old query editors
-    this.props.panel.events.emit('data-error', error);
   };
 
   onPanelError = (message: string) => {
