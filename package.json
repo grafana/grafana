@@ -228,8 +228,7 @@
     "xss": "1.0.3"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
-    "**/@types/react": "16.8.8"
+    "caniuse-db": "1.0.30000772"
   },
   "workspaces": {
     "packages": [
