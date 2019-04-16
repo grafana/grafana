@@ -151,7 +151,7 @@ export default class InfluxSeries {
       return table;
     }
 
-    _.each(this.series, (series, seriesIndex) => {
+    _.each(this.series, (series: any, seriesIndex: number) => {
       if (seriesIndex === 0) {
         j = 0;
         // Check that the first column is indeed 'time'

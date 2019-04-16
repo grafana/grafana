@@ -178,6 +178,10 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
+		// plain text fields to SecureJsonData.
+		sess.MustCols("password")
+		sess.MustCols("basic_auth_password")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

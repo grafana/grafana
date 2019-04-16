@@ -18,11 +18,12 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, ReactPanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types';
+import { DataSourcePlugin, AppPlugin, ReactPanelPlugin, AngularPanelPlugin, PluginMeta } from '@grafana/ui/src/types';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
+import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -91,6 +92,16 @@ exposeToPlugin('vendor/npm/rxjs/Rx', {
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
   __esModule: true,
+});
+
+/**
+ * NOTE: this is added temporarily while we explore a long term solution
+ * If you use this export, only use the:
+ *  get/delete/post/patch/request methods
+ */
+exposeToPlugin('app/core/services/backend_srv', {
+  BackendSrv,
+  getBackendSrv,
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
@@ -165,9 +176,9 @@ export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> 
   });
 }
 
-export function importAppPlugin(path: string): Promise<AppPlugin> {
-  return importPluginModule(path).then(pluginExports => {
-    return new AppPlugin(pluginExports.ConfigCtrl);
+export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  return importPluginModule(meta.module).then(pluginExports => {
+    return new AppPlugin(meta, pluginExports);
   });
 }
 

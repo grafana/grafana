@@ -27,7 +27,7 @@ can configure and setup a new Notification Channel.
 You specify a name and a type, and type specific options. You can also test the notification to make
 sure it's setup correctly.
 
-### Send on all alerts
+### Default (send on all alerts)
 
 When checked, this option will notify for all alert rules - existing and new.
 
