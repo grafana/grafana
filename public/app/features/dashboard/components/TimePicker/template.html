@@ -39,7 +39,7 @@
     <div class="popover-box__header">
       <span class="popover-box__title">Custom range</span>
     </div>
-    <form name="timeForm" class="popover-box__body gf-timepicker-absolute-section">
+    <form name="timeForm" class="popover-box__body gf-timepicker-absolute-section max-width-28">
       <label class="small">From:</label>
       <div class="gf-form-inline">
         <div class="gf-form max-width-28">
@@ -73,15 +73,11 @@
         <datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" starting-day="ctrl.firstDayOfWeek" ng-change="ctrl.absoluteToChanged()"></datepicker>
       </div>
 
-      <!-- <label class="small">Refreshing every:</label>
-      <div class="gf-form-inline">
-        <div class="gf-form max-width-28">
-          <select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
-        </div>
+      <div class="gf-form gf-form--flex-end m-t-1">
         <div class="gf-form">
           <button type="submit" class="btn gf-form-btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
         </div>
-      </div> -->
+      </div>
     </form>
   </div>
 </div>
