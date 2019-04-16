@@ -15,7 +15,6 @@ type DashboardProvisioner interface {
 type DashboardProvisionerImpl struct {
 	log         log.Logger
 	fileReaders []*fileReader
-	configs     []*DashboardsAsConfig
 }
 
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
@@ -34,7 +33,6 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	}
 
 	d := &DashboardProvisionerImpl{
-		configs:     configs,
 		log:         logger,
 		fileReaders: fileReaders,
 	}
