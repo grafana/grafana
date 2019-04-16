@@ -51,7 +51,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   queryRunner = new PanelQueryRunner();
   querySubscription: Unsubscribable;
-  queryWidthPixels = -1; // used to set maxDataPoints in query
+  queryWidthPixels = -1; // used to set maxDataPoints and interval in the query
 
   constructor(props: Props) {
     super(props);
