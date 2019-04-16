@@ -133,10 +133,19 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
   }
 
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
-    if (this.state.hiddenSeries.indexOf(label) > -1) {
-      this.onSeriesShow([label]);
+    const { hiddenSeries } = this.state;
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      if (hiddenSeries.indexOf(label) > -1) {
+        this.setState({
+          hiddenSeries: hiddenSeries.filter(series => series !== label),
+        });
+      } else {
+        this.setState({
+          hiddenSeries: hiddenSeries.concat([label]),
+        });
+      }
     } else {
-      this.onSeriesHide([label]);
+      // TODO
     }
   }
 
