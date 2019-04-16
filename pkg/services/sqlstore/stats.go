@@ -89,52 +89,79 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 }
 
 func GetAdminStats(query *m.GetAdminStatsQuery) error {
+	activeEndDate := time.Now().Add(-activeUserTimeLimit)
+	roleCounter := func(role, alias string) string {
+		sql :=
+			`
+			(
+				SELECT COUNT(id)
+				FROM ` + dialect.Quote("user") + `
+				WHERE 
+				(SELECT COUNT(id) FROM ` + dialect.Quote("org_user") + ` WHERE org_user.user_id = user.id and org_user.role = '` + role + `') > 0
+				 	
+			) as ` + alias + `,
+			(
+				SELECT COUNT(id)
+				FROM ` + dialect.Quote("user") + `
+				WHERE 
+				(SELECT COUNT(id) FROM ` + dialect.Quote("org_user") + ` WHERE org_user.user_id = user.id and org_user.role = '` + role + `') > 0
+				AND user.last_seen_at > ?
+			) as active_` + alias
+
+		return sql
+	}
+
 	var rawSql = `SELECT
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("user") + `
-	  ) AS users,
-	  (
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("org") + `
-	  ) AS orgs,
-	  (
+	  	) AS orgs,
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("dashboard") + `
-	  ) AS dashboards,
-	  (
+	  	) AS dashboards,
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("dashboard_snapshot") + `
-	  ) AS snapshots,
-	  (
+	  	) AS snapshots,
+	  	(
 		SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
 		FROM ` + dialect.Quote("dashboard_tag") + `
-	  ) AS tags,
-	  (
+	  	) AS tags,
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("data_source") + `
-	  ) AS datasources,
-	  (
+	  	) AS datasources,
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("playlist") + `
-	  ) AS playlists,
-	  (
+	  	) AS playlists,
+	  	(
 		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
-	  ) AS stars,
-	  (
+	  	) AS stars,
+	  	(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("alert") + `
-	  ) AS alerts,
-			(
-				SELECT COUNT(*)
-		from ` + dialect.Quote("user") + ` where last_seen_at > ?
-			) as active_users
+		) AS alerts,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user") + `
+		) AS users,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
+		) as active_users,
+		` + roleCounter("Admin", "admins") + `,
+		` + roleCounter("Editor", "editors") + `,
+		` + roleCounter("Viewer", "viewers") + `,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user_auth_token") + ` where rotated_at > ?
+		) as active_sessions
 	  `
 
-	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
-
 	var stats m.AdminStats
-	_, err := x.SQL(rawSql, activeUserDeadlineDate).Get(&stats)
+	_, err := x.SQL(rawSql, activeEndDate, activeEndDate, activeEndDate, activeEndDate, activeEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}
