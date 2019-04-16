@@ -6,7 +6,7 @@ import { components } from '@torkelo/react-select';
 import { OptionProps } from 'react-select/lib/components/Option';
 
 // https://github.com/JedWatson/react-select/issues/3038
-interface ExtendedOptionProps extends OptionProps<any> {
+export interface ExtendedOptionProps extends OptionProps<any> {
   data: {
     description?: string;
     imgUrl?: string;

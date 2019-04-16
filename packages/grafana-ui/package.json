@@ -28,6 +28,7 @@
     "moment": "^2.22.2",
     "papaparse": "^4.6.3",
     "react": "^16.8.4",
+    "react-calendar": "^2.18.1",
     "react-color": "^2.17.0",
     "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^16.8.4",

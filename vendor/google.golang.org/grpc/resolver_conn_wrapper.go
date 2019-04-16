@@ -65,8 +65,8 @@ func parseTarget(target string) (ret resolver.Target) {
 }
 
 // newCCResolverWrapper parses cc.target for scheme and gets the resolver
-// builder for this scheme. It then builds the resolver and starts the
-// monitoring goroutine for it.
+// builder for this scheme and builds the resolver. The monitoring goroutine
+// for it is not started yet and can be created by calling start().
 //
 // If withResolverBuilder dial option is set, the specified resolver will be
 // used instead.
@@ -84,7 +84,7 @@ func newCCResolverWrapper(cc *ClientConn) (*ccResolverWrapper, error) {
 	}
 
 	var err error
-	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{})
+	ccr.resolver, err = rb.Build(cc.parsedTarget, ccr, resolver.BuildOption{DisableServiceConfig: cc.dopts.disableServiceConfig})
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (ccr *ccResolverWrapper) start() {
 	go ccr.watcher()
 }
 
-// watcher processes address updates and service config updates sequencially.
+// watcher processes address updates and service config updates sequentially.
 // Otherwise, we need to resolve possible races between address and service
 // config (e.g. they specify different balancer types).
 func (ccr *ccResolverWrapper) watcher() {
@@ -148,7 +148,7 @@ func (ccr *ccResolverWrapper) NewAddress(addrs []resolver.Address) {
 }
 
 // NewServiceConfig is called by the resolver implemenetion to send service
-// configs to gPRC.
+// configs to gRPC.
 func (ccr *ccResolverWrapper) NewServiceConfig(sc string) {
 	select {
 	case <-ccr.scCh:

@@ -29,6 +29,7 @@
   .navbar-button--share,
   .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
+  .refresh-picker,
   .gf-timepicker-nav {
     display: none;
   }
@@ -133,6 +134,16 @@
     .gicon {
       font-size: 22px;
     }
+  }
+
+  &--refresh {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  &--attached {
+    margin-left: 0;
+    border-radius: 0 2px 2px 0;
   }
 
   &--tight {

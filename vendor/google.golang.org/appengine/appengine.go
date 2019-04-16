@@ -28,7 +28,8 @@ import (
 // See https://cloud.google.com/appengine/docs/flexible/custom-runtimes#health_check_requests
 // for details on how to do your own health checking.
 //
-// Main is not yet supported on App Engine Standard.
+// On App Engine Standard it ensures the server has started and is prepared to
+// receive requests.
 //
 // Main never returns.
 //
@@ -59,10 +60,34 @@ func IsDevAppServer() bool {
 	return internal.IsDevAppServer()
 }
 
+// IsStandard reports whether the App Engine app is running in the standard
+// environment. This includes both the first generation runtimes (<= Go 1.9)
+// and the second generation runtimes (>= Go 1.11).
+func IsStandard() bool {
+	return internal.IsStandard()
+}
+
+// IsFlex reports whether the App Engine app is running in the flexible environment.
+func IsFlex() bool {
+	return internal.IsFlex()
+}
+
+// IsAppEngine reports whether the App Engine app is running on App Engine, in either
+// the standard or flexible environment.
+func IsAppEngine() bool {
+	return internal.IsAppEngine()
+}
+
+// IsSecondGen reports whether the App Engine app is running on the second generation
+// runtimes (>= Go 1.11).
+func IsSecondGen() bool {
+	return internal.IsSecondGen()
+}
+
 // NewContext returns a context for an in-flight HTTP request.
 // This function is cheap.
 func NewContext(req *http.Request) context.Context {
-	return WithContext(context.Background(), req)
+	return internal.ReqContext(req)
 }
 
 // WithContext returns a copy of the parent context

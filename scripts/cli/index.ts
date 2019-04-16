@@ -48,7 +48,7 @@ program
   .description('Builds changelog markdown')
   .action(async cmd => {
     if (!cmd.milestone) {
-      console.log('Please specify milestone, example: --m 6.0.1');
+      console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
       return;
     }
 
