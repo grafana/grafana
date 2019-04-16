@@ -1,19 +1,7 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
-
-export interface NavModelItem {
-  text: string;
-  url: string;
-  icon?: string;
-  img?: string;
-  id: string;
-  active?: boolean;
-  hideFromTabs?: boolean;
-  divider?: boolean;
-  children: NavModelItem[];
-  target?: string;
-}
+import { NavModelItem } from 'app/types';
 
 export class NavModel {
   breadcrumbs: NavModelItem[];
@@ -76,7 +64,6 @@ export class NavModelSrv {
     };
 
     return {
-      breadcrumbs: [node],
       node: node,
       main: node,
     };

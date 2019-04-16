@@ -148,7 +148,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             name: 'ds-config-' + dsMeta.id,
             bindings: { meta: '=', current: '=' },
             attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsPlugin.components.ConfigCtrl,
+            Component: dsPlugin.angular.ConfigCtrl,
           };
         });
       }

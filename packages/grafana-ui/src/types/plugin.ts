@@ -1,3 +1,5 @@
+import { ComponentClass } from 'react';
+
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
   beta = 'beta', // Will show a warning banner
@@ -82,15 +84,42 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export class AppPlugin {
-  meta: PluginMeta;
+export interface AppPagePlugin {
+  getPageNav: () => any;
+}
 
+export interface PluginConfigPage<TPlugin> {
+  title: string; // Name of the table
+  subTitle?: string;
+  icon?: string;
+
+  body: ComponentClass<PluginConfigPageProps<TPlugin>>;
+}
+
+export interface PluginConfigPageProps<T> {
+  plugin: T;
+
+  onConfigSave: () => void; //
+  beforeConfigSaved: () => void;
+  afterConfigSaved: () => void;
+}
+
+export class PluginWithConfig<TPlugin> {
+  meta?: PluginMeta;
+
+  configPage?: PluginConfigPage<TPlugin>;
+  configTabs?: Array<PluginConfigPage<TPlugin>>;
+
+  // Legacy Angular based configs
   angular?: {
     ConfigCtrl?: any;
     pages: { [component: string]: any };
   };
 
-  constructor(meta: PluginMeta, pluginExports: any) {
+  /**
+   * Use PluginMeta to find relevant configs in include
+   */
+  initLegacyComponents(meta: PluginMeta, pluginExports: any) {
     this.meta = meta;
     const legacy = {
       ConfigCtrl: undefined,
@@ -108,7 +137,7 @@ export class AppPlugin {
         if (type === PluginIncludeType.page && component) {
           const exp = pluginExports[component];
           if (!exp) {
-            console.warn('App Page uses unknown component: ', component, meta);
+            console.warn('Plugin references unknown component: ', component, meta);
             continue;
           }
           legacy.pages[component] = exp;
@@ -116,5 +145,48 @@ export class AppPlugin {
         }
       }
     }
+  }
+
+  setConfigPage(page: PluginConfigPage<TPlugin>): TPlugin {
+    this.configPage = page;
+    return (this as unknown) as TPlugin;
+  }
+
+  addConfigTab(tab: PluginConfigPage<TPlugin>): TPlugin {
+    if (!this.configTabs) {
+      this.configTabs = [];
+    }
+    this.configTabs.push(tab);
+    return (this as unknown) as TPlugin;
+  }
+}
+
+export interface AppPluginPageProps<T> {
+  plugin: T;
+  path?: string; // The path (everythign after the configured pathPrefix)
+}
+
+export interface AppPluginPage<T> {
+  pathPrefix: string; //
+  plugin: T;
+  getPageNav: () => void;
+  body: AppPluginPageProps<T>;
+}
+
+export class AppPlugin extends PluginWithConfig<AppPlugin> {
+  pages?: Array<AppPluginPage<AppPlugin>>;
+
+  /**
+   * Add a page that is rendered under:
+   *  /a/${plugin-id}/
+   *
+   * The first matching page will be used.
+   */
+  addPage(page: AppPluginPage<AppPlugin>): AppPlugin {
+    if (!this.pages) {
+      this.pages = [];
+    }
+    this.pages.push(page);
+    return this;
   }
 }

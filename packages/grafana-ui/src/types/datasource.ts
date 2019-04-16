@@ -1,20 +1,16 @@
 import { ComponentClass } from 'react';
 import { TimeRange, RawTimeRange } from './time';
-import { PluginMeta } from './plugin';
+import { PluginMeta, PluginWithConfig } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 
-export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
+export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> extends PluginWithConfig<DataSourcePlugin> {
   DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TQuery>;
 
   constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
+    super();
     this.DataSourceClass = DataSourceClass;
     this.components = {};
-  }
-
-  setConfigCtrl(ConfigCtrl: any) {
-    this.components.ConfigCtrl = ConfigCtrl;
-    return this;
   }
 
   setQueryCtrl(QueryCtrl: any) {
@@ -47,8 +43,11 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
     return this;
   }
 
-  setComponentsFromLegacyExports(exports: any) {
-    this.components.ConfigCtrl = exports.ConfigCtrl;
+  setComponentsFromLegacyExports(pluginExports: any) {
+    if (exports.ConfigCtrl) {
+      this.angular = { ConfigCtrl: exports.ConfigCtrl, pages: {} };
+    }
+
     this.components.QueryCtrl = exports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = exports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = exports.ExploreQueryField;
@@ -60,7 +59,6 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
 
 export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
-  ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;

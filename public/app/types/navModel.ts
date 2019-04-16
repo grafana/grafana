@@ -1,15 +1,21 @@
+export interface NavModelBreadcrumb {
+  title: string;
+  url?: string;
+}
+
 export interface NavModelItem {
   text: string;
-  url: string;
+  url?: string;
   subTitle?: string;
+  subType?: any; // ??? icon and text
   icon?: string;
   img?: string;
-  id: string;
+  id?: string;
   active?: boolean;
   hideFromTabs?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
-  breadcrumbs?: Array<{ title: string; url: string }>;
+  breadcrumbs?: NavModelBreadcrumb[];
   target?: string;
   parentItem?: NavModelItem;
 }
