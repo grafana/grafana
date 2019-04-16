@@ -10,7 +10,6 @@ import {
   ScopedVars,
   DataRequestInfo,
   SeriesData,
-  LegacyResponseData,
   DataQueryError,
   toLegacyResponseData,
   isSeriesData,
@@ -40,19 +39,29 @@ export interface QueryRunnerOptions {
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
+  delayStateNotification?: number; // default 100ms.
+}
+
+export enum PanelQueryRunnerFormat {
+  series = 'series',
+  legacy = 'legacy',
 }
 
 export class PanelQueryRunner {
   private counter = 0;
   private subject?: Subject<PanelDataEvent>;
-  private includeLegacyFormats = false;
 
-  subscribe(observer: PartialObserver<PanelDataEvent>, includeLegacyFormats = false): Unsubscribable {
+  private sendSeries = false;
+  private sendLegacy = false;
+
+  subscribe(observer: PartialObserver<PanelDataEvent>, format = PanelQueryRunnerFormat.series): Unsubscribable {
     if (!this.subject) {
       this.subject = new Subject();
     }
-    if (includeLegacyFormats) {
-      this.includeLegacyFormats = true;
+    if (format === PanelQueryRunnerFormat.legacy) {
+      this.sendLegacy = true;
+    } else {
+      this.sendSeries = true;
     }
     return this.subject.subscribe(observer);
   }
@@ -73,6 +82,7 @@ export class PanelQueryRunner {
       widthPixels,
       maxDataPoints,
       scopedVars,
+      delayStateNotification,
     } = options;
 
     const request: DataRequestInfo = {
@@ -116,29 +126,32 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Start loading spinner: TODO, only start this if >XX ms pass?
-      this.subject.next({
-        eventId: this.counter++,
-        state: LoadingState.Loading,
-        request,
-      });
+      // Send a loading status event on slower queries
+      setTimeout(() => {
+        if (!request.endTime) {
+          this.subject.next({
+            eventId: this.counter++,
+            state: LoadingState.Loading,
+            request,
+          });
+        }
+      }, delayStateNotification || 100);
 
       const resp = await ds.query(request);
       request.endTime = Date.now();
 
-      // Make sure the data is SeriesData[]
-      let legacy: LegacyResponseData[] | undefined;
-      const series = getProcessedSeriesData(resp.data);
-      if (this.includeLegacyFormats) {
-        legacy = resp.data.map(v => {
-          if (isSeriesData(v)) {
-            return toLegacyResponseData(v);
-          }
-          return v;
-        });
-      }
+      // Make sure the response is in a supported format
+      const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
+      const legacy = this.sendLegacy
+        ? resp.data.map(v => {
+            if (isSeriesData(v)) {
+              return toLegacyResponseData(v);
+            }
+            return v;
+          })
+        : undefined;
 
-      // Start loading spinner
+      // Notify results
       this.subject.next({
         eventId: this.counter++,
         state: LoadingState.Done,
@@ -159,6 +172,7 @@ export class PanelQueryRunner {
         state: LoadingState.Error,
         error: error,
         request,
+        // ?? Should an error clear the last data ???
       });
     }
   }
