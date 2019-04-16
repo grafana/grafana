@@ -4,6 +4,7 @@ import { AngularExamplePageCtrl } from './legacy/angular_example_page';
 import { AppPlugin } from '@grafana/ui';
 import { ExampleConfigPage } from './config/ExampleConfigPage';
 import { ExampleTab1 } from './config/ExampleTab1';
+import { ExampleAppPage } from './page/ExampleAppPage';
 
 // Legacy exports just for testing
 export {
@@ -26,6 +27,9 @@ export const appPlugin = new AppPlugin()
     title: 'Tab 2',
     icon: 'fa fa-user',
     body: ExampleTab1,
+  })
+  .addPage({
+    body: ExampleAppPage,
   });
 
 // Only for testing

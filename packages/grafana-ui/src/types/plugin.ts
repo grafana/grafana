@@ -116,6 +116,49 @@ export class PluginWithConfig<TPlugin> {
     pages: { [component: string]: any };
   };
 
+  setConfigPage(page: PluginConfigPage<TPlugin>): TPlugin {
+    this.configPage = page;
+    return (this as unknown) as TPlugin;
+  }
+
+  addConfigTab(tab: PluginConfigPage<TPlugin>): TPlugin {
+    if (!this.configTabs) {
+      this.configTabs = [];
+    }
+    this.configTabs.push(tab);
+    return (this as unknown) as TPlugin;
+  }
+}
+
+export interface AppPluginPageProps<T> {
+  plugin: T;
+  url: string; // The URL path to this app page
+  query: { [s: string]: any }; // The URL query parameters
+  onNavChanged: (nav: any) => void;
+}
+
+export interface AppPluginPage<T> {
+  pathPrefix?: string;
+  body: ComponentClass<AppPluginPageProps<T>>;
+}
+
+export class AppPlugin extends PluginWithConfig<AppPlugin> {
+  pages?: Array<AppPluginPage<AppPlugin>>;
+
+  /**
+   * Add a page that is rendered under:
+   *  /a/${plugin-id}/
+   *
+   * The first matching page will be used.
+   */
+  addPage(page: AppPluginPage<AppPlugin>): AppPlugin {
+    if (!this.pages) {
+      this.pages = [];
+    }
+    this.pages.push(page);
+    return this;
+  }
+
   /**
    * Use PluginMeta to find relevant configs in include
    */
@@ -145,48 +188,5 @@ export class PluginWithConfig<TPlugin> {
         }
       }
     }
-  }
-
-  setConfigPage(page: PluginConfigPage<TPlugin>): TPlugin {
-    this.configPage = page;
-    return (this as unknown) as TPlugin;
-  }
-
-  addConfigTab(tab: PluginConfigPage<TPlugin>): TPlugin {
-    if (!this.configTabs) {
-      this.configTabs = [];
-    }
-    this.configTabs.push(tab);
-    return (this as unknown) as TPlugin;
-  }
-}
-
-export interface AppPluginPageProps<T> {
-  plugin: T;
-  path?: string; // The path (everythign after the configured pathPrefix)
-}
-
-export interface AppPluginPage<T> {
-  pathPrefix: string; //
-  plugin: T;
-  getPageNav: () => void;
-  body: AppPluginPageProps<T>;
-}
-
-export class AppPlugin extends PluginWithConfig<AppPlugin> {
-  pages?: Array<AppPluginPage<AppPlugin>>;
-
-  /**
-   * Add a page that is rendered under:
-   *  /a/${plugin-id}/
-   *
-   * The first matching page will be used.
-   */
-  addPage(page: AppPluginPage<AppPlugin>): AppPlugin {
-    if (!this.pages) {
-      this.pages = [];
-    }
-    this.pages.push(page);
-    return this;
   }
 }

@@ -4,13 +4,14 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, NavModel } from 'app/types';
+import { StoreState, NavModel, UrlQueryMap } from 'app/types';
 
 import Page from 'app/core/components/Page/Page';
 
 interface Props {
   pluginId: string; // From the angular router
   path?: string;
+  query: UrlQueryMap;
 }
 
 import { State, loadAppPluginForPage } from './AppConfigPage';
@@ -26,6 +27,12 @@ class AppPageWrapper extends Component<Props, State> {
   async componentDidMount() {
     const { pluginId } = this.props;
     this.setState(await loadAppPluginForPage(pluginId));
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.props.query !== prevProps.query) {
+      console.log('QUERY changed', this.props.query);
+    }
   }
 
   getNavModel(): NavModel {
@@ -85,6 +92,26 @@ class AppPageWrapper extends Component<Props, State> {
     // };
   }
 
+  onNavChanged = (nav: any) => {
+    console.log('TODO, update the nav from the page control', nav);
+  };
+
+  renderPageBody() {
+    const { path, query } = this.props;
+    const { plugin } = this.state;
+    const { pages } = plugin;
+    if (pages) {
+      for (const page of pages) {
+        if (!page.pathPrefix || (path && path.startsWith(page.pathPrefix))) {
+          console.log('LOAD', page);
+
+          return <page.body plugin={plugin} query={query} onNavChanged={this.onNavChanged} url={'xxxxx'} />;
+        }
+      }
+    }
+    return null;
+  }
+
   render() {
     const { pluginId, path } = this.props;
     const { loading, plugin } = this.state;
@@ -97,6 +124,18 @@ class AppPageWrapper extends Component<Props, State> {
               {plugin ? (
                 <div>
                   HELLO: {pluginId} / {path}
+                  <ul>
+                    <li>
+                      <a href="/a/example-app/page?x=1">111</a>
+                    </li>
+                    <li>
+                      <a href="/a/example-app/page?x=2">222</a>
+                    </li>
+                    <li>
+                      <a href="/a/example-app/page?x=3">333</a>
+                    </li>
+                  </ul>
+                  {this.renderPageBody()}
                 </div>
               ) : (
                 <div>not found...</div>
@@ -112,6 +151,7 @@ class AppPageWrapper extends Component<Props, State> {
 const mapStateToProps = (state: StoreState) => ({
   pluginId: state.location.routeParams.pluginId,
   path: state.location.routeParams.path,
+  query: state.location.query,
 });
 
 export default hot(module)(connect(mapStateToProps)(AppPageWrapper));
