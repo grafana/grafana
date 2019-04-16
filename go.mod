@@ -28,6 +28,7 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/go-xorm/core v0.6.2
 	github.com/go-xorm/xorm v0.7.1
+	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190411002643-bd77b112433e // indirect
 	github.com/gorilla/websocket v1.4.0
