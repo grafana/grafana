@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 
 interface RenderProps {
-  data?: PanelData;
+  data: PanelData;
 }
 
 export interface Props {
