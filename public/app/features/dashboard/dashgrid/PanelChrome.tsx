@@ -7,7 +7,6 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { DataPanel } from './DataPanel';
 import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
@@ -19,12 +18,13 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData, PanelData } from '@grafana/ui';
+import { TimeRange, LoadingState, DataQueryError, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData } from './DataPanel';
+import { PanelQueryRunner, PanelDataEvent } from '../state/PanelQueryRunner';
+import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -42,19 +42,31 @@ export interface State {
   timeInfo?: string;
   timeRange?: TimeRange;
   errorMessage: string | null;
+
+  // Current state of all events
+  data: PanelData;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
+  queryRunner = new PanelQueryRunner();
+  querySubscription: Unsubscribable;
+  queryWidthPixels = -1; // used to set maxDataPoints in query
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-
     this.state = {
       refreshCounter: 0,
       renderCounter: 0,
       errorMessage: null,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+      },
     };
+
+    // Listen for changes to the query results
+    this.querySubscription = this.queryRunner.subscribe(this.panelDataObserver);
   }
 
   componentDidMount() {
@@ -66,6 +78,36 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onRefresh);
   }
+
+  // Updates the response with information from the stream
+  panelDataObserver = {
+    next: (event: PanelDataEvent) => {
+      const data = {
+        ...this.state.data,
+        ...event,
+      };
+
+      if (data.state === LoadingState.Error) {
+        const { error } = data;
+        if (error) {
+          if (this.state.errorMessage !== error.message) {
+            this.setState({ errorMessage: error.message });
+          }
+          // this event is used by old query editors
+          this.props.panel.events.emit('data-error', error);
+        }
+      } else {
+        this.clearErrorState();
+      }
+
+      // Save the query response into the panel
+      if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
+        this.props.panel.snapshotData = data.series;
+      }
+
+      this.setState({ data });
+    },
+  };
 
   onRefresh = () => {
     console.log('onRefresh');
@@ -81,6 +123,27 @@ export class PanelChrome extends PureComponent<Props, State> {
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
     });
+
+    // Issue Query
+    if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
+      if (this.queryWidthPixels < 0) {
+        console.log('No width yet... wait till we know');
+        return;
+      }
+      this.queryRunner.run({
+        datasource: panel.datasource,
+        queries: panel.targets,
+        panelId: panel.id,
+        dashboardId: this.props.dashboard.id,
+        timezone: this.props.dashboard.timezone,
+        timeRange: timeData.timeRange,
+        widthPixels: this.queryWidthPixels,
+        minInterval: undefined, // Currently not passed in DataPanel?
+        maxDataPoints: panel.maxDataPoints,
+        scopedVars: panel.scopedVars,
+        cacheTimeout: panel.cacheTimeout,
+      });
+    }
   };
 
   onRender = () => {
@@ -95,27 +158,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
     return templateSrv.replace(value, vars, format);
-  };
-
-  onDataResponse = (data?: SeriesData[]) => {
-    if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = data;
-    }
-    // clear error state (if any)
-    this.clearErrorState();
-
-    if (this.props.isEditing) {
-      const events = this.props.panel.events;
-      if (!data) {
-        data = [];
-      }
-
-      // Angular query editors expect TimeSeries|TableData
-      events.emit('data-received', data.map(v => toLegacyResponseData(v)));
-
-      // Notify react query editors
-      events.emit('series-data-received', data);
-    }
   };
 
   onDataError = (message: string, error: DataQueryError) => {
@@ -147,72 +189,47 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  get needsQueryExecution() {
-    return this.hasPanelSnapshot || this.props.plugin.dataFormats.length > 0;
+  get wantsQueryExecution() {
+    return this.props.plugin.dataFormats.length > 0;
   }
 
-  get getDataForPanel() {
-    return {
-      state: LoadingState.Done,
-      series: this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : [],
-    };
-  }
-
-  renderPanelPlugin(data: PanelData, width: number, height: number): JSX.Element {
+  renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { timeRange, renderCounter } = this.state;
+    const { timeRange, renderCounter, data } = this.state;
     const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
-    if (data.state === LoadingState.Done) {
+    const loading = data.state;
+    if (loading === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
     }
 
     return (
-      <div className="panel-content">
-        <PanelComponent
-          data={data}
-          timeRange={timeRange}
-          options={panel.getOptions(plugin.reactPlugin.defaults)}
-          width={width - 2 * config.theme.panelPadding.horizontal}
-          height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
-          renderCounter={renderCounter}
-          replaceVariables={this.replaceVariables}
-        />
-      </div>
+      <>
+        {loading === LoadingState.Loading && this.renderLoadingState()}
+        <div className="panel-content">
+          <PanelComponent
+            data={data}
+            timeRange={timeRange}
+            options={panel.getOptions(plugin.reactPlugin.defaults)}
+            width={width - 2 * config.theme.panelPadding.horizontal}
+            height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
+            renderCounter={renderCounter}
+            replaceVariables={this.replaceVariables}
+          />
+        </div>
+      </>
     );
   }
 
-  renderPanelBody = (width: number, height: number): JSX.Element => {
-    const { panel } = this.props;
-    const { refreshCounter, timeRange } = this.state;
-    const { datasource, targets } = panel;
+  private renderLoadingState(): JSX.Element {
     return (
-      <>
-        {this.needsQueryExecution ? (
-          <DataPanel
-            panelId={panel.id}
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            widthPixels={width}
-            refreshCounter={refreshCounter}
-            scopedVars={panel.scopedVars}
-            onDataResponse={this.onDataResponse}
-            onError={this.onDataError}
-          >
-            {({ data }) => {
-              return this.renderPanelPlugin(data, width, height);
-            }}
-          </DataPanel>
-        ) : (
-          this.renderPanelPlugin(this.getDataForPanel, width, height)
-        )}
-      </>
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
+      </div>
     );
-  };
+  }
 
   render() {
     const { dashboard, panel, isFullscreen } = this.props;
@@ -226,7 +243,13 @@ export class PanelChrome extends PureComponent<Props, State> {
           if (width === 0) {
             return null;
           }
+          if (this.queryWidthPixels < 0 && this.wantsQueryExecution) {
+            this.queryWidthPixels = width;
+            setTimeout(() => this.onRefresh(), 1); // TODO some better way!!!
+            return null;
+          }
 
+          this.queryWidthPixels = width;
           return (
             <div className={containerClassNames}>
               <PanelHeader
@@ -246,7 +269,7 @@ export class PanelChrome extends PureComponent<Props, State> {
                     this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
                     return null;
                   }
-                  return this.renderPanelBody(width, height);
+                  return this.renderPanel(width, height);
                 }}
               </ErrorBoundary>
             </div>
