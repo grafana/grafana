@@ -15,12 +15,12 @@ import {
   toSeriesData,
   guessFieldTypes,
   DataQuery,
+  PanelData,
   DataRequestInfo,
-  QueryResponseData,
 } from '@grafana/ui';
 
 interface RenderProps {
-  data?: QueryResponseData;
+  data?: PanelData;
 }
 
 export interface Props {
@@ -42,7 +42,7 @@ export interface Props {
 
 export interface State {
   isFirstLoad: boolean;
-  response: QueryResponseData;
+  data: PanelData;
 }
 
 /**
@@ -78,7 +78,7 @@ export class DataPanel extends Component<Props, State> {
 
     this.state = {
       isFirstLoad: true,
-      response: {
+      data: {
         state: LoadingState.NotStarted,
         series: [],
       },
@@ -126,7 +126,7 @@ export class DataPanel extends Component<Props, State> {
 
     if (!queries.length) {
       this.setState({
-        response: {
+        data: {
           state: LoadingState.Done,
           series: [],
         },
@@ -135,8 +135,8 @@ export class DataPanel extends Component<Props, State> {
     }
 
     this.setState({
-      response: {
-        ...this.state.response,
+      data: {
+        ...this.state.data,
         loading: LoadingState.Loading,
       },
     });
@@ -177,16 +177,16 @@ export class DataPanel extends Component<Props, State> {
       }
 
       // Make sure the data is SeriesData[]
-      const data = getProcessedSeriesData(resp.data);
+      const series = getProcessedSeriesData(resp.data);
       if (onDataResponse) {
-        onDataResponse(data);
+        onDataResponse(series);
       }
 
       this.setState({
         isFirstLoad: false,
-        response: {
+        data: {
           state: LoadingState.Done,
-          series: data,
+          series,
           request,
         },
       });
@@ -209,8 +209,8 @@ export class DataPanel extends Component<Props, State> {
 
       this.setState({
         isFirstLoad: false,
-        response: {
-          ...this.state.response,
+        data: {
+          ...this.state.data,
           loading: LoadingState.Error,
         },
       });
@@ -219,8 +219,8 @@ export class DataPanel extends Component<Props, State> {
 
   render() {
     const { queries } = this.props;
-    const { isFirstLoad, response } = this.state;
-    const { state } = response;
+    const { isFirstLoad, data } = this.state;
+    const { state } = data;
 
     // do not render component until we have first data
     if (isFirstLoad && (state === LoadingState.Loading || state === LoadingState.NotStarted)) {
@@ -238,7 +238,7 @@ export class DataPanel extends Component<Props, State> {
     return (
       <>
         {state === LoadingState.Loading && this.renderLoadingState()}
-        {this.props.children({ data: response })}
+        {this.props.children({ data })}
       </>
     );
   }

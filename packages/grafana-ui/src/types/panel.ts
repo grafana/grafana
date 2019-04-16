@@ -5,7 +5,7 @@ import { ScopedVars, DataRequestInfo, DataQueryError } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
-export interface QueryResponseData {
+export interface PanelData {
   state: LoadingState;
   series: SeriesData[];
   request?: DataRequestInfo;
@@ -13,8 +13,8 @@ export interface QueryResponseData {
 }
 
 export interface PanelProps<T = any> {
-  data?: QueryResponseData;
-  // TODO: annotation?: QueryResponseData;
+  data?: PanelData;
+  // TODO: annotation?: PanelData;
 
   timeRange: TimeRange;
   options: T;
