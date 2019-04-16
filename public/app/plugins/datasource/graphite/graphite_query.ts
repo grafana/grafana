@@ -61,7 +61,7 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    const seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
+    const seriesByTagFunc: any = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
@@ -135,7 +135,7 @@ export default class GraphiteQuery {
   }
 
   moveAliasFuncLast() {
-    const aliasFunc = _.find(this.functions, func => {
+    const aliasFunc: any = _.find(this.functions, func => {
       return func.def.name.startsWith('alias');
     });
 
@@ -158,6 +158,7 @@ export default class GraphiteQuery {
 
   moveFunction(func, offset) {
     const index = this.functions.indexOf(func);
+    // @ts-ignore
     _.move(this.functions, index, index + offset);
   }
 

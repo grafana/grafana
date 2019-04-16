@@ -3,13 +3,20 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange, TimeZone } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper, TimeZone } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
-import { changeDatasource, clearQueries, splitClose, runQueries, splitOpen } from './state/actions';
+import {
+  changeDatasource,
+  clearQueries,
+  splitClose,
+  runQueries,
+  splitOpen,
+  changeRefreshInterval,
+} from './state/actions';
 import TimePicker from './TimePicker';
-import { ClickOutsideWrapper } from 'app/core/components/ClickOutsideWrapper/ClickOutsideWrapper';
 import { getTimeZone } from '../profile/state/selectors';
+import { RefreshPicker, SetInterval } from '@grafana/ui';
 
 enum IconSide {
   left = 'left',
@@ -53,20 +60,22 @@ interface StateProps {
   timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
+  refreshInterval: string;
 }
 
 interface DispatchProps {
   changeDatasource: typeof changeDatasource;
   clearAll: typeof clearQueries;
-  runQuery: typeof runQueries;
+  runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
+  changeRefreshInterval: typeof changeRefreshInterval;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -79,17 +88,23 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   };
 
   onRunQuery = () => {
-    this.props.runQuery(this.props.exploreId);
+    return this.props.runQueries(this.props.exploreId);
   };
 
   onCloseTimePicker = () => {
     this.props.timepickerRef.current.setState({ isOpen: false });
   };
 
+  onChangeRefreshInterval = (item: string) => {
+    const { changeRefreshInterval, exploreId } = this.props;
+    changeRefreshInterval(exploreId, item);
+  };
+
   render() {
     const {
       datasourceMissing,
       exploreDatasources,
+      closeSplit,
       exploreId,
       loading,
       range,
@@ -97,6 +112,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       selectedDatasource,
       splitted,
       timepickerRef,
+      refreshInterval,
+      onChangeTime,
+      split,
     } = this.props;
 
     return (
@@ -112,7 +130,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               )}
             </div>
             {splitted && (
-              <a className="explore-toolbar-header-close" onClick={() => this.props.closeSplit(exploreId)}>
+              <a className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)}>
                 <i className="fa fa-times fa-fw" />
               </a>
             )}
@@ -136,7 +154,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 {createResponsiveButton({
                   splitted,
                   title: 'Split',
-                  onClick: this.props.split,
+                  onClick: split,
                   iconClassName: 'fa fa-fw fa-columns icon-margin-right',
                   iconSide: IconSide.left,
                 })}
@@ -144,14 +162,18 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
               <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker
-                  ref={timepickerRef}
-                  range={range}
-                  isUtc={timeZone.isUtc}
-                  onChangeTime={this.props.onChangeTime}
-                />
+                <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
               </ClickOutsideWrapper>
+
+              <RefreshPicker
+                onIntervalChanged={this.onChangeRefreshInterval}
+                onRefresh={this.onRunQuery}
+                value={refreshInterval}
+                tooltip="Refresh"
+              />
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} />}
             </div>
+
             <div className="explore-toolbar-content-item">
               <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
                 Clear All
@@ -177,7 +199,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
   const exploreItem = state.explore[exploreId];
-  const { datasourceInstance, datasourceMissing, exploreDatasources, queryTransactions, range } = exploreItem;
+  const {
+    datasourceInstance,
+    datasourceMissing,
+    exploreDatasources,
+    queryTransactions,
+    range,
+    refreshInterval,
+  } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
@@ -191,13 +220,15 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     timeZone: getTimeZone(state.user),
     selectedDatasource,
     splitted,
+    refreshInterval,
   };
 };
 
 const mapDispatchToProps: DispatchProps = {
   changeDatasource,
+  changeRefreshInterval,
   clearAll: clearQueries,
-  runQuery: runQueries,
+  runQueries,
   closeSplit: splitClose,
   split: splitOpen,
 };

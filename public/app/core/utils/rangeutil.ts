@@ -1,3 +1,4 @@
+// @ts-ignore
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -5,7 +6,7 @@ import { RawTimeRange } from '@grafana/ui';
 
 import * as dateMath from './datemath';
 
-const spans = {
+const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
   m: { display: 'minute' },
   h: { display: 'hour' },
@@ -63,12 +64,12 @@ const rangeOptions = [
 
 const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
 
-const rangeIndex = {};
-_.each(rangeOptions, frame => {
+const rangeIndex: any = {};
+_.each(rangeOptions, (frame: any) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
-export function getRelativeTimesList(timepickerSettings, currentDisplay) {
+export function getRelativeTimesList(timepickerSettings: any, currentDisplay: any) {
   const groups = _.groupBy(rangeOptions, (option: any) => {
     option.active = option.display === currentDisplay;
     return option.section;
@@ -84,7 +85,7 @@ export function getRelativeTimesList(timepickerSettings, currentDisplay) {
   return groups;
 }
 
-function formatDate(date) {
+function formatDate(date: any) {
   return date.format(absoluteFormat);
 }
 
@@ -144,12 +145,12 @@ export function describeTimeRange(range: RawTimeRange): string {
 
   if (moment.isMoment(range.from)) {
     const toMoment = dateMath.parse(range.to, true);
-    return formatDate(range.from) + ' to ' + toMoment.fromNow();
+    return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
   }
 
   if (moment.isMoment(range.to)) {
     const from = dateMath.parse(range.from, false);
-    return from.fromNow() + ' to ' + formatDate(range.to);
+    return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
   }
 
   if (range.to.toString() === 'now') {

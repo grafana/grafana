@@ -66,7 +66,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     text += 'Metrics: ';
 
     _.each(metricAggs, (metric, index) => {
-      const aggDef = _.find(metricAggTypes, { value: metric.type });
+      const aggDef: any = _.find(metricAggTypes, { value: metric.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
@@ -77,12 +77,12 @@ export class ElasticQueryCtrl extends QueryCtrl {
       text += '), ';
     });
 
-    _.each(bucketAggs, (bucketAgg, index) => {
+    _.each(bucketAggs, (bucketAgg: any, index: number) => {
       if (index === 0) {
         text += ' Group by: ';
       }
 
-      const aggDef = _.find(bucketAggTypes, { value: bucketAgg.type });
+      const aggDef: any = _.find(bucketAggTypes, { value: bucketAgg.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += bucketAgg.field;

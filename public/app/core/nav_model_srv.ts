@@ -48,7 +48,7 @@ export class NavModelSrv {
         break;
       }
 
-      const node = _.find(children, { id: id });
+      const node: any = _.find(children, { id: id });
       nav.breadcrumbs.push(node);
       nav.node = node;
       nav.main = node;

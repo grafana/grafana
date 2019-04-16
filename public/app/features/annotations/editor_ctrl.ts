@@ -74,6 +74,7 @@ export class AnnotationsEditorCtrl {
   }
 
   move(index, dir) {
+    // @ts-ignore
     _.move(this.annotations, index, index + dir);
   }
 

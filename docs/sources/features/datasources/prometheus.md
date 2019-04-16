@@ -69,13 +69,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| _label_names()_               | Returns a list of label names.                                          |
-| _label_values(label)_         | Returns a list of label values for the `label` in every metric.         |
-| _label_values(metric, label)_ | Returns a list of label values for the `label` in the specified metric. |
-| _metrics(metric)_             | Returns a list of metrics matching the specified `metric` regex.        |
-| _query_result(query)_         | Returns a list of Prometheus query result for the `query`.              |
+| Name                             | Description                                                             |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| _label_\__names()_               | Returns a list of label names.                                          |
+| _label_\__values(label)_         | Returns a list of label values for the `label` in every metric.         |
+| _label_\__values(metric, label)_ | Returns a list of label values for the `label` in the specified metric. |
+| _metrics(metric)_                | Returns a list of metrics matching the specified `metric` regex.        |
+| _query_\__result(query)_         | Returns a list of Prometheus query result for the `query`.              |
 
 For details of _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

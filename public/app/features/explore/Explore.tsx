@@ -3,7 +3,6 @@ import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-// @ts-ignore
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
 
@@ -120,7 +119,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const initialQueries: DataQuery[] = ensureQueries(queries);
     const initialRange = { from: parseTime(range.from, timeZone.isUtc), to: parseTime(range.to, timeZone.isUtc) };
     const width = this.el ? this.el.offsetWidth : 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(

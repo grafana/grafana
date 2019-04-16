@@ -29,3 +29,18 @@ export const parseTimeZone = (raw: string): TimeZone => {
 };
 
 export const DefaultTimeZone = parseTimeZone('browser');
+export interface TimeOption {
+  from: string;
+  to: string;
+  display: string;
+  section: number;
+  active: boolean;
+}
+
+export interface TimeOptions {
+  [key: string]: TimeOption[];
+}
+
+export type TimeFragment = string | Moment;
+
+export const TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';

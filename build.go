@@ -270,7 +270,7 @@ func createDebPackages() {
 		defaultFileSrc: "packaging/deb/default/grafana-server",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
-		depends: []string{"adduser", "libfontconfig"},
+		depends: []string{"adduser", "libfontconfig1"},
 	})
 }
 

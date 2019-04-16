@@ -9,6 +9,7 @@ import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
 // Components
 import { DashNavButton } from './DashNavButton';
+import { DashNavTimeControls } from './DashNavTimeControls';
 import { Tooltip } from '@grafana/ui';
 
 // State
@@ -16,8 +17,9 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { DashboardModel } from '../../state';
+import { StoreState } from 'app/types';
 
-export interface Props {
+export interface OwnProps {
   dashboard: DashboardModel;
   editview: string;
   isEditing: boolean;
@@ -26,6 +28,12 @@ export interface Props {
   updateLocation: typeof updateLocation;
   onAddPanel: () => void;
 }
+
+export interface StateProps {
+  location: any;
+}
+
+type Props = StateProps & OwnProps;
 
 export class DashNav extends PureComponent<Props> {
   timePickerEl: HTMLElement;
@@ -39,7 +47,6 @@ export class DashNav extends PureComponent<Props> {
 
   componentDidMount() {
     const loader = getAngularLoader();
-
     const template =
       '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
     const scopeProps = { dashboard: this.props.dashboard };
@@ -161,12 +168,10 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel } = this.props;
+    const { dashboard, onAddPanel, location } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
-
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     return (
       <div className="navbar">
         {this.isInFullscreenOrSettings && this.renderBackButton()}
@@ -255,13 +260,20 @@ export class DashNav extends PureComponent<Props> {
           />
         </div>
 
-        <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+        {!dashboard.timepicker.hidden && (
+          <div className="navbar-buttons">
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+          </div>
+        )}
       </div>
     );
   }
 }
 
-const mapStateToProps = () => ({});
+const mapStateToProps = (state: StoreState) => ({
+  location: state.location,
+});
 
 const mapDispatchToProps = {
   updateLocation,

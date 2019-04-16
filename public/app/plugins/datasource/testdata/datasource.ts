@@ -90,6 +90,13 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     return this.$q.when(events);
   }
 
+  getQueryDisplayText(query: TestDataQuery) {
+    if (query.alias) {
+      return query.scenarioId + ' as ' + query.alias;
+    }
+    return query.scenarioId;
+  }
+
   testDatasource() {
     return Promise.resolve({
       status: 'success',
