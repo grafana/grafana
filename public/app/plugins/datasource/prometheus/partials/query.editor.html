@@ -10,7 +10,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label">Legend</label>
-      <input type="text" class="gf-form-input" ng-model="ctrl.target.legendFormat" spellcheck='false' placeholder="legend format"
+      <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.target.legendFormat" spellcheck='false' placeholder="legend format"
         data-min-length=0 data-items=1000 ng-model-onblur ng-change="ctrl.refreshMetricData()">
       </input>
       <info-popover mode="right-absolute">
@@ -21,7 +21,7 @@
 
     <div class="gf-form">
       <label class="gf-form-label width-6">Min step</label>
-      <input type="text" class="gf-form-input width-8" ng-model="ctrl.target.interval" data-placement="right" spellcheck='false'
+      <input type="text" class="gf-form-input width-8 gf-form-input--has-help-icon" ng-model="ctrl.target.interval" data-placement="right" spellcheck='false'
         placeholder="{{ctrl.panelCtrl.interval}}" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"
       />
       <info-popover mode="right-absolute">

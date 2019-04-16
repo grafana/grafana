@@ -307,28 +307,42 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 			}
 		}
 
-		if c.OrgRole == m.ROLE_ADMIN && c.IsGrafanaAdmin {
-			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-				Divider: true, HideFromTabs: true, Id: "admin-divider", Text: "Text",
-			})
-		}
+		data.NavTree = append(data.NavTree, cfgNode)
+	}
 
-		if c.IsGrafanaAdmin {
-			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-				Text:         "Server Admin",
-				HideFromTabs: true,
-				SubTitle:     "Manage all users & orgs",
-				Id:           "admin",
-				Icon:         "gicon gicon-shield",
-				Url:          setting.AppSubUrl + "/admin/users",
-				Children: []*dtos.NavLink{
-					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
-					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
-					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
-					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
+	if c.IsGrafanaAdmin {
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text:         "Server Admin",
+			SubTitle:     "Manage all users & orgs",
+			HideFromTabs: true,
+			Id:           "admin",
+			Icon:         "gicon gicon-shield",
+			Url:          setting.AppSubUrl + "/admin/users",
+			Children: []*dtos.NavLink{
+				{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+				{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+				{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+			},
+		})
+	}
+
+	if (c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_VIEWER) && hs.Cfg.EditorsCanAdmin {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/org/teams",
+			Children: []*dtos.NavLink{
+				{
+					Text:        "Teams",
+					Id:          "teams",
+					Description: "Manage org groups",
+					Icon:        "gicon gicon-team",
+					Url:         setting.AppSubUrl + "/org/teams",
 				},
-			})
+			},
 		}
 
 		data.NavTree = append(data.NavTree, cfgNode)

@@ -14,15 +14,15 @@ module.exports = (baseConfig, env, config) => {
     test: /\.scss$/,
     use: [
       {
-        loader: 'style-loader',
+        loader: 'style-loader/useable',
       },
       {
         loader: 'css-loader',
         options: {
           importLoaders: 2,
-          url: false,
-          sourceMap: false,
-          minimize: false,
+          // url: false,
+          // sourceMap: false,
+          // minimize: false,
         },
       },
       {
@@ -35,7 +35,7 @@ module.exports = (baseConfig, env, config) => {
       {
         loader: 'sass-loader',
         options: {
-          sourceMap: false
+          sourceMap: false,
         },
       },
     ],

@@ -1,4 +1,5 @@
-import { scaledUnits, DecimalCount } from './valueFormats';
+import { scaledUnits } from './valueFormats';
+import { DecimalCount } from '../../types';
 
 export function currency(symbol: string) {
   const units = ['', 'K', 'M', 'B', 'T'];

@@ -1,5 +1,5 @@
-import { flatten } from 'lodash';
-import { GrafanaThemeType } from '../types';
+import flatten from 'lodash/flatten';
+import { GrafanaThemeType } from '../types/theme';
 import tinycolor from 'tinycolor2';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';

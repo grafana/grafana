@@ -38,7 +38,7 @@ provider (listed above). There is also options for allowing self sign up.
 
 ### Login and short-lived tokens
 
-> The followung applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
+> The following applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
 
 Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.

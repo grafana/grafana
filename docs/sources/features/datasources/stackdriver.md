@@ -5,9 +5,9 @@ keywords = ["grafana", "stackdriver", "google", "guide"]
 type = "docs"
 aliases = ["/datasources/stackdriver"]
 [menu.docs]
-name = "Stackdriver"
+name = "Google Stackdriver"
 parent = "datasources"
-weight = 11
+weight = 4
 +++
 
 # Using Google Stackdriver in Grafana
@@ -66,7 +66,7 @@ Click on the links above and click the `Enable` button:
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
     {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
-  
+
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
@@ -156,7 +156,7 @@ Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
 
 Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
 
-It is also possible to resolve the name of the Monitored Resource Type. 
+It is also possible to resolve the name of the Monitored Resource Type.
 
 | Alias Pattern Format | Description                                     | Example Result |
 | -------------------- | ----------------------------------------------- | -------------- |

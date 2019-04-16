@@ -3,6 +3,7 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"strconv"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -24,7 +25,9 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("getEngine", "connection", cnnstr)
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",

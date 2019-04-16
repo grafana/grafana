@@ -5,4 +5,5 @@ pkg/
 node_modules
 public/vendor/
 vendor/
+data/
 

@@ -66,11 +66,12 @@ describe('Prometheus Result Transformer', () => {
       ]);
       expect(table.columns).toMatchObject([
         { text: 'Time', type: 'time' },
-        { text: '__name__' },
-        { text: 'instance' },
+        { text: '__name__', filterable: true },
+        { text: 'instance', filterable: true },
         { text: 'job' },
         { text: 'Value' },
       ]);
+      expect(table.columns[4].filterable).toBeUndefined();
     });
 
     it('should column title include refId if response count is more than 2', () => {

@@ -34,6 +34,7 @@ const panelDefaults = {
   },
   dataFormat: 'timeseries',
   yBucketBound: 'auto',
+  reverseYBuckets: false,
   xAxis: {
     show: true,
   },
@@ -55,6 +56,7 @@ const panelDefaults = {
     showHistogram: false,
   },
   highlightCards: true,
+  hideZeroBuckets: false,
 };
 
 const colorModes = ['opacity', 'spectrum'];
@@ -97,7 +99,7 @@ const colorSchemes = [
   { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'dark' },
 ];
 
-const dsSupportHistogramSort = ['prometheus', 'elasticsearch'];
+const dsSupportHistogramSort = ['elasticsearch'];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -108,7 +110,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: any;
+  series: any[];
   timeSrv: any;
   dataWarning: any;
   decimals: number;
@@ -146,7 +148,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   onRender() {
-    if (!this.range) {
+    if (!this.range || !this.series) {
       return;
     }
 
@@ -204,7 +206,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
-    const { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
 
     this.data = {
       buckets: bucketsData,
@@ -225,13 +227,20 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       this.series.sort(sortSeriesByLabel);
     }
 
+    if (this.panel.reverseYBuckets) {
+      this.series.reverse();
+    }
+
     // Convert histogram to heatmap. Each histogram bucket represented by the series which name is
-    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as X axis labels.
+    // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as Y axis labels.
     bucketsData = histogramToHeatmap(this.series);
 
     tsBuckets = _.map(this.series, 'label');
     const yBucketBound = this.panel.yBucketBound;
-    if ((panelDatasource === 'prometheus' && yBucketBound !== 'lower') || yBucketBound === 'upper') {
+    if (
+      (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
+      yBucketBound === 'upper'
+    ) {
       // Prometheus labels are upper inclusive bounds, so add empty bottom bucket label.
       tsBuckets = [''].concat(tsBuckets);
     } else {
@@ -246,7 +255,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
 
-    const { cards, cardStats } = convertToCards(bucketsData);
+    const { cards, cardStats } = convertToCards(bucketsData, this.panel.hideZeroBuckets);
 
     this.data = {
       buckets: bucketsData,

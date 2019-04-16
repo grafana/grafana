@@ -24,22 +24,9 @@ import { LogLevel } from 'app/core/logs_model';
  *
  */
 export enum ActionTypes {
-  InitializeExploreSplit = 'explore/INITIALIZE_EXPLORE_SPLIT',
-  SplitClose = 'explore/SPLIT_CLOSE',
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
 }
-
-export interface InitializeExploreSplitAction {
-  type: ActionTypes.InitializeExploreSplit;
-  payload: {};
-}
-
-export interface SplitCloseAction {
-  type: ActionTypes.SplitClose;
-  payload: {};
-}
-
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
   payload: {
@@ -154,10 +141,6 @@ export interface RemoveQueryRowPayload {
   index: number;
 }
 
-export interface RunQueriesEmptyPayload {
-  exploreId: ExploreId;
-}
-
 export interface ScanStartPayload {
   exploreId: ExploreId;
   scanner: RangeScanner;
@@ -175,6 +158,10 @@ export interface ScanStopPayload {
 export interface SetQueriesPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
+}
+
+export interface SplitCloseActionPayload {
+  itemId: ExploreId;
 }
 
 export interface SplitOpenPayload {
@@ -210,6 +197,15 @@ export interface ToggleLogLevelPayload {
 export interface QueriesImportedPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
+}
+
+export interface LoadExploreDataSourcesPayload {
+  exploreId: ExploreId;
+  exploreDatasources: DataSourceSelectItem[];
+}
+
+export interface RunQueriesPayload {
+  exploreId: ExploreId;
 }
 
 /**
@@ -258,11 +254,6 @@ export const highlightLogsExpressionAction = actionCreatorFactory<HighlightLogsE
 export const initializeExploreAction = actionCreatorFactory<InitializeExplorePayload>(
   'explore/INITIALIZE_EXPLORE'
 ).create();
-
-/**
- * Initialize the wrapper split state
- */
-export const initializeExploreSplitAction = noPayloadActionCreatorFactory('explore/INITIALIZE_EXPLORE_SPLIT').create();
 
 /**
  * Display an error that happened during the selection of a datasource
@@ -341,8 +332,8 @@ export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransacti
  * Remove query row of the given index, as well as associated query results.
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
-export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
-export const runQueriesEmptyAction = actionCreatorFactory<RunQueriesEmptyPayload>('explore/RUN_QUERIES_EMPTY').create();
+
+export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
 
 /**
  * Start a scan for more results using the given scanner.
@@ -366,7 +357,7 @@ export const setQueriesAction = actionCreatorFactory<SetQueriesPayload>('explore
 /**
  * Close the split view and save URL state.
  */
-export const splitCloseAction = noPayloadActionCreatorFactory('explore/SPLIT_CLOSE').create();
+export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('explore/SPLIT_CLOSE').create();
 
 /**
  * Open the split view and copy the left state to be the right state.
@@ -412,8 +403,7 @@ export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_E
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
 
 export type HigherOrderAction =
-  | InitializeExploreSplitAction
-  | SplitCloseAction
+  | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
   | ActionOf<any>;
@@ -435,7 +425,6 @@ export type Action =
   | ActionOf<QueryTransactionStartPayload>
   | ActionOf<QueryTransactionSuccessPayload>
   | ActionOf<RemoveQueryRowPayload>
-  | ActionOf<RunQueriesEmptyPayload>
   | ActionOf<ScanStartPayload>
   | ActionOf<ScanRangePayload>
   | ActionOf<SetQueriesPayload>

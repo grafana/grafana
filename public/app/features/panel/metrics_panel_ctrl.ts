@@ -81,7 +81,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // load datasource service
     this.datasourceSrv
-      .get(this.panel.datasource)
+      .get(this.panel.datasource, this.panel.scopedVars)
       .then(this.updateTimeRange.bind(this))
       .then(this.issueQueries.bind(this))
       .then(this.handleQueryResult.bind(this))
@@ -224,7 +224,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       items.push({
         text: 'Explore',
         click: 'ctrl.explore();',
-        icon: 'fa fa-fw fa-rocket',
+        icon: 'gicon gicon-explore',
         shortcut: 'x',
       });
     }

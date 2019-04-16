@@ -14,10 +14,7 @@
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
     },
-    "links": [
-      {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
-    ],
-    "version": "5.0.0"
+    "links": [{ "name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch" }]
   },
 
   "alerting": true,

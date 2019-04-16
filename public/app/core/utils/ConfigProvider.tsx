@@ -15,6 +15,7 @@ export const provideConfig = (component: React.ComponentType<any>) => {
 
 export const getCurrentThemeName = () =>
   config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark;
+
 export const getCurrentTheme = () => getTheme(getCurrentThemeName());
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {

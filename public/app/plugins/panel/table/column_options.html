@@ -124,13 +124,13 @@
     <div class="gf-form">
       <label class="gf-form-label width-8">Colors</label>
       <span class="gf-form-label">
-        <color-picker color="style.colors[0]" onChange="editor.onColorChange($index, 0)"></color-picker>
+        <color-picker color="style.colors[0]" onChange="editor.onColorChange(style, 0)"></color-picker>
       </span>
       <span class="gf-form-label">
-        <color-picker color="style.colors[1]" onChange="editor.onColorChange($index, 1)"></color-picker>
+        <color-picker color="style.colors[1]" onChange="editor.onColorChange(style, 1)"></color-picker>
       </span>
       <span class="gf-form-label">
-        <color-picker color="style.colors[2]" onChange="editor.onColorChange($index, 2)"></color-picker>
+        <color-picker color="style.colors[2]" onChange="editor.onColorChange(style, 2)"></color-picker>
       </span>
       <div class="gf-form-label">
         <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>

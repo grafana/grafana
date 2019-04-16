@@ -66,10 +66,6 @@
     padding-left: 6px;
   }
 
-  &--search {
-    padding: 1rem 1.5rem 0.75rem 1.5rem;
-  }
-
   .gicon {
     top: -2px;
     position: relative;
@@ -157,14 +153,8 @@
 
 @include media-breakpoint-up(sm) {
   .navbar {
-    padding-left: 60px;
-  }
-
-  .sidemenu-open {
-    .navbar {
-      padding-left: 25px;
-      margin-left: 0;
-    }
+    padding-left: 20px;
+    margin-left: 0;
   }
 
   .navbar-page-btn {

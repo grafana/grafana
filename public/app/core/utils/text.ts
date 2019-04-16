@@ -68,3 +68,7 @@ export function sanitize(unsanitizedString: string): string {
     return unsanitizedString;
   }
 }
+
+export function hasAnsiCodes(input: string): boolean {
+  return /\u001b\[\d{1,2}m/.test(input);
+}

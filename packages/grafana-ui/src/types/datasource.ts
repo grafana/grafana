@@ -1,9 +1,11 @@
 import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries } from './data';
+import { TableData, TimeSeries, SeriesData } from './data';
+
+export type DataQueryResponseData = TimeSeries | TableData | SeriesData | any;
 
 export interface DataQueryResponse {
-  data: TimeSeries[] | [TableData] | any;
+  data: DataQueryResponseData[];
 }
 
 export interface DataQuery {
@@ -39,6 +41,16 @@ export interface DataQueryError {
   statusText?: string;
 }
 
+export interface ScopedVar {
+  text: any;
+  value: any;
+  [key: string]: any;
+}
+
+export interface ScopedVars {
+  [key: string]: ScopedVar;
+}
+
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
@@ -50,7 +62,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   interval: string;
   intervalMs: number;
   maxDataPoints: number;
-  scopedVars: object;
+  scopedVars: ScopedVars;
 }
 
 export interface QueryFix {

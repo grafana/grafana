@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import React, { Component } from 'react';
+import isNil from 'lodash/isNil';
+import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
 
 interface Props {
-  customClassName?: string;
+  className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHideDuration?: number;
@@ -20,9 +21,8 @@ interface Props {
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class CustomScrollbar extends PureComponent<Props> {
+export class CustomScrollbar extends Component<Props> {
   static defaultProps: Partial<Props> = {
-    customClassName: 'custom-scrollbars',
     autoHide: false,
     autoHideTimeout: 200,
     autoHideDuration: 200,
@@ -42,7 +42,7 @@ export class CustomScrollbar extends PureComponent<Props> {
   updateScroll() {
     const ref = this.ref.current;
 
-    if (ref && !_.isNil(this.props.scrollTop)) {
+    if (ref && !isNil(this.props.scrollTop)) {
       ref.scrollTop(this.props.scrollTop);
     }
   }
@@ -71,7 +71,7 @@ export class CustomScrollbar extends PureComponent<Props> {
 
   render() {
     const {
-      customClassName,
+      className,
       children,
       autoHeightMax,
       autoHeightMin,
@@ -86,7 +86,7 @@ export class CustomScrollbar extends PureComponent<Props> {
     return (
       <Scrollbars
         ref={this.ref}
-        className={customClassName}
+        className={classNames('custom-scrollbar', className)}
         onScroll={setScrollTop}
         autoHeight={true}
         autoHide={autoHide}

@@ -1,3 +1,7 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
@@ -41,6 +45,7 @@ type Column struct {
 	Comment         string
 }
 
+// NewColumn creates a new column
 func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable bool) *Column {
 	return &Column{
 		Name:            name,
@@ -66,7 +71,7 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 	}
 }
 
-// generate column description string according dialect
+// String generate column description string according dialect
 func (col *Column) String(d Dialect) string {
 	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
 
@@ -79,6 +84,10 @@ func (col *Column) String(d Dialect) string {
 		}
 	}
 
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
+	}
+
 	if d.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
@@ -87,18 +96,19 @@ func (col *Column) String(d Dialect) string {
 		}
 	}
 
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
-	}
-
 	return sql
 }
 
+// StringNoPk generate column description string according dialect without primary keys
 func (col *Column) StringNoPk(d Dialect) string {
 	sql := d.QuoteStr() + col.Name + d.QuoteStr() + " "
 
 	sql += d.SqlType(col) + " "
 
+	if col.Default != "" {
+		sql += "DEFAULT " + col.Default + " "
+	}
+
 	if d.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
@@ -107,19 +117,16 @@ func (col *Column) StringNoPk(d Dialect) string {
 		}
 	}
 
-	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
-	}
-
 	return sql
 }
 
-// return col's filed of struct's value
+// ValueOf returns column's filed of struct's value
 func (col *Column) ValueOf(bean interface{}) (*reflect.Value, error) {
 	dataStruct := reflect.Indirect(reflect.ValueOf(bean))
 	return col.ValueOfV(&dataStruct)
 }
 
+// ValueOfV returns column's filed of struct's value accept reflevt value
 func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 	var fieldValue reflect.Value
 	fieldPath := strings.Split(col.FieldName, ".")
@@ -147,12 +154,12 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 			}
 			fieldValue = fieldValue.Elem().FieldByName(fieldPath[i+1])
 		} else {
-			return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
+			return nil, fmt.Errorf("field %v is not valid", col.FieldName)
 		}
 	}
 
 	if !fieldValue.IsValid() {
-		return nil, fmt.Errorf("field  %v is not valid", col.FieldName)
+		return nil, fmt.Errorf("field %v is not valid", col.FieldName)
 	}
 
 	return &fieldValue, nil

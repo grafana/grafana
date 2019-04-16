@@ -73,6 +73,7 @@ var unitMultiplier = map[string]int{
 	"s": 1,
 	"m": 60,
 	"h": 3600,
+	"d": 86400,
 }
 
 func getTimeDurationStringToSeconds(str string) (int64, error) {
