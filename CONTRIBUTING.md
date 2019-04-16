@@ -52,3 +52,31 @@ Closes #12864
 ```
 
 If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged.
+
+## Backend dependency management
+
+The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
+
+All dependencies are vendored in the `vendor/` directory.
+
+To add or update a new dependency, use the `go get` command:
+
+```bash
+# Pick the latest tagged release.
+go get example.com/some/module/pkg
+
+# Pick a specific version.
+go get example.com/some/module/pkg@vX.Y.Z
+```
+
+Tidy up the `go.mod` and `go.sum` files and copy the new/updated dependency to the `vendor/` directory:
+
+
+```bash
+# The GO111MODULE variable can be omitted when the code isn't located in GOPATH.
+GO111MODULE=on go mod tidy
+
+GO111MODULE=on go mod vendor
+```
+
+You have to commit the changes to `go.mod`, `go.sum` and the `vendor/` directory before submitting the pull request.

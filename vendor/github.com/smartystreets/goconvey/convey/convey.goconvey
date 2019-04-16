@@ -1,0 +1,4 @@
+#ignore
+-timeout=1s
+#-covermode=count
+#-coverpkg=github.com/smartystreets/goconvey/convey,github.com/smartystreets/goconvey/convey/gotest,github.com/smartystreets/goconvey/convey/reporting

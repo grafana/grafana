@@ -66,7 +66,8 @@ func TestSecondSet(t *testing.T) {
 	obj := &CacheableStruct{String: "hey!"}
 
 	err = db.Set("killa-gorilla", obj, 0)
-	err = db.Set("killa-gorilla", obj, 0)
+	assert.Equal(t, err, nil)
 
+	err = db.Set("killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
 }
