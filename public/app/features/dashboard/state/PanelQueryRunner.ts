@@ -29,7 +29,6 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   timezone?: string;
   timeRange?: TimeRange;
   widthPixels: number;
-  minInterval?: string;
   maxDataPoints?: number;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
@@ -128,7 +127,7 @@ export class PanelQueryRunner {
     try {
       const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
-      const minInterval = options.minInterval || ds.interval;
+      const minInterval = ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
 
       // make shallow copy of scoped vars,

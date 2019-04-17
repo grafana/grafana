@@ -156,7 +156,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         timezone: this.props.dashboard.timezone,
         timeRange: timeData.timeRange,
         widthPixels: width,
-        minInterval: undefined, // Currently not passed in DataPanel?
         maxDataPoints: panel.maxDataPoints,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
