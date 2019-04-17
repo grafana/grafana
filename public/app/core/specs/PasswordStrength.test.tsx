@@ -5,7 +5,7 @@ import { PasswordStrength } from '../components/PasswordStrength';
 
 describe('PasswordStrength', () => {
   it('should have class bad if using weak password', () => {
-    const wrapper = shallow(<PasswordStrength password="asdaasdda" />);
+    const wrapper = shallow(<PasswordStrength password="aaaaaaa" />);
     expect(wrapper.find('.password-strength-bad')).toHaveLength(1);
   });
 
