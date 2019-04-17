@@ -9,9 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"gopkg.in/macaron.v1"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
@@ -124,7 +123,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler(nil))
+	sc.m.Use(middleware.GetContextHandler(nil, nil))
 
 	return sc
 }

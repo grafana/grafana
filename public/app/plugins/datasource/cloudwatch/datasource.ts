@@ -2,10 +2,11 @@ import angular from 'angular';
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
-import * as templatingVariable from 'app/features/templating/variable';
+import { CloudWatchQuery } from './types';
+import { DataSourceApi } from '@grafana/ui/src/types';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource {
+export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
   type: any;
   name: any;
   proxyUrl: any;
@@ -138,15 +139,16 @@ export default class CloudWatchDatasource {
       const data = [];
 
       if (res.results) {
-        _.forEach(res.results, queryRes => {
-          _.forEach(queryRes.series, series => {
+        for (const query of request.queries) {
+          const queryRes = res.results[query.refId];
+          for (const series of queryRes.series) {
             const s = { target: series.name, datapoints: series.points } as any;
             if (queryRes.meta.unit) {
               s.unit = queryRes.meta.unit;
             }
             data.push(s);
-          });
-        });
+          }
+        }
       }
 
       return { data: data };
@@ -408,7 +410,7 @@ export default class CloudWatchDatasource {
 
   getExpandedVariables(target, dimensionKey, variable, templateSrv) {
     /* if the all checkbox is marked we should add all values to the targets */
-    const allSelected = _.find(variable.options, { selected: true, text: 'All' });
+    const allSelected: any = _.find(variable.options, { selected: true, text: 'All' });
     const selectedVariables = _.filter(variable.options, v => {
       if (allSelected) {
         return v.text !== 'All';
@@ -425,7 +427,7 @@ export default class CloudWatchDatasource {
           };
         });
     const useSelectedVariables =
-      selectedVariables.some(s => {
+      selectedVariables.some((s: any) => {
         return s.value === currentVariables[0].value;
       }) || currentVariables[0].value === '$__all';
     return (useSelectedVariables ? selectedVariables : currentVariables).map(v => {
@@ -447,20 +449,19 @@ export default class CloudWatchDatasource {
     // Datasource and template srv logic uber-complected. This should be cleaned up.
     return _.chain(targets)
       .map(target => {
+        if (target.id && target.id.length > 0 && target.expression && target.expression.length > 0) {
+          return [target];
+        }
+
+        const variableIndex = _.keyBy(templateSrv.variables, 'name');
         const dimensionKey = _.findKey(target.dimensions, v => {
-          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          const variableName = templateSrv.getVariableName(v);
+          return templateSrv.variableExists(v) && !_.has(scopedVars, variableName) && variableIndex[variableName].multi;
         });
 
         if (dimensionKey) {
-          const multiVariable = _.find(templateSrv.variables, variable => {
-            return (
-              templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi
-            );
-          });
-          const variable = _.find(templateSrv.variables, variable => {
-            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
-          });
-          return this.getExpandedVariables(target, dimensionKey, multiVariable || variable, templateSrv);
+          const multiVariable = variableIndex[templateSrv.getVariableName(target.dimensions[dimensionKey])];
+          return this.getExpandedVariables(target, dimensionKey, multiVariable, templateSrv);
         } else {
           return [target];
         }

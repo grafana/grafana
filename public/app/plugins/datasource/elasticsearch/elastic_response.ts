@@ -156,6 +156,14 @@ export class ElasticResponse {
             }
             break;
           }
+          case 'percentiles': {
+            const percentiles = bucket[metric.id].values;
+
+            for (const percentileName in percentiles) {
+              addMetricValue(values, `p${percentileName} ${metric.field}`, percentiles[percentileName]);
+            }
+            break;
+          }
           default: {
             let metricName = this.getMetricName(metric.type);
             const otherMetrics = _.filter(target.metrics, { type: metric.type });
@@ -214,7 +222,7 @@ export class ElasticResponse {
   }
 
   private getMetricName(metric) {
-    let metricDef = _.find(queryDef.metricAggTypes, { value: metric });
+    let metricDef: any = _.find(queryDef.metricAggTypes, { value: metric });
     if (!metricDef) {
       metricDef = _.find(queryDef.extendedStats, { value: metric });
     }
@@ -250,12 +258,12 @@ export class ElasticResponse {
 
     if (series.field && queryDef.isPipelineAgg(series.metric)) {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
-        const agg = _.find(target.metrics, { id: series.metricId });
+        const agg: any = _.find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {
           metricName = agg.settings.script;
 
           for (const pv of agg.pipelineVariables) {
-            const appliedAgg = _.find(target.metrics, { id: pv.pipelineAgg });
+            const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
             if (appliedAgg) {
               metricName = metricName.replace('params.' + pv.name, queryDef.describeMetric(appliedAgg));
             }
@@ -264,7 +272,7 @@ export class ElasticResponse {
           metricName = 'Unset';
         }
       } else {
-        const appliedAgg = _.find(target.metrics, { id: series.field });
+        const appliedAgg: any = _.find(target.metrics, { id: series.field });
         if (appliedAgg) {
           metricName += ' ' + queryDef.describeMetric(appliedAgg);
         } else {
@@ -335,7 +343,7 @@ export class ElasticResponse {
   }
 
   trimDatapoints(aggregations, target) {
-    const histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
+    const histogram: any = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {

@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import {
   calculateResultsFromQueryTransactions,
@@ -11,22 +10,31 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, QueryTransaction, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
-
-import { HigherOrderAction, ActionTypes, SplitCloseActionPayload, splitCloseAction } from './actionTypes';
+import {
+  HigherOrderAction,
+  ActionTypes,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
+  splitCloseAction,
+  SplitCloseActionPayload,
+  loadExploreDatasources,
+  runQueriesAction,
+} from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
   changeTimeAction,
+  changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
   updateDatasourceInstanceAction,
-  loadDatasourceFailureAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
-  loadDatasourceSuccessAction,
+  loadDatasourceReadyAction,
   modifyQueriesAction,
   queryTransactionFailureAction,
   queryTransactionStartAction,
@@ -60,6 +68,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   range: false,
   ui: false,
 });
+
 /**
  * Returns a fresh Explore area state
  */
@@ -94,10 +103,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
+export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
-  left: makeExploreItemState(),
-  right: makeExploreItemState(),
+  left: initialExploreItemState,
+  right: initialExploreItemState,
 };
 
 /**
@@ -158,20 +168,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
-      const { range, datasourceInstance } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
       const containerWidth = action.payload.width;
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return { ...state, containerWidth, queryIntervals };
+      return { ...state, containerWidth };
     },
   })
   .addMapper({
     filter: changeTimeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, range: action.payload.range };
+    },
+  })
+  .addMapper({
+    filter: changeRefreshIntervalAction,
+    mapper: (state, action): ExploreItemState => {
+      const { refreshInterval } = action.payload;
+      return {
+        ...state,
+        refreshInterval: refreshInterval,
+      };
     },
   })
   .addMapper({
@@ -197,12 +211,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, exploreDatasources, queries, range, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, ui } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
-        exploreDatasources,
         range,
         queries,
         initialized: true,
@@ -216,17 +229,23 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      return { ...state, datasourceInstance, queryKeys: getQueryKeys(state.queries, datasourceInstance) };
-    },
-  })
-  .addMapper({
-    filter: loadDatasourceFailureAction,
-    mapper: (state, action): ExploreItemState => {
+      // Capabilities
+      const supportsGraph = datasourceInstance.meta.metrics;
+      const supportsLogs = datasourceInstance.meta.logs;
+      const supportsTable = datasourceInstance.meta.tables;
+
+      // Custom components
+      const StartPage = datasourceInstance.components.ExploreStartPage;
+
       return {
         ...state,
-        datasourceError: action.payload.error,
-        datasourceLoading: false,
-        update: makeInitialUpdateState(),
+        datasourceInstance,
+        supportsGraph,
+        supportsLogs,
+        supportsTable,
+        StartPage,
+        showingStartPage: Boolean(StartPage),
+        queryKeys: getQueryKeys(state.queries, datasourceInstance),
       };
     },
   })
@@ -244,37 +263,22 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: loadDatasourcePendingAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, datasourceLoading: true, requestedDatasourceName: action.payload.requestedDatasourceName };
+      return {
+        ...state,
+        datasourceLoading: true,
+        requestedDatasourceName: action.payload.requestedDatasourceName,
+      };
     },
   })
   .addMapper({
-    filter: loadDatasourceSuccessAction,
+    filter: loadDatasourceReadyAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, range } = state;
-      const {
-        StartPage,
-        datasourceInstance,
-        history,
-        showingStartPage,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
-      } = action.payload;
-      const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
-
+      const { history } = action.payload;
       return {
         ...state,
-        queryIntervals,
-        StartPage,
-        datasourceInstance,
         history,
-        showingStartPage,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
         datasourceLoading: false,
         datasourceMissing: false,
-        datasourceError: null,
         logsHighlighterExpressions: undefined,
         queryTransactions: [],
         update: makeInitialUpdateState(),
@@ -517,6 +521,62 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
+  .addMapper({
+    filter: testDataSourcePendingAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        datasourceError: null,
+      };
+    },
+  })
+  .addMapper({
+    filter: testDataSourceSuccessAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        datasourceError: null,
+      };
+    },
+  })
+  .addMapper({
+    filter: testDataSourceFailureAction,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        datasourceError: action.payload.error,
+        queryTransactions: [],
+        graphResult: undefined,
+        tableResult: undefined,
+        logsResult: undefined,
+        update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: loadExploreDatasources,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        exploreDatasources: action.payload.exploreDatasources,
+      };
+    },
+  })
+  .addMapper({
+    filter: runQueriesAction,
+    mapper: (state): ExploreItemState => {
+      const { range, datasourceInstance, containerWidth } = state;
+      let interval = '1s';
+      if (datasourceInstance && datasourceInstance.interval) {
+        interval = datasourceInstance.interval;
+      }
+      const queryIntervals = getIntervals(range, interval, containerWidth);
+      return {
+        ...state,
+        queryIntervals,
+      };
+    },
+  })
   .create();
 
 export const updateChildRefreshState = (
@@ -533,7 +593,11 @@ export const updateChildRefreshState = (
   const urlState = parseUrlState(queryState);
   if (!state.urlState || path !== '/explore') {
     // we only want to refresh when browser back/forward
-    return { ...state, urlState, update: { datasource: false, queries: false, range: false, ui: false } };
+    return {
+      ...state,
+      urlState,
+      update: { datasource: false, queries: false, range: false, ui: false },
+    };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;

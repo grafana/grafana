@@ -224,12 +224,12 @@ export function getOrderByOptions(target) {
 }
 
 export function describeOrder(order) {
-  const def = _.find(orderOptions, { value: order });
+  const def: any = _.find(orderOptions, { value: order });
   return def.text;
 }
 
 export function describeMetric(metric) {
-  const def = _.find(metricAggTypes, { value: metric.type });
+  const def: any = _.find(metricAggTypes, { value: metric.type });
   if (!def.requiresField && !isPipelineAgg(metric.type)) {
     return def.text;
   }
@@ -237,11 +237,11 @@ export function describeMetric(metric) {
 }
 
 export function describeOrderBy(orderBy, target) {
-  const def = _.find(orderByOptions, { value: orderBy });
+  const def: any = _.find(orderByOptions, { value: orderBy });
   if (def) {
     return def.text;
   }
-  const metric = _.find(target.metrics, { id: orderBy });
+  const metric: any = _.find(target.metrics, { id: orderBy });
   if (metric) {
     return describeMetric(metric);
   } else {

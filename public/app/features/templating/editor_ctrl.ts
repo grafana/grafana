@@ -64,7 +64,7 @@ export class VariableEditorCtrl {
         return false;
       }
 
-      const sameName = _.find($scope.variables, { name: $scope.current.name });
+      const sameName: any = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         appEvents.emit('alert-warning', ['Validation', 'Variable with the same name already exists']);
         return false;
@@ -151,7 +151,7 @@ export class VariableEditorCtrl {
 
       $scope.datasourceTypes = _($scope.datasources)
         .uniqBy('meta.id')
-        .map(ds => {
+        .map((ds: any) => {
           return { text: ds.meta.name, value: ds.meta.id };
         })
         .value();

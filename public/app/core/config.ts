@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { PanelPlugin } from 'app/types/plugins';
-import { GrafanaTheme, getTheme, GrafanaThemeType } from '@grafana/ui';
+import { GrafanaTheme, getTheme, GrafanaThemeType, DataSourceInstanceSettings } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
@@ -12,7 +12,7 @@ export interface BuildInfo {
 }
 
 export class Settings {
-  datasources: any;
+  datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPlugin };
   appSubUrl: string;
   windowTitlePrefix: string;
@@ -40,6 +40,7 @@ export class Settings {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
+  pluginsToPreload: string[];
 
   constructor(options: Settings) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

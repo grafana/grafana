@@ -4,134 +4,8 @@ import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
 import moment from 'moment';
 
-import Papa, { ParseError, ParseMeta } from 'papaparse';
-
 // Types
 import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
-
-// Subset of all parse options
-export interface TableParseOptions {
-  headerIsFirstLine?: boolean; // Not a papa-parse option
-  delimiter?: string; // default: ","
-  newline?: string; // default: "\r\n"
-  quoteChar?: string; // default: '"'
-  encoding?: string; // default: ""
-  comments?: boolean | string; // default: false
-}
-
-export interface TableParseDetails {
-  meta?: ParseMeta;
-  errors?: ParseError[];
-}
-
-/**
- * This makes sure the header and all rows have equal length.
- *
- * @param series (immutable)
- * @returns a series that has equal length rows, or the same
- * series if no changes were needed
- */
-export function matchRowSizes(series: SeriesData): SeriesData {
-  const { rows } = series;
-  let { fields } = series;
-
-  let sameSize = true;
-  let size = fields.length;
-  rows.forEach(row => {
-    if (size !== row.length) {
-      sameSize = false;
-      size = Math.max(size, row.length);
-    }
-  });
-  if (sameSize) {
-    return series;
-  }
-
-  // Pad Fields
-  if (size !== fields.length) {
-    const diff = size - fields.length;
-    fields = [...fields];
-    for (let i = 0; i < diff; i++) {
-      fields.push({
-        name: 'Field ' + (fields.length + 1),
-      });
-    }
-  }
-
-  // Pad Rows
-  const fixedRows: any[] = [];
-  rows.forEach(row => {
-    const diff = size - row.length;
-    if (diff > 0) {
-      row = [...row];
-      for (let i = 0; i < diff; i++) {
-        row.push(null);
-      }
-    }
-    fixedRows.push(row);
-  });
-
-  return {
-    fields,
-    rows: fixedRows,
-  };
-}
-
-function makeFields(values: any[]): Field[] {
-  return values.map((value, index) => {
-    if (!value) {
-      value = 'Field ' + (index + 1);
-    }
-    return {
-      name: value.toString().trim(),
-    };
-  });
-}
-
-/**
- * Convert CSV text into a valid SeriesData object
- *
- * @param text
- * @param options
- * @param details, if exists the result will be filled with debugging details
- */
-export function parseCSV(text: string, options?: TableParseOptions, details?: TableParseDetails): SeriesData {
-  const results = Papa.parse(text, { ...options, dynamicTyping: true, skipEmptyLines: true });
-  const { data, meta, errors } = results;
-
-  // Fill the parse details for debugging
-  if (details) {
-    details.errors = errors;
-    details.meta = meta;
-  }
-
-  if (!data || data.length < 1) {
-    // Show a more reasonable warning on empty input text
-    if (details && !text) {
-      errors.length = 0;
-      errors.push({
-        code: 'empty',
-        message: 'Empty input text',
-        type: 'warning',
-        row: 0,
-      });
-      details.errors = errors;
-    }
-    return {
-      fields: [],
-      rows: [],
-    };
-  }
-
-  // Assume the first line is the header unless the config says its not
-  const headerIsNotFirstLine = options && options.headerIsFirstLine === false;
-  const header = headerIsNotFirstLine ? [] : results.data.shift();
-
-  return matchRowSizes({
-    fields: makeFields(header),
-    rows: results.data,
-  });
-}
 
 function convertTableToSeriesData(table: TableData): SeriesData {
   return {
@@ -143,6 +17,8 @@ function convertTableToSeriesData(table: TableData): SeriesData {
       return f;
     }),
     rows: table.rows,
+    refId: table.refId,
+    meta: table.meta,
   };
 }
 
@@ -161,6 +37,9 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
       },
     ],
     rows: timeSeries.datapoints,
+    labels: timeSeries.tags,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
   };
 }
 
@@ -214,7 +93,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-function guessFieldTypeFromTable(series: SeriesData, index: number): FieldType | undefined {
+export function guessFieldTypeFromSeries(series: SeriesData, index: number): FieldType | undefined {
   const column = series.fields[index];
 
   // 1. Use the column name to guess
@@ -254,7 +133,7 @@ export const guessFieldTypes = (series: SeriesData): SeriesData => {
           // Replace it with a calculated version
           return {
             ...field,
-            type: guessFieldTypeFromTable(series, index),
+            type: guessFieldTypeFromSeries(series, index),
           };
         }),
       };
@@ -281,6 +160,36 @@ export const toSeriesData = (data: any): SeriesData => {
   // TODO, try to convert JSON/Array to seriesta?
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
+};
+
+export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData => {
+  const { fields, rows } = series;
+
+  if (fields.length === 2) {
+    const type = guessFieldTypeFromSeries(series, 1);
+    if (type === FieldType.time) {
+      return {
+        target: fields[0].name || series.name,
+        datapoints: rows,
+        unit: fields[0].unit,
+        refId: series.refId,
+        meta: series.meta,
+      } as TimeSeries;
+    }
+  }
+
+  return {
+    columns: fields.map(f => {
+      return {
+        text: f.name,
+        filterable: f.filterable,
+        unit: f.unit,
+        refId: series.refId,
+        meta: series.meta,
+      };
+    }),
+    rows,
+  };
 };
 
 export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = false): SeriesData {

@@ -9,6 +9,7 @@ import { DataSourceSettings } from '@grafana/ui/src/types';
 import { Plugin, StoreState, LocationUpdate } from 'app/types';
 import { actionCreatorFactory } from 'app/core/redux';
 import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 
 export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 
@@ -50,7 +51,7 @@ export function loadDataSources(): ThunkResult<void> {
 export function loadDataSource(id: number): ThunkResult<void> {
   return async dispatch => {
     const dataSource = await getBackendSrv().get(`/api/datasources/${id}`);
-    const pluginInfo = await getBackendSrv().get(`/api/plugins/${dataSource.type}/settings`);
+    const pluginInfo = await getPluginSettings(dataSource.type);
     dispatch(dataSourceLoaded(dataSource));
     dispatch(dataSourceMetaLoaded(pluginInfo));
     dispatch(updateNavIndex(buildNavModel(dataSource, pluginInfo)));
@@ -98,8 +99,8 @@ export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<vo
 export function deleteDataSource(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dataSource = getStore().dataSources.dataSource;
-
     await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
+    await updateFrontendSettings();
     dispatch(updateLocation({ path: '/datasources' }));
   };
 }

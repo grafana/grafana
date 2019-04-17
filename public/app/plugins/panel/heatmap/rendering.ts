@@ -529,7 +529,7 @@ export class HeatmapRenderer {
     const minValueAuto = Math.min(cardStats.min, 0);
     const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
     const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
-    const colorScheme = _.find(this.ctrl.colorSchemes, {
+    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
@@ -594,7 +594,8 @@ export class HeatmapRenderer {
       yGridSize = Math.floor((this.yScale(1) - this.yScale(base)) / splitFactor);
     }
 
-    this.cardWidth = xGridSize - this.cardPadding * 2;
+    const cardWidth = xGridSize - this.cardPadding * 2;
+    this.cardWidth = Math.max(cardWidth, MIN_CARD_SIZE);
     this.cardHeight = yGridSize ? yGridSize - this.cardPadding * 2 : 0;
   }
 
@@ -611,16 +612,13 @@ export class HeatmapRenderer {
   }
 
   getCardWidth(d) {
-    let w;
+    let w = this.cardWidth;
     if (this.xScale(d.x) < 0) {
       // Cut card left to prevent overlay
-      const cuttedWidth = this.xScale(d.x) + this.cardWidth;
-      w = cuttedWidth > 0 ? cuttedWidth : 0;
+      w = this.xScale(d.x) + this.cardWidth;
     } else if (this.xScale(d.x) + this.cardWidth > this.chartWidth) {
       // Cut card right to prevent overlay
       w = this.chartWidth - this.xScale(d.x) - this.cardPadding;
-    } else {
-      w = this.cardWidth;
     }
 
     // Card width should be MIN_CARD_SIZE at least, but cut cards shouldn't be displayed

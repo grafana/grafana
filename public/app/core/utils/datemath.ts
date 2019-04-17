@@ -1,9 +1,10 @@
+// @ts-ignore
 import _ from 'lodash';
 import moment from 'moment';
 
 const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-type Timezone = 'utc';
+export type Timezone = 'utc';
 
 /**
  * Parses different types input to a moment instance. There is a specific formatting language that can be used
@@ -88,7 +89,8 @@ export function isValid(text: string | moment.Moment): boolean {
  * @param time
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
-export function parseDateMath(mathString: string, time: moment.Moment, roundUp?: boolean): moment.Moment | undefined {
+// TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
+export function parseDateMath(mathString: string, time: any, roundUp?: boolean): moment.Moment | undefined {
   const dateTime = time;
   let i = 0;
   const len = mathString.length;

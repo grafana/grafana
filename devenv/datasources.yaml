@@ -22,10 +22,11 @@ datasources:
     access: proxy
     database: site
     user: grafana
-    password: grafana
     url: http://localhost:8086
     jsonData:
       timeInterval: "15s"
+    secureJsonData:
+      password: grafana
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -95,19 +96,31 @@ datasources:
       timeField: "@timestamp"
       esVersion: 60
 
+  - name: gdev-elasticsearch-v6-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-6.2.4-]YYYY.MM.DD"
+    url: http://localhost:11200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 60
+
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
     database: grafana
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mysql-ds-tests
     type: mysql
     url: localhost:3306
     database: grafana_ds_tests
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mssql
     type: mssql

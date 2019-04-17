@@ -55,6 +55,10 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     this.loadRules();
   }
 
+  getQueryDisplayText(query: PromQuery) {
+    return query.expr;
+  }
+
   _request(url, data?, options?: any) {
     options = _.defaults(options || {}, {
       url: this.url + url,

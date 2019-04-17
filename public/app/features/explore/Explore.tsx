@@ -3,7 +3,6 @@ import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-// @ts-ignore
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
 
@@ -28,6 +27,7 @@ import {
   scanStart,
   setQueries,
   refreshExplore,
+  reconnectDatasource,
 } from './state/actions';
 
 // Types
@@ -38,6 +38,8 @@ import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STAT
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
+import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
+import { FadeIn } from 'app/core/components/Animations/FadeIn';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -53,6 +55,7 @@ interface ExploreProps {
   modifyQueries: typeof modifyQueries;
   range: RawTimeRange;
   update: ExploreUpdateState;
+  reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
   scanner?: RangeScanner;
   scanning?: boolean;
@@ -114,7 +117,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const initialQueries: DataQuery[] = ensureQueries(queries);
     const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
     const width = this.el ? this.el.offsetWidth : 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(
@@ -192,6 +194,21 @@ export class Explore extends React.PureComponent<ExploreProps> {
     }
   };
 
+  renderEmptyState = () => {
+    return (
+      <div className="explore-container">
+        <NoDataSourceCallToAction />
+      </div>
+    );
+  };
+
+  onReconnect = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const { exploreId, reconnectDatasource } = this.props;
+
+    event.preventDefault();
+    reconnectDatasource(exploreId);
+  };
+
   render() {
     const {
       StartPage,
@@ -213,17 +230,18 @@ export class Explore extends React.PureComponent<ExploreProps> {
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} timepickerRef={this.timepickerRef} onChangeTime={this.onChangeTime} />
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
-        {datasourceMissing ? (
-          <div className="explore-container">Please add a datasource that supports Explore (e.g., Prometheus).</div>
-        ) : null}
+        {datasourceMissing ? this.renderEmptyState() : null}
 
-        {datasourceError && (
+        <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
           <div className="explore-container">
-            <Alert message={`Error connecting to datasource: ${datasourceError}`} />
+            <Alert
+              message={`Error connecting to datasource: ${datasourceError}`}
+              button={{ text: 'Reconnect', onClick: this.onReconnect }}
+            />
           </div>
-        )}
+        </FadeIn>
 
-        {datasourceInstance && !datasourceError && (
+        {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <AutoSizer onResize={this.onResize} disableHeight>
@@ -308,6 +326,7 @@ const mapDispatchToProps = {
   changeTime,
   initializeExplore,
   modifyQueries,
+  reconnectDatasource,
   refreshExplore,
   scanStart,
   scanStopAction,

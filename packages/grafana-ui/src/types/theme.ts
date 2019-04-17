@@ -52,6 +52,7 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    insetSquishMd: string;
     d: string;
     xxs: string;
     xs: string;
@@ -70,6 +71,11 @@ export interface GrafanaThemeCommons {
     width: {
       sm: string;
     };
+  };
+  height: {
+    sm: string;
+    md: string;
+    lg: string;
   };
   panelPadding: {
     horizontal: number;

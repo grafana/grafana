@@ -204,7 +204,7 @@ export class ElasticDatasource {
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       dateFields => {
-        const timeField = _.find(dateFields, { text: this.timeField });
+        const timeField: any = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
             status: 'error',

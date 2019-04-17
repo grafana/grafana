@@ -136,7 +136,7 @@ export default class ResponseParser {
   }
 
   static parseMetadata(result: any, metricName: string) {
-    const metricData = _.find(result.data.value, o => {
+    const metricData: any = _.find(result.data.value, o => {
       return _.get(o, 'name.value') === metricName;
     });
 

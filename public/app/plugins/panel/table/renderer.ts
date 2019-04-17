@@ -101,7 +101,7 @@ export class TableRenderer {
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (_.isString(v) && !isNaN(v) && v.length > 12) {
+        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
           v = parseInt(v, 10);
         }
 
@@ -177,7 +177,7 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isString(v) || _.isArray(v)) {
+        if (isNaN(v) || _.isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 

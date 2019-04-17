@@ -124,6 +124,7 @@ export class TimeSrv {
   setAutoRefresh(interval) {
     this.dashboard.refresh = interval;
     this.cancelNextRefresh();
+
     if (interval) {
       const intervalMs = kbn.interval_to_ms(interval);
 
@@ -135,15 +136,17 @@ export class TimeSrv {
       );
     }
 
-    // update url
-    const params = this.$location.search();
-    if (interval) {
-      params.refresh = interval;
-      this.$location.search(params);
-    } else if (params.refresh) {
-      delete params.refresh;
-      this.$location.search(params);
-    }
+    // update url inside timeout to so that a digest happens after (called from react)
+    this.$timeout(() => {
+      const params = this.$location.search();
+      if (interval) {
+        params.refresh = interval;
+        this.$location.search(params);
+      } else if (params.refresh) {
+        delete params.refresh;
+        this.$location.search(params);
+      }
+    });
   }
 
   refreshDashboard() {

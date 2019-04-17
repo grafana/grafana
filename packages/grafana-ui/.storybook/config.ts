@@ -1,6 +1,7 @@
 import { configure, addDecorator } from '@storybook/react';
 import { withKnobs } from '@storybook/addon-knobs';
 import { withTheme } from '../src/utils/storybook/withTheme';
+import { withPaddedStory } from '../src/utils/storybook/withPaddedStory';
 
 // @ts-ignore
 import lightTheme from '../../../public/sass/grafana.light.scss';
@@ -20,6 +21,7 @@ const handleThemeChange = (theme: string) => {
 const req = require.context('../src/components', true, /.story.tsx$/);
 
 addDecorator(withKnobs);
+addDecorator(withPaddedStory);
 addDecorator(withTheme(handleThemeChange));
 
 function loadStories() {
