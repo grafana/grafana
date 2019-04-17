@@ -181,7 +181,7 @@ Sensu | `sensu` | yes
 OpsGenie | `opsgenie` | yes
 Threema | `threema` | yes
 Pushover | `pushover` | no
-Telegram | `telegram` | no
+Telegram | `telegram` | yes
 Line | `line` | no
 Prometheus Alertmanager | `prometheus-alertmanager` | no
 
