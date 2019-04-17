@@ -37,7 +37,6 @@ export interface Props {
 }
 
 export interface State {
-  refreshCounter: number;
   renderCounter: number;
   timeInfo?: string;
   timeRange?: TimeRange;
@@ -56,7 +55,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      refreshCounter: 0,
       renderCounter: 0,
       errorMessage: null,
       data: {
@@ -140,7 +138,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
     this.setState({
-      refreshCounter: this.state.refreshCounter + 1,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
     });
@@ -151,6 +148,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         console.log('No width yet... wait till we know');
         return;
       }
+
       this.queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -256,6 +254,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           if (width === 0) {
             return null;
           }
+
           if (this.queryWidthPixels < 0 && this.wantsQueryExecution) {
             this.queryWidthPixels = width;
             setTimeout(() => this.onRefresh(), 1); // TODO some better way!!!

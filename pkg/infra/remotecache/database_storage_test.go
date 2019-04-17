@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDatabaseStorageGarbageCollection(t *testing.T) {
