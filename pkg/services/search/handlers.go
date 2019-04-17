@@ -31,6 +31,7 @@ func (s *SearchService) searchHandler(query *Query) error {
 		FolderIds:    query.FolderIds,
 		Tags:         query.Tags,
 		Limit:        query.Limit,
+		Page:         query.Page,
 		Permission:   query.Permission,
 	}
 
@@ -43,10 +44,6 @@ func (s *SearchService) searchHandler(query *Query) error {
 
 	// sort main result array
 	sort.Sort(hits)
-
-	if len(hits) > query.Limit {
-		hits = hits[0:query.Limit]
-	}
 
 	// sort tags
 	for _, hit := range hits {

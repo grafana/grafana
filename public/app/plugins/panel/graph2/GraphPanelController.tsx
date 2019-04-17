@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraphSeriesXY, SeriesData } from '@grafana/ui';
+import { GraphSeriesXY, PanelData } from '@grafana/ui';
 import difference from 'lodash/difference';
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
@@ -16,7 +16,7 @@ interface GraphPanelControllerAPI {
 interface GraphPanelControllerProps {
   children: (api: GraphPanelControllerAPI) => JSX.Element;
   options: Options;
-  data: SeriesData[];
+  data: PanelData;
   onOptionsChange: (options: Options) => void;
 }
 

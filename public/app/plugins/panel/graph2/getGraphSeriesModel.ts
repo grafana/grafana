@@ -1,5 +1,4 @@
 import {
-  SeriesData,
   GraphSeriesXY,
   getFirstTimeField,
   FieldType,
@@ -10,12 +9,13 @@ import {
   getColorFromHexRgbOrName,
   getDisplayProcessor,
   DisplayValue,
+  PanelData,
 } from '@grafana/ui';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export const getGraphSeriesModel = (
-  data: SeriesData[],
+  data: PanelData,
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions
@@ -26,7 +26,7 @@ export const getGraphSeriesModel = (
     decimals: legendOptions.decimals,
   });
 
-  for (const series of data) {
+  for (const series of data.series) {
     const timeColumn = getFirstTimeField(series);
     if (timeColumn < 0) {
       continue;
