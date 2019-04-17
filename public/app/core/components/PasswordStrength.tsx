@@ -21,7 +21,7 @@ export class PasswordStrength extends React.Component<Props, any> {
 
     const passwordScore = zxcvbn(password).score;
 
-    if (passwordScore == 2) {
+    if (passwordScore <= 2) {
       strengthText = 'strength: you can do better.';
       strengthClass = 'password-strength-ok';
     }
