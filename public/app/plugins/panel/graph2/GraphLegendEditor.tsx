@@ -91,19 +91,10 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
           }}
         />
       </>
-
       <>
-        {options.hideEmpty !== undefined && options.hideEmpty !== undefined && (
-          <>
-            <h4>Legend series visibility</h4>
-            {options.hideEmpty !== undefined && (
-              <Switch label="With only nulls" checked={options.hideEmpty} onChange={onOptionToggle('hideEmpty')} />
-            )}
-            {options.hideZero !== undefined && (
-              <Switch label="With only zeros" checked={options.hideZero} onChange={onOptionToggle('hideZero')} />
-            )}
-          </>
-        )}
+        <h4>Legend series visibility</h4>
+        {/* <Switch label="With only nulls" checked={!!options.hideEmpty} onChange={onOptionToggle('hideEmpty')} /> */}
+        <Switch label="With only zeros" checked={!!options.hideZero} onChange={onOptionToggle('hideZero')} />
       </>
     </PanelOptionsGroup>
   );

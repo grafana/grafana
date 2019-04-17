@@ -4,9 +4,10 @@ import React from 'react';
 
 import { css } from 'emotion';
 import { Graph, GraphProps } from './Graph';
-import { LegendRenderOptions } from '../Legend/Legend';
+import { LegendRenderOptions, LegendItem } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { GraphSeriesValue } from '../../types/graph';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
@@ -40,6 +41,13 @@ const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
   `,
 });
 
+const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hideZero = false) => {
+  const isZeroOnlySeries = data.reduce((acc, current) => acc + (current[1] || 0), 0) === 0;
+  const isNullOnlySeries = !data.reduce((acc, current) => acc && current[1] !== null, true);
+
+  return (hideEmpty && isNullOnlySeries) || (hideZero && isZeroOnlySeries);
+};
+
 export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (props: GraphWithLegendProps) => {
   const {
     series,
@@ -58,6 +66,8 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     onSeriesColorChange,
     onSeriesToggle,
     onToggleSort,
+    hideEmpty,
+    hideZero,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -80,13 +90,19 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         <div className={legendContainer}>
           <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
             <GraphLegend
-              items={series.map(s => ({
-                label: s.label,
-                color: s.color,
-                isVisible: s.isVisible,
-                useRightYAxis: s.useRightYAxis,
-                info: s.info || [],
-              }))}
+              items={series.reduce<LegendItem[]>((acc, s) => {
+                return shouldHideLegendItem(s.data, hideEmpty, hideZero)
+                  ? acc
+                  : acc.concat([
+                      {
+                        label: s.label,
+                        color: s.color,
+                        isVisible: s.isVisible,
+                        useRightYAxis: s.useRightYAxis,
+                        info: s.info || [],
+                      },
+                    ]);
+              }, [])}
               renderLegendAsTable={renderLegendAsTable}
               placement={placement}
               sortBy={sortLegendBy}
