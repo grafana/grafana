@@ -25,15 +25,23 @@ export class ExampleAppPage2 extends PureComponent<Props> {
   }
 
   render() {
-    const { plugin, url, query } = this.props;
+    const { plugin, path, query } = this.props;
 
     return (
       <div>
-        Hello from the example App Page: {plugin.meta.name}
-        QUERY: {query}
+        222222: {plugin.meta.name} QUERY: <pre>{JSON.stringify(query)}</pre>
         <br />
-        PATH: {url}
-        <br />
+        <ul>
+          <li>
+            <a href={path + '?x=1'}>111</a>
+          </li>
+          <li>
+            <a href={path + '?x=AAA'}>AAA</a>
+          </li>
+          <li>
+            <a href={path + '?x=1&y=2&y=3'}>ZZZ</a>
+          </li>
+        </ul>
       </div>
     );
   }

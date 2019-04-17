@@ -16,6 +16,6 @@ export class ExampleTab2 extends PureComponent<Props> {
   render() {
     const { plugin } = this.props;
 
-    return <div>Hello from the example Config Page: {plugin.meta.name}</div>;
+    return <div>222222222: {plugin.meta.name}</div>;
   }
 }

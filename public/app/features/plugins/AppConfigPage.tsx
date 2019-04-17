@@ -5,40 +5,20 @@ import { connect } from 'react-redux';
 
 // Types
 import { StoreState, NavModel, NavModelItem } from 'app/types';
-import { importAppPlugin } from './plugin_loader';
-import { AppPlugin } from '@grafana/ui';
-import { getPluginSettings } from './PluginSettingsCache';
 
 import Page from 'app/core/components/Page/Page';
+
+import { State as LoadignState, loadAppPluginForPage } from './AppPageWrapper';
 
 interface Props {
   pluginId: string;
   tab?: string;
+  path: string;
 }
 
-export interface State {
-  loading: boolean;
-  plugin?: AppPlugin;
-}
-
-export function loadAppPluginForPage(pluginId: string): Promise<State> {
-  return getPluginSettings(pluginId)
-    .then(info => {
-      if (!info || info.type !== 'app' || !info.enabled) {
-        return { loading: false, plugin: null };
-      }
-      return importAppPlugin(info)
-        .then(plugin => {
-          return { loading: false, plugin };
-        })
-        .catch(err => {
-          return { loading: false, plugin: null };
-        });
-    })
-    .catch(reason => {
-      // This happens if the plugin is unknown
-      return { loading: false, plugin: null };
-    });
+interface State extends LoadignState {
+  tabs: NavModelItem[];
+  defaultIndex: number;
 }
 
 class AppConfigPage extends Component<Props, State> {
@@ -46,12 +26,46 @@ class AppConfigPage extends Component<Props, State> {
     super(props);
     this.state = {
       loading: true,
+      tabs: [],
+      defaultIndex: 0,
     };
   }
 
   async componentDidMount() {
-    const { pluginId } = this.props;
-    this.setState(await loadAppPluginForPage(pluginId));
+    const { pluginId, path } = this.props;
+    const info = await loadAppPluginForPage(pluginId);
+    const tabs: NavModelItem[] = [];
+    let defaultIndex = 0;
+    if (info.plugin) {
+      if (true) {
+        tabs.push({
+          text: 'REAME',
+          icon: 'fa fa-fw fa-file-text-o',
+          url: path + '?tab=readme',
+          id: 'readme',
+        });
+      }
+      tabs.push({
+        text: 'Config',
+        icon: 'gicon gicon-cog',
+        url: path,
+        id: 'config',
+      });
+      defaultIndex = tabs.length - 1;
+
+      if (info.plugin.configTabs) {
+        for (const tab of info.plugin.configTabs) {
+          tabs.push({
+            text: tab.title,
+            subTitle: tab.subTitle,
+            icon: tab.icon,
+            url: path + '?tab=' + tab.title,
+            id: tab.title,
+          });
+        }
+      }
+    }
+    this.setState({ ...info, tabs, defaultIndex });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -61,23 +75,19 @@ class AppConfigPage extends Component<Props, State> {
   }
 
   getNavModel(): NavModel {
-    const { tab } = this.props;
-    const { loading, plugin } = this.state;
+    const { tab, path } = this.props;
+    const { loading, plugin, tabs, defaultIndex } = this.state;
     if (plugin) {
-      const url = `/plugins/${plugin.meta.id}/config`;
-      const children: NavModelItem[] = [];
-      children.push({
-        text: 'REAME',
-        icon: 'fa fa-fw fa-file-text-o',
-        url: url + '?tab=readme',
-        active: tab === 'readme',
-      });
-      children.push({
-        text: 'Config',
-        icon: 'gicon gicon-cog',
-        url: url + '?tab=config',
-        active: !tab || tab === 'config',
-      });
+      let count = 0;
+      for (const nav of tabs) {
+        nav.active = tab === nav.id;
+        if (nav.active) {
+          count++;
+        }
+      }
+      if (count < 1 && tabs.length) {
+        tabs[defaultIndex].active = true;
+      }
 
       const { meta } = plugin;
       const node = {
@@ -85,8 +95,8 @@ class AppConfigPage extends Component<Props, State> {
         img: meta.info.logos.large,
         subTitle: meta.info.author.name,
         breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
-        url,
-        children,
+        url: path,
+        children: tabs,
       };
       return {
         node: node,
@@ -109,14 +119,60 @@ class AppConfigPage extends Component<Props, State> {
     };
   }
 
-  render() {
-    const { loading, plugin } = this.state;
+  getBodyComponent() {
+    const { tab } = this.props;
+    const { plugin } = this.state;
 
+    if (!tab || tab === 'config') {
+      return plugin.configPage.body;
+    }
+
+    if (plugin.configTabs) {
+      for (const t of plugin.configTabs) {
+        if (tab === t.title) {
+          return t.body;
+        }
+      }
+    }
+
+    console.log('NOT FOUND', tab);
+
+    return plugin.configPage.body;
+  }
+
+  renderBody() {
+    const { plugin } = this.state;
+    if (!plugin) {
+      return <div>Not found...</div>;
+    }
+
+    const Body = this.getBodyComponent();
+    return (
+      <Body
+        plugin={this.state.plugin}
+        onConfigSave={this.onConfigSave}
+        beforeConfigSaved={this.beforeConfigSaved}
+        afterConfigSaved={this.afterConfigSaved}
+      />
+    );
+  }
+
+  onConfigSave = () => {
+    console.log('TODO, save config');
+  };
+
+  beforeConfigSaved = () => {
+    console.log('TODO, beforeConfigSaved');
+  };
+  afterConfigSaved = () => {
+    console.log('TODO, afterConfigSaved');
+  };
+
+  render() {
+    const { loading } = this.state;
     return (
       <Page navModel={this.getNavModel()}>
-        <Page.Contents isLoading={loading}>
-          {!loading && <div>{plugin ? <div>HELLO: {plugin.meta.id}</div> : <div>not found...</div>}</div>}
-        </Page.Contents>
+        <Page.Contents isLoading={loading}>{!loading && <div>{this.renderBody()}</div>}</Page.Contents>
       </Page>
     );
   }
@@ -125,6 +181,7 @@ class AppConfigPage extends Component<Props, State> {
 const mapStateToProps = (state: StoreState) => ({
   pluginId: state.location.routeParams.pluginId,
   tab: state.location.query.tab,
+  path: state.location.path,
 });
 
 export default hot(module)(connect(mapStateToProps)(AppConfigPage));

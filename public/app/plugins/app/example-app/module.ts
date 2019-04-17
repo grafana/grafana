@@ -5,6 +5,7 @@ import { AppPlugin } from '@grafana/ui';
 import { ExampleConfigPage } from './config/ExampleConfigPage';
 import { ExampleTab1 } from './config/ExampleTab1';
 import { ExampleAppPage } from './page/ExampleAppPage';
+import { ExampleTab2 } from './config/ExampleTab2';
 
 // Legacy exports just for testing
 export {
@@ -26,10 +27,10 @@ export const appPlugin = new AppPlugin()
   .addConfigTab({
     title: 'Tab 2',
     icon: 'fa fa-user',
-    body: ExampleTab1,
+    body: ExampleTab2,
   })
   .addPage({
-    body: ExampleAppPage,
+    Body: ExampleAppPage,
   });
 
 // Only for testing

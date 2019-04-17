@@ -132,14 +132,14 @@ export class PluginWithConfig<TPlugin> {
 
 export interface AppPluginPageProps<T> {
   plugin: T;
-  url: string; // The URL path to this app page
+  path: string; // The URL path to this page
   query: { [s: string]: any }; // The URL query parameters
-  onNavChanged: (nav: any) => void;
+  onNavChanged: (nav: any) => void; // Pass the Nav back to the Page
 }
 
 export interface AppPluginPage<T> {
-  pathPrefix?: string;
-  body: ComponentClass<AppPluginPageProps<T>>;
+  path?: string;
+  Body: ComponentClass<AppPluginPageProps<T>>;
 }
 
 export class AppPlugin extends PluginWithConfig<AppPlugin> {

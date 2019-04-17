@@ -7,14 +7,41 @@ import { connect } from 'react-redux';
 import { StoreState, NavModel, UrlQueryMap } from 'app/types';
 
 import Page from 'app/core/components/Page/Page';
+import { getPluginSettings } from './PluginSettingsCache';
+import { importAppPlugin } from './plugin_loader';
+import { AppPlugin } from '@grafana/ui';
 
 interface Props {
   pluginId: string; // From the angular router
-  path?: string;
+  page?: string;
   query: UrlQueryMap;
+  path: string;
 }
 
-import { State, loadAppPluginForPage } from './AppConfigPage';
+export interface State {
+  loading: boolean;
+  plugin?: AppPlugin;
+}
+
+export function loadAppPluginForPage(pluginId: string): Promise<State> {
+  return getPluginSettings(pluginId)
+    .then(info => {
+      if (!info || info.type !== 'app' || !info.enabled) {
+        return { loading: false, plugin: null };
+      }
+      return importAppPlugin(info)
+        .then(plugin => {
+          return { loading: false, plugin };
+        })
+        .catch(err => {
+          return { loading: false, plugin: null };
+        });
+    })
+    .catch(reason => {
+      // This happens if the plugin is unknown
+      return { loading: false, plugin: null };
+    });
+}
 
 class AppPageWrapper extends Component<Props, State> {
   constructor(props: Props) {
@@ -97,51 +124,26 @@ class AppPageWrapper extends Component<Props, State> {
   };
 
   renderPageBody() {
-    const { path, query } = this.props;
+    const { path, query, page } = this.props;
     const { plugin } = this.state;
     const { pages } = plugin;
     if (pages) {
-      for (const page of pages) {
-        if (!page.pathPrefix || (path && path.startsWith(page.pathPrefix))) {
-          console.log('LOAD', page);
-
-          return <page.body plugin={plugin} query={query} onNavChanged={this.onNavChanged} url={'xxxxx'} />;
+      for (const p of pages) {
+        if (p.path === page) {
+          const { Body } = p;
+          return <Body plugin={plugin} query={query} onNavChanged={this.onNavChanged} path={path} />;
         }
       }
     }
-    return null;
+    return <div>Page Not Found: {page}</div>;
   }
 
   render() {
-    const { pluginId, path } = this.props;
     const { loading, plugin } = this.state;
-
     return (
       <Page navModel={this.getNavModel()}>
         <Page.Contents isLoading={loading}>
-          {!loading && (
-            <div>
-              {plugin ? (
-                <div>
-                  HELLO: {pluginId} / {path}
-                  <ul>
-                    <li>
-                      <a href="/a/example-app/page?x=1">111</a>
-                    </li>
-                    <li>
-                      <a href="/a/example-app/page?x=2">222</a>
-                    </li>
-                    <li>
-                      <a href="/a/example-app/page?x=3">333</a>
-                    </li>
-                  </ul>
-                  {this.renderPageBody()}
-                </div>
-              ) : (
-                <div>not found...</div>
-              )}
-            </div>
-          )}
+          {!loading && <div>{plugin ? <div>{this.renderPageBody()}</div> : <div>not found...</div>}</div>}
         </Page.Contents>
       </Page>
     );
@@ -150,8 +152,9 @@ class AppPageWrapper extends Component<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   pluginId: state.location.routeParams.pluginId,
-  path: state.location.routeParams.path,
+  page: state.location.routeParams.path,
   query: state.location.query,
+  path: state.location.path,
 });
 
 export default hot(module)(connect(mapStateToProps)(AppPageWrapper));
