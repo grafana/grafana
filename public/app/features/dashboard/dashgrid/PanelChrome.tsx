@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { AutoSizer } from 'react-virtualized';
 
 // Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -34,6 +33,8 @@ export interface Props {
   plugin: PanelPlugin;
   isFullscreen: boolean;
   isEditing: boolean;
+  width: number;
+  height: number;
 }
 
 export interface State {
@@ -50,7 +51,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   queryRunner = new PanelQueryRunner();
   querySubscription: Unsubscribable;
-  queryWidthPixels = -1; // used to set maxDataPoints and interval in the query
 
   constructor(props: Props) {
     super(props);
@@ -145,7 +145,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
-    const { panel } = this.props;
+    const { panel, width } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
     this.setState({
@@ -155,7 +155,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     // Issue Query
     if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
-      if (this.queryWidthPixels < 0) {
+      if (width < 0) {
         console.log('No width yet... wait till we know');
         return;
       }
@@ -167,7 +167,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         dashboardId: this.props.dashboard.id,
         timezone: this.props.dashboard.timezone,
         timeRange: timeData.timeRange,
-        widthPixels: this.queryWidthPixels,
+        widthPixels: width,
         minInterval: undefined, // Currently not passed in DataPanel?
         maxDataPoints: panel.maxDataPoints,
         scopedVars: panel.scopedVars,
@@ -254,51 +254,34 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isFullscreen } = this.props;
+    const { dashboard, panel, isFullscreen, width, height } = this.props;
     const { errorMessage, timeInfo } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
     return (
-      <AutoSizer>
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
-
-          if (this.queryWidthPixels < 0 && this.wantsQueryExecution) {
-            this.queryWidthPixels = width;
-            setTimeout(() => this.onRefresh(), 1); // TODO some better way!!!
-            return null;
-          }
-
-          this.queryWidthPixels = width;
-          return (
-            <div className={containerClassNames}>
-              <PanelHeader
-                panel={panel}
-                dashboard={dashboard}
-                timeInfo={timeInfo}
-                title={panel.title}
-                description={panel.description}
-                scopedVars={panel.scopedVars}
-                links={panel.links}
-                error={errorMessage}
-                isFullscreen={isFullscreen}
-              />
-              <ErrorBoundary>
-                {({ error, errorInfo }) => {
-                  if (errorInfo) {
-                    this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
-                    return null;
-                  }
-                  return this.renderPanel(width, height);
-                }}
-              </ErrorBoundary>
-            </div>
-          );
-        }}
-      </AutoSizer>
+      <div className={containerClassNames}>
+        <PanelHeader
+          panel={panel}
+          dashboard={dashboard}
+          timeInfo={timeInfo}
+          title={panel.title}
+          description={panel.description}
+          scopedVars={panel.scopedVars}
+          links={panel.links}
+          error={errorMessage}
+          isFullscreen={isFullscreen}
+        />
+        <ErrorBoundary>
+          {({ error, errorInfo }) => {
+            if (errorInfo) {
+              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return this.renderPanel(width, height);
+          }}
+        </ErrorBoundary>
+      </div>
     );
   }
 }
