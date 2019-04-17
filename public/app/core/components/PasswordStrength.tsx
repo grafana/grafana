@@ -4,7 +4,11 @@ export interface Props {
   password: string;
 }
 
-export class PasswordStrength extends PureComponent<Props, any> {
+export interface State {
+  getScore(password: string): number;
+}
+
+export class PasswordStrength extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
