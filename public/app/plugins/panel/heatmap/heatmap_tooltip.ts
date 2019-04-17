@@ -81,7 +81,7 @@ export class HeatmapTooltip {
     let boundBottom, boundTop, valuesNumber;
     const xData = data.buckets[xBucketIndex];
     // Search in special 'zero' bucket also
-    const yData = _.find(xData.buckets, (bucket, bucketIndex) => {
+    const yData: any = _.find(xData.buckets, (bucket, bucketIndex) => {
       return bucket.bounds.bottom === yBucketIndex || bucketIndex === yBucketIndex.toString();
     });
 
@@ -161,7 +161,7 @@ export class HeatmapTooltip {
   getXBucketIndex(x, data) {
     // First try to find X bucket by checking x pos is in the
     // [bucket.x, bucket.x + xBucketSize] interval
-    const xBucket = _.find(data.buckets, bucket => {
+    const xBucket: any = _.find(data.buckets, bucket => {
       return x > bucket.x && x - bucket.x <= data.xBucketSize;
     });
     return xBucket ? xBucket.x : getValueBucketBound(x, data.xBucketSize, 1);

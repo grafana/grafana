@@ -234,6 +234,14 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   scopedVars: ScopedVars;
 }
 
+/**
+ * Timestamps when the query starts and stops
+ */
+export interface DataRequestInfo extends DataQueryOptions {
+  startTime: number;
+  endTime?: number;
+}
+
 export interface QueryFix {
   type: string;
   label: string;

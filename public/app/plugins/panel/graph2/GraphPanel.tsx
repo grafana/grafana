@@ -14,33 +14,31 @@ export class GraphPanel extends PureComponent<Props> {
     const { showLines, showBars, showPoints } = this.props.options;
 
     const graphs: GraphSeriesXY[] = [];
-    if (data) {
-      for (const series of data) {
-        const timeColumn = getFirstTimeField(series);
-        if (timeColumn < 0) {
-          continue;
-        }
+    for (const series of data.series) {
+      const timeColumn = getFirstTimeField(series);
+      if (timeColumn < 0) {
+        continue;
+      }
 
-        for (let i = 0; i < series.fields.length; i++) {
-          const field = series.fields[i];
+      for (let i = 0; i < series.fields.length; i++) {
+        const field = series.fields[i];
 
-          // Show all numeric columns
-          if (field.type === FieldType.number) {
-            // Use external calculator just to make sure it works :)
-            const points = getFlotPairs({
-              series,
-              xIndex: timeColumn,
-              yIndex: i,
-              nullValueMode: NullValueMode.Null,
+        // Show all numeric columns
+        if (field.type === FieldType.number) {
+          // Use external calculator just to make sure it works :)
+          const points = getFlotPairs({
+            series,
+            xIndex: timeColumn,
+            yIndex: i,
+            nullValueMode: NullValueMode.Null,
+          });
+
+          if (points.length > 0) {
+            graphs.push({
+              label: field.name,
+              data: points,
+              color: colors[graphs.length % colors.length],
             });
-
-            if (points.length > 0) {
-              graphs.push({
-                label: field.name,
-                data: points,
-                color: colors[graphs.length % colors.length],
-              });
-            }
           }
         }
       }

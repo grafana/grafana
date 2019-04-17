@@ -34,7 +34,7 @@ type Metrics struct {
 	// RequestCountFailures is a counter of the number of times any failure has been observed.
 	RequestCountFailures metrics.Counter `metric:"requests" tags:"error=true"`
 
-	// RequestLatencySuccess is a latency histogram of succesful requests.
+	// RequestLatencySuccess is a latency histogram of successful requests.
 	RequestLatencySuccess metrics.Timer `metric:"request_latency" tags:"error=false"`
 
 	// RequestLatencyFailures is a latency histogram of failed requests.

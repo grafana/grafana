@@ -188,6 +188,8 @@ $btn-divider-right: $dark-3;
 
 $btn-drag-image: '../img/grab_dark.svg';
 
+$navbar-btn-gicon-brightness: brightness(0.5);
+
 // Forms
 // -------------------------
 $input-bg: $input-black;

@@ -410,7 +410,7 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
 
   getExpandedVariables(target, dimensionKey, variable, templateSrv) {
     /* if the all checkbox is marked we should add all values to the targets */
-    const allSelected = _.find(variable.options, { selected: true, text: 'All' });
+    const allSelected: any = _.find(variable.options, { selected: true, text: 'All' });
     const selectedVariables = _.filter(variable.options, v => {
       if (allSelected) {
         return v.text !== 'All';
@@ -427,7 +427,7 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
           };
         });
     const useSelectedVariables =
-      selectedVariables.some(s => {
+      selectedVariables.some((s: any) => {
         return s.value === currentVariables[0].value;
       }) || currentVariables[0].value === '$__all';
     return (useSelectedVariables ? selectedVariables : currentVariables).map(v => {

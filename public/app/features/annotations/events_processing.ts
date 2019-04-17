@@ -17,10 +17,10 @@ function getRegions(events, range) {
   const regionEvents = _.filter(events, event => {
     return event.regionId;
   });
-  let regions = _.groupBy(regionEvents, 'regionId');
+  let regions: any = _.groupBy(regionEvents, 'regionId');
   regions = _.compact(
     _.map(regions, regionEvents => {
-      const regionObj = _.head(regionEvents);
+      const regionObj: any = _.head(regionEvents);
       if (regionEvents && regionEvents.length > 1) {
         regionObj.timeEnd = regionEvents[1].time;
         regionObj.isRegion = true;

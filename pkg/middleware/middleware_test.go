@@ -276,52 +276,9 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderProperty = "username"
 			name := "markelog"
 
-			middlewareScenario(t, "should sync the user if it's not in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
-					return nil
-				})
-
-				sc.fakeReq("GET", "/")
-
-				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
-				sc.exec()
-
-				Convey("Should init user via ldap", func() {
-					So(called, ShouldBeTrue)
-					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
-					So(sc.context.OrgId, ShouldEqual, 4)
-				})
-			})
-
 			middlewareScenario(t, "should not sync the user if it's in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
+					query.Result = &m.SignedInUser{OrgId: 4, UserId: query.UserId}
 					return nil
 				})
 
@@ -332,17 +289,10 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
-				cacheValue, cacheErr := sc.remoteCacheService.Get(key)
-
 				Convey("Should init user via cache", func() {
-					So(called, ShouldBeFalse)
-
 					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
+					So(sc.context.UserId, ShouldEqual, 33)
 					So(sc.context.OrgId, ShouldEqual, 4)
-
-					So(cacheValue, ShouldEqual, 33)
-					So(cacheErr, ShouldBeNil)
 				})
 			})
 
