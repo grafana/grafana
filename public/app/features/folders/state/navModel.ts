@@ -25,7 +25,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       },
       {
         active: false,
-        icon: 'fa fa-fw fa-cog',
+        icon: 'gicon gicon-cog',
         id: `folder-settings-${folder.uid}`,
         text: 'Settings',
         url: `${folder.url}/settings`,
