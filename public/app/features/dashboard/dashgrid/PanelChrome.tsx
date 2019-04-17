@@ -38,6 +38,7 @@ export interface Props {
 }
 
 export interface State {
+  isFirstLoad: boolean;
   renderCounter: number;
   timeInfo?: string;
   timeRange?: TimeRange;
@@ -55,6 +56,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      isFirstLoad: true,
       renderCounter: 0,
       errorMessage: null,
       data: {
@@ -80,7 +82,10 @@ export class PanelChrome extends PureComponent<Props, State> {
           state: LoadingState.Done,
           series: getProcessedSeriesData(panel.snapshotData),
         },
+        isFirstLoad: false,
       });
+    } else if (!this.wantsQueryExecution) {
+      this.setState({ isFirstLoad: false });
     }
   }
 
@@ -120,7 +125,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.props.panel.snapshotData = data.series;
       }
 
-      this.setState({ data });
+      this.setState({ data, isFirstLoad: false });
 
       // Notify query editors that the results have changed
       if (this.props.isEditing) {
@@ -217,7 +222,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { timeRange, renderCounter, data } = this.state;
+    const { timeRange, renderCounter, data, isFirstLoad } = this.state;
     const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
@@ -225,6 +230,11 @@ export class PanelChrome extends PureComponent<Props, State> {
     const loading = data.state;
     if (loading === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
+    }
+
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+      return this.renderLoadingState();
     }
 
     return (
