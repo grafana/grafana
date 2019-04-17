@@ -149,7 +149,7 @@ func (sb *SearchBuilder) buildTagQuery() {
 	sb.buildSearchWhereClause()
 
 	// this ends the inner select (tag filtered part)
-	sb.sql.WriteString(`GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ? `)
+	sb.sql.WriteString(` GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ? `)
 	sb.params = append(sb.params, len(sb.tags))
 }
 
