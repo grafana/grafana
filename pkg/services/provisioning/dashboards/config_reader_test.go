@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -18,8 +19,10 @@ func TestDashboardsAsConfig(t *testing.T) {
 		logger := log.New("test-logger")
 
 		Convey("Can read config file version 1 format", func() {
+			_ = os.Setenv("TEST_VAR", "general")
 			cfgProvider := configReader{path: simpleDashboardConfig, log: logger}
 			cfg, err := cfgProvider.readConfig()
+			_ = os.Unsetenv("TEST_VAR")
 			So(err, ShouldBeNil)
 
 			validateDashboardAsConfig(t, cfg)
