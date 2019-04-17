@@ -251,6 +251,23 @@
   version = "v0.7.1"
 
 [[projects]]
+  digest = "1:6a7159c5f8f8826207545407a458b43ab6599c1c8a2271465c2e979ecea1dcd4"
+  name = "github.com/gobwas/glob"
+  packages = [
+    ".",
+    "compiler",
+    "match",
+    "syntax",
+    "syntax/ast",
+    "syntax/lexer",
+    "util/runes",
+    "util/strings",
+  ]
+  pruneopts = "NUT"
+  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
+  version = "v0.2.3"
+
+[[projects]]
   branch = "master"
   digest = "1:ffbb19fb66f140b5ea059428d1f84246a055d1bc3d9456c1e5c3d143611f03d0"
   name = "github.com/golang/protobuf"
@@ -885,6 +902,7 @@
     "github.com/aws/aws-sdk-go/service/sts",
     "github.com/benbjohnson/clock",
     "github.com/bmizerany/assert",
+    "github.com/bradfitz/gomemcache/memcache",
     "github.com/codegangsta/cli",
     "github.com/davecgh/go-spew/spew",
     "github.com/denisenkom/go-mssqldb",
@@ -900,6 +918,7 @@
     "github.com/go-stack/stack",
     "github.com/go-xorm/core",
     "github.com/go-xorm/xorm",
+    "github.com/gobwas/glob",
     "github.com/gorilla/websocket",
     "github.com/gosimple/slug",
     "github.com/grafana/grafana-plugin-model/go/datasource",
@@ -915,7 +934,6 @@
     "github.com/opentracing/opentracing-go/ext",
     "github.com/opentracing/opentracing-go/log",
     "github.com/patrickmn/go-cache",
-    "github.com/pkg/errors",
     "github.com/prometheus/client_golang/api",
     "github.com/prometheus/client_golang/api/prometheus/v1",
     "github.com/prometheus/client_golang/prometheus",
@@ -937,6 +955,7 @@
     "gopkg.in/ldap.v3",
     "gopkg.in/macaron.v1",
     "gopkg.in/mail.v2",
+    "gopkg.in/redis.v2",
     "gopkg.in/square/go-jose.v2",
     "gopkg.in/yaml.v2",
   ]
