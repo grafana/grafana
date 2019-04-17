@@ -94,8 +94,19 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
-          if (this.state.errorMessage !== error.message) {
-            this.setState({ errorMessage: error.message });
+          let message = 'Query error';
+          if (error.message) {
+            message = error.message;
+          } else if (error.data && error.data.message) {
+            message = error.data.message;
+          } else if (error.data && error.data.error) {
+            message = error.data.error;
+          } else if (error.status) {
+            message = `Query error: ${error.status} ${error.statusText}`;
+          }
+
+          if (this.state.errorMessage !== message) {
+            this.setState({ errorMessage: message });
           }
           // this event is used by old query editors
           this.props.panel.events.emit('data-error', error);
