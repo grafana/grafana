@@ -39,6 +39,7 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
 export enum PanelQueryRunnerFormat {
   series = 'series',
   legacy = 'legacy',
+  both = 'both',
 }
 
 export class PanelQueryRunner {
@@ -62,6 +63,9 @@ export class PanelQueryRunner {
     }
 
     if (format === PanelQueryRunnerFormat.legacy) {
+      this.sendLegacy = true;
+    } else if (format === PanelQueryRunnerFormat.both) {
+      this.sendSeries = true;
       this.sendLegacy = true;
     } else {
       this.sendSeries = true;

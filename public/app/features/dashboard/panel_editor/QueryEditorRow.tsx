@@ -11,13 +11,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData, PanelData, LoadingState } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData, PanelData } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
-import { Unsubscribable } from 'rxjs';
-import { PanelQueryRunner, PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 
 interface Props {
   panel: PanelModel;
+  data: PanelData;
   query: DataQuery;
   dashboard: DashboardModel;
   onAddQuery: (query?: DataQuery) => void;
@@ -41,7 +40,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope | null;
   angularQueryEditor: AngularComponent | null = null;
-  querySubscription: Unsubscribable;
 
   state: State = {
     datasource: null,
@@ -54,54 +52,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadDatasource();
-
-    const { panel } = this.props;
-
-    if (!panel.queryRunner) {
-      panel.queryRunner = new PanelQueryRunner();
-    }
-    const format = this.angularQueryEditor ? PanelQueryRunnerFormat.legacy : PanelQueryRunnerFormat.series;
-    this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver, format);
   }
 
   componentWillUnmount() {
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-      this.querySubscription = null;
-    }
   }
-
-  // Updates the response with information from the stream
-  panelDataObserver = {
-    next: (data: PanelData) => {
-      if (data.state === LoadingState.Error) {
-        // if error relates to this query store it in state and pass it on to query editor
-        if (data.error.refId === this.props.query.refId) {
-          this.setState({ queryError: data.error });
-        }
-      }
-
-      // Update angular time range
-      if (this.angularScope) {
-        this.angularScope.range = getTimeSrv().timeRange();
-      }
-
-      // Some query controllers listen to data error events and need a digest
-      if (this.angularQueryEditor) {
-        // for some reason this needs to be done in next tick
-        setTimeout(this.angularQueryEditor.digest);
-
-        this.props.panel.events.emit('data-received', data.legacy);
-      } else if (data.state !== LoadingState.Error) {
-        // only pass series related to this query to query editor
-        const filterByRefId = data.series.filter(series => series.refId === this.props.query.refId);
-        this.setState({ queryResponse: filterByRefId, queryError: null });
-      }
-    },
-  };
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
     const { panel, query, dashboard } = this.props;
@@ -131,8 +88,25 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     });
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
+    const { data, query } = this.props;
+
+    if (data !== prevProps.data) {
+      const queryError = data.error && data.error.refId === query.refId ? data.error : null;
+      const queryResponse = data.series.filter(series => series.refId === query.refId);
+      this.setState({ queryResponse, queryError });
+
+      if (this.angularScope) {
+        this.angularScope.range = getTimeSrv().timeRange();
+      }
+
+      if (this.angularQueryEditor) {
+        // Some query controllers listen to data error events and need a digest
+        // for some reason this needs to be done in next tick
+        setTimeout(this.angularQueryEditor.digest);
+      }
+    }
 
     // check if we need to load another datasource
     if (loadedDataSourceValue !== this.props.dataSourceValue) {
