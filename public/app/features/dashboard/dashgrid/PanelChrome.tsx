@@ -32,7 +32,6 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
-  isEditing: boolean;
   width: number;
   height: number;
 }
