@@ -1,4 +1,5 @@
 import React from 'react';
+import zxcvbn from 'zxcvbn';
 
 export interface Props {
   password: string;
@@ -18,12 +19,14 @@ export class PasswordStrength extends React.Component<Props, any> {
       return null;
     }
 
-    if (password.length <= 8) {
+    const passwordScore = zxcvbn(password).score;
+
+    if (passwordScore <= 2) {
       strengthText = 'strength: you can do better.';
       strengthClass = 'password-strength-ok';
     }
 
-    if (password.length < 4) {
+    if (passwordScore < 1) {
       strengthText = 'strength: weak sauce.';
       strengthClass = 'password-strength-bad';
     }

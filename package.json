@@ -244,7 +244,8 @@
     "tether": "1.4.5",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
-    "xss": "1.0.3"
+    "xss": "1.0.3",
+    "zxcvbn": "4.4.2"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
