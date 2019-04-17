@@ -16,6 +16,8 @@ import {
   DataSourceApi,
 } from '@grafana/ui';
 
+import cloneDeep from 'lodash/cloneDeep';
+
 import kbn from 'app/core/utils/kbn';
 
 export interface QueryRunnerOptions {
@@ -101,7 +103,7 @@ export class PanelQueryRunner {
       rangeRaw: timeRange.raw,
       interval: '',
       intervalMs: 0,
-      targets: queries,
+      targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
