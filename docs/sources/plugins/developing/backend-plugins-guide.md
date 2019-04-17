@@ -8,18 +8,21 @@ parent = "developing"
 weight = 5
 +++
 
-# Backend plugins
+# Backend Plugins
 
-Backend plugins are a new type of plugin in Grafana. Once Grafana introduced the alerting feature, external plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules. So the main purpose and motivation for backend plugins was alerting. But this new plugin type can be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
+Grafana added support for plugins in Grafana 3.0 and this enabled the Grafana community to create panel plugins and datasource plugins. It was wildly successful and has made Grafana much more useful as you can integrate it with anything and do any type of custom visualization that you want. However, these plugin hooks are on the frontend only and we also want to provide hooks into the Grafana backend to allow the community to extend and improve Grafana in new ways.
 
-## General information
-The backend plugin feature is implemented with the [HashiCorp plugin system](https://github.com/hashicorp/go-plugin) which is a is a Go plugin system over RPC. Grafana server launches each plugin as a subprocesses and communicates with it over RPC. This approach has a number of benefits:
+Once Grafana introduced the alerting feature, external plugins needed a backend component for the Grafana server to execute queries for evaluating alert rules, as the alerting engine cannot call frontend JavaScript code from a backend service. So the the obvious first backend plugin type is the **Datasource backend plugin** and it is a new possible component for an existing datasource plugin. This new plugin type will enable alerting for external plugins but can also be used for achieving different goals such as query caching, request proxying, custom authentication methods, and more.
+
+## Backend Plugin System
+
+The backend plugin feature is implemented with the [HashiCorp plugin system](https://github.com/hashicorp/go-plugin) which is a is a Go plugin system over RPC. Grafana server launches each plugin as a subprocess and communicates with it over RPC. This approach has a number of benefits:
 
 - Plugins can't crash your grafana process: a panic in a plugin doesn't panic the server.
-- Plugins are easy to develop: just write a Go application and go build (or use any other language which supports gRPC).
+- Plugins are easy to develop: just write a Go application and `go build` (or use any other language which supports gRPC).
 - Plugins can be relatively secure: The plugin only has access to the interfaces and args given to it, not to the entire memory space of the process.
 
-## Plugin interface
+## Datasource Plugin Interface
 
 The plugin interface is very simple and described as a Go interface type in [Grafana](https://github.com/grafana/grafana/blob/6724aaeff9a332dc73b4ee0f8abe0621f7253142/pkg/tsdb/query_endpoint.go#L10-L12) and as a general [RPC service](https://github.com/grafana/grafana-plugin-model/blob/84176c64269d8060f99e750ee8aba6f062753336/datasource.proto#L96-L98) in the corresponding `.proto` (protocol buffer file):
 
@@ -39,7 +42,7 @@ Thus, a datasource plugin should only implement the `Query()` method.
 
 ## Introduction to building a backend component for a plugin
 
-The [Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) datasource is a good example for writing simple backend plugin in golang. Let's take a look at some key points.
+The [Simple JSON backend](https://github.com/grafana/simple-json-backend-datasource) datasource is a good example of writing a simple backend plugin in Go. Let's take a look at some key points.
 
 ### Metadata
 
@@ -61,11 +64,13 @@ The plugin needs to know it has a backend component, this is done in the `plugin
 ```
 
 `executable` should be the the the first part of the binary filename. The actual binary filename has 3 possible endings:
-- _linux_amd64
-- _darwin_amd64
-- _windows_amd64.exe
 
-When Grafana loads the plugin binary, it use the executable field plus the current OS to load in the correct version of the plugin. So in Simple JSON the executable field is `simple-json-plugin` and the 3 binaries are named:
+- \_linux_amd64
+- \_darwin_amd64
+- \_windows_amd64.exe
+
+When Grafana loads the plugin binary, it uses the executable field plus the current OS (Grafana knows which OS it is running on) to load in the correct version of the plugin. So in Simple JSON the executable field is `simple-json-plugin` and the 3 binaries are named:
+
 - `simple-json-plugin_darwin_amd64`
 - `simple-json-plugin_linux_amd64`
 - `simple-json-plugin_windows_amd64.exe`
@@ -124,7 +129,7 @@ func (t *JsonDatasource) Query(ctx context.Context, tsdbReq *datasource.Datasour
 
 #### Request format
 
-In order to call this method from the [frontend part](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/src/datasource.ts#L116), use `/api/tsdb/query` endpoint:
+In order to call this method from the [frontend part of your datasource](https://github.com/grafana/simple-json-backend-datasource/blob/7927ff0db60c3402dbf954a454f19d7230e18deb/src/datasource.ts#L116), use the `/api/tsdb/query` endpoint:
 
 ```js
 class SimpleJSONDatasource {
@@ -192,6 +197,7 @@ message QueryResult {
   repeated Table tables = 5;
 }
 ```
+
 ```go
 // pkg/tsdb/models.go
 
@@ -265,10 +271,18 @@ func main() {
 
 ### Building the backend binary
 
-Building the binary depends on which OS you are using. For a Linux distro, the build command would be:
+Building the binary depends on which OS you are using.
+
+For a Linux distro, the build command would be:
 
 ```sh
 go build -o ./dist/simple-json-plugin_linux_amd64 ./pkg
+```
+
+On Windows, the command would be:
+
+```sh
+go build -o ./dist/simple-json-plugin_windows_amd64.exe ./pkg
 ```
 
 Restart your Grafana server and then check the Grafana logs to make sure your plugin is loaded properly.
