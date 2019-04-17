@@ -2,9 +2,9 @@ package provisioning
 
 import (
 	"context"
-	"github.com/bmizerany/assert"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -21,26 +21,28 @@ func TestProvisioningServiceImpl(t *testing.T) {
 			serviceRunning = false
 		}()
 
-		assert.Equal(t, len(mock.Calls.PollChanges), 0, "PollChanges should not have been called")
+		assert.Equal(t, 0, len(mock.Calls.PollChanges), "PollChanges should not have been called")
 
-		service.ProvisionDashboards()
+		err := service.ProvisionDashboards()
+		assert.Nil(t, err)
 		time.Sleep(time.Millisecond)
-		assert.Equal(t, len(mock.Calls.PollChanges), 1, "PollChanges should have been called")
+		assert.Equal(t, 1, len(mock.Calls.PollChanges), "PollChanges should have been called")
 
-		service.ProvisionDashboards()
+		err = service.ProvisionDashboards()
+		assert.Nil(t, err)
 		time.Sleep(time.Millisecond)
-		assert.Equal(t, len(mock.Calls.PollChanges), 2, "PollChanges should have been called 2 times")
+		assert.Equal(t, 2, len(mock.Calls.PollChanges), "PollChanges should have been called 2 times")
 
 		pollingCtx := mock.Calls.PollChanges[0].(context.Context)
-		assert.Equal(t, pollingCtx.Err(), context.Canceled, "Polling context from first call should have been cancelled")
-		assert.Equal(t, serviceRunning, true, "Service should be still running")
+		assert.Equal(t, context.Canceled, pollingCtx.Err(), "Polling context from first call should have been cancelled")
+		assert.True(t, serviceRunning, "Service should be still running")
 
 		// Cancelling the root context and stopping the service
 		cancel()
 		time.Sleep(time.Millisecond)
 
-		assert.Equal(t, serviceRunning, false, "Service should not be running")
-		assert.Equal(t, serviceError, context.Canceled, "Service should have returned canceled error")
+		assert.False(t, serviceRunning, "Service should not be running")
+		assert.Equal(t, context.Canceled, serviceError, "Service should have returned canceled error")
 
 	})
 }
