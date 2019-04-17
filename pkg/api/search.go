@@ -18,10 +18,6 @@ func Search(c *m.ReqContext) Response {
 	dashboardType := c.Query("type")
 	permission := m.PERMISSION_VIEW
 
-	if limit == 0 {
-		limit = 1000
-	}
-
 	if limit > 5000 {
 		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}

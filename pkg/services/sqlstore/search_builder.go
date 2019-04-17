@@ -23,6 +23,16 @@ type SearchBuilder struct {
 }
 
 func NewSearchBuilder(signedInUser *m.SignedInUser, limit int64, page int64, permission m.PermissionType) *SearchBuilder {
+	// Default to page 1
+	if page < 1 {
+		page = 1
+	}
+
+	// default limit
+	if limit <= 0 {
+		limit = 1000
+	}
+
 	searchBuilder := &SearchBuilder{
 		signedInUser: signedInUser,
 		limit:        limit,
@@ -91,7 +101,7 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 	}
 
 	sb.sql.WriteString(`
-		ORDER BY dashboard.id ` + sb.getLimitExpression() + `) as ids
+		ORDER BY dashboard.id ` + dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit) + `) as ids
 		INNER JOIN dashboard on ids.id = dashboard.id
 	`)
 
@@ -101,15 +111,6 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 
 	sb.sql.WriteString(" ORDER BY dashboard.title ASC")
 	return sb.sql.String(), sb.params
-}
-
-func (sb *SearchBuilder) getLimitExpression() string {
-	// Default to page 1
-	if sb.page < 1 {
-		sb.page = 1
-	}
-
-	return dialect.LimitOffset(sb.limit, (sb.page-1)*sb.limit)
 }
 
 func (sb *SearchBuilder) buildSelect() {

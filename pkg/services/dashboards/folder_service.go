@@ -26,10 +26,6 @@ var NewFolderService = func(orgId int64, user *models.SignedInUser) FolderServic
 }
 
 func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error) {
-	if limit == 0 {
-		limit = 1000
-	}
-
 	searchQuery := search.Query{
 		SignedInUser: dr.user,
 		DashboardIds: make([]int64, 0),
