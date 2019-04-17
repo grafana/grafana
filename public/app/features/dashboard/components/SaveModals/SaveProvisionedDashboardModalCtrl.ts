@@ -27,10 +27,10 @@ const template = `
       </div>
       <div class="gf-form-button-row">
         <button class="btn btn-primary" clipboard-button="ctrl.getJsonForClipboard()">
-          <i class="fa fa-clipboard"></i>&nbsp;Copy JSON to Clipboard
+          Copy JSON to Clipboard
         </button>
         <button class="btn btn-secondary" clipboard-button="ctrl.save()">
-          <i class="fa fa-save"></i>&nbsp;Save JSON to file
+          Save JSON to file
         </button>
         <a class="btn btn-link" ng-click="ctrl.dismiss();">Cancel</a>
       </div>
