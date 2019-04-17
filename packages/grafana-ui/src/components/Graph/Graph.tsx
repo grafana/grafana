@@ -72,7 +72,11 @@ export class Graph extends PureComponent<GraphProps> {
         },
         shadowSize: 0,
       },
+      yaxis: {
+        show: true,
+      },
       xaxis: {
+        show: true,
         mode: 'time',
         min: min,
         max: max,
