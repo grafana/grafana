@@ -2,10 +2,10 @@ package api
 
 import (
 	"context"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
-func (server *HTTPServer) AdminProvisioningReloadDasboards(c *m.ReqContext) Response {
+func (server *HTTPServer) AdminProvisioningReloadDasboards(c *models.ReqContext) Response {
 	err := server.ProvisioningService.ProvisionDashboards()
 	if err != nil && err != context.Canceled {
 		return Error(500, "", err)
@@ -13,7 +13,7 @@ func (server *HTTPServer) AdminProvisioningReloadDasboards(c *m.ReqContext) Resp
 	return Success("Dashboards config reloaded")
 }
 
-func (server *HTTPServer) AdminProvisioningReloadDatasources(c *m.ReqContext) Response {
+func (server *HTTPServer) AdminProvisioningReloadDatasources(c *models.ReqContext) Response {
 	err := server.ProvisioningService.ProvisionDatasources()
 	if err != nil {
 		return Error(500, "", err)
@@ -21,7 +21,7 @@ func (server *HTTPServer) AdminProvisioningReloadDatasources(c *m.ReqContext) Re
 	return Success("Datasources config reloaded")
 }
 
-func (server *HTTPServer) AdminProvisioningReloadNotifications(c *m.ReqContext) Response {
+func (server *HTTPServer) AdminProvisioningReloadNotifications(c *models.ReqContext) Response {
 	err := server.ProvisioningService.ProvisionNotifications()
 	if err != nil {
 		return Error(500, "", err)
