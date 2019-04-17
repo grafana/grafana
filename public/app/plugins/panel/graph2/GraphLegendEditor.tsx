@@ -58,14 +58,13 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
 
   return (
     <PanelOptionsGroup title="Legend">
-      <>
-        <h4>Legend options</h4>
+      <div className="section gf-form-group">
+        <h4>Options</h4>
         <Switch label="Show legend" checked={options.isVisible} onChange={onOptionToggle('isVisible')} />
         <Switch label="Display as table" checked={options.asTable} onChange={onOptionToggle('asTable')} />
         <Switch label="To the right" checked={options.placement === 'right'} onChange={onOptionToggle('placement')} />
-      </>
-
-      <>
+      </div>
+      <div className="section gf-form-group">
         <h4>Values</h4>
         {stats.map(stat => {
           return (
@@ -77,25 +76,29 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
             />
           );
         })}
-        <h4>Decimals</h4>
-        <Input
-          className="gf-form-input width-5"
-          type="number"
-          value={options.decimals}
-          placeholder="Auto"
-          onChange={event => {
-            onChange({
-              ...options,
-              decimals: parseInt(event.target.value, 10),
-            });
-          }}
-        />
-      </>
-      <>
-        <h4>Legend series visibility</h4>
+
+        <div className="gf-form">
+          <div className="gf-form-label">Decimals</div>
+          <Input
+            className="gf-form-input width-5"
+            type="number"
+            value={options.decimals}
+            placeholder="Auto"
+            onChange={event => {
+              onChange({
+                ...options,
+                decimals: parseInt(event.target.value, 10),
+              });
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="section gf-form-group">
+        <h4>Hidden series</h4>
         {/* <Switch label="With only nulls" checked={!!options.hideEmpty} onChange={onOptionToggle('hideEmpty')} /> */}
         <Switch label="With only zeros" checked={!!options.hideZero} onChange={onOptionToggle('hideZero')} />
-      </>
+      </div>
     </PanelOptionsGroup>
   );
 };
