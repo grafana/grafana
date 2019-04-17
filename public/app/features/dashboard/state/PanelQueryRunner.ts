@@ -20,10 +20,10 @@ import cloneDeep from 'lodash/cloneDeep';
 
 import kbn from 'app/core/utils/kbn';
 
-export interface QueryRunnerOptions {
-  ds?: DataSourceApi; // if they already have the datasource, don't look it up
+export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
+  ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
   datasource: string | null;
-  queries: DataQuery[];
+  queries: TQuery[];
   panelId: number;
   dashboardId?: number;
   timezone?: string;
@@ -174,7 +174,17 @@ export class PanelQueryRunner {
     } catch (err) {
       const error = err as DataQueryError;
       if (!error.message) {
-        err.message = 'Query Error';
+        let message = 'Query error';
+        if (error.message) {
+          message = error.message;
+        } else if (error.data && error.data.message) {
+          message = error.data.message;
+        } else if (error.data && error.data.error) {
+          message = error.data.error;
+        } else if (error.status) {
+          message = `Query error: ${error.status} ${error.statusText}`;
+        }
+        error.message = message;
       }
 
       this.data = {
