@@ -54,8 +54,6 @@ github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
 github.com/benbjohnson/clock
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
-# github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
-github.com/bmizerany/assert
 # github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
 github.com/bradfitz/gomemcache/memcache
 # github.com/codegangsta/cli v1.20.0
@@ -136,10 +134,6 @@ github.com/klauspost/compress/gzip
 github.com/klauspost/compress/flate
 # github.com/klauspost/cpuid v1.2.0
 github.com/klauspost/cpuid
-# github.com/kr/pretty v0.1.0
-github.com/kr/pretty
-# github.com/kr/text v0.1.0
-github.com/kr/text
 # github.com/lib/pq v1.0.0
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -163,6 +157,8 @@ github.com/opentracing/opentracing-go/log
 github.com/patrickmn/go-cache
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v0.9.2
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/promhttp
@@ -193,6 +189,8 @@ github.com/smartystreets/assertions/internal/oglematchers
 github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/reporting
 github.com/smartystreets/goconvey/convey/gotest
+# github.com/stretchr/testify v1.3.0
+github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
