@@ -6,23 +6,12 @@ import { withHorizontallyCenteredStory } from '../../utils/storybook/withCentere
 import { GraphWithLegend } from './GraphWithLegend';
 
 import { mockGraphWithLegendData } from './mockGraphWithLegendData';
-// import { StatID } from '../../utils/index';
 import { action } from '@storybook/addon-actions';
 import { LegendPlacement } from '../Legend/Legend';
-const GraphWithLegendStories = storiesOf('UI/Graph/GraphWithLegend', module);
+const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
 const getStoriesKnobs = () => {
-  // const statsToDisplay = select(
-  //   'Stats to display',
-  //   {
-  //     none: [],
-  //     'single (min)': ['min'],
-  //     'multiple (min, max)': ['min', 'max'],
-  //   },
-  //   []
-  // ) as StatID[];
-
   const containerWidth = select(
     'Container width',
     {
@@ -36,10 +25,10 @@ const getStoriesKnobs = () => {
     'Container height',
     {
       Small: '200px',
-      Medium: '300px',
+      Medium: '400px',
       'Full height': '100%',
     },
-    '200px'
+    '400px'
   );
 
   const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
@@ -52,21 +41,32 @@ const getStoriesKnobs = () => {
     },
     'under'
   );
+  const renderLegendAsTable = select(
+    'Render legend as',
+    {
+      list: false,
+      table: true,
+    },
+    false
+  );
 
   return {
     containerWidth,
     containerHeight,
     rightAxisSeries,
     legendPlacement,
+    renderLegendAsTable,
   };
 };
 
 GraphWithLegendStories.add('default', () => {
-  const { containerWidth, containerHeight, rightAxisSeries, legendPlacement } = getStoriesKnobs();
+  const { containerWidth, containerHeight, rightAxisSeries, legendPlacement, renderLegendAsTable } = getStoriesKnobs();
 
+  console.log(renderLegendAsTable);
   const props = mockGraphWithLegendData({
     onSeriesColorChange: action('Series color changed'),
     onSeriesAxisToggle: action('Series y-axis changed'),
+    renderLegendAsTable,
   });
   const series = props.series.map(s => {
     if (

@@ -6,7 +6,7 @@ import { SeriesColorChangeHandler } from './GraphWithLegend';
 import { LegendStatsList } from '../Legend/LegendStatsList';
 import { ThemeContext } from '../../themes/ThemeContext';
 
-interface GraphLegendItemProps {
+export interface GraphLegendItemProps {
   key?: React.Key;
   item: LegendItem;
   className?: string;
