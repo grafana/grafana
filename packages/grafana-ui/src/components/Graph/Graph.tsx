@@ -1,6 +1,7 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
+import uniqBy from 'lodash/uniqBy';
 
 // Types
 import { TimeRange, GraphSeriesXY } from '../../types';
@@ -46,7 +47,16 @@ export class Graph extends PureComponent<GraphProps> {
     const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
-
+    const yaxes = uniqBy(
+      series.map(s => {
+        return {
+          show: true,
+          index: s.useRightYAxis ? 2 : 1,
+          position: s.useRightYAxis ? 'right' : 'left',
+        };
+      }),
+      yAxisConfig => yAxisConfig.index
+    );
     const flotOptions = {
       legend: {
         show: false,
@@ -72,11 +82,7 @@ export class Graph extends PureComponent<GraphProps> {
         },
         shadowSize: 0,
       },
-      yaxis: {
-        show: true,
-      },
       xaxis: {
-        show: true,
         mode: 'time',
         min: min,
         max: max,
@@ -84,6 +90,7 @@ export class Graph extends PureComponent<GraphProps> {
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
       },
+      yaxes,
       grid: {
         minBorderMargin: 0,
         markings: [],
