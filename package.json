@@ -191,7 +191,7 @@
     "file-saver": "1.3.8",
     "immutable": "3.8.2",
     "jquery": "3.3.1",
-    "lodash": "4.17.10",
+    "lodash": "4.17.11",
     "moment": "2.24.0",
     "mousetrap": "1.6.3",
     "mousetrap-global-bind": "1.1.0",
