@@ -8,7 +8,7 @@ import { withHorizontallyCenteredStory } from '../../utils/storybook/withCentere
 import { generateLegendItems } from '../Legend/Legend.story';
 import { LegendPlacement } from '../Legend/Legend';
 
-const GraphLegendStories = storiesOf('UI/Graph/GraphLegend', module);
+const GraphLegendStories = storiesOf('Visualizations/Graph/GraphLegend', module);
 GraphLegendStories.addDecorator(withHorizontallyCenteredStory);
 
 const getStoriesKnobs = (isList = false) => {
