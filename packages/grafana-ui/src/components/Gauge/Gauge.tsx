@@ -67,9 +67,10 @@ export class Gauge extends PureComponent<Props> {
     const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 6, 45) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 6, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const labelFontSize = Math.min(dimension / 5.5, 100) * (value.title ? this.getFontScale(value.title.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
     const showLabel = value.title !== null && value.title !== undefined;
 
@@ -85,7 +86,7 @@ export class Gauge extends PureComponent<Props> {
             width: gaugeWidth,
           },
           frame: { show: false },
-          label: { show: showLabel },
+          label: { show: showLabel, margin: labelFontSize, size: labelFontSize },
           layout: { margin: 0, thresholdWidth: 0 },
           cell: { border: { width: 0 } },
           threshold: {

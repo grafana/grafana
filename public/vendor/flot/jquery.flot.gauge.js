@@ -143,9 +143,9 @@
                 heightRatioV = Math.max(heightRatioV, Math.sin(toRad(a)));
             }
             heightRatioV = Math.max(heightRatioV, Math.sin(toRad(endAngle)));
-            var outerRadiusV = (cellHeight - (cellMargin * 2) - (labelMargin * 2) - labelFontSize) / (1 + heightRatioV);
+            var outerRadiusV = (cellHeight - (cellMargin * 2)) / (1 + heightRatioV);
             if (outerRadiusV * heightRatioV < valueMargin + (valueFontSize / 2)) {
-                outerRadiusV = cellHeight - (cellMargin * 2) - (labelMargin * 2) - labelFontSize - valueMargin - (valueFontSize / 2);
+                outerRadiusV = cellHeight - (cellMargin * 2) - valueMargin - (valueFontSize / 2);
             }
             var maxRadiusV = outerRadiusV - (thresholdLabelMargin * 2) - thresholdLabelFontSize - thresholdWidth;
 
@@ -239,9 +239,9 @@
             var x = layout.margin + (layout.cellWidth + layout.hMargin) * c;
             var y = layout.margin + (layout.cellHeight + layout.vMargin) * r;
             var cx = x + (layout.cellWidth / 2);
-            var cy = y + layout.cellMargin + (layout.labelMargin * 2) + layout.thresholdWidth
+            var cy = y + layout.cellMargin + layout.thresholdWidth
                         + layout.thresholdLabelFontSize + (layout.thresholdLabelMargin * 2) + layout.radius;
-            var blank = layout.cellHeight - (layout.cellMargin * 2) - (layout.labelMargin * 2) - layout.labelFontSize - layout.gaugeOuterHeight;
+            var blank = layout.cellHeight - (layout.cellMargin * 2) - layout.gaugeOuterHeight;
             var offsetY = 0;
             if (gaugeOptionsi.cell.vAlign === "middle") {
                 offsetY = (blank / 2);
@@ -476,7 +476,7 @@
           console.log(layout, cellLayout);
             drawText(
                 cellLayout.cx,
-                cellLayout.cy + (layout.gaugeOuterHeight/2) - (layout.labelFontSize / 2),
+                cellLayout.cy + (gaugeOptionsi.value.font.size / 2) - (layout.labelFontSize / 2) + layout.labelMargin,
                 "flotGagueLabel" + i,
                 gaugeOptionsi.label.formatter ? gaugeOptionsi.label.formatter(item.label, item.data[0][1]) : text,
                 gaugeOptionsi.label);
