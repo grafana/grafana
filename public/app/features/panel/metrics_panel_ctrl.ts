@@ -200,6 +200,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       timeRange: this.range,
       widthPixels: this.resolution, // The pixel width
       maxDataPoints: panel.maxDataPoints,
+      minInterval: panel.interval,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
     });

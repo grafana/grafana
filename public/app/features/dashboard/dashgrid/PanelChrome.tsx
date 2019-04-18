@@ -134,15 +134,18 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('No width yet... wait till we know');
+        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
+
       if (!panel.queryRunner) {
         panel.queryRunner = new PanelQueryRunner();
       }
+
       if (!this.querySubscription) {
         this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver);
       }
+
       panel.queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -153,6 +156,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         timeInfo: timeData.timeInfo,
         widthPixels: width,
         maxDataPoints: panel.maxDataPoints,
+        minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
       });

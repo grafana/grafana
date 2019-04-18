@@ -30,7 +30,8 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   timeRange?: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
-  maxDataPoints?: number;
+  maxDataPoints: number | undefined | null;
+  minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
