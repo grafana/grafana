@@ -236,7 +236,7 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Open original dashboard"
               classSuffix="snapshot-origin"
-              icon="fa fa-link"
+              icon="gicon gicon-link"
               href={snapshotUrl}
             />
           )}
@@ -245,7 +245,7 @@ export class DashNav extends PureComponent<Props> {
             <DashNavButton
               tooltip="Dashboard settings"
               classSuffix="settings"
-              icon="fa fa-cog"
+              icon="gicon gicon-cog"
               onClick={this.onOpenSettings}
             />
           )}

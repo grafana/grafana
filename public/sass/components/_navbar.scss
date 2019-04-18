@@ -146,6 +146,17 @@
     border-radius: 0 2px 2px 0;
   }
 
+  &--settings {
+    .gicon {
+      filter: $navbar-btn-gicon-brightness;
+    }
+    &:hover {
+      .gicon {
+        filter: brightness(0.8);
+      }
+    }
+  }
+
   &--tight {
     padding: 7px 4px;
 

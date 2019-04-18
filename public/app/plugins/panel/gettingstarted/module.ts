@@ -27,7 +27,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Create your first data source',
       cta: 'Add data source',
-      icon: 'icon-gf icon-gf-datasources',
+      icon: 'gicon gicon-datasources',
       href: 'datasources/new?gettingstarted',
       check: () => {
         return $q.when(
@@ -41,7 +41,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Create your first dashboard',
       cta: 'New dashboard',
-      icon: 'icon-gf icon-gf-dashboard',
+      icon: 'gicon gicon-dashboard',
       href: 'dashboard/new?gettingstarted',
       check: () => {
         return this.backendSrv.search({ limit: 1 }).then(result => {
@@ -53,7 +53,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Invite your team',
       cta: 'Add Users',
-      icon: 'icon-gf icon-gf-users',
+      icon: 'gicon gicon-team',
       href: 'org/users?gettingstarted',
       check: () => {
         return this.backendSrv.get('/api/org/users').then(res => {
@@ -65,7 +65,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Install apps & plugins',
       cta: 'Explore plugin repository',
-      icon: 'icon-gf icon-gf-apps',
+      icon: 'gicon gicon-plugins',
       href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
       check: () => {
         return this.backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then(plugins => {
