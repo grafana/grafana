@@ -1,7 +1,9 @@
 import { ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
+import { PanelData } from './panel';
+import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -72,6 +74,14 @@ interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
   new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
 }
 
+export interface DataSourceStream {
+  /**
+   * While streaming, notify listeners about the entire results and
+   * about partial set of data that has changed in this step
+   */
+  onStreamProgress(full: PanelData, partial: PanelData, subscription?: Unsubscribable): void;
+}
+
 /**
  * The main data source abstraction interface, represents an instance of a data source
  */
@@ -93,8 +103,10 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
 
   /**
    * Main metrics / data query action
+   *
+   * The stream will notify both the full response and partial updates
    */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+  query(request: DataQueryRequest<TQuery>, stream?: DataSourceStream): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -220,10 +232,11 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
+  requestId: string; // Unique string identifying the Request
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange; // Duplicate of results in range.  will be deprecated eventually
+  timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -232,13 +245,11 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
-}
 
-/**
- * Timestamps when the query starts and stops
- */
-export interface DataRequestInfo extends DataQueryOptions {
-  timeInfo?: string; // The query time description (blue text in the upper right)
+  // Some Queries issue multiple sub requests
+  subQueries?: DataQueryRequest[];
+
+  // Request Timing
   startTime: number;
   endTime?: number;
 }

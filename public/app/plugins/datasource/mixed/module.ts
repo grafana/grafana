@@ -1,2 +1,4 @@
-import { MixedDatasource } from './datasource';
-export { MixedDatasource, MixedDatasource as Datasource };
+import { MixedDatasource } from './MixedDatasource';
+import { DataSourcePlugin } from '@grafana/ui';
+
+export const plugin = new DataSourcePlugin(MixedDatasource);

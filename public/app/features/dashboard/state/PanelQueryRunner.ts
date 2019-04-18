@@ -8,17 +8,23 @@ import {
   DataQuery,
   TimeRange,
   ScopedVars,
-  DataRequestInfo,
+  DataQueryRequest,
   SeriesData,
   DataQueryError,
   toLegacyResponseData,
   isSeriesData,
   DataSourceApi,
+  DataSourceStream,
 } from '@grafana/ui';
 
 import cloneDeep from 'lodash/cloneDeep';
 
 import kbn from 'app/core/utils/kbn';
+
+let counter = 100;
+function getNextRequestId() {
+  return 'Q' + counter++;
+}
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
@@ -101,12 +107,12 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    const request: DataRequestInfo = {
+    const request: DataQueryRequest = {
+      requestId: getNextRequestId(),
       timezone,
       panelId,
       dashboardId,
       range: timeRange,
-      rangeRaw: timeRange.raw,
       timeInfo,
       interval: '',
       intervalMs: 0,
@@ -116,6 +122,15 @@ export class PanelQueryRunner {
       cacheTimeout,
       startTime: Date.now(),
     };
+    // Support `rangeRaw` for legacy untyped requests
+    (request as any).rangeRaw = timeRange.raw;
+
+    if (this.data.state === LoadingState.Loading) {
+      console.log('Previous query is still loading, what should we do?');
+      // Maybe check if it is the same query???
+      // Maybe cancel the existing one?
+      // Maybe hold on to the ds.query( promise?
+    }
 
     if (!queries) {
       this.data = {
@@ -150,7 +165,7 @@ export class PanelQueryRunner {
         this.publishUpdate({ state: LoadingState.Loading });
       }, delayStateNotification || 500);
 
-      const resp = await ds.query(request);
+      const resp = await ds.query(request, this.streamingDataListener);
 
       request.endTime = Date.now();
 
@@ -211,6 +226,28 @@ export class PanelQueryRunner {
 
     return this.data;
   }
+
+  // This is passed to DataSourceAPI and may get partial results
+  private streamingDataListener: DataSourceStream = {
+    onStreamProgress: (full: PanelData, partial: PanelData, subscription?: Unsubscribable) => {
+      // Make sure the data is what we are looking for
+      if (full.request.requestId !== this.data.request.requestId) {
+        if (subscription) {
+          console.log('Stop listening to:', full.request);
+          subscription.unsubscribe();
+        } else {
+          console.log('Ignoring: ', full.request.requestId, partial);
+        }
+        return;
+      }
+
+      // TODO: let listener subscribe to partial updates?
+      // this.streamProgressListeners.next(partial);
+
+      this.data = full;
+      this.subject.next(this.data); // debounce?
+    },
+  };
 }
 
 /**

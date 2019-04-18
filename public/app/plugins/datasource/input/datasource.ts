@@ -1,6 +1,6 @@
 // Types
 import {
-  DataQueryOptions,
+  DataQueryRequest,
   SeriesData,
   DataQueryResponse,
   DataSourceApi,
@@ -67,7 +67,7 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
     });
   }
 
-  query(options: DataQueryOptions<InputQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
     const results: SeriesData[] = [];
     for (const query of options.targets) {
       if (query.hide) {
