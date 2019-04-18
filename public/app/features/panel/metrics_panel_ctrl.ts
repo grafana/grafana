@@ -18,7 +18,7 @@ import {
 } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunner, PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
+import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -184,14 +184,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasource = datasource;
 
     const panel = this.panel as PanelModel;
-    if (!panel.queryRunner) {
-      panel.queryRunner = new PanelQueryRunner();
-    }
+    const queryRunner = panel.getQueryRunner();
+
     if (!this.querySubscription) {
-      this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.legacy);
+      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.legacy);
     }
 
-    return panel.queryRunner.run({
+    return queryRunner.run({
       datasource: panel.datasource,
       queries: panel.targets,
       panelId: panel.id,
