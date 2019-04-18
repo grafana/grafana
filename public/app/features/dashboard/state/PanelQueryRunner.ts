@@ -39,6 +39,7 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
 export enum PanelQueryRunnerFormat {
   series = 'series',
   legacy = 'legacy',
+  both = 'both',
 }
 
 export class PanelQueryRunner {
@@ -62,6 +63,9 @@ export class PanelQueryRunner {
     }
 
     if (format === PanelQueryRunnerFormat.legacy) {
+      this.sendLegacy = true;
+    } else if (format === PanelQueryRunnerFormat.both) {
+      this.sendSeries = true;
       this.sendLegacy = true;
     } else {
       this.sendSeries = true;
@@ -121,6 +125,8 @@ export class PanelQueryRunner {
       return this.data;
     }
 
+    let loadingStateTimeoutId = 0;
+
     try {
       const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
@@ -137,18 +143,12 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
 
       // Send a loading status event on slower queries
-      setTimeout(() => {
-        if (!request.endTime) {
-          this.data = {
-            ...this.data,
-            state: LoadingState.Loading,
-            request,
-          };
-          this.subject.next(this.data);
-        }
-      }, delayStateNotification || 100);
+      loadingStateTimeoutId = window.setTimeout(() => {
+        this.publishUpdate({ state: LoadingState.Loading });
+      }, delayStateNotification || 500);
 
       const resp = await ds.query(request);
+
       request.endTime = Date.now();
 
       // Make sure the response is in a supported format
@@ -162,15 +162,16 @@ export class PanelQueryRunner {
           })
         : undefined;
 
-      // The Result
-      this.data = {
+      // Make sure the delayed loading state timeout is cleared
+      clearTimeout(loadingStateTimeoutId);
+
+      // Publish the result
+      return this.publishUpdate({
         state: LoadingState.Done,
         series,
         legacy,
         request,
-      };
-      this.subject.next(this.data);
-      return this.data;
+      });
     } catch (err) {
       const error = err as DataQueryError;
       if (!error.message) {
@@ -187,14 +188,25 @@ export class PanelQueryRunner {
         error.message = message;
       }
 
-      this.data = {
-        ...this.data, // ?? Should we keep existing data, or clear it ???
+      // Make sure the delayed loading state timeout is cleared
+      clearTimeout(loadingStateTimeoutId);
+
+      return this.publishUpdate({
         state: LoadingState.Error,
         error: error,
-      };
-      this.subject.next(this.data);
-      return this.data;
+      });
     }
+  }
+
+  publishUpdate(update: Partial<PanelData>): PanelData {
+    this.data = {
+      ...this.data,
+      ...update,
+    };
+
+    this.subject.next(this.data);
+
+    return this.data;
   }
 }
 

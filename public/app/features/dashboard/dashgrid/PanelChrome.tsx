@@ -17,7 +17,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, PanelData, toLegacyResponseData } from '@grafana/ui';
+import { TimeRange, LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -32,7 +32,6 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
-  isEditing: boolean;
   width: number;
   height: number;
 }
@@ -50,7 +49,6 @@ export interface State {
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
-  queryRunner = new PanelQueryRunner();
   querySubscription: Unsubscribable;
 
   constructor(props: Props) {
@@ -64,9 +62,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         series: [],
       },
     };
-
-    // Listen for changes to the query results
-    this.querySubscription = this.queryRunner.subscribe(this.panelDataObserver);
   }
 
   componentDidMount() {
@@ -91,50 +86,41 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onRefresh);
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
   }
 
   // Updates the response with information from the stream
+  // The next is outside a react synthetic event so setState is not batched
+  // So in this context we can only do a single call to setState
   panelDataObserver = {
     next: (data: PanelData) => {
+      let { errorMessage, isFirstLoad } = this.state;
+
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
-          let message = error.message;
-          if (!message) {
-            message = 'Query error';
+          if (this.state.errorMessage !== error.message) {
+            errorMessage = error.message;
           }
-
-          if (this.state.errorMessage !== message) {
-            this.setState({ errorMessage: message });
-          }
-          // this event is used by old query editors
-          this.props.panel.events.emit('data-error', error);
         }
       } else {
-        this.clearErrorState();
+        errorMessage = null;
       }
 
-      // Save the query response into the panel
-      if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
-        this.props.panel.snapshotData = data.series;
-      }
-
-      this.setState({ data, isFirstLoad: false });
-
-      // Notify query editors that the results have changed
-      if (this.props.isEditing) {
-        const events = this.props.panel.events;
-        let legacy = data.legacy;
-        if (!legacy) {
-          legacy = data.series.map(v => toLegacyResponseData(v));
+      if (data.state === LoadingState.Done) {
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series;
         }
-
-        // Angular query editors expect TimeSeries|TableData
-        events.emit('data-received', legacy);
-
-        // Notify react query editors
-        events.emit('series-data-received', data);
+        if (this.state.isFirstLoad) {
+          isFirstLoad = false;
+        }
       }
+
+      this.setState({ isFirstLoad, errorMessage, data });
     },
   };
 
@@ -153,13 +139,18 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
 
     // Issue Query
-    if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
+    if (this.wantsQueryExecution) {
       if (width < 0) {
         console.log('No width yet... wait till we know');
         return;
       }
-
-      this.queryRunner.run({
+      if (!panel.queryRunner) {
+        panel.queryRunner = new PanelQueryRunner();
+      }
+      if (!this.querySubscription) {
+        this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver);
+      }
+      panel.queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -195,12 +186,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   };
 
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
-
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
   }
@@ -211,7 +196,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get wantsQueryExecution() {
-    return this.props.plugin.dataFormats.length > 0;
+    return this.props.plugin.dataFormats.length > 0 && !this.hasPanelSnapshot;
   }
 
   renderPanel(width: number, height: number): JSX.Element {
