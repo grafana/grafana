@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { css } from 'emotion';
 import { getColorFromHexRgbOrName } from '../../utils';
 import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
 
@@ -68,10 +67,11 @@ export class Gauge extends PureComponent<Props> {
     const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 6, 45) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const fontSize = Math.min(dimension / 5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
+    const showLabel = value.title !== null && value.title !== undefined;
 
     const options: any = {
       series: {
@@ -85,7 +85,7 @@ export class Gauge extends PureComponent<Props> {
             width: gaugeWidth,
           },
           frame: { show: false },
-          label: { show: false },
+          label: { show: showLabel },
           layout: { margin: 0, thresholdWidth: 0 },
           cell: { border: { width: 0 } },
           threshold: {
@@ -110,7 +110,10 @@ export class Gauge extends PureComponent<Props> {
       },
     };
 
-    const plotSeries = { data: [[0, value.numeric]] };
+    const plotSeries = {
+      data: [[0, value.numeric]],
+      label: value.title,
+    };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);
@@ -120,7 +123,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, value } = this.props;
+    const { height, width } = this.props;
 
     return (
       <div
@@ -128,23 +131,9 @@ export class Gauge extends PureComponent<Props> {
           height: `${Math.min(height, width * 1.3)}px`,
           width: `${Math.min(width, height * 1.3)}px`,
           margin: 'auto',
-          marginTop: '-8px',
         }}
         ref={element => (this.canvasElement = element)}
-      >
-        {value.title && (
-          <div
-            className={css({
-              textAlign: 'center',
-              bottom: -8,
-              width: '100%',
-              position: 'absolute',
-            })}
-          >
-            {value.title}
-          </div>
-        )}
-      </div>
+      />
     );
   }
 }
