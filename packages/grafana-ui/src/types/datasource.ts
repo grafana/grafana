@@ -247,7 +247,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   scopedVars: ScopedVars;
 
   // Some Queries issue multiple sub requests
-  subQueries?: DataQueryRequest[];
+  subRequests?: DataQueryRequest[];
 
   // Request Timing
   startTime: number;
