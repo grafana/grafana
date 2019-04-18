@@ -223,7 +223,7 @@ export interface ScopedVars {
 export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange;
+  rangeRaw: RawTimeRange; // Duplicate of results in range.  will be deprecated eventually
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -238,6 +238,7 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
  * Timestamps when the query starts and stops
  */
 export interface DataRequestInfo extends DataQueryOptions {
+  timeInfo?: string; // The query time description (blue text in the upper right)
   startTime: number;
   endTime?: number;
 }
