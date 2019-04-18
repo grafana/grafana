@@ -93,32 +93,34 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   // Updates the response with information from the stream
+  // The next is outside a react synthetic event so setState is not batched
+  // So in this context we can only do a single call to setState
   panelDataObserver = {
     next: (data: PanelData) => {
+      let { errorMessage, isFirstLoad } = this.state;
+
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
-          let message = error.message;
-          if (!message) {
-            message = 'Query error';
+          if (this.state.errorMessage !== error.message) {
+            errorMessage = error.message;
           }
-
-          if (this.state.errorMessage !== message) {
-            this.setState({ errorMessage: message });
-          }
-          // this event is used by old query editors
-          this.props.panel.events.emit('data-error', error);
         }
       } else {
-        this.clearErrorState();
+        errorMessage = null;
       }
 
-      // Save the query response into the panel
-      if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
-        this.props.panel.snapshotData = data.series;
+      if (data.state === LoadingState.Done) {
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series;
+        }
+        if (this.state.isFirstLoad) {
+          isFirstLoad = false;
+        }
       }
 
-      this.setState({ data, isFirstLoad: false });
+      this.setState({ isFirstLoad, errorMessage, data });
     },
   };
 
@@ -182,12 +184,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({ errorMessage: message });
     }
   };
-
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
 
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
