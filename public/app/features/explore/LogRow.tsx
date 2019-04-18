@@ -133,7 +133,7 @@ export class LogRow extends PureComponent<Props, State> {
     const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0 && highlights[0].length > 0;
+    const needsHighlighter = highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0;
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });

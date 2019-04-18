@@ -27,7 +27,6 @@ export const DEFAULT_MAX_LINES = 1000;
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
   limit: DEFAULT_MAX_LINES,
-  regexp: '',
   query: '',
 };
 
@@ -69,12 +68,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
+    const { query } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
     const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
-      ...parseQuery(interpolated),
+      query,
       start,
       end,
       limit: this.maxLines,
@@ -126,14 +126,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
-
         if (result.data) {
           const refId = queryTargets[i].refId;
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
             seriesData.refId = refId;
             seriesData.meta = {
-              search: queryTargets[i].regexp,
               limit: this.maxLines,
             };
             series.push(seriesData);
@@ -160,7 +158,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
-    let selector = parsed.query;
+    let { selector } = parsed;
     switch (action.type) {
       case 'ADD_FILTER': {
         selector = addLabelToSelector(selector, action.key, action.value);
@@ -169,12 +167,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       default:
         break;
     }
-    const expression = formatQuery(selector, parsed.regexp);
+    const expression = formatQuery(selector, parsed.filter);
     return { ...query, expr: expression };
   }
 
   getHighlighterExpression(query: LokiQuery): string {
-    return parseQuery(query.expr).regexp;
+    return undefined;
   }
 
   getTime(date, roundUp) {
