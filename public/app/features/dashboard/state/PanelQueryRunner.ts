@@ -234,8 +234,6 @@ export class PanelQueryRunner {
    * Called when the panel is closed
    */
   destroy() {
-    console.log('Query Runner shutdown', this);
-
     // Tell anyone listening that we are done
     if (this.subject) {
       this.subject.complete();
