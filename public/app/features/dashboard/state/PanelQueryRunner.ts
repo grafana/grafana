@@ -22,8 +22,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
-  ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
-  datasource: string | null;
+  datasource: string | DataSourceApi<TQuery>;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
@@ -144,7 +143,10 @@ export class PanelQueryRunner {
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
+      const ds =
+        datasource && (datasource as any).query
+          ? (datasource as DataSourceApi)
+          : await getDatasourceSrv().get(datasource as string, request.scopedVars);
 
       const minInterval = options.minInterval || ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
