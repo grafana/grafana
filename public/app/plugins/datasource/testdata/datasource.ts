@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataSourceApi, DataQueryOptions, TableData, TimeSeries } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, TableData, TimeSeries } from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
 
 type TestData = TimeSeries | TableData;
@@ -16,7 +16,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     this.id = instanceSettings.id;
   }
 
-  query(options: DataQueryOptions<TestDataQuery>) {
+  query(options: DataQueryRequest<TestDataQuery>) {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {

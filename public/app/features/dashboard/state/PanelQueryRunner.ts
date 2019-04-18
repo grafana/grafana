@@ -1,4 +1,3 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import {
   guessFieldTypes,
@@ -8,7 +7,7 @@ import {
   DataQuery,
   TimeRange,
   ScopedVars,
-  DataRequestInfo,
+  DataQueryRequest,
   SeriesData,
   DataQueryError,
   toLegacyResponseData,
@@ -19,6 +18,8 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 
 import kbn from 'app/core/utils/kbn';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
@@ -43,9 +44,15 @@ export enum PanelQueryRunnerFormat {
   both = 'both',
 }
 
+let counter = 100;
+function getNextRequestId() {
+  return 'Q' + counter++;
+}
+
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
+  private isShutdown = false;
   private sendSeries = false;
   private sendLegacy = false;
 
@@ -54,11 +61,22 @@ export class PanelQueryRunner {
     series: [],
   } as PanelData;
 
+  shutdown() {
+    if (!this.isShutdown && this.data.request) {
+      getBackendSrv().resolveCancelerIfExists(this.data.request.requestId);
+    }
+    this.isShutdown = true;
+  }
+
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
+    if (this.isShutdown) {
+      throw new Error('Runner is shutdown');
+    }
+
     if (!this.subject) {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
@@ -82,8 +100,17 @@ export class PanelQueryRunner {
   }
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
+    if (this.isShutdown) {
+      return Promise.reject('Runner is shutdown');
+    }
+
     if (!this.subject) {
       this.subject = new Subject();
+    }
+
+    // Make sure we send something back
+    if (!(this.sendSeries || this.sendLegacy)) {
+      this.sendSeries = true;
     }
 
     const {
@@ -101,12 +128,12 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    const request: DataRequestInfo = {
+    const request: DataQueryRequest = {
+      requestId: getNextRequestId(),
       timezone,
       panelId,
       dashboardId,
       range: timeRange,
-      rangeRaw: timeRange.raw,
       timeInfo,
       interval: '',
       intervalMs: 0,
@@ -116,6 +143,8 @@ export class PanelQueryRunner {
       cacheTimeout,
       startTime: Date.now(),
     };
+    // Deprecated: use range
+    (request as any).rangeRaw = timeRange.raw;
 
     if (!queries) {
       this.data = {
