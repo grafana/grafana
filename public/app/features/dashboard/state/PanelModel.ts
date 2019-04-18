@@ -118,7 +118,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  queryRunner?: PanelQueryRunner;
+  private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();
@@ -324,6 +324,13 @@ export class PanelModel {
       }
       return item;
     });
+  }
+
+  getQueryRunner(): PanelQueryRunner {
+    if (!this.queryRunner) {
+      this.queryRunner = new PanelQueryRunner();
+    }
+    return this.queryRunner;
   }
 
   destroy() {
