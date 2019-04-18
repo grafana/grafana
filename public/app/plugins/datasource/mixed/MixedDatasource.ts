@@ -21,7 +21,7 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
 
     // Remove any hidden or invalid queries
     const queries = request.targets.filter(t => {
-      return !t.hide || t.datasource !== MIXED_DATASOURCE_NAME;
+      return !t.hide || t.datasource === MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {
@@ -63,7 +63,7 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
                 r.meta.requestId = sub.requestId;
               }
               results.push(r);
-              return;
+              return r;
             });
 
             if (stream && finished < all.length) {
@@ -84,7 +84,10 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       });
     });
 
-    return Promise.all(all).then(results => {
+    // Return the values we collected
+    return Promise.all(all).then(() => {
+      console.log('Mixed Done!');
+
       return { data: results };
     });
   }

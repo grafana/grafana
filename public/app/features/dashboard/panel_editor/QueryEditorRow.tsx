@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, filterPanelDataToQuery, PanelData } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -32,8 +32,9 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryError: DataQueryError | null;
-  queryResponse: SeriesData[] | null;
+
+  // Filtered to match the query
+  queryResponse?: PanelData;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -46,7 +47,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    queryError: null,
     queryResponse: null,
   };
 
@@ -93,9 +93,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { data, query } = this.props;
 
     if (data !== prevProps.data) {
-      const queryError = data.error && data.error.refId === query.refId ? data.error : null;
-      const queryResponse = data.series.filter(series => series.refId === query.refId);
-      this.setState({ queryResponse, queryError });
+      console.log('componentDidUpdate', this);
+      this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
 
       if (this.angularScope) {
         this.angularScope.range = getTimeSrv().timeRange();
@@ -145,7 +144,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderPluginEditor() {
     const { query, onChange } = this.props;
-    const { datasource, queryResponse, queryError } = this.state;
+    const { datasource, queryResponse } = this.state;
 
     if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
@@ -160,8 +159,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           datasource={datasource}
           onChange={onChange}
           onRunQuery={this.onRunQuery}
-          queryResponse={queryResponse}
-          queryError={queryError}
+          queryResponse={queryResponse.series}
+          queryError={queryResponse.error}
         />
       );
     }
@@ -209,7 +208,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   render() {
     const { query, inMixedMode } = this.props;
-    const { datasource, isCollapsed, hasTextEditMode } = this.state;
+    const { datasource, isCollapsed, hasTextEditMode, queryResponse } = this.state;
     const isDisabled = query.hide;
 
     const bodyClasses = classNames('query-editor-row__body gf-form-query', {
@@ -225,6 +224,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       return null;
     }
 
+    console.log('QUERY', query, queryResponse);
+
     return (
       <div className={rowClasses}>
         <div className="query-editor-row__header">
@@ -238,6 +239,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           <div className="query-editor-row__collapsed-text" onClick={this.onToggleEditMode}>
             {isCollapsed && <div>{this.renderCollapsedText()}</div>}
           </div>
+
+          {queryResponse && <div className="query-editor-row__collapsed-text">XXX: {queryResponse.state}</div>}
+
           <div className="query-editor-row__actions">
             {hasTextEditMode && (
               <button

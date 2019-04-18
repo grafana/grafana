@@ -8,6 +8,7 @@ export * from './csv';
 export * from './statsCalculator';
 export * from './displayValue';
 export * from './deprecationWarning';
+export * from './panelData';
 export * from './logs';
 export * from './labels';
 export { getMappedValue } from './valueMappings';

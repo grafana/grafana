@@ -80,6 +80,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         panel.events.emit('data-received', data.legacy);
       }
       this.setState({ data });
+      console.log('SET DATA here', data);
     },
   };
 
