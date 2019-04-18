@@ -869,14 +869,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
-	GoogleAnalyticsId, err = valueAsString(analytics, "google_analytics_ua_id", "")
-	if err != nil {
-		return err
-	}
-	GoogleTagManagerId, err = valueAsString(analytics, "google_tag_manager_id", "")
-	if err != nil {
-		return err
-	}
+	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
