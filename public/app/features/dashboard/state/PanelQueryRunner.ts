@@ -145,7 +145,7 @@ export class PanelQueryRunner {
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
         this.publishUpdate({ state: LoadingState.Loading });
-      }, delayStateNotification || 100);
+      }, delayStateNotification || 500);
 
       const resp = await ds.query(request);
 

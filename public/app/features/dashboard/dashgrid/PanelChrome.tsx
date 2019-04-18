@@ -93,17 +93,21 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   // Updates the response with information from the stream
+  // The next is outside a react synthetic event so setState is not batched
+  // So in this context we can only do a single call to setState
   panelDataObserver = {
     next: (data: PanelData) => {
+      let { errorMessage, isFirstLoad } = this.state;
+
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
           if (this.state.errorMessage !== error.message) {
-            this.setState({ errorMessage: error.message });
+            errorMessage = error.message;
           }
         }
       } else {
-        this.clearErrorState();
+        errorMessage = null;
       }
 
       if (data.state === LoadingState.Done) {
@@ -112,11 +116,11 @@ export class PanelChrome extends PureComponent<Props, State> {
           this.props.panel.snapshotData = data.series;
         }
         if (this.state.isFirstLoad) {
-          this.setState({ isFirstLoad: false });
+          isFirstLoad = false;
         }
       }
 
-      this.setState({ data });
+      this.setState({ isFirstLoad, errorMessage, data });
     },
   };
 
@@ -181,12 +185,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({ errorMessage: message });
     }
   };
-
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
 
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
