@@ -1,5 +1,13 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+// Libraries
+import cloneDeep from 'lodash/cloneDeep';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+
+// Services & Utils
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import kbn from 'app/core/utils/kbn';
+import templateSrv from 'app/features/templating/template_srv';
+
+// Components & Types
 import {
   guessFieldTypes,
   toSeriesData,
@@ -16,10 +24,6 @@ import {
   DataSourceApi,
 } from '@grafana/ui';
 
-import cloneDeep from 'lodash/cloneDeep';
-
-import kbn from 'app/core/utils/kbn';
-
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
   datasource: string | null;
@@ -27,11 +31,11 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   panelId: number;
   dashboardId?: number;
   timezone?: string;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
-  minInterval?: string;
-  maxDataPoints?: number;
+  maxDataPoints: number | undefined | null;
+  minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
@@ -98,6 +102,7 @@ export class PanelQueryRunner {
       widthPixels,
       maxDataPoints,
       scopedVars,
+      minInterval,
       delayStateNotification,
     } = options;
 
@@ -118,14 +123,12 @@ export class PanelQueryRunner {
     };
 
     if (!queries) {
-      this.data = {
+      return this.publishUpdate({
         state: LoadingState.Done,
         series: [], // Clear the data
         legacy: [],
         request,
-      };
-      this.subject.next(this.data);
-      return this.data;
+      });
     }
 
     let loadingStateTimeoutId = 0;
@@ -133,8 +136,8 @@ export class PanelQueryRunner {
     try {
       const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
-      const minInterval = options.minInterval || ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -142,6 +145,7 @@ export class PanelQueryRunner {
         __interval: { text: norm.interval, value: norm.interval },
         __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
       });
+
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
@@ -151,7 +155,6 @@ export class PanelQueryRunner {
       }, delayStateNotification || 500);
 
       const resp = await ds.query(request);
-
       request.endTime = Date.now();
 
       // Make sure the response is in a supported format
@@ -229,5 +232,6 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
       series.push(guessFieldTypes(toSeriesData(r)));
     }
   }
+
   return series;
 }
