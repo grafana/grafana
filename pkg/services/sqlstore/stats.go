@@ -94,52 +94,57 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
 		sql :=
 			`
 			(
-				SELECT COUNT(id)
-				FROM ` + dialect.Quote("user") + `
+				SELECT COUNT(*)
+				FROM ` + dialect.Quote("user") + ` as u
 				WHERE 
-				(SELECT COUNT(id) FROM ` + dialect.Quote("org_user") + ` WHERE org_user.user_id = user.id and org_user.role = '` + role + `') > 0
-				 	
+				(SELECT COUNT(*) 
+					FROM org_user 
+					WHERE org_user.user_id=u.id 
+					AND org_user.role='` + role + `')>0
 			) as ` + alias + `,
 			(
-				SELECT COUNT(id)
-				FROM ` + dialect.Quote("user") + `
+				SELECT COUNT(*)
+				FROM ` + dialect.Quote("user") + ` as u
 				WHERE 
-				(SELECT COUNT(id) FROM ` + dialect.Quote("org_user") + ` WHERE org_user.user_id = user.id and org_user.role = '` + role + `') > 0
-				AND user.last_seen_at > ?
+				(SELECT COUNT(*) 
+					FROM org_user 
+					WHERE org_user.user_id=u.id 
+					AND org_user.role='` + role + `')>0
+				AND u.last_seen_at>?
 			) as active_` + alias
 
 		return sql
 	}
 
 	var rawSql = `SELECT
-	  	(
+		  (
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("org") + `
-	  	) AS orgs,
-	  	(
+		  ) AS orgs,
+		  (
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("dashboard") + `
-	  	) AS dashboards,
-	  	(
+		) AS dashboards,
+		(
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("dashboard_snapshot") + `
-	  	) AS snapshots,
-	  	(
+		  ) AS snapshots,
+		  (
 		SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
 		FROM ` + dialect.Quote("dashboard_tag") + `
-	  	) AS tags,
-	  	(
+		  ) AS tags,
+		  (
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("data_source") + `
-	  	) AS datasources,
-	  	(
+		  ) AS datasources,
+		  (
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("playlist") + `
-	  	) AS playlists,
-	  	(
+		  ) AS playlists,
+		  (
 		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
-	  	) AS stars,
-	  	(
+		  ) AS stars,
+		  (
 		SELECT COUNT(*)
 		FROM ` + dialect.Quote("alert") + `
 		) AS alerts,
