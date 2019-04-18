@@ -18,7 +18,11 @@ export class DatasourceSrvMock {
 }
 
 export class MockDataSourceApi implements DataSourceApi {
-  constructor(private res: DataQueryResponse) {}
+  name: string;
+
+  constructor(private res: DataQueryResponse, name?: string) {
+    this.name = name ? name : 'MockDataSourceApi';
+  }
 
   query(request: DataQueryRequest, stream: DataSourceStream): Promise<DataQueryResponse> {
     return Promise.resolve(this.res); // empty data

@@ -191,27 +191,12 @@ export class PanelQueryRunner {
         request,
       });
     } catch (err) {
-      const error = err as DataQueryError;
-      if (!error.message) {
-        let message = 'Query error';
-        if (error.message) {
-          message = error.message;
-        } else if (error.data && error.data.message) {
-          message = error.data.message;
-        } else if (error.data && error.data.error) {
-          message = error.data.error;
-        } else if (error.status) {
-          message = `Query error: ${error.status} ${error.statusText}`;
-        }
-        error.message = message;
-      }
-
       // Make sure the delayed loading state timeout is cleared
       clearTimeout(loadingStateTimeoutId);
 
       return this.publishUpdate({
         state: LoadingState.Error,
-        error: error,
+        error: toDataQueryError(err),
       });
     }
   }
@@ -244,8 +229,8 @@ export class PanelQueryRunner {
       // TODO: let listener subscribe to partial updates?
       // this.streamProgressListeners.next(partial);
 
-      this.data = full;
-      this.subject.next(this.data); // debounce?
+      // this.data = full;
+      // this.subject.next(this.data); // debounce?
     },
   };
 }
@@ -267,4 +252,22 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
     }
   }
   return series;
+}
+
+export function toDataQueryError(err: any): DataQueryError {
+  const error = err as DataQueryError;
+  if (!error.message) {
+    let message = 'Query error';
+    if (error.message) {
+      message = error.message;
+    } else if (error.data && error.data.message) {
+      message = error.data.message;
+    } else if (error.data && error.data.error) {
+      message = error.data.error;
+    } else if (error.status) {
+      message = `Query error: ${error.status} ${error.statusText}`;
+    }
+    error.message = message;
+  }
+  return err;
 }

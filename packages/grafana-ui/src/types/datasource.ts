@@ -79,7 +79,7 @@ export interface DataSourceStream {
    * While streaming, notify listeners about the entire results and
    * about partial set of data that has changed in this step
    */
-  onStreamProgress(full: PanelData, partial: PanelData, subscription?: Unsubscribable): void;
+  onStreamProgress(result: PanelData, partial?: PanelData, subscription?: Unsubscribable): void;
 }
 
 /**
