@@ -1,5 +1,14 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+// Libraries
+import cloneDeep from 'lodash/cloneDeep';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+
+// Services & Utils
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import kbn from 'app/core/utils/kbn';
+import templateSrv from 'app/features/templating/template_srv';
+
+// Components & Types
 import {
   guessFieldTypes,
   toSeriesData,
@@ -17,27 +26,17 @@ import {
   DataSourceStream,
 } from '@grafana/ui';
 
-import cloneDeep from 'lodash/cloneDeep';
-
-import kbn from 'app/core/utils/kbn';
-
-let counter = 100;
-function getNextRequestId() {
-  return 'Q' + counter++;
-}
-
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
-  ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
-  datasource: string | null;
+  datasource: string | DataSourceApi<TQuery>;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
   timezone?: string;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
-  minInterval?: string;
-  maxDataPoints?: number;
+  maxDataPoints: number | undefined | null;
+  minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
@@ -47,6 +46,11 @@ export enum PanelQueryRunnerFormat {
   series = 'series',
   legacy = 'legacy',
   both = 'both',
+}
+
+let counter = 100;
+function getNextRequestId() {
+  return 'Q' + counter++;
 }
 
 export class PanelQueryRunner {
@@ -67,6 +71,11 @@ export class PanelQueryRunner {
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
     if (!this.subject) {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
+    }
+
+    // Make sure we send something back
+    if (!(this.sendSeries || this.sendLegacy)) {
+      this.sendSeries = true;
     }
 
     if (format === PanelQueryRunnerFormat.legacy) {
@@ -104,6 +113,7 @@ export class PanelQueryRunner {
       widthPixels,
       maxDataPoints,
       scopedVars,
+      minInterval,
       delayStateNotification,
     } = options;
 
@@ -122,7 +132,7 @@ export class PanelQueryRunner {
       cacheTimeout,
       startTime: Date.now(),
     };
-    // Support `rangeRaw` for legacy untyped requests
+    // Deprecated
     (request as any).rangeRaw = timeRange.raw;
 
     if (this.data.state === LoadingState.Loading) {
@@ -133,23 +143,24 @@ export class PanelQueryRunner {
     }
 
     if (!queries) {
-      this.data = {
+      return this.publishUpdate({
         state: LoadingState.Done,
         series: [], // Clear the data
         legacy: [],
         request,
-      };
-      this.subject.next(this.data);
-      return this.data;
+      });
     }
 
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
+      const ds =
+        datasource && (datasource as any).query
+          ? (datasource as DataSourceApi)
+          : await getDatasourceSrv().get(datasource as string, request.scopedVars);
 
-      const minInterval = options.minInterval || ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -157,6 +168,7 @@ export class PanelQueryRunner {
         __interval: { text: norm.interval, value: norm.interval },
         __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
       });
+
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
@@ -233,6 +245,22 @@ export class PanelQueryRunner {
       // this.subject.next(this.data); // debounce?
     },
   };
+
+  /**
+   * Called when the panel is closed
+   */
+  destroy() {
+    // Tell anyone listening that we are done
+    if (this.subject) {
+      this.subject.complete();
+    }
+
+    // If there are open HTTP requests, close them
+    const { request } = this.data;
+    if (request && request.requestId) {
+      getBackendSrv().resolveCancelerIfExists(request.requestId);
+    }
+  }
 }
 
 /**
@@ -251,6 +279,7 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
       series.push(guessFieldTypes(toSeriesData(r)));
     }
   }
+
   return series;
 }
 

@@ -233,7 +233,7 @@ export interface ScopedVars {
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
-  requestId: string; // Unique string identifying the Request
+  requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)

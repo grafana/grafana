@@ -8,7 +8,7 @@ export function getQueryOptions<TQuery extends DataQuery>(
   const range = { from: moment(), to: moment(), raw: raw };
 
   const defaults: DataQueryRequest<TQuery> = {
-    requestId: 'test',
+    requestId: 'TEST',
     range: range,
     targets: [],
     scopedVars: {},
