@@ -1,14 +1,12 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { AutoSizer } from 'react-virtualized';
 
 // Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { DataPanel } from './DataPanel';
-import ErrorBoundary from '../../../core/components/ErrorBoundary/ErrorBoundary';
+import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -19,12 +17,13 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, DataQueryError, SeriesData, toLegacyResponseData, PanelData } from '@grafana/ui';
+import { LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData } from './DataPanel';
+import { PanelQueryRunner, getProcessedSeriesData } from '../state/PanelQueryRunner';
+import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -33,39 +32,95 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
-  isEditing: boolean;
+  width: number;
+  height: number;
 }
 
 export interface State {
-  refreshCounter: number;
+  isFirstLoad: boolean;
   renderCounter: number;
-  timeInfo?: string;
-  timeRange?: TimeRange;
   errorMessage: string | null;
+
+  // Current state of all events
+  data: PanelData;
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
+  querySubscription: Unsubscribable;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-
     this.state = {
-      refreshCounter: 0,
+      isFirstLoad: true,
       renderCounter: 0,
       errorMessage: null,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+      },
     };
   }
 
   componentDidMount() {
-    this.props.panel.events.on('refresh', this.onRefresh);
-    this.props.panel.events.on('render', this.onRender);
-    this.props.dashboard.panelInitialized(this.props.panel);
+    const { panel, dashboard } = this.props;
+    panel.events.on('refresh', this.onRefresh);
+    panel.events.on('render', this.onRender);
+    dashboard.panelInitialized(this.props.panel);
+
+    // Move snapshot data into the query response
+    if (this.hasPanelSnapshot) {
+      this.setState({
+        data: {
+          state: LoadingState.Done,
+          series: getProcessedSeriesData(panel.snapshotData),
+        },
+        isFirstLoad: false,
+      });
+    } else if (!this.wantsQueryExecution) {
+      this.setState({ isFirstLoad: false });
+    }
   }
 
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onRefresh);
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
   }
+
+  // Updates the response with information from the stream
+  // The next is outside a react synthetic event so setState is not batched
+  // So in this context we can only do a single call to setState
+  panelDataObserver = {
+    next: (data: PanelData) => {
+      let { errorMessage, isFirstLoad } = this.state;
+
+      if (data.state === LoadingState.Error) {
+        const { error } = data;
+        if (error) {
+          if (this.state.errorMessage !== error.message) {
+            errorMessage = error.message;
+          }
+        }
+      } else {
+        errorMessage = null;
+      }
+
+      if (data.state === LoadingState.Done) {
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series;
+        }
+        if (this.state.isFirstLoad) {
+          isFirstLoad = false;
+        }
+      }
+
+      this.setState({ isFirstLoad, errorMessage, data });
+    },
+  };
 
   onRefresh = () => {
     console.log('onRefresh');
@@ -73,14 +128,36 @@ export class PanelChrome extends PureComponent<Props, State> {
       return;
     }
 
-    const { panel } = this.props;
+    const { panel, width } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
-    this.setState({
-      refreshCounter: this.state.refreshCounter + 1,
-      timeRange: timeData.timeRange,
-      timeInfo: timeData.timeInfo,
-    });
+    // Issue Query
+    if (this.wantsQueryExecution) {
+      if (width < 0) {
+        console.log('No width yet... wait till we know');
+        return;
+      }
+      if (!panel.queryRunner) {
+        panel.queryRunner = new PanelQueryRunner();
+      }
+      if (!this.querySubscription) {
+        this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver);
+      }
+      panel.queryRunner.run({
+        datasource: panel.datasource,
+        queries: panel.targets,
+        panelId: panel.id,
+        dashboardId: this.props.dashboard.id,
+        timezone: this.props.dashboard.timezone,
+        timeRange: timeData.timeRange,
+        timeInfo: timeData.timeInfo,
+        widthPixels: width,
+        minInterval: undefined, // Currently not passed in DataPanel?
+        maxDataPoints: panel.maxDataPoints,
+        scopedVars: panel.scopedVars,
+        cacheTimeout: panel.cacheTimeout,
+      });
+    }
   };
 
   onRender = () => {
@@ -97,46 +174,11 @@ export class PanelChrome extends PureComponent<Props, State> {
     return templateSrv.replace(value, vars, format);
   };
 
-  onDataResponse = (data?: SeriesData[]) => {
-    if (this.props.dashboard.isSnapshot()) {
-      this.props.panel.snapshotData = data;
-    }
-    // clear error state (if any)
-    this.clearErrorState();
-
-    if (this.props.isEditing) {
-      const events = this.props.panel.events;
-      if (!data) {
-        data = [];
-      }
-
-      // Angular query editors expect TimeSeries|TableData
-      events.emit('data-received', data.map(v => toLegacyResponseData(v)));
-
-      // Notify react query editors
-      events.emit('series-data-received', data);
-    }
-  };
-
-  onDataError = (message: string, error: DataQueryError) => {
-    if (this.state.errorMessage !== message) {
-      this.setState({ errorMessage: message });
-    }
-    // this event is used by old query editors
-    this.props.panel.events.emit('data-error', error);
-  };
-
   onPanelError = (message: string) => {
     if (this.state.errorMessage !== message) {
       this.setState({ errorMessage: message });
     }
   };
-
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
 
   get isVisible() {
     return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
@@ -147,112 +189,82 @@ export class PanelChrome extends PureComponent<Props, State> {
     return panel.snapshotData && panel.snapshotData.length;
   }
 
-  get needsQueryExecution() {
-    return this.hasPanelSnapshot || this.props.plugin.dataFormats.length > 0;
+  get wantsQueryExecution() {
+    return this.props.plugin.dataFormats.length > 0 && !this.hasPanelSnapshot;
   }
 
-  get getDataForPanel() {
-    return {
-      state: LoadingState.Done,
-      series: this.hasPanelSnapshot ? getProcessedSeriesData(this.props.panel.snapshotData) : [],
-    };
-  }
-
-  renderPanelPlugin(data: PanelData, width: number, height: number): JSX.Element {
+  renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { timeRange, renderCounter } = this.state;
+    const { renderCounter, data, isFirstLoad } = this.state;
     const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
-    if (data.state === LoadingState.Done) {
+    const loading = data.state;
+    if (loading === LoadingState.Done) {
       profiler.renderingCompleted(panel.id);
     }
 
+    // do not render component until we have first data
+    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+      return this.renderLoadingState();
+    }
+
     return (
-      <div className="panel-content">
-        <PanelComponent
-          data={data}
-          timeRange={timeRange}
-          options={panel.getOptions(plugin.reactPlugin.defaults)}
-          width={width - 2 * config.theme.panelPadding.horizontal}
-          height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
-          renderCounter={renderCounter}
-          replaceVariables={this.replaceVariables}
-        />
+      <>
+        {loading === LoadingState.Loading && this.renderLoadingState()}
+        <div className="panel-content">
+          <PanelComponent
+            data={data}
+            timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
+            options={panel.getOptions(plugin.reactPlugin.defaults)}
+            width={width - 2 * config.theme.panelPadding.horizontal}
+            height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
+            renderCounter={renderCounter}
+            replaceVariables={this.replaceVariables}
+          />
+        </div>
+      </>
+    );
+  }
+
+  private renderLoadingState(): JSX.Element {
+    return (
+      <div className="panel-loading">
+        <i className="fa fa-spinner fa-spin" />
       </div>
     );
   }
 
-  renderPanelBody = (width: number, height: number): JSX.Element => {
-    const { panel } = this.props;
-    const { refreshCounter, timeRange } = this.state;
-    const { datasource, targets } = panel;
-    return (
-      <>
-        {this.needsQueryExecution ? (
-          <DataPanel
-            panelId={panel.id}
-            datasource={datasource}
-            queries={targets}
-            timeRange={timeRange}
-            isVisible={this.isVisible}
-            widthPixels={width}
-            refreshCounter={refreshCounter}
-            scopedVars={panel.scopedVars}
-            onDataResponse={this.onDataResponse}
-            onError={this.onDataError}
-          >
-            {({ data }) => {
-              return this.renderPanelPlugin(data, width, height);
-            }}
-          </DataPanel>
-        ) : (
-          this.renderPanelPlugin(this.getDataForPanel, width, height)
-        )}
-      </>
-    );
-  };
-
   render() {
-    const { dashboard, panel, isFullscreen } = this.props;
-    const { errorMessage, timeInfo } = this.state;
+    const { dashboard, panel, isFullscreen, width, height } = this.props;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
     return (
-      <AutoSizer>
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
-
-          return (
-            <div className={containerClassNames}>
-              <PanelHeader
-                panel={panel}
-                dashboard={dashboard}
-                timeInfo={timeInfo}
-                title={panel.title}
-                description={panel.description}
-                scopedVars={panel.scopedVars}
-                links={panel.links}
-                error={errorMessage}
-                isFullscreen={isFullscreen}
-              />
-              <ErrorBoundary>
-                {({ error, errorInfo }) => {
-                  if (errorInfo) {
-                    this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
-                    return null;
-                  }
-                  return this.renderPanelBody(width, height);
-                }}
-              </ErrorBoundary>
-            </div>
-          );
-        }}
-      </AutoSizer>
+      <div className={containerClassNames}>
+        <PanelHeader
+          panel={panel}
+          dashboard={dashboard}
+          timeInfo={data.request ? data.request.timeInfo : null}
+          title={panel.title}
+          description={panel.description}
+          scopedVars={panel.scopedVars}
+          links={panel.links}
+          error={errorMessage}
+          isFullscreen={isFullscreen}
+        />
+        <ErrorBoundary>
+          {({ error, errorInfo }) => {
+            if (errorInfo) {
+              this.onPanelError(error.message || DEFAULT_PLUGIN_ERROR);
+              return null;
+            }
+            return this.renderPanel(width, height);
+          }}
+        </ErrorBoundary>
+      </div>
     );
   }
 }

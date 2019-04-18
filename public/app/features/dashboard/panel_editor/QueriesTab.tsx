@@ -12,14 +12,16 @@ import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafana/ui/src/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
+import { PanelQueryRunner, PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
+import { Unsubscribable } from 'rxjs';
 
 interface Props {
   panel: PanelModel;
@@ -33,11 +35,13 @@ interface State {
   isPickerOpen: boolean;
   isAddingMixed: boolean;
   scrollTop: number;
+  data: PanelData;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
+  querySubscription: Unsubscribable;
 
   state: State = {
     isLoadingHelp: false,
@@ -46,6 +50,40 @@ export class QueriesTab extends PureComponent<Props, State> {
     isPickerOpen: false,
     isAddingMixed: false,
     scrollTop: 0,
+    data: {
+      state: LoadingState.NotStarted,
+      series: [],
+    },
+  };
+
+  componentDidMount() {
+    const { panel } = this.props;
+
+    if (!panel.queryRunner) {
+      panel.queryRunner = new PanelQueryRunner();
+    }
+
+    this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  // Updates the response with information from the stream
+  panelDataObserver = {
+    next: (data: PanelData) => {
+      const { panel } = this.props;
+      if (data.state === LoadingState.Error) {
+        panel.events.emit('data-error', data.error);
+      } else if (data.state === LoadingState.Done) {
+        panel.events.emit('data-received', data.legacy);
+      }
+      this.setState({ data });
+    },
   };
 
   findCurrentDataSource(): DataSourceSelectItem {
@@ -179,7 +217,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
-    const { currentDS, scrollTop } = this.state;
+    const { currentDS, scrollTop, data } = this.state;
 
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
@@ -208,6 +246,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 key={query.refId}
                 panel={panel}
                 dashboard={dashboard}
+                data={data}
                 query={query}
                 onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}

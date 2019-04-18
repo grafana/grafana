@@ -1,29 +1,6 @@
-// Library
-import React from 'react';
+import { getProcessedSeriesData } from './PanelQueryRunner';
 
-import { DataPanel, getProcessedSeriesData } from './DataPanel';
-
-describe('DataPanel', () => {
-  let dataPanel: DataPanel;
-
-  beforeEach(() => {
-    dataPanel = new DataPanel({
-      queries: [],
-      panelId: 1,
-      widthPixels: 100,
-      refreshCounter: 1,
-      datasource: 'xxx',
-      children: r => {
-        return <div>hello</div>;
-      },
-      onError: (message, error) => {},
-    });
-  });
-
-  it('starts with unloaded state', () => {
-    expect(dataPanel.state.isFirstLoad).toBe(true);
-  });
-
+describe('QueryRunner', () => {
   it('converts timeseries to table skipping nulls', () => {
     const input1 = {
       target: 'Field Name',
