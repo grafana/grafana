@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, Switch, LogLevel, TimeZone } from '@grafana/ui';
+import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
 import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
@@ -48,7 +48,7 @@ interface Props {
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  range?: RawTimeRange;
+  range: TimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;

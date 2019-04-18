@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper, TimeZone } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, ClickOutsideWrapper, TimeZone, TimeRange } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -49,14 +49,14 @@ const createResponsiveButton = (options: {
 interface OwnProps {
   exploreId: ExploreId;
   timepickerRef: React.RefObject<TimePicker>;
-  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
+  onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
 interface StateProps {
   datasourceMissing: boolean;
   exploreDatasources: DataSourceSelectItem[];
   loading: boolean;
-  range: RawTimeRange;
+  range: TimeRange;
   timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;

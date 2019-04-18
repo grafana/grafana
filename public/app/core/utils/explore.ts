@@ -6,8 +6,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import { parse as parseDate } from 'app/core/utils/datemath';
-import { colors } from '@grafana/ui';
+import { colors, TimeRange, TimeZone } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
@@ -104,7 +103,7 @@ export function buildQueryTransaction(
   rowIndex: number,
   resultType: ResultType,
   queryOptions: QueryOptions,
-  range: RawTimeRange,
+  range: TimeRange,
   queryIntervals: QueryIntervals,
   scanning: boolean
 ): QueryTransaction {
@@ -131,12 +130,8 @@ export function buildQueryTransaction(
     intervalMs,
     panelId,
     targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
-    range: {
-      from: dateMath.parse(range.from, false),
-      to: dateMath.parse(range.to, true),
-      raw: range,
-    },
-    rangeRaw: range,
+    range,
+    rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
@@ -315,17 +310,12 @@ export function calculateResultsFromQueryTransactions(
   };
 }
 
-export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  const absoluteRange: RawTimeRange = {
-    from: parseDate(range.from, false),
-    to: parseDate(range.to, true),
-  };
-
-  return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
+  return kbn.calculateInterval(range, resolution, lowLimit);
 }
 
 export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
@@ -394,4 +384,12 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
   }, []);
 
   return queryKeys;
+};
+
+export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
+  return {
+    from: dateMath.parse(rawRange.from, false, timeZone.raw as any),
+    to: dateMath.parse(rawRange.to, true, timeZone.raw as any),
+    raw: rawRange,
+  };
 };

@@ -16,7 +16,7 @@ import GraphContainer from './GraphContainer';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import TimePicker, { parseTime } from './TimePicker';
+import TimePicker from './TimePicker';
 
 // Actions
 import {
@@ -31,7 +31,7 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, TimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, TimeZone } from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, TimeZone } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
@@ -41,6 +41,7 @@ import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
+import { timeRangeFromUrlSelector } from './state/selectors';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -54,7 +55,6 @@ interface ExploreProps {
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  range: RawTimeRange;
   timeZone: TimeZone;
   update: ExploreUpdateState;
   reconnectDatasource: typeof reconnectDatasource;
@@ -114,11 +114,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   componentDidMount() {
     const { exploreId, urlState, initialized, timeZone } = this.props;
-    const { datasource, queries, range = DEFAULT_RANGE, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
+    const { datasource, queries, range: urlRange, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
     const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
     const initialQueries: DataQuery[] = ensureQueries(queries);
-    const initialRange = { from: parseTime(range.from, timeZone.isUtc), to: parseTime(range.to, timeZone.isUtc) };
+    const initialRange = urlRange ? timeRangeFromUrlSelector(urlRange, timeZone).raw : DEFAULT_RANGE;
     const width = this.el ? this.el.offsetWidth : 0;
+
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(
@@ -145,7 +146,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (range: TimeRange, changedByScanner?: boolean) => {
+  onChangeTime = (range: RawTimeRange, changedByScanner?: boolean) => {
     if (this.props.scanning && !changedByScanner) {
       this.onStopScanning();
     }
@@ -288,6 +289,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
+  const timeZone = getTimeZone(state.user);
   const {
     StartPage,
     datasourceError,
@@ -295,7 +297,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceLoading,
     datasourceMissing,
     initialized,
-    range,
     showingStartPage,
     supportsGraph,
     supportsLogs,
@@ -311,7 +312,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceLoading,
     datasourceMissing,
     initialized,
-    range,
     showingStartPage,
     split,
     supportsGraph,
@@ -320,7 +320,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     urlState,
     update,
-    timeZone: getTimeZone(state.user),
+    timeZone,
   };
 }
 

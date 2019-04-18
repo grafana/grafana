@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
+import { TimeRange, TimeZone } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -15,7 +15,7 @@ interface GraphContainerProps {
   exploreId: ExploreId;
   graphResult?: any[];
   loading: boolean;
-  range: RawTimeRange;
+  range: TimeRange;
   timeZone: TimeZone;
   showingGraph: boolean;
   showingTable: boolean;

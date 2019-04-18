@@ -7,8 +7,7 @@ import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { RawTimeRange, TimeZone } from '@grafana/ui';
-import * as dateMath from 'app/core/utils/datemath';
+import { RawTimeRange, TimeZone, TimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
@@ -78,7 +77,7 @@ interface GraphProps {
   height?: number;
   width?: number;
   id?: string;
-  range: RawTimeRange;
+  range: TimeRange;
   timeZone: TimeZone;
   split?: boolean;
   userOptions?: any;
@@ -134,8 +133,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   onPlotSelected = (event, ranges) => {
-    if (this.props.onChangeTime) {
-      const { timeZone } = this.props;
+    const { onChangeTime, timeZone } = this.props;
+    if (onChangeTime) {
       const range = {
         from: timeZone.isUtc ? moment.utc(ranges.xaxis.from) : moment(ranges.xaxis.from),
         to: timeZone.isUtc ? moment.utc(ranges.xaxis.to) : moment(ranges.xaxis.to),
@@ -147,15 +146,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   getDynamicOptions() {
     const { range, width, timeZone } = this.props;
     const ticks = (width || 0) / 100;
-    let { from, to } = range;
-    if (!moment.isMoment(from)) {
-      from = dateMath.parse(from, false, timeZone.raw as any);
-    }
-    if (!moment.isMoment(to)) {
-      to = dateMath.parse(to, true, timeZone.raw as any);
-    }
-    const min = from.valueOf();
-    const max = to.valueOf();
+    const min = range.from.valueOf();
+    const max = range.to.valueOf();
     return {
       xaxis: {
         mode: 'time',

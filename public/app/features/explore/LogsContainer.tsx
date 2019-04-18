@@ -24,7 +24,7 @@ interface LogsContainerProps {
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
-  range: RawTimeRange;
+  range: TimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -110,6 +110,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);
+  const timeZone = getTimeZone(state.user);
 
   return {
     loading,
@@ -119,7 +120,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     scanRange,
     showingLogs,
     range,
-    timeZone: getTimeZone(state.user),
+    timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
