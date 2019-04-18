@@ -113,12 +113,17 @@ export class PanelChrome extends PureComponent<Props, State> {
         this.clearErrorState();
       }
 
-      // Save the query response into the panel
-      if (data.state === LoadingState.Done && this.props.dashboard.snapshot) {
-        this.props.panel.snapshotData = data.series;
+      if (data.state === LoadingState.Done) {
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series;
+        }
+        if (this.state.isFirstLoad) {
+          this.setState({ isFirstLoad: false });
+        }
       }
 
-      this.setState({ data, isFirstLoad: false });
+      this.setState({ data });
     },
   };
 
