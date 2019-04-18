@@ -10,6 +10,8 @@ import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafan
 import { PanelPlugin } from 'app/types';
 import config from 'app/core/config';
 
+import { PanelQueryRunner } from './PanelQueryRunner';
+
 export interface GridPos {
   x: number;
   y: number;
@@ -25,6 +27,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
+  queryRunner: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -115,6 +118,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
+  queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();

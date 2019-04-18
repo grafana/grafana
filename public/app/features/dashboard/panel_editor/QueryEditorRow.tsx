@@ -11,11 +11,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData, PanelData } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
   panel: PanelModel;
+  data: PanelData;
   query: DataQuery;
   dashboard: DashboardModel;
   onAddQuery: (query?: DataQuery) => void;
@@ -51,60 +52,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadDatasource();
-    this.props.panel.events.on('refresh', this.onPanelRefresh);
-    this.props.panel.events.on('data-error', this.onPanelDataError);
-    this.props.panel.events.on('data-received', this.onPanelDataReceived);
-    this.props.panel.events.on('series-data-received', this.onSeriesDataReceived);
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off('refresh', this.onPanelRefresh);
-    this.props.panel.events.off('data-error', this.onPanelDataError);
-    this.props.panel.events.off('data-received', this.onPanelDataReceived);
-    this.props.panel.events.off('series-data-received', this.onSeriesDataReceived);
-
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
   }
-
-  onPanelDataError = (error: DataQueryError) => {
-    // Some query controllers listen to data error events and need a digest
-    if (this.angularQueryEditor) {
-      // for some reason this needs to be done in next tick
-      setTimeout(this.angularQueryEditor.digest);
-      return;
-    }
-
-    // if error relates to this query store it in state and pass it on to query editor
-    if (error.refId === this.props.query.refId) {
-      this.setState({ queryError: error });
-    }
-  };
-
-  // Only used by angular plugins
-  onPanelDataReceived = () => {
-    // Some query controllers listen to data error events and need a digest
-    if (this.angularQueryEditor) {
-      // for some reason this needs to be done in next tick
-      setTimeout(this.angularQueryEditor.digest);
-    }
-  };
-
-  // Only used by the React Query Editors
-  onSeriesDataReceived = (data: SeriesData[]) => {
-    if (!this.angularQueryEditor) {
-      // only pass series related to this query to query editor
-      const filterByRefId = data.filter(series => series.refId === this.props.query.refId);
-      this.setState({ queryResponse: filterByRefId, queryError: null });
-    }
-  };
-
-  onPanelRefresh = () => {
-    if (this.angularScope) {
-      this.angularScope.range = getTimeSrv().timeRange();
-    }
-  };
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
     const { panel, query, dashboard } = this.props;
@@ -134,8 +88,25 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     });
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
+    const { data, query } = this.props;
+
+    if (data !== prevProps.data) {
+      const queryError = data.error && data.error.refId === query.refId ? data.error : null;
+      const queryResponse = data.series.filter(series => series.refId === query.refId);
+      this.setState({ queryResponse, queryError });
+
+      if (this.angularScope) {
+        this.angularScope.range = getTimeSrv().timeRange();
+      }
+
+      if (this.angularQueryEditor) {
+        // Some query controllers listen to data error events and need a digest
+        // for some reason this needs to be done in next tick
+        setTimeout(this.angularQueryEditor.digest);
+      }
+    }
 
     // check if we need to load another datasource
     if (loadedDataSourceValue !== this.props.dataSourceValue) {

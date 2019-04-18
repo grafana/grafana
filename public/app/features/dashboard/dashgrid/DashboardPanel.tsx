@@ -37,7 +37,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels = {};
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -150,7 +150,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen, isEditing } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
 
     return (
@@ -165,7 +165,6 @@ export class DashboardPanel extends PureComponent<Props, State> {
               panel={panel}
               dashboard={dashboard}
               isFullscreen={isFullscreen}
-              isEditing={isEditing}
               width={width}
               height={height}
             />
