@@ -329,5 +329,9 @@ export class PanelModel {
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
+
+    if (this.queryRunner) {
+      this.queryRunner.destroy();
+    }
   }
 }

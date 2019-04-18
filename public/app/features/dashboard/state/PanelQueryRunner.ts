@@ -52,7 +52,6 @@ function getNextRequestId() {
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
-  private isShutdown = false;
   private sendSeries = false;
   private sendLegacy = false;
 
@@ -61,22 +60,11 @@ export class PanelQueryRunner {
     series: [],
   } as PanelData;
 
-  shutdown() {
-    if (!this.isShutdown && this.data.request) {
-      getBackendSrv().resolveCancelerIfExists(this.data.request.requestId);
-    }
-    this.isShutdown = true;
-  }
-
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
-    if (this.isShutdown) {
-      throw new Error('Runner is shutdown');
-    }
-
     if (!this.subject) {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
@@ -100,10 +88,6 @@ export class PanelQueryRunner {
   }
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
-    if (this.isShutdown) {
-      return Promise.reject('Runner is shutdown');
-    }
-
     if (!this.subject) {
       this.subject = new Subject();
     }
@@ -239,6 +223,24 @@ export class PanelQueryRunner {
     this.subject.next(this.data);
 
     return this.data;
+  }
+
+  /**
+   * Called when the panel is closed
+   */
+  destroy() {
+    console.log('Query Runner shutdown', this);
+
+    // Tell anyone listening that we are done
+    if (this.subject) {
+      this.subject.complete();
+    }
+
+    // If there are open HTTP requests, close them
+    const { request } = this.data;
+    if (request && request.requestId) {
+      getBackendSrv().resolveCancelerIfExists(request.requestId);
+    }
   }
 }
 
