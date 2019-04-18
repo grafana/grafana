@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -126,10 +127,14 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
+	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to send request", "error", err)
+		logger.Info("Failed to send request", err)
+		if strings.Contains(err.Error(), "404") {
+			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
+		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
 	}
 
