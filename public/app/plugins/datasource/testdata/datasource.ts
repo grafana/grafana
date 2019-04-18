@@ -45,8 +45,11 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
           to: options.range.to.valueOf().toString(),
           queries: queries,
         },
+
+        // This sets up a cancel token
+        requestId: options.requestId,
       })
-      .then(res => {
+      .then((res: any) => {
         const data: TestData[] = [];
 
         // Returns data in the order it was asked for.
