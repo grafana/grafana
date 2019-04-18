@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -15,16 +16,14 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		var serviceRunning bool
 		var serviceError error
+
+		err := service.ProvisionDashboards()
+		assert.Nil(t, err)
 		go func() {
 			serviceRunning = true
 			serviceError = service.Run(ctx)
 			serviceRunning = false
 		}()
-
-		assert.Equal(t, 0, len(mock.Calls.PollChanges), "PollChanges should not have been called")
-
-		err := service.ProvisionDashboards()
-		assert.Nil(t, err)
 		time.Sleep(time.Millisecond)
 		assert.Equal(t, 1, len(mock.Calls.PollChanges), "PollChanges should have been called")
 
@@ -43,6 +42,36 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 		assert.False(t, serviceRunning, "Service should not be running")
 		assert.Equal(t, context.Canceled, serviceError, "Service should have returned canceled error")
+
+	})
+
+	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
+		service, mock := setup()
+		ctx, cancel := context.WithCancel(context.Background())
+		var serviceRunning bool
+
+		err := service.ProvisionDashboards()
+		assert.Nil(t, err)
+		go func() {
+			serviceRunning = true
+			_ = service.Run(ctx)
+			serviceRunning = false
+		}()
+		time.Sleep(time.Millisecond)
+		assert.Equal(t, 1, len(mock.Calls.PollChanges), "PollChanges should have been called")
+
+		mock.ProvisionFunc = func() error {
+			return errors.New("Test error")
+		}
+		err = service.ProvisionDashboards()
+		assert.NotNil(t, err)
+		time.Sleep(time.Millisecond)
+		// This should have been called with the old provisioner, after the last one failed.
+		assert.Equal(t, 2, len(mock.Calls.PollChanges), "PollChanges should have been called 2 times")
+		assert.True(t, serviceRunning, "Service should be still running")
+
+		// Cancelling the root context and stopping the service
+		cancel()
 
 	})
 }

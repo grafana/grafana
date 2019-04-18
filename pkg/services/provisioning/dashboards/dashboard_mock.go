@@ -8,9 +8,9 @@ type Calls struct {
 }
 
 type DashboardProvisionerMock struct {
-	Calls       *Calls
-	provision   func() error
-	pollChanges func(ctx context.Context)
+	Calls           *Calls
+	ProvisionFunc   func() error
+	PollChangesFunc func(ctx context.Context)
 }
 
 func NewDashboardProvisionerMock() *DashboardProvisionerMock {
@@ -21,8 +21,8 @@ func NewDashboardProvisionerMock() *DashboardProvisionerMock {
 
 func (dpm *DashboardProvisionerMock) Provision() error {
 	dpm.Calls.Provision = append(dpm.Calls.Provision, nil)
-	if dpm.provision != nil {
-		return dpm.provision()
+	if dpm.ProvisionFunc != nil {
+		return dpm.ProvisionFunc()
 	} else {
 		return nil
 	}
@@ -30,7 +30,7 @@ func (dpm *DashboardProvisionerMock) Provision() error {
 
 func (dpm *DashboardProvisionerMock) PollChanges(ctx context.Context) {
 	dpm.Calls.PollChanges = append(dpm.Calls.PollChanges, ctx)
-	if dpm.pollChanges != nil {
-		dpm.pollChanges(ctx)
+	if dpm.PollChangesFunc != nil {
+		dpm.PollChangesFunc(ctx)
 	}
 }

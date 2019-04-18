@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/pkg/errors"
 	"path"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -39,20 +40,18 @@ func NewProvisioningServiceImpl(
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
-		// Channel to send new provisioner and start polling with it. Needs to have 1 buffering to allow creating the
-		// the provisioner in Init and let the polling start later in Run().
-		dashProvisionerChan: make(chan dashboards.DashboardProvisioner, 1),
 	}
 }
 
 type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
-	dashProvisionerChan     chan dashboards.DashboardProvisioner
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
+	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	mutex                   sync.Mutex
 }
 
 func (ps *provisioningServiceImpl) Init() error {
@@ -76,19 +75,18 @@ func (ps *provisioningServiceImpl) Init() error {
 
 func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	for {
-		// We do not have to check for cancellation of the pollingContext in the select statement as there is
-		// nothing to do with that, just wait for new provisioner to start polling again.
+
+		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
+		ps.mutex.Lock()
+		pollingContext, cancelFun := context.WithCancel(ctx)
+		ps.pollingCtxCancel = cancelFun
+		ps.dashboardProvisioner.PollChanges(pollingContext)
+		ps.mutex.Unlock()
+
 		select {
-		case provisioner := <-ps.dashProvisionerChan:
-			// There is new dashboard provisioner config so we need to start polling for it.
-			// Make sure the old polling process is cancelled even though this should be called before by the code
-			// creating new provisioner to prevent race conditions.
-			ps.cancelPolling()
-
-			pollingContext, cancelFun := context.WithCancel(ctx)
-			ps.pollingCtxCancel = cancelFun
-
-			provisioner.PollChanges(pollingContext)
+		case <-pollingContext.Done():
+			// Polling was canceled.
+			continue
 		case <-ctx.Done():
 			// Root server context was cancelled so just leave.
 			return ctx.Err()
@@ -114,13 +112,18 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to create provisioner")
 	}
-	// Lets cancel first so we do not get new config temporary overwritten by the polling process.
+
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
+
 	ps.cancelPolling()
 
 	if err := dashProvisioner.Provision(); err != nil {
+		// If we fail to provision with the new provisioner, mutex will unlock and the polling we restart with the
+		// old provisioner as we did not switch them yet.
 		return errors.Wrap(err, "Failed to provision dashboards")
 	}
-	ps.dashProvisionerChan <- dashProvisioner
+	ps.dashboardProvisioner = dashProvisioner
 	return nil
 }
 
