@@ -1,5 +1,13 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+// Libraries
+import cloneDeep from 'lodash/cloneDeep';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+
+// Services & Utils
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import kbn from 'app/core/utils/kbn';
+import templateSrv from 'app/features/templating/template_srv';
+
+// Components & Types
 import {
   guessFieldTypes,
   toSeriesData,
@@ -15,10 +23,6 @@ import {
   isSeriesData,
   DataSourceApi,
 } from '@grafana/ui';
-
-import cloneDeep from 'lodash/cloneDeep';
-
-import kbn from 'app/core/utils/kbn';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
@@ -132,7 +136,7 @@ export class PanelQueryRunner {
     try {
       const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
-      const lowerIntervalLimit = minInterval ? minInterval : ds.interval;
+      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
