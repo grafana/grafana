@@ -73,11 +73,6 @@ export class PanelQueryRunner {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
 
-    // Make sure we send something back
-    if (!(this.sendSeries || this.sendLegacy)) {
-      this.sendSeries = true;
-    }
-
     if (format === PanelQueryRunnerFormat.legacy) {
       this.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
@@ -180,6 +175,11 @@ export class PanelQueryRunner {
       const resp = await ds.query(request, this.streamingDataListener);
 
       request.endTime = Date.now();
+
+      // Make sure we send something back -- called run() w/o subscribe!
+      if (!(this.sendSeries || this.sendLegacy)) {
+        this.sendSeries = true;
+      }
 
       // Make sure the response is in a supported format
       const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
