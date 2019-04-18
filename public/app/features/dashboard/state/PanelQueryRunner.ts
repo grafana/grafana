@@ -27,7 +27,7 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   panelId: number;
   dashboardId?: number;
   timezone?: string;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
   maxDataPoints: number | undefined | null;
@@ -98,6 +98,7 @@ export class PanelQueryRunner {
       widthPixels,
       maxDataPoints,
       scopedVars,
+      minInterval,
       delayStateNotification,
     } = options;
 
@@ -118,14 +119,12 @@ export class PanelQueryRunner {
     };
 
     if (!queries) {
-      this.data = {
+      return this.publishUpdate({
         state: LoadingState.Done,
         series: [], // Clear the data
         legacy: [],
         request,
-      };
-      this.subject.next(this.data);
-      return this.data;
+      });
     }
 
     let loadingStateTimeoutId = 0;
@@ -133,8 +132,8 @@ export class PanelQueryRunner {
     try {
       const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
 
-      const minInterval = ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+      const lowerIntervalLimit = minInterval ? minInterval : ds.interval;
+      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -142,6 +141,7 @@ export class PanelQueryRunner {
         __interval: { text: norm.interval, value: norm.interval },
         __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
       });
+
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
@@ -151,7 +151,6 @@ export class PanelQueryRunner {
       }, delayStateNotification || 500);
 
       const resp = await ds.query(request);
-
       request.endTime = Date.now();
 
       // Make sure the response is in a supported format
@@ -229,5 +228,6 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
       series.push(guessFieldTypes(toSeriesData(r)));
     }
   }
+
   return series;
 }
