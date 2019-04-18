@@ -117,6 +117,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   name?: string;
 
   /**
+   *  Set after constructor is called by Grafana
+   */
+  id?: number;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -229,6 +234,14 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   scopedVars: ScopedVars;
 }
 
+/**
+ * Timestamps when the query starts and stops
+ */
+export interface DataRequestInfo extends DataQueryOptions {
+  startTime: number;
+  endTime?: number;
+}
+
 export interface QueryFix {
   type: string;
   label: string;
@@ -275,6 +288,7 @@ export interface DataSourceSettings {
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
 export interface DataSourceInstanceSettings {
+  id: number;
   type: string;
   name: string;
   meta: PluginMeta;

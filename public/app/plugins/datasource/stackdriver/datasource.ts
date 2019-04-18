@@ -112,12 +112,12 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
     const result = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
-      Object['values'](data.results).forEach(queryRes => {
+      Object['values'](data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
           return;
         }
         const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach(series => {
+        queryRes.series.forEach((series: any) => {
           let timeSerie: any = {
             target: series.name,
             datapoints: series.points,

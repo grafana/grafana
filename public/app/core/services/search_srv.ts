@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 // @ts-ignore
 import { IQService } from 'angular';
@@ -41,7 +40,7 @@ export class SearchSrv {
     });
   }
 
-  private queryForRecentDashboards(): Promise<number[]> {
+  private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
     const dashIds: number[] = _.take(impressionSrv.getDashboardOpened(), 30);
     if (dashIds.length === 0) {
       return Promise.resolve([]);

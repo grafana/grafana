@@ -78,6 +78,11 @@ func (s *PostgresStore) ID() string {
 // save postgres session values to database.
 // must call this method to save values to database.
 func (s *PostgresStore) Release() error {
+	// Skip encoding if the data is empty
+	if len(s.data) == 0 {
+		return nil
+	}
+
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err

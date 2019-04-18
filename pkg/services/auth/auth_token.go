@@ -149,7 +149,7 @@ func (s *UserAuthTokenService) TryRotateToken(token *models.UserToken, clientIP,
 
 	now := getTime()
 
-	needsRotation := false
+	var needsRotation bool
 	rotatedAt := time.Unix(model.RotatedAt, 0)
 	if model.AuthTokenSeen {
 		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.Cfg.TokenRotationIntervalMinutes) * time.Minute))

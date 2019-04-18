@@ -26,11 +26,16 @@ func unmarshalError(r *request.Request) {
 	// Bucket exists in a different region, and request needs
 	// to be made to the correct region.
 	if r.HTTPResponse.StatusCode == http.StatusMovedPermanently {
+		msg := fmt.Sprintf(
+			"incorrect region, the bucket is not in '%s' region at endpoint '%s'",
+			aws.StringValue(r.Config.Region),
+			aws.StringValue(r.Config.Endpoint),
+		)
+		if v := r.HTTPResponse.Header.Get("x-amz-bucket-region"); len(v) != 0 {
+			msg += fmt.Sprintf(", bucket is in '%s' region", v)
+		}
 		r.Error = awserr.NewRequestFailure(
-			awserr.New("BucketRegionError",
-				fmt.Sprintf("incorrect region, the bucket is not in '%s' region",
-					aws.StringValue(r.Config.Region)),
-				nil),
+			awserr.New("BucketRegionError", msg, nil),
 			r.HTTPResponse.StatusCode,
 			r.RequestID,
 		)

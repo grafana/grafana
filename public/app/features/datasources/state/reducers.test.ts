@@ -14,22 +14,22 @@ import {
 } from './actions';
 import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourcesState } from 'app/types';
-import { PluginMetaInfo } from '@grafana/ui';
+import { DataSourcesState, Plugin } from 'app/types';
+import { PluginMetaInfo, PluginType } from '@grafana/ui';
 
-const mockPlugin = () => ({
-  defaultNavUrl: 'defaultNavUrl',
-  enabled: true,
-  hasUpdate: true,
-  id: 'id',
-  info: {} as PluginMetaInfo,
-  latestVersion: 'latestVersion',
-  name: 'name',
-  pinned: true,
-  state: 'state',
-  type: 'type',
-  module: {},
-});
+const mockPlugin = () =>
+  ({
+    defaultNavUrl: 'defaultNavUrl',
+    enabled: true,
+    hasUpdate: true,
+    id: 'id',
+    info: {} as PluginMetaInfo,
+    latestVersion: 'latestVersion',
+    name: 'name',
+    pinned: true,
+    type: PluginType.datasource,
+    module: 'path/to/module',
+  } as Plugin);
 
 describe('dataSourcesReducer', () => {
   describe('when dataSourcesLoaded is dispatched', () => {

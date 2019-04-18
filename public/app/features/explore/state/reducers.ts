@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import {
   calculateResultsFromQueryTransactions,
@@ -28,6 +27,7 @@ import {
   changeQueryAction,
   changeSizeAction,
   changeTimeAction,
+  changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
@@ -68,6 +68,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   range: false,
   ui: false,
 });
+
 /**
  * Returns a fresh Explore area state
  */
@@ -102,10 +103,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
+export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
-  left: makeExploreItemState(),
-  right: makeExploreItemState(),
+  left: initialExploreItemState,
+  right: initialExploreItemState,
 };
 
 /**
@@ -174,6 +176,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: changeTimeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, range: action.payload.range };
+    },
+  })
+  .addMapper({
+    filter: changeRefreshIntervalAction,
+    mapper: (state, action): ExploreItemState => {
+      const { refreshInterval } = action.payload;
+      return {
+        ...state,
+        refreshInterval: refreshInterval,
+      };
     },
   })
   .addMapper({
@@ -581,7 +593,11 @@ export const updateChildRefreshState = (
   const urlState = parseUrlState(queryState);
   if (!state.urlState || path !== '/explore') {
     // we only want to refresh when browser back/forward
-    return { ...state, urlState, update: { datasource: false, queries: false, range: false, ui: false } };
+    return {
+      ...state,
+      urlState,
+      update: { datasource: false, queries: false, range: false, ui: false },
+    };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;

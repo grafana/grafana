@@ -77,7 +77,7 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
         if (index < func.def.params.length) {
           return func.def.params[index];
         }
-        if (_.last(func.def.params).multiple) {
+        if ((_.last(func.def.params) as any).multiple) {
           return _.assign({}, _.last(func.def.params), { optional: true });
         }
         return {};
@@ -170,14 +170,14 @@ export function graphiteFuncEditor($compile, templateSrv, popoverSrv) {
       function addElementsAndCompile() {
         $funcLink.appendTo(elem);
 
-        const defParams = _.clone(func.def.params);
-        const lastParam = _.last(func.def.params);
+        const defParams: any = _.clone(func.def.params);
+        const lastParam: any = _.last(func.def.params);
 
         while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
           defParams.push(_.assign({}, lastParam, { optional: true }));
         }
 
-        _.each(defParams, (param, index) => {
+        _.each(defParams, (param: any, index: number) => {
           if (param.optional && func.params.length < index) {
             return false;
           }

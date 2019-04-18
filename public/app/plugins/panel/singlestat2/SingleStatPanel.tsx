@@ -50,8 +50,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     const { stat } = valueOptions;
 
     const values: SingleStatDisplay[] = [];
-
-    for (const series of data) {
+    for (const series of data.series) {
       const timeColumn = sparkline.show ? getFirstTimeField(series) : -1;
 
       for (let i = 0; i < series.fields.length; i++) {
@@ -122,11 +121,17 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       }
     }
 
-    // Don't show a title if there is only one item
-    if (values.length === 1) {
+    if (values.length === 0) {
+      values.push({
+        value: {
+          numeric: 0,
+          text: 'No data',
+        },
+      });
+    } else if (values.length === 1) {
+      // Don't show title for single item
       values[0].value.title = null;
     }
-
     return values;
   };
 

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -21,7 +20,7 @@ var pluginProxyTransport *http.Transport
 func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 	pluginProxyTransport = &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: setting.PluginAppsSkipVerifyTLS,
+			InsecureSkipVerify: hs.Cfg.PluginsAppsSkipVerifyTLS,
 			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
