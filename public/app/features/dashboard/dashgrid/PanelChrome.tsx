@@ -17,7 +17,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { TimeRange, LoadingState, PanelData, toLegacyResponseData } from '@grafana/ui';
+import { LoadingState, PanelData, toLegacyResponseData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -40,8 +40,6 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
-  timeInfo?: string;
-  timeRange?: TimeRange;
   errorMessage: string | null;
 
   // Current state of all events
@@ -147,11 +145,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { panel, width } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
-    this.setState({
-      timeRange: timeData.timeRange,
-      timeInfo: timeData.timeInfo,
-    });
-
     // Issue Query
     if (this.wantsQueryExecution && !this.hasPanelSnapshot) {
       if (width < 0) {
@@ -166,6 +159,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         dashboardId: this.props.dashboard.id,
         timezone: this.props.dashboard.timezone,
         timeRange: timeData.timeRange,
+        timeInfo: timeData.timeInfo,
         widthPixels: width,
         minInterval: undefined, // Currently not passed in DataPanel?
         maxDataPoints: panel.maxDataPoints,
@@ -216,7 +210,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
-    const { timeRange, renderCounter, data, isFirstLoad } = this.state;
+    const { renderCounter, data, isFirstLoad } = this.state;
     const PanelComponent = plugin.reactPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
@@ -237,7 +231,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         <div className="panel-content">
           <PanelComponent
             data={data}
-            timeRange={timeRange}
+            timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.reactPlugin.defaults)}
             width={width - 2 * config.theme.panelPadding.horizontal}
             height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
@@ -259,7 +253,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, panel, isFullscreen, width, height } = this.props;
-    const { errorMessage, timeInfo } = this.state;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
@@ -268,7 +262,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
-          timeInfo={timeInfo}
+          timeInfo={data.request ? data.request.timeInfo : null}
           title={panel.title}
           description={panel.description}
           scopedVars={panel.scopedVars}

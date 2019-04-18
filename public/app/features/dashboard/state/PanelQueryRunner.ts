@@ -28,6 +28,7 @@ export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   dashboardId?: number;
   timezone?: string;
   timeRange?: TimeRange;
+  timeInfo?: string; // String description of time range for display
   widthPixels: number;
   minInterval?: string;
   maxDataPoints?: number;
@@ -88,6 +89,7 @@ export class PanelQueryRunner {
       panelId,
       dashboardId,
       timeRange,
+      timeInfo,
       cacheTimeout,
       widthPixels,
       maxDataPoints,
@@ -101,6 +103,7 @@ export class PanelQueryRunner {
       dashboardId,
       range: timeRange,
       rangeRaw: timeRange.raw,
+      timeInfo,
       interval: '',
       intervalMs: 0,
       targets: cloneDeep(queries),
