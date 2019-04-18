@@ -24,6 +24,7 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { PanelQueryRunner, getProcessedSeriesData } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
+import { SHARED_DASHBODARD_QUERY, DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -142,6 +143,45 @@ export class PanelChrome extends PureComponent<Props, State> {
         console.log('No width yet... wait till we know');
         return;
       }
+
+      if (panel.datasource === SHARED_DASHBODARD_QUERY) {
+        const query = panel.targets[0] as DashboardQuery;
+        const otherPanel = this.props.dashboard.getPanelById(query.panelId);
+        if (otherPanel) {
+          if (otherPanel.queryRunner === panel.queryRunner) {
+            if (this.props.isFullscreen) {
+              otherPanel.refresh(); // TODO
+              console.log('Somehow refresh the other query when in fullscreen');
+            }
+            return; // should be good
+          }
+          if (this.querySubscription) {
+            this.querySubscription.unsubscribe();
+          }
+          if (!otherPanel.queryRunner) {
+            otherPanel.queryRunner = new PanelQueryRunner();
+          }
+          // Use the same runner?  HACK -- easy way to check if we are already listening
+          panel.queryRunner = otherPanel.queryRunner;
+          this.querySubscription = otherPanel.queryRunner.subscribe(this.panelDataObserver);
+          console.log('Subscribed to other panel results', otherPanel.id);
+        } else {
+          if (this.querySubscription) {
+            this.querySubscription.unsubscribe();
+            this.querySubscription = null;
+          }
+          this.panelDataObserver.next({
+            state: LoadingState.Error,
+            series: [],
+            error: {
+              message: 'Unknown reference panel: ' + query.panelId,
+            },
+          });
+          console.log('Other panel not found', query);
+        }
+        return;
+      }
+
       if (!panel.queryRunner) {
         panel.queryRunner = new PanelQueryRunner();
       }
