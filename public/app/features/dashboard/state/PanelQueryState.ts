@@ -71,8 +71,6 @@ export class PanelQueryState {
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
     this.request = req;
 
-    console.log('EXXXX', req);
-
     // Return early if there are no queries to run
     if (!req.targets.length) {
       console.log('No queries, so return early');
