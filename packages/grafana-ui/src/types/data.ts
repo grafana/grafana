@@ -3,6 +3,7 @@ import { Subscribable } from 'rxjs';
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
+  Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
 }
@@ -15,15 +16,23 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
+export interface QueryResultMeta {
+  [key: string]: any;
+
+  // Match the result to the query
+  requestId?: string;
+}
+
 export interface QueryResultBase {
   /**
    * Matches the query target refId
    */
   refId?: string;
+
   /**
    * Used by some backend datasources to communicate back info about the execution (generated sql, timing)
    */
-  meta?: any;
+  meta?: QueryResultMeta;
 }
 
 export interface Field {
@@ -75,6 +84,7 @@ export enum NullValueMode {
 }
 
 export interface AnnotationEvent {
+  id?: string;
   annotation?: any;
   dashboardId?: number;
   panelId?: number;
@@ -85,5 +95,5 @@ export interface AnnotationEvent {
   title?: string;
   text?: string;
   type?: string;
-  tags?: string;
+  tags?: string[];
 }

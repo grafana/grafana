@@ -109,7 +109,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move pulldowns to new schema
-      const annotations = _.find(old.pulldowns, { type: 'annotations' });
+      const annotations: any = _.find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {

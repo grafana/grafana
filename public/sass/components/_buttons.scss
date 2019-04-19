@@ -50,6 +50,16 @@
     opacity: 0.65;
     @include box-shadow(none);
   }
+
+  &--radius-left-0 {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &--radius-right-0 {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
 }
 
 // Button Sizes

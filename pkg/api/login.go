@@ -164,7 +164,7 @@ func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) 
 		return "", false
 	}
 
-	decryptedError, err := util.Decrypt([]byte(decoded), setting.SecretKey)
+	decryptedError, err := util.Decrypt(decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
 }
 

@@ -156,7 +156,7 @@ export class DataProcessor {
         }
 
         const validOptions = this.getXAxisValueOptions({});
-        const found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const found: any = _.find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }

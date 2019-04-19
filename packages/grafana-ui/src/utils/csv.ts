@@ -316,6 +316,10 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
 }
 
 export function toCSV(data: SeriesData[], config?: CSVConfig): string {
+  if (!data) {
+    return '';
+  }
+
   let csv = '';
   config = defaults(config, {
     delimiter: ',',

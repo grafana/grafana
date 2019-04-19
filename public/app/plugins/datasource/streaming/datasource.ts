@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { FetchStream, getKeyForFetch } from './method/fetch/FetchStream';
 import { RandomWalkStream, getKeyForRandomWalk } from './method/random/RandomWalkStream';
 import { StreamHandler } from './StreamHandler';
-import { DataQueryOptions, DataQueryResponse, DataSourceApi, SeriesData } from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, SeriesData } from '@grafana/ui';
 import { StreamingQuery, StreamingMethod } from './types';
 import { FetchQuery } from './method/fetch/types';
 import { RandomStreamQuery } from './method/random/types';
@@ -36,7 +36,7 @@ export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
     this.interval = safeJsonData.timeInterval;
   }
 
-  initStreamHandler(query: StreamingQuery, options: DataQueryOptions<StreamingQuery>) {
+  initStreamHandler(query: StreamingQuery, options: DataQueryRequest<StreamingQuery>) {
     if (query.method === StreamingMethod.fetch) {
       return new FetchStream(query as FetchQuery, options, this);
     }
@@ -47,7 +47,7 @@ export class StreamingDatasource implements DataSourceApi<StreamingQuery> {
     throw new Error('Unsupported method: ' + query.method);
   }
 
-  query(options: DataQueryOptions<StreamingQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryRequest<StreamingQuery>): Promise<DataQueryResponse> {
     const { targets } = options;
     if (!targets || targets.length < 1) {
       return Promise.resolve({ data: [] });

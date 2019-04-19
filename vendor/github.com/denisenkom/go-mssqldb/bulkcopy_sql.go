@@ -66,7 +66,7 @@ func (ci *copyin) Query(v []driver.Value) (r driver.Rows, err error) {
 
 func (ci *copyin) Exec(v []driver.Value) (r driver.Result, err error) {
 	if ci.closed {
-		return nil, errors.New("errCopyInClosed")
+		return nil, errors.New("copyin query is closed")
 	}
 
 	if len(v) == 0 {

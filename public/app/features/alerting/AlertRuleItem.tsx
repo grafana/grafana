@@ -58,7 +58,7 @@ class AlertRuleItem extends PureComponent<Props> {
             <i className={iconClassName} />
           </button>
           <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="icon-gf icon-gf-settings" />
+            <i className="gicon gicon-cog" />
           </a>
         </div>
       </li>

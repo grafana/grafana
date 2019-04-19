@@ -1,7 +1,9 @@
 import { ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
+import { PanelData } from './panel';
+import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -73,6 +75,21 @@ interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
 }
 
 /**
+ * Similar to PanelData but requires the request and includes a way to unsubscribe
+ */
+export interface DataStreamEvent extends PanelData {
+  request: DataQueryRequest;
+  subscription?: Unsubscribable;
+}
+
+/**
+ * Returning false should unsubscribe and/or cancel
+ */
+export type DataStreamEventObserver = {
+  next: (event: DataStreamEvent) => boolean;
+};
+
+/**
  * The main data source abstraction interface, represents an instance of a data source
  */
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
@@ -93,8 +110,10 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
 
   /**
    * Main metrics / data query action
+   *
+   * The stream will notify both the full response and partial updates
    */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+  query(request: DataQueryRequest<TQuery>, stream?: DataStreamEventObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -115,6 +134,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *  Set after constructor is called by Grafana
    */
   name?: string;
+
+  /**
+   *  Set after constructor is called by Grafana
+   */
+  id?: number;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -177,6 +201,9 @@ export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+
+  // Indicate that streaming has started
+  streaming?: boolean;
 }
 
 export interface DataQuery {
@@ -223,10 +250,11 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
+  requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange;
+  timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -235,6 +263,13 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+
+  // Some Queries issue multiple sub requests
+  subRequests?: DataQueryRequest[];
+
+  // Request Timing
+  startTime: number;
+  endTime?: number;
 }
 
 export interface QueryFix {
@@ -283,6 +318,7 @@ export interface DataSourceSettings {
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
 export interface DataSourceInstanceSettings {
+  id: number;
   type: string;
   name: string;
   meta: PluginMeta;

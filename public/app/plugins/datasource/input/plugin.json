@@ -1,0 +1,24 @@
+{
+  "type": "datasource",
+  "name": "Direct Input",
+  "id": "input",
+  "state": "alpha",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "explore": false,
+
+  "info": {
+    "description": "User Input Data Source for Grafana",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/input.svg",
+      "large": "img/input.svg"
+    }
+  }
+}

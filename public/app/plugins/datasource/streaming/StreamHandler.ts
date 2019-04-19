@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import _ from 'lodash';
 import { SeriesData } from '@grafana/ui';
 import { StreamingQuery } from './types';
-import { DataQueryOptions } from '@grafana/ui/src/types';
+import { DataQueryRequest } from '@grafana/ui/src/types';
 import { StreamingDatasource } from './datasource';
 
 export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData> {
@@ -19,7 +19,7 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
   lastTime: number;
   totalRows: number;
 
-  constructor(query: T, options: DataQueryOptions<any>, datasource: StreamingDatasource) {
+  constructor(query: T, options: DataQueryRequest<any>, datasource: StreamingDatasource) {
     super();
 
     this.query = { ...query }; // copy of the query
@@ -33,7 +33,7 @@ export class StreamHandler<T extends StreamingQuery> extends Subject<SeriesData>
     this.initBuffer(query, options);
   }
 
-  initBuffer(query: T, options: DataQueryOptions<any>) {
+  initBuffer(query: T, options: DataQueryRequest<any>) {
     // Can fill this up
   }
 

@@ -59,7 +59,7 @@ export async function getExploreUrl(
 ) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
-  let url;
+  let url: string;
 
   // Mixed datasources need to choose only one datasource
   if (panelDatasource.meta.id === 'mixed' && panelTargets) {
@@ -141,6 +141,7 @@ export function buildQueryTransaction(
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
+    maxDataPoints: queryOptions.maxDataPoints,
   };
 
   return {
@@ -190,7 +191,12 @@ export const safeParseJson = (text: string) => {
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
-  const errorResult = { datasource: null, queries: [], range: DEFAULT_RANGE, ui: DEFAULT_UI_STATE };
+  const errorResult = {
+    datasource: null,
+    queries: [],
+    range: DEFAULT_RANGE,
+    ui: DEFAULT_UI_STATE,
+  };
 
   if (!parsed) {
     return errorResult;

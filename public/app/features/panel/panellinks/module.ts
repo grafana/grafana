@@ -37,7 +37,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.dashboardChanged = link => {
       backendSrv.search({ query: link.dashboard }).then(hits => {
-        const dashboard = _.find(hits, { title: link.dashboard });
+        const dashboard: any = _.find(hits, { title: link.dashboard });
         if (dashboard) {
           if (dashboard.url) {
             link.url = dashboard.url;

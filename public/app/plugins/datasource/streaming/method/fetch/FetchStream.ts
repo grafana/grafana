@@ -4,7 +4,7 @@ import { SeriesData, CSVReader } from '@grafana/ui';
 import { StreamingDatasource } from '../../datasource';
 import { FetchQuery } from './types';
 
-import { DataQueryOptions } from '@grafana/ui';
+import { DataQueryRequest } from '@grafana/ui';
 
 // polyfil for TextEncoder/TextDecoder (node & IE)
 import 'fast-text-encoding'; //'text-encoding';  // 'fast-text-encoding';
@@ -38,7 +38,7 @@ export class FetchStream extends StreamHandler<FetchQuery> {
   csv: CSVReader;
   reader: ReadableStreamReader<Uint8Array>;
 
-  constructor(query: FetchQuery, options: DataQueryOptions<any>, datasource: StreamingDatasource) {
+  constructor(query: FetchQuery, options: DataQueryRequest<any>, datasource: StreamingDatasource) {
     super(_.defaults(query, defaultQuery), options, datasource);
 
     this.csv = new CSVReader({ callback: this });

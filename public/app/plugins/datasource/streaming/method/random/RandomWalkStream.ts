@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { StreamHandler } from '../../StreamHandler';
 import { RandomStreamQuery } from './types';
-import { DataQueryOptions, FieldType } from '@grafana/ui';
+import { DataQueryRequest, FieldType } from '@grafana/ui';
 import { StreamingDatasource } from '../../datasource';
 import { StreamingMethod } from '../../types';
 
@@ -21,13 +21,13 @@ export function getKeyForRandomWalk(query: RandomStreamQuery) {
 export class RandomWalkStream extends StreamHandler<RandomStreamQuery> {
   value: number;
 
-  constructor(query: RandomStreamQuery, options: DataQueryOptions<any>, datasource: StreamingDatasource) {
+  constructor(query: RandomStreamQuery, options: DataQueryRequest<any>, datasource: StreamingDatasource) {
     super(_.defaults(query, defaultQuery), options, datasource);
 
     this.looper();
   }
 
-  initBuffer(query: RandomStreamQuery, options: DataQueryOptions<any>) {
+  initBuffer(query: RandomStreamQuery, options: DataQueryRequest<any>) {
     console.log('QUERY', options);
     const { range, intervalMs } = options;
     const { maxRowCount, series } = this;

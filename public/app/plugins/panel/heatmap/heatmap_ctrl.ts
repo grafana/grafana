@@ -164,7 +164,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     const logBase = this.panel.yAxis.logBase;
 
     const xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-    const xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
+    const xBucketSizeByNumber = Math.floor((this.range.to.valueOf() - this.range.from.valueOf()) / xBucketNumber);
 
     // Parse X bucket size (number or interval)
     const isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
@@ -333,7 +333,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     if (datapoints && datapoints.length > 0) {
       const last = datapoints[datapoints.length - 1][1];
       const from = this.range.from;
-      if (last - from < -10000) {
+      if (last - from.valueOf() < -10000) {
         series.isOutsideRange = true;
       }
     }

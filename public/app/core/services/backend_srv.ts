@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';

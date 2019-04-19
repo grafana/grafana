@@ -529,7 +529,7 @@ export class HeatmapRenderer {
     const minValueAuto = Math.min(cardStats.min, 0);
     const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
     const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
-    const colorScheme = _.find(this.ctrl.colorSchemes, {
+    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
