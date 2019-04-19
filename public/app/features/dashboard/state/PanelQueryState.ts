@@ -6,8 +6,9 @@ import {
   toLegacyResponseData,
   isSeriesData,
   toSeriesData,
+  DataQueryError,
 } from '@grafana/ui';
-import { getProcessedSeriesData, toDataQueryError } from './PanelQueryRunner';
+import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import isEqual from 'lodash/isEqual';
 
@@ -15,6 +16,7 @@ export class PanelQueryState {
   // The current/last running request
   request = {
     startTime: 0,
+    endTime: 1000, // Somethign not zero
   } as DataQueryRequest;
 
   // The best known state of data
@@ -27,7 +29,7 @@ export class PanelQueryState {
   sendLegacy = false;
 
   // A promise for the running query
-  private executor: Promise<PanelData> = Promise.reject();
+  private executor: Promise<PanelData> = {} as any;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
 
@@ -65,7 +67,8 @@ export class PanelQueryState {
     this.request = req;
 
     // Return early if there are no queries to run
-    if (req.targets.length) {
+    if (!req.targets.length) {
+      console.log('No queries, so return early');
       this.request.endTime = Date.now();
       return Promise.resolve(
         (this.data = {
@@ -82,7 +85,8 @@ export class PanelQueryState {
     return (this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
-      ds.query(this.request)
+      return ds
+        .query(this.request)
         .then(resp => {
           this.request.endTime = Date.now();
 
@@ -120,7 +124,7 @@ export class PanelQueryState {
   /**
    * Make sure all requested formats exist on the data
    */
-  checkDataFormats(): PanelData {
+  getDataAfterCheckingFormats(): PanelData {
     const { data, sendLegacy, sendSeries } = this;
     if (sendLegacy && (!data.legacy || !data.legacy.length)) {
       data.legacy = data.series.map(v => toLegacyResponseData(v));
@@ -143,4 +147,22 @@ export class PanelQueryState {
       request: this.request,
     });
   }
+}
+
+export function toDataQueryError(err: any) {
+  const error = err as DataQueryError;
+  if (!error.message) {
+    let message = 'Query error';
+    if (error.message) {
+      message = error.message;
+    } else if (error.data && error.data.message) {
+      message = error.data.message;
+    } else if (error.data && error.data.error) {
+      message = error.data.error;
+    } else if (error.status) {
+      message = `Query error: ${error.status} ${error.statusText}`;
+    }
+    error.message = message;
+  }
+  return error;
 }

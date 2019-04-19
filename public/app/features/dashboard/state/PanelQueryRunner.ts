@@ -18,7 +18,6 @@ import {
   ScopedVars,
   DataQueryRequest,
   SeriesData,
-  DataQueryError,
   DataSourceApi,
 } from '@grafana/ui';
 import { PanelQueryState } from './PanelQueryState';
@@ -75,7 +74,7 @@ export class PanelQueryRunner {
 
     // Send the last result
     if (this.state.data.state !== LoadingState.NotStarted) {
-      observer.next(this.state.checkDataFormats());
+      observer.next(this.state.getDataAfterCheckingFormats());
     }
 
     return this.subject.subscribe(observer);
@@ -213,22 +212,4 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
   }
 
   return series;
-}
-
-export function toDataQueryError(err: any) {
-  const error = err as DataQueryError;
-  if (!error.message) {
-    let message = 'Query error';
-    if (error.message) {
-      message = error.message;
-    } else if (error.data && error.data.message) {
-      message = error.data.message;
-    } else if (error.data && error.data.error) {
-      message = error.data.error;
-    } else if (error.status) {
-      message = `Query error: ${error.status} ${error.statusText}`;
-    }
-    error.message = message;
-  }
-  return error;
 }
