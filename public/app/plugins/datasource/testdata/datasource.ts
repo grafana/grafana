@@ -61,12 +61,14 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
             continue;
           }
 
-          for (const table of results.tables || []) {
-            data.push(table as TableData);
+          for (const t of results.tables || []) {
+            const table = t as TableData;
+            table.refId = query.refId;
+            data.push(table);
           }
 
           for (const series of results.series || []) {
-            data.push({ target: series.name, datapoints: series.points });
+            data.push({ target: series.name, datapoints: series.points, refId: query.refId });
           }
         }
 
