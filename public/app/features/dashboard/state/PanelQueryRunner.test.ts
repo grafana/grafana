@@ -1,5 +1,5 @@
 import { getProcessedSeriesData, PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryOptions } from '@grafana/ui/src/types';
+import { PanelData, DataQueryRequest } from '@grafana/ui/src/types';
 import moment from 'moment';
 
 describe('PanelQueryRunner', () => {
@@ -46,7 +46,7 @@ interface ScenarioContext {
   minInterval?: string;
   events?: PanelData[];
   res?: PanelData;
-  queryCalledWith?: DataQueryOptions;
+  queryCalledWith?: DataQueryRequest;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
@@ -70,9 +70,9 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     beforeEach(async () => {
       setupFn();
 
-      const ds: any = {
+      const datasource: any = {
         interval: ctx.dsInterval,
-        query: (options: DataQueryOptions) => {
+        query: (options: DataQueryRequest) => {
           ctx.queryCalledWith = options;
           return Promise.resolve(response);
         },
@@ -80,8 +80,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       };
 
       const args: any = {
-        ds: ds as any,
-        datasource: '',
+        datasource,
         minInterval: ctx.minInterval,
         widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
