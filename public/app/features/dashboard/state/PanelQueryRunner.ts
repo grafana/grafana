@@ -1,6 +1,7 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+import throttle from 'lodash/throttle';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -23,7 +24,7 @@ import {
   toLegacyResponseData,
   isSeriesData,
   DataSourceApi,
-  DataSourceStream,
+  DataStreamEvent,
 } from '@grafana/ui';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
@@ -63,6 +64,8 @@ export class PanelQueryRunner {
     state: LoadingState.NotStarted,
     series: [],
   } as PanelData;
+
+  private streamEvents = new Map<string, DataStreamEvent>();
 
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
@@ -167,12 +170,31 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
+      // Set the internal state
+      // If events are streamed back, they are expected to refernce the
+      // same requestId
+      this.data = {
+        ...this.data, // Keep any existing data
+        request,
+        state: LoadingState.Loading,
+        error: undefined, // Clear the error
+      };
+
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
         this.publishUpdate({ state: LoadingState.Loading });
       }, delayStateNotification || 500);
 
-      const resp = await ds.query(request, this.streamingDataListener);
+      const resp = await ds.query(request, this.streamingDataObserver);
+
+      // When streaming get data from the callback events
+      if (resp.streaming) {
+        clearTimeout(loadingStateTimeoutId);
+        return this.publishUpdate({
+          state: LoadingState.Streaming,
+          request,
+        });
+      }
 
       request.endTime = Date.now();
 
@@ -221,28 +243,80 @@ export class PanelQueryRunner {
 
     this.subject.next(this.data);
 
+    console.log('UPDATE', this.data);
+
     return this.data;
   }
 
-  // This is passed to DataSourceAPI and may get partial results
-  private streamingDataListener: DataSourceStream = {
-    onStreamProgress: (full: PanelData, partial: PanelData, subscription?: Unsubscribable) => {
-      // Make sure the data is what we are looking for
-      if (full.request.requestId !== this.data.request.requestId) {
-        if (subscription) {
-          console.log('Stop listening to:', full.request);
-          subscription.unsubscribe();
+  /**
+   * This looks at the values we have saved and builds a full
+   * response based on any open streams
+   */
+  private updateFromStream = throttle(
+    () => {
+      const { request } = this.data;
+      const series = [];
+
+      let error: DataQueryError | undefined;
+      this.streamEvents.forEach((event, key) => {
+        if (key.startsWith(request.requestId)) {
+          series.push.apply(series, event.series);
+          if (event.error) {
+            error = event.error;
+          }
         } else {
-          console.log('Ignoring: ', full.request.requestId, partial);
+          if (event.subscription) {
+            event.subscription.unsubscribe();
+          }
+          this.streamEvents.delete(key);
         }
-        return;
+      });
+
+      // Update the graphs
+      this.publishUpdate({
+        series,
+        error,
+        legacy: this.sendLegacy
+          ? series.map(v => {
+              return toLegacyResponseData(v);
+            })
+          : undefined,
+      });
+    },
+    50,
+    { leading: true, trailing: true }
+  );
+
+  // This is passed to DataSourceAPI and may get partial results
+  private streamingDataObserver = {
+    next: (event: DataStreamEvent): boolean => {
+      const { request } = this.data;
+      try {
+        const { requestId } = event.request;
+        // Make sure it is an event we are listening for
+        if (!requestId.startsWith(request.requestId)) {
+          if (event.subscription) {
+            event.subscription.unsubscribe();
+          }
+          console.log('Ignoring event from different request', request.requestId, event.request.requestId);
+
+          return false;
+        }
+
+        // Set the Request ID on all series metadata
+        for (const series of event.series) {
+          if (series.meta) {
+            series.meta.requestId = requestId;
+          } else {
+            series.meta = { requestId };
+          }
+        }
+        this.streamEvents.set(event.request.requestId, event);
+        this.updateFromStream(); // throttled
+      } catch (err) {
+        console.log('Error in stream handling', err, event);
       }
-
-      // TODO: let listener subscribe to partial updates?
-      // this.streamProgressListeners.next(partial);
-
-      // this.data = full;
-      // this.subject.next(this.data); // debounce?
+      return true;
     },
   };
 
@@ -254,6 +328,13 @@ export class PanelQueryRunner {
     if (this.subject) {
       this.subject.complete();
     }
+
+    // Unsubscribe to any streaming events
+    this.streamEvents.forEach(event => {
+      if (event.subscription) {
+        event.subscription.unsubscribe();
+      }
+    });
 
     // If there are open HTTP requests, close them
     const { request } = this.data;

@@ -1,4 +1,4 @@
-import { DataSourceApi, DataQueryRequest, DataSourceStream, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataQueryResponse, DataStreamEventObserver } from '@grafana/ui';
 
 export class DatasourceSrvMock {
   constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {
@@ -24,7 +24,7 @@ export class MockDataSourceApi implements DataSourceApi {
     this.name = name ? name : 'MockDataSourceApi';
   }
 
-  query(request: DataQueryRequest, stream: DataSourceStream): Promise<DataQueryResponse> {
+  query(request: DataQueryRequest, stream: DataStreamEventObserver): Promise<DataQueryResponse> {
     return Promise.resolve(this.res); // empty data
   }
 

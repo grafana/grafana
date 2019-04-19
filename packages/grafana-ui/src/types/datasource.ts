@@ -3,7 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
-import { Unsubscribable } from 'rxjs';
+import { Unsubscribable, PartialObserver } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -74,13 +74,20 @@ interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
   new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
 }
 
-export interface DataSourceStream {
-  /**
-   * While streaming, notify listeners about the entire results and
-   * about partial set of data that has changed in this step
-   */
-  onStreamProgress(result: PanelData, partial?: PanelData, subscription?: Unsubscribable): void;
+/**
+ * Similar to PanelData but requires the request and includes a way to unsubscribe
+ */
+export interface DataStreamEvent extends PanelData {
+  request: DataQueryRequest;
+  subscription?: Unsubscribable;
 }
+
+/**
+ * Returning false should unsubscribe and/or cancel
+ */
+export type DataStreamEventObserver = {
+  next: (event: DataStreamEvent) => boolean;
+};
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
@@ -106,7 +113,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *
    * The stream will notify both the full response and partial updates
    */
-  query(request: DataQueryRequest<TQuery>, stream?: DataSourceStream): Promise<DataQueryResponse>;
+  query(request: DataQueryRequest<TQuery>, stream?: PartialObserver<DataStreamEvent>): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -186,6 +193,9 @@ export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+
+  // Indicate that streaming has started
+  streaming?: boolean;
 }
 
 export interface DataQuery {

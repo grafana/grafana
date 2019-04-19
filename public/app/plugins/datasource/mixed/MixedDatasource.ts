@@ -5,18 +5,20 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceStream,
-  PanelData,
   LoadingState,
-  QueryResultBase,
+  DataStreamEvent,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getProcessedSeriesData, toDataQueryError } from 'app/features/dashboard/state/PanelQueryRunner';
+import { PartialObserver } from 'rxjs';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
 export class MixedDatasource implements DataSourceApi<DataQuery> {
-  async query(request: DataQueryRequest<DataQuery>, stream?: DataSourceStream): Promise<DataQueryResponse> {
+  async query(
+    request: DataQueryRequest<DataQuery>,
+    stream?: PartialObserver<DataStreamEvent>
+  ): Promise<DataQueryResponse> {
     const datasourceSrv = getDatasourceSrv();
 
     // Remove any hidden or invalid queries
@@ -28,68 +30,46 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       return Promise.resolve({ data: [] }); // nothing
     }
 
+    if (!stream) {
+      throw new Error('Mixed Query requires streaming callback');
+    }
+
     // Update the sub request list
     request.subRequests = [];
+    for (const query of queries) {
+      const sub = cloneDeep(request);
+      sub.requestId = request.requestId + '_' + request.subRequests.length;
+      sub.targets = [query];
+      sub.startTime = Date.now();
+      request.subRequests.push(sub);
+      const data: DataStreamEvent = {
+        state: LoadingState.Loading,
+        request: sub,
+        series: [],
+      };
+      stream.next(data);
 
-    let finished = 0;
-    const results: QueryResultBase[] = [];
-    const all = queries.map((query, index) => {
-      return datasourceSrv.get(query.datasource).then(ds => {
-        const sub = cloneDeep(request);
-        sub.requestId = request.requestId + '_' + index;
-        sub.targets = [query];
-        sub.startTime = Date.now();
-        request.subRequests.push(sub);
-        const data: PanelData = {
-          state: LoadingState.Loading,
-          request: sub,
-          series: [],
-        };
-        if (stream) {
-          stream.onStreamProgress(data);
-        }
+      // Starts the request async
+      datasourceSrv.get(query.datasource).then(ds => {
         return ds
           .query(sub, stream)
           .then(res => {
             sub.endTime = Date.now();
             data.state = LoadingState.Done;
-            finished++;
-
-            // Attach the requestId to the returned results
-            const withMeta = res.data.map((r: QueryResultBase) => {
-              if (!r.meta) {
-                r.meta = { requestId: sub.requestId };
-              } else {
-                r.meta.requestId = sub.requestId;
-              }
-              results.push(r);
-              return r;
-            });
-
-            if (stream && finished < all.length) {
-              data.series = getProcessedSeriesData(withMeta);
-              stream.onStreamProgress(data);
-            }
-            return { data: withMeta };
+            data.series = getProcessedSeriesData(res.data);
+            stream.next(data);
           })
           .catch(err => {
             sub.endTime = Date.now();
             data.state = LoadingState.Error;
             data.error = toDataQueryError(err);
-            finished++;
-            if (stream && finished < all.length) {
-              stream.onStreamProgress(data);
-            }
+            stream.next(data);
           });
       });
-    });
+    }
 
-    // Return the values we collected
-    return Promise.all(all).then(() => {
-      console.log('Mixed Done!');
-
-      return { data: results };
-    });
+    // Return, but keep listening for changes
+    return Promise.resolve({ data: [], streaming: true });
   }
 
   testDatasource() {

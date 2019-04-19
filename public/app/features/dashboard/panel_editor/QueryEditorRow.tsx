@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, filterPanelDataToQuery, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, filterPanelDataToQuery, PanelData, LoadingState } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -93,7 +93,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { data, query } = this.props;
 
     if (data !== prevProps.data) {
-      console.log('componentDidUpdate', this);
       this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
 
       if (this.angularScope) {
@@ -206,6 +205,24 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return null;
   }
 
+  renderQueryResponseInfo(response: PanelData) {
+    if (response.state === LoadingState.Loading) {
+      return <i className="fa fa-spinner fa-spin" />;
+    }
+    if (response.state === LoadingState.Error) {
+      return (
+        <span>
+          <i className="fa fa-error" /> {response.error && response.error.message}
+        </span>
+      );
+    }
+    if (response.state === LoadingState.Done) {
+      const elapsed = (response.request.endTime - response.request.startTime) / 1000;
+      return response.series.length + ' Series in ' + elapsed + ' seconds';
+    }
+    return null;
+  }
+
   render() {
     const { query, inMixedMode } = this.props;
     const { datasource, isCollapsed, hasTextEditMode, queryResponse } = this.state;
@@ -224,8 +241,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       return null;
     }
 
-    console.log('QUERY', query, queryResponse);
-
     return (
       <div className={rowClasses}>
         <div className="query-editor-row__header">
@@ -235,12 +250,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             <span>{query.refId}</span>
             {inMixedMode && <em className="query-editor-row__context-info"> ({datasource.name})</em>}
             {isDisabled && <em className="query-editor-row__context-info"> Disabled</em>}
+            {queryResponse && (
+              <em className="query-editor-row__context-info"> {this.renderQueryResponseInfo(queryResponse)}</em>
+            )}
           </div>
           <div className="query-editor-row__collapsed-text" onClick={this.onToggleEditMode}>
             {isCollapsed && <div>{this.renderCollapsedText()}</div>}
           </div>
-
-          {queryResponse && <div className="query-editor-row__collapsed-text">XXX: {queryResponse.state}</div>}
 
           <div className="query-editor-row__actions">
             {hasTextEditMode && (

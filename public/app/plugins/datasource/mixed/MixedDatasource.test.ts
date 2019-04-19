@@ -1,8 +1,7 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataSourceStream, PanelData } from '@grafana/ui';
-import { Unsubscribable } from 'rxjs';
+import { DataStreamEvent, DataStreamEventObserver } from '@grafana/ui';
 import { MixedDatasource } from './MixedDatasource';
 
 const defaultDS = new MockDataSourceApi({ data: ['A', 'B'] }, 'DefaultDS');
@@ -18,9 +17,10 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   },
 }));
 
-const dummyStream: DataSourceStream = {
-  onStreamProgress: (full: PanelData, partial: PanelData, subscription?: Unsubscribable) => {
+const dummyStream: DataStreamEventObserver = {
+  next: (event: DataStreamEvent) => {
     console.log('DUMMY');
+    return true;
   },
 };
 
