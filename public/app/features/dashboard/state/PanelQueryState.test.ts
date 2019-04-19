@@ -42,17 +42,5 @@ describe('PanelQueryState', () => {
     expect(state.isRunning()).toBeFalsy();
     expect(empty.series.length).toBe(0);
     expect(hasRun).toBeFalsy();
-
-    // Should run a single query
-    const results = await state.execute(
-      ds,
-      getQueryOptions({
-        targets: [{ hide: false, refId: 'X' }, { hide: true, refId: 'Y' }, { hide: true, refId: 'Z' }],
-      })
-    );
-    // should not run any hidden queries'
-    expect(state.isRunning()).toBeFalsy();
-    expect(results.series.length).toBe(1);
-    expect(hasRun).toBeTruthy();
   });
 });
