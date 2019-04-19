@@ -99,7 +99,7 @@ datasources:
   - name: gdev-elasticsearch-v6-filebeat
     type: elasticsearch
     access: proxy
-    database: "[filebeat-6.2.4-]YYYY.MM.DD"
+    database: "[filebeat-]YYYY.MM.DD"
     url: http://localhost:11200
     jsonData:
       interval: Daily
