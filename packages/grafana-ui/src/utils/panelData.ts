@@ -20,18 +20,24 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
         });
         if (sub) {
           request = sub;
-          if (sub.endTime && state === LoadingState.Loading) {
+          if (sub.endTime) {
             state = LoadingState.Done;
           }
         }
       }
     }
   }
+
+  const error = data.error && data.error.refId === refId ? data.error : undefined;
+  if (error) {
+    state = LoadingState.Error;
+  }
+
   return {
     state,
     series,
     request,
-    error: data.error && data.error.refId === refId ? data.error : undefined,
+    error,
   };
 }
 

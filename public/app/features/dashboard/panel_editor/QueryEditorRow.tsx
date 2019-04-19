@@ -206,21 +206,36 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   renderQueryResponseInfo(response: PanelData) {
-    if (response.state === LoadingState.Loading) {
-      return <i className="fa fa-spinner fa-spin" />;
+    const things = [];
+
+    if (response.state === LoadingState.Loading || response.state === LoadingState.Streaming) {
+      things.push(<i className="fa fa-spinner fa-spin" />);
     }
     if (response.state === LoadingState.Error) {
-      return (
+      things.push(
         <span>
           <i className="fa fa-error" /> {response.error && response.error.message}
         </span>
       );
     }
-    if (response.state === LoadingState.Done) {
-      const elapsed = (response.request.endTime - response.request.startTime) / 1000;
-      return response.series.length + ' Series in ' + elapsed + ' seconds';
+
+    if (response.series && response.series.length) {
+      const rows = response.series.reduce((count, series) => {
+        return count + series.rows.length;
+      }, 0);
+      things.push(
+        <span>
+          {response.series.length} Series, {rows} Rows
+        </span>
+      );
     }
-    return null;
+
+    if (response.request.endTime) {
+      const elapsed = (response.request.endTime - response.request.startTime) / 1000;
+      things.push(<span>&nbsp;&nbsp; {elapsed} seconds</span>);
+    }
+
+    return things;
   }
 
   render() {
