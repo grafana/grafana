@@ -200,11 +200,17 @@
   height: 34px;
   transition: transform 0.1s ease 0.1s;
   color: $text-color;
-
+	display: inline-flex; 
+	align-items: center; 
+	justify-content: center;
+  
   i {
     font-size: $font-size-lg;
     position: relative;
-    top: 2px;
+    margin-left: auto; 
+    margin-right: auto; 
+    left: 0; 
+    right: 0; 
   }
 
   &:hover {
