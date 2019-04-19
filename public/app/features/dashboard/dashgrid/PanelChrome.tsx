@@ -25,8 +25,6 @@ import templateSrv from 'app/features/templating/template_srv';
 import { getProcessedSeriesData } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
-import { SHARED_DASHBODARD_QUERY, DashboardQuery } from 'app/plugins/datasource/dashboard/types';
-
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
 export interface Props {
@@ -137,43 +135,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.wantsQueryExecution) {
       if (width < 0) {
         console.log('Refresh skippted, no width yet... wait till we know');
-        return;
-      }
-      if (panel.datasource === SHARED_DASHBODARD_QUERY) {
-        const query = panel.targets[0] as DashboardQuery;
-        const otherPanel = this.props.dashboard.getPanelById(query.panelId);
-        if (otherPanel) {
-          const otherQueryRunner = otherPanel.getQueryRunner();
-          const thisQueryRuner = panel.getQueryRunner();
-          if (otherQueryRunner === thisQueryRuner) {
-            if (this.props.isFullscreen) {
-              otherPanel.refresh(); // TODO
-              console.log('Somehow refresh the other query when in fullscreen');
-            }
-            return; // should be good
-          }
-          if (this.querySubscription) {
-            this.querySubscription.unsubscribe();
-          }
-
-          // Use the same runner?  HACK -- easy way to check if we are already listening
-          (panel as any).queryRunner = otherQueryRunner; // HACK HACK HACK
-          this.querySubscription = otherQueryRunner.subscribe(this.panelDataObserver);
-          console.log('Subscribed to other panel results', otherPanel.id);
-        } else {
-          if (this.querySubscription) {
-            this.querySubscription.unsubscribe();
-            this.querySubscription = null;
-          }
-          this.panelDataObserver.next({
-            state: LoadingState.Error,
-            series: [],
-            error: {
-              message: 'Unknown reference panel: ' + query.panelId,
-            },
-          });
-          console.log('Other panel not found', query);
-        }
         return;
       }
 

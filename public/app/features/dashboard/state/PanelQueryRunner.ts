@@ -21,6 +21,7 @@ import {
   DataSourceApi,
 } from '@grafana/ui';
 import { PanelQueryState } from './PanelQueryState';
+import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   datasource: string | DataSourceApi<TQuery>;
@@ -54,6 +55,9 @@ export class PanelQueryRunner {
 
   private state = new PanelQueryState();
 
+  // Listen to another panel for changes
+  private sharedQueryRunner: SharedQueryRunner;
+
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
@@ -80,6 +84,21 @@ export class PanelQueryRunner {
     return this.subject.subscribe(observer);
   }
 
+  /**
+   * Subscribe one runner to another
+   */
+  chain(runner: PanelQueryRunner): Unsubscribable {
+    let format = this.state.sendSeries ? PanelQueryRunnerFormat.series : PanelQueryRunnerFormat.legacy;
+    if (this.state.sendLegacy) {
+      format = PanelQueryRunnerFormat.both;
+    }
+    return this.subscribe(runner.subject, format);
+  }
+
+  getCurrentData() {
+    return this.state.data;
+  }
+
   async run(options: QueryRunnerOptions): Promise<PanelData> {
     if (!this.subject) {
       this.subject = new Subject();
@@ -102,6 +121,17 @@ export class PanelQueryRunner {
       minInterval,
       delayStateNotification,
     } = options;
+
+    // Support shared queries
+    if (isSharedDashboardQuery(datasource)) {
+      if (!this.sharedQueryRunner) {
+        this.sharedQueryRunner = new SharedQueryRunner(this);
+      }
+      return this.sharedQueryRunner.process(queries);
+    } else if (this.sharedQueryRunner) {
+      this.sharedQueryRunner.disconnect();
+      this.sharedQueryRunner = null;
+    }
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),

@@ -2,7 +2,7 @@ import { DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui'
 import { DashboardQuery } from './types';
 
 /**
- * This is never really called
+ * This should not really be called
  */
 export class DashboardDatasource implements DataSourceApi<DashboardQuery> {
   getCollapsedText(query: DashboardQuery) {

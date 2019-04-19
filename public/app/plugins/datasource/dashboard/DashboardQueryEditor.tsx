@@ -3,13 +3,12 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { Select, SelectOptionItem, DataQuery, PanelData, SeriesData, DataQueryError } from '@grafana/ui';
-import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
+import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
-
-// type Props = QueryEditorProps<DashboardDatasource, DashboardQuery>;
+import { SHARED_DASHBODARD_QUERY } from './SharedQueryRunner';
 
 type ResultInfo = {
   img: string; // The Datasource

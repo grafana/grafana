@@ -23,7 +23,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 import DashboardQueryEditor from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
-import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 interface Props {
   panel: PanelModel;
