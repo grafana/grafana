@@ -3,7 +3,7 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
 import { StackdriverQuery, MetricDescriptor } from './types';
-import { DataSourceApi, DataQueryOptions } from '@grafana/ui/src/types';
+import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
 
 export default class StackdriverDatasource implements DataSourceApi<StackdriverQuery> {
   id: number;
@@ -108,7 +108,7 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
     return unit;
   }
 
-  async query(options: DataQueryOptions<StackdriverQuery>) {
+  async query(options: DataQueryRequest<StackdriverQuery>) {
     const result = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {

@@ -1,34 +1,19 @@
-import { DataSourceApi, DataQueryOptions, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 import { DashboardQuery } from './types';
 
 /**
  * This is never really called
  */
-class DashboardDatasource implements DataSourceApi<DashboardQuery> {
-  constructor() {
-    console.log('Constructor!', this);
-  }
-
+export class DashboardDatasource implements DataSourceApi<DashboardQuery> {
   getCollapsedText(query: DashboardQuery) {
-    console.log('COLLAPSED:', this, query);
     return `Dashboard Reference: ${query.panelId}`;
   }
 
-  query(options: DataQueryOptions<DashboardQuery>): Promise<DataQueryResponse> {
-    // ??? get the panel and call refresh?
-    console.log('Query!', this);
-
+  query(options: DataQueryRequest<DashboardQuery>): Promise<DataQueryResponse> {
     return Promise.reject('This should not be called directly');
   }
 
   testDatasource() {
-    return new Promise((resolve, reject) => {
-      resolve({
-        status: 'success',
-        message: 'yes!',
-      });
-    });
+    return Promise.resolve({});
   }
 }
-
-export { DashboardDatasource, DashboardDatasource as Datasource };
