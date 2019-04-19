@@ -52,19 +52,26 @@ export class PanelQueryState {
 
   cancel(reason: string) {
     const { request } = this;
-    if (!request.endTime) {
-      this.rejector('Query Canceled:' + reason);
-      request.endTime = Date.now();
-    }
+    try {
+      if (!request.endTime) {
+        request.endTime = Date.now();
 
-    // Cancel any open HTTP request with the same ID
-    if (request.requestId) {
-      getBackendSrv().resolveCancelerIfExists(request.requestId);
+        this.rejector('Canceled:' + reason);
+      }
+
+      // Cancel any open HTTP request with the same ID
+      if (request.requestId) {
+        getBackendSrv().resolveCancelerIfExists(request.requestId);
+      }
+    } catch (err) {
+      console.log('Error canceling request');
     }
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
     this.request = req;
+
+    console.log('EXXXX', req);
 
     // Return early if there are no queries to run
     if (!req.targets.length) {
@@ -149,9 +156,13 @@ export class PanelQueryState {
   }
 }
 
-export function toDataQueryError(err: any) {
-  const error = err as DataQueryError;
+export function toDataQueryError(err: any): DataQueryError {
+  const error = (err || {}) as DataQueryError;
   if (!error.message) {
+    if (typeof err === 'string' || err instanceof String) {
+      return { message: err } as DataQueryError;
+    }
+
     let message = 'Query error';
     if (error.message) {
       message = error.message;
