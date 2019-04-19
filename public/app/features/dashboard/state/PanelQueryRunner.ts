@@ -4,6 +4,7 @@ import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 
@@ -16,7 +17,7 @@ import {
   DataQuery,
   TimeRange,
   ScopedVars,
-  DataRequestInfo,
+  DataQueryRequest,
   SeriesData,
   DataQueryError,
   toLegacyResponseData,
@@ -25,8 +26,7 @@ import {
 } from '@grafana/ui';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
-  ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
-  datasource: string | null;
+  datasource: string | DataSourceApi<TQuery>;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
@@ -45,6 +45,11 @@ export enum PanelQueryRunnerFormat {
   series = 'series',
   legacy = 'legacy',
   both = 'both',
+}
+
+let counter = 100;
+function getNextRequestId() {
+  return 'Q' + counter++;
 }
 
 export class PanelQueryRunner {
@@ -106,12 +111,12 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    const request: DataRequestInfo = {
+    const request: DataQueryRequest = {
+      requestId: getNextRequestId(),
       timezone,
       panelId,
       dashboardId,
       range: timeRange,
-      rangeRaw: timeRange.raw,
       timeInfo,
       interval: '',
       intervalMs: 0,
@@ -121,6 +126,8 @@ export class PanelQueryRunner {
       cacheTimeout,
       startTime: Date.now(),
     };
+    // Deprecated
+    (request as any).rangeRaw = timeRange.raw;
 
     if (!queries) {
       return this.publishUpdate({
@@ -134,7 +141,10 @@ export class PanelQueryRunner {
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
+      const ds =
+        datasource && (datasource as any).query
+          ? (datasource as DataSourceApi)
+          : await getDatasourceSrv().get(datasource as string, request.scopedVars);
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
@@ -156,6 +166,11 @@ export class PanelQueryRunner {
 
       const resp = await ds.query(request);
       request.endTime = Date.now();
+
+      // Make sure we send something back -- called run() w/o subscribe!
+      if (!(this.sendSeries || this.sendLegacy)) {
+        this.sendSeries = true;
+      }
 
       // Make sure the response is in a supported format
       const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
@@ -213,6 +228,22 @@ export class PanelQueryRunner {
     this.subject.next(this.data);
 
     return this.data;
+  }
+
+  /**
+   * Called when the panel is closed
+   */
+  destroy() {
+    // Tell anyone listening that we are done
+    if (this.subject) {
+      this.subject.complete();
+    }
+
+    // If there are open HTTP requests, close them
+    const { request } = this.data;
+    if (request && request.requestId) {
+      getBackendSrv().resolveCancelerIfExists(request.requestId);
+    }
   }
 }
 
