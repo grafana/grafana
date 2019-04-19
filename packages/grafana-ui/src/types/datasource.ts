@@ -3,7 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
-import { Unsubscribable, PartialObserver } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -113,7 +113,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    *
    * The stream will notify both the full response and partial updates
    */
-  query(request: DataQueryRequest<TQuery>, stream?: PartialObserver<DataStreamEvent>): Promise<DataQueryResponse>;
+  query(request: DataQueryRequest<TQuery>, stream?: DataStreamEventObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details

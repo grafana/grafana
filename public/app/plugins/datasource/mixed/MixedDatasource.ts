@@ -7,18 +7,15 @@ import {
   DataQueryResponse,
   LoadingState,
   DataStreamEvent,
+  DataStreamEventObserver,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getProcessedSeriesData, toDataQueryError } from 'app/features/dashboard/state/PanelQueryRunner';
-import { PartialObserver } from 'rxjs';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
 export class MixedDatasource implements DataSourceApi<DataQuery> {
-  async query(
-    request: DataQueryRequest<DataQuery>,
-    stream?: PartialObserver<DataStreamEvent>
-  ): Promise<DataQueryResponse> {
+  async query(request: DataQueryRequest<DataQuery>, stream?: DataStreamEventObserver): Promise<DataQueryResponse> {
     const datasourceSrv = getDatasourceSrv();
 
     // Remove any hidden or invalid queries

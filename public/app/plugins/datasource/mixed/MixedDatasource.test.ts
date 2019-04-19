@@ -38,6 +38,6 @@ describe('MixedDatasource', () => {
   it('direct query should return results', async () => {
     const ds = new MixedDatasource();
     const res = await ds.query(request, dummyStream);
-    expect(res.data.length).toEqual(3);
+    expect(res.streaming).toBeTruthy();
   });
 });
