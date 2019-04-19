@@ -241,9 +241,16 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			mr.header["search_type"] = "count"
 		}
 
-		if c.version >= 56 {
+		if c.version >= 56 && c.version < 70 {
 			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
 			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
+		}
+
+		if c.version >= 70 {
+			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+			mr.header["preference"] = map[string]interface{}{
+				"max_concurrent_shard_requests": maxConcurrentShardRequests,
+			}
 		}
 
 		multiRequests = append(multiRequests, &mr)
