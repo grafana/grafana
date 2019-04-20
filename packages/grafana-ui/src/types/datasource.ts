@@ -2,6 +2,7 @@ import { ComponentClass } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
+import { PanelData } from './panel';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -140,8 +141,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  queryResponse?: SeriesData[];
-  queryError?: DataQueryError;
+  panelData: PanelData; // The current panel data
+  queryResponse?: PanelData; // data filtered to only this query.  Includes the error.
 }
 
 export enum DataSourceStatus {
