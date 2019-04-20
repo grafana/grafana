@@ -163,7 +163,6 @@ export class VariableEditorCtrl {
         type: $scope.current.type,
       });
       $scope.current.name = old.name;
-      $scope.current.hide = old.hide;
       $scope.current.label = old.label;
 
       const oldIndex = _.indexOf(this.variables, old);
