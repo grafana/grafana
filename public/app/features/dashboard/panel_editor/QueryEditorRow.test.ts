@@ -1,7 +1,5 @@
-import { filterPanelDataToQuery, isSameDataQueryRequest } from './panelData';
-import { LoadingState } from '../types/data';
-import { PanelData } from '../types/panel';
-import { DataQueryRequest } from '../types/index';
+import { PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
+import { filterPanelDataToQuery } from './QueryEditorRow';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
   return {
@@ -50,18 +48,5 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData.series.length).toBe(1);
     expect(panelData.series[0].refId).toBe('C');
     expect(panelData.request!.requestId).toBe('sub3');
-  });
-});
-
-describe('isSameDataQueryRequest', () => {
-  const request = makePretendRequest('111', [
-    makePretendRequest('sub1'),
-    makePretendRequest('sub2'),
-    makePretendRequest('sub3'),
-  ]);
-
-  it('should think a child is the same request', () => {
-    expect(isSameDataQueryRequest(request, request)).toBeTruthy();
-    expect(isSameDataQueryRequest(request, request.subRequests![0])).toBeTruthy();
   });
 });

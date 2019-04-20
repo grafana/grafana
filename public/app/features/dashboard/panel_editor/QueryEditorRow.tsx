@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, filterPanelDataToQuery, PanelData, LoadingState } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -32,8 +32,6 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-
-  // Filtered to match the query
   queryResponse?: PanelData;
 }
 
@@ -142,7 +140,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor() {
-    const { query, onChange } = this.props;
+    const { query, data, onChange } = this.props;
     const { datasource, queryResponse } = this.state;
 
     if (datasource.components.QueryCtrl) {
@@ -158,8 +156,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           datasource={datasource}
           onChange={onChange}
           onRunQuery={this.onRunQuery}
-          queryResponse={queryResponse.series}
-          queryError={queryResponse.error}
+          queryResponse={queryResponse}
+          panelData={data}
         />
       );
     }
@@ -318,4 +316,50 @@ export interface AngularQueryComponentScope {
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
   range: TimeRange;
+}
+
+/**
+ * Get a version of the PanelData limited to the query we are looking at
+ */
+export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
+  const series = data.series.filter(series => series.refId === refId);
+
+  // No matching series
+  if (!series.length) {
+    return undefined;
+  }
+
+  let state = data.state;
+  let request: DataQueryRequest = undefined;
+
+  // For requests that have subRequests find the matching one
+  if (data.request && data.request.subRequests) {
+    for (const s of series) {
+      // Now try to match the sub requests
+      if (s.meta && s.meta.requestId) {
+        const subs = data.request.subRequests as DataQueryRequest[];
+        const sub = subs.find(r => {
+          return r.requestId === s.meta!.requestId;
+        });
+        if (sub) {
+          request = sub;
+          if (sub.endTime) {
+            state = LoadingState.Done;
+          }
+        }
+      }
+    }
+  }
+
+  const error = data.error && data.error.refId === refId ? data.error : undefined;
+  if (error) {
+    state = LoadingState.Error;
+  }
+
+  return {
+    state,
+    series,
+    request,
+    error,
+  };
 }
