@@ -132,17 +132,17 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   onRefresh = () => {
-    if (!this.props.isInView) {
-      // always true when fullscreen
-      console.log('Refresh when panel is visible', this.props.panel.id);
+    const { panel, isInView, width } = this.props;
+
+    console.log('onRefresh', panel.id);
+
+    if (!isInView) {
+      console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
       return;
     }
 
-    const { panel, width } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
-
-    console.log('onRefresh', panel.id);
 
     // Issue Query
     if (this.wantsQueryExecution) {
@@ -193,12 +193,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({ errorMessage: message });
     }
   };
-
-  clearErrorState() {
-    if (this.state.errorMessage) {
-      this.setState({ errorMessage: null });
-    }
-  }
 
   get hasPanelSnapshot() {
     const { panel } = this.props;
