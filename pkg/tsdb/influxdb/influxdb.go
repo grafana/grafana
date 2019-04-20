@@ -125,11 +125,11 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 	req.Header.Set("User-Agent", "Grafana")
 
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	if !dsInfo.BasicAuth && dsInfo.User != "" {
-		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
+		req.SetBasicAuth(dsInfo.User, dsInfo.DecryptedPassword())
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

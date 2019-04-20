@@ -42,7 +42,7 @@ export function metricSegment($compile, $sce, templateSrv) {
         }
 
         $scope.$apply(() => {
-          const selected = _.find($scope.altSegments, { value: value });
+          const selected: any = _.find($scope.altSegments, { value: value });
           if (selected) {
             segment.value = selected.value;
             segment.html = selected.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(selected.value));
@@ -202,7 +202,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
         let cachedOptions;
 
         $scope.valueToSegment = value => {
-          const option = _.find($scope.options, { value: value });
+          const option: any = _.find($scope.options, { value: value });
           const segment = {
             cssClass: attrs.cssClass,
             custom: attrs.custom,
@@ -236,7 +236,7 @@ export function metricSegmentModel(uiSegmentSrv, $q) {
 
         $scope.onSegmentChange = () => {
           if (cachedOptions) {
-            const option = _.find(cachedOptions, { text: $scope.segment.value });
+            const option: any = _.find(cachedOptions, { text: $scope.segment.value });
             if (option && option.value !== $scope.property) {
               $scope.property = option.value;
             } else if (attrs.custom !== 'false') {

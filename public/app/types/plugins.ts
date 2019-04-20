@@ -16,6 +16,9 @@ export enum PanelDataFormat {
   TimeSeries = 'time_series',
 }
 
+/**
+ * Values we don't want in the public API
+ */
 export interface Plugin extends PluginMeta {
   defaultNavUrl: string;
   hasUpdate: boolean;

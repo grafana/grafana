@@ -325,7 +325,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Search
-		apiRoute.Get("/search/", Search)
+		apiRoute.Get("/search/", Wrap(Search))
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))

@@ -11,7 +11,7 @@ provides:
 - grafana-cli
 depends:
 - adduser
-- libfontconfig
+- libfontconfig1
 maintainer: "<contact@grafana.com>"
 description: |
   Grafana

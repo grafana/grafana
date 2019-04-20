@@ -12,14 +12,18 @@ export enum PluginType {
 export interface PluginMeta {
   id: string;
   name: string;
-  info: PluginMetaInfo;
-  module: string;
-  includes?: PluginInclude[];
-  baseUrl?: string;
-
   type: PluginType;
-  enabled?: boolean;
+  info: PluginMetaInfo;
+  includes?: PluginInclude[];
   state?: PluginState;
+
+  // System.load & relative URLS
+  module: string;
+  baseUrl: string;
+
+  // Filled in by the backend
+  jsonData?: { [str: string]: any };
+  enabled?: boolean;
 
   // Datasource-specific
   builtIn?: boolean;
@@ -51,7 +55,10 @@ export enum PluginIncludeType {
 export interface PluginInclude {
   type: PluginIncludeType;
   name: string;
-  path: string;
+  path?: string;
+  icon?: string;
+  // Angular app pages
+  component?: string;
 }
 
 interface PluginMetaInfoLink {
@@ -76,16 +83,38 @@ export interface PluginMetaInfo {
 }
 
 export class AppPlugin {
-  components: {
+  meta: PluginMeta;
+
+  angular?: {
     ConfigCtrl?: any;
+    pages: { [component: string]: any };
   };
 
-  pages: { [str: string]: any };
-
-  constructor(ConfigCtrl: any) {
-    this.components = {
-      ConfigCtrl: ConfigCtrl,
+  constructor(meta: PluginMeta, pluginExports: any) {
+    this.meta = meta;
+    const legacy = {
+      ConfigCtrl: undefined,
+      pages: {} as any,
     };
-    this.pages = {};
+
+    if (pluginExports.ConfigCtrl) {
+      legacy.ConfigCtrl = pluginExports.ConfigCtrl;
+      this.angular = legacy;
+    }
+
+    if (meta.includes) {
+      for (const include of meta.includes) {
+        const { type, component } = include;
+        if (type === PluginIncludeType.page && component) {
+          const exp = pluginExports[component];
+          if (!exp) {
+            console.warn('App Page uses unknown component: ', component, meta);
+            continue;
+          }
+          legacy.pages[component] = exp;
+          this.angular = legacy;
+        }
+      }
+    }
   }
 }
