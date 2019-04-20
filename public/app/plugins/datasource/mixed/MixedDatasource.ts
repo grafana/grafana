@@ -10,7 +10,8 @@ import {
   DataStreamEventObserver,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getProcessedSeriesData, toDataQueryError } from 'app/features/dashboard/state/PanelQueryRunner';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryRunner';
+import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 

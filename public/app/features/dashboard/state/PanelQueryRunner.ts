@@ -5,7 +5,6 @@ import throttle from 'lodash/throttle';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 
@@ -20,12 +19,9 @@ import {
   ScopedVars,
   DataQueryRequest,
   SeriesData,
-  DataQueryError,
-  toLegacyResponseData,
-  isSeriesData,
   DataSourceApi,
-  DataStreamEvent,
 } from '@grafana/ui';
+import { PanelQueryState } from './PanelQueryState';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   datasource: string | DataSourceApi<TQuery>;
@@ -57,15 +53,7 @@ function getNextRequestId() {
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
-  private sendSeries = false;
-  private sendLegacy = false;
-
-  private data = {
-    state: LoadingState.NotStarted,
-    series: [],
-  } as PanelData;
-
-  private streamEvents = new Map<string, DataStreamEvent>();
+  private state = new PanelQueryState();
 
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
@@ -76,19 +64,21 @@ export class PanelQueryRunner {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
 
+    // This gets a notice when the model was updated from a stream
+    this.state.streamCallback = this.updateFromStream;
+
     if (format === PanelQueryRunnerFormat.legacy) {
-      this.sendLegacy = true;
+      this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
-      this.sendSeries = true;
-      this.sendLegacy = true;
+      this.state.sendSeries = true;
+      this.state.sendLegacy = true;
     } else {
-      this.sendSeries = true;
+      this.state.sendSeries = true;
     }
 
     // Send the last result
-    if (this.data.state !== LoadingState.NotStarted) {
-      // TODO: make sure it has legacy if necessary
-      observer.next(this.data);
+    if (this.state.data.state !== LoadingState.NotStarted) {
+      observer.next(this.state.getDataAfterCheckingFormats());
     }
 
     return this.subject.subscribe(observer);
@@ -98,6 +88,8 @@ export class PanelQueryRunner {
     if (!this.subject) {
       this.subject = new Subject();
     }
+
+    const { state } = this;
 
     const {
       queries,
@@ -124,7 +116,11 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: cloneDeep(queries),
+      targets: cloneDeep(
+        queries.filter(q => {
+          return !q.hide; // Skip any hidden queries
+        })
+      ),
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
@@ -132,22 +128,6 @@ export class PanelQueryRunner {
     };
     // Deprecated
     (request as any).rangeRaw = timeRange.raw;
-
-    if (this.data.state === LoadingState.Loading) {
-      console.log('Previous query is still loading, what should we do?');
-      // Maybe check if it is the same query???
-      // Maybe cancel the existing one?
-      // Maybe hold on to the ds.query( promise?
-    }
-
-    if (!queries) {
-      return this.publishUpdate({
-        state: LoadingState.Done,
-        series: [], // Clear the data
-        legacy: [],
-        request,
-      });
-    }
 
     let loadingStateTimeoutId = 0;
 
@@ -170,82 +150,38 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Set the internal state
-      // If events are streamed back, they are expected to refernce the
-      // same requestId
-      this.data = {
-        ...this.data, // Keep any existing data
-        request,
-        state: LoadingState.Loading,
-        error: undefined, // Clear the error
-      };
+      // Check if we can reuse the already issued query
+      if (state.isRunning()) {
+        if (state.isSameQuery(ds, request)) {
+          // TODO? maybe cancel if it has run too long?
+          return state.getCurrentExecutor();
+        } else {
+          state.cancel('Query Changed while running');
+        }
+      }
 
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
-        this.publishUpdate({ state: LoadingState.Loading });
+        if (this.state.isRunning()) {
+          this.subject.next(this.state.data);
+        }
       }, delayStateNotification || 500);
 
-      const resp = await ds.query(request, this.streamingDataObserver);
+      const data = await state.execute(ds, request);
 
-      // When streaming get data from the callback events
-      if (resp.streaming) {
-        clearTimeout(loadingStateTimeoutId);
-        return this.publishUpdate({
-          state: LoadingState.Streaming,
-          request,
-        });
-      }
-
-      request.endTime = Date.now();
-
-      // Make sure we send something back -- called run() w/o subscribe!
-      if (!(this.sendSeries || this.sendLegacy)) {
-        this.sendSeries = true;
-      }
-
-      // Make sure the response is in a supported format
-      const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
-      const legacy = this.sendLegacy
-        ? resp.data.map(v => {
-            if (isSeriesData(v)) {
-              return toLegacyResponseData(v);
-            }
-            return v;
-          })
-        : undefined;
-
-      // Make sure the delayed loading state timeout is cleared
+      // Clear the delayed loading state timeout
       clearTimeout(loadingStateTimeoutId);
 
-      // Publish the result
-      return this.publishUpdate({
-        state: LoadingState.Done,
-        series,
-        legacy,
-        request,
-      });
+      // Broadcast results
+      this.subject.next(data);
+      return data;
     } catch (err) {
-      // Make sure the delayed loading state timeout is cleared
       clearTimeout(loadingStateTimeoutId);
 
-      return this.publishUpdate({
-        state: LoadingState.Error,
-        error: toDataQueryError(err),
-      });
+      const data = state.setError(err);
+      this.subject.next(data);
+      return data;
     }
-  }
-
-  publishUpdate(update: Partial<PanelData>): PanelData {
-    this.data = {
-      ...this.data,
-      ...update,
-    };
-
-    this.subject.next(this.data);
-
-    console.log('UPDATE', this.data);
-
-    return this.data;
   }
 
   /**
@@ -254,71 +190,11 @@ export class PanelQueryRunner {
    */
   private updateFromStream = throttle(
     () => {
-      const { request } = this.data;
-      const series = [];
-
-      let error: DataQueryError | undefined;
-      this.streamEvents.forEach((event, key) => {
-        if (key.startsWith(request.requestId)) {
-          series.push.apply(series, event.series);
-          if (event.error) {
-            error = event.error;
-          }
-        } else {
-          if (event.subscription) {
-            event.subscription.unsubscribe();
-          }
-          this.streamEvents.delete(key);
-        }
-      });
-
-      // Update the graphs
-      this.publishUpdate({
-        series,
-        error,
-        legacy: this.sendLegacy
-          ? series.map(v => {
-              return toLegacyResponseData(v);
-            })
-          : undefined,
-      });
+      this.subject.next(this.state.updateDataFromStream());
     },
     50,
     { leading: true, trailing: true }
   );
-
-  // This is passed to DataSourceAPI and may get partial results
-  private streamingDataObserver = {
-    next: (event: DataStreamEvent): boolean => {
-      const { request } = this.data;
-      try {
-        const { requestId } = event.request;
-        // Make sure it is an event we are listening for
-        if (!requestId.startsWith(request.requestId)) {
-          if (event.subscription) {
-            event.subscription.unsubscribe();
-          }
-          console.log('Ignoring event from different request', request.requestId, event.request.requestId);
-
-          return false;
-        }
-
-        // Set the Request ID on all series metadata
-        for (const series of event.series) {
-          if (series.meta) {
-            series.meta.requestId = requestId;
-          } else {
-            series.meta = { requestId };
-          }
-        }
-        this.streamEvents.set(event.request.requestId, event);
-        this.updateFromStream(); // throttled
-      } catch (err) {
-        console.log('Error in stream handling', err, event);
-      }
-      return true;
-    },
-  };
 
   /**
    * Called when the panel is closed
@@ -329,18 +205,8 @@ export class PanelQueryRunner {
       this.subject.complete();
     }
 
-    // Unsubscribe to any streaming events
-    this.streamEvents.forEach(event => {
-      if (event.subscription) {
-        event.subscription.unsubscribe();
-      }
-    });
-
-    // If there are open HTTP requests, close them
-    const { request } = this.data;
-    if (request && request.requestId) {
-      getBackendSrv().resolveCancelerIfExists(request.requestId);
-    }
+    // Will cancel and disconnect any open requets
+    this.state.cancel('destroy');
   }
 }
 
@@ -362,22 +228,4 @@ export function getProcessedSeriesData(results?: any[]): SeriesData[] {
   }
 
   return series;
-}
-
-export function toDataQueryError(err: any): DataQueryError {
-  const error = err as DataQueryError;
-  if (!error.message) {
-    let message = 'Query error';
-    if (error.message) {
-      message = error.message;
-    } else if (error.data && error.data.message) {
-      message = error.data.message;
-    } else if (error.data && error.data.error) {
-      message = error.data.error;
-    } else if (error.status) {
-      message = `Query error: ${error.status} ${error.statusText}`;
-    }
-    error.message = message;
-  }
-  return err;
 }
