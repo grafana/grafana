@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { CallToActionCard, ExtraLargeLinkButton, ThemeContext } from '@grafana/ui';
+import { CallToActionCard, LargeLinkButton, ThemeContext } from '@grafana/ui';
 import { css } from 'emotion';
 export interface Props {
   model: any;
@@ -37,9 +37,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = props => {
     : '';
 
   const ctaElement = (
-    <ExtraLargeLinkButton onClick={onClick} href={buttonLink} icon={buttonIcon} className={ctaElementClassName}>
+    <LargeLinkButton onClick={onClick} href={buttonLink} icon={buttonIcon} className={ctaElementClassName}>
       {buttonTitle}
-    </ExtraLargeLinkButton>
+    </LargeLinkButton>
   );
 
   return <CallToActionCard message={title} footer={footer} callToActionElement={ctaElement} theme={theme} />;

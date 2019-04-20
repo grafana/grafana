@@ -40,6 +40,7 @@ export class Settings {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
+  pluginsToPreload: string[];
 
   constructor(options: Settings) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

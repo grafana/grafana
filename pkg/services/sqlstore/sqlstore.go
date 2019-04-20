@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -21,12 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
-
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
+	"github.com/grafana/grafana/pkg/util"
 	_ "github.com/lib/pq"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )

@@ -23,7 +23,7 @@ describe('PrometheusDatasource', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {},
+    jsonData: {} as any,
   };
 
   ctx.backendSrvMock = {};

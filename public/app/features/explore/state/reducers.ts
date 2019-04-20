@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import {
   calculateResultsFromQueryTransactions,
@@ -20,6 +19,7 @@ import {
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
+  runQueriesAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -27,6 +27,7 @@ import {
   changeQueryAction,
   changeSizeAction,
   changeTimeAction,
+  changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
   initializeExploreAction,
@@ -67,6 +68,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   range: false,
   ui: false,
 });
+
 /**
  * Returns a fresh Explore area state
  */
@@ -101,10 +103,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
+export const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: null,
-  left: makeExploreItemState(),
-  right: makeExploreItemState(),
+  left: initialExploreItemState,
+  right: initialExploreItemState,
 };
 
 /**
@@ -165,20 +168,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeSizeAction,
     mapper: (state, action): ExploreItemState => {
-      const { range, datasourceInstance } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
       const containerWidth = action.payload.width;
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return { ...state, containerWidth, queryIntervals };
+      return { ...state, containerWidth };
     },
   })
   .addMapper({
     filter: changeTimeAction,
     mapper: (state, action): ExploreItemState => {
       return { ...state, range: action.payload.range };
+    },
+  })
+  .addMapper({
+    filter: changeRefreshIntervalAction,
+    mapper: (state, action): ExploreItemState => {
+      const { refreshInterval } = action.payload;
+      return {
+        ...state,
+        refreshInterval: refreshInterval,
+      };
     },
   })
   .addMapper({
@@ -266,13 +273,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: loadDatasourceReadyAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, range, datasourceInstance } = state;
       const { history } = action.payload;
-      const queryIntervals = getIntervals(range, datasourceInstance.interval, containerWidth);
-
       return {
         ...state,
-        queryIntervals,
         history,
         datasourceLoading: false,
         datasourceMissing: false,
@@ -559,6 +562,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
+  .addMapper({
+    filter: runQueriesAction,
+    mapper: (state): ExploreItemState => {
+      const { range, datasourceInstance, containerWidth } = state;
+      let interval = '1s';
+      if (datasourceInstance && datasourceInstance.interval) {
+        interval = datasourceInstance.interval;
+      }
+      const queryIntervals = getIntervals(range, interval, containerWidth);
+      return {
+        ...state,
+        queryIntervals,
+      };
+    },
+  })
   .create();
 
 export const updateChildRefreshState = (
@@ -575,7 +593,11 @@ export const updateChildRefreshState = (
   const urlState = parseUrlState(queryState);
   if (!state.urlState || path !== '/explore') {
     // we only want to refresh when browser back/forward
-    return { ...state, urlState, update: { datasource: false, queries: false, range: false, ui: false } };
+    return {
+      ...state,
+      urlState,
+      update: { datasource: false, queries: false, range: false, ui: false },
+    };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;

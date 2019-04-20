@@ -191,7 +191,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data.value = 0;
       data.valueRounded = 0;
     } else {
-      const decimalInfo = getDecimalsForValue(data.value);
+      const decimalInfo = getDecimalsForValue(data.value, this.panel.decimals);
       const formatFunc = getValueFormat(this.panel.format);
 
       data.valueFormatted = formatFunc(
@@ -199,7 +199,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         decimalInfo.decimals,
         decimalInfo.scaledDecimals
       );
-      data.valueRounded = kbn.roundValue(data.value, this.panel.decimals || 0);
+      data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
     }
 
     this.setValueMapping(data);
@@ -279,17 +279,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
-        let decimals = this.panel.decimals;
-        let scaledDecimals = 0;
+        const decimalInfo = getDecimalsForValue(data.value, this.panel.decimals);
 
-        if (!this.panel.decimals) {
-          const decimalInfo = getDecimalsForValue(data.value);
-          decimals = decimalInfo.decimals;
-          scaledDecimals = decimalInfo.scaledDecimals;
-        }
-
-        data.valueFormatted = formatFunc(data.value, decimals, scaledDecimals, this.dashboard.isTimezoneUtc());
-        data.valueRounded = kbn.roundValue(data.value, decimals);
+        data.valueFormatted = formatFunc(
+          data.value,
+          decimalInfo.decimals,
+          decimalInfo.scaledDecimals,
+          this.dashboard.isTimezoneUtc()
+        );
+        data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 
       // Add $__name variable for using in prefix or postfix

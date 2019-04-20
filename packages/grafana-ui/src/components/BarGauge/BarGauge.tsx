@@ -136,8 +136,9 @@ export class BarGauge extends PureComponent<Props> {
     const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
-    const cellCount = maxSize / 20;
-    const cellSize = (maxSize - cellSpacing * cellCount) / cellCount;
+    const cellWidth = 12;
+    const cellCount = Math.floor(maxSize / cellWidth);
+    const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
     const valueColor = getValueColor(this.props);
     const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
 
@@ -286,7 +287,7 @@ export function getTitleStyles(props: Props): { wrapper: CSSProperties; title: C
 
       titleStyles.width = `${titleDim.width}px`;
       titleStyles.textAlign = 'right';
-      titleStyles.marginRight = '10px';
+      titleStyles.paddingRight = '10px';
     }
   }
 
@@ -343,6 +344,11 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
       wrapperHeight = height;
     }
   }
+
+  // console.log('titleDim', titleDim);
+  // console.log('valueWidth', valueWidth);
+  // console.log('width', width);
+  // console.log('total', titleDim.width + maxBarWidth + valueWidth);
 
   return {
     valueWidth,
@@ -409,7 +415,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     barStyles.transition = 'width 1s';
     barStyles.height = `${maxBarHeight}px`;
     barStyles.width = `${barWidth}px`;
-    barStyles.marginRight = '10px';
+
+    valueStyles.paddingLeft = '10px';
 
     if (isBasic) {
       // Basic styles
