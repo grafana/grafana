@@ -22,7 +22,6 @@ import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafa
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
-import DashboardQueryEditor from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
 import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 interface Props {
@@ -238,37 +237,28 @@ export class QueriesTab extends PureComponent<Props, State> {
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >
-        {currentDS.name === SHARED_DASHBODARD_QUERY ? (
-          <DashboardQueryEditor
-            panel={panel}
-            dashboard={dashboard}
-            data={data}
-            onChange={query => this.onQueryChange(query, 0)}
-          />
-        ) : (
-          <>
-            <div className="query-editor-rows">
-              {panel.targets.map((query, index) => (
-                <QueryEditorRow
-                  dataSourceValue={query.datasource || panel.datasource}
-                  key={query.refId}
-                  panel={panel}
-                  dashboard={dashboard}
-                  data={data}
-                  query={query}
-                  onChange={query => this.onQueryChange(query, index)}
-                  onRemoveQuery={this.onRemoveQuery}
-                  onAddQuery={this.onAddQuery}
-                  onMoveQuery={this.onMoveQuery}
-                  inMixedMode={currentDS.meta.mixed}
-                />
-              ))}
-            </div>
-            <PanelOptionsGroup>
-              <QueryOptions panel={panel} datasource={currentDS} />
-            </PanelOptionsGroup>
-          </>
-        )}
+        <>
+          <div className="query-editor-rows">
+            {panel.targets.map((query, index) => (
+              <QueryEditorRow
+                dataSourceValue={query.datasource || panel.datasource}
+                key={query.refId}
+                panel={panel}
+                dashboard={dashboard}
+                data={data}
+                query={query}
+                onChange={query => this.onQueryChange(query, index)}
+                onRemoveQuery={this.onRemoveQuery}
+                onAddQuery={this.onAddQuery}
+                onMoveQuery={this.onMoveQuery}
+                inMixedMode={currentDS.meta.mixed}
+              />
+            ))}
+          </div>
+          <PanelOptionsGroup>
+            <QueryOptions panel={panel} datasource={currentDS} />
+          </PanelOptionsGroup>
+        </>
       </EditorTabBody>
     );
   }

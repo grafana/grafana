@@ -2,13 +2,16 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, SelectOptionItem, DataQuery, PanelData, SeriesData, DataQueryError } from '@grafana/ui';
+import { Select, SelectOptionItem, DataQuery, SeriesData, DataQueryError, QueryEditorProps } from '@grafana/ui';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './SharedQueryRunner';
+import { DashboardDatasource } from './datasource';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
 
 type ResultInfo = {
   img: string; // The Datasource
@@ -22,13 +25,8 @@ function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
 }
 
-interface Props {
-  panel: PanelModel;
-  dashboard: DashboardModel;
-  data: PanelData;
-
-  // Callback after query changes
-  onChange: (query: DataQuery) => void;
+interface Props extends QueryEditorProps<DashboardDatasource, DashboardQuery> {
+  // standard
 }
 
 type State = {
@@ -50,10 +48,11 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidUpdate(prevProps: Props) {
-    const { data, dashboard } = this.props;
-    if (!prevProps || prevProps.data !== data) {
+    const { panelData, query } = this.props;
+    if (!prevProps || prevProps.panelData !== panelData) {
       const defaultDS = await getDatasourceSrv().get(null);
-      const panel = dashboard.getPanelById(this.getQuery().panelId);
+      const dashboard = getDashboardSrv().getCurrent();
+      const panel = dashboard.getPanelById(query.panelId);
       if (!panel) {
         this.setState({ defaultDatasource: defaultDS.name });
         return;
@@ -65,12 +64,14 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
       for (const query of panel.targets) {
         const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
         const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
+
+        const queryData = filterPanelDataToQuery(panelData, query.refId);
         info.push({
           refId: query.refId,
           query: fmt(query),
           img: ds.meta.info.logos.small,
-          data: data.series.filter(v => v.refId === query.refId),
-          error: data.error && data.error.refId === query.refId ? data.error : null,
+          data: queryData.series,
+          error: queryData.error,
         });
       }
       this.setState({ defaultDatasource: defaultDS.name, results: info });
@@ -78,26 +79,9 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   onPanelChanged = (id: number) => {
-    const { onChange } = this.props;
-    const query = this.getQuery();
+    const { onChange, query } = this.props;
     query.panelId = id;
     onChange(query);
-  };
-
-  /**
-   * Get the current query and make sure dashboard model only has a single query
-   */
-  getQuery = (): DashboardQuery => {
-    const { panel } = this.props;
-    if (!panel.targets && !panel.targets.length) {
-      const query = { refId: 'A' };
-      panel.targets = [query];
-      return query;
-    }
-    if (panel.targets.length > 1) {
-      panel.targets = [panel.targets[0]];
-    }
-    return panel.targets[0];
   };
 
   renderQueryData(editURL: string) {
@@ -136,8 +120,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard } = this.props;
-    const query = this.getQuery();
+    const { query } = this.props;
+    const dashboard = getDashboardSrv().getCurrent();
 
     let selected: SelectOptionItem;
     const panels: SelectOptionItem[] = [];
