@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -274,12 +275,6 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("Should add db to url", func() {
 				So(req.URL.Path, ShouldEqual, "/db/site/")
 			})
-
-			Convey("Should add username and password", func() {
-				queryVals := req.URL.Query()
-				So(queryVals["u"][0], ShouldEqual, "user")
-				So(queryVals["p"][0], ShouldEqual, "password")
-			})
 		})
 
 		Convey("When proxying a data source with no keepCookies specified", func() {
@@ -481,6 +476,26 @@ func TestDSRouteRule(t *testing.T) {
 				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
 			})
 		})
+
+		Convey("When proxying data source proxy should handle authentication", func() {
+			tests := []*Test{
+				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, false),
+				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, false),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+
+				// These two should be enough for any other datasource at the moment. Proxy has special handling
+				// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
+				// do not go through proxy but through TSDB API which is not tested here.
+				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+			}
+			for _, test := range tests {
+				runDatasourceAuthTest(test)
+			}
+		})
 	})
 }
 
@@ -523,4 +538,91 @@ func newFakeHTTPClient(fakeBody []byte) httpClient {
 	return &httpClientStub{
 		fakeBody: fakeBody,
 	}
+}
+
+type Test struct {
+	datasource *m.DataSource
+	checkReq   func(req *http.Request)
+}
+
+const (
+	AUTHTYPE_PASSWORD = "password"
+	AUTHTYPE_BASIC    = "basic"
+)
+
+const (
+	AUTHCHECK_QUERY  = "query"
+	AUTHCHECK_HEADER = "header"
+)
+
+func createAuthTest(dsType string, authType string, authCheck string, useSecureJsonData bool) *Test {
+	// Basic user:password
+	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+
+	test := &Test{
+		datasource: &m.DataSource{
+			Type:     dsType,
+			JsonData: simplejson.New(),
+		},
+	}
+	var message string
+	if authType == AUTHTYPE_PASSWORD {
+		message = fmt.Sprintf("%v should add username and password", dsType)
+		test.datasource.User = "user"
+		if useSecureJsonData {
+			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+				"password": "password",
+			})
+		} else {
+			test.datasource.Password = "password"
+		}
+	} else {
+		message = fmt.Sprintf("%v should add basic auth username and password", dsType)
+		test.datasource.BasicAuth = true
+		test.datasource.BasicAuthUser = "user"
+		if useSecureJsonData {
+			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+				"basicAuthPassword": "password",
+			})
+		} else {
+			test.datasource.BasicAuthPassword = "password"
+		}
+	}
+
+	if useSecureJsonData {
+		message += " from securejsondata"
+	}
+
+	if authCheck == AUTHCHECK_QUERY {
+		message += " to query params"
+		test.checkReq = func(req *http.Request) {
+			Convey(message, func() {
+				queryVals := req.URL.Query()
+				So(queryVals["u"][0], ShouldEqual, "user")
+				So(queryVals["p"][0], ShouldEqual, "password")
+			})
+		}
+	} else {
+		message += " to auth header"
+		test.checkReq = func(req *http.Request) {
+			Convey(message, func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, base64AthHeader)
+			})
+		}
+	}
+
+	return test
+}
+
+func runDatasourceAuthTest(test *Test) {
+	plugin := &plugins.DataSourcePlugin{}
+	ctx := &m.ReqContext{}
+	proxy := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{})
+
+	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+	So(err, ShouldBeNil)
+
+	proxy.getDirector()(req)
+
+	test.checkReq(req)
 }

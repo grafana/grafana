@@ -81,6 +81,11 @@ func (s *RedisStore) ID() string {
 
 // Release releases resource and save data to provider.
 func (s *RedisStore) Release() error {
+	// Skip encoding if the data is empty
+	if len(s.data) == 0 {
+		return nil
+	}
+
 	data, err := session.EncodeGob(s.data)
 	if err != nil {
 		return err
@@ -153,7 +158,7 @@ func (p *RedisProvider) Init(maxlifetime int64, configs string) (err error) {
 func (p *RedisProvider) Read(sid string) (session.RawStore, error) {
 	psid := p.prefix + sid
 	if !p.Exist(sid) {
-		if err := p.c.Set(psid, "").Err(); err != nil {
+		if err := p.c.SetEx(psid, p.duration, "").Err(); err != nil {
 			return nil, err
 		}
 	}

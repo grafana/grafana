@@ -141,8 +141,8 @@ export class ChangeTracker {
     const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
     const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
-    const currentTimepicker = _.find(current.nav, { type: 'timepicker' });
-    const originalTimepicker = _.find(original.nav, { type: 'timepicker' });
+    const currentTimepicker: any = _.find(current.nav, { type: 'timepicker' });
+    const originalTimepicker: any = _.find(original.nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;

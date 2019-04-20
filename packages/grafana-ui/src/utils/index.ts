@@ -12,3 +12,4 @@ export * from './logs';
 export * from './labels';
 export { getMappedValue } from './valueMappings';
 export * from './validate';
+export * from './object';

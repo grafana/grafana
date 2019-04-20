@@ -90,6 +90,12 @@ $container-max-widths: (
 $grid-columns: 12 !default;
 $grid-gutter-width: 30px !default;
 
+// Component heights
+// -------------------------
+$height-sm: 24px;
+$height-md: 32px;
+$height-lg: 48px;
+
 // Typography
 // -------------------------
 
@@ -168,6 +174,7 @@ $zindex-tooltip: 1030;
 $zindex-modal-backdrop: 1040;
 $zindex-modal: 1050;
 $zindex-typeahead: 1060;
+$zindex-timepicker-popover: 1070;
 
 // Buttons
 //

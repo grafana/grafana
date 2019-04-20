@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-// @ts-ignore
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
 // @ts-ignore

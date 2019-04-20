@@ -250,6 +250,11 @@ export interface ExploreItemState {
    */
   hiddenLogLevels?: LogLevel[];
 
+  /**
+   * How often query should be refreshed
+   */
+  refreshInterval?: string;
+
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
@@ -317,6 +322,7 @@ export interface QueryOptions {
   hinting?: boolean;
   instant?: boolean;
   valueWithRefId?: boolean;
+  maxDataPoints?: number;
 }
 
 export interface QueryTransaction {

@@ -20,6 +20,7 @@ import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
 import { loadPanelRef, copyReference } from '../state/PanelReference';
 import { AngularPanelPlugin, ReactPanelPlugin } from '@grafana/ui/src/types/panel';
+import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
   panel: PanelModel;
@@ -176,17 +177,27 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen, isEditing } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
 
     return (
-      <PanelChrome
-        plugin={plugin}
-        panel={panel}
-        dashboard={dashboard}
-        isFullscreen={isFullscreen}
-        isEditing={isEditing}
-      />
+      <AutoSizer>
+        {({ width, height }) => {
+          if (width === 0) {
+            return null;
+          }
+          return (
+            <PanelChrome
+              plugin={plugin}
+              panel={panel}
+              dashboard={dashboard}
+              isFullscreen={isFullscreen}
+              width={width}
+              height={height}
+            />
+          );
+        }}
+      </AutoSizer>
     );
   }
 

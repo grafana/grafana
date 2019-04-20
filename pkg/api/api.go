@@ -287,7 +287,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", Wrap(DeleteDashboardByUID))
 
 			dashboardRoute.Get("/db/:slug", Wrap(GetDashboard))
-			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboard))
+			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
@@ -325,7 +325,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Search
-		apiRoute.Get("/search/", Search)
+		apiRoute.Get("/search/", Wrap(Search))
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))
