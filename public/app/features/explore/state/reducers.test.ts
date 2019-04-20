@@ -515,6 +515,44 @@ describe('Explore reducer', () => {
             });
           });
 
+          describe('and refreshInterval differs', () => {
+            it('then it should return update refreshInterval', () => {
+              const { initalState, serializedUrlState } = setup();
+              const expectedState = {
+                ...initalState,
+                left: {
+                  ...initalState.left,
+                  update: {
+                    ...initalState.left.update,
+                    refreshInterval: true,
+                  },
+                },
+              };
+              const stateWithDifferentDataSource = {
+                ...initalState,
+                left: {
+                  ...initalState.left,
+                  urlState: {
+                    ...initalState.left.urlState,
+                    refreshInterval: '5s',
+                  },
+                },
+              };
+
+              reducerTester()
+                .givenReducer(exploreReducer, stateWithDifferentDataSource)
+                .whenActionIsDispatched(
+                  updateLocation({
+                    query: {
+                      left: serializedUrlState,
+                    },
+                    path: '/explore',
+                  })
+                )
+                .thenStateShouldEqual(expectedState);
+            });
+          });
+
           describe('and nothing differs', () => {
             fit('then it should return update ui', () => {
               const { initalState, serializedUrlState } = setup();

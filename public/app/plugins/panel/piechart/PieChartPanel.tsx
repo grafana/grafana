@@ -21,7 +21,7 @@ export class PieChartPanel extends PureComponent<Props> {
       valueMappings: options.valueMappings,
       thresholds: options.thresholds,
       valueOptions: options.valueOptions,
-      data: data,
+      data: data.series,
       theme: config.theme,
       replaceVariables: replaceVariables,
     });

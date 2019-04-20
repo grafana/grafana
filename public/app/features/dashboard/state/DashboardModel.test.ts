@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';

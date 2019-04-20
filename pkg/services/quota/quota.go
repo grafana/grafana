@@ -48,7 +48,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 					return false, err
 				}
 
-				if int64(usedSessions) > scope.DefaultLimit {
+				if usedSessions > scope.DefaultLimit {
 					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil
 				}

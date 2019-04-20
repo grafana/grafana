@@ -38,7 +38,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        let annotations = _.flattenDeep(results[0]);
+        let annotations: any[] = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -53,7 +53,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        const alertState = _.find(results[1], { panelId: options.panel.id });
+        const alertState: any = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,

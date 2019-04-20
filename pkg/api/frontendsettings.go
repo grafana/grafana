@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/util"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -8,9 +9,9 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
@@ -92,7 +93,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -100,14 +101,13 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
-				dsMap["database"] = ds.Database
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}

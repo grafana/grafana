@@ -1,6 +1,5 @@
 // Libaries
 import moment, { MomentInput } from 'moment';
-// @ts-ignore
 import _ from 'lodash';
 
 // Constants
@@ -179,7 +178,7 @@ export class DashboardModel {
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         const current = copy.templating.list[i];
-        const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -449,7 +448,7 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    const variable = _.find(this.templating.list, { name: panel.repeat });
+    const variable: any = _.find(this.templating.list, { name: panel.repeat } as any);
     if (!variable) {
       return;
     }
@@ -719,7 +718,7 @@ export class DashboardModel {
 
     if (row.collapsed) {
       row.collapsed = false;
-      const hasRepeat = _.some(row.panels, (p: PanelModel) => p.repeat);
+      const hasRepeat = _.some(row.panels as PanelModel[], (p: PanelModel) => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed

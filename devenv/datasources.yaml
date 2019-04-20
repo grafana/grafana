@@ -22,10 +22,11 @@ datasources:
     access: proxy
     database: site
     user: grafana
-    password: grafana
     url: http://localhost:8086
     jsonData:
       timeInterval: "15s"
+    secureJsonData:
+      password: grafana
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -110,14 +111,16 @@ datasources:
     url: localhost:3306
     database: grafana
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mysql-ds-tests
     type: mysql
     url: localhost:3306
     database: grafana_ds_tests
     user: grafana
-    password: password
+    secureJsonData:
+      password: password
 
   - name: gdev-mssql
     type: mssql

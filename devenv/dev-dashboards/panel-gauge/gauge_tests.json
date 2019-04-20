@@ -1,0 +1,1224 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1547810606599,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Value options tests",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "2",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Average, 2 decimals, ms unit",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 5,
+        "y": 1
+      },
+      "id": 5,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "max",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Max (90 ms), no decimals",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 11,
+        "y": 1
+      },
+      "id": 6,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "p",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "s",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Current (10 ms), no unit, prefix (p), suffix (s)",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 16,
+        "y": 1
+      },
+      "id": 16,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "id": 18,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,91"
+        }
+      ],
+      "timeFrom": "1h",
+      "timeShift": null,
+      "title": "",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 16,
+        "y": 5
+      },
+      "id": 17,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 5
+      },
+      "id": 19,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,81"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Value Mappings",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
+      "id": 12,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": [
+          {
+            "from": "",
+            "id": 1,
+            "operator": "",
+            "text": "TEN",
+            "to": "",
+            "type": 1,
+            "value": "10"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "value mapping 10 -> TEN",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "description": "should read N/A",
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 4,
+        "y": 10
+      },
+      "id": 13,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": [
+          {
+            "from": "",
+            "id": 1,
+            "operator": "",
+            "text": "N/A",
+            "to": "",
+            "type": 1,
+            "value": "null"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,null,null,null,null"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "value mapping null -> N/A",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "description": "should read N/A",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 8,
+        "y": 10
+      },
+      "id": 20,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": [
+          {
+            "from": "0",
+            "id": 1,
+            "operator": "",
+            "text": "OK",
+            "to": "10",
+            "type": 2,
+            "value": "null"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,null,null,null,null,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "value mapping range, 0-10 -> OK, value 10",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "description": "should read N/A",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 14,
+        "y": 10
+      },
+      "id": 21,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "current",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "none",
+        "valueMappings": [
+          {
+            "from": "0",
+            "id": 1,
+            "operator": "",
+            "text": "OK",
+            "to": "90",
+            "type": 2,
+            "value": "null"
+          },
+          {
+            "from": "90",
+            "id": 2,
+            "operator": "",
+            "text": "BAD",
+            "to": "100",
+            "type": 2,
+            "value": ""
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,10,null,null,null,null,10,95"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "value mapping range, 90-100 -> BAD, value 90",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 9,
+      "panels": [],
+      "title": "Templating & Repeat",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 19
+      },
+      "id": 7,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "2",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "$Servers",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "repeat": "Servers",
+      "repeatDirection": "h",
+      "scopedVars": {
+        "Servers": {
+          "selected": false,
+          "text": "server1",
+          "value": "server1"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "repeat $Servers",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 19
+      },
+      "id": 22,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "2",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "$Servers",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "repeat": null,
+      "repeatDirection": "h",
+      "repeatIteration": 1547810606599,
+      "repeatPanelId": 7,
+      "scopedVars": {
+        "Servers": {
+          "selected": false,
+          "text": "server2",
+          "value": "server2"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "repeat $Servers",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 19
+      },
+      "id": 23,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "2",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "$Servers",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "repeat": null,
+      "repeatDirection": "h",
+      "repeatIteration": 1547810606599,
+      "repeatPanelId": 7,
+      "scopedVars": {
+        "Servers": {
+          "selected": false,
+          "text": "server3",
+          "value": "server3"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "repeat $Servers",
+      "type": "gauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 19
+      },
+      "id": 24,
+      "links": [],
+      "nullPointMode": "null",
+      "options-gauge": {
+        "baseColor": "#299c46",
+        "decimals": "2",
+        "maxValue": 100,
+        "minValue": 0,
+        "options": {
+          "baseColor": "#299c46",
+          "decimals": 0,
+          "maxValue": 100,
+          "minValue": 0,
+          "prefix": "",
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "stat": "avg",
+          "suffix": "",
+          "thresholds": [],
+          "unit": "none",
+          "valueMappings": []
+        },
+        "prefix": "$Servers",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "stat": "avg",
+        "suffix": "",
+        "thresholds": [
+          {
+            "color": "#e24d42",
+            "index": 2,
+            "value": 90
+          },
+          {
+            "color": "#ef843c",
+            "index": 1,
+            "value": 75
+          },
+          {
+            "color": "#7EB26D",
+            "index": 0,
+            "value": null
+          }
+        ],
+        "unit": "ms",
+        "valueMappings": []
+      },
+      "repeat": null,
+      "repeatDirection": "h",
+      "repeatIteration": 1547810606599,
+      "repeatPanelId": 7,
+      "scopedVars": {
+        "Servers": {
+          "selected": false,
+          "text": "server4",
+          "value": "server4"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "repeat $Servers",
+      "type": "gauge"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 17,
+  "style": "dark",
+  "tags": ["gdev", "panel-tests"],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": "All",
+          "value": ["$__all"]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "Servers",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "server1",
+            "value": "server1"
+          },
+          {
+            "selected": false,
+            "text": "server2",
+            "value": "server2"
+          },
+          {
+            "selected": false,
+            "text": "server3",
+            "value": "server3"
+          },
+          {
+            "selected": false,
+            "text": "server4",
+            "value": "server4"
+          }
+        ],
+        "query": "server1,server2,server3,server4",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+  },
+  "timezone": "",
+  "title": "Panel Tests - Gauge",
+  "uid": "_5rDmaQiz",
+  "version": 5
+}
