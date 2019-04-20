@@ -193,6 +193,14 @@
       </div>
     </div>
 
+    <div ng-if="current.type === 'meta'" class="gf-form-group">
+      <h5 class="section-heading">Meta options</h5>
+      <div class="gf-form">
+        <span class="gf-form-label">Expression</span>
+        <textarea class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder='region=~"$region", instance=~"$instance"'></textarea>
+      </div>
+    </div>
+
     <div ng-if="current.type === 'custom'" class="gf-form-group">
       <h5 class="section-heading">Custom Options</h5>
       <div class="gf-form">
