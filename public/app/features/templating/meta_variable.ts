@@ -32,8 +32,8 @@ export class MetaVariable implements Variable {
   }
 
   updateOptions() {
-    const text = this.query.trim(),
-          value = this.templateSrv.replace(text, this.templateSrv.variables);
+    const text = this.query.trim();
+    const value = this.templateSrv.replace(text, this.templateSrv.variables);
     this.options = [{ text: text, value: value }];
     this.current = this.options[0];
     return Promise.resolve();
