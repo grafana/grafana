@@ -64,6 +64,13 @@ export class PanelQueryState {
       if (request.requestId) {
         getBackendSrv().resolveCancelerIfExists(request.requestId);
       }
+
+      // Unsubscribe to any streaming events
+      this.streamEvents.forEach(event => {
+        if (event.subscription) {
+          event.subscription.unsubscribe();
+        }
+      });
     } catch (err) {
       console.log('Error canceling request');
     }
@@ -162,12 +169,14 @@ export class PanelQueryState {
   streamCallback: () => void;
 
   updateDataFromStream() {
-    const { request } = this.data;
-    const series = [];
+    const { request } = this;
+    const { requestId } = request;
 
+    const series = [];
     let error: DataQueryError | undefined;
     this.streamEvents.forEach((event, key) => {
-      if (key.startsWith(request.requestId)) {
+      if (key.startsWith(requestId)) {
+        // Use prefix to say it is the same event
         series.push.apply(series, event.series);
         if (event.error) {
           error = event.error;
@@ -182,7 +191,8 @@ export class PanelQueryState {
 
     // Update the graphs
     return (this.data = {
-      ...this.data,
+      state: this.data.state,
+      request,
       series,
       error,
       legacy: this.sendLegacy
@@ -198,7 +208,7 @@ export class PanelQueryState {
   // This is passed to DataSourceAPI and may get partial results
   private streamingDataObserver = {
     next: (event: DataStreamEvent): boolean => {
-      const { request } = this.data;
+      const { request } = this;
       try {
         const { requestId } = event.request;
         // Make sure it is an event we are listening for
@@ -207,11 +217,10 @@ export class PanelQueryState {
             event.subscription.unsubscribe();
           }
           console.log('Ignoring event from different request', request.requestId, event.request.requestId);
-
           return false;
         }
 
-        // Set the Request ID on all series metadata
+        // Set the Request ID on all series metadata (for debugging)
         for (const series of event.series) {
           if (series.meta) {
             series.meta.requestId = requestId;
@@ -224,7 +233,9 @@ export class PanelQueryState {
           this.streamCallback(); // Throttled and sends events to subscribers
         }
       } catch (err) {
-        console.log('Error in stream handling', err, event);
+        console.log('Error in stream handling:', err);
+        console.log('>> EVENT:', event.request);
+        console.log('>> THIS:', this.request);
       }
       return true;
     },
