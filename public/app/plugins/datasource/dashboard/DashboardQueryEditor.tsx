@@ -153,7 +153,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const editURL = `d/${dashboard.uid}/${dashboard.title}?orgId=1?&fullscreen&edit&panelId=${query.panelId}`;
 
     return (
-      <div>
+      <div className={css({ padding: '16px' })}>
         <h4>Reuse the results from panel:</h4>
         <div className="gf-form">
           <Select
@@ -164,7 +164,6 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             onChange={item => this.onPanelChanged(item.value)}
           />
         </div>
-        <br />
         <br />
         {query.panelId && this.renderQueryData(editURL)}
       </div>
