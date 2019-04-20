@@ -93,7 +93,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      runner = new PanelQueryRunner();
+      runner = new PanelQueryRunner(1);
       runner.subscribe({
         next: (data: PanelData) => {
           ctx.events.push(data);

@@ -1,5 +1,5 @@
 import { DataSourceApi, DataQuery, PanelData, LoadingState } from '@grafana/ui';
-import { PanelQueryRunner } from 'app/features/dashboard/state/PanelQueryRunner';
+import { PanelQueryRunner, QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 import { DashboardQuery } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -21,15 +21,20 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi) {
 }
 
 export class SharedQueryRunner {
+  private containerPanel: PanelModel;
   private listenId: number;
   private listenPanel: PanelModel;
   private listenRunner: PanelQueryRunner;
   private subscription: Unsubscribable;
 
-  constructor(private runner: PanelQueryRunner) {}
+  constructor(private runner: PanelQueryRunner) {
+    this.containerPanel = getDashboardSrv()
+      .getCurrent()
+      .getPanelById(runner.panelId);
+  }
 
-  process(queries: DataQuery[]): Promise<PanelData> {
-    const panelId = getPanelIdFromQuery(queries);
+  process(options: QueryRunnerOptions): Promise<PanelData> {
+    const panelId = getPanelIdFromQuery(options.queries);
     if (!panelId) {
       this.disconnect();
       return getQueryError('Missing panel reference ID');
@@ -45,18 +50,37 @@ export class SharedQueryRunner {
       if (!this.listenPanel) {
         return getQueryError('Unknown Panel: ' + panelId);
       }
+      this.listenId = panelId;
       this.listenRunner = this.listenPanel.getQueryRunner();
       this.subscription = this.listenRunner.chain(this.runner);
+      console.log('Connecting panel: ', this.containerPanel.id, 'to:', this.listenId);
     }
 
     const data = this.listenRunner.getCurrentData();
     if (data.request && data.request.startTime) {
       const elapsed = Date.now() - data.request.startTime;
       if (elapsed < 1000) {
+        console.log('Using Recent query for', this.containerPanel.id, 'to:', this.listenId);
         return Promise.resolve(data);
       }
     }
-    this.listenPanel.refresh(); // ????? Won't really work often
+
+    // When fullscreen run with the current panel settings
+    if (this.containerPanel.fullscreen) {
+      const { datasource, targets } = this.listenPanel;
+      const modified = {
+        ...options,
+        panelId,
+        datasource,
+        queries: targets,
+      };
+      console.log('fullscreen so deligate:', modified);
+      return this.listenRunner.run(modified);
+    } else {
+      // TODO, maybe set a timer to make sure refresh is called soon?
+      console.log('Send refresh for', this.containerPanel.id, 'to:', this.listenId);
+      this.listenPanel.refresh();
+    }
     return Promise.resolve(data);
   }
 

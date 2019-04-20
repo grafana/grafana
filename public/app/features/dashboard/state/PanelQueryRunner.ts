@@ -51,12 +51,18 @@ function getNextRequestId() {
 }
 
 export class PanelQueryRunner {
+  panelId: number; // set by the constructor
+
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
 
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
+
+  constructor(panelId: number) {
+    this.panelId = panelId;
+  }
 
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
@@ -127,7 +133,7 @@ export class PanelQueryRunner {
       if (!this.sharedQueryRunner) {
         this.sharedQueryRunner = new SharedQueryRunner(this);
       }
-      return this.sharedQueryRunner.process(queries);
+      return this.sharedQueryRunner.process(options);
     } else if (this.sharedQueryRunner) {
       this.sharedQueryRunner.disconnect();
       this.sharedQueryRunner = null;
