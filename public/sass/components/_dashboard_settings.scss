@@ -65,7 +65,7 @@
 }
 
 .dashboard-settings__nav-item {
-  padding: 8px 16px;
+  padding: 8px 40px 8px 8px;
   color: $text-color;
   font-size: $font-size-md;
   line-height: 20px;
@@ -78,11 +78,13 @@
 
   .gicon {
     margin-bottom: 2px;
+    margin-right: 4px;
   }
 
   .fa {
     font-size: 17px;
     width: 16px;
+    margin-right: 4px;
   }
 }
 
