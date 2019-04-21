@@ -155,6 +155,8 @@ export class VariableEditorCtrl {
           return { text: ds.meta.name, value: ds.meta.id };
         })
         .value();
+
+      $scope.currentDatasource = null;
     };
 
     $scope.typeChanged = function() {
