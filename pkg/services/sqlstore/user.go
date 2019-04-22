@@ -2,10 +2,10 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"

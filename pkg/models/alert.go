@@ -1,8 +1,8 @@
 package models
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
