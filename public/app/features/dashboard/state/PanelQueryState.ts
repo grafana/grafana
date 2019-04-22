@@ -140,6 +140,18 @@ export class PanelQueryState {
     return this.data;
   }
 
+  setEmpty(): PanelData {
+    if (!this.request.endTime) {
+      this.request.endTime = Date.now();
+    }
+    return (this.data = {
+      state: LoadingState.Done,
+      series: [],
+      legacy: [],
+      request: this.request,
+    });
+  }
+
   setError(err: any): PanelData {
     if (!this.request.endTime) {
       this.request.endTime = Date.now();

@@ -127,11 +127,26 @@ export class PanelQueryRunner {
 
     let loadingStateTimeoutId = 0;
 
+    // Quick return when no queries
+    if (!request.targets.length) {
+      const data = state.setEmpty();
+      this.subject.next(data);
+      return data;
+    }
+
     try {
       const ds =
         datasource && (datasource as any).query
           ? (datasource as DataSourceApi)
           : await getDatasourceSrv().get(datasource as string, request.scopedVars);
+
+      // Attach the datasource name to each query
+      request.targets = request.targets.map(query => {
+        if (!query.datasource) {
+          query.datasource = ds.name;
+        }
+        return query;
+      });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
