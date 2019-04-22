@@ -127,13 +127,6 @@ export class PanelQueryRunner {
 
     let loadingStateTimeoutId = 0;
 
-    // Quick return when no queries
-    if (!request.targets.length) {
-      const data = state.setEmpty();
-      this.subject.next(data);
-      return data;
-    }
-
     try {
       const ds =
         datasource && (datasource as any).query
