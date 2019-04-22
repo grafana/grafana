@@ -7,10 +7,23 @@ import {
   isSeriesData,
   toSeriesData,
   DataQueryError,
+  SeriesDataStream,
+  SeriesData,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import isEqual from 'lodash/isEqual';
+import { Unsubscribable, Subscribable } from 'rxjs';
+
+export interface OpenStream {
+  refId: string;
+  openTime: number;
+  lastEvent: number; // Time
+  eventCount: number;
+  request: DataQueryRequest;
+  subscription: Unsubscribable;
+  source: Subscribable<SeriesData>;
+}
 
 export class PanelQueryState {
   // The current/last running request
@@ -27,6 +40,8 @@ export class PanelQueryState {
 
   sendSeries = false;
   sendLegacy = false;
+
+  openStreams?: OpenStream[];
 
   // A promise for the running query
   private executor: Promise<PanelData> = {} as any;
@@ -111,6 +126,9 @@ export class PanelQueryState {
               })
             : undefined;
 
+          // Check if any streams were returned
+          this.checkStreams(resp.streams);
+
           resolve(
             (this.data = {
               state: LoadingState.Done,
@@ -124,6 +142,18 @@ export class PanelQueryState {
           resolve(this.setError(err));
         });
     }));
+  }
+
+  checkStreams(streams?: SeriesDataStream[]) {
+    if (streams && streams.length) {
+      console.log('TODO connect streams', streams);
+    } else if (this.openStreams) {
+      // We have open streams, but query does not think so
+      for (const stream of this.openStreams) {
+        stream.subscription.unsubscribe();
+      }
+      this.openStreams = undefined;
+    }
   }
 
   /**

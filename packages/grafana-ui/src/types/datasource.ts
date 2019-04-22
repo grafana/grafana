@@ -3,6 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
+import { Subscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -173,8 +174,14 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
+export interface SeriesDataStream {
+  refId: string; // will match the query and the returned SeriesData
+  subscription: Subscribable<SeriesData>;
+}
+
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+  streams?: SeriesDataStream[];
 }
 
 export interface DataQuery {

@@ -1,6 +1,8 @@
 import _ from 'lodash';
-import { DataSourceApi, DataQueryRequest, TableData, TimeSeries } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, TableData, TimeSeries, DataSourceInstanceSettings } from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { StreamHandler } from './StreamHandler';
 
 type TestData = TimeSeries | TableData;
 
@@ -10,9 +12,10 @@ export interface TestDataRegistry {
 
 export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   id: number;
+  streams = new StreamHandler();
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
     this.id = instanceSettings.id;
   }
 
@@ -33,10 +36,16 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
-    return this.backendSrv
+    // Currently we do not support mixed with client only streaming
+    const resp = this.streams.process(options);
+    if (resp) {
+      return Promise.resolve(resp);
+    }
+
+    return getBackendSrv()
       .datasourceRequest({
         method: 'POST',
         url: '/api/tsdb/query',
@@ -92,7 +101,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       });
       timeWalker += step;
     }
-    return this.$q.when(events);
+    return Promise.resolve(events);
   }
 
   getQueryDisplayText(query: TestDataQuery) {
@@ -110,6 +119,6 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
   }
 }
