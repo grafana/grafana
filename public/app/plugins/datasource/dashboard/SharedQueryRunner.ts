@@ -59,8 +59,7 @@ export class SharedQueryRunner {
     const data = this.listenRunner.getCurrentData();
     if (data.request && data.request.startTime) {
       const elapsed = Date.now() - data.request.startTime;
-      if (elapsed < 1000) {
-        console.log('Using Recent query for', this.containerPanel.id, 'to:', this.listenId);
+      if (elapsed < 100) {
         return Promise.resolve(data);
       }
     }
