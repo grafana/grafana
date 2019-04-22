@@ -9,6 +9,8 @@ import {
   PanelOptionsGroup,
   FieldDisplayEditor,
   FieldDisplayOptions,
+  Field,
+  FieldPropertiesEditor,
 } from '@grafana/ui';
 
 // Types
@@ -34,6 +36,13 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       fieldOptions,
     });
 
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      defaults: field,
+    });
+  };
+
   onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
@@ -44,12 +53,15 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+
+          <FieldPropertiesEditor
+            title="Field (default)"
             showMinMax={true}
-            showPrefixSuffix={false}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
           />
+
           <PanelOptionsGroup title="Gauge">
             <div className="form-field">
               <FormLabel width={8}>Orientation</FormLabel>

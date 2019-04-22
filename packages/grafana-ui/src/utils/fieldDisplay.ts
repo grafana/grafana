@@ -23,6 +23,7 @@ export interface FieldDisplayOptions {
   suffix?: string;
 
   values: boolean; // If true show each row value
+  limit?: number; // if showing all values limit
   stats: string[]; // when !values, pick one value for the whole field
 
   defaults: Partial<Field>; // Use these values unless otherwise stated
@@ -82,6 +83,8 @@ export interface GetFieldDisplayValuesOptions {
   theme: GrafanaTheme;
 }
 
+export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
+
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions, sparkline } = options;
   const { defaults, override } = fieldOptions;
@@ -90,6 +93,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (data) {
+    const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const title = getTitleTemplate(fieldOptions.title, stats, data);
     const scopedVars: ScopedVars = {};
 
@@ -140,6 +144,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               suffix: fieldOptions.suffix ? replaceVariables(fieldOptions.suffix, scopedVars) : undefined,
               display: displayValue,
             });
+
+            // This will allow one for each series
+            if (values.length > limit) {
+              break;
+            }
           }
         } else {
           const results = calculateStats({

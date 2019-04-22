@@ -6,10 +6,12 @@ import { FormField, FormLabel, PanelOptionsGroup, UnitPicker, SelectOptionItem }
 
 // Types
 import { Field } from '../../types/data';
+import { toNumberString, toIntegerOrUndefined } from '../../utils';
 
 const labelWidth = 6;
 
 export interface Props {
+  title: string;
   options: Partial<Field>;
   onChange: (fieldProperties: Partial<Field>) => void;
   showMinMax: boolean;
@@ -21,70 +23,63 @@ export class FieldPropertiesEditor extends PureComponent<Props> {
   onDecimalChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
       ...this.props.options,
-      decimals: parseInt(event.target.value, 10), // May be NaN
+      decimals: toIntegerOrUndefined(event.target.value),
     });
   };
 
   onMinChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
       ...this.props.options,
-      min: parseInt(event.target.value, 10), // May be NaN
+      min: toIntegerOrUndefined(event.target.value),
     });
   };
 
   onMaxChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
       ...this.props.options,
-      min: parseInt(event.target.value, 10), // May be NaN
+      min: toIntegerOrUndefined(event.target.value),
     });
   };
 
   render() {
-    const { showMinMax } = this.props;
+    const { showMinMax, title } = this.props;
     const { unit, decimals, min, max } = this.props.options;
 
     return (
-      <PanelOptionsGroup title="Field">
+      <PanelOptionsGroup title={title}>
         <>
           <div className="gf-form">
             <FormLabel width={labelWidth}>Unit</FormLabel>
             <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />
           </div>
-          <FormField
-            label="Decimals"
-            labelWidth={labelWidth}
-            placeholder="auto"
-            onChange={this.onDecimalChange}
-            value={toDecimalString(decimals)}
-            type="number"
-          />
           {showMinMax && (
             <>
               <FormField
                 label="Min"
                 labelWidth={labelWidth}
                 onChange={this.onMinChange}
-                value={toDecimalString(min)}
+                value={toNumberString(min)}
                 type="number"
               />
               <FormField
                 label="Max"
                 labelWidth={labelWidth}
                 onChange={this.onMaxChange}
-                value={toDecimalString(max)}
+                value={toNumberString(max)}
                 type="number"
               />
             </>
           )}
+          <FormField
+            label="Decimals"
+            labelWidth={labelWidth}
+            placeholder="auto"
+            onChange={this.onDecimalChange}
+            value={toNumberString(decimals)}
+            type="number"
+          />
         </>
       </PanelOptionsGroup>
     );
   }
-}
-
-function toDecimalString(value: number | undefined | null) {
-  if (value !== null && value !== undefined && Number.isFinite(value as number)) {
-    return value.toString();
-  }
-  return '';
 }

@@ -9,6 +9,8 @@ import {
   ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
+  FieldPropertiesEditor,
+  Field,
 } from '@grafana/ui';
 
 import { SingleStatOptions, SparklineOptions } from './types';
@@ -41,6 +43,13 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       sparkline,
     });
 
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      override: field,
+    });
+  };
+
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
@@ -48,12 +57,15 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
-            showMinMax={false}
-            showPrefixSuffix={true}
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+
+          <FieldPropertiesEditor
+            title="Field (default)"
+            showMinMax={true}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
           />
+
           <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />

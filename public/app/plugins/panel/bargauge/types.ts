@@ -1,4 +1,5 @@
-import { VizOrientation, SelectOptionItem, StatID, SingleStatBaseOptions } from '@grafana/ui';
+import { VizOrientation, SelectOptionItem, SingleStatBaseOptions } from '@grafana/ui';
+import { standardGaugeFieldOptions } from '../gauge/types';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
   displayMode: 'basic' | 'lcd' | 'gradient';
@@ -18,16 +19,5 @@ export const orientationOptions: SelectOptionItem[] = [
 export const defaults: BarGaugeOptions = {
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
-  fieldOptions: {
-    title: '', // auto title
-    values: false,
-    stats: [StatID.mean],
-    defaults: {},
-    override: {
-      min: 0,
-      max: 100,
-    },
-    mappings: [],
-    thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
-  },
+  fieldOptions: standardGaugeFieldOptions,
 };

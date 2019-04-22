@@ -6,6 +6,8 @@ import {
   ValueMapping,
   FieldDisplayEditor,
   FieldDisplayOptions,
+  FieldPropertiesEditor,
+  Field,
 } from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
@@ -24,6 +26,13 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
       fieldOptions,
     });
 
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      defaults: field,
+    });
+  };
+
   render() {
     const { onOptionsChange, options } = this.props;
     const { fieldOptions } = options;
@@ -31,12 +40,15 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+
+          <FieldPropertiesEditor
+            title="Field (default)"
             showMinMax={true}
-            showPrefixSuffix={false}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
           />
+
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 

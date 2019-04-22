@@ -7,18 +7,37 @@ import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@g
 // Types
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
-import { FieldPropertiesEditor } from './FieldPropertiesEditor';
+import Select, { SelectOptionItem } from '../Select/Select';
+import { toNumberString, toIntegerOrUndefined } from '../../utils';
 
-const labelWidth = 6;
+const labelWidth = 5;
+
+const showOptions: SelectOptionItem[] = [
+  {
+    value: true,
+    label: 'All Values',
+    description: 'Each row in the response data',
+  },
+  {
+    value: false,
+    label: 'Calculation',
+    description: 'Calculate a value based on the response',
+  },
+];
 
 export interface Props {
   options: FieldDisplayOptions;
   onChange: (valueOptions: FieldDisplayOptions) => void;
-  showMinMax: boolean;
   showPrefixSuffix: boolean;
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
+  onShowValuesChange = (item: SelectOptionItem) => {
+    const val = item.value === true;
+    console.log('Change ShowValue:', val);
+    this.props.onChange({ ...this.props.options, values: val });
+  };
+
   onStatsChange = (stats: string[]) => {
     this.props.onChange({ ...this.props.options, stats });
   };
@@ -26,9 +45,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
   onTitleChange = (event: ChangeEvent<HTMLInputElement>) =>
     this.props.onChange({ ...this.props.options, title: event.target.value });
 
-  onOverrideChange = (value: Partial<Field>) => {
-    this.props.onChange({ ...this.props.options, override: value });
-  };
   onDefaultsChange = (value: Partial<Field>) => {
     this.props.onChange({ ...this.props.options, defaults: value });
   };
@@ -39,28 +55,57 @@ export class FieldDisplayEditor extends PureComponent<Props> {
   onSuffixChange = (event: ChangeEvent<HTMLInputElement>) =>
     this.props.onChange({ ...this.props.options, suffix: event.target.value });
 
+  onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onChange({
+      ...this.props.options,
+      limit: toIntegerOrUndefined(event.target.value),
+    });
+  };
+
   render() {
-    const { showMinMax, showPrefixSuffix, options } = this.props;
-    const { title, stats, override, prefix, suffix } = options;
+    const { showPrefixSuffix, options } = this.props;
+    const { title, stats, prefix, suffix, values, limit } = options;
 
     return (
-      <PanelOptionsGroup title="Value">
+      <PanelOptionsGroup title="Display">
         <>
+          <FormField
+            label="Title"
+            labelWidth={labelWidth}
+            onChange={this.onTitleChange}
+            value={title}
+            placeholder="Auto"
+          />
           <div className="gf-form">
             <FormLabel width={labelWidth}>Show</FormLabel>
-            <StatsPicker
-              width={12}
-              placeholder="Choose Stat"
-              defaultStat={StatID.mean}
-              allowMultiple={true}
-              stats={stats}
-              onChange={this.onStatsChange}
+            <Select
+              options={showOptions}
+              value={values ? showOptions[0] : showOptions[1]}
+              onChange={this.onShowValuesChange}
             />
           </div>
-          <FormField label="Title" labelWidth={labelWidth} onChange={this.onTitleChange} value={title} />
-
-          <FieldPropertiesEditor showMinMax={showMinMax} onChange={this.onOverrideChange} options={override} />
-
+          {values ? (
+            <FormField
+              label="Limit"
+              labelWidth={labelWidth}
+              placeholder="auto XXX"
+              onChange={this.onLimitChange}
+              value={toNumberString(limit)}
+              type="number"
+            />
+          ) : (
+            <div className="gf-form">
+              <FormLabel width={labelWidth}>Calc</FormLabel>
+              <StatsPicker
+                width={12}
+                placeholder="Choose Stat"
+                defaultStat={StatID.mean}
+                allowMultiple={true}
+                stats={stats}
+                onChange={this.onStatsChange}
+              />
+            </div>
+          )}
           {showPrefixSuffix && (
             <>
               <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />

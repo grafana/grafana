@@ -9,6 +9,8 @@ import {
   ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
+  Field,
+  FieldPropertiesEditor,
 } from '@grafana/ui';
 
 import { GaugeOptionsBox } from './GaugeOptionsBox';
@@ -33,6 +35,13 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       fieldOptions,
     });
 
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      defaults: field,
+    });
+  };
+
   render() {
     const { onOptionsChange, options } = this.props;
     const { fieldOptions } = options;
@@ -40,12 +49,15 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+
+          <FieldPropertiesEditor
+            title="Field (default)"
             showMinMax={true}
-            showPrefixSuffix={false}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
           />
+
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
