@@ -5,7 +5,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@grafana/ui';
 
 // Types
-import { FieldDisplayOptions } from '../../utils/fieldDisplay';
+import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
@@ -34,7 +34,6 @@ export interface Props {
 export class FieldDisplayEditor extends PureComponent<Props> {
   onShowValuesChange = (item: SelectOptionItem) => {
     const val = item.value === true;
-    console.log('Change ShowValue:', val);
     this.props.onChange({ ...this.props.options, values: val });
   };
 
@@ -88,7 +87,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
             <FormField
               label="Limit"
               labelWidth={labelWidth}
-              placeholder="auto XXX"
+              placeholder={`${DEFAULT_FIELD_DISPLAY_VALUES_LIMIT}`}
               onChange={this.onLimitChange}
               value={toNumberString(limit)}
               type="number"
