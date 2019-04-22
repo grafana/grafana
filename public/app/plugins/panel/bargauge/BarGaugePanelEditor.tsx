@@ -7,9 +7,8 @@ import {
   ValueMappingsEditor,
   PanelOptionsGrid,
   PanelOptionsGroup,
-  FormField,
-  SingleStatValueOptions,
-  SingleStatValueEditor,
+  FieldDisplayEditor,
+  FieldDisplayOptions,
 } from '@grafana/ui';
 
 // Types
@@ -29,14 +28,12 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       valueMappings,
     });
 
-  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+  onValueOptionsChanged = (valueOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
       valueOptions,
     });
 
-  onMinValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, minValue: target.value });
-  onMaxValueChange = ({ target }) => this.props.onOptionsChange({ ...this.props.options, maxValue: target.value });
   onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
@@ -46,10 +43,13 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <FieldDisplayEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            showMinMax={true}
+            showPrefixSuffix={false}
+          />
           <PanelOptionsGroup title="Gauge">
-            <FormField label="Min value" labelWidth={8} onChange={this.onMinValueChange} value={options.minValue} />
-            <FormField label="Max value" labelWidth={8} onChange={this.onMaxValueChange} value={options.maxValue} />
             <div className="form-field">
               <FormLabel width={8}>Orientation</FormLabel>
               <Select

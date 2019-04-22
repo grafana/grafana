@@ -16,16 +16,12 @@ import {
   GrafanaTheme,
   GrafanaThemeType,
   DecimalCount,
+  Field,
 } from '../types';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
-export interface DisplayValueOptions {
-  unit?: string;
-  decimals?: DecimalCount;
-  dateFormat?: string; // If set try to convert numbers to date
-
-  color?: string;
+export interface DisplayValueOptions extends Partial<Field> {
   mappings?: ValueMapping[];
   thresholds?: Threshold[];
   prefix?: string;

@@ -4,8 +4,8 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
-  SingleStatValueOptions,
-  SingleStatValueEditor,
+  FieldDisplayEditor,
+  FieldDisplayOptions,
 } from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
@@ -18,7 +18,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
       valueMappings,
     });
 
-  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+  onValueOptionsChanged = (valueOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
       valueOptions,
@@ -30,7 +30,12 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <FieldDisplayEditor
+            onChange={this.onValueOptionsChanged}
+            options={options.valueOptions}
+            showMinMax={true}
+            showPrefixSuffix={false}
+          />
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 

@@ -9,10 +9,13 @@ export const defaults: PieChartOptions = {
   pieType: PieChartType.PIE,
   strokeWidth: 1,
   valueOptions: {
-    unit: 'short',
-    stat: StatID.last,
-    suffix: '',
-    prefix: '',
+    title: '', // auto title
+    showAllValues: false,
+    stats: [StatID.last],
+    defaults: {},
+    override: {
+      unit: 'short',
+    },
   },
   valueMappings: [],
   thresholds: [],

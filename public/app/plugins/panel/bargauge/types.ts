@@ -1,8 +1,6 @@
 import { VizOrientation, SelectOptionItem, StatID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface BarGaugeOptions extends SingleStatBaseOptions {
-  minValue: number;
-  maxValue: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
@@ -18,16 +16,17 @@ export const orientationOptions: SelectOptionItem[] = [
 ];
 
 export const defaults: BarGaugeOptions = {
-  minValue: 0,
-  maxValue: 100,
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
   valueOptions: {
-    unit: 'none',
-    stat: StatID.mean,
-    prefix: '',
-    suffix: '',
-    decimals: null,
+    title: '', // auto title
+    showAllValues: false,
+    stats: [StatID.mean],
+    defaults: {},
+    override: {
+      min: 0,
+      max: 100,
+    },
   },
   thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   valueMappings: [],

@@ -28,13 +28,12 @@ export const defaults: SingleStatOptions = {
     lineColor: 'rgb(31, 120, 193)',
     fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-
   valueOptions: {
-    prefix: '',
-    suffix: '',
-    decimals: null,
-    stat: StatID.mean,
-    unit: 'none',
+    title: '', // auto title
+    showAllValues: false,
+    stats: [StatID.mean],
+    defaults: {},
+    override: {},
   },
   valueMappings: [],
   thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],

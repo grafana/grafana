@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { PieChart, getSingleStatDisplayValues } from '@grafana/ui';
+import { PieChart, getFieldDisplayValues } from '@grafana/ui';
 
 // Types
 import { PieChartOptions } from './types';
@@ -17,14 +17,14 @@ export class PieChartPanel extends PureComponent<Props> {
   render() {
     const { width, height, options, data, replaceVariables } = this.props;
 
-    const values = getSingleStatDisplayValues({
+    const values = getFieldDisplayValues({
       valueMappings: options.valueMappings,
       thresholds: options.thresholds,
       valueOptions: options.valueOptions,
       data: data.series,
       theme: config.theme,
       replaceVariables: replaceVariables,
-    });
+    }).map(v => v.display);
 
     return (
       <PieChart
