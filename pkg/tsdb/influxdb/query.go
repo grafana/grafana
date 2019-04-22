@@ -2,9 +2,9 @@ package influxdb
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
