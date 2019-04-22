@@ -23,5 +23,4 @@ errorCode = 0
 # [blank-imports]
 # [rule.receiver-naming]
 # [error-strings]
-# [rule.if-return]
 # [rule.blank-imports]
