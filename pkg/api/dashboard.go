@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -106,14 +107,24 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(isDashboardProvisioned)
+	provisioningDataQuery := &m.GetProvisionedDashboardDataByIdQuery{DashboardId: dash.Id}
+	err = bus.Dispatch(provisioningDataQuery)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	if isDashboardProvisioned.Result {
+	if provisioningDataQuery.Result != nil {
 		meta.Provisioned = true
+		workDir, err := os.Getwd()
+		if err != nil {
+			// TODO
+			fmt.Println("Got Error ", err)
+		}
+		meta.ProvisioningFilePath, err = filepath.Rel(workDir, provisioningDataQuery.Result.ExternalId)
+		if err != nil {
+			// TODO
+			fmt.Println("Got Error ", err)
+		}
 	}
 
 	// make sure db version is in sync with json model version

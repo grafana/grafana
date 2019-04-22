@@ -56,8 +56,8 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
-					cmd.Result = false
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					cmd.Result = nil
 					return nil
 				})
 
@@ -86,9 +86,9 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
-					cmd.Result = true
+					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
@@ -110,8 +110,8 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
-				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
-					cmd.Result = false
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					cmd.Result = nil
 					return nil
 				})
 
@@ -130,9 +130,9 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should not return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
-					cmd.Result = true
+					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
@@ -167,9 +167,9 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
-					cmd.Result = true
+					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
@@ -242,8 +242,12 @@ type Result struct {
 }
 
 func setupDeleteHandlers(provisioned bool) *Result {
-	bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
-		cmd.Result = provisioned
+	bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+		if provisioned {
+			cmd.Result = &models.DashboardProvisioning{}
+		} else {
+			cmd.Result = nil
+		}
 		return nil
 	})
 

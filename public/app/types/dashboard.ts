@@ -26,6 +26,7 @@ export interface DashboardMeta {
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;
   provisioned?: boolean;
+  provisioningFilePath?: string;
   focusPanelId?: number;
   isStarred?: boolean;
   showSettings?: boolean;

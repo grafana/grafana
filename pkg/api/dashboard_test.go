@@ -43,8 +43,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -198,8 +198,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.HasAcl = true
 		setting.ViewersCanEdit = false
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -636,8 +636,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -766,8 +766,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -909,8 +909,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = true
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = &m.DashboardProvisioning{}
 			return nil
 		})
 
