@@ -17,9 +17,10 @@ import (
 	"time"
 
 	"github.com/go-macaron/session"
+	ini "gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -182,9 +183,6 @@ var (
 
 	// Explore UI
 	ExploreEnabled bool
-
-	// logger
-	logger log.Logger
 
 	// Grafana.NET URL
 	GrafanaComUrl string
