@@ -13,7 +13,6 @@ export interface Props {
   options: Partial<Field>;
   onChange: (fieldProperties: Partial<Field>) => void;
   showMinMax: boolean;
-  showPrefixSuffix: boolean;
 }
 
 export class FieldPropertiesEditor extends PureComponent<Props> {
@@ -40,14 +39,9 @@ export class FieldPropertiesEditor extends PureComponent<Props> {
     });
   };
 
-  onPrefixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, prefix: event.target.value });
-  onSuffixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, suffix: event.target.value });
-
   render() {
-    const { showPrefixSuffix, showMinMax } = this.props;
-    const { unit, decimals, min, max, prefix, suffix } = this.props.options;
+    const { showMinMax } = this.props;
+    const { unit, decimals, min, max } = this.props.options;
 
     return (
       <PanelOptionsGroup title="Field">
@@ -80,12 +74,6 @@ export class FieldPropertiesEditor extends PureComponent<Props> {
                 value={toDecimalString(max)}
                 type="number"
               />
-            </>
-          )}
-          {showPrefixSuffix && (
-            <>
-              <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
-              <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
             </>
           )}
         </>

@@ -4,13 +4,10 @@ import React, { PureComponent } from 'react';
 // Utils & Services
 import { config } from 'app/core/config';
 
-// Components
-import { VizRepeater, FieldDisplay } from '@grafana/ui/src/components';
-import { BigValueSparkline, BigValue } from '@grafana/ui/src/components/BigValue/BigValue';
-
 // Types
 import { SingleStatOptions } from './types';
-import { PanelProps, getFieldDisplayValues } from '@grafana/ui';
+import { PanelProps, getFieldDisplayValues, VizRepeater, FieldDisplay, BigValue, DisplayValue } from '@grafana/ui';
+import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -26,7 +23,34 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       };
     }
 
-    return <BigValue value={value.display} sparkline={sparkline} width={width} height={height} theme={config.theme} />;
+    // TODO, fonts and colors
+    let prefix: DisplayValue;
+    let suffix: DisplayValue;
+
+    if (value.prefix) {
+      prefix = {
+        text: value.prefix,
+        numeric: NaN,
+      };
+    }
+    if (value.suffix) {
+      suffix = {
+        text: value.suffix,
+        numeric: NaN,
+      };
+    }
+
+    return (
+      <BigValue
+        value={value.display}
+        sparkline={sparkline}
+        width={width}
+        height={height}
+        prefix={prefix}
+        suffix={suffix}
+        theme={config.theme}
+      />
+    );
   };
 
   getValues = (): FieldDisplay[] => {

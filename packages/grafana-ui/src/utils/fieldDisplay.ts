@@ -1,9 +1,8 @@
-import cloneDeep from 'lodash/cloneDeep';
+import toNumber from 'lodash/toNumber';
+
 import {
   ValueMapping,
   Threshold,
-  VizOrientation,
-  PanelModel,
   DisplayValue,
   FieldType,
   NullValueMode,
@@ -13,37 +12,25 @@ import {
   Field,
   ScopedVars,
   GraphSeriesValue,
-} from '../../types';
-import { getStatsCalculators, calculateStats, StatID } from '../../utils/statsCalculator';
-import { getDisplayProcessor } from '../../utils/displayValue';
-import { getFlotPairs } from '../../utils/flotPairs';
-export { FieldDisplayEditor } from './FieldDisplayEditor';
-
-export interface SingleStatBaseOptions {
-  valueMappings: ValueMapping[];
-  thresholds: Threshold[];
-  valueOptions: FieldDisplayOptions;
-  orientation: VizOrientation;
-}
+} from '../types/index';
+import { calculateStats, StatID } from './statsCalculator';
+import { getDisplayProcessor } from './displayValue';
+import { getFlotPairs } from './flotPairs';
 
 export interface FieldDisplayOptions {
   title?: string; // empty is 'auto', otherwise template
+  prefix?: string;
+  suffix?: string;
 
-  showAllValues: boolean; // If true show each row value
+  values: boolean; // If true show each row value
   stats: string[]; // when !values, pick one value for the whole field
 
   defaults: Partial<Field>; // Use these values unless otherwise stated
   override: Partial<Field>; // Set these values regardless of the source
-}
 
-export interface GetFieldDisplayValueOptions {
-  data?: SeriesData[];
-  theme: GrafanaTheme;
-  valueMappings: ValueMapping[];
+  // Could these be data driven also?
   thresholds: Threshold[];
-  valueOptions: FieldDisplayOptions;
-  replaceVariables: InterpolateFunction;
-  sparkline?: boolean;
+  mappings: ValueMapping[];
 }
 
 const VAR_SERIES_NAME = '__series_name';
@@ -83,17 +70,27 @@ export interface FieldDisplay {
   field: Field;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
+  prefix?: string;
+  suffix?: string;
 }
 
-export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): FieldDisplay[] => {
-  const { data, replaceVariables, valueOptions, sparkline } = options;
-  const { defaults, override, showAllValues } = valueOptions;
-  const stats = valueOptions.stats.length ? valueOptions.stats : [StatID.last];
+export interface GetFieldDisplayValuesOptions {
+  data?: SeriesData[];
+  fieldOptions: FieldDisplayOptions;
+  replaceVariables: InterpolateFunction;
+  sparkline?: boolean; // Calculate the sparkline
+  theme: GrafanaTheme;
+}
+
+export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
+  const { data, replaceVariables, fieldOptions, sparkline } = options;
+  const { defaults, override } = fieldOptions;
+  const stats = fieldOptions.stats.length ? fieldOptions.stats : [StatID.last];
 
   const values: FieldDisplay[] = [];
 
   if (data) {
-    const title = getTitleTemplate(valueOptions.title, stats, data);
+    const title = getTitleTemplate(fieldOptions.title, stats, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length; s++) {
@@ -111,12 +108,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): Fie
       }
 
       for (let i = 0; i < series.fields.length; i++) {
-        // Maybe use a different method that checks isNaN? and 'none'
-        const field: Field = {
-          ...defaults,
-          ...series.fields[i],
-          ...override,
-        };
+        const field = getFieldProperties(defaults, series.fields[i], override);
 
         // Show all number fields
         if (field.type !== FieldType.number) {
@@ -126,16 +118,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): Fie
         scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name ? field.name : `Field[${s}]` };
 
         const display = getDisplayProcessor({
-          ...field,
-          mappings: options.valueMappings,
-          thresholds: options.thresholds,
-          prefix: field.prefix ? replaceVariables(field.prefix) : undefined,
-          suffix: field.suffix ? replaceVariables(field.suffix) : undefined,
+          field,
+          mappings: fieldOptions.mappings,
+          thresholds: fieldOptions.thresholds,
           theme: options.theme,
         });
 
         // Show all number fields
-        if (showAllValues) {
+        if (fieldOptions.values) {
           for (const row of series.rows) {
             // Add all the row variables
             for (let j = 0; j < series.fields.length; j++) {
@@ -146,6 +136,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): Fie
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               field,
+              prefix: fieldOptions.prefix ? replaceVariables(fieldOptions.prefix, scopedVars) : undefined,
+              suffix: fieldOptions.suffix ? replaceVariables(fieldOptions.suffix, scopedVars) : undefined,
               display: displayValue,
             });
           }
@@ -175,6 +167,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): Fie
             values.push({
               field,
               display: displayValue,
+              prefix: fieldOptions.prefix ? replaceVariables(fieldOptions.prefix, scopedVars) : undefined,
+              suffix: fieldOptions.suffix ? replaceVariables(fieldOptions.suffix, scopedVars) : undefined,
               sparkline: points,
             });
           }
@@ -199,44 +193,65 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValueOptions): Fie
   return values;
 };
 
-const optionsToKeep = ['valueOptions', 'stat', 'maxValue', 'maxValue', 'thresholds', 'valueMappings'];
-
-export const sharedSingleStatOptionsCheck = (
-  options: Partial<SingleStatBaseOptions> | any,
-  prevPluginId: string,
-  prevOptions: any
-) => {
-  for (const k of optionsToKeep) {
-    if (prevOptions.hasOwnProperty(k)) {
-      options[k] = cloneDeep(prevOptions[k]);
-    }
-  }
-  return options;
+const numericFieldProps: any = {
+  decimals: true,
+  min: true,
+  max: true,
 };
 
-export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseOptions>) => {
-  const options = panel.options;
-
-  if (!options) {
-    // This happens on the first load or when migrating from angular
-    return {};
+/**
+ * Returns a version of the field with the overries applied.  Any property with
+ * value: null | undefined | empty string are skipped.
+ *
+ * For numeric values, only valid numbers will be applied
+ * for units, 'none' will be skipped
+ */
+export function applyFieldProperties(field: Field, props?: Partial<Field>): Field {
+  if (!props) {
+    return field;
   }
+  const keys = Object.keys(props);
+  if (!keys.length) {
+    return field;
+  }
+  const copy = { ...field } as any; // make a copy that we will manipulate directly
+  for (const key of keys) {
+    const val = (props as any)[key];
+    if (val === null || val === undefined) {
+      continue;
+    }
 
-  if (options.valueOptions) {
-    // 6.1 renamed some stats, This makes sure they are up to date
-    // avg -> mean, current -> last, total -> sum
-    const { valueOptions } = options;
-    if (valueOptions) {
-      // 6.2 renamed 'stat' to 'stats'
-      const opts = valueOptions as any;
-      if (opts.stat) {
-        valueOptions.stats = [opts.stat];
-        delete opts.stat;
+    if (numericFieldProps[key]) {
+      const num = toNumber(val);
+      if (!isNaN(num)) {
+        copy[key] = num;
       }
-      if (valueOptions.stats) {
-        valueOptions.stats = getStatsCalculators(valueOptions.stats).map(s => s.id);
+    } else if (val) {
+      // skips empty string
+      if (key === 'unit' && val === 'none') {
+        continue;
       }
+      copy[key] = val;
     }
   }
-  return options;
-};
+  return copy as Field;
+}
+
+type PartialField = Partial<Field>;
+
+export function getFieldProperties(...props: PartialField[]): Field {
+  let field = props[0] as Field;
+  for (let i = 1; i < props.length; i++) {
+    field = applyFieldProperties(field, props[i]);
+  }
+
+  // Verify that max > min
+  if (field.hasOwnProperty('min') && field.hasOwnProperty('max') && field.min! > field.max!) {
+    return {
+      ...field,
+      min: field.max,
+      max: field.min,
+    };
+  }
+  return field;
+}

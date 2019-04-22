@@ -17,21 +17,21 @@ import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
       thresholds,
     });
 
-  onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
+  onValueMappingsChanged = (mappings: ValueMapping[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      mappings,
     });
 
-  onValueOptionsChanged = (valueOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions,
+      fieldOptions,
     });
 
   onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
@@ -39,13 +39,14 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
   render() {
     const { options } = this.props;
+    const { fieldOptions } = options;
 
     return (
       <>
         <PanelOptionsGrid>
           <FieldDisplayEditor
-            onChange={this.onValueOptionsChanged}
-            options={options.valueOptions}
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
             showMinMax={true}
             showPrefixSuffix={false}
           />
@@ -71,10 +72,10 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
               />
             </div>
           </PanelOptionsGroup>
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
       </>
     );
   }

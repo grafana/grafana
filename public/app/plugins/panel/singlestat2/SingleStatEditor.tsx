@@ -18,21 +18,21 @@ import { SparklineEditor } from './SparklineEditor';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
       thresholds,
     });
 
-  onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
+  onValueMappingsChanged = (mappings: ValueMapping[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      mappings,
     });
 
-  onValueOptionsChanged = (valueOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions,
+      fieldOptions,
     });
 
   onSparklineChanged = (sparkline: SparklineOptions) =>
@@ -43,13 +43,14 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
 
   render() {
     const { options } = this.props;
+    const { fieldOptions } = options;
 
     return (
       <>
         <PanelOptionsGrid>
           <FieldDisplayEditor
-            onChange={this.onValueOptionsChanged}
-            options={options.valueOptions}
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
             showMinMax={false}
             showPrefixSuffix={true}
           />
@@ -57,10 +58,10 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
       </>
     );
   }

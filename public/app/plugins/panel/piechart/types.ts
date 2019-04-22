@@ -8,16 +8,16 @@ export interface PieChartOptions extends SingleStatBaseOptions {
 export const defaults: PieChartOptions = {
   pieType: PieChartType.PIE,
   strokeWidth: 1,
-  valueOptions: {
+  orientation: VizOrientation.Auto,
+  fieldOptions: {
     title: '', // auto title
-    showAllValues: false,
+    values: false,
     stats: [StatID.last],
     defaults: {},
     override: {
       unit: 'short',
     },
+    mappings: [],
+    thresholds: [],
   },
-  valueMappings: [],
-  thresholds: [],
-  orientation: VizOrientation.Auto,
 };

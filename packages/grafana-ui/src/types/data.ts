@@ -42,8 +42,6 @@ export interface Field {
   color?: string;
   min?: number | null;
   max?: number | null;
-  prefix?: string;
-  suffix?: string;
 }
 
 export interface Labels {

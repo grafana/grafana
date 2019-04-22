@@ -7,8 +7,8 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
-  FieldDisplayEditor,
   FieldDisplayOptions,
+  FieldDisplayEditor,
 } from '@grafana/ui';
 
 import { GaugeOptionsBox } from './GaugeOptionsBox';
@@ -16,40 +16,41 @@ import { GaugeOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
       thresholds,
     });
 
-  onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
+  onValueMappingsChanged = (mappings: ValueMapping[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      mappings,
     });
 
-  onValueOptionsChanged = (valueOptions: FieldDisplayOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions,
+      fieldOptions,
     });
 
   render() {
     const { onOptionsChange, options } = this.props;
+    const { fieldOptions } = options;
 
     return (
       <>
         <PanelOptionsGrid>
           <FieldDisplayEditor
-            onChange={this.onValueOptionsChanged}
-            options={options.valueOptions}
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
             showMinMax={true}
             showPrefixSuffix={false}
           />
           <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
       </>
     );
   }

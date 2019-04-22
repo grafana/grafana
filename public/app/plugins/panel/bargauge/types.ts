@@ -18,16 +18,16 @@ export const orientationOptions: SelectOptionItem[] = [
 export const defaults: BarGaugeOptions = {
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
-  valueOptions: {
+  fieldOptions: {
     title: '', // auto title
-    showAllValues: false,
+    values: false,
     stats: [StatID.mean],
     defaults: {},
     override: {
       min: 0,
       max: 100,
     },
+    mappings: [],
+    thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   },
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
-  valueMappings: [],
 };

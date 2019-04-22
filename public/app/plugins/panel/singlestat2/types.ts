@@ -28,14 +28,14 @@ export const defaults: SingleStatOptions = {
     lineColor: 'rgb(31, 120, 193)',
     fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-  valueOptions: {
+  fieldOptions: {
     title: '', // auto title
-    showAllValues: false,
+    values: false,
     stats: [StatID.mean],
     defaults: {},
     override: {},
+    mappings: [],
+    thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   },
-  valueMappings: [],
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
   orientation: VizOrientation.Auto,
 };
