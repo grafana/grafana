@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,16 +47,15 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error
 		}
 		if has {
 			return org.Id, nil
+		}
+		if setting.AutoAssignOrgId == 1 {
+			org.Name = "Main Org."
+			org.Id = int64(setting.AutoAssignOrgId)
 		} else {
-			if setting.AutoAssignOrgId == 1 {
-				org.Name = "Main Org."
-				org.Id = int64(setting.AutoAssignOrgId)
-			} else {
-				sqlog.Info("Could not create user: organization id %v does not exist",
-					setting.AutoAssignOrgId)
-				return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
-					setting.AutoAssignOrgId)
-			}
+			sqlog.Info("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
+			return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
+				setting.AutoAssignOrgId)
 		}
 	} else {
 		org.Name = cmd.OrgName

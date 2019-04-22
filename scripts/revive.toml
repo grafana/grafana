@@ -9,6 +9,7 @@ errorCode = 0
 [rule.range]
 [rule.superfluous-else]
 [rule.modifies-parameter]
+[rule.indent-error-flow]
 
 # This can be checked by other tools like megacheck
 [rule.unreachable-code]
@@ -23,5 +24,4 @@ errorCode = 0
 # [rule.receiver-naming]
 # [error-strings]
 # [rule.if-return]
-# [rule.indent-error-flow]
 # [rule.blank-imports]

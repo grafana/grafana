@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -160,7 +159,6 @@ func (query *Query) renderTz() string {
 	tz := query.Tz
 	if tz == "" {
 		return ""
-	} else {
-		return fmt.Sprintf(" tz('%s')", tz)
 	}
+	return fmt.Sprintf(" tz('%s')", tz)
 }
