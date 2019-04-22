@@ -10,6 +10,7 @@ errorCode = 0
 [rule.superfluous-else]
 [rule.modifies-parameter]
 [rule.indent-error-flow]
+[rule.error-strings]
 
 # This can be checked by other tools like megacheck
 [rule.unreachable-code]
@@ -18,9 +19,8 @@ errorCode = 0
 # [rule.unexported-return]
 # [rule.exported]
 # [rule.var-naming]
-# [error-naming]
+# [rule.error-naming]
 # [rule.dot-imports]
 # [blank-imports]
 # [rule.receiver-naming]
-# [error-strings]
 # [rule.blank-imports]

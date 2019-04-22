@@ -10,8 +10,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+	// self registering services
 
 	"github.com/facebookgo/inject"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -19,14 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry"
-
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/setting"
-
-	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
@@ -238,7 +236,7 @@ func sendSystemdNotification(state string) error {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
 
 	if notifySocket == "" {
-		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset.")
+		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset")
 	}
 
 	socketAddr := &net.UnixAddr{

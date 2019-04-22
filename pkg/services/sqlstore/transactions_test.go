@@ -5,12 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
-var ProvokedError = errors.New("testing error.")
+var ProvokedError = errors.New("testing error")
 
 func TestTransaction(t *testing.T) {
 	ss := InitTestDB(t)
