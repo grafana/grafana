@@ -9,11 +9,12 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"gopkg.in/ldap.v3"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/ldap.v3"
 )
 
 type ILdapConn interface {
@@ -31,6 +32,7 @@ type ILdapAuther interface {
 }
 
 type ldapAuther struct {
+	config            *LdapConfig
 	server            *LdapServerConf
 	conn              ILdapConn
 	requireSecondBind bool
@@ -53,7 +55,19 @@ var New = func(server *LdapServerConf) ILdapAuther {
 	return &ldapAuther{server: server, log: log.New("ldap")}
 }
 
+func NewNew(config *LdapConfig) *ldapAuther {
+	return &ldapAuther{
+		config: config,
+		server: config.Servers[0],
+		log:    log.New("ldap"),
+	}
+}
+
 func (a *ldapAuther) Dial() error {
+	if testHookDial != nil {
+		return testHookDial()
+	}
+
 	var err error
 	var certPool *x509.CertPool
 	if a.server.RootCACert != "" {
@@ -410,6 +424,14 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	}, nil
 }
 
+var dial = func(network, addr string) (ILdapConn, error) {
+	return ldap.Dial(network, addr)
+}
+
+func getLdapAttr(name string, result *ldap.SearchResult) string {
+	return getLdapAttrN(name, result, 0)
+}
+
 func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
 	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
@@ -424,16 +446,12 @@ func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
 	return ""
 }
 
-var dial = func(network, addr string) (ILdapConn, error) {
-	return ldap.Dial(network, addr)
-}
-
-func getLdapAttr(name string, result *ldap.SearchResult) string {
-	return getLdapAttrN(name, result, 0)
-}
-
 func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
-	for _, attr := range result.Entries[0].Attributes {
+	return getLdapAttrArrayN(name, result, 0)
+}
+
+func getLdapAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
+	for _, attr := range result.Entries[n].Attributes {
 		if attr.Name == name {
 			return attr.Values
 		}

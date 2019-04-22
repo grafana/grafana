@@ -61,7 +61,7 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/asn1-ber.v1"
+	ber "gopkg.in/asn1-ber.v1"
 )
 
 // scope choices

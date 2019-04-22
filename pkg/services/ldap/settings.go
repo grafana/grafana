@@ -55,6 +55,12 @@ type LdapGroupToOrgRole struct {
 var LdapCfg LdapConfig
 var ldapLogger log.Logger = log.New("ldap")
 
+func ReadConfig() *LdapConfig {
+	loadLdapConfig()
+
+	return &LdapCfg
+}
+
 func loadLdapConfig() {
 	if !setting.LdapEnabled {
 		return
