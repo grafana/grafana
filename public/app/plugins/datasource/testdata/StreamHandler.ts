@@ -40,7 +40,7 @@ export class StreamHandler {
           if (existing.update(query, req)) {
             continue;
           }
-          existing.shutdown();
+          existing.unsubscribe();
           delete this.workers[key];
         }
         const type = query.stream.type;
@@ -75,7 +75,7 @@ export class StreamWorker {
       key,
       state: LoadingState.Streaming,
       request,
-      shutdown: this.shutdown,
+      unsubscribe: this.unsubscribe,
     };
     this.query = query.stream;
     this.last = Date.now();
@@ -83,7 +83,7 @@ export class StreamWorker {
     console.log('Creating Test Stream: ', this);
   }
 
-  shutdown = () => {
+  unsubscribe = () => {
     this.observer = null;
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);

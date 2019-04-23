@@ -46,7 +46,8 @@ export class PanelQueryState {
   }
 
   isRunning() {
-    return !this.isFinished(this.results.state);
+    const state = this.results.state;
+    return state === LoadingState.Loading || state === LoadingState.Streaming;
   }
 
   isStarted() {
@@ -146,24 +147,30 @@ export class PanelQueryState {
   streamCallback: () => void;
 
   // This gets all stream events and keeps track of them
-  // it will throttle actuall updates to subscribers
-  streamDataObserver: DataStreamObserver = (event: DataStreamState) => {
+  // it will then delegate real changes to the PanelQueryRunner
+  streamDataObserver: DataStreamObserver = (stream: DataStreamState) => {
+    // Streams only work with the 'series' format
     this.sendSeries = true;
 
+    // Add the stream to our list
     let found = false;
     const active = this.streams.map(s => {
-      if (s.key === event.key) {
+      if (s.key === stream.key) {
         found = true;
-        return event;
+        return stream;
       }
       return s;
     });
-    if (found) {
-      this.streams = active;
-      this.streamCallback();
-    } else {
-      console.log('Ignore: ', event);
+
+    if (!found) {
+      if (shouldDisconnect(this.request, stream)) {
+        stream.unsubscribe();
+        return;
+      }
+      active.push(stream);
     }
+    this.streams = active;
+    this.streamCallback();
   };
 
   closeStreams(keepSeries = false) {
@@ -174,7 +181,7 @@ export class PanelQueryState {
           series.push.apply(series, stream.series);
         }
         try {
-          stream.shutdown();
+          stream.unsubscribe();
         } catch {}
       }
       this.streams = [];
@@ -205,7 +212,7 @@ export class PanelQueryState {
     const active: DataStreamState[] = [];
     for (const stream of this.streams) {
       if (shouldDisconnect(request, stream)) {
-        stream.shutdown(); // No longer active
+        stream.unsubscribe();
         continue;
       }
 
@@ -272,7 +279,8 @@ export function shouldDisconnect(source: DataQueryRequest, state: DataStreamStat
     return false;
   }
 
-  // TODO -- somehow know it is the same
+  // We should be able to check that it is the same query regardless of
+  // if it came from the same request. This will be important for #16676
 
   return true;
 }

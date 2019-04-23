@@ -207,9 +207,9 @@ export interface DataStreamState {
   delta?: SeriesData[];
 
   /**
-   * Callback function to stop the data stream
+   * Stop listening to this stream
    */
-  shutdown: () => void;
+  unsubscribe: () => void;
 }
 
 export interface DataQueryResponse {
