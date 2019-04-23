@@ -361,8 +361,6 @@ export class ElasticDatasource {
               getFieldsRecursively(properties);
             }
           } else {
-            // ES 7 finally removed types in indices, and it also removed
-            // them from the API
             const properties = mappings.properties;
             getFieldsRecursively(properties);
           }
