@@ -48,7 +48,7 @@ func dashboardGuardianResponse(err error) Response {
 	return Error(403, "Access denied to this dashboard", nil)
 }
 
-func GetDashboard(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -115,15 +115,11 @@ func GetDashboard(c *m.ReqContext) Response {
 
 	if provisioningDataQuery.Result != nil {
 		meta.Provisioned = true
-		workDir, err := os.Getwd()
+		meta.ProvisioningFilePath, err = filepath.Rel(hs.Cfg.ProvisioningPath, provisioningDataQuery.Result.ExternalId)
 		if err != nil {
-			// TODO
-			fmt.Println("Got Error ", err)
-		}
-		meta.ProvisioningFilePath, err = filepath.Rel(workDir, provisioningDataQuery.Result.ExternalId)
-		if err != nil {
-			// TODO
-			fmt.Println("Got Error ", err)
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
 		}
 	}
 
