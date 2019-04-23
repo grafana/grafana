@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
-	// self registering services
 
 	"github.com/facebookgo/inject"
 	"golang.org/x/sync/errgroup"
