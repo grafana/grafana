@@ -53,6 +53,7 @@ export class RefreshPicker extends PureComponent<Props> {
     const selectedValue = options.find(item => item.value === currentValue) || offOption;
 
     const cssClasses = classNames({
+      'navbar-button--refresh-picker': true,
       'refresh-picker': true,
       'refresh-picker--refreshing': selectedValue.label !== offOption.label,
     });
