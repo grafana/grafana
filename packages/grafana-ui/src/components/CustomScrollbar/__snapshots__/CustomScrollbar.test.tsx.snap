@@ -40,9 +40,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     className="track-horizontal"
     style={
       Object {
-        "display": "none",
-        "height": 6,
-        "position": "absolute",
+        "visibility": "visible",
       }
     }
   >
@@ -61,9 +59,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     className="track-vertical"
     style={
       Object {
-        "display": "none",
-        "position": "absolute",
-        "width": 6,
+        "visibility": "visible",
       }
     }
   >
