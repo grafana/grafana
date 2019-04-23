@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
+import { DataQueryRequest, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export class PrometheusDatasource implements DataSourceApi<PromQuery> {
@@ -120,7 +120,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options: DataQueryOptions<PromQuery>) {
+  query(options: DataQueryRequest<PromQuery>) {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 

@@ -11,7 +11,7 @@ import { makeSeriesForLogs } from 'app/core/logs_model';
 
 // Types
 import { LogsStream, LogsModel } from 'app/core/logs_model';
-import { PluginMeta, DataQueryOptions } from '@grafana/ui/src/types';
+import { PluginMeta, DataQueryRequest } from '@grafana/ui/src/types';
 import { LokiQuery } from './types';
 
 export const DEFAULT_MAX_LINES = 1000;
@@ -73,7 +73,7 @@ export class LokiDatasource {
     };
   }
 
-  async query(options: DataQueryOptions<LokiQuery>) {
+  async query(options: DataQueryRequest<LokiQuery>) {
     const queryTargets = options.targets
       .filter(target => target.expr && !target.hide)
       .map(target => this.prepareQueryTarget(target, options));

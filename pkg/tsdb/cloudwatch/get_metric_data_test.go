@@ -42,22 +42,29 @@ func TestCloudWatchGetMetricData(t *testing.T) {
 					ReturnData: true,
 				},
 			}
+
 			queryContext := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
 			}
 			res, err := parseGetMetricDataQuery(queries, queryContext)
 			So(err, ShouldBeNil)
-			So(*res.MetricDataQueries[0].MetricStat.Metric.Namespace, ShouldEqual, "AWS/EC2")
-			So(*res.MetricDataQueries[0].MetricStat.Metric.MetricName, ShouldEqual, "CPUUtilization")
-			So(*res.MetricDataQueries[0].MetricStat.Metric.Dimensions[0].Name, ShouldEqual, "InstanceId")
-			So(*res.MetricDataQueries[0].MetricStat.Metric.Dimensions[0].Value, ShouldEqual, "i-12345678")
-			So(*res.MetricDataQueries[0].MetricStat.Period, ShouldEqual, 300)
-			So(*res.MetricDataQueries[0].MetricStat.Stat, ShouldEqual, "Average")
-			So(*res.MetricDataQueries[0].Id, ShouldEqual, "id1")
-			So(*res.MetricDataQueries[0].ReturnData, ShouldEqual, true)
-			So(*res.MetricDataQueries[1].Id, ShouldEqual, "id2")
-			So(*res.MetricDataQueries[1].Expression, ShouldEqual, "id1 * 2")
-			So(*res.MetricDataQueries[1].ReturnData, ShouldEqual, true)
+
+			for _, v := range res.MetricDataQueries {
+				if *v.Id == "id1" {
+					So(*v.MetricStat.Metric.Namespace, ShouldEqual, "AWS/EC2")
+					So(*v.MetricStat.Metric.MetricName, ShouldEqual, "CPUUtilization")
+					So(*v.MetricStat.Metric.Dimensions[0].Name, ShouldEqual, "InstanceId")
+					So(*v.MetricStat.Metric.Dimensions[0].Value, ShouldEqual, "i-12345678")
+					So(*v.MetricStat.Period, ShouldEqual, 300)
+					So(*v.MetricStat.Stat, ShouldEqual, "Average")
+					So(*v.Id, ShouldEqual, "id1")
+					So(*v.ReturnData, ShouldEqual, true)
+				} else {
+					So(*v.Id, ShouldEqual, "id2")
+					So(*v.Expression, ShouldEqual, "id1 * 2")
+					So(*v.ReturnData, ShouldEqual, true)
+				}
+			}
 		})
 
 		Convey("can parse cloudwatch response", func() {
