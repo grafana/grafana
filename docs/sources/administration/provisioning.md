@@ -401,7 +401,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | apiKey |
 | apiUrl |
-[ autoClose ]
+| autoClose |
 
 #### Alert notification `telegram`
 
@@ -425,3 +425,10 @@ The following sections detail the supported settings for each alert notification
 | url |
 | username |
 | password |
+
+#### Alert notification `googlechat`
+
+| Name |
+| ---- |
+| url |
+
