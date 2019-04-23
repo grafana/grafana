@@ -102,7 +102,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
 
       {isLegendVisible && (
         <div className={legendContainer}>
-          <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
+          <CustomScrollbar hideHorizontalTrack>
             <GraphLegend
               items={legendItems}
               displayMode={displayMode}

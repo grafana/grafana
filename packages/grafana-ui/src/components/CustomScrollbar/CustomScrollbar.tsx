@@ -10,8 +10,10 @@ interface Props {
   autoHideDuration?: number;
   autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
-  renderTrackHorizontal?: React.FunctionComponent<any>;
-  renderTrackVertical?: React.FunctionComponent<any>;
+  hideHorizontalTrack?: boolean;
+  hideVerticalTrack?: boolean;
+  // renderTrackHorizontal?: React.FunctionComponent<any>;
+  // renderTrackVertical?: React.FunctionComponent<any>;
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
@@ -79,8 +81,8 @@ export class CustomScrollbar extends Component<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
-      renderTrackHorizontal,
-      renderTrackVertical,
+      hideHorizontalTrack,
+      hideVerticalTrack,
     } = this.props;
 
     return (
@@ -96,8 +98,16 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
-        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
+        renderTrackHorizontal={props => (
+          <div
+            {...props}
+            className="track-horizontal"
+            style={{ visibility: hideHorizontalTrack ? 'none' : 'visible' }}
+          />
+        )}
+        renderTrackVertical={props => (
+          <div {...props} className="track-vertical" style={{ visibility: hideVerticalTrack ? 'none' : 'visible' }} />
+        )}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
         renderView={props => <div {...props} className="view" />}
