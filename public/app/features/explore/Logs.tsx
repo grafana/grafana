@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange } from '@grafana/ui';
+import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
 import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
@@ -54,7 +54,7 @@ interface Props {
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: Set<LogLevel>;
-  onChangeTime?: (range: RawTimeRange) => void;
+  onChangeTime?: (range: AbsoluteTimeRange) => void;
   onClickLabel?: (label: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
@@ -193,6 +193,10 @@ export default class Logs extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
     const timeSeries = data.series.map(series => new TimeSeries(series));
+    const absRange = {
+      from: range.from.valueOf(),
+      to: range.to.valueOf(),
+    };
 
     return (
       <div className="logs-panel">
@@ -201,7 +205,7 @@ export default class Logs extends PureComponent<Props, State> {
             data={timeSeries}
             height={100}
             width={width}
-            range={range}
+            range={absRange}
             timeZone={timeZone}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone } from '@grafana/ui';
+import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
@@ -20,7 +20,7 @@ interface LogsContainerProps {
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   dedupedResult?: LogsModel;
-  onChangeTime: (range: TimeRange) => void;
+  onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;

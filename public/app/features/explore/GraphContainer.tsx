@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeRange, TimeZone } from '@grafana/ui';
+import moment from 'moment';
+import { TimeRange, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -30,13 +31,20 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
     this.props.toggleGraph(this.props.exploreId, this.props.showingGraph);
   };
 
-  onChangeTime = (timeRange: TimeRange) => {
-    this.props.changeTime(this.props.exploreId, timeRange);
+  onChangeTime = (absRange: AbsoluteTimeRange) => {
+    const { exploreId, timeZone, changeTime } = this.props;
+    const range = {
+      from: timeZone.isUtc ? moment.utc(absRange.from) : moment(absRange.from),
+      to: timeZone.isUtc ? moment.utc(absRange.to) : moment(absRange.to),
+    };
+
+    changeTime(exploreId, range);
   };
 
   render() {
     const { exploreId, graphResult, loading, showingGraph, showingTable, range, split, width, timeZone } = this.props;
     const graphHeight = showingGraph && showingTable ? 200 : 400;
+    const timeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
     if (!graphResult) {
       return null;
@@ -49,7 +57,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
           height={graphHeight}
           id={`explore-graph-${exploreId}`}
           onChangeTime={this.onChangeTime}
-          range={range}
+          range={timeRange}
           timeZone={timeZone}
           split={split}
           width={width}

@@ -11,6 +11,11 @@ export interface TimeRange {
   raw: RawTimeRange;
 }
 
+export interface AbsoluteTimeRange {
+  from: number;
+  to: number;
+}
+
 export interface IntervalValues {
   interval: string; // 10s,5m
   intervalMs: number;

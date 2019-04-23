@@ -1,13 +1,12 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import moment from 'moment';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { RawTimeRange, TimeZone, TimeRange } from '@grafana/ui';
+import { TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
@@ -77,11 +76,11 @@ interface GraphProps {
   height?: number;
   width?: number;
   id?: string;
-  range: TimeRange;
+  range: AbsoluteTimeRange;
   timeZone: TimeZone;
   split?: boolean;
   userOptions?: any;
-  onChangeTime?: (range: RawTimeRange) => void;
+  onChangeTime?: (range: AbsoluteTimeRange) => void;
   onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
 }
 
@@ -133,21 +132,20 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   onPlotSelected = (event, ranges) => {
-    const { onChangeTime, timeZone } = this.props;
+    const { onChangeTime } = this.props;
     if (onChangeTime) {
-      const range = {
-        from: timeZone.isUtc ? moment.utc(ranges.xaxis.from) : moment(ranges.xaxis.from),
-        to: timeZone.isUtc ? moment.utc(ranges.xaxis.to) : moment(ranges.xaxis.to),
-      };
-      this.props.onChangeTime(range);
+      this.props.onChangeTime({
+        from: ranges.xaxis.from,
+        to: ranges.xaxis.to,
+      });
     }
   };
 
   getDynamicOptions() {
     const { range, width, timeZone } = this.props;
     const ticks = (width || 0) / 100;
-    const min = range.from.valueOf();
-    const max = range.to.valueOf();
+    const min = range.from;
+    const max = range.to;
     return {
       xaxis: {
         mode: 'time',
