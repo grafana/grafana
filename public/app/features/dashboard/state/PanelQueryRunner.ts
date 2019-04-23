@@ -193,15 +193,15 @@ export class PanelQueryRunner {
   }
 
   /**
-   * Called after every streaming event.  This should be throttled to make
-   * sure we do not totally overwhelm the system accidentally
+   * Called after every streaming event.  This should be throttled so we
+   * avoid accidentally overwhelming the browser
    */
   onDataStreamEvent = throttle(
     () => {
       this.subject.next(this.state.getPanelData());
     },
     50,
-    { trailing: true }
+    { trailing: true, leading: true }
   );
 
   /**

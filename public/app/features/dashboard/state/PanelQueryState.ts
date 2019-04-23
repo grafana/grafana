@@ -24,8 +24,8 @@ export class PanelQueryState {
     endTime: 1000, // Somethign not zero
   } as DataQueryRequest;
 
-  // The best known state of data (but ignore the request object)
-  results = {
+  // The result back from the datasource query
+  response = {
     state: LoadingState.NotStarted,
     series: [],
   } as PanelData;
@@ -46,12 +46,12 @@ export class PanelQueryState {
   }
 
   isRunning() {
-    const state = this.results.state;
+    const state = this.response.state;
     return state === LoadingState.Loading || state === LoadingState.Streaming;
   }
 
   isStarted() {
-    return this.results.state !== LoadingState.NotStarted;
+    return this.response.state !== LoadingState.NotStarted;
   }
 
   isSameQuery(ds: DataSourceApi, req: DataQueryRequest) {
@@ -97,22 +97,21 @@ export class PanelQueryState {
       this.request.endTime = Date.now();
       this.closeStreams();
       return Promise.resolve(
-        (this.results = {
+        (this.response = {
           state: LoadingState.Done,
           series: [], // Clear the data
           legacy: [],
-          request: req,
         })
       );
     }
 
     // Set the loading state immediatly
-    this.results.state = LoadingState.Loading;
+    this.response.state = LoadingState.Loading;
     return (this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
       return ds
-        .query(this.request, this.streamDataObserver)
+        .query(this.request, this.dataStreamObserver)
         .then(resp => {
           this.request.endTime = Date.now();
 
@@ -122,7 +121,7 @@ export class PanelQueryState {
           }
 
           // Save the result state
-          this.results = {
+          this.response = {
             state: LoadingState.Done,
             request: this.request,
             series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
@@ -148,7 +147,7 @@ export class PanelQueryState {
 
   // This gets all stream events and keeps track of them
   // it will then delegate real changes to the PanelQueryRunner
-  streamDataObserver: DataStreamObserver = (stream: DataStreamState) => {
+  dataStreamObserver: DataStreamObserver = (stream: DataStreamState) => {
     // Streams only work with the 'series' format
     this.sendSeries = true;
 
@@ -188,27 +187,31 @@ export class PanelQueryState {
 
       // Move the series from streams to the resposne
       if (keepSeries) {
-        this.results = {
-          ...this.results,
-          series: [...this.results.series, ...series],
+        const { response } = this;
+        this.response = {
+          ...response,
+          series: [
+            ...response.series,
+            ...series, // Append the streamed series
+          ],
         };
       }
     }
   }
 
   getPanelData(): PanelData {
-    const { results, streams, request } = this;
+    const { response, streams, request } = this;
 
-    // Without streams it is just the result
+    // Without streams it is just the result+request
     if (!streams.length) {
       return {
-        ...results,
+        ...response,
         request: request,
       };
     }
 
-    let done = this.isFinished(results.state);
-    const series = [...results.series];
+    let done = this.isFinished(response.state);
+    const series = [...response.series];
     const active: DataStreamState[] = [];
     for (const stream of this.streams) {
       if (shouldDisconnect(request, stream)) {
@@ -249,12 +252,12 @@ export class PanelQueryState {
    * Make sure all requested formats exist on the data
    */
   getDataAfterCheckingFormats(): PanelData {
-    const { results, sendLegacy, sendSeries } = this;
-    if (sendLegacy && (!results.legacy || !results.legacy.length)) {
-      results.legacy = results.series.map(v => toLegacyResponseData(v));
+    const { response, sendLegacy, sendSeries } = this;
+    if (sendLegacy && (!response.legacy || !response.legacy.length)) {
+      response.legacy = response.series.map(v => toLegacyResponseData(v));
     }
-    if (sendSeries && !results.series.length && results.legacy) {
-      results.series = results.legacy.map(v => toSeriesData(v));
+    if (sendSeries && !response.series.length && response.legacy) {
+      response.series = response.legacy.map(v => toSeriesData(v));
     }
     return this.getPanelData();
   }
@@ -264,8 +267,8 @@ export class PanelQueryState {
       this.request.endTime = Date.now();
     }
     this.closeStreams(true);
-    this.results = {
-      ...this.results, // Keep any existing data
+    this.response = {
+      ...this.response, // Keep any existing data
       state: LoadingState.Error,
       error: toDataQueryError(err),
     };
