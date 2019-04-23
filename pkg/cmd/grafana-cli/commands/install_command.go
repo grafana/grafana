@@ -144,7 +144,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		}
 	}()
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) // #nosec
 	if err != nil {
 		return err
 	}
