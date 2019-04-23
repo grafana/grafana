@@ -3301,7 +3301,6 @@ export const mockGraphWithLegendData = ({
   showLines: true,
   showPoints: false,
   placement: 'under',
-  decimals: 1,
   onSeriesColorChange: (label, color) => {
     if (onSeriesColorChange) {
       onSeriesColorChange(label, color);

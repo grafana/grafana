@@ -14,7 +14,6 @@ export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
 export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
 
 export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
-  decimals?: number;
   isLegendVisible: boolean;
   displayMode: LegendDisplayMode;
   sortLegendBy?: string;
