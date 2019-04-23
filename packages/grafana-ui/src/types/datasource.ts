@@ -173,9 +173,9 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
-export type DataStreamObserver = (event: DataStreamEvent) => void;
+export type DataStreamObserver = (event: DataStreamState) => void;
 
-export interface DataStreamEvent {
+export interface DataStreamState {
   /**
    * Consistent key across events
    */
@@ -192,9 +192,9 @@ export interface DataStreamEvent {
   request: DataQueryRequest;
 
   /**
-   * Series data
+   * Series data may not be known yet
    */
-  series: SeriesData[];
+  series?: SeriesData[];
 
   /**
    * Error in stream (but may still be running)
@@ -202,7 +202,7 @@ export interface DataStreamEvent {
   error?: DataQueryError;
 
   /**
-   * Optionally return only the rows that changed
+   * Optionally return only the rows that changed in this event
    */
   delta?: SeriesData[];
 
@@ -214,12 +214,6 @@ export interface DataStreamEvent {
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-
-  /**
-   * When streaming, this must return the list of expected events
-   * other events will be ignored and shutdown
-   */
-  streams?: DataStreamEvent[];
 }
 
 export interface DataQuery {

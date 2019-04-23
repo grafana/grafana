@@ -9,7 +9,8 @@ import {
   toSeriesData,
   DataQueryError,
   DataStreamObserver,
-  DataStreamEvent,
+  DataStreamState,
+  SeriesData,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -23,28 +24,37 @@ export class PanelQueryState {
     endTime: 1000, // Somethign not zero
   } as DataQueryRequest;
 
-  // The best known state of data
-  data = {
+  // The best known state of data (but ignore the request object)
+  results = {
     state: LoadingState.NotStarted,
     series: [],
   } as PanelData;
 
+  // Active stream results
+  streams: DataStreamState[] = [];
+
   sendSeries = false;
   sendLegacy = false;
-
-  streams: DataStreamEvent[] = [];
 
   // A promise for the running query
   private executor: Promise<PanelData> = {} as any;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
 
+  isFinished(state: LoadingState) {
+    return state === LoadingState.Done || state === LoadingState.Error;
+  }
+
   isRunning() {
-    return this.data.state === LoadingState.Loading; //
+    return !this.isFinished(this.results.state);
+  }
+
+  isStarted() {
+    return this.results.state !== LoadingState.NotStarted;
   }
 
   isSameQuery(ds: DataSourceApi, req: DataQueryRequest) {
-    if (this.datasource !== this.datasource) {
+    if (ds !== this.datasource) {
       return false;
     }
 
@@ -74,7 +84,7 @@ export class PanelQueryState {
     }
 
     // Close any open streams
-    this.closeStreams();
+    this.closeStreams(true);
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
@@ -84,8 +94,9 @@ export class PanelQueryState {
     if (!req.targets.length) {
       console.log('No queries, so return early');
       this.request.endTime = Date.now();
+      this.closeStreams();
       return Promise.resolve(
-        (this.data = {
+        (this.results = {
           state: LoadingState.Done,
           series: [], // Clear the data
           legacy: [],
@@ -95,7 +106,7 @@ export class PanelQueryState {
     }
 
     // Set the loading state immediatly
-    this.data.state = LoadingState.Loading;
+    this.results.state = LoadingState.Loading;
     return (this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
@@ -109,31 +120,21 @@ export class PanelQueryState {
             this.sendSeries = true;
           }
 
-          // Make sure the response is in a supported format
-          const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
-          const legacy = this.sendLegacy
-            ? resp.data.map(v => {
-                if (isSeriesData(v)) {
-                  return toLegacyResponseData(v);
-                }
-                return v;
-              })
-            : undefined;
-
-          // Check if any streams were returned
-          if (this.checkStreams(resp.streams)) {
-            resolve((this.data = this.getPanelDataFromStream()));
-            return;
-          }
-
-          resolve(
-            (this.data = {
-              state: LoadingState.Done,
-              request: this.request,
-              series,
-              legacy,
-            })
-          );
+          // Save the result state
+          this.results = {
+            state: LoadingState.Done,
+            request: this.request,
+            series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
+            legacy: this.sendLegacy
+              ? resp.data.map(v => {
+                  if (isSeriesData(v)) {
+                    return toLegacyResponseData(v);
+                  }
+                  return v;
+                })
+              : undefined,
+          };
+          resolve(this.getPanelData());
         })
         .catch(err => {
           resolve(this.setError(err));
@@ -146,7 +147,9 @@ export class PanelQueryState {
 
   // This gets all stream events and keeps track of them
   // it will throttle actuall updates to subscribers
-  streamDataObserver: DataStreamObserver = (event: DataStreamEvent) => {
+  streamDataObserver: DataStreamObserver = (event: DataStreamState) => {
+    this.sendSeries = true;
+
     let found = false;
     const active = this.streams.map(s => {
       if (s.key === event.key) {
@@ -163,51 +166,56 @@ export class PanelQueryState {
     }
   };
 
-  checkStreams(streams?: DataStreamEvent[]): boolean {
-    if (streams && streams.length) {
-      const keys = new Set<string>();
-      for (const stream of streams) {
-        keys.add(stream.key);
-      }
-
-      // Shudown any old streams
-      for (const old of this.streams) {
-        if (!keys.has(old.key)) {
-          old.shutdown();
-        }
-      }
-
-      this.streams = streams;
-    } else if (this.streams.length) {
-      this.closeStreams();
-    }
-    return this.streams.length > 0;
-  }
-
-  closeStreams() {
+  closeStreams(keepSeries = false) {
     if (this.streams.length) {
-      // We have open streams, but query does not think so
+      const series: SeriesData[] = [];
       for (const stream of this.streams) {
+        if (stream.series) {
+          series.push.apply(series, stream.series);
+        }
         try {
           stream.shutdown();
         } catch {}
       }
       this.streams = [];
+
+      // Move the series from streams to the resposne
+      if (keepSeries) {
+        this.results = {
+          ...this.results,
+          series: [...this.results.series, ...series],
+        };
+      }
     }
   }
 
-  /**
-   * Build PanelData based on the stream state
-   */
-  getPanelDataFromStream = (): PanelData => {
-    let state = LoadingState.Done;
-    const series = [...this.data.series];
+  getPanelData(): PanelData {
+    const { results, streams, request } = this;
+
+    // Without streams it is just the result
+    if (!streams.length) {
+      return {
+        ...results,
+        request: request,
+      };
+    }
+
+    let done = this.isFinished(results.state);
+    const series = [...results.series];
+    const active: DataStreamState[] = [];
     for (const stream of this.streams) {
+      if (shouldDisconnect(request, stream)) {
+        stream.shutdown(); // No longer active
+        continue;
+      }
+
+      active.push(stream);
       series.push.apply(series, stream.series);
-      if (stream.state === LoadingState.Loading || stream.state === LoadingState.Streaming) {
-        state = LoadingState.Streaming;
+      if (!this.isFinished(stream.state)) {
+        done = false;
       }
     }
+    this.streams = active;
 
     // Update the time range
     let timeRange = this.request.range;
@@ -220,43 +228,53 @@ export class PanelQueryState {
     }
 
     return {
-      state,
-      series,
+      state: done ? LoadingState.Done : LoadingState.Streaming,
+      series, // Union of series from response and all streams
       legacy: this.sendLegacy ? series.map(s => toLegacyResponseData(s)) : undefined,
       request: {
         ...this.request,
         range: timeRange, // update the time range
       },
     };
-  };
+  }
 
   /**
    * Make sure all requested formats exist on the data
    */
   getDataAfterCheckingFormats(): PanelData {
-    const { data, sendLegacy, sendSeries } = this;
-    if (sendLegacy && (!data.legacy || !data.legacy.length)) {
-      data.legacy = data.series.map(v => toLegacyResponseData(v));
+    const { results, sendLegacy, sendSeries } = this;
+    if (sendLegacy && (!results.legacy || !results.legacy.length)) {
+      results.legacy = results.series.map(v => toLegacyResponseData(v));
     }
-    if (sendSeries && !data.series.length && data.legacy) {
-      data.series = data.legacy.map(v => toSeriesData(v));
+    if (sendSeries && !results.series.length && results.legacy) {
+      results.series = results.legacy.map(v => toSeriesData(v));
     }
-    return this.data;
+    return this.getPanelData();
   }
 
   setError(err: any): PanelData {
     if (!this.request.endTime) {
       this.request.endTime = Date.now();
     }
-    this.closeStreams();
-
-    return (this.data = {
-      ...this.data, // Keep any existing data
+    this.closeStreams(true);
+    this.results = {
+      ...this.results, // Keep any existing data
       state: LoadingState.Error,
       error: toDataQueryError(err),
-      request: this.request,
-    });
+    };
+    return this.getPanelData();
   }
+}
+
+export function shouldDisconnect(source: DataQueryRequest, state: DataStreamState) {
+  // It came from the same the same request, so keep it
+  if (source === state.request || state.request.requestId.startsWith(source.requestId)) {
+    return false;
+  }
+
+  // TODO -- somehow know it is the same
+
+  return true;
 }
 
 export function toDataQueryError(err: any): DataQueryError {

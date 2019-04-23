@@ -13,7 +13,6 @@ import {
   guessFieldTypes,
   toSeriesData,
   PanelData,
-  LoadingState,
   DataQuery,
   TimeRange,
   ScopedVars,
@@ -55,6 +54,10 @@ export class PanelQueryRunner {
 
   private state = new PanelQueryState();
 
+  constructor() {
+    this.state.streamCallback = this.onDataStreamEvent;
+  }
+
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
@@ -63,8 +66,6 @@ export class PanelQueryRunner {
     if (!this.subject) {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
-
-    this.state.streamCallback = this.updateFromStream;
 
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
@@ -76,7 +77,7 @@ export class PanelQueryRunner {
     }
 
     // Send the last result
-    if (this.state.data.state !== LoadingState.NotStarted) {
+    if (this.state.isStarted()) {
       observer.next(this.state.getDataAfterCheckingFormats());
     }
 
@@ -170,7 +171,7 @@ export class PanelQueryRunner {
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
         if (this.state.isRunning()) {
-          this.subject.next(this.state.data);
+          this.subject.next(this.state.getPanelData());
         }
       }, delayStateNotification || 500);
 
@@ -191,9 +192,13 @@ export class PanelQueryRunner {
     }
   }
 
-  updateFromStream = throttle(
+  /**
+   * Called after every streaming event.  This should be throttled to make
+   * sure we do not totally overwhelm the system accidentally
+   */
+  onDataStreamEvent = throttle(
     () => {
-      this.subject.next(this.state.getPanelDataFromStream());
+      this.subject.next(this.state.getPanelData());
     },
     50,
     { trailing: true }
