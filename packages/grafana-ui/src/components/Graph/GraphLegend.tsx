@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { LegendProps, LegendItem } from '../Legend/Legend';
+import { LegendProps, LegendItem, LegendDisplayMode } from '../Legend/Legend';
 import { GraphLegendListItem, GraphLegendTableRow } from './GraphLegendItem';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from './GraphWithLegend';
 import { LegendTable } from '../Legend/LegendTable';
@@ -11,7 +11,7 @@ import { css } from 'emotion';
 import { selectThemeVariant } from '../../themes/index';
 
 interface GraphLegendProps extends LegendProps {
-  renderLegendAsTable?: boolean;
+  displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
   onSeriesColorChange: SeriesColorChangeHandler;
@@ -22,7 +22,7 @@ interface GraphLegendProps extends LegendProps {
 
 export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   items,
-  renderLegendAsTable,
+  displayMode,
   sortBy: sortKey,
   sortDesc,
   onToggleSort,
@@ -33,7 +33,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
 }) => {
   const theme = useContext(ThemeContext);
 
-  if (renderLegendAsTable) {
+  if (displayMode === LegendDisplayMode.Table) {
     const columns = items
       .map(item => {
         if (item.info) {

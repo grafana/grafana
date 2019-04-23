@@ -6,7 +6,7 @@ import { action } from '@storybook/addon-actions';
 import { select, number } from '@storybook/addon-knobs';
 import { withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { generateLegendItems } from '../Legend/Legend.story';
-import { LegendPlacement } from '../Legend/Legend';
+import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 
 const GraphLegendStories = storiesOf('Visualizations/Graph/GraphLegend', module);
 GraphLegendStories.addDecorator(withHorizontallyCenteredStory);
@@ -59,6 +59,7 @@ GraphLegendStories.add('list', () => {
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
+        displayMode={LegendDisplayMode.List}
         items={generateLegendItems(numberOfSeries, statsToDisplay)}
         onLabelClick={(item, event) => {
           action('Series label clicked')(item, event);
@@ -83,8 +84,8 @@ GraphLegendStories.add('table', () => {
   return (
     <div style={{ width: containerWidth }}>
       <GraphLegend
+        displayMode={LegendDisplayMode.Table}
         items={generateLegendItems(numberOfSeries, statsToDisplay)}
-        renderLegendAsTable
         onLabelClick={item => {
           action('Series label clicked')(item);
         }}

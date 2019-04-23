@@ -7,7 +7,7 @@ import { GraphWithLegend } from './GraphWithLegend';
 
 import { mockGraphWithLegendData } from './mockGraphWithLegendData';
 import { action } from '@storybook/addon-actions';
-import { LegendPlacement } from '../Legend/Legend';
+import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 const GraphWithLegendStories = storiesOf('Visualizations/Graph/GraphWithLegend', module);
 GraphWithLegendStories.addDecorator(withHorizontallyCenteredStory);
 
@@ -62,11 +62,10 @@ const getStoriesKnobs = () => {
 GraphWithLegendStories.add('default', () => {
   const { containerWidth, containerHeight, rightAxisSeries, legendPlacement, renderLegendAsTable } = getStoriesKnobs();
 
-  console.log(renderLegendAsTable);
   const props = mockGraphWithLegendData({
     onSeriesColorChange: action('Series color changed'),
     onSeriesAxisToggle: action('Series y-axis changed'),
-    renderLegendAsTable,
+    displayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
   });
   const series = props.series.map(s => {
     if (

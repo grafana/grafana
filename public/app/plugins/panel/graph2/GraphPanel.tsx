@@ -2,6 +2,7 @@ import React from 'react';
 import { PanelProps, GraphWithLegend /*, GraphSeriesXY*/ } from '@grafana/ui';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
+import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -40,7 +41,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             timeRange={timeRange}
             width={width}
             height={height}
-            renderLegendAsTable={asTable}
+            displayMode={asTable ? LegendDisplayMode.Table : LegendDisplayMode.List}
             isLegendVisible={isVisible}
             sortLegendBy={legendOptions.sortBy}
             sortLegendDesc={legendOptions.sortDesc}

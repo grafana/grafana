@@ -1,9 +1,10 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
 import moment from 'moment';
+import { LegendDisplayMode } from '../Legend/Legend';
 // import { LegendList } from '../Legend/LegendList';
 
 export const mockGraphWithLegendData = ({
-  renderLegendAsTable,
+  displayMode,
   onSeriesColorChange,
   onSeriesAxisToggle,
 }: Partial<GraphWithLegendProps>): GraphWithLegendProps => ({
@@ -3312,5 +3313,5 @@ export const mockGraphWithLegendData = ({
     }
   },
   onToggleSort: () => {},
-  renderLegendAsTable: renderLegendAsTable || false,
+  displayMode: displayMode || LegendDisplayMode.List,
 });

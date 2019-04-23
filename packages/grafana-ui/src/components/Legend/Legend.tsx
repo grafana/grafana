@@ -3,6 +3,10 @@ import { DisplayValue } from '../../types/index';
 import { LegendList } from './LegendList';
 import { LegendTable } from './LegendTable';
 
+export enum LegendDisplayMode {
+  List = 'list',
+  Table = 'table',
+}
 export interface LegendBasicOptions {
   isVisible: boolean;
   asTable: boolean;

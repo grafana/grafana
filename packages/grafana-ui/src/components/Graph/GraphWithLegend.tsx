@@ -4,7 +4,7 @@ import React from 'react';
 
 import { css } from 'emotion';
 import { Graph, GraphProps } from './Graph';
-import { LegendRenderOptions, LegendItem } from '../Legend/Legend';
+import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { GraphSeriesValue } from '../../types/graph';
@@ -16,7 +16,7 @@ export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<boolean>;
 export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   decimals?: number;
   isLegendVisible: boolean;
-  renderLegendAsTable: boolean;
+  displayMode: LegendDisplayMode;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
   onSeriesColorChange: SeriesColorChangeHandler;
@@ -60,7 +60,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendBy,
     sortLegendDesc,
     isLegendVisible,
-    renderLegendAsTable,
+    displayMode,
     placement,
     onSeriesAxisToggle,
     onSeriesColorChange,
@@ -103,7 +103,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
                       },
                     ]);
               }, [])}
-              renderLegendAsTable={renderLegendAsTable}
+              displayMode={displayMode}
               placement={placement}
               sortBy={sortLegendBy}
               sortDesc={sortLegendDesc}
