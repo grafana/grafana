@@ -1,5 +1,12 @@
 import _ from 'lodash';
-import { DataSourceApi, DataQueryRequest, TableData, TimeSeries, DataSourceInstanceSettings } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  TableData,
+  TimeSeries,
+  DataSourceInstanceSettings,
+  SeriesDataStreamObserver,
+} from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
@@ -19,7 +26,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     this.id = instanceSettings.id;
   }
 
-  query(options: DataQueryRequest<TestDataQuery>) {
+  query(options: DataQueryRequest<TestDataQuery>, observer: SeriesDataStreamObserver) {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(item => {
@@ -40,7 +47,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     }
 
     // Currently we do not support mixed with client only streaming
-    const resp = this.streams.process(options);
+    const resp = this.streams.process(options, observer);
     if (resp) {
       return Promise.resolve(resp);
     }

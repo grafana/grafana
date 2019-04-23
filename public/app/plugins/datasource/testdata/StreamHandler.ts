@@ -5,11 +5,11 @@ import {
   SeriesData,
   DataQueryResponse,
   DataQueryError,
-  SeriesDataStream,
   SeriesDataStreamObserver,
+  DataQueryStream,
+  LoadingState,
 } from '@grafana/ui';
 import { TestDataQuery, StreamingQuery } from './types';
-import { Unsubscribable } from 'rxjs';
 
 export const defaultQuery: StreamingQuery = {
   type: 'signal',
@@ -25,7 +25,7 @@ type StreamWorkers = {
 export class StreamHandler {
   workers: StreamWorkers = {};
 
-  process(req: DataQueryRequest<TestDataQuery>): DataQueryResponse | undefined {
+  process(req: DataQueryRequest<TestDataQuery>, observer: SeriesDataStreamObserver): DataQueryResponse | undefined {
     let resp: DataQueryResponse;
     for (const query of req.targets) {
       if ('streaming_client' === query.scenarioId) {
@@ -38,20 +38,20 @@ export class StreamHandler {
         if (this.workers[key]) {
           const existing = this.workers[key];
           if (existing.update(query, req)) {
-            resp.streams.push(existing.stream);
+            resp.streams.push(existing);
             continue;
           }
-          existing.stop();
+          existing.shutdown();
           delete this.workers[key];
         }
         const type = query.stream.type;
         if (type === 'signal') {
-          const worker = new SignalWorker(key, query, req);
-          resp.streams.push(worker.stream);
+          const worker = new SignalWorker(key, query, req, observer);
+          resp.streams.push(worker);
           this.workers[key] = worker;
         } else if (type === 'logs') {
-          const worker = new LogsWorker(key, query, req);
-          resp.streams.push(worker.stream);
+          const worker = new LogsWorker(key, query, req, observer);
+          resp.streams.push(worker);
           this.workers[key] = worker;
         } else {
           throw {
@@ -68,60 +68,34 @@ export class StreamHandler {
 /**
  * Manages a single stream request
  */
-export class StreamWorker implements Unsubscribable {
-  stream: SeriesDataStream;
-  series: SeriesData;
-  query: StreamingQuery;
+export class StreamWorker implements DataQueryStream {
+  key: string;
+  state = LoadingState.Streaming;
+  series: SeriesData[];
   request: DataQueryRequest;
+
+  query: StreamingQuery;
   observer: SeriesDataStreamObserver;
   last = -1;
   timeoutId = 0;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
+    this.key = key;
     this.query = query.stream;
     this.request = request;
     this.last = Date.now();
-    this.stream = {
-      key,
-      refId: query.refId,
-      subscribe: this.subscribe,
-    };
+    this.observer = observer;
+    this.series = [];
     console.log('Creating Test Stream: ', this);
   }
 
-  private subscribe = (observer: SeriesDataStreamObserver): Unsubscribable => {
-    if (this.observer) {
-      throw {
-        refId: this.stream.refId,
-        message: 'Only one subscriber is allowed at a time',
-      } as DataQueryError;
-    }
-    this.observer = observer;
-    setTimeout(this.onSubscribe.bind(this), 5);
-    return this;
-  };
-
-  onSubscribe() {
-    // Allow subclasses to start sending
-  }
-
-  stop() {
-    if (this.observer) {
-      this.observer.done(this.stream.key);
-      this.observer = null;
-    }
+  shutdown = () => {
+    this.observer = null;
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
       this.timeoutId = 0;
     }
-  }
-
-  unsubscribe() {
-    if (!this.observer) {
-      throw new Error('Not listening to: ' + this.stream.refId);
-    }
-    this.observer = null;
-  }
+  };
 
   update(query: TestDataQuery, request: DataQueryRequest): boolean {
     if (this.query.type !== query.stream.type) {
@@ -135,9 +109,11 @@ export class StreamWorker implements Unsubscribable {
 
   appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { series, query, request } = this;
+    const { query, request } = this;
     const maxRows = query.buffer ? query.buffer : request.maxDataPoints;
 
+    // Edit the first series
+    const series = this.series[0];
     let rows = series.rows.concat(append);
     const extra = maxRows - rows.length;
     if (extra < 0) {
@@ -147,10 +123,7 @@ export class StreamWorker implements Unsubscribable {
 
     // Broadcast the changes
     if (this.observer) {
-      if (!this.observer.next(this.stream.key, [series])) {
-        this.stop();
-        return;
-      }
+      this.observer.next(this);
     }
     this.last = Date.now();
   }
@@ -159,13 +132,12 @@ export class StreamWorker implements Unsubscribable {
 export class SignalWorker extends StreamWorker {
   value: number;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
-    super(key, query, request);
-  }
-
-  onSubscribe() {
-    this.series = this.initBuffer(this.stream.refId);
-    this.looper(); // Start looping
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
+    super(key, query, request, observer);
+    window.setTimeout(() => {
+      this.series = [this.initBuffer(query.refId)];
+      this.looper();
+    }, 10);
   }
 
   nextRow = (time: number) => {
@@ -232,13 +204,13 @@ export class SignalWorker extends StreamWorker {
 export class LogsWorker extends StreamWorker {
   index = 0;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
-    super(key, query, request);
-  }
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
+    super(key, query, request, observer);
 
-  onSubscribe() {
-    this.series = this.initBuffer(this.stream.refId);
-    this.looper(); // Start looping
+    window.setTimeout(() => {
+      this.series = [this.initBuffer(query.refId)];
+      this.looper();
+    }, 10);
   }
 
   getNextWord() {

@@ -8,25 +8,20 @@ import {
   isSeriesData,
   toSeriesData,
   DataQueryError,
-  SeriesDataStream,
-  SeriesData,
   SeriesDataStreamObserver,
+  DataQueryStream,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import isEqual from 'lodash/isEqual';
-import { Unsubscribable } from 'rxjs';
 import * as dateMath from 'app/core/utils/datemath';
 
-export interface OpenStream {
+class OpenStream {
   key: string;
-  refId: string;
-  openTime: number;
+  data: DataQueryStream;
   lastQuery: number;
-  lastEvent: number; // Time
+  lastEvent: number;
   eventCount: number;
-  subscription: Unsubscribable | null;
-  data: SeriesData[];
 }
 
 export class PanelQueryState {
@@ -113,7 +108,7 @@ export class PanelQueryState {
       this.rejector = reject;
 
       return ds
-        .query(this.request)
+        .query(this.request, this.streamDataObserver)
         .then(resp => {
           this.request.endTime = Date.now();
 
@@ -136,6 +131,7 @@ export class PanelQueryState {
           // Check if any streams were returned
           if (this.checkStreams(resp.streams)) {
             resolve((this.data = this.getPanelDataFromStream()));
+            return;
           }
 
           resolve(
@@ -159,27 +155,17 @@ export class PanelQueryState {
   // This gets all stream events and keeps track of them
   // it will throttle actuall updates to subscribers
   streamDataObserver: SeriesDataStreamObserver = {
-    done: (key: string) => {
-      console.log('DONE With', key);
-    },
-    error: (key: string, err: DataQueryError) => {
-      console.log('ERROR With', key, err);
-    },
-    next: (key: string, series: SeriesData[]): boolean => {
-      const stream = this.getOpenStream(key);
+    next: (event: DataQueryStream) => {
+      const stream = this.getOpenStream(event.key);
       if (!stream) {
-        console.log('Unknown stream: ', key);
-        return false;
+        console.log('Shutdown unknown event', event);
+        event.shutdown();
+        return;
       }
+      stream.data = event;
       stream.eventCount++;
       stream.lastEvent = Date.now();
-      stream.data = series;
-      try {
-        this.streamCallback();
-      } catch (err) {
-        console.log('Error in callback', err, stream);
-      }
-      return true;
+      this.streamCallback();
     },
   };
 
@@ -187,10 +173,10 @@ export class PanelQueryState {
     return this.openStreams.find(s => s.key === key);
   }
 
-  checkStreams(streams?: SeriesDataStream[]): boolean {
+  checkStreams(streams?: DataQueryStream[]): boolean {
     if (streams && streams.length) {
-      const active: OpenStream[] = [];
       const now = Date.now();
+      const active: OpenStream[] = [];
       for (const stream of streams) {
         const current = this.getOpenStream(stream.key);
         if (current && current.key === stream.key) {
@@ -200,31 +186,26 @@ export class PanelQueryState {
         }
 
         // Add the stream *before* calling subscribe
-        const open: OpenStream = {
+        active.push({
           key: stream.key,
-          refId: stream.refId,
-          openTime: now,
           lastQuery: now,
           lastEvent: 0,
           eventCount: 0,
-          data: [],
-          subscription: null,
-        };
-        this.openStreams.push(open);
-        open.subscription = stream.subscribe(this.streamDataObserver);
-        active.push(open);
+          data: stream,
+        });
       }
 
       if (this.openStreams) {
         // Close any streams that did not come back from the query
         for (const open of this.openStreams) {
-          if (open.lastQuery !== now && open.subscription) {
-            open.subscription.unsubscribe();
-            open.subscription = null;
+          if (open.lastQuery !== now && open.data) {
+            open.data.shutdown();
           }
         }
       }
       this.openStreams = active;
+
+      console.log('HELLO', this.openStreams);
     } else if (this.openStreams.length) {
       this.closeStreams();
     }
@@ -235,12 +216,9 @@ export class PanelQueryState {
     if (this.openStreams.length) {
       // We have open streams, but query does not think so
       for (const stream of this.openStreams) {
-        if (stream.subscription) {
-          try {
-            stream.subscription.unsubscribe();
-          } catch {}
-          stream.subscription = null;
-        }
+        try {
+          stream.data.shutdown();
+        } catch {}
       }
       this.openStreams = [];
     }
@@ -250,9 +228,13 @@ export class PanelQueryState {
    * Build PanelData based on the stream state
    */
   getPanelDataFromStream = (): PanelData => {
-    const series: SeriesData[] = [];
+    let state = LoadingState.Done;
+    const series = [...this.data.series];
     for (const stream of this.openStreams) {
-      series.push.apply(series, stream.data);
+      series.push.apply(series, stream.data.series);
+      if (stream.data.state === LoadingState.Loading || stream.data.state === LoadingState.Streaming) {
+        state = LoadingState.Streaming;
+      }
     }
 
     // Update the time range
@@ -266,7 +248,7 @@ export class PanelQueryState {
     }
 
     return (this.data = {
-      state: LoadingState.Done, // TODO, state based on the actual states!
+      state,
       series,
       legacy: this.sendLegacy ? series.map(s => toLegacyResponseData(s)) : undefined,
       request: {

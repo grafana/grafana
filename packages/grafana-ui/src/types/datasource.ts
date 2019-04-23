@@ -3,7 +3,6 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
-import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -96,7 +95,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, stream?: SeriesDataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -178,28 +177,18 @@ export interface SeriesDataStreamObserver {
   /**
    * Return true if processed, and false if the event should shutdown
    */
-  next: (key: string, data: SeriesData[]) => boolean;
-
-  /**
-   * Error in the stream
-   */
-  error: (key: string, err: DataQueryError) => void;
-
-  /**
-   * Stream closed
-   */
-  done: (key: string) => void;
+  next: (data: DataQueryStream) => void;
 }
 
-export interface SeriesDataStream {
+export interface DataQueryStream extends PanelData {
   key: string;
-  refId: string;
-  subscribe: (observer: SeriesDataStreamObserver) => Unsubscribable;
+  request: DataQueryRequest; // not optional
+  shutdown: () => void;
 }
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-  streams?: SeriesDataStream[];
+  streams?: DataQueryStream[];
 }
 
 export interface DataQuery {
