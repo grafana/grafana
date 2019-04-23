@@ -82,13 +82,23 @@ func (cr *configReader) readConfig() ([]*DashboardsAsConfig, error) {
 		}
 	}
 
-	for i := range dashboards {
-		if dashboards[i].OrgId == 0 {
-			dashboards[i].OrgId = 1
+	uidUsage := map[string]uint8{}
+	for _, dashboard := range dashboards {
+		if dashboard.OrgId == 0 {
+			dashboard.OrgId = 1
 		}
 
-		if dashboards[i].UpdateIntervalSeconds == 0 {
-			dashboards[i].UpdateIntervalSeconds = 10
+		if dashboard.UpdateIntervalSeconds == 0 {
+			dashboard.UpdateIntervalSeconds = 10
+		}
+		if len(dashboard.FolderUid) > 0 {
+			uidUsage[dashboard.FolderUid] += 1
+		}
+	}
+
+	for uid, times := range uidUsage {
+		if times > 1 {
+			cr.log.Error("the same 'folderUid' is used more than once", "folderUid", uid)
 		}
 	}
 
