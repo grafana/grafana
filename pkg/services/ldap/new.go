@@ -56,12 +56,36 @@ func (ldap *ldapAuther) serializeUsers(users *LDAP.SearchResult) []*LdapUserInfo
 
 	for index := range users.Entries {
 		serialize := &LdapUserInfo{
-			DN:        getLdapAttrN("dn", users, index),
-			LastName:  getLdapAttrN(ldap.server.Attr.Surname, users, index),
-			FirstName: getLdapAttrN(ldap.server.Attr.Name, users, index),
-			Username:  getLdapAttrN(ldap.server.Attr.Username, users, index),
-			Email:     getLdapAttrN(ldap.server.Attr.Email, users, index),
-			MemberOf:  getLdapAttrArrayN(ldap.server.Attr.MemberOf, users, index),
+			DN: getLdapAttrN(
+				"dn",
+				users,
+				index,
+			),
+			LastName: getLdapAttrN(
+				ldap.server.Attr.Surname,
+				users,
+				index,
+			),
+			FirstName: getLdapAttrN(
+				ldap.server.Attr.Name,
+				users,
+				index,
+			),
+			Username: getLdapAttrN(
+				ldap.server.Attr.Username,
+				users,
+				index,
+			),
+			Email: getLdapAttrN(
+				ldap.server.Attr.Email,
+				users,
+				index,
+			),
+			MemberOf: getLdapAttrArrayN(
+				ldap.server.Attr.MemberOf,
+				users,
+				index,
+			),
 		}
 
 		serialized = append(serialized, serialize)

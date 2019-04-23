@@ -3,15 +3,19 @@ package login
 import (
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+
+	m "github.com/grafana/grafana/pkg/models"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestLdapLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {
 		Convey("Given ldap enabled and a server configured", func() {
 			setting.LdapEnabled = true
+			LDAP.ReadConfig()
+
 			LdapCfg.Servers = append(LdapCfg.Servers,
 				&LdapServerConf{
 					Host: "",

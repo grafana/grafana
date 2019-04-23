@@ -56,17 +56,19 @@ type LdapGroupToOrgRole struct {
 var LdapCfg LdapConfig
 var ldapLogger log.Logger = log.New("ldap")
 
-func ReadConfig() *LdapConfig {
+// ReadConfig reads the config if ldap is enabled
+// TODO: refactor
+func ReadConfig() (bool, *LdapConfig) {
+	if !setting.LdapEnabled {
+		return false, nil
+	}
+
 	loadLdapConfig()
 
-	return &LdapCfg
+	return true, &LdapCfg
 }
 
 func loadLdapConfig() {
-	if !setting.LdapEnabled {
-		return
-	}
-
 	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
 
 	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
