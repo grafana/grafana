@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"path"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -22,6 +21,7 @@ var (
 	IoHelper       m.IoUtil = IoUtilImp{}
 	HttpClient     http.Client
 	grafanaVersion string
+	NotFoundError  = errors.New("404 not found error")
 )
 
 func Init(version string, skipTLSVerify bool) {
@@ -131,8 +131,8 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to send request", err)
-		if strings.Contains(err.Error(), "404") {
+		logger.Info("Failed to send request: ", err)
+		if err == NotFoundError {
 			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
 		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
@@ -174,6 +174,9 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	if res.StatusCode == 404 {
+		return []byte{}, NotFoundError
+	}
 	if res.StatusCode/100 != 2 {
 		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
 	}
