@@ -5,8 +5,8 @@ import {
   SeriesData,
   DataQueryResponse,
   DataQueryError,
-  SeriesDataStreamObserver,
-  SeriesDataStream,
+  DataStreamObserver,
+  DataStreamEvent,
   LoadingState,
 } from '@grafana/ui';
 import { TestDataQuery, StreamingQuery } from './types';
@@ -25,7 +25,7 @@ type StreamWorkers = {
 export class StreamHandler {
   workers: StreamWorkers = {};
 
-  process(req: DataQueryRequest<TestDataQuery>, observer: SeriesDataStreamObserver): DataQueryResponse | undefined {
+  process(req: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver): DataQueryResponse | undefined {
     let resp: DataQueryResponse;
     for (const query of req.targets) {
       if ('streaming_client' === query.scenarioId) {
@@ -38,7 +38,7 @@ export class StreamHandler {
         if (this.workers[key]) {
           const existing = this.workers[key];
           if (existing.update(query, req)) {
-            resp.streams.push(existing.stream);
+            resp.streams.push(existing.event);
             continue;
           }
           existing.shutdown();
@@ -47,11 +47,11 @@ export class StreamHandler {
         const type = query.stream.type;
         if (type === 'signal') {
           const worker = new SignalWorker(key, query, req, observer);
-          resp.streams.push(worker.stream);
+          resp.streams.push(worker.event);
           this.workers[key] = worker;
         } else if (type === 'logs') {
           const worker = new LogsWorker(key, query, req, observer);
-          resp.streams.push(worker.stream);
+          resp.streams.push(worker.event);
           this.workers[key] = worker;
         } else {
           throw {
@@ -69,20 +69,19 @@ export class StreamHandler {
  * Manages a single stream request
  */
 export class StreamWorker {
-  stream: SeriesDataStream;
   query: StreamingQuery;
-  observer: SeriesDataStreamObserver;
+  event: DataStreamEvent;
+  observer: DataStreamObserver;
   last = -1;
   timeoutId = 0;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
-    this.stream = {
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
+    this.event = {
       key,
-      data: {
-        state: LoadingState.Streaming,
-        request,
-        series: [],
-      },
+      state: LoadingState.Streaming,
+      request,
+      series: [],
+      delta: [],
       shutdown: this.shutdown,
     };
     this.query = query.stream;
@@ -104,19 +103,18 @@ export class StreamWorker {
       return false;
     }
     this.query = query.stream;
-    this.stream.data.request = request; // OK?
+    this.event.request = request; // OK?
     console.log('Reuse Test Stream: ', this);
     return true;
   }
 
   appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { query, stream } = this;
-    const { data } = stream;
-    const maxRows = query.buffer ? query.buffer : data.request.maxDataPoints;
+    const { query, event } = this;
+    const maxRows = query.buffer ? query.buffer : event.request.maxDataPoints;
 
     // Edit the first series
-    const series = data.series[0];
+    const series = event.series[0];
     let rows = series.rows.concat(append);
     const extra = maxRows - rows.length;
     if (extra < 0) {
@@ -124,9 +122,12 @@ export class StreamWorker {
     }
     series.rows = rows;
 
+    // Tell the event about only the rows that changed (it may want to process them)
+    event.delta = [{ ...series, rows: append }];
+
     // Broadcast the changes
     if (this.observer) {
-      this.observer(stream);
+      this.observer(event);
     }
     this.last = Date.now();
   }
@@ -135,10 +136,10 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     window.setTimeout(() => {
-      this.stream.data.series = [this.initBuffer(query.refId)];
+      this.event.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
   }
@@ -168,7 +169,7 @@ export class SignalWorker extends StreamWorker {
       name: 'Signal ' + refId,
     } as SeriesData;
 
-    const request = this.stream.data.request;
+    const request = this.event.request;
     data.meta = {
       request: request.requestId,
     };
@@ -185,7 +186,7 @@ export class SignalWorker extends StreamWorker {
 
   looper = () => {
     if (!this.observer) {
-      const request = this.stream.data.request;
+      const request = this.event.request;
       const elapsed = request.startTime - Date.now();
       if (elapsed > 1000) {
         console.log('Stop looping');
@@ -207,11 +208,11 @@ export class SignalWorker extends StreamWorker {
 export class LogsWorker extends StreamWorker {
   index = 0;
 
-  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: SeriesDataStreamObserver) {
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
 
     window.setTimeout(() => {
-      this.stream.data.series = [this.initBuffer(query.refId)];
+      this.event.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
   }
@@ -242,7 +243,7 @@ export class LogsWorker extends StreamWorker {
       name: 'Logs ' + refId,
     } as SeriesData;
 
-    const request = this.stream.data.request;
+    const request = this.event.request;
     data.meta = {
       request: request.requestId,
     };
@@ -258,7 +259,7 @@ export class LogsWorker extends StreamWorker {
 
   looper = () => {
     if (!this.observer) {
-      const request = this.stream.data.request;
+      const request = this.event.request;
       const elapsed = request.startTime - Date.now();
       if (elapsed > 1000) {
         console.log('Stop looping');

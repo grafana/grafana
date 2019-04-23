@@ -8,8 +8,8 @@ import {
   isSeriesData,
   toSeriesData,
   DataQueryError,
-  SeriesDataStreamObserver,
-  SeriesDataStream,
+  DataStreamObserver,
+  DataStreamEvent,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -32,7 +32,7 @@ export class PanelQueryState {
   sendSeries = false;
   sendLegacy = false;
 
-  streams: SeriesDataStream[] = [];
+  streams: DataStreamEvent[] = [];
 
   // A promise for the running query
   private executor: Promise<PanelData> = {} as any;
@@ -146,7 +146,7 @@ export class PanelQueryState {
 
   // This gets all stream events and keeps track of them
   // it will throttle actuall updates to subscribers
-  streamDataObserver: SeriesDataStreamObserver = (event: SeriesDataStream) => {
+  streamDataObserver: DataStreamObserver = (event: DataStreamEvent) => {
     let found = false;
     const active = this.streams.map(s => {
       if (s.key === event.key) {
@@ -163,7 +163,7 @@ export class PanelQueryState {
     }
   };
 
-  checkStreams(streams?: SeriesDataStream[]): boolean {
+  checkStreams(streams?: DataStreamEvent[]): boolean {
     if (streams && streams.length) {
       const keys = new Set<string>();
       for (const stream of streams) {
@@ -203,8 +203,8 @@ export class PanelQueryState {
     let state = LoadingState.Done;
     const series = [...this.data.series];
     for (const stream of this.streams) {
-      series.push.apply(series, stream.data.series);
-      if (stream.data.state === LoadingState.Loading || stream.data.state === LoadingState.Streaming) {
+      series.push.apply(series, stream.series);
+      if (stream.state === LoadingState.Loading || stream.state === LoadingState.Streaming) {
         state = LoadingState.Streaming;
       }
     }

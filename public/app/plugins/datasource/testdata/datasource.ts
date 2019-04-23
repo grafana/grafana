@@ -5,7 +5,7 @@ import {
   TableData,
   TimeSeries,
   DataSourceInstanceSettings,
-  SeriesDataStreamObserver,
+  DataStreamObserver,
 } from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -26,10 +26,8 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     this.id = instanceSettings.id;
   }
 
-  query(options: DataQueryRequest<TestDataQuery>, observer: SeriesDataStreamObserver) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+  query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
+    const queries = options.targets.map(item => {
       return {
         refId: item.refId,
         scenarioId: item.scenarioId,
@@ -92,7 +90,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       });
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     let timeWalker = options.range.from.valueOf();
     const to = options.range.to.valueOf();
     const events = [];
