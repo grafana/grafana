@@ -122,8 +122,11 @@ func TestPluginProxy(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(header.Get("X-Grafana-User"), ShouldEqual, "")
 		})
-		Convey("Should interpolate url from jsondata", func() {
-			So(route.Url, ShouldEqual, "https://dynamic.grafana.com")
+		Convey("Should set req.URL to be interpolated value from jsonData", func() {
+			So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com")
+		})
+		Convey("Route url should not be modified", func() {
+			So(route.Url, ShouldEqual, "{{.JsonData.dynamicUrl}}")
 		})
 	})
 
