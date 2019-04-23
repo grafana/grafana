@@ -287,8 +287,6 @@ export class ElasticDatasource {
   }
 
   getFields(query) {
-    // XXX: code-smell, I don't really know how to access the `this` closure
-    // value
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then(result => {
       const typeMap = {
