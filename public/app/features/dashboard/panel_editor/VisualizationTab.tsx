@@ -19,6 +19,7 @@ import { DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { PanelOptionsUIBuilder, isOptionsUIModel, OptionsUIModel } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -68,7 +69,24 @@ export class VisualizationTab extends PureComponent<Props, State> {
       const PanelEditor = plugin.reactPlugin.editor;
 
       if (PanelEditor) {
-        return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+        if (isOptionsUIModel(PanelEditor)) {
+          return (
+            <PanelOptionsUIBuilder
+              uiModel={PanelEditor as OptionsUIModel<any>}
+              options={this.getReactPanelOptions()}
+              onOptionsChange={(key, value) => {
+                const optionsUpdate: { [key: string]: any } = {};
+                optionsUpdate[key as string] = value;
+                this.onPanelOptionsChanged({
+                  ...this.getReactPanelOptions(),
+                  ...optionsUpdate,
+                });
+              }}
+            />
+          );
+        } else {
+          return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+        }
       }
     }
 

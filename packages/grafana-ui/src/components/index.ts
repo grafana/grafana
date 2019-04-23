@@ -49,3 +49,7 @@ export { VizRepeater } from './VizRepeater/VizRepeater';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/shared';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
+
+export { PanelOptionsUIBuilder } from './PanelOptions/PanelOptionsBuilder';
+export { BooleanOption } from './PanelOptions/BooleanOption';
+export { FloatOption, IntegerOption } from './PanelOptions/NumericInputOption';
