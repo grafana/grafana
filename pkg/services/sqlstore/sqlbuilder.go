@@ -42,9 +42,14 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 
 	falseStr := dialect.BooleanStr(false)
 
-	sb.sql.WriteString(` AND
+	sb.sql.WriteString(` AND EXISTS
 	(
-		dashboard.id IN (
+		SELECT * FROM (
+			SELECT dashboard.id
+			UNION ALL
+			SELECT cd.id FROM dashboard cd
+			WHERE  cd.folder_id = dashboard.id)
+			INTERSECT 
 			SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
 			 	LEFT JOIN dashboard folder on folder.id = d.folder_id
@@ -66,8 +71,7 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 					da.user_id = ? OR
 					ugm.user_id = ? OR
 					da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
-				)
-		)
+				)	
 	)`)
 
 	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)

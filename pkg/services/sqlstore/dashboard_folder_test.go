@@ -105,13 +105,14 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				Convey("when the user is given permission to child", func() {
 					testHelperUpdateDashboardAcl(childDash.Id, m.DashboardAcl{DashboardId: childDash.Id, OrgId: 1, UserId: currentUser.Id, Permission: m.PERMISSION_EDIT})
 
-					Convey("should be able to search for child dashboard but not folder", func() {
+					Convey("should be able to search for child dashboard and the folder", func() {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
 						err := SearchDashboards(query)
 						So(err, ShouldBeNil)
-						So(len(query.Result), ShouldEqual, 2)
-						So(query.Result[0].Id, ShouldEqual, childDash.Id)
-						So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+						So(len(query.Result), ShouldEqual, 3)
+						So(query.Result[0].Id, ShouldEqual, folder.Id)
+						So(query.Result[1].Id, ShouldEqual, childDash.Id)
+						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
 					})
 				})
 
