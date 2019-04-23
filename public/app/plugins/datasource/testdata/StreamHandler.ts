@@ -49,6 +49,10 @@ export class StreamHandler {
           const worker = new SignalWorker(key, query, req);
           resp.streams.push(worker.stream);
           this.workers[key] = worker;
+        } else if (type === 'logs') {
+          const worker = new LogsWorker(key, query, req);
+          resp.streams.push(worker.stream);
+          this.workers[key] = worker;
         } else {
           throw {
             message: 'Unknown Stream type: ' + type,
@@ -196,6 +200,260 @@ export class SignalWorker extends StreamWorker {
     }
 
     this.value = Math.random() * 100;
+    const maxRows = buffer ? buffer : this.request.maxDataPoints;
+    let time = Date.now() - maxRows * speed;
+    for (let i = 0; i < maxRows; i++) {
+      data.rows.push(this.nextRow(time));
+      time += speed;
+    }
+    return data;
+  }
+
+  looper = () => {
+    if (!this.observer) {
+      const elapsed = this.request.startTime - Date.now();
+      if (elapsed > 1000) {
+        console.log('Stop looping');
+        return;
+      }
+    }
+
+    // Make sure it has a minimum speed
+    const { query } = this;
+    if (query.speed < 5) {
+      query.speed = 5;
+    }
+
+    this.appendRows([this.nextRow(Date.now())]);
+    this.timeoutId = window.setTimeout(this.looper, query.speed);
+  };
+}
+
+const words = [
+  'a',
+  'ac',
+  'accumsan',
+  'ad',
+  'adipiscing',
+  'aenean',
+  'aenean',
+  'aliquam',
+  'aliquam',
+  'aliquet',
+  'amet',
+  'ante',
+  'aptent',
+  'arcu',
+  'at',
+  'auctor',
+  'augue',
+  'bibendum',
+  'blandit',
+  'class',
+  'commodo',
+  'condimentum',
+  'congue',
+  'consectetur',
+  'consequat',
+  'conubia',
+  'convallis',
+  'cras',
+  'cubilia',
+  'curabitur',
+  'curabitur',
+  'curae',
+  'cursus',
+  'dapibus',
+  'diam',
+  'dictum',
+  'dictumst',
+  'dolor',
+  'donec',
+  'donec',
+  'dui',
+  'duis',
+  'egestas',
+  'eget',
+  'eleifend',
+  'elementum',
+  'elit',
+  'enim',
+  'erat',
+  'eros',
+  'est',
+  'et',
+  'etiam',
+  'etiam',
+  'eu',
+  'euismod',
+  'facilisis',
+  'fames',
+  'faucibus',
+  'felis',
+  'fermentum',
+  'feugiat',
+  'fringilla',
+  'fusce',
+  'gravida',
+  'habitant',
+  'habitasse',
+  'hac',
+  'hendrerit',
+  'himenaeos',
+  'iaculis',
+  'id',
+  'imperdiet',
+  'in',
+  'inceptos',
+  'integer',
+  'interdum',
+  'ipsum',
+  'justo',
+  'lacinia',
+  'lacus',
+  'laoreet',
+  'lectus',
+  'leo',
+  'libero',
+  'ligula',
+  'litora',
+  'lobortis',
+  'lorem',
+  'luctus',
+  'maecenas',
+  'magna',
+  'malesuada',
+  'massa',
+  'mattis',
+  'mauris',
+  'metus',
+  'mi',
+  'molestie',
+  'mollis',
+  'morbi',
+  'nam',
+  'nec',
+  'neque',
+  'netus',
+  'nibh',
+  'nisi',
+  'nisl',
+  'non',
+  'nostra',
+  'nulla',
+  'nullam',
+  'nunc',
+  'odio',
+  'orci',
+  'ornare',
+  'pellentesque',
+  'per',
+  'pharetra',
+  'phasellus',
+  'placerat',
+  'platea',
+  'porta',
+  'porttitor',
+  'posuere',
+  'potenti',
+  'praesent',
+  'pretium',
+  'primis',
+  'proin',
+  'pulvinar',
+  'purus',
+  'quam',
+  'quis',
+  'quisque',
+  'quisque',
+  'rhoncus',
+  'risus',
+  'rutrum',
+  'sagittis',
+  'sapien',
+  'scelerisque',
+  'sed',
+  'sem',
+  'semper',
+  'senectus',
+  'sit',
+  'sociosqu',
+  'sodales',
+  'sollicitudin',
+  'suscipit',
+  'suspendisse',
+  'taciti',
+  'tellus',
+  'tempor',
+  'tempus',
+  'tincidunt',
+  'torquent',
+  'tortor',
+  'tristique',
+  'turpis',
+  'ullamcorper',
+  'ultrices',
+  'ultricies',
+  'urna',
+  'ut',
+  'ut',
+  'varius',
+  'vehicula',
+  'vel',
+  'velit',
+  'venenatis',
+  'vestibulum',
+  'vitae',
+  'vivamus',
+  'viverra',
+  'volutpat',
+  'vulputate',
+];
+
+export class LogsWorker extends StreamWorker {
+  index = 0;
+
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
+    super(key, query, request);
+  }
+
+  onSubscribe() {
+    this.series = this.initBuffer(this.stream.refId);
+    this.looper(); // Start looping
+  }
+
+  getNextWord() {
+    this.index = (this.index + Math.floor(Math.random() * 5)) % words.length;
+    return words[this.index];
+  }
+
+  getRandomLine() {
+    let line = this.getNextWord();
+    while (line.length < 80) {
+      line += ' ' + this.getNextWord();
+    }
+    return line;
+  }
+
+  nextRow = (time: number) => {
+    return [time, this.getRandomLine()];
+  };
+
+  initBuffer(refId: string): SeriesData {
+    const { speed, buffer } = this.query;
+    const data = {
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
+      rows: [],
+      refId,
+      name: 'Logs ' + refId,
+    } as SeriesData;
+
+    if (this.request) {
+      data.meta = {
+        request: this.request.requestId,
+      };
+    }
+
     const maxRows = buffer ? buffer : this.request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
