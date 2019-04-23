@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/pkg/errors"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DashboardService service for operating on dashboards
@@ -261,7 +261,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, 
 		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
 		err := bus.Dispatch(isDashboardProvisioned)
 		if err != nil {
-			return errors.Wrap(err, "error while checking if dashboard is provisioned")
+			return errutil.Wrap("failed to check if dashboard is provisioned", err)
 		}
 
 		if isDashboardProvisioned.Result {

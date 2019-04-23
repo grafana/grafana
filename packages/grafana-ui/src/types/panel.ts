@@ -1,15 +1,18 @@
 import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
-import { ScopedVars, DataRequestInfo, DataQueryError } from './datasource';
+import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelData {
   state: LoadingState;
   series: SeriesData[];
-  request?: DataRequestInfo;
+  request?: DataQueryRequest;
   error?: DataQueryError;
+
+  // Data format expected by Angular panels
+  legacy?: LegacyResponseData[];
 }
 
 export interface PanelProps<T = any> {
