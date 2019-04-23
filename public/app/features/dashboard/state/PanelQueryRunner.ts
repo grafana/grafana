@@ -1,5 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import throttle from 'lodash/throttle';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
@@ -182,10 +183,13 @@ export class PanelQueryRunner {
     }
   }
 
-  // TODO: add throttle to this
-  updateFromStream = () => {
-    this.subject.next(this.state.getPanelDataFromStream());
-  };
+  updateFromStream = throttle(
+    () => {
+      this.subject.next(this.state.getPanelDataFromStream());
+    },
+    50,
+    { trailing: true }
+  );
 
   /**
    * Called when the panel is closed
