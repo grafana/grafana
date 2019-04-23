@@ -206,19 +206,21 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   renderQueryResponseInfo(response: PanelData) {
     const things = [];
 
-    if (response.state === LoadingState.Loading || response.state === LoadingState.Streaming) {
+    const { request, state, series, error } = response;
+
+    if (state === LoadingState.Loading || state === LoadingState.Streaming) {
       things.push(<i className="fa fa-spinner fa-spin" />);
     }
-    if (response.state === LoadingState.Error) {
+    if (state === LoadingState.Error) {
       things.push(
         <span>
-          <i className="fa fa-error" /> {response.error && response.error.message}
+          <i className="fa fa-error" /> {error && error.message}
         </span>
       );
     }
 
-    if (response.series && response.series.length) {
-      const rows = response.series.reduce((count, series) => {
+    if (series && series.length) {
+      const rows = series.reduce((count, series) => {
         return count + series.rows.length;
       }, 0);
       things.push(
@@ -228,9 +230,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       );
     }
 
-    if (response.request.endTime) {
-      const elapsed = (response.request.endTime - response.request.startTime) / 1000;
-      things.push(<span>&nbsp;&nbsp; {elapsed} seconds</span>);
+    if (request) {
+      if (request.endTime) {
+        const elapsed = (request.endTime - request.startTime) / 1000;
+        things.push(<span>&nbsp;&nbsp; {elapsed} seconds</span>);
+      } else {
+        // running time?
+      }
     }
 
     return things;

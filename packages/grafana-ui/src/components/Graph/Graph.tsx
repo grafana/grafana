@@ -94,7 +94,6 @@ export class Graph extends PureComponent<GraphProps> {
     };
 
     try {
-      console.log('Graph render');
       $.plot(this.element, series, flotOptions);
     } catch (err) {
       console.log('Graph rendering error', err, flotOptions, series);

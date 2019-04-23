@@ -1,7 +1,7 @@
 import { ComponentClass } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries, SeriesData } from './data';
+import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
@@ -95,7 +95,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -173,8 +173,53 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
+export type DataStreamObserver = (event: DataStreamEvent) => void;
+
+export interface DataStreamEvent {
+  /**
+   * Consistent key across events
+   */
+  key: string;
+
+  /**
+   * when Done or Error no more events will be processed
+   */
+  state: LoadingState;
+
+  /**
+   * The initial request for this stream
+   */
+  request: DataQueryRequest;
+
+  /**
+   * Series data
+   */
+  series: SeriesData[];
+
+  /**
+   * Error in stream (but may still be running)
+   */
+  error?: DataQueryError;
+
+  /**
+   * Optionally return only the rows that changed
+   */
+  delta?: SeriesData[];
+
+  /**
+   * Callback function to stop the data stream
+   */
+  shutdown: () => void;
+}
+
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+
+  /**
+   * When streaming, this must return the list of expected events
+   * other events will be ignored and shutdown
+   */
+  streams?: DataStreamEvent[];
 }
 
 export interface DataQuery {
@@ -234,6 +279,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+
+  // Sometimes on request kicks off others
+  subRequests?: DataQueryRequest[];
 
   // Request Timing
   startTime: number;

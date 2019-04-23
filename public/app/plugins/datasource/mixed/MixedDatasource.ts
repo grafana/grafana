@@ -7,7 +7,7 @@ import {
   DataQueryResponse,
   LoadingState,
   DataStreamEvent,
-  DataStreamEventObserver,
+  DataStreamObserver,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryRunner';
@@ -16,9 +16,7 @@ import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
 export class MixedDatasource implements DataSourceApi<DataQuery> {
-  async query(request: DataQueryRequest<DataQuery>, stream?: DataStreamEventObserver): Promise<DataQueryResponse> {
-    const datasourceSrv = getDatasourceSrv();
-
+  query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
     // Remove any hidden or invalid queries
     const queries = request.targets.filter(t => {
       return !t.hide || t.datasource === MIXED_DATASOURCE_NAME;
@@ -28,46 +26,58 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       return Promise.resolve({ data: [] }); // nothing
     }
 
-    if (!stream) {
+    if (!observer) {
       throw new Error('Mixed Query requires streaming callback');
     }
 
     // Update the sub request list
     request.subRequests = [];
+    const streams: DataStreamEvent[] = [];
     for (const query of queries) {
       const sub = cloneDeep(request);
       sub.requestId = request.requestId + '_' + request.subRequests.length;
       sub.targets = [query];
       sub.startTime = Date.now();
       request.subRequests.push(sub);
-      const data: DataStreamEvent = {
-        state: LoadingState.Loading,
-        request: sub,
-        series: [],
-      };
-      stream.next(data);
+      streams.push(this.startStreamingQuery(query.datasource, query.refId, sub, observer));
+    }
+    return Promise.resolve({ data: [], streams });
+  }
 
-      // Starts the request async
-      datasourceSrv.get(query.datasource).then(ds => {
-        return ds
-          .query(sub, stream)
+  startStreamingQuery(
+    datasource: string,
+    key: string,
+    request: DataQueryRequest<DataQuery>,
+    observer: DataStreamObserver
+  ) {
+    const event: DataStreamEvent = {
+      key,
+      state: LoadingState.Loading,
+      request,
+      series: [],
+      shutdown: () => {
+        console.log('SHUTDOWN');
+      },
+    };
+    // Starts background process
+    getDatasourceSrv()
+      .get(datasource)
+      .then(ds => {
+        ds.query(request, observer)
           .then(res => {
-            sub.endTime = Date.now();
-            data.state = LoadingState.Done;
-            data.series = getProcessedSeriesData(res.data);
-            stream.next(data);
+            request.endTime = Date.now();
+            event.state = LoadingState.Done;
+            event.series = getProcessedSeriesData(res.data);
+            observer(event);
           })
           .catch(err => {
-            sub.endTime = Date.now();
-            data.state = LoadingState.Error;
-            data.error = toDataQueryError(err);
-            stream.next(data);
+            request.endTime = Date.now();
+            event.state = LoadingState.Error;
+            event.error = toDataQueryError(err);
+            observer(event);
           });
       });
-    }
-
-    // Return, but keep listening for changes
-    return Promise.resolve({ data: [], streaming: true });
+    return event;
   }
 
   testDatasource() {

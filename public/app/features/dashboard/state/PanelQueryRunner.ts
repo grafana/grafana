@@ -1,7 +1,7 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import throttle from 'lodash/throttle';
+import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -196,12 +196,12 @@ export class PanelQueryRunner {
    * This looks at the values we have saved and builds a full
    * response based on any open streams
    */
-  private updateFromStream = throttle(
+  updateFromStream = throttle(
     () => {
-      this.subject.next(this.state.updateDataFromStream());
+      this.subject.next(this.state.getPanelDataFromStream());
     },
     50,
-    { leading: true, trailing: true }
+    { trailing: true }
   );
 
   /**

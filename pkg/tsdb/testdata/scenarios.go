@@ -226,6 +226,15 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "streaming_client",
+		Name: "Streaming Client",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			// Real work is in javascript client
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "table_static",
 		Name: "Table Static",
 

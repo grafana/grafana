@@ -1,3 +1,4 @@
+import isString from 'lodash/isString';
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -7,11 +8,13 @@ import {
   isSeriesData,
   toSeriesData,
   DataQueryError,
+  DataStreamObserver,
   DataStreamEvent,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import isEqual from 'lodash/isEqual';
+import * as dateMath from 'app/core/utils/datemath';
 
 export class PanelQueryState {
   // The current/last running request
@@ -28,6 +31,8 @@ export class PanelQueryState {
 
   sendSeries = false;
   sendLegacy = false;
+
+  streams: DataStreamEvent[] = [];
 
   // A promise for the running query
   private executor: Promise<PanelData> = {} as any;
@@ -64,16 +69,12 @@ export class PanelQueryState {
       if (request.requestId) {
         getBackendSrv().resolveCancelerIfExists(request.requestId);
       }
-
-      // Unsubscribe to any streaming events
-      this.streamEvents.forEach(event => {
-        if (event.subscription) {
-          event.subscription.unsubscribe();
-        }
-      });
     } catch (err) {
       console.log('Error canceling request');
     }
+
+    // Close any open streams
+    this.closeStreams();
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
@@ -99,7 +100,7 @@ export class PanelQueryState {
       this.rejector = reject;
 
       return ds
-        .query(this.request, this.streamingDataObserver)
+        .query(this.request, this.streamDataObserver)
         .then(resp => {
           this.request.endTime = Date.now();
 
@@ -119,6 +120,18 @@ export class PanelQueryState {
               })
             : undefined;
 
+          // Check if any streams were returned
+          if (this.checkStreams(resp.streams)) {
+            this.data = {
+              state: LoadingState.Streaming,
+              request: this.request,
+              series: [],
+              legacy: [],
+            };
+            resolve(this.getPanelDataFromStream());
+            return;
+          }
+
           resolve(
             (this.data = {
               state: LoadingState.Done,
@@ -133,6 +146,95 @@ export class PanelQueryState {
         });
     }));
   }
+
+  // Send a notice when the stream has updated the current model
+  streamCallback: () => void;
+
+  // This gets all stream events and keeps track of them
+  // it will throttle actuall updates to subscribers
+  streamDataObserver: DataStreamObserver = (event: DataStreamEvent) => {
+    let found = false;
+    const active = this.streams.map(s => {
+      if (s.key === event.key) {
+        found = true;
+        return event;
+      }
+      return s;
+    });
+    if (found) {
+      this.streams = active;
+      this.streamCallback();
+    } else {
+      console.log('Ignore: ', event);
+    }
+  };
+
+  checkStreams(streams?: DataStreamEvent[]): boolean {
+    if (streams && streams.length) {
+      const keys = new Set<string>();
+      for (const stream of streams) {
+        keys.add(stream.key);
+      }
+
+      // Shudown any old streams
+      for (const old of this.streams) {
+        if (!keys.has(old.key)) {
+          old.shutdown();
+        }
+      }
+
+      this.streams = streams;
+    } else if (this.streams.length) {
+      this.closeStreams();
+    }
+    return this.streams.length > 0;
+  }
+
+  closeStreams() {
+    if (this.streams.length) {
+      // We have open streams, but query does not think so
+      for (const stream of this.streams) {
+        try {
+          stream.shutdown();
+        } catch {}
+      }
+      this.streams = [];
+    }
+  }
+
+  /**
+   * Build PanelData based on the stream state
+   */
+  getPanelDataFromStream = (): PanelData => {
+    let state = LoadingState.Done;
+    const series = [...this.data.series];
+    for (const stream of this.streams) {
+      series.push.apply(series, stream.series);
+      if (stream.state === LoadingState.Loading || stream.state === LoadingState.Streaming) {
+        state = LoadingState.Streaming;
+      }
+    }
+
+    // Update the time range
+    let timeRange = this.request.range;
+    if (isString(timeRange.raw.from)) {
+      timeRange = {
+        from: dateMath.parse(timeRange.raw.from, false),
+        to: dateMath.parse(timeRange.raw.to, true),
+        raw: timeRange.raw,
+      };
+    }
+
+    return {
+      state,
+      series,
+      legacy: this.sendLegacy ? series.map(s => toLegacyResponseData(s)) : undefined,
+      request: {
+        ...this.request,
+        range: timeRange, // update the time range
+      },
+    };
+  };
 
   /**
    * Make sure all requested formats exist on the data
@@ -152,6 +254,7 @@ export class PanelQueryState {
     if (!this.request.endTime) {
       this.request.endTime = Date.now();
     }
+    this.closeStreams();
 
     return (this.data = {
       ...this.data, // Keep any existing data
@@ -160,86 +263,6 @@ export class PanelQueryState {
       request: this.request,
     });
   }
-
-  //---------------------
-  // Streaming Support
-  //---------------------
-
-  // Send a notice when the stream has updated the current model
-  streamCallback: () => void;
-
-  updateDataFromStream() {
-    const { request } = this;
-    const { requestId } = request;
-
-    const series = [];
-    let error: DataQueryError | undefined;
-    this.streamEvents.forEach((event, key) => {
-      if (key.startsWith(requestId)) {
-        // Use prefix to say it is the same event
-        series.push.apply(series, event.series);
-        if (event.error) {
-          error = event.error;
-        }
-      } else {
-        if (event.subscription) {
-          event.subscription.unsubscribe();
-        }
-        this.streamEvents.delete(key);
-      }
-    });
-
-    // Update the graphs
-    return (this.data = {
-      state: this.data.state,
-      request,
-      series,
-      error,
-      legacy: this.sendLegacy
-        ? series.map(v => {
-            return toLegacyResponseData(v);
-          })
-        : undefined,
-    });
-  }
-
-  private streamEvents = new Map<string, DataStreamEvent>();
-
-  // This is passed to DataSourceAPI and may get partial results
-  private streamingDataObserver = {
-    next: (event: DataStreamEvent): boolean => {
-      const { request } = this;
-      try {
-        const { requestId } = event.request;
-        // Make sure it is an event we are listening for
-        if (!requestId.startsWith(request.requestId)) {
-          if (event.subscription) {
-            event.subscription.unsubscribe();
-          }
-          console.log('Ignoring event from different request', request.requestId, event.request.requestId);
-          return false;
-        }
-
-        // Set the Request ID on all series metadata (for debugging)
-        for (const series of event.series) {
-          if (series.meta) {
-            series.meta.requestId = requestId;
-          } else {
-            series.meta = { requestId };
-          }
-        }
-        this.streamEvents.set(event.request.requestId, event);
-        if (this.streamCallback) {
-          this.streamCallback(); // Throttled and sends events to subscribers
-        }
-      } catch (err) {
-        console.log('Error in stream handling:', err);
-        console.log('>> EVENT:', event.request);
-        console.log('>> THIS:', this.request);
-      }
-      return true;
-    },
-  };
 }
 
 export function toDataQueryError(err: any): DataQueryError {
