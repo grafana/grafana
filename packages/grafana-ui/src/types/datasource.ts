@@ -3,7 +3,6 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
-import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -75,21 +74,6 @@ interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
 }
 
 /**
- * Similar to PanelData but requires the request and includes a way to unsubscribe
- */
-export interface DataStreamEvent extends PanelData {
-  request: DataQueryRequest;
-  subscription?: Unsubscribable;
-}
-
-/**
- * Returning false should unsubscribe and/or cancel
- */
-export type DataStreamEventObserver = {
-  next: (event: DataStreamEvent) => boolean;
-};
-
-/**
  * The main data source abstraction interface, represents an instance of a data source
  */
 export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
@@ -110,10 +94,8 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
 
   /**
    * Main metrics / data query action
-   *
-   * The stream will notify both the full response and partial updates
    */
-  query(request: DataQueryRequest<TQuery>, stream?: DataStreamEventObserver): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -193,9 +175,6 @@ export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-
-  // Indicate that streaming has started
-  streaming?: boolean;
 }
 
 export interface DataQuery {
@@ -255,9 +234,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
-
-  // Some Queries issue multiple sub requests
-  subRequests?: DataQueryRequest[];
 
   // Request Timing
   startTime: number;
