@@ -95,7 +95,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>, stream?: SeriesDataStreamObserver): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, observer?: SeriesDataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -173,22 +173,17 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
-export interface SeriesDataStreamObserver {
-  /**
-   * Return true if processed, and false if the event should shutdown
-   */
-  next: (data: DataQueryStream) => void;
-}
+export type SeriesDataStreamObserver = (event: SeriesDataStream) => void;
 
-export interface DataQueryStream extends PanelData {
+export interface SeriesDataStream {
   key: string;
-  request: DataQueryRequest; // not optional
+  data: PanelData;
   shutdown: () => void;
 }
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-  streams?: DataQueryStream[];
+  streams?: SeriesDataStream[];
 }
 
 export interface DataQuery {
