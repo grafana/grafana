@@ -3,11 +3,12 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -60,13 +61,13 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
 	notifier := notifierState.notifier
 
-	n.log.Debug("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
+	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUid(), "isDefault", notifier.GetIsDefault())
 	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
 
 	err := notifier.Notify(evalContext)
 
 	if err != nil {
-		n.log.Error("failed to send notification", "id", notifier.GetNotifierId(), "error", err)
+		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUid(), "error", err)
 	}
 
 	if evalContext.IsTestRun {
@@ -110,7 +111,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
-			n.log.Error("failed to send notification", "id", notifierState.notifier.GetNotifierId(), "error", err)
+			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUid(), "error", err)
 		}
 	}
 
@@ -126,7 +127,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
-		Timeout:         alertTimeout / 2,
+		Timeout:         time.Duration(setting.AlertingEvaluationTimeout.Seconds() * 0.9),
 		OrgId:           context.Rule.OrgId,
 		OrgRole:         m.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
@@ -137,7 +138,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?panelId=%d", ref.Uid, ref.Slug, context.Rule.PanelId)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgId, context.Rule.PanelId)
 
 	result, err := n.renderService.Render(context.Ctx, renderOpts)
 	if err != nil {
@@ -157,8 +158,8 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
+	query := &m.GetAlertNotificationsWithUidToSendQuery{OrgId: orgId, Uids: notificationUids}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
@@ -168,7 +169,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []
 	for _, notification := range query.Result {
 		not, err := InitNotifier(notification)
 		if err != nil {
-			n.log.Error("Could not create notifier", "notifier", notification.Id, "error", err)
+			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
 			continue
 		}
 

@@ -3,3 +3,9 @@ export interface Options {
   showLines: boolean;
   showPoints: boolean;
 }
+
+export const defaults: Options = {
+  showBars: false,
+  showLines: true,
+  showPoints: false,
+};

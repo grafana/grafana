@@ -1,12 +1,20 @@
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
+import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
+  constructor(
+    private panel,
+    private table,
+    private isUtc,
+    private sanitize,
+    private templateSrv,
+    private theme?: GrafanaThemeType
+  ) {
     this.initColumns();
   }
 
@@ -27,7 +35,7 @@ export class TableRenderer {
       for (let i = 0; i < this.panel.styles.length; i++) {
         const style = this.panel.styles[i];
 
-        const regex = kbn.stringToJsRegex(style.pattern);
+        const regex = stringToJsRegex(style.pattern);
         if (column.text.match(regex)) {
           column.style = style;
 
@@ -43,19 +51,19 @@ export class TableRenderer {
     }
   }
 
-  getColorForValue(value, style) {
+  getColorForValue(value, style: ColumnStyle) {
     if (!style.thresholds) {
       return null;
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return style.colors[i];
+        return getColorFromHexRgbOrName(style.colors[i], this.theme);
       }
     }
-    return _.first(style.colors);
+    return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
   }
 
-  defaultCellFormatter(v, style) {
+  defaultCellFormatter(v, style: ColumnStyle) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -93,7 +101,7 @@ export class TableRenderer {
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (_.isString(v) && !isNaN(v) && v.length > 12) {
+        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
           v = parseInt(v, 10);
         }
 
@@ -102,6 +110,7 @@ export class TableRenderer {
         if (this.isUtc) {
           date = date.utc();
         }
+
         return date.format(column.style.dateFormat);
       };
     }
@@ -161,14 +170,14 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'number') {
-      const valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
+      const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
       return v => {
         if (v === null || v === void 0) {
           return '-';
         }
 
-        if (_.isString(v) || _.isArray(v)) {
+        if (isNaN(v) || _.isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 
@@ -182,7 +191,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value, style) {
+  setColorState(value, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
@@ -300,13 +309,13 @@ export class TableRenderer {
     const startPos = page * pageSize;
     const endPos = Math.min(startPos + pageSize, this.table.rows.length);
     let html = '';
-    const rowClasses = [];
-    let rowClass = '';
 
     for (let y = startPos; y < endPos; y++) {
       const row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+      const rowClasses = [];
+      let rowClass = '';
       for (let i = 0; i < this.table.columns.length; i++) {
         cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }

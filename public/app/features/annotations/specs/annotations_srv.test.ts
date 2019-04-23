@@ -1,5 +1,3 @@
-import '../annotations_srv';
-import 'app/features/dashboard/time_srv';
 import { AnnotationsSrv } from '../annotations_srv';
 
 describe('AnnotationsSrv', () => {

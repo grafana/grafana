@@ -6,26 +6,20 @@ import {
   clearHistory,
   hasNonEmptyQuery,
 } from './explore';
-import { ExploreState } from 'app/types/explore';
+import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
+import { LogsDedupStrategy } from 'app/core/logs_model';
 
-const DEFAULT_EXPLORE_STATE: ExploreState = {
+const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
-  datasourceError: null,
-  datasourceLoading: null,
-  datasourceMissing: false,
-  exploreDatasources: [],
-  graphInterval: 1000,
-  history: [],
-  initialQueries: [],
-  queryTransactions: [],
+  queries: [],
   range: DEFAULT_RANGE,
-  showingGraph: true,
-  showingLogs: true,
-  showingTable: true,
-  supportsGraph: null,
-  supportsLogs: null,
-  supportsTable: null,
+  ui: {
+    showingGraph: true,
+    showingTable: true,
+    showingLogs: true,
+    dedupStrategy: LogsDedupStrategy.none,
+  },
 };
 
 describe('state functions', () => {
@@ -52,7 +46,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      const paramValue = '%5B"now-1h","now","Local",%7B"expr":"metric"%7D%5D';
+      const paramValue = '%5B"now-1h","now","Local","5m",%7B"expr":"metric"%7D,"ui"%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
@@ -68,49 +62,47 @@ describe('state functions', () => {
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasource: 'foo',
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+          },
+        ],
         range: {
           from: 'now-5h',
           to: 'now',
         },
-        initialQueries: [
-          {
-            refId: '1',
-            expr: 'metric{test="a/b"}',
-          },
-          {
-            refId: '2',
-            expr: 'super{foo="x/z"}',
-          },
-        ],
       };
+
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
+          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
+          '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
       );
     });
 
     it('returns url parameter value for a state object', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasource: 'foo',
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+          },
+        ],
         range: {
           from: 'now-5h',
           to: 'now',
         },
-        initialQueries: [
-          {
-            refId: '1',
-            expr: 'metric{test="a/b"}',
-          },
-          {
-            refId: '2',
-            expr: 'super{foo="x/z"}',
-          },
-        ],
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
       );
     });
   });
@@ -119,35 +111,45 @@ describe('state functions', () => {
     it('can parse the serialized state into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
-        initialDatasource: 'foo',
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+          },
+        ],
         range: {
           from: 'now - 5h',
           to: 'now',
         },
-        initialQueries: [
-          {
-            refId: '1',
-            expr: 'metric{test="a/b"}',
-          },
-          {
-            refId: '2',
-            expr: 'super{foo="x/z"}',
-          },
-        ],
       };
       const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
+      expect(state).toMatchObject(parsed);
+    });
 
-      // Account for datasource vs datasourceName
-      const { datasource, queries, ...rest } = parsed;
-      const resultState = {
-        ...rest,
-        datasource: DEFAULT_EXPLORE_STATE.datasource,
-        initialDatasource: datasource,
-        initialQueries: queries,
+    it('can parse the compact serialized state into the original state', () => {
+      const state = {
+        ...DEFAULT_EXPLORE_STATE,
+        datasource: 'foo',
+        queries: [
+          {
+            expr: 'metric{test="a/b"}',
+          },
+          {
+            expr: 'super{foo="x/z"}',
+          },
+        ],
+        range: {
+          from: 'now - 5h',
+          to: 'now',
+        },
       };
-
-      expect(state).toMatchObject(resultState);
+      const serialized = serializeStateToUrlParam(state, true);
+      const parsed = parseUrlState(serialized);
+      expect(state).toMatchObject(parsed);
     });
   });
 });

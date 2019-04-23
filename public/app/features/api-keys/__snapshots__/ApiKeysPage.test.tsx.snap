@@ -1,28 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render API keys table if there are any keys 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Api Keys",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={true}
   />
-  <PageLoader
-    pageName="Api keys"
-  />
-</div>
+</Page>
 `;
 
 exports[`Render should render CTA if there are no API keys 1`] = `
-<div>
-  <PageHeader
-    model={Object {}}
-  />
-  <div
-    className="page-container page-body"
+<Page
+  navModel={
+    Object {
+      "main": Object {
+        "text": "Configuration",
+      },
+      "node": Object {
+        "text": "Api Keys",
+      },
+    }
+  }
+>
+  <PageContents
+    isLoading={false}
   >
     <EmptyListCTA
       model={
         Object {
-          "buttonIcon": "fa fa-plus",
+          "buttonIcon": "gicon gicon-apikeys",
           "buttonLink": "#",
           "buttonTitle": " New API Key",
           "onClick": [Function],
@@ -66,7 +82,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
               >
                 Key name
               </span>
-              <input
+              <Input
                 className="gf-form-input"
                 onChange={[Function]}
                 placeholder="Name"
@@ -118,7 +134,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
               className="gf-form"
             >
               <button
-                className="btn gf-form-btn btn-success"
+                className="btn gf-form-btn btn-primary"
               >
                 Add
               </button>
@@ -127,6 +143,6 @@ exports[`Render should render CTA if there are no API keys 1`] = `
         </form>
       </div>
     </Component>
-  </div>
-</div>
+  </PageContents>
+</Page>
 `;

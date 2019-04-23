@@ -10,13 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/ini.v1"
-
 	"github.com/go-stack/stack"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/inconshreveable/log15"
 	isatty "github.com/mattn/go-isatty"
-
-	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 var Root log15.Logger
@@ -27,6 +25,7 @@ var filters map[string]log15.Lvl
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
+	filters = map[string]log15.Lvl{}
 	Root = log15.Root()
 	Root.SetHandler(log15.DiscardHandler())
 }
@@ -58,10 +57,6 @@ func Debug(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Debug2(message string, v ...interface{}) {
-	Root.Debug(message, v...)
-}
-
 func Info(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
@@ -71,10 +66,6 @@ func Info(format string, v ...interface{}) {
 	}
 
 	Root.Info(message)
-}
-
-func Info2(message string, v ...interface{}) {
-	Root.Info(message, v...)
 }
 
 func Warn(format string, v ...interface{}) {
@@ -88,16 +79,8 @@ func Warn(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
-func Warn2(message string, v ...interface{}) {
-	Root.Warn(message, v...)
-}
-
 func Error(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v...))
-}
-
-func Error2(message string, v ...interface{}) {
-	Root.Error(message, v...)
 }
 
 func Critical(skip int, format string, v ...interface{}) {
@@ -215,7 +198,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 		// Log level.
 		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		filters := getFilters(util.SplitString(sec.Key("filters").String()))
+		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
 		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler log15.Handler
@@ -248,12 +231,18 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		}
 
 		for key, value := range defaultFilters {
+			if _, exist := modeFilters[key]; !exist {
+				modeFilters[key] = value
+			}
+		}
+
+		for key, value := range modeFilters {
 			if _, exist := filters[key]; !exist {
 				filters[key] = value
 			}
 		}
 
-		handler = LogFilterHandler(level, filters, handler)
+		handler = LogFilterHandler(level, modeFilters, handler)
 		handlers = append(handlers, handler)
 	}
 

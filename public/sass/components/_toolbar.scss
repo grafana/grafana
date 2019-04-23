@@ -4,7 +4,6 @@
   align-items: center;
   padding: 3px 20px 3px 20px;
   position: relative;
-  z-index: 1;
   flex: 0 0 auto;
   background: $toolbar-bg;
   border-radius: 3px;
@@ -16,13 +15,19 @@
   padding-right: 20px;
 }
 
+.toolbar__left {
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+}
+
 .toolbar__main {
-  padding: 0 $input-padding-x;
+  padding: 0 $space-sm;
   font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
-  height: $gf-form-input-height;
+  height: $input-height;
   border: $input-border;
   border-radius: $input-border-radius;
   display: flex;

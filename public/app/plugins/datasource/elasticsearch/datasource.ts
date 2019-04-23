@@ -1,9 +1,9 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
-import { ElasticQueryBuilder } from './query_builder';
-import { IndexPattern } from './index_pattern';
 import { ElasticResponse } from './elastic_response';
+import { IndexPattern } from './index_pattern';
+import { ElasticQueryBuilder } from './query_builder';
 
 export class ElasticDatasource {
   basicAuth: string;
@@ -204,7 +204,7 @@ export class ElasticDatasource {
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       dateFields => {
-        const timeField = _.find(dateFields, { text: this.timeField });
+        const timeField: any = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
           return {
             status: 'error',
@@ -242,16 +242,19 @@ export class ElasticDatasource {
 
   query(options) {
     let payload = '';
-    let target;
+    const targets = _.cloneDeep(options.targets);
     const sentTargets = [];
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
-    for (let i = 0; i < options.targets.length; i++) {
-      target = options.targets[i];
+    for (const target of targets) {
       if (target.hide) {
         continue;
+      }
+
+      if (target.alias) {
+        target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
       }
 
       const queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');

@@ -47,7 +47,8 @@ class BottomNavLinks extends PureComponent<Props> {
                   <div className="sidemenu-org-switcher__org-current">Current Org:</div>
                 </div>
                 <div className="sidemenu-org-switcher__switch">
-                  <i className="fa fa-fw fa-random" />Switch
+                  <i className="fa fa-fw fa-random" />
+                  Switch
                 </div>
               </a>
             </li>

@@ -1,13 +1,18 @@
+// Libraries
 import _ from 'lodash';
 
+// Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
-import { LogsStream, LogsModel, makeSeriesForLogs } from 'app/core/logs_model';
-import { PluginMeta, DataQuery } from 'app/types';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
-
 import LanguageProvider from './language_provider';
 import { mergeStreamsToLogs } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
+import { makeSeriesForLogs } from 'app/core/logs_model';
+
+// Types
+import { LogsStream, LogsModel } from 'app/core/logs_model';
+import { PluginMeta, DataQueryRequest } from '@grafana/ui/src/types';
+import { LokiQuery } from './types';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -27,7 +32,7 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export default class LokiDatasource {
+export class LokiDatasource {
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -68,10 +73,11 @@ export default class LokiDatasource {
     };
   }
 
-  query(options): Promise<{ data: LogsStream[] }> {
+  async query(options: DataQueryRequest<LokiQuery>) {
     const queryTargets = options.targets
-      .filter(target => target.expr)
+      .filter(target => target.expr && !target.hide)
       .map(target => this.prepareQueryTarget(target, options));
+
     if (queryTargets.length === 0) {
       return Promise.resolve({ data: [] });
     }
@@ -79,24 +85,33 @@ export default class LokiDatasource {
     const queries = queryTargets.map(target => this._request('/api/prom/query', target));
 
     return Promise.all(queries).then((results: any[]) => {
-      // Flatten streams from multiple queries
-      const allStreams: LogsStream[] = results.reduce((acc, response, i) => {
-        if (!response) {
-          return acc;
+      const allStreams: LogsStream[] = [];
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const query = queryTargets[i];
+
+        // add search term to stream & add to array
+        if (result.data) {
+          for (const stream of result.data.streams || []) {
+            stream.search = query.regexp;
+            allStreams.push(stream);
+          }
         }
-        const streams: LogsStream[] = response.data.streams || [];
-        // Inject search for match highlighting
-        const search: string = queryTargets[i].regexp;
-        streams.forEach(s => {
-          s.search = search;
-        });
-        return [...acc, ...streams];
-      }, []);
-      return { data: allStreams };
+      }
+
+      // check resultType
+      if (options.targets[0].resultFormat === 'time_series') {
+        const logs = mergeStreamsToLogs(allStreams, this.maxLines);
+        logs.series = makeSeriesForLogs(logs.rows, options.intervalMs);
+        return { data: logs.series };
+      } else {
+        return { data: allStreams };
+      }
     });
   }
 
-  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<DataQuery[]> {
+  async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
@@ -109,7 +124,7 @@ export default class LokiDatasource {
     });
   }
 
-  modifyQuery(query: DataQuery, action: any): DataQuery {
+  modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
     let selector = parsed.query;
     switch (action.type) {
@@ -124,7 +139,7 @@ export default class LokiDatasource {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: DataQuery): string {
+  getHighlighterExpression(query: LokiQuery): string {
     return parseQuery(query.expr).regexp;
   }
 
@@ -168,3 +183,5 @@ export default class LokiDatasource {
       });
   }
 }
+
+export default LokiDatasource;

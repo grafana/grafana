@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 import { TimeSeries } from 'app/core/core';
-import CustomScrollbar from 'app/core/components/CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '@grafana/ui';
 import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
@@ -88,7 +88,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
   }
 
   sortLegend() {
-    let seriesList = [...this.props.seriesList] || [];
+    let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
     if (this.props.sort) {
       seriesList = _.sortBy(seriesList, series => {
         let sort = series.stats[this.props.sort];
@@ -96,7 +96,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
           sort = -Infinity;
         }
         return sort;
-      });
+      }) as TimeSeries[];
       if (this.props.sortDesc) {
         seriesList = seriesList.reverse();
       }
@@ -311,7 +311,7 @@ class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & Legen
 export class Legend extends PureComponent<GraphLegendProps> {
   render() {
     return (
-      <CustomScrollbar>
+      <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
         <GraphLegend {...this.props} />
       </CustomScrollbar>
     );

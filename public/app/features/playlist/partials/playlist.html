@@ -24,7 +24,7 @@
 		<table class="filter-table playlist-available-list">
 			<tr ng-repeat="playlistItem in ctrl.playlistItems">
 				<td ng-if="playlistItem.type === 'dashboard_by_id'">
-					<i class="icon-gf icon-gf-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
+					<i class="gicon gicon-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
 				</td>
 				<td ng-if="playlistItem.type === 'dashboard_by_tag'">
 					<a class="search-result-tag label label-tag" tag-color-from-name="playlistItem.title">
@@ -34,13 +34,13 @@
 				</td>
 
 				<td class="selected-playlistitem-settings">
-					<button class="btn btn-inverse btn-mini" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-hide="$first" ng-click="ctrl.movePlaylistItemUp(playlistItem)">
 						<i class="fa fa-arrow-up"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-hide="$last" ng-click="ctrl.movePlaylistItemDown(playlistItem)">
 						<i class="fa fa-arrow-down"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-click="ctrl.removePlaylistItem(playlistItem)">
+					<button class="btn btn-inverse btn-small" ng-click="ctrl.removePlaylistItem(playlistItem)">
 						<i class="fa fa-remove"></i>
 					</button>
 				</td>
@@ -59,12 +59,12 @@
 			<table class="filter-table playlist-available-list">
 				<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
 					<td>
-						<i class="icon-gf icon-gf-dashboard"></i>
+						<i class="gicon gicon-dashboard"></i>
 						&nbsp;&nbsp;{{playlistItem.title}}
 						<i class="fa fa-star" ng-show="playlistItem.isStarred"></i>
 					</td>
 					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
+						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addPlaylistItem(playlistItem)">
 							<i class="fa fa-plus"></i>
 							Add to playlist
 						</button>
@@ -82,7 +82,7 @@
 						</a>
 					</td>
 					<td class="add-dashboard">
-						<button class="btn btn-inverse btn-mini pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
+						<button class="btn btn-inverse btn-small pull-right" ng-click="ctrl.addTagPlaylistItem(tag)">
 							<i class="fa fa-plus"></i>
 							Add to playlist
 						</button>
@@ -95,8 +95,8 @@
 	<div class="clearfix"></div>
 
 	<div class="gf-form-button-row">
-		<a class="btn btn-success" ng-show="ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create</a>
-		<a class="btn btn-success" ng-show="!ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
+		<a class="btn btn-primary" ng-show="ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create</a>
+		<a class="btn btn-primary" ng-show="!ctrl.isNew" ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()" ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Save</a>
 		<a class="btn-text" ng-click="ctrl.backToList()">Cancel</a>
 	</div>
 </div>

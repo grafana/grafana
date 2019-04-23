@@ -18,7 +18,7 @@ exports[`Render should render component 1`] = `
       <Component>
         Name
       </Component>
-      <input
+      <Input
         className="gf-form-input max-width-22"
         onChange={[Function]}
         required={true}
@@ -34,7 +34,7 @@ exports[`Render should render component 1`] = `
       >
         Email
       </Component>
-      <input
+      <Input
         className="gf-form-input max-width-22"
         onChange={[Function]}
         placeholder="team@email.com"
@@ -46,7 +46,7 @@ exports[`Render should render component 1`] = `
       className="gf-form-button-row"
     >
       <button
-        className="btn btn-success"
+        className="btn btn-primary"
         type="submit"
       >
         Update

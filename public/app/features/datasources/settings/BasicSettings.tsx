@@ -1,6 +1,5 @@
-import React, { SFC } from 'react';
-import { Label } from 'app/core/components/Label/Label';
-import { Switch } from '../../../core/components/Switch/Switch';
+import React, { FC } from 'react';
+import { FormLabel, Input, Switch } from '@grafana/ui';
 
 export interface Props {
   dataSourceName: string;
@@ -9,20 +8,20 @@ export interface Props {
   onDefaultChange: (value: boolean) => void;
 }
 
-const BasicSettings: SFC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
+const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, onNameChange }) => {
   return (
     <div className="gf-form-group">
       <div className="gf-form-inline">
         <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
-          <Label
+          <FormLabel
             tooltip={
-              'The name is used when you select the data source in panels. The Default data source is' +
+              'The name is used when you select the data source in panels. The Default data source is ' +
               'preselected in new panels.'
             }
           >
             Name
-          </Label>
-          <input
+          </FormLabel>
+          <Input
             className="gf-form-input max-width-23"
             type="text"
             value={dataSourceName}
@@ -31,6 +30,8 @@ const BasicSettings: SFC<Props> = ({ dataSourceName, isDefault, onDefaultChange,
             required
           />
         </div>
+        {/*
+        //@ts-ignore */}
         <Switch label="Default" checked={isDefault} onChange={event => onDefaultChange(event.target.checked)} />
       </div>
     </div>

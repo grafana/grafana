@@ -4,21 +4,22 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func Search(c *m.ReqContext) {
+func Search(c *m.ReqContext) Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
-	limit := c.QueryInt("limit")
+	limit := c.QueryInt64("limit")
+	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	permission := m.PERMISSION_VIEW
 
-	if limit == 0 {
-		limit = 1000
+	if limit > 5000 {
+		return Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
@@ -46,6 +47,7 @@ func Search(c *m.ReqContext) {
 		Tags:         tags,
 		SignedInUser: c.SignedInUser,
 		Limit:        limit,
+		Page:         page,
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,
 		DashboardIds: dbIDs,
@@ -56,10 +58,9 @@ func Search(c *m.ReqContext) {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		c.JsonApiErr(500, "Search failed", err)
-		return
+		return Error(500, "Search failed", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Search)
-	c.JSON(200, searchQuery.Result)
+	return JSON(200, searchQuery.Result)
 }

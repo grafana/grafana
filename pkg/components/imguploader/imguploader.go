@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/log"
-
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,6 +19,10 @@ type NopImageUploader struct {
 func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
+
+var (
+	logger = log.New("imguploader")
+)
 
 func NewImageUploader() (ImageUploader, error) {
 
@@ -94,7 +97,7 @@ func NewImageUploader() (ImageUploader, error) {
 	}
 
 	if setting.ImageUploadProvider != "" {
-		log.Error2("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
+		logger.Error("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil

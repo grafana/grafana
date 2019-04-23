@@ -1,10 +1,10 @@
-import React, { SFC } from 'react';
+import React, { FC } from 'react';
 
 interface Props {
-  pageName: string;
+  pageName?: string;
 }
 
-const PageLoader: SFC<Props> = ({ pageName }) => {
+const PageLoader: FC<Props> = ({ pageName = '' }) => {
   const loadingText = `Loading ${pageName}...`;
   return (
     <div className="page-loader-wrapper">

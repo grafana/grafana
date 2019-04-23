@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -17,11 +18,15 @@ func init() {
 	bus.AddHandler("sql", CreateAlertNotificationCommand)
 	bus.AddHandler("sql", UpdateAlertNotification)
 	bus.AddHandler("sql", DeleteAlertNotification)
-	bus.AddHandler("sql", GetAlertNotificationsToSend)
 	bus.AddHandler("sql", GetAllAlertNotifications)
 	bus.AddHandlerCtx("sql", GetOrCreateAlertNotificationState)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToCompleteCommand)
 	bus.AddHandlerCtx("sql", SetAlertNotificationStateToPendingCommand)
+
+	bus.AddHandler("sql", GetAlertNotificationsWithUid)
+	bus.AddHandler("sql", UpdateAlertNotificationWithUid)
+	bus.AddHandler("sql", DeleteAlertNotificationWithUid)
+	bus.AddHandler("sql", GetAlertNotificationsWithUidToSend)
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
@@ -39,8 +44,31 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	})
 }
 
+func DeleteAlertNotificationWithUid(cmd *m.DeleteAlertNotificationWithUidCommand) error {
+	existingNotification := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+	if err := getAlertNotificationWithUidInternal(existingNotification, newSession()); err != nil {
+		return err
+	}
+
+	if existingNotification.Result != nil {
+		deleteCommand := &m.DeleteAlertNotificationCommand{
+			Id:    existingNotification.Result.Id,
+			OrgId: existingNotification.Result.OrgId,
+		}
+		if err := bus.Dispatch(deleteCommand); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func GetAlertNotifications(query *m.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(query, newSession())
+}
+
+func GetAlertNotificationsWithUid(query *m.GetAlertNotificationsWithUidQuery) error {
+	return getAlertNotificationWithUidInternal(query, newSession())
 }
 
 func GetAllAlertNotifications(query *m.GetAllAlertNotificationsQuery) error {
@@ -53,12 +81,13 @@ func GetAllAlertNotifications(query *m.GetAllAlertNotificationsQuery) error {
 	return nil
 }
 
-func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) error {
+func GetAlertNotificationsWithUidToSend(query *m.GetAlertNotificationsWithUidToSendQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
+										alert_notification.uid,
 										alert_notification.org_id,
 										alert_notification.name,
 										alert_notification.type,
@@ -77,9 +106,10 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 
 	sql.WriteString(` AND ((alert_notification.is_default = ?)`)
 	params = append(params, dialect.BooleanStr(true))
-	if len(query.Ids) > 0 {
-		sql.WriteString(` OR alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
-		for _, v := range query.Ids {
+
+	if len(query.Uids) > 0 {
+		sql.WriteString(` OR alert_notification.uid IN (?` + strings.Repeat(",?", len(query.Uids)-1) + ")")
+		for _, v := range query.Uids {
 			params = append(params, v)
 		}
 	}
@@ -100,6 +130,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
+										alert_notification.uid,
 										alert_notification.org_id,
 										alert_notification.name,
 										alert_notification.type,
@@ -142,16 +173,71 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBS
 	return nil
 }
 
+func getAlertNotificationWithUidInternal(query *m.GetAlertNotificationsWithUidQuery, sess *DBSession) error {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`SELECT
+										alert_notification.id,
+										alert_notification.uid,
+										alert_notification.org_id,
+										alert_notification.name,
+										alert_notification.type,
+										alert_notification.created,
+										alert_notification.updated,
+										alert_notification.settings,
+										alert_notification.is_default,
+										alert_notification.disable_resolve_message,
+										alert_notification.send_reminder,
+										alert_notification.frequency
+										FROM alert_notification
+	  							`)
+
+	sql.WriteString(` WHERE alert_notification.org_id = ? AND alert_notification.uid = ?`)
+	params = append(params, query.OrgId, query.Uid)
+
+	results := make([]*m.AlertNotification, 0)
+	if err := sess.SQL(sql.String(), params...).Find(&results); err != nil {
+		return err
+	}
+
+	if len(results) == 0 {
+		query.Result = nil
+	} else {
+		query.Result = results[0]
+	}
+
+	return nil
+}
+
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		err := getAlertNotificationInternal(existingQuery, sess)
+		if cmd.Uid == "" {
+			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			if uidGenerationErr != nil {
+				return uidGenerationErr
+			}
+
+			cmd.Uid = uid
+		}
+		existingQuery := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+		err := getAlertNotificationWithUidInternal(existingQuery, sess)
 
 		if err != nil {
 			return err
 		}
 
 		if existingQuery.Result != nil {
+			return fmt.Errorf("Alert notification uid %s already exists", cmd.Uid)
+		}
+
+		// check if name exists
+		sameNameQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
+		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
+			return err
+		}
+
+		if sameNameQuery.Result != nil {
 			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
 		}
 
@@ -168,6 +254,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
+			Uid:                   cmd.Uid,
 			OrgId:                 cmd.OrgId,
 			Name:                  cmd.Name,
 			Type:                  cmd.Type,
@@ -187,6 +274,22 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		cmd.Result = alertNotification
 		return nil
 	})
+}
+
+func generateNewAlertNotificationUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&m.AlertNotification{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", m.ErrAlertNotificationFailedGenerateUniqueUid
 }
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
@@ -215,6 +318,10 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.SendReminder = cmd.SendReminder
 		current.DisableResolveMessage = cmd.DisableResolveMessage
 
+		if cmd.Uid != "" {
+			current.Uid = cmd.Uid
+		}
+
 		if current.SendReminder {
 			if cmd.Frequency == "" {
 				return m.ErrNotificationFrequencyNotFound
@@ -239,6 +346,46 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		cmd.Result = &current
 		return nil
 	})
+}
+
+func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand) error {
+	getAlertNotificationWithUidQuery := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
+
+	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession()); err != nil {
+		return err
+	}
+
+	current := getAlertNotificationWithUidQuery.Result
+
+	if current == nil {
+		return fmt.Errorf("Cannot update, alert notification uid %s doesn't exist", cmd.Uid)
+	}
+
+	if cmd.NewUid == "" {
+		cmd.NewUid = cmd.Uid
+	}
+
+	updateNotification := &m.UpdateAlertNotificationCommand{
+		Id:                    current.Id,
+		Uid:                   cmd.NewUid,
+		Name:                  cmd.Name,
+		Type:                  cmd.Type,
+		SendReminder:          cmd.SendReminder,
+		DisableResolveMessage: cmd.DisableResolveMessage,
+		Frequency:             cmd.Frequency,
+		IsDefault:             cmd.IsDefault,
+		Settings:              cmd.Settings,
+
+		OrgId: cmd.OrgId,
+	}
+
+	if err := bus.Dispatch(updateNotification); err != nil {
+		return err
+	}
+
+	cmd.Result = updateNotification.Result
+
+	return nil
 }
 
 func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *m.SetAlertNotificationStateToCompleteCommand) error {

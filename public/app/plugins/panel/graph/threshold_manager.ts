@@ -1,6 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
+import { getColorFromHexRgbOrName } from '@grafana/ui';
 
 export class ThresholdManager {
   plot: any;
@@ -197,6 +198,7 @@ export class ThresholdManager {
       }
 
       let fillColor, lineColor;
+
       switch (threshold.colorMode) {
         case 'critical': {
           fillColor = 'rgba(234, 112, 112, 0.12)';
@@ -225,12 +227,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
-            color: fillColor,
+            color: getColorFromHexRgbOrName(fillColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: limit },
-            color: fillColor,
+            color: getColorFromHexRgbOrName(fillColor),
           });
         }
       }
@@ -238,12 +240,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
-            color: lineColor,
+            color: getColorFromHexRgbOrName(lineColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: threshold.value },
-            color: lineColor,
+            color: getColorFromHexRgbOrName(lineColor),
           });
         }
       }

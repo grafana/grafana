@@ -57,10 +57,17 @@ class GrafanaDatasource {
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);
       }
+      const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
-        const renderedValues = this.templateSrv.replace(t, {}, 'pipe');
-        for (const tt of renderedValues.split('|')) {
+        const renderedValues = this.templateSrv.replace(t, {}, value => {
+          if (typeof value === 'string') {
+            return value;
+          }
+
+          return value.join(delimiter);
+        });
+        for (const tt of renderedValues.split(delimiter)) {
           tags.push(tt);
         }
       }

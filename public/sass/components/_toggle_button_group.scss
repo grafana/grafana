@@ -1,5 +1,6 @@
 .toggle-button-group {
   display: flex;
+  padding-top: 5px;
 
   .btn {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);

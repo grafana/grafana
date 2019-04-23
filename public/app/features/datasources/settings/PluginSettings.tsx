@@ -1,20 +1,21 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { DataSource, Plugin } from 'app/types/';
+import { Plugin } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui/src/types';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 export interface Props {
-  dataSource: DataSource;
+  dataSource: DataSourceSettings;
   dataSourceMeta: Plugin;
-  onModelChange: (dataSource: DataSource) => void;
+  onModelChange: (dataSource: DataSourceSettings) => void;
 }
 
 export class PluginSettings extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
   scopeProps: {
-    ctrl: { datasourceMeta: Plugin; current: DataSource };
-    onModelChanged: (dataSource: DataSource) => void;
+    ctrl: { datasourceMeta: Plugin; current: DataSourceSettings };
+    onModelChanged: (dataSource: DataSourceSettings) => void;
   };
 
   constructor(props) {
@@ -51,7 +52,7 @@ export class PluginSettings extends PureComponent<Props> {
     }
   }
 
-  onModelChanged = (dataSource: DataSource) => {
+  onModelChanged = (dataSource: DataSourceSettings) => {
     this.props.onModelChange(dataSource);
   };
 

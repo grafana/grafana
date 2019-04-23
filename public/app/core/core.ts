@@ -1,5 +1,5 @@
-import './directives/dash_class';
 import './directives/dropdown_typeahead';
+import './directives/autofill_event_fix';
 import './directives/metric_segment';
 import './directives/misc';
 import './directives/ng_model_on_blur';
@@ -13,11 +13,10 @@ import './partials';
 import './components/jsontree/jsontree';
 import './components/code_editor/code_editor';
 import './utils/outline';
-import './components/colorpicker/ColorPicker';
-import './components/colorpicker/SeriesColorPickerPopover';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';
+import { colors } from '@grafana/ui/';
 
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
@@ -36,7 +35,6 @@ import 'app/core/services/all';
 import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';
-import colors from './utils/colors';
 import { assignModelProperties } from './utils/model_utils';
 import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
@@ -44,8 +42,6 @@ import { helpModal } from './components/help/help';
 import { JsonExplorer } from './components/json_explorer/json_explorer';
 import { NavModelSrv, NavModel } from './nav_model_srv';
 import { geminiScrollbar } from './components/scroll/scroll';
-import { pageScrollbar } from './components/scroll/page_scroll';
-import { gfPageDirective } from './components/gf_page';
 import { orgSwitcher } from './components/org_switcher';
 import { profiler } from './profiler';
 import { registerAngularDirectives } from './angular_wrappers';
@@ -80,8 +76,6 @@ export {
   NavModelSrv,
   NavModel,
   geminiScrollbar,
-  pageScrollbar,
-  gfPageDirective,
   orgSwitcher,
   manageDashboardsDirective,
   TimeSeries,

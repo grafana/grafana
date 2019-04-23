@@ -11,7 +11,6 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
@@ -26,6 +25,10 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
+import { getValueFormat } from '@grafana/ui';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
+
+const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -51,7 +54,7 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.timeRegionManager = new TimeRegionManager(this.ctrl);
+    this.timeRegionManager = new TimeRegionManager(this.ctrl, config.theme.type);
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
@@ -106,7 +109,7 @@ class GraphElement {
       onToggleAxis: this.ctrl.onToggleAxis,
     };
 
-    const legendReactElem = React.createElement(Legend, legendProps);
+    const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
@@ -334,9 +337,17 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          const histMin = _.min(_.map(this.data, s => s.stats.min));
-          const histMax = _.max(_.map(this.data, s => s.stats.max));
+          let histMin = _.min(_.map(this.data, s => s.stats.min));
+          let histMax = _.max(_.map(this.data, s => s.stats.max));
           const ticks = panel.xaxis.buckets || this.panelWidth / 50;
+          if (panel.xaxis.min != null) {
+            const isInvalidXaxisMin = tickStep(panel.xaxis.min, histMax, ticks) <= 0;
+            histMin = isInvalidXaxisMin ? histMin : panel.xaxis.min;
+          }
+          if (panel.xaxis.max != null) {
+            const isInvalidXaxisMax = tickStep(histMin, panel.xaxis.max, ticks) <= 0;
+            histMax = isInvalidXaxisMax ? histMax : panel.xaxis.max;
+          }
           bucketSize = tickStep(histMin, histMax, ticks);
           options.series.bars.barWidth = bucketSize * 0.8;
           this.data = convertToHistogramData(this.data, bucketSize, this.ctrl.hiddenSeries, histMin, histMax);
@@ -529,7 +540,7 @@ class GraphElement {
       // Expand ticks for pretty view
       min = Math.floor(min / tickStep) * tickStep;
       // 1.01 is 101% - ensure we have enough space for last bar
-      max = Math.ceil(max * 1.01 / tickStep) * tickStep;
+      max = Math.ceil((max * 1.01) / tickStep) * tickStep;
 
       ticks = [];
       for (let i = min; i <= max; i += tickStep) {
@@ -563,6 +574,7 @@ class GraphElement {
         return [tickIndex + 1, point[1]];
       });
     });
+    // @ts-ignore, potential bug? is this _.flattenDeep?
     ticks = _.flatten(ticks, true);
 
     options.xaxis = {
@@ -726,10 +738,12 @@ class GraphElement {
 
   configureAxisMode(axis, format) {
     axis.tickFormatter = (val, axis) => {
-      if (!kbn.valueFormats[format]) {
+      const formatter = getValueFormat(format);
+
+      if (!formatter) {
         throw new Error(`Unit '${format}' is not supported`);
       }
-      return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
+      return formatter(val, axis.tickDecimals, axis.scaledDecimals);
     };
   }
 

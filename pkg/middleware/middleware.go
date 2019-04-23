@@ -1,17 +1,19 @@
 package middleware
 
 import (
+	"net/http"
+	"net/url"
 	"strconv"
-
-	"gopkg.in/macaron.v1"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
 var (
@@ -21,12 +23,11 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler() macaron.Handler {
+func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        session.GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -48,8 +49,8 @@ func GetContextHandler() macaron.Handler {
 		case initContextWithRenderAuth(ctx):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(ctx, orgId):
-		case initContextWithUserSessionCookie(ctx, orgId):
+		case initContextWithAuthProxy(remoteCache, ctx, orgId):
+		case initContextWithToken(ats, ctx, orgId):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -85,29 +86,6 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
-	return true
-}
-
-func initContextWithUserSessionCookie(ctx *m.ReqContext, orgId int64) bool {
-	// initialize session
-	if err := ctx.Session.Start(ctx.Context); err != nil {
-		ctx.Logger.Error("Failed to start session", "error", err)
-		return false
-	}
-
-	var userId int64
-	if userId = getRequestUserId(ctx); userId == 0 {
-		return false
-	}
-
-	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
-		return false
-	}
-
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
 	return true
 }
 
@@ -187,6 +165,69 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
 	return true
+}
+
+func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext, orgID int64) bool {
+	rawToken := ctx.GetCookie(setting.LoginCookieName)
+	if rawToken == "" {
+		return false
+	}
+
+	token, err := authTokenService.LookupToken(rawToken)
+	if err != nil {
+		ctx.Logger.Error("failed to look up user based on cookie", "error", err)
+		WriteSessionCookie(ctx, "", -1)
+		return false
+	}
+
+	query := m.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
+	if err := bus.Dispatch(&query); err != nil {
+		ctx.Logger.Error("failed to get user with id", "userId", token.UserId, "error", err)
+		return false
+	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	ctx.UserToken = token
+
+	rotated, err := authTokenService.TryRotateToken(token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+	if err != nil {
+		ctx.Logger.Error("failed to rotate token", "error", err)
+		return true
+	}
+
+	if rotated {
+		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+	}
+
+	return true
+}
+
+func WriteSessionCookie(ctx *m.ReqContext, value string, maxLifetimeDays int) {
+	if setting.Env == setting.DEV {
+		ctx.Logger.Info("new token", "unhashed token", value)
+	}
+
+	var maxAge int
+	if maxLifetimeDays <= 0 {
+		maxAge = -1
+	} else {
+		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+	}
+
+	ctx.Resp.Header().Del("Set-Cookie")
+	cookie := http.Cookie{
+		Name:     setting.LoginCookieName,
+		Value:    url.QueryEscape(value),
+		HttpOnly: true,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.CookieSecure,
+		MaxAge:   maxAge,
+		SameSite: setting.CookieSameSite,
+	}
+
+	http.SetCookie(ctx.Resp, &cookie)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {

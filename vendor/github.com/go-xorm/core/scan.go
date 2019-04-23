@@ -1,3 +1,7 @@
+// Copyright 2019 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package core
 
 import (
@@ -44,9 +48,19 @@ func convertTime(dest *NullTime, src interface{}) error {
 		}
 		*dest = NullTime(t)
 		return nil
+	case time.Time:
+		*dest = NullTime(s)
+		return nil
 	case nil:
 	default:
 		return fmt.Errorf("unsupported driver -> Scan pair: %T -> %T", src, dest)
 	}
+	return nil
+}
+
+type EmptyScanner struct {
+}
+
+func (EmptyScanner) Scan(src interface{}) error {
 	return nil
 }

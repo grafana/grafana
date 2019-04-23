@@ -6,7 +6,14 @@ import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
-    navModel: {} as NavModel,
+    navModel: {
+      main: {
+        text: 'Configuration',
+      },
+      node: {
+        text: 'Api Keys',
+      },
+    } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
     hasFetched: false,
@@ -71,9 +78,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

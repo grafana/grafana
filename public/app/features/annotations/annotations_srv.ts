@@ -10,7 +10,7 @@ import coreModule from 'app/core/core_module';
 import { makeRegions, dedupAnnotations } from './events_processing';
 
 // Types
-import { DashboardModel } from '../dashboard/dashboard_model';
+import { DashboardModel } from '../dashboard/state/DashboardModel';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -21,12 +21,16 @@ export class AnnotationsSrv {
   constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {}
 
   init(dashboard: DashboardModel) {
+    // always clearPromiseCaches when loading new dashboard
+    this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on('refresh', () => {
-      this.globalAnnotationsPromise = null;
-      this.alertStatesPromise = null;
-      this.datasourcePromises = null;
-    });
+    dashboard.on('refresh', this.clearPromiseCaches.bind(this));
+  }
+
+  clearPromiseCaches() {
+    this.globalAnnotationsPromise = null;
+    this.alertStatesPromise = null;
+    this.datasourcePromises = null;
   }
 
   getAnnotations(options) {
@@ -34,7 +38,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        let annotations = _.flattenDeep(results[0]);
+        let annotations: any[] = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -49,7 +53,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        const alertState = _.find(results[1], { panelId: options.panel.id });
+        const alertState: any = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,

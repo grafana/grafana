@@ -6,7 +6,7 @@ export default class AdminEditUserCtrl {
     $scope.user = {};
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
-    $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users', 1);
+    $scope.navModel = navModelSrv.getNav('admin', 'global-users', 0);
 
     $scope.init = () => {
       if ($routeParams.id) {
@@ -98,7 +98,7 @@ export default class AdminEditUserCtrl {
         return;
       }
 
-      const orgInfo = _.find($scope.orgsSearchCache, {
+      const orgInfo: any = _.find($scope.orgsSearchCache, {
         name: $scope.newOrg.name,
       });
       if (!orgInfo) {

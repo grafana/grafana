@@ -14,7 +14,7 @@ export function arrayJoin() {
 
       function join_array(text) {
         if (_.isArray(text)) {
-          return (text || '').join(',');
+          return ((text || '') as any).join(',');
         } else {
           return text;
         }

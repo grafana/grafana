@@ -1,57 +1,24 @@
+// Libraries
 import _ from 'lodash';
-
 import $ from 'jquery';
+
+// Services & Utils
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
 import { BackendSrv } from 'app/core/services/backend_srv';
-
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
-import { DataQuery } from 'app/types';
+
+// Types
+import { PromQuery } from './types';
+import { DataQueryRequest, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
-export function alignRange(start, end, step) {
-  const alignedEnd = Math.ceil(end / step) * step;
-  const alignedStart = Math.floor(start / step) * step;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
-}
-
-export function extractRuleMappingFromGroups(groups: any[]) {
-  return groups.reduce(
-    (mapping, group) =>
-      group.rules.filter(rule => rule.type === 'recording').reduce(
-        (acc, rule) => ({
-          ...acc,
-          [rule.name]: rule.query,
-        }),
-        mapping
-      ),
-    {}
-  );
-}
-
-export function prometheusRegularEscape(value) {
-  if (typeof value === 'string') {
-    return value.replace(/'/g, "\\\\'");
-  }
-  return value;
-}
-
-export function prometheusSpecialRegexEscape(value) {
-  if (typeof value === 'string') {
-    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
-  }
-  return value;
-}
-
-export class PrometheusDatasource {
+export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   type: string;
   editorSrc: string;
   name: string;
@@ -86,6 +53,10 @@ export class PrometheusDatasource {
 
   init() {
     this.loadRules();
+  }
+
+  getQueryDisplayText(query: PromQuery) {
+    return query.expr;
   }
 
   _request(url, data?, options?: any) {
@@ -149,7 +120,7 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options) {
+  query(options: DataQueryRequest<PromQuery>) {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -219,8 +190,9 @@ export class PrometheusDatasource {
     };
     const range = Math.ceil(end - start);
 
+    // options.interval is the dynamically calculated interval
     let interval = kbn.interval_to_seconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
     const minInterval = kbn.interval_to_seconds(
       this.templateSrv.replace(target.interval, options.scopedVars) || options.interval
     );
@@ -247,7 +219,7 @@ export class PrometheusDatasource {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
-        value = prometheusSpecialRegexEscape(value);
+        value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
     }, expr);
@@ -256,7 +228,8 @@ export class PrometheusDatasource {
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
 
-    // Align query interval with step
+    // Align query interval with step to allow query caching and to ensure
+    // that about-same-time query results look the same.
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
@@ -366,12 +339,13 @@ export class PrometheusDatasource {
     const step = annotation.step || '60s';
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-    // Unsetting min interval
     const queryOptions = {
       ...options,
-      interval: '0s',
+      interval: step,
     };
-    const query = this.createQuery({ expr, interval: step }, queryOptions, start, end);
+    // Unsetting min interval for accurate event resolution
+    const minStep = '1s';
+    const query = this.createQuery({ expr, interval: minStep }, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
@@ -385,10 +359,11 @@ export class PrometheusDatasource {
           })
           .value();
 
+        const dupCheck = {};
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
-            const event = {
+            const event: AnnotationEvent = {
               annotation: annotation,
               title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
               tags: tags,
@@ -396,9 +371,14 @@ export class PrometheusDatasource {
             };
 
             if (annotation.useValueForTime) {
-              event['time'] = Math.floor(parseFloat(value[1]));
+              const timestampValue = Math.floor(parseFloat(value[1]));
+              if (dupCheck[timestampValue]) {
+                continue;
+              }
+              dupCheck[timestampValue] = true;
+              event.time = timestampValue;
             } else {
-              event['time'] = Math.floor(parseFloat(value[0])) * 1000;
+              event.time = Math.floor(parseFloat(value[0])) * 1000;
             }
 
             eventList.push(event);
@@ -407,6 +387,24 @@ export class PrometheusDatasource {
       });
 
       return eventList;
+    });
+  }
+
+  getTagKeys(options) {
+    const url = '/api/v1/labels';
+    return this.metadataRequest(url).then(result => {
+      return _.map(result.data.data, value => {
+        return { text: value };
+      });
+    });
+  }
+
+  getTagValues(options) {
+    const url = '/api/v1/label/' + options.key + '/values';
+    return this.metadataRequest(url).then(result => {
+      return _.map(result.data.data, value => {
+        return { text: value };
+      });
     });
   }
 
@@ -421,12 +419,16 @@ export class PrometheusDatasource {
     });
   }
 
-  getExploreState(queries: DataQuery[]): Partial<ExploreUrlState> {
+  getExploreState(queries: PromQuery[]): Partial<ExploreUrlState> {
     let state: Partial<ExploreUrlState> = { datasource: this.name };
     if (queries && queries.length > 0) {
       const expandedQueries = queries.map(query => ({
         ...query,
         expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+
+        // null out values we don't support in Explore yet
+        legendFormat: null,
+        step: null,
       }));
       state = {
         ...state,
@@ -436,7 +438,7 @@ export class PrometheusDatasource {
     return state;
   }
 
-  getQueryHints(query: DataQuery, result: any[]) {
+  getQueryHints(query: PromQuery, result: any[]) {
     return getQueryHints(query.expr || '', result, this);
   }
 
@@ -455,7 +457,7 @@ export class PrometheusDatasource {
       });
   }
 
-  modifyQuery(query: DataQuery, action: any): DataQuery {
+  modifyQuery(query: PromQuery, action: any): PromQuery {
     let expression = query.expr || '';
     switch (action.type) {
       case 'ADD_FILTER': {
@@ -504,4 +506,50 @@ export class PrometheusDatasource {
   getOriginalMetricName(labelData) {
     return this.resultTransformer.getOriginalMetricName(labelData);
   }
+}
+
+/**
+ * Align query range to step.
+ * Rounds start and end down to a multiple of step.
+ * @param start Timestamp marking the beginning of the range.
+ * @param end Timestamp marking the end of the range.
+ * @param step Interval to align start and end with.
+ */
+export function alignRange(start: number, end: number, step: number): { end: number; start: number } {
+  const alignedEnd = Math.floor(end / step) * step;
+  const alignedStart = Math.floor(start / step) * step;
+  return {
+    end: alignedEnd,
+    start: alignedStart,
+  };
+}
+
+export function extractRuleMappingFromGroups(groups: any[]) {
+  return groups.reduce(
+    (mapping, group) =>
+      group.rules
+        .filter(rule => rule.type === 'recording')
+        .reduce(
+          (acc, rule) => ({
+            ...acc,
+            [rule.name]: rule.query,
+          }),
+          mapping
+        ),
+    {}
+  );
+}
+
+export function prometheusRegularEscape(value) {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "\\\\'");
+  }
+  return value;
+}
+
+export function prometheusSpecialRegexEscape(value) {
+  if (typeof value === 'string') {
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+  }
+  return value;
 }

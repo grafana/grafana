@@ -1,14 +1,19 @@
 package alerting
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	m "github.com/grafana/grafana/pkg/models"
+)
+
+var (
+	ErrFrequencyCannotBeZeroOrLess = errors.New(`"evaluate every" cannot be zero or below`)
+	ErrFrequencyCouldNotBeParsed   = errors.New(`"evaluate every" field could not be parsed`)
 )
 
 type Rule struct {
@@ -25,7 +30,7 @@ type Rule struct {
 	ExecutionErrorState m.ExecutionErrorOption
 	State               m.AlertStateType
 	Conditions          []Condition
-	Notifications       []int64
+	Notifications       []string
 
 	StateChanges int64
 }
@@ -68,6 +73,7 @@ var unitMultiplier = map[string]int{
 	"s": 1,
 	"m": 60,
 	"h": 3600,
+	"d": 86400,
 }
 
 func getTimeDurationStringToSeconds(str string) (int64, error) {
@@ -76,12 +82,16 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	matches := ValueFormatRegex.FindAllString(str, 1)
 
 	if len(matches) <= 0 {
-		return 0, fmt.Errorf("Frequency could not be parsed")
+		return 0, ErrFrequencyCouldNotBeParsed
 	}
 
 	value, err := strconv.Atoi(matches[0])
 	if err != nil {
 		return 0, err
+	}
+
+	if value == 0 {
+		return 0, ErrFrequencyCannotBeZeroOrLess
 	}
 
 	unit := UnitFormatRegex.FindAllString(str, 1)[0]
@@ -101,7 +111,6 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.PanelId = ruleDef.PanelId
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
-	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
 	model.For = ruleDef.For
@@ -109,13 +118,24 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
 
+	model.Frequency = ruleDef.Frequency
+	// frequency cannot be zero since that would not execute the alert rule.
+	// so we fallback to 60 seconds if `Freqency` is missing
+	if model.Frequency == 0 {
+		model.Frequency = 60
+	}
+
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		id, err := jsonModel.Get("id").Int64()
-		if err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+		if id, err := jsonModel.Get("id").Int64(); err == nil {
+			model.Notifications = append(model.Notifications, fmt.Sprintf("%09d", id))
+		} else {
+			uid, err := jsonModel.Get("uid").String()
+			if err != nil {
+				return nil, ValidationError{Reason: "Neither id nor uid is specified, " + err.Error(), DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+			}
+			model.Notifications = append(model.Notifications, uid)
 		}
-		model.Notifications = append(model.Notifications, id)
 	}
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {

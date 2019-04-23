@@ -1,6 +1,5 @@
 import _ from 'lodash';
-
-import { QueryHint } from 'app/types/explore';
+import { QueryHint } from '@grafana/ui/src/types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
@@ -27,7 +26,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
     });
   }
 
-  // Check for monotony on series (table results are being ignored here)
+  // Check for monotonicity on series (table results are being ignored here)
   if (series && series.length > 0) {
     series.forEach(s => {
       const datapoints: number[][] = s.datapoints;
@@ -44,7 +43,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
         });
         if (increasing && monotonic) {
           const simpleMetric = query.trim().match(/^\w+$/);
-          let label = 'Time series is monotonously increasing.';
+          let label = 'Time series is monotonically increasing.';
           let fix;
           if (simpleMetric) {
             fix = {

@@ -46,6 +46,9 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 	isDev                 bool     = false
 	enterprise            bool     = false
+	skipRpmGen            bool     = false
+	skipDebGen            bool     = false
+	printGenVersion       bool     = false
 )
 
 func main() {
@@ -67,6 +70,9 @@ func main() {
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
 	flag.BoolVar(&isDev, "dev", isDev, "optimal for development, skips certain steps")
+	flag.BoolVar(&skipRpmGen, "skipRpm", skipRpmGen, "skip rpm package generation (default: false)")
+	flag.BoolVar(&skipDebGen, "skipDeb", skipDebGen, "skip deb package generation (default: false)")
+	flag.BoolVar(&printGenVersion, "gen-version", printGenVersion, "generate Grafana version and output (default: false)")
 	flag.Parse()
 
 	buildId = shortenBuildId(buildIdRaw)
@@ -75,6 +81,11 @@ func main() {
 
 	if pkgArch == "" {
 		pkgArch = goarch
+	}
+
+	if printGenVersion {
+		printGeneratedVersion()
+		return
 	}
 
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
@@ -164,6 +175,9 @@ func makeLatestDistCopies() {
 		"_amd64.deb":          "dist/grafana_latest_amd64.deb",
 		".x86_64.rpm":         "dist/grafana-latest-1.x86_64.rpm",
 		".linux-amd64.tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
+		".linux-armv7.tar.gz": "dist/grafana-latest.linux-armv7.tar.gz",
+		".linux-armv6.tar.gz": "dist/grafana-latest.linux-armv6.tar.gz",
+		".linux-arm64.tar.gz": "dist/grafana-latest.linux-arm64.tar.gz",
 	}
 
 	for _, file := range files {
@@ -214,6 +228,7 @@ func readVersionFromPackageJson() {
 
 type linuxPackageOptions struct {
 	packageType            string
+	packageArch            string
 	homeDir                string
 	binPath                string
 	serverBinPath          string
@@ -234,12 +249,14 @@ type linuxPackageOptions struct {
 }
 
 func createDebPackages() {
-	previousPkgArch := pkgArch
-	if pkgArch == "armv7" {
-		pkgArch = "armhf"
+	debPkgArch := pkgArch
+	if pkgArch == "armv7" || pkgArch == "armv6" {
+		debPkgArch = "armhf"
 	}
+
 	createPackage(linuxPackageOptions{
 		packageType:            "deb",
+		packageArch:            debPkgArch,
 		homeDir:                "/usr/share/grafana",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
@@ -253,21 +270,21 @@ func createDebPackages() {
 		defaultFileSrc: "packaging/deb/default/grafana-server",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
-		depends: []string{"adduser", "libfontconfig"},
+		depends: []string{"adduser", "libfontconfig1"},
 	})
-	pkgArch = previousPkgArch
 }
 
 func createRpmPackages() {
-	previousPkgArch := pkgArch
+	rpmPkgArch := pkgArch
 	switch {
 	case pkgArch == "armv7":
-		pkgArch = "armhfp"
+		rpmPkgArch = "armhfp"
 	case pkgArch == "arm64":
-		pkgArch = "aarch64"
+		rpmPkgArch = "aarch64"
 	}
 	createPackage(linuxPackageOptions{
 		packageType:            "rpm",
+		packageArch:            rpmPkgArch,
 		homeDir:                "/usr/share/grafana",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
@@ -283,12 +300,16 @@ func createRpmPackages() {
 
 		depends: []string{"/sbin/service", "fontconfig", "freetype", "urw-fonts"},
 	})
-	pkgArch = previousPkgArch
 }
 
 func createLinuxPackages() {
-	createDebPackages()
-	createRpmPackages()
+	if !skipDebGen {
+		createDebPackages()
+	}
+
+	if !skipRpmGen {
+		createRpmPackages()
+	}
 }
 
 func createPackage(options linuxPackageOptions) {
@@ -337,6 +358,11 @@ func createPackage(options linuxPackageOptions) {
 		name += "-enterprise"
 		args = append(args, "--replaces", "grafana")
 	}
+	fmt.Printf("pkgArch is set to '%s', generated arch is '%s'\n", pkgArch, options.packageArch)
+	if pkgArch == "armv6" {
+		name += "-rpi"
+		args = append(args, "--replaces", "grafana")
+	}
 	args = append(args, "--name", name)
 
 	description := "Grafana"
@@ -357,8 +383,8 @@ func createPackage(options linuxPackageOptions) {
 		args = append(args, "--deb-no-default-config-files")
 	}
 
-	if pkgArch != "" {
-		args = append(args, "-a", pkgArch)
+	if options.packageArch != "" {
+		args = append(args, "-a", options.packageArch)
 	}
 
 	if linuxPackageIteration != "" {
@@ -396,13 +422,17 @@ func grunt(params ...string) {
 	}
 }
 
+func genPackageVersion() string {
+	if includeBuildId {
+		return fmt.Sprintf("%v-%v", linuxPackageVersion, linuxPackageIteration)
+	} else {
+		return version
+	}
+}
+
 func gruntBuildArg(task string) []string {
 	args := []string{task}
-	if includeBuildId {
-		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
-	} else {
-		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
-	}
+	args = append(args, fmt.Sprintf("--pkgVer=%v", genPackageVersion()))
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
 	}
@@ -419,8 +449,11 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "get", "-v", "github.com/golang/dep")
 	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
+}
+
+func printGeneratedVersion() {
+	fmt.Print(genPackageVersion())
 }
 
 func test(pkg string) {

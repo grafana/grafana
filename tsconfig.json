@@ -4,7 +4,7 @@
     "outDir": "public/dist",
     "target": "es5",
     "lib": ["es6", "dom"],
-    "rootDir": "public/",
+    "rootDirs": ["public/"],
     "jsx": "react",
     "module": "esnext",
     "declaration": false,
@@ -23,13 +23,16 @@
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
     "noImplicitAny": false,
+    "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
     "pretty": true,
-    "typeRoots": ["node_modules/@types", "types"],
+    "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
-      "app": ["app"]
-    }
+      "app": ["app"],
+      "sass": ["sass"]
+    },
+    "skipLibCheck": true
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts"]
+  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

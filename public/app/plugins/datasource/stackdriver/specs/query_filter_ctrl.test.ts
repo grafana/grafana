@@ -5,6 +5,7 @@ import { DefaultRemoveFilterValue, DefaultFilterValue } from '../filter_segments
 describe('StackdriverQueryFilterCtrl', () => {
   let ctrl;
   let result;
+  let groupByChangedMock;
 
   describe('when initializing query editor', () => {
     beforeEach(() => {
@@ -32,10 +33,10 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when labels are fetched', () => {
       beforeEach(async () => {
-        ctrl.metricLabels = { 'metric-key-1': ['metric-value-1'] };
-        ctrl.resourceLabels = { 'resource-key-1': ['resource-value-1'] };
+        ctrl.labelData.metricLabels = { 'metric-key-1': ['metric-value-1'] };
+        ctrl.labelData.resourceLabels = { 'resource-key-1': ['resource-value-1'] };
 
-        result = await ctrl.getGroupBys();
+        result = await ctrl.getGroupBys({ type: '' });
       });
 
       it('should populate group bys segments', () => {
@@ -48,17 +49,17 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when a group by label is selected', () => {
       beforeEach(async () => {
-        ctrl.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
-        ctrl.target.aggregation.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
+        ctrl.groupBys = ['metric.label.metric-key-1', 'resource.label.resource-key-1'];
 
-        result = await ctrl.getGroupBys();
+        result = await ctrl.getGroupBys({ type: '' });
       });
 
       it('should not be used to populate group bys segments', () => {
@@ -71,6 +72,8 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when a group by is selected', () => {
       beforeEach(() => {
+        groupByChangedMock = jest.fn();
+        ctrl.groupBysChanged = groupByChangedMock;
         const removeSegment = { fake: true, value: '-- remove group by --' };
         const segment = { value: 'groupby1' };
         ctrl.groupBySegments = [segment, removeSegment];
@@ -78,12 +81,14 @@ describe('StackdriverQueryFilterCtrl', () => {
       });
 
       it('should be added to group bys list', () => {
-        expect(ctrl.target.aggregation.groupBys.length).toBe(1);
+        expect(groupByChangedMock).toHaveBeenCalledWith({ groupBys: ['groupby1'] });
       });
     });
 
     describe('when a selected group by is removed', () => {
       beforeEach(() => {
+        groupByChangedMock = jest.fn();
+        ctrl.groupBysChanged = groupByChangedMock;
         const removeSegment = { fake: true, value: '-- remove group by --' };
         const segment = { value: 'groupby1' };
         ctrl.groupBySegments = [segment, removeSegment];
@@ -91,7 +96,7 @@ describe('StackdriverQueryFilterCtrl', () => {
       });
 
       it('should be added to group bys list', () => {
-        expect(ctrl.target.aggregation.groupBys.length).toBe(0);
+        expect(groupByChangedMock).toHaveBeenCalledWith({ groupBys: [] });
       });
     });
   });
@@ -130,11 +135,11 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when values for a key filter part are fetched', () => {
       beforeEach(async () => {
-        ctrl.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
@@ -155,11 +160,11 @@ describe('StackdriverQueryFilterCtrl', () => {
 
     describe('when values for a value filter part are fetched', () => {
       beforeEach(async () => {
-        ctrl.metricLabels = {
+        ctrl.labelData.metricLabels = {
           'metric-key-1': ['metric-value-1'],
           'metric-key-2': ['metric-value-2'],
         };
-        ctrl.resourceLabels = {
+        ctrl.labelData.resourceLabels = {
           'resource-key-1': ['resource-value-1'],
           'resource-key-2': ['resource-value-2'],
         };
@@ -198,6 +203,7 @@ describe('StackdriverQueryFilterCtrl', () => {
         });
       });
     });
+
     describe('when has one existing filter', () => {
       describe('and user clicks on key segment', () => {
         beforeEach(() => {
@@ -213,7 +219,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ];
           ctrl.filterSegmentUpdated(existingKeySegment, 0);
         });
-
         it('should not add any new segments', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(4);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -229,7 +234,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ctrl.filterSegments.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
           ctrl.filterSegmentUpdated(existingValueSegment, 2);
         });
-
         it('should ensure that plus segment exists', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(4);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -238,7 +242,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
-
       describe('and user clicks on value segment and value is equal to fake value', () => {
         beforeEach(() => {
           const existingKeySegment = { value: 'filterkey1', type: 'key' };
@@ -247,7 +250,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ctrl.filterSegments.filterSegments = [existingKeySegment, existingOperatorSegment, existingValueSegment];
           ctrl.filterSegmentUpdated(existingValueSegment, 2);
         });
-
         it('should not add plus segment', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(3);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -269,13 +271,11 @@ describe('StackdriverQueryFilterCtrl', () => {
           ];
           ctrl.filterSegmentUpdated(existingKeySegment, 0);
         });
-
         it('should remove filter segments', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(1);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('plus-button');
         });
       });
-
       describe('and user removes key segment and there is a previous filter', () => {
         beforeEach(() => {
           const existingKeySegment1 = { value: DefaultRemoveFilterValue, type: 'key' };
@@ -296,7 +296,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ];
           ctrl.filterSegmentUpdated(existingKeySegment2, 4);
         });
-
         it('should remove filter segments and the condition segment', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(4);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -305,7 +304,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
-
       describe('and user removes key segment and there is a filter after it', () => {
         beforeEach(() => {
           const existingKeySegment1 = { value: DefaultRemoveFilterValue, type: 'key' };
@@ -326,7 +324,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ];
           ctrl.filterSegmentUpdated(existingKeySegment1, 0);
         });
-
         it('should remove filter segments and the condition segment', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(4);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -335,7 +332,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           expect(ctrl.filterSegments.filterSegments[3].type).toBe('plus-button');
         });
       });
-
       describe('and user clicks on plus button', () => {
         beforeEach(() => {
           const existingKeySegment = { value: 'filterkey1', type: 'key' };
@@ -350,7 +346,6 @@ describe('StackdriverQueryFilterCtrl', () => {
           ];
           ctrl.filterSegmentUpdated(plusSegment, 3);
         });
-
         it('should condition segment and new filter segments', () => {
           expect(ctrl.filterSegments.filterSegments.length).toBe(7);
           expect(ctrl.filterSegments.filterSegments[0].type).toBe('key');
@@ -367,13 +362,6 @@ describe('StackdriverQueryFilterCtrl', () => {
 });
 
 function createCtrlWithFakes(existingFilters?: string[]) {
-  StackdriverFilterCtrl.prototype.loadMetricDescriptors = () => {
-    return Promise.resolve([]);
-  };
-  StackdriverFilterCtrl.prototype.getLabels = () => {
-    return Promise.resolve();
-  };
-
   const fakeSegmentServer = {
     newKey: val => {
       return { value: val, type: 'key' };
@@ -403,40 +391,24 @@ function createCtrlWithFakes(existingFilters?: string[]) {
     },
   };
   const scope = {
-    target: createTarget(existingFilters),
+    hideGroupBys: false,
+    groupBys: [],
+    filters: existingFilters || [],
+    labelData: {
+      metricLabels: {},
+      resourceLabels: {},
+      resourceTypes: [],
+    },
+    filtersChanged: () => {},
+    groupBysChanged: () => {},
     datasource: {
       getDefaultProject: () => {
         return 'project';
       },
     },
-    defaultDropdownValue: 'Select Metric',
-    defaultServiceValue: 'All Services',
     refresh: () => {},
   };
 
-  return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub(), { $broadcast: param => {} });
-}
-
-function createTarget(existingFilters?: string[]) {
-  return {
-    project: {
-      id: '',
-      name: '',
-    },
-    unit: '',
-    metricType: 'ametric',
-    service: '',
-    refId: 'A',
-    aggregation: {
-      crossSeriesReducer: '',
-      alignmentPeriod: '',
-      perSeriesAligner: '',
-      groupBys: [],
-    },
-    filters: existingFilters || [],
-    aliasBy: '',
-    metricService: '',
-    metricKind: '',
-    valueType: '',
-  };
+  Object.assign(StackdriverFilterCtrl.prototype, scope);
+  return new StackdriverFilterCtrl(scope, fakeSegmentServer, new TemplateSrvStub());
 }

@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import SlideDown from 'app/core/components/Animations/SlideDown';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { Input, Tooltip } from '@grafana/ui';
+
 import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
@@ -61,7 +63,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-mini" onClick={() => this.onRemoveGroup(group)}>
+          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
             <i className="fa fa-remove" />
           </a>
         </td>
@@ -77,12 +79,14 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <h3 className="page-sub-heading">External group sync</h3>
-          <Tooltip className="page-sub-heading-icon" placement="auto" content={headerTooltip}>
-            <i className="gicon gicon-question gicon--has-hover" />
+          <Tooltip placement="auto" content={headerTooltip}>
+            <div className="page-sub-heading-icon">
+              <i className="gicon gicon-question gicon--has-hover" />
+            </div>
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <button className="btn btn-success pull-right" onClick={this.onToggleAdding}>
+            <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
               <i className="fa fa-plus" /> Add group
             </button>
           )}
@@ -96,7 +100,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>
               <div className="gf-form">
-                <input
+                <Input
                   type="text"
                   className="gf-form-input width-30"
                   value={newGroupId}
@@ -106,7 +110,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </div>
 
               <div className="gf-form">
-                <button className="btn btn-success gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
+                <button className="btn btn-primary gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
                   Add group
                 </button>
               </div>
@@ -114,26 +118,25 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           </div>
         </SlideDown>
 
-        {groups.length === 0 &&
-          !isAdding && (
-            <div className="empty-list-cta">
-              <div className="empty-list-cta__title">There are no external groups to sync with</div>
-              <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-success">
-                <i className="gicon gicon-add-team" />
-                Add Group
-              </button>
-              <div className="empty-list-cta__pro-tip">
-                <i className="fa fa-rocket" /> {headerTooltip}
-                <a
-                  className="text-link empty-list-cta__pro-tip-link"
-                  href="http://docs.grafana.org/auth/enhanced_ldap/"
-                  target="_blank"
-                >
-                  Learn more
-                </a>
-              </div>
+        {groups.length === 0 && !isAdding && (
+          <div className="empty-list-cta">
+            <div className="empty-list-cta__title">There are no external groups to sync with</div>
+            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-large btn-primary">
+              <i className="gicon gicon-team" />
+              Add Group
+            </button>
+            <div className="empty-list-cta__pro-tip">
+              <i className="fa fa-rocket" /> {headerTooltip}
+              <a
+                className="text-link empty-list-cta__pro-tip-link"
+                href="http://docs.grafana.org/auth/enhanced_ldap/"
+                target="_blank"
+              >
+                Learn more
+              </a>
             </div>
-          )}
+          </div>
+        )}
 
         {groups.length > 0 && (
           <div className="admin-list-table">
@@ -165,4 +168,7 @@ const mapDispatchToProps = {
   removeTeamGroup,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamGroupSync);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TeamGroupSync);

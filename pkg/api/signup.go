@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,7 +51,7 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	return JSON(200, util.DynMap{"status": "SignUpCreated"})
 }
 
-func SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
+func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
 	if !setting.AllowUserSignUp {
 		return Error(401, "User signup is disabled", nil)
 	}
@@ -109,7 +109,7 @@ func SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Response {
 		apiResponse["code"] = "redirect-to-select-org"
 	}
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 	metrics.M_Api_User_SignUpCompleted.Inc()
 
 	return JSON(200, apiResponse)

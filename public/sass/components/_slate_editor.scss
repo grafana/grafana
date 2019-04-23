@@ -8,7 +8,8 @@
 .slate-query-field__wrapper {
   position: relative;
   display: inline-block;
-  padding: 6px 7px 4px;
+  padding: $input-padding;
+  min-height: $input-height;
   width: 100%;
   cursor: text;
   line-height: $line-height-base;
@@ -18,6 +19,7 @@
   border: $panel-border;
   border-radius: $border-radius;
   transition: all 0.3s;
+  line-height: $input-line-height;
 }
 
 .slate-query-field__wrapper--disabled {
@@ -49,14 +51,13 @@
     color: $text-color-weak;
     font-size: $font-size-sm;
     line-height: $line-height-base;
-    padding: $input-padding-y $input-padding-x;
+    padding: $space-sm;
   }
 
   .typeahead-item {
     height: auto;
     font-family: $font-family-monospace;
-    padding: $input-padding-y $input-padding-x;
-    padding-left: $input-padding-x-lg;
+    padding: $space-sm $space-sm $space-sm $space-md;
     font-size: $font-size-sm;
     text-overflow: ellipsis;
     overflow: hidden;

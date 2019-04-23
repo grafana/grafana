@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 
-import { Label } from 'app/core/components/Label/Label';
-import Select from 'app/core/components/Select/Select';
+import { FormLabel, Select } from '@grafana/ui';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardSearchHit } from 'app/types';
+import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
 
 export interface Props {
   resourceUri: string;
@@ -42,6 +41,21 @@ export class SharedPreferences extends PureComponent<Props, State> {
   async componentDidMount() {
     const prefs = await this.backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
     const dashboards = await this.backendSrv.search({ starred: true });
+    const defaultDashboardHit: DashboardSearchHit = {
+      id: 0,
+      title: 'Default',
+      tags: [],
+      type: '' as DashboardSearchHitType,
+      uid: '',
+      uri: '',
+      url: '',
+      folderId: 0,
+      folderTitle: '',
+      folderUid: '',
+      folderUrl: '',
+      isStarred: false,
+      slug: '',
+    };
 
     if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
       const missing = await this.backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
@@ -54,7 +68,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: prefs.homeDashboardId,
       theme: prefs.theme,
       timezone: prefs.timezone,
-      dashboards: [{ id: 0, title: 'Default', tags: [], type: '', uid: '', uri: '', url: '' }, ...dashboards],
+      dashboards: [defaultDashboardHit, ...dashboards],
     });
   }
 
@@ -100,12 +114,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form">
-          <Label
+          <FormLabel
             width={11}
             tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
           >
             Home Dashboard
-          </Label>
+          </FormLabel>
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
@@ -127,7 +141,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           />
         </div>
         <div className="gf-form-button-row">
-          <button type="submit" className="btn btn-success">
+          <button type="submit" className="btn btn-primary">
             Save
           </button>
         </div>

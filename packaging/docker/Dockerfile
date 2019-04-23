@@ -1,4 +1,5 @@
-FROM debian:stretch-slim
+ARG BASE_IMAGE=debian:stretch-slim
+FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
@@ -8,9 +9,11 @@ RUN apt-get update && apt-get install -qq -y tar && \
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
-RUN mkdir /tmp/grafana && tar xfvz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+# Change to tar xfzv to make tar print every file it extracts
+RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-FROM debian:stretch-slim
+ARG BASE_IMAGE=debian:stretch-slim
+FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
 ARG GF_GID="472"
@@ -26,7 +29,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -qq -y libfontconfig ca-certificates curl && \
+    apt-get install -qq -y libfontconfig1 ca-certificates curl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
@@ -37,6 +40,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     useradd -r -u $GF_UID -g grafana grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
+             "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Select, SelectOptionItem } from 'app/core/components/Select/Select';
+import { Select, SelectOptionItem } from '@grafana/ui';
 import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -130,7 +130,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
             </div>
 
             <div className="gf-form">
-              <button data-save-permission className="btn btn-success" type="submit" disabled={!isValid}>
+              <button data-save-permission className="btn btn-primary" type="submit" disabled={!isValid}>
                 Save
               </button>
             </div>

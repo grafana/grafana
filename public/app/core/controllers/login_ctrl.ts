@@ -25,6 +25,7 @@ export class LoginCtrl {
     $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint = config.loginHint;
+    $scope.passwordHint = config.passwordHint;
 
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';

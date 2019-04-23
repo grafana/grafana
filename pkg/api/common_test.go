@@ -5,13 +5,12 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
-
+	"github.com/grafana/grafana/pkg/services/auth"
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
@@ -95,13 +94,14 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 }
 
 type scenarioContext struct {
-	m              *macaron.Macaron
-	context        *m.ReqContext
-	resp           *httptest.ResponseRecorder
-	handlerFunc    handlerFunc
-	defaultHandler macaron.Handler
-	req            *http.Request
-	url            string
+	m                    *macaron.Macaron
+	context              *m.ReqContext
+	resp                 *httptest.ResponseRecorder
+	handlerFunc          handlerFunc
+	defaultHandler       macaron.Handler
+	req                  *http.Request
+	url                  string
+	userAuthTokenService *auth.FakeUserAuthTokenService
 }
 
 func (sc *scenarioContext) exec() {
@@ -123,8 +123,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler())
-	sc.m.Use(middleware.Sessioner(&session.Options{}, 0))
+	sc.m.Use(middleware.GetContextHandler(nil, nil))
 
 	return sc
 }

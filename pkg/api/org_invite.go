@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -27,6 +27,10 @@ func GetPendingOrgInvites(c *m.ReqContext) Response {
 }
 
 func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
+	if setting.DisableLoginForm {
+		return Error(400, "Cannot invite when login is disabled.", nil)
+	}
+
 	if !inviteDto.Role.IsValid() {
 		return Error(400, "Invalid role specified", nil)
 	}
@@ -36,10 +40,6 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if err != m.ErrUserNotFound {
 			return Error(500, "Failed to query db for existing user check", err)
-		}
-
-		if setting.DisableLoginForm {
-			return Error(401, "User could not be found", nil)
 		}
 	} else {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
@@ -148,7 +148,7 @@ func GetInviteInfoByCode(c *m.ReqContext) Response {
 	})
 }
 
-func CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
+func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
 	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -186,7 +186,7 @@ func CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Res
 		return rsp
 	}
 
-	loginUserWithUser(user, c)
+	hs.loginUserWithUser(user, c)
 
 	metrics.M_Api_User_SignUpCompleted.Inc()
 	metrics.M_Api_User_SignUpInvite.Inc()

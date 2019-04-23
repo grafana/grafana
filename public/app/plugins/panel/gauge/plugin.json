@@ -3,7 +3,7 @@
   "name": "Gauge",
   "id": "gauge",
 
-  "state": "alpha",
+  "dataFormats": ["time_series"],
 
   "info": {
     "author": {

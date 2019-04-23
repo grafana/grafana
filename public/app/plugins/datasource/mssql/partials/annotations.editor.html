@@ -30,12 +30,15 @@ Macros:
 - $__timeEpoch(column) -&gt; DATEDIFF(second, '1970-01-01', column) AS time
 - $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
 - $__unixEpochFilter(column) -&gt; column &gt;= 1492750877 AND column &lt;= 1492750877
+- $__unixEpochNanoFilter(column) -&gt;  column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872
 
 Or build your own conditionals using these macros which just return the values:
 - $__timeFrom() -&gt;  '2017-04-21T05:01:17Z'
 - $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
 - $__unixEpochFrom() -&gt; 1492750877
 - $__unixEpochTo() -&gt; 1492750877
+- $__unixEpochNanoFrom() -&gt;  1494410783152415214
+- $__unixEpochNanoTo() -&gt;  1494497183142514872
 		</pre>
 	</div>
 </div>

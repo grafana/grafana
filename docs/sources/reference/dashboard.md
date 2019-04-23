@@ -51,7 +51,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
     "list": []
   },
   "refresh": "5s",
-  "schemaVersion": 16,
+  "schemaVersion": 17,
   "version": 0,
   "links": []
 }

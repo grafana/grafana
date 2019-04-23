@@ -4,14 +4,30 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 func init() {
-	bus.AddHandler("auth", UpsertUser)
+	registry.RegisterService(&LoginService{})
 }
 
-func UpsertUser(cmd *m.UpsertUserCommand) error {
+var (
+	logger = log.New("login.ext_user")
+)
+
+type LoginService struct {
+	Bus          bus.Bus             `inject:""`
+	QuotaService *quota.QuotaService `inject:""`
+}
+
+func (ls *LoginService) Init() error {
+	ls.Bus.AddHandler(ls.UpsertUser)
+
+	return nil
+}
+
+func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := &m.GetUserByAuthInfoQuery{
@@ -33,7 +49,7 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 			return ErrInvalidCredentials
 		}
 
-		limitReached, err := quota.QuotaReached(cmd.ReqContext, "user")
+		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
 			log.Warn("Error getting user quota. error: %v", err)
 			return ErrGettingUserQuota
@@ -47,13 +63,14 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 			return err
 		}
 
-		if extUser.AuthModule != "" && extUser.AuthId != "" {
+		if extUser.AuthModule != "" {
 			cmd2 := &m.SetAuthInfoCommand{
 				UserId:     cmd.Result.Id,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
+				OAuthToken: extUser.OAuthToken,
 			}
-			if err := bus.Dispatch(cmd2); err != nil {
+			if err := ls.Bus.Dispatch(cmd2); err != nil {
 				return err
 			}
 		}
@@ -65,6 +82,14 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 		if err != nil {
 			return err
 		}
+
+		// Always persist the latest token at log-in
+		if extUser.AuthModule != "" && extUser.OAuthToken != nil {
+			err = updateUserAuth(cmd.Result, extUser)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	err = syncOrgRoles(cmd.Result, extUser)
@@ -74,12 +99,12 @@ func UpsertUser(cmd *m.UpsertUserCommand) error {
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+		if err := ls.Bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
 			return err
 		}
 	}
 
-	err = bus.Dispatch(&m.SyncTeamsCommand{
+	err = ls.Bus.Dispatch(&m.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})
@@ -135,7 +160,19 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 		return nil
 	}
 
-	log.Debug2("Syncing user info", "id", user.Id, "update", updateCmd)
+	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
+	return bus.Dispatch(updateCmd)
+}
+
+func updateUserAuth(user *m.User, extUser *m.ExternalUserInfo) error {
+	updateCmd := &m.UpdateAuthInfoCommand{
+		AuthModule: extUser.AuthModule,
+		AuthId:     extUser.AuthId,
+		UserId:     user.Id,
+		OAuthToken: extUser.OAuthToken,
+	}
+
+	logger.Debug("Updating user_auth info", "user_id", user.Id)
 	return bus.Dispatch(updateCmd)
 }
 

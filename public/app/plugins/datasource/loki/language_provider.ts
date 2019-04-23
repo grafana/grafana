@@ -1,6 +1,12 @@
+// Libraries
 import _ from 'lodash';
 import moment from 'moment';
 
+// Services & Utils
+import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
+import syntax from './syntax';
+
+// Types
 import {
   CompletionItem,
   CompletionItemGroup,
@@ -9,18 +15,19 @@ import {
   TypeaheadOutput,
   HistoryItem,
 } from 'app/types/explore';
-import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax from './syntax';
-import { DataQuery } from 'app/types';
+import { LokiQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
+export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label });
 
-export function addHistoryMetadata(item: CompletionItem, history: HistoryItem[]): CompletionItem {
+type LokiHistoryItem = HistoryItem<LokiQuery>;
+
+export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryItem[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
   const historyForItem = history.filter(h => h.ts > cutoffTs && (h.query.expr as string) === item.label);
   const count = historyForItem.length;
@@ -40,6 +47,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   logLabelOptions: any[];
+  logLabelFetchTs?: number;
   started: boolean;
 
   constructor(datasource: any, initialValues?: any) {
@@ -52,13 +60,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
   // Strip syntax chars
-  cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 
   getSyntax() {
     return syntax;
   }
 
-  request = url => {
+  request = (url: string) => {
     return this.datasource.metadataRequest(url);
   };
 
@@ -92,12 +100,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     if (history && history.length > 0) {
       const historyItems = _.chain(history)
-        .map(h => h.query.expr)
+        .map((h: any) => h.query.expr)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
-        .map(item => addHistoryMetadata(item, history))
+        .map((item: CompletionItem) => addHistoryMetadata(item, history))
         .value();
 
       suggestions.push({
@@ -155,7 +163,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { context, refresher, suggestions };
   }
 
-  async importQueries(queries: DataQuery[], datasourceType: string): Promise<DataQuery[]> {
+  async importQueries(queries: LokiQuery[], datasourceType: string): Promise<LokiQuery[]> {
     if (datasourceType === 'prometheus') {
       return Promise.all(
         queries.map(async query => {
@@ -167,8 +175,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
         })
       );
     }
+    // Return a cleaned LokiQuery
     return queries.map(query => ({
-      ...query,
+      refId: query.refId,
       expr: '',
     }));
   }
@@ -182,7 +191,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const selectorMatch = query.match(selectorRegexp);
     if (selectorMatch) {
       const selector = selectorMatch[0];
-      const labels = {};
+      const labels: { [key: string]: { value: any; operator: any } } = {};
       selector.replace(labelRegexp, (_, key, operator, value) => {
         labels[key] = { value, operator };
         return '';
@@ -191,7 +200,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Keep only labels that exist on origin and target datasource
       await this.start(); // fetches all existing label keys
       const existingKeys = this.labelKeys[EMPTY_SELECTOR];
-      let labelsToKeep = {};
+      let labelsToKeep: { [key: string]: { value: any; operator: any } } = {};
       if (existingKeys && existingKeys.length > 0) {
         // Check for common labels
         for (const key in labels) {
@@ -216,9 +225,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return '';
   }
 
-  async fetchLogLabels() {
+  async fetchLogLabels(): Promise<any> {
     const url = '/api/prom/label';
     try {
+      this.logLabelFetchTs = Date.now();
       const res = await this.request(url);
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
@@ -226,14 +236,24 @@ export default class LokiLanguageProvider extends LanguageProvider {
         ...this.labelKeys,
         [EMPTY_SELECTOR]: labelKeys,
       };
-      this.logLabelOptions = labelKeys.map(key => ({ label: key, value: key, isLeaf: false }));
+      this.logLabelOptions = labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
 
       // Pre-load values for default labels
-      return labelKeys.filter(key => DEFAULT_KEYS.indexOf(key) > -1).map(key => this.fetchLabelValues(key));
+      return Promise.all(
+        labelKeys
+          .filter((key: string) => DEFAULT_KEYS.indexOf(key) > -1)
+          .map((key: string) => this.fetchLabelValues(key))
+      );
     } catch (e) {
       console.error(e);
     }
     return [];
+  }
+
+  async refreshLogLabels(forceRefresh?: boolean) {
+    if ((this.labelKeys && Date.now() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
+      await this.fetchLogLabels();
+    }
   }
 
   async fetchLabelValues(key: string) {
@@ -248,7 +268,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
         if (keyOption.value === key) {
           return {
             ...keyOption,
-            children: values.map(value => ({ label: value, value })),
+            children: values.map((value: string) => ({ label: value, value })),
           };
         }
         return keyOption;

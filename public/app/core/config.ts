@@ -1,16 +1,19 @@
 import _ from 'lodash';
 import { PanelPlugin } from 'app/types/plugins';
+import { GrafanaTheme, getTheme, GrafanaThemeType, DataSourceInstanceSettings } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
   commit: string;
   isEnterprise: boolean;
   env: string;
+  latestVersion: string;
+  hasUpdate: boolean;
 }
 
 export class Settings {
-  datasources: any;
-  panels: PanelPlugin[];
+  datasources: { [str: string]: DataSourceInstanceSettings };
+  panels: { [key: string]: PanelPlugin };
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
@@ -31,9 +34,17 @@ export class Settings {
   oauth: any;
   disableUserSignUp: boolean;
   loginHint: any;
+  passwordHint: any;
   loginError: any;
+  viewersCanEdit: boolean;
+  editorsCanAdmin: boolean;
+  disableSanitizeHtml: boolean;
+  theme: GrafanaTheme;
+  pluginsToPreload: string[];
 
-  constructor(options) {
+  constructor(options: Settings) {
+    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+
     const defaults = {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
@@ -48,6 +59,9 @@ export class Settings {
         env: 'production',
         isEnterprise: false,
       },
+      viewersCanEdit: false,
+      editorsCanAdmin: false,
+      disableSanitizeHtml: false,
     };
 
     _.extend(this, defaults, options);
@@ -62,5 +76,5 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
-const config = new Settings(options);
+export const config = new Settings(options);
 export default config;

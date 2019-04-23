@@ -1,31 +1,18 @@
-import _ from 'lodash';
-import './query_filter_ctrl';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class StackdriverAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
   annotation: any;
-  datasource: any;
-
-  defaultDropdownValue = 'Select Metric';
-  defaultServiceValue = 'All Services';
-
-  defaults = {
-    project: {
-      id: 'default',
-      name: 'loading project...',
-    },
-    metricType: this.defaultDropdownValue,
-    service: this.defaultServiceValue,
-    metric: '',
-    filters: [],
-    metricKind: '',
-    valueType: '',
-  };
+  templateSrv: TemplateSrv;
 
   /** @ngInject */
-  constructor() {
+  constructor(templateSrv) {
+    this.templateSrv = templateSrv;
     this.annotation.target = this.annotation.target || {};
-    this.annotation.target.refId = 'annotationQuery';
-    _.defaultsDeep(this.annotation.target, this.defaults);
+    this.onQueryChange = this.onQueryChange.bind(this);
+  }
+
+  onQueryChange(target) {
+    Object.assign(this.annotation.target, target);
   }
 }

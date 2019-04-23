@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build go1.8
+
 package xorm
 
 import (
@@ -17,7 +19,7 @@ import (
 
 const (
 	// Version show the xorm's version
-	Version string = "0.6.4.0910"
+	Version string = "0.7.0.0504"
 )
 
 func regDrvsNDialects() bool {
@@ -31,7 +33,7 @@ func regDrvsNDialects() bool {
 		"mysql":    {"mysql", func() core.Driver { return &mysqlDriver{} }, func() core.Dialect { return &mysql{} }},
 		"mymysql":  {"mysql", func() core.Driver { return &mymysqlDriver{} }, func() core.Dialect { return &mysql{} }},
 		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
-		"pgx":      {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
+		"pgx":      {"postgres", func() core.Driver { return &pqDriverPgx{} }, func() core.Dialect { return &postgres{} }},
 		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
 		"oci8":     {"oracle", func() core.Driver { return &oci8Driver{} }, func() core.Dialect { return &oracle{} }},
 		"goracle":  {"oracle", func() core.Driver { return &goracleDriver{} }, func() core.Dialect { return &oracle{} }},
@@ -90,6 +92,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		TagIdentifier: "xorm",
 		TZLocation:    time.Local,
 		tagHandlers:   defaultTagHandlers,
+		cachers:       make(map[string]core.Cacher),
 	}
 
 	if uri.DbType == core.SQLITE {
@@ -106,6 +109,13 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	runtime.SetFinalizer(engine, close)
 
 	return engine, nil
+}
+
+// NewEngineWithParams new a db manager with params. The params will be passed to dialect.
+func NewEngineWithParams(driverName string, dataSourceName string, params map[string]string) (*Engine, error) {
+	engine, err := NewEngine(driverName, dataSourceName)
+	engine.dialect.SetParams(params)
+	return engine, err
 }
 
 // Clone clone an engine

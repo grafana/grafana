@@ -1,4 +1,5 @@
-import { Plugin, PanelPlugin } from 'app/types';
+import { Plugin, PanelPlugin, PanelDataFormat } from 'app/types';
+import { PluginType } from '@grafana/ui';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
   const plugins = [];
@@ -33,11 +34,13 @@ export const getMockPlugins = (amount: number): Plugin[] => {
   return plugins;
 };
 
-export const getPanelPlugin = (options: { id: string; sort?: number; hideFromList?: boolean }): PanelPlugin => {
+export const getPanelPlugin = (options: Partial<PanelPlugin>): PanelPlugin => {
   return {
     id: options.id,
+    type: PluginType.panel,
     name: options.id,
     sort: options.sort || 1,
+    dataFormats: [PanelDataFormat.TimeSeries],
     info: {
       author: {
         name: options.id + 'name',
@@ -55,6 +58,8 @@ export const getPanelPlugin = (options: { id: string; sort?: number; hideFromLis
     hideFromList: options.hideFromList === true,
     module: '',
     baseUrl: '',
+    reactPlugin: options.reactPlugin,
+    angularPlugin: options.angularPlugin,
   };
 };
 
@@ -78,9 +83,9 @@ export const getMockPlugin = () => {
     },
     latestVersion: '1',
     name: 'pretty cool plugin 1',
+    baseUrl: 'path/to/plugin',
     pinned: false,
-    state: '',
-    type: '',
-    module: {},
-  };
+    type: PluginType.panel,
+    module: 'path/to/module',
+  } as Plugin;
 };

@@ -6,8 +6,8 @@
 // -------------------------
 
 .alert {
-  padding: 1.25rem 2rem 1.25rem 1.5rem;
-  margin-bottom: $panel-margin / 2;
+  padding: 15px 20px;
+  margin-bottom: $space-xs;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
   background: $alert-error-bg;
   position: relative;
@@ -16,6 +16,7 @@
   border-radius: $border-radius;
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 // Alternate styles
@@ -48,31 +49,30 @@
 }
 
 .alert-close {
-  padding: 0 0 0 1rem;
+  padding: 0 0 0 $space-md;
   border: none;
   background: none;
   display: flex;
   align-items: center;
   .fa {
     align-self: flex-end;
-    font-size: 1.5rem;
+    font-size: 21px;
     color: rgba(255, 255, 255, 0.75);
   }
 }
 
 .alert-title {
   font-weight: $font-weight-semi-bold;
-  padding-bottom: 2px;
 }
 
 .alert-icon {
-  padding: 0 1rem 0 0;
+  padding: 0 $space-md 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
+  width: 35px;
   .fa {
-    font-size: 1.5rem;
+    font-size: 21px;
   }
 }
 

@@ -7,7 +7,7 @@ exports[`Render should render component 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />
@@ -480,7 +480,7 @@ exports[`Render should render component with disclaimer 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />
@@ -962,7 +962,7 @@ exports[`Render should show query return no time series 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />

@@ -24,7 +24,7 @@ export class GeneralTabCtrl {
       const panelPropsString = panelPropsToTrack
         .map(prop => prop + '=' + (panel[prop] && panel[prop].toString ? panel[prop].toString() : panel[prop]))
         .join();
-      const panelLinks = panel.links;
+      const panelLinks = panel.links || [];
       const panelLinksString = panelLinks.map(obj2string).join();
       return panelPropsString + panelLinksString;
     };

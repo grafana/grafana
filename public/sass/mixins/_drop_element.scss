@@ -9,13 +9,13 @@
       font-family: inherit;
       background: $theme-bg;
       color: $theme-color;
-      padding: 0.65rem;
+      padding: $space-sm;
       word-wrap: break-word;
-      max-width: 20rem;
+      max-width: 280px;
       border: 1px solid $border-color;
 
       &:before {
-        content: "";
+        content: '';
         display: block;
         position: absolute;
         width: 0;
@@ -29,7 +29,7 @@
 
     &.drop-wide {
       .drop-content {
-        max-width: 40rem;
+        max-width: 560px;
       }
     }
 
@@ -41,7 +41,7 @@
       &:before {
         top: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-top-color: $border-color;
       }
     }
@@ -52,7 +52,7 @@
       &:before {
         bottom: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-bottom-color: $border-color;
       }
     }
@@ -63,7 +63,7 @@
       &:before {
         left: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-left-color: $border-color;
       }
     }
@@ -74,22 +74,21 @@
       &:before {
         right: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-right-color: $border-color;
       }
     }
 
     // Target middle/center, element corner
     &.drop-element-attached-left.drop-target-attached-center .drop-content {
-      left: - $popover-arrow-size * 2;
+      left: -$popover-arrow-size * 2;
     }
 
     &.drop-element-attached-right.drop-target-attached-center .drop-content {
       left: $popover-arrow-size * 2;
     }
 
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
@@ -99,8 +98,7 @@
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
@@ -110,8 +108,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
@@ -121,8 +118,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
@@ -133,8 +129,7 @@
     }
 
     // Top and bottom corners
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
@@ -144,8 +139,7 @@
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
       margin-top: $popover-arrow-size;
 
       &:before {
@@ -155,8 +149,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
@@ -166,8 +159,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
       margin-bottom: $popover-arrow-size;
 
       &:before {
@@ -178,8 +170,7 @@
     }
 
     // Side corners
-    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
       margin-right: $popover-arrow-size;
 
       &:before {
@@ -189,8 +180,7 @@
       }
     }
 
-    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right
-      .drop-content {
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
       margin-left: $popover-arrow-size;
 
       &:before {
@@ -200,8 +190,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
       margin-right: $popover-arrow-size;
 
       &:before {
@@ -211,8 +200,7 @@
       }
     }
 
-    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right
-      .drop-content {
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
       margin-left: $popover-arrow-size;
 
       &:before {
@@ -224,7 +212,7 @@
   }
 }
 
-@mixin drop-animation-scale($themePrefix: "drop", $themeName: "default", $attachmentOffset: 0, $easing: "linear") {
+@mixin drop-animation-scale($themePrefix: 'drop', $themeName: 'default', $attachmentOffset: 0, $easing: 'linear') {
   .#{$themePrefix}-element.#{$themePrefix}-#{$themeName} {
     transform: translateZ(0);
     transition: opacity 100ms;
@@ -247,20 +235,16 @@
       }
     }
     // Centers and middles
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-center
-      .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
       transform-origin: 50% calc(100% + #{$attachmentOffset});
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-center
-      .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
       transform-origin: 50% (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-right.#{$themePrefix}-element-attached-middle
-      .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-right.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 50%;
     }
-    &.#{$themePrefix}-element-attached-left.#{$themePrefix}-element-attached-middle
-      .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-left.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
       transform-origin: -($attachmentOffset 50%);
     }
     // Top and bottom corners

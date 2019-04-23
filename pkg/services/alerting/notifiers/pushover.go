@@ -1,8 +1,11 @@
 package notifiers
 
 import (
+	"bytes"
 	"fmt"
-	"net/url"
+	"io"
+	"mime/multipart"
+	"os"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -14,6 +17,31 @@ import (
 const PUSHOVER_ENDPOINT = "https://api.pushover.net/1/messages.json"
 
 func init() {
+	sounds := ` 
+          'default',
+          'pushover',
+          'bike',
+          'bugle',
+          'cashregister',
+          'classical',
+          'cosmic',
+          'falling',
+          'gamelan',
+          'incoming',
+          'intermission',
+          'magic',
+          'mechanical',
+          'pianobar',
+          'siren',
+          'spacealarm',
+          'tugboat',
+          'alien',
+          'climb',
+          'persistent',
+          'echo',
+          'updown',
+          'none'`
+
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "pushover",
 		Name:        "Pushover",
@@ -52,32 +80,16 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="maximum 86400 seconds" ng-model="ctrl.model.settings.expire" ng-init="ctrl.model.settings.expire=ctrl.model.settings.expire||'3600'"></input>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label width-10">Sound</span>
+        <span class="gf-form-label width-10">Alerting sound</span>
         <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.sound" ng-options="s for s in [
-          'default',
-          'pushover',
-          'bike',
-          'bugle',
-          'cashregister',
-          'classical',
-          'cosmic',
-          'falling',
-          'gamelan',
-          'incoming',
-          'intermission',
-          'magic',
-          'mechanical',
-          'pianobar',
-          'siren',
-          'spacealarm',
-          'tugboat',
-          'alien',
-          'climb',
-          'persistent',
-          'echo',
-          'updown',
-          'none'
+          ` + sounds + `
         ]" ng-init="ctrl.model.settings.sound=ctrl.model.settings.sound||'default'"></select>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">OK sound</span>
+        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.okSound" ng-options="s for s in [
+         ` + sounds + `
+        ]" ng-init="ctrl.model.settings.okSound=ctrl.model.settings.okSound||'default'"></select>
       </div>
     `,
 	})
@@ -90,7 +102,9 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	priority, _ := strconv.Atoi(model.Settings.Get("priority").MustString())
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
 	expire, _ := strconv.Atoi(model.Settings.Get("expire").MustString())
-	sound := model.Settings.Get("sound").MustString()
+	alertingSound := model.Settings.Get("sound").MustString()
+	okSound := model.Settings.Get("okSound").MustString()
+	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if userKey == "" {
 		return nil, alerting.ValidationError{Reason: "User key not given"}
@@ -99,28 +113,32 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "API token not given"}
 	}
 	return &PushoverNotifier{
-		NotifierBase: NewNotifierBase(model),
-		UserKey:      userKey,
-		ApiToken:     apiToken,
-		Priority:     priority,
-		Retry:        retry,
-		Expire:       expire,
-		Device:       device,
-		Sound:        sound,
-		log:          log.New("alerting.notifier.pushover"),
+		NotifierBase:  NewNotifierBase(model),
+		UserKey:       userKey,
+		ApiToken:      apiToken,
+		Priority:      priority,
+		Retry:         retry,
+		Expire:        expire,
+		Device:        device,
+		AlertingSound: alertingSound,
+		OkSound:       okSound,
+		Upload:        uploadImage,
+		log:           log.New("alerting.notifier.pushover"),
 	}, nil
 }
 
 type PushoverNotifier struct {
 	NotifierBase
-	UserKey  string
-	ApiToken string
-	Priority int
-	Retry    int
-	Expire   int
-	Device   string
-	Sound    string
-	log      log.Logger
+	UserKey       string
+	ApiToken      string
+	Priority      int
+	Retry         int
+	Expire        int
+	Device        string
+	AlertingSound string
+	OkSound       string
+	Upload        bool
+	log           log.Logger
 }
 
 func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -140,38 +158,22 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Error != nil {
 		message += fmt.Sprintf("\n<b>Error message:</b> %s", evalContext.Error.Error())
 	}
-	if evalContext.ImagePublicUrl != "" {
-		message += fmt.Sprintf("\n<a href=\"%s\">Show graph image</a>", evalContext.ImagePublicUrl)
-	}
+
 	if message == "" {
 		message = "Notification message missing (Set a notification message to replace this text.)"
 	}
 
-	q := url.Values{}
-	q.Add("user", this.UserKey)
-	q.Add("token", this.ApiToken)
-	q.Add("priority", strconv.Itoa(this.Priority))
-	if this.Priority == 2 {
-		q.Add("retry", strconv.Itoa(this.Retry))
-		q.Add("expire", strconv.Itoa(this.Expire))
+	headers, uploadBody, err := this.genPushoverBody(evalContext, message, ruleUrl)
+	if err != nil {
+		this.log.Error("Failed to generate body for pushover", "error", err)
+		return err
 	}
-	if this.Device != "" {
-		q.Add("device", this.Device)
-	}
-	if this.Sound != "default" {
-		q.Add("sound", this.Sound)
-	}
-	q.Add("title", evalContext.GetNotificationTitle())
-	q.Add("url", ruleUrl)
-	q.Add("url_title", "Show dashboard with alert")
-	q.Add("message", message)
-	q.Add("html", "1")
 
 	cmd := &m.SendWebhookSync{
 		Url:        PUSHOVER_ENDPOINT,
 		HttpMethod: "POST",
-		HttpHeader: map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-		Body:       q.Encode(),
+		HttpHeader: headers,
+		Body:       uploadBody.String(),
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -180,4 +182,114 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	return nil
+}
+
+func (this *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, message string, ruleUrl string) (map[string]string, bytes.Buffer, error) {
+	var b bytes.Buffer
+	var err error
+	w := multipart.NewWriter(&b)
+
+	// Add image only if requested and available
+	if this.Upload && evalContext.ImageOnDiskPath != "" {
+		f, err := os.Open(evalContext.ImageOnDiskPath)
+		if err != nil {
+			return nil, b, err
+		}
+		defer f.Close()
+
+		fw, err := w.CreateFormFile("attachment", evalContext.ImageOnDiskPath)
+		if err != nil {
+			return nil, b, err
+		}
+
+		_, err = io.Copy(fw, f)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add the user token
+	err = w.WriteField("user", this.UserKey)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add the api token
+	err = w.WriteField("token", this.ApiToken)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add priority
+	err = w.WriteField("priority", strconv.Itoa(this.Priority))
+	if err != nil {
+		return nil, b, err
+	}
+
+	if this.Priority == 2 {
+		err = w.WriteField("retry", strconv.Itoa(this.Retry))
+		if err != nil {
+			return nil, b, err
+		}
+
+		err = w.WriteField("expire", strconv.Itoa(this.Expire))
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add device
+	if this.Device != "" {
+		err = w.WriteField("device", this.Device)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add sound
+	sound := this.AlertingSound
+	if evalContext.Rule.State == m.AlertStateOK {
+		sound = this.OkSound
+	}
+	if sound != "default" {
+		err = w.WriteField("sound", sound)
+		if err != nil {
+			return nil, b, err
+		}
+	}
+
+	// Add title
+	err = w.WriteField("title", evalContext.GetNotificationTitle())
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add URL
+	err = w.WriteField("url", ruleUrl)
+	if err != nil {
+		return nil, b, err
+	}
+	// Add URL title
+	err = w.WriteField("url_title", "Show dashboard with alert")
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Add message
+	err = w.WriteField("message", message)
+	if err != nil {
+		return nil, b, err
+	}
+
+	// Mark as html message
+	err = w.WriteField("html", "1")
+	if err != nil {
+		return nil, b, err
+	}
+
+	w.Close()
+	headers := map[string]string{
+		"Content-Type": w.FormDataContentType(),
+	}
+	return headers, b, nil
 }

@@ -7,6 +7,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
 
 module.exports = merge(common, {
   entry: {
@@ -55,7 +56,7 @@ module.exports = merge(common, {
               plugins: [
                 [require('@rtsao/plugin-proposal-class-properties'), { loose: true }],
                 'angularjs-annotate',
-                'syntax-dynamic-import', // needed for `() => import()` in routes.ts
+                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
                 'react-hot-loader/babel',
               ],
               presets: [
@@ -84,7 +85,9 @@ module.exports = merge(common, {
               config: { path: __dirname + '/postcss.config.js' },
             },
           },
-          'sass-loader', // compiles Sass to CSS
+          {
+            loader: 'sass-loader'
+          }
         ],
       },
       {
@@ -95,7 +98,7 @@ module.exports = merge(common, {
   },
 
   plugins: [
-    new CleanWebpackPlugin('../public/build', { allowExternal: true }),
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
@@ -111,5 +114,6 @@ module.exports = merge(common, {
         NODE_ENV: JSON.stringify('development'),
       },
     }),
+    new IgnoreNotFoundExportPlugin(),
   ],
 });

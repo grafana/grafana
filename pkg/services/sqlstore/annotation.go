@@ -258,11 +258,15 @@ func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 			queryParams = []interface{}{params.DashboardId, params.PanelId, params.OrgId}
 		}
 
-		if _, err := sess.Exec(annoTagSql, queryParams...); err != nil {
+		sqlOrArgs := append([]interface{}{annoTagSql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 
-		if _, err := sess.Exec(sql, queryParams...); err != nil {
+		sqlOrArgs = append([]interface{}{sql}, queryParams...)
+
+		if _, err := sess.Exec(sqlOrArgs...); err != nil {
 			return err
 		}
 

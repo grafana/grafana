@@ -182,7 +182,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
   }
 
-  removeTaggedEntry(altSegments) {
+  removeTaggedEntry(altSegments: any[]) {
     altSegments = _.remove(altSegments, s => s.value === '_tagged');
   }
 
@@ -269,6 +269,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   removeFunction(func) {
     this.queryModel.removeFunction(func);
+    this.targetChanged();
+  }
+
+  moveFunction(func, offset) {
+    this.queryModel.moveFunction(func, offset);
     this.targetChanged();
   }
 
@@ -390,6 +395,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   unpause() {
     this.paused = false;
     this.panelCtrl.refresh();
+  }
+
+  getCollapsedText() {
+    return this.target.target;
   }
 }
 

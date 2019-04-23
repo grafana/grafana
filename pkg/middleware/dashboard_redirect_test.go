@@ -20,14 +20,14 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		fakeDash.Id = 1
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
-		fakeDash.Uid = util.GenerateShortUid()
+		fakeDash.Uid = util.GenerateShortUID()
 
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})
 
-		middlewareScenario("GET dashboard by legacy url", func(sc *scenarioContext) {
+		middlewareScenario(t, "GET dashboard by legacy url", func(sc *scenarioContext) {
 			sc.m.Get("/dashboard/db/:slug", redirectFromLegacyDashboardUrl, sc.defaultHandler)
 
 			sc.fakeReqWithParams("GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
@@ -40,7 +40,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("GET dashboard solo by legacy url", func(sc *scenarioContext) {
+		middlewareScenario(t, "GET dashboard solo by legacy url", func(sc *scenarioContext) {
 			sc.m.Get("/dashboard-solo/db/:slug", redirectFromLegacyDashboardSoloUrl, sc.defaultHandler)
 
 			sc.fakeReqWithParams("GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec()

@@ -30,7 +30,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		req.URL.Host = url.Host
 		req.Host = url.Host
 
-		req.URL.Path = util.JoinUrlFragments(url.Path+"/api", proxyPath)
+		req.URL.Path = util.JoinURLFragments(url.Path+"/api", proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")

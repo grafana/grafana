@@ -5,13 +5,13 @@ export class FilterSegments {
   filterSegments: any[];
   removeSegment: any;
 
-  constructor(private uiSegmentSrv, private target, private getFilterKeysFunc, private getFilterValuesFunc) {}
+  constructor(private uiSegmentSrv, private filters, private getFilterKeysFunc, private getFilterValuesFunc) {}
 
   buildSegmentModel() {
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: DefaultRemoveFilterValue });
 
     this.filterSegments = [];
-    this.target.filters.forEach((f, index) => {
+    this.filters.forEach((f, index) => {
       switch (index % 4) {
         case 0:
           this.filterSegments.push(this.uiSegmentSrv.newKey(f));

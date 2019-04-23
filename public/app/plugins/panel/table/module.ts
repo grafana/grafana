@@ -1,10 +1,13 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import config from 'app/core/config';
 import { transformDataToTable } from './transformers';
 import { tablePanelEditor } from './editor';
 import { columnOptionsTab } from './column_options';
 import { TableRenderer } from './renderer';
+import { isTableData } from '@grafana/ui';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -44,7 +47,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, private variableSrv) {
+  constructor(
+    $scope: any,
+    $injector: any,
+    templateSrv: TemplateSrv,
+    private annotationsSrv: any,
+    private $sanitize: any,
+    private variableSrv: any
+  ) {
     super($scope, $injector);
 
     this.pageIndex = 0;
@@ -70,15 +80,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
   }
 
-  onInitPanelActions(actions) {
+  onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: any) {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
-      this.setTimeQueryStart();
       return this.annotationsSrv
         .getAnnotations({
           dashboard: this.dashboard,
@@ -93,18 +102,18 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     return super.issueQueries(datasource);
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.dataRaw = [];
     this.render();
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: any) {
     this.dataRaw = dataList;
     this.pageIndex = 0;
 
     // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
-      if (this.dataRaw[0].type === 'table') {
+      if (isTableData(this.dataRaw[0])) {
         this.panel.transform = 'table';
       } else {
         if (this.dataRaw[0].type === 'docs') {
@@ -129,13 +138,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.table,
       this.dashboard.isTimezoneUtc(),
       this.$sanitize,
-      this.templateSrv
+      this.templateSrv,
+      config.theme.type
     );
 
     return super.render(this.table);
   }
 
-  toggleColumnSort(col, colIndex) {
+  toggleColumnSort(col: any, colIndex: any) {
     // remove sort flag from current column
     if (this.table.columns[this.panel.sort.col]) {
       this.table.columns[this.panel.sort.col].sort = false;
@@ -165,7 +175,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     });
   }
 
-  link(scope, elem, attrs, ctrl: TablePanelCtrl) {
+  link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
     let data;
     const panel = ctrl.panel;
     let pageCount = 0;

@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag, index) {
   let str = '';
@@ -43,7 +44,7 @@ export class InfluxQueryBuilder {
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
-        query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter + '/';
+        query += ' WITH MEASUREMENT =~ /' + kbn.regexEscape(withMeasurementFilter) + '/';
       }
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;

@@ -1,0 +1,196 @@
+<h3 class="page-heading">Azure Monitor API Details</h3>
+
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Azure Cloud</span>
+      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+        <select class="gf-form-input" ng-model="ctrl.current.jsonData.cloudName" ng-options="f.value as f.text for f in [{value: 'azuremonitor', text: 'Azure'}, {value: 'govazuremonitor', text: 'Azure US Government'}, {value: 'germanyazuremonitor', text: 'Azure Germany'}, {value: 'chinaazuremonitor', text: 'Azure China'}]"
+          ng-change="ctrl.refresh()"></select>
+      </div>
+      <info-popover mode="right-normal">
+        <p>Choose an Azure Cloud.</p>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Subscription Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.subscriptionId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Subscriptions -> Choose subscription -> Overview -> Subscription ID.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Tenant Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.tenantId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Azure Active Directory -> Properties -> Directory ID.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Client Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.clientId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Azure Active Directory -> App Registrations -> Choose your app ->
+          Application ID.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.clientSecret">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Client Secret</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.clientSecret" placeholder=""></input>
+      <info-popover mode="right-absolute">
+        <p>To create a new key, log in to Azure Portal, navigate to Azure Active Directory -> App Registrations ->
+          Choose your
+          app -> Keys.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form" ng-if="ctrl.current.secureJsonFields.clientSecret">
+    <span class="gf-form-label width-9">Client Secret</span>
+    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.clientSecret = false">reset</a>
+  </div>
+</div>
+
+<h3 class="page-heading">Azure Log Analytics API Details</h3>
+
+<div class="grafana-info-box ng-scope">
+  The Azure Log Analytics support is marked as being in a preview development state. This means it is in currently in active development and major changes might be made - depending on feedback from users.
+</div>
+
+<div class="gf-form-group">
+  <gf-form-switch class="gf-form" label="Same details as Azure Monitor API" label-class="width-19" switch-class="max-width-6"
+    checked="ctrl.current.jsonData.azureLogAnalyticsSameAs" on-change="ctrl.onSameAsToggle()">
+  </gf-form-switch>
+</div>
+
+<div class="gf-form-group" ng-show="!ctrl.current.jsonData.azureLogAnalyticsSameAs">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Subscription Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsSubscriptionId"
+        placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Subscriptions -> Choose subscription -> Overview -> Subscription ID.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Tenant Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsTenantId"
+        placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Azure Active Directory -> Properties -> Directory ID.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Client Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsClientId"
+        placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
+      <info-popover mode="right-absolute">
+        <p>In the Azure Portal, navigate to Azure Active Directory -> App Registrations -> Choose your app ->
+          Application ID.
+        </p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.logAnalyticsClientSecret">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Client Secret</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.logAnalyticsClientSecret"
+        placeholder="" />
+      <info-popover mode="right-absolute">
+        <p>To create a new key, log in to Azure Portal, navigate to Azure Active Directory -> App Registrations ->
+          Choose your
+          app -> Keys.</p>
+        <a target="_blank" href="https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal">**Click
+          here for detailed instructions on setting up an Azure Active Directory (AD) application.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form" ng-if="ctrl.current.secureJsonFields.logAnalyticsClientSecret">
+    <span class="gf-form-label width-9">Client Secret</span>
+    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.logAnalyticsClientSecret = false">reset</a>
+  </div>
+</div>
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Default Workspace</span>
+      <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+        <select class="gf-form-input" ng-model="ctrl.current.jsonData.logAnalyticsDefaultWorkspace" ng-options="f.value as f.text for f in ctrl.workspaces"
+          ng-disabled="!ctrl.workspaces"></select>
+      </div>
+      <info-popover mode="right-normal">
+        <p>Choose the default/preferred Workspace for Azure Log Analytics queries.</p>
+      </info-popover>
+    </div>
+  </div>
+</div>
+<div class="gf-form-group" ng-if="ctrl.showMinVersionWarning()">
+  <div class=" alert alert-error">
+    <p>
+      The Azure Log Analytics feature requires Grafana 5.2.0 or greater. Download a new version of
+      Grafana
+      <a class="external-link" target="_blank" href="https://grafana.com/get">here</a>.
+    </p>
+  </div>
+</div>
+
+<h3 class="page-heading">Application Insights Details</h3>
+
+<div class="gf-form-group">
+  <div class="gf-form-inline" ng-if="!ctrl.current.secureJsonFields.appInsightsApiKey">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">API Key</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.secureJsonData.appInsightsApiKey"
+        placeholder="" />
+      <info-popover mode="right-absolute">
+        <p>Section 2 of the Quickstart guide shows where to find/create the API Key:</p>
+        <a target="_blank" href="https://dev.applicationinsights.io/quickstart/">**Click here to open the Application
+          Insights Quickstart.**</a>
+      </info-popover>
+    </div>
+  </div>
+  <div class="gf-form" ng-if="ctrl.current.secureJsonFields.appInsightsApiKey">
+    <span class="gf-form-label width-9">API Key</span>
+    <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+    <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.appInsightsApiKey = false">reset</a>
+  </div>
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-9">Application Id</span>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.appInsightsAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></input>
+      <info-popover mode="right-absolute">
+        <p>Section 2 of the Quickstart guide shows where to find the Application ID:</p>
+        <a target="_blank" href="https://dev.applicationinsights.io/quickstart/">**Click here to open the Application
+          Insights Quickstart.**</a>
+      </info-popover>
+    </div>
+  </div>
+</div>

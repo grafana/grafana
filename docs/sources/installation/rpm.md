@@ -50,7 +50,7 @@ $ wget https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
 ### On CentOS / Fedora / Redhat:
 
 ```bash
-$ sudo yum install initscripts fontconfig
+$ sudo yum install initscripts urw-fonts
 $ sudo rpm -Uvh <local rpm package>
 ```
 
@@ -68,6 +68,20 @@ Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 [grafana]
 name=grafana
 baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
+
+There is a separate repository if you want beta releases.
+
+```bash
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm-beta
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1

@@ -9,24 +9,21 @@ import (
 
 func main() {
 	var version string
-	var whatsNewUrl string
-	var releaseNotesUrl string
+	var whatsNewURL string
+	var releaseNotesURL string
 	var dryRun bool
 	var enterprise bool
-	var fromLocal bool
 	var nightly bool
 	var apiKey string
 
 	flag.StringVar(&version, "version", "", "Grafana version (ex: --version v5.2.0-beta1)")
-	flag.StringVar(&whatsNewUrl, "wn", "", "What's new url (ex: --wn http://docs.grafana.org/guides/whats-new-in-v5-2/)")
-	flag.StringVar(&releaseNotesUrl, "rn", "", "Grafana version (ex: --rn https://community.grafana.com/t/release-notes-v5-2-x/7894)")
+	flag.StringVar(&whatsNewURL, "wn", "", "What's new url (ex: --wn http://docs.grafana.org/guides/whats-new-in-v5-2/)")
+	flag.StringVar(&releaseNotesURL, "rn", "", "Grafana version (ex: --rn https://community.grafana.com/t/release-notes-v5-2-x/7894)")
 	flag.StringVar(&apiKey, "apikey", "", "Grafana.com API key (ex: --apikey ABCDEF)")
 	flag.BoolVar(&dryRun, "dry-run", false, "--dry-run")
 	flag.BoolVar(&enterprise, "enterprise", false, "--enterprise")
-	flag.BoolVar(&fromLocal, "from-local", false, "--from-local (builds will be tagged as nightly)")
+	flag.BoolVar(&nightly, "nightly", false, "--nightly (default: false)")
 	flag.Parse()
-
-	nightly = fromLocal
 
 	if len(os.Args) == 1 {
 		fmt.Println("Usage: go run publisher.go main.go --version <v> --wn <what's new url> --rn <release notes url> --apikey <api key> --dry-run false --enterprise false --nightly false")
@@ -37,7 +34,7 @@ func main() {
 	if dryRun {
 		log.Println("Dry-run has been enabled.")
 	}
-	var baseUrl string
+	var baseURL string
 	var builder releaseBuilder
 	var product string
 
@@ -46,7 +43,7 @@ func main() {
 
 	if enterprise {
 		product = "grafana-enterprise"
-		baseUrl = createBaseUrl(archiveProviderRoot, "enterprise", product, nightly)
+		baseURL = createBaseURL(archiveProviderRoot, "enterprise", product, nightly)
 		var err error
 		buildArtifacts, err = filterBuildArtifacts([]artifactFilter{
 			{os: "deb", arch: "amd64"},
@@ -61,37 +58,29 @@ func main() {
 
 	} else {
 		product = "grafana"
-		baseUrl = createBaseUrl(archiveProviderRoot, "oss", product, nightly)
+		baseURL = createBaseURL(archiveProviderRoot, "oss", product, nightly)
 	}
 
-	if fromLocal {
-		path, _ := os.Getwd()
-		builder = releaseLocalSources{
-			path:                   path,
-			artifactConfigurations: buildArtifacts,
-		}
-	} else {
-		builder = releaseFromExternalContent{
-			getter:                 getHttpContents{},
-			rawVersion:             version,
-			artifactConfigurations: buildArtifacts,
-		}
+	builder = releaseFromExternalContent{
+		getter:                 getHTTPContents{},
+		rawVersion:             version,
+		artifactConfigurations: buildArtifacts,
 	}
 
 	p := publisher{
 		apiKey:         apiKey,
-		apiUri:         "https://grafana.com/api",
+		apiURI:         "https://grafana.com/api",
 		product:        product,
 		dryRun:         dryRun,
 		enterprise:     enterprise,
-		baseArchiveUrl: baseUrl,
+		baseArchiveURL: baseURL,
 		builder:        builder,
 	}
-	if err := p.doRelease(whatsNewUrl, releaseNotesUrl, nightly); err != nil {
+	if err := p.doRelease(whatsNewURL, releaseNotesURL, nightly); err != nil {
 		log.Fatalf("error: %v", err)
 	}
 }
-func createBaseUrl(root string, bucketName string, product string, nightly bool) string {
+func createBaseURL(root string, bucketName string, product string, nightly bool) string {
 	var subPath string
 	if nightly {
 		subPath = "master"

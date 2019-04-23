@@ -33,7 +33,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: (scope, elem) => {
+    link: (scope: any, elem) => {
       const panelContainer = elem.find('.panel-container');
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
@@ -67,7 +67,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass('panel-transparent', true);
+        panelContainer.addClass('panel-transparent');
       }
 
       // update scrollbar after mounting
@@ -101,7 +101,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       ctrl.events.on('panel-size-changed', () => {
-        ctrl.calculatePanelHeight();
+        ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
@@ -112,19 +112,21 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style
-          ctrl.calculatePanelHeight();
+          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
           // then wait another cycle (this might not be needed)
           $timeout(() => {
             ctrl.render();
             resizeScrollableContent();
           });
-        });
+        }, 10);
       });
 
-      // set initial height
-      ctrl.calculatePanelHeight();
-
       ctrl.events.on('render', () => {
+        // set initial height
+        if (!ctrl.height) {
+          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
+        }
+
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
@@ -191,11 +193,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
-
-      cornerInfoElem.on('click', () => {
-        infoDrop.close();
-        scope.$apply(ctrl.openInspector.bind(ctrl));
-      });
 
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);

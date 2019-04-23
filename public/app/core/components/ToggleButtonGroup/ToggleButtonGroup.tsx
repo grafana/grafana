@@ -1,5 +1,5 @@
-import React, { SFC, ReactNode, PureComponent } from 'react';
-import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import React, { FC, ReactNode, PureComponent } from 'react';
+import { Tooltip } from '@grafana/ui';
 
 interface ToggleButtonGroupProps {
   label?: string;
@@ -29,7 +29,7 @@ interface ToggleButtonProps {
   tooltip?: string;
 }
 
-export const ToggleButton: SFC<ToggleButtonProps> = ({
+export const ToggleButton: FC<ToggleButtonProps> = ({
   children,
   selected,
   className = '',
@@ -37,7 +37,7 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({
   tooltip,
   onChange,
 }) => {
-  const handleChange = event => {
+  const onClick = event => {
     event.stopPropagation();
     if (onChange) {
       onChange(value);
@@ -46,7 +46,7 @@ export const ToggleButton: SFC<ToggleButtonProps> = ({
 
   const btnClassName = `btn ${className} ${selected ? 'active' : ''}`;
   const button = (
-    <button className={btnClassName} onClick={handleChange}>
+    <button className={btnClassName} onClick={onClick}>
       <span>{children}</span>
     </button>
   );

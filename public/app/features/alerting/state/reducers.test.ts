@@ -80,7 +80,7 @@ describe('Alert rules', () => {
 
   it('should set alert rules', () => {
     const action: Action = {
-      type: ActionTypes.LoadAlertRules,
+      type: ActionTypes.LoadedAlertRules,
       payload: payload,
     };
 

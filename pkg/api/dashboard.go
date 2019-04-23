@@ -13,12 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -154,7 +153,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 	return query.Result, nil
 }
 
-func DeleteDashboard(c *m.ReqContext) Response {
+func DeleteDashboardBySlug(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -165,29 +164,15 @@ func DeleteDashboard(c *m.ReqContext) Response {
 		return JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to delete dashboard", err)
-	}
-
-	return JSON(200, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
-	})
+	return deleteDashboard(c)
 }
 
 func DeleteDashboardByUID(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
+	return deleteDashboard(c)
+}
+
+func deleteDashboard(c *m.ReqContext) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -197,8 +182,10 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	if err == m.ErrDashboardCannotDeleteProvisionedDashboard {
+		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
+	} else if err != nil {
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
@@ -208,14 +195,15 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 	})
 }
 
-func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
+func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 
 	dash := cmd.GetDashboardModel()
 
-	if dash.Id == 0 && dash.Uid == "" {
-		limitReached, err := quota.QuotaReached(c, "dashboard")
+	newDashboard := dash.Id == 0 && dash.Uid == ""
+	if newDashboard {
+		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
 			return Error(500, "failed to get quota", err)
 		}
@@ -275,6 +263,15 @@ func PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand) Response {
 			return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
 		return Error(500, "Failed to save dashboard", err)
+	}
+
+	if hs.Cfg.EditorsCanAdmin && newDashboard {
+		inFolder := cmd.FolderId > 0
+		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		if err != nil {
+			hs.log.Error("Could not make user admin", "dashboard", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
+			return Error(500, "Failed to make user admin of dashboard", err)
+		}
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
@@ -410,8 +407,15 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 	}
 
 	dashVersionMeta := &m.DashboardVersionMeta{
-		DashboardVersion: *query.Result,
-		CreatedBy:        creator,
+		Id:            query.Result.Id,
+		DashboardId:   query.Result.DashboardId,
+		Data:          query.Result.Data,
+		ParentVersion: query.Result.ParentVersion,
+		RestoredFrom:  query.Result.RestoredFrom,
+		Version:       query.Result.Version,
+		Created:       query.Result.Created,
+		Message:       query.Result.Message,
+		CreatedBy:     creator,
 	}
 
 	return JSON(200, dashVersionMeta)
@@ -463,7 +467,7 @@ func CalculateDashboardDiff(c *m.ReqContext, apiOptions dtos.CalculateDiffOption
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
-func RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) Response {
+func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
@@ -489,8 +493,9 @@ func RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.RestoreDashboardVersio
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.Uid)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	saveCmd.FolderId = dash.FolderId
 
-	return PostDashboard(c, saveCmd)
+	return hs.PostDashboard(c, saveCmd)
 }
 
 func GetDashboardTags(c *m.ReqContext) {

@@ -2,8 +2,8 @@
 import store from 'app/core/store';
 
 // Models
-import { DashboardModel } from 'app/features/dashboard/dashboard_model';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { TimeRange } from '@grafana/ui';
 
 // Utils
@@ -69,6 +69,7 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
     updateHandler: (newPanel: PanelModel, oldPanel: PanelModel) => {
       replacePanel(dashboard, newPanel, oldPanel);
     },
+    canUpdate: dashboard.meta.canEdit,
     enableCopy: true,
   };
 
@@ -80,7 +81,7 @@ export const editPanelJson = (dashboard: DashboardModel, panel: PanelModel) => {
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   appEvents.emit('show-modal', {
-    src: 'public/app/features/dashboard/partials/shareModal.html',
+    src: 'public/app/features/dashboard/components/ShareModal/template.html',
     model: {
       dashboard: dashboard,
       panel: panel,
@@ -142,12 +143,15 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
 
     const timeShift = '-' + timeShiftInterpolated;
     newTimeData.timeInfo += ' timeshift ' + timeShift;
+    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false);
+    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true);
+
     newTimeData.timeRange = {
-      from: dateMath.parseDateMath(timeShift, timeRange.from, false),
-      to: dateMath.parseDateMath(timeShift, timeRange.to, true),
+      from,
+      to,
       raw: {
-        from: timeRange.from,
-        to: timeRange.to,
+        from,
+        to,
       },
     };
   }

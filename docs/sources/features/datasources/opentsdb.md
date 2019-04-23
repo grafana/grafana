@@ -7,7 +7,7 @@ aliases = ["/datasources/opentsdb",	"docs/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
-weight = 5
+weight = 19
 +++
 
 # Using OpenTSDB in Grafana

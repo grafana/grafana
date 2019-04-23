@@ -2,8 +2,8 @@
   <div class="alert alert-error m-b-2" ng-show="ctrl.error">
     <i class="fa fa-warning"></i> {{ctrl.error}}
   </div>
-  <div class="panel-option-section">
-    <div class="panel-option-section__body">
+  <div class="panel-options-group">
+    <div class="panel-options-group__body">
       <div class="gf-form-group">
         <h4 class="section-heading">Rule</h4>
         <div class="gf-form-inline">
@@ -17,7 +17,7 @@
           </div>
           <div class="gf-form max-width-11">
             <label class="gf-form-label width-5">For</label>
-            <input type="text" class="gf-form-input max-width-6" ng-model="ctrl.alert.for"
+            <input type="text" class="gf-form-input max-width-6 gf-form-input--has-help-icon" ng-model="ctrl.alert.for"
                   spellcheck='false' placeholder="5m">
             <info-popover mode="right-absolute">
               If an alert rule has a configured For and the query violates the configured
@@ -121,27 +121,13 @@
             </div>
           </div>
         </div>
-
-        <div class="gf-form-button-row">
-          <button class="btn btn-inverse" ng-click="ctrl.test()">
-            Test Rule
-          </button>
-        </div>
-      </div>
-
-      <div class="gf-form-group" ng-if="ctrl.testing">
-        Evaluating rule <i class="fa fa-spinner fa-spin"></i>
-      </div>
-
-      <div class="gf-form-group" ng-if="ctrl.testResult">
-        <json-tree root-name="result" object="ctrl.testResult" start-expanded="true"></json-tree>
       </div>
     </div>
   </div>
 
-  <div class="panel-option-section">
-    <div class="panel-option-section__header">Notifications</div>
-    <div class="panel-option-section__body">
+  <div class="panel-options-group">
+    <div class="panel-options-group__header">Notifications</div>
+    <div class="panel-options-group__body">
       <div class="gf-form-inline">
         <div class="gf-form">
           <span class="gf-form-label width-8">Send to</span>
@@ -149,7 +135,7 @@
         <div class="gf-form" ng-repeat="nc in ctrl.alertNotifications">
           <span class="gf-form-label" ng-style="{'background-color': nc.bgColor }">
             <i class="{{nc.iconClass}}"></i>&nbsp;{{nc.name}}&nbsp;
-            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification($index)" ng-if="nc.isDefault === false"></i>
+            <i class="fa fa-remove pointer muted" ng-click="ctrl.removeNotification(nc)" ng-if="nc.isDefault === false"></i>
           </span>
         </div>
         <div class="gf-form">

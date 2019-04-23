@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
+// Pages
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -10,12 +11,21 @@ import ApiKeys from 'app/features/api-keys/ApiKeysPage';
 import PluginListPage from 'app/features/plugins/PluginListPage';
 import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
 import FolderPermissions from 'app/features/folders/FolderPermissions';
+import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
+import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
+import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettings from '../features/datasources/settings/DataSourceSettings';
+import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
+import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
+import DashboardPage from '../features/dashboard/containers/DashboardPage';
+import config from 'app/core/config';
+
+// Types
+import { DashboardRouteInfo } from 'app/types';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -23,50 +33,71 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
 
   $routeProvider
     .when('/', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Home,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/d/:uid', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      reloadOnSearch: false,
+      routeInfo: DashboardRouteInfo.Normal,
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/dashboard/:type/:slug', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'LoadDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
-    })
-    .when('/d-solo/:uid/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
+      routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
-      pageClass: 'page-dashboard',
-    })
-    .when('/dashboard-solo/:type/:slug', {
-      templateUrl: 'public/app/features/panel/partials/soloPanel.html',
-      controller: 'SoloPanelCtrl',
-      reloadOnSearch: false,
-      pageClass: 'page-dashboard',
+      resolve: {
+        component: () => DashboardPage,
+      },
     })
     .when('/dashboard/new', {
-      templateUrl: 'public/app/partials/dashboard.html',
-      controller: 'NewDashboardCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
       pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.New,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => DashboardPage,
+      },
+    })
+    .when('/d-solo/:uid/:slug', {
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => SoloPanelPage,
+      },
+    })
+    .when('/dashboard-solo/:type/:slug', {
+      template: '<react-container />',
+      pageClass: 'dashboard-solo',
+      routeInfo: DashboardRouteInfo.Normal,
+      reloadOnSearch: false,
+      resolve: {
+        component: () => SoloPanelPage,
+      },
     })
     .when('/dashboard/import', {
-      templateUrl: 'public/app/features/dashboard/partials/dashboard_import.html',
-      controller: 'DashboardImportCtrl',
+      templateUrl: 'public/app/features/manage-dashboards/partials/dashboard_import.html',
+      controller: DashboardImportCtrl,
       controllerAs: 'ctrl',
     })
     .when('/datasources', {
@@ -78,7 +109,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourceSettings,
+        component: () => DataSourceSettingsPage,
       },
     })
     .when('/datasources/edit/:id/dashboards', {
@@ -99,8 +130,8 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/new', {
-      templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
-      controller: 'CreateFolderCtrl',
+      templateUrl: 'public/app/features/folders/partials/create_folder.html',
+      controller: CreateFolderCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid/:slug/permissions', {
@@ -116,20 +147,20 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/dashboards/f/:uid/:slug', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/dashboards/f/:uid', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
-      controller: 'FolderDashboardsCtrl',
+      templateUrl: 'public/app/features/folders/partials/folder_dashboards.html',
+      controller: FolderDashboardsCtrl,
       controllerAs: 'ctrl',
     })
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
@@ -164,7 +195,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
         component: () => TeamList,
       },
     })
@@ -176,7 +207,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
         component: () => TeamPages,
       },
     })

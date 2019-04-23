@@ -1,8 +1,14 @@
+// Libraries
 import _ from 'lodash';
-import { DataSource, PluginMeta, NavModel } from 'app/types';
+
+// Utils & Services
 import config from 'app/core/config';
 
-export function buildNavModel(ds: DataSource, plugin: PluginMeta, currentPage: string): NavModel {
+// Types
+import { NavModel } from 'app/types';
+import { PluginMeta, DataSourceSettings } from '@grafana/ui/src/types';
+
+export function buildNavModel(ds: DataSourceSettings, plugin: PluginMeta, currentPage: string): NavModel {
   let title = 'New';
   const subTitle = `Type: ${plugin.name}`;
 
@@ -28,7 +34,7 @@ export function buildNavModel(ds: DataSource, plugin: PluginMeta, currentPage: s
     ],
   };
 
-  const hasDashboards = _.find(plugin.includes, { type: 'dashboard' }) !== undefined;
+  const hasDashboards: any = _.find(plugin.includes, { type: 'dashboard' }) !== undefined;
   if (hasDashboards && ds.id) {
     main.children.push({
       active: currentPage === 'datasource-dashboards',

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { getValueFormats } from '@grafana/ui';
 
 export class ColumnOptionsCtrl {
   panel: any;
@@ -16,13 +16,13 @@ export class ColumnOptionsCtrl {
   mappingTypes: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     $scope.editor = this;
 
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.unitFormats = kbn.getUnitFormats();
+    this.unitFormats = getValueFormats();
     this.colorModes = [
       { text: 'Disabled', value: null },
       { text: 'Cell', value: 'cell' },
@@ -61,7 +61,7 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  setUnitFormat(column, subItem) {
+  setUnitFormat(column: any, subItem: any) {
     column.unit = subItem.value;
     this.panelCtrl.render();
   }
@@ -96,11 +96,11 @@ export class ColumnOptionsCtrl {
     this.activeStyleIndex = indexToInsert;
   }
 
-  removeColumnStyle(style) {
+  removeColumnStyle(style: any) {
     this.panel.styles = _.without(this.panel.styles, style);
   }
 
-  invertColorOrder(index) {
+  invertColorOrder(index: number) {
     const ref = this.panel.styles[index].colors;
     const copy = ref[0];
     ref[0] = ref[2];
@@ -108,14 +108,14 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  onColorChange(styleIndex, colorIndex) {
-    return newColor => {
-      this.panel.styles[styleIndex].colors[colorIndex] = newColor;
+  onColorChange(style: any, colorIndex: number) {
+    return (newColor: string) => {
+      style.colors[colorIndex] = newColor;
       this.render();
     };
   }
 
-  addValueMap(style) {
+  addValueMap(style: any) {
     if (!style.valueMaps) {
       style.valueMaps = [];
     }
@@ -123,12 +123,12 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  removeValueMap(style, index) {
+  removeValueMap(style: any, index: number) {
     style.valueMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 
-  addRangeMap(style) {
+  addRangeMap(style: any) {
     if (!style.rangeMaps) {
       style.rangeMaps = [];
     }
@@ -136,14 +136,14 @@ export class ColumnOptionsCtrl {
     this.panelCtrl.render();
   }
 
-  removeRangeMap(style, index) {
+  removeRangeMap(style: any, index: number) {
     style.rangeMaps.splice(index, 1);
     this.panelCtrl.render();
   }
 }
 
 /** @ngInject */
-export function columnOptionsTab($q, uiSegmentSrv) {
+export function columnOptionsTab($q: any, uiSegmentSrv: any) {
   'use strict';
   return {
     restrict: 'E',

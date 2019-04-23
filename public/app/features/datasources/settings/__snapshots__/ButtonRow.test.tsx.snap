@@ -6,11 +6,10 @@ exports[`Render should render component 1`] = `
 >
   <button
     className="btn btn-success"
-    disabled={true}
-    onClick={[Function]}
+    onClick={[MockFunction]}
     type="submit"
   >
-    Save & Test
+    Test
   </button>
   <button
     className="btn btn-danger"
@@ -34,7 +33,7 @@ exports[`Render should render with buttons enabled 1`] = `
   className="gf-form-button-row"
 >
   <button
-    className="btn btn-success"
+    className="btn btn-primary"
     disabled={false}
     onClick={[Function]}
     type="submit"

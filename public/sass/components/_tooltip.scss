@@ -8,8 +8,8 @@
   z-index: $zindex-tooltip;
   display: block;
   visibility: visible;
-  font-size: 11px;
   line-height: 1.4;
+  font-weight: 500;
   @include opacity(0);
 
   &.in {
@@ -40,7 +40,8 @@
 // Wrapper for the tooltip content
 .tooltip-inner {
   max-width: 400px;
-  padding: 8px;
+  padding: 8px 16px;
+  padding: 4px 8px;
   color: $tooltipColor;
   text-align: center;
   text-decoration: none;

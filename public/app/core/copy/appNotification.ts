@@ -1,4 +1,5 @@
 import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 const defaultSuccessNotification: AppNotification = {
   title: '',
@@ -31,12 +32,14 @@ export const createSuccessNotification = (title: string, text?: string): AppNoti
   id: Date.now(),
 });
 
-export const createErrorNotification = (title: string, text?: string): AppNotification => ({
-  ...defaultErrorNotification,
-  title: title,
-  text: text,
-  id: Date.now(),
-});
+export const createErrorNotification = (title: string, text?: any): AppNotification => {
+  return {
+    ...defaultErrorNotification,
+    title: title,
+    text: getMessageFromError(text),
+    id: Date.now(),
+  };
+};
 
 export const createWarningNotification = (title: string, text?: string): AppNotification => ({
   ...defaultWarningNotification,

@@ -102,7 +102,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -162,7 +162,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -273,7 +273,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -331,7 +331,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -400,7 +400,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -470,7 +470,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -529,7 +529,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -596,7 +596,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -650,7 +650,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		role := m.ROLE_EDITOR
 
 		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-			CallDeleteDashboard(sc)
+			CallDeleteDashboardBySlug(sc)
 
 			Convey("Should result in 412 Precondition failed", func() {
 				So(sc.resp.Code, ShouldEqual, 412)
@@ -810,6 +810,137 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given dashboard in folder being restored should restore to folder", t, func() {
+		fakeDash := m.NewDashboard("Child dash")
+		fakeDash.Id = 2
+		fakeDash.FolderId = 1
+		fakeDash.HasAcl = false
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = fakeDash
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}
+			return nil
+		})
+
+		mock := &dashboards.FakeDashboardService{
+			SaveDashboardResult: &m.Dashboard{
+				Id:      2,
+				Uid:     "uid",
+				Title:   "Dash",
+				Slug:    "dash",
+				Version: 1,
+			},
+		}
+
+		cmd := dtos.RestoreDashboardVersionCommand{
+			Version: 1,
+		}
+
+		restoreDashboardVersionScenario("When calling POST on", "/api/dashboards/id/1/restore", "/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
+			CallRestoreDashboardVersion(sc)
+			So(sc.resp.Code, ShouldEqual, 200)
+			dto := mock.SavedDashboards[0]
+			So(dto.Dashboard.FolderId, ShouldEqual, 1)
+			So(dto.Dashboard.Title, ShouldEqual, "Child dash")
+			So(dto.Message, ShouldEqual, "Restored from version 1")
+		})
+	})
+
+	Convey("Given dashboard in general folder being restored should restore to general folder", t, func() {
+		fakeDash := m.NewDashboard("Child dash")
+		fakeDash.Id = 2
+		fakeDash.HasAcl = false
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = fakeDash
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+			query.Result = &m.DashboardVersion{
+				DashboardId: 2,
+				Version:     1,
+				Data:        fakeDash.Data,
+			}
+			return nil
+		})
+
+		mock := &dashboards.FakeDashboardService{
+			SaveDashboardResult: &m.Dashboard{
+				Id:      2,
+				Uid:     "uid",
+				Title:   "Dash",
+				Slug:    "dash",
+				Version: 1,
+			},
+		}
+
+		cmd := dtos.RestoreDashboardVersionCommand{
+			Version: 1,
+		}
+
+		restoreDashboardVersionScenario("When calling POST on", "/api/dashboards/id/1/restore", "/api/dashboards/id/:dashboardId/restore", mock, cmd, func(sc *scenarioContext) {
+			CallRestoreDashboardVersion(sc)
+			So(sc.resp.Code, ShouldEqual, 200)
+			dto := mock.SavedDashboards[0]
+			So(dto.Dashboard.FolderId, ShouldEqual, 0)
+			So(dto.Dashboard.Title, ShouldEqual, "Child dash")
+			So(dto.Message, ShouldEqual, "Restored from version 1")
+		})
+	})
+
+	Convey("Given provisioned dashboard", t, func() {
+
+		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+			query.Result = []*m.Dashboard{{}}
+			return nil
+		})
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = &m.Dashboard{Id: 1}
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = true
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			query.Result = []*m.DashboardAclInfoDTO{
+				{OrgId: TestOrgID, DashboardId: 1, UserId: TestUserID, Permission: m.PERMISSION_EDIT},
+			}
+			return nil
+		})
+
+		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/dash", "/api/dashboards/db/:slug", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			CallDeleteDashboardBySlug(sc)
+
+			Convey("Should result in 400", func() {
+				So(sc.resp.Code, ShouldEqual, 400)
+				result := sc.ToJSON()
+				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
+			})
+		})
+
+		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			CallDeleteDashboardByUID(sc)
+
+			Convey("Should result in 400", func() {
+				So(sc.resp.Code, ShouldEqual, 400)
+				result := sc.ToJSON()
+				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
+			})
+		})
+	})
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
@@ -849,12 +980,12 @@ func CallGetDashboardVersions(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func CallDeleteDashboard(sc *scenarioContext) {
+func CallDeleteDashboardBySlug(sc *scenarioContext) {
 	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
-	sc.handlerFunc = DeleteDashboard
+	sc.handlerFunc = DeleteDashboardBySlug
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 
@@ -871,6 +1002,10 @@ func CallPostDashboard(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
+func CallRestoreDashboardVersion(sc *scenarioContext) {
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+}
+
 func CallPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	CallPostDashboard(sc)
 
@@ -881,12 +1016,17 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Bus: bus.GetBus(),
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(url)
 		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &m.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
-			return PostDashboard(c, cmd)
+			return hs.PostDashboard(c, cmd)
 		})
 
 		origNewDashboardService := dashboards.NewService
@@ -919,6 +1059,40 @@ func postDiffScenario(desc string, url string, routePattern string, cmd dtos.Cal
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func restoreDashboardVersionScenario(desc string, url string, routePattern string, mock *dashboards.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
+			Bus: bus.GetBus(),
+		}
+
+		sc := setupScenarioContext(url)
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+			sc.context = c
+			sc.context.SignedInUser = &m.SignedInUser{
+				OrgId:  TestOrgID,
+				UserId: TestUserID,
+			}
+			sc.context.OrgRole = m.ROLE_ADMIN
+
+			return hs.RestoreDashboardVersion(c, cmd)
+		})
+
+		origNewDashboardService := dashboards.NewService
+		dashboards.MockDashboardService(mock)
+
+		sc.m.Post(routePattern, sc.defaultHandler)
+
+		defer func() {
+			dashboards.NewService = origNewDashboardService
+		}()
 
 		fn(sc)
 	})

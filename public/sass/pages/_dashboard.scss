@@ -17,6 +17,13 @@ div.flot-text {
   height: 100%;
 }
 
+.dashboard-solo {
+  .footer,
+  .sidemenu {
+    display: none;
+  }
+}
+
 .panel-solo {
   position: fixed;
   bottom: 0;
@@ -214,7 +221,7 @@ div.flot-text {
 
   &--info {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa:before {
       content: '\f129';
     }
@@ -222,7 +229,7 @@ div.flot-text {
 
   &--links {
     display: block;
-    @include panel-corner-color(lighten($panel-bg, 4%));
+    @include panel-corner-color(lighten($panel-corner, 4%));
     .fa {
       left: 4px;
     }
@@ -233,7 +240,7 @@ div.flot-text {
 
   &--error {
     display: block;
-    color: $text-color;
+    color: $white;
     @include panel-corner-color($popover-error-bg);
     .fa:before {
       content: '\f12a';
@@ -253,7 +260,6 @@ div.flot-text {
 }
 
 .dashboard-header {
-  font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
   overflow: hidden;
@@ -262,10 +268,22 @@ div.flot-text {
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
+    padding: $space-sm $space-sm $space-xxs $space-sm;
   }
 }
 
-.panel-full-edit {
-  padding-top: $dashboard-padding;
+.dashboard-loading {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .alert {
+    max-width: 600px;
+    min-width: 600px;
+  }
+}
+
+.dashboard-loading__text {
+  font-size: $font-size-lg;
 }

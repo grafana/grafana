@@ -1,9 +1,8 @@
+import angular from 'angular';
+import * as dateMath from 'app/core/utils/datemath';
 import _ from 'lodash';
 import moment from 'moment';
-import angular from 'angular';
 import { ElasticDatasource } from '../datasource';
-
-import * as dateMath from 'app/core/utils/datemath';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv = {
@@ -16,7 +15,13 @@ describe('ElasticDatasource', function(this: any) {
   };
 
   const templateSrv = {
-    replace: jest.fn(text => text),
+    replace: jest.fn(text => {
+      if (text.startsWith('$')) {
+        return `resolvedVariable`;
+      } else {
+        return text;
+      }
+    }),
     getAdhocFilters: jest.fn(() => []),
   };
 
@@ -67,9 +72,9 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header;
+    let requestOptions, parts, header, query, result;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       createDatasource({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
@@ -78,22 +83,42 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
+        return Promise.resolve({
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  '1': {
+                    buckets: [
+                      {
+                        doc_count: 10,
+                        key: 1000,
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        });
       });
 
-      ctx.ds.query({
+      query = {
         range: {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10]),
         },
         targets: [
           {
-            bucketAggs: [],
-            metrics: [{ type: 'raw_document' }],
+            alias: '$varAlias',
+            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+            metrics: [{ type: 'count', id: '1' }],
             query: 'escape\\:test',
           },
         ],
-      });
+      };
+
+      result = await ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -101,6 +126,14 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should translate index pattern to current day', () => {
       expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+    });
+
+    it('should not resolve the variable in the original alias field in the query', () => {
+      expect(query.targets[0].alias).toEqual('$varAlias');
+    });
+
+    it('should resolve the alias variable for the alias/target in the result', () => {
+      expect(result.data[0].target).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', () => {

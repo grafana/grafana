@@ -1,0 +1,28 @@
+.refresh-picker {
+  position: relative;
+  display: none;
+
+  .refresh-picker-buttons {
+    display: flex;
+  }
+
+  .gf-form-input--form-dropdown {
+    position: static;
+  }
+
+  .gf-form-select-box__menu {
+    position: absolute;
+    left: 0;
+    width: 100%;
+  }
+
+  &--refreshing {
+    .select-button-value {
+      color: $orange;
+    }
+  }
+
+  @include media-breakpoint-up(md) {
+    display: block;
+  }
+}

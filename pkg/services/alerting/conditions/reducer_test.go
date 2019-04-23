@@ -143,6 +143,18 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(10))
 		})
 
+		Convey("diff with only nulls", func() {
+			reducer := NewSimpleReducer("diff")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
 		Convey("percent_diff one point", func() {
 			result := testReducer("percent_diff", 40)
 			So(result, ShouldEqual, float64(0))
@@ -156,6 +168,18 @@ func TestSimpleReducer(t *testing.T) {
 		Convey("percent_diff three points", func() {
 			result := testReducer("percent_diff", 30, 40, 40)
 			So(result, ShouldEqual, float64(33.33333333333333))
+		})
+
+		Convey("percent_diff with only nulls", func() {
+			reducer := NewSimpleReducer("percent_diff")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
 		})
 	})
 }

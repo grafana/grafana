@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type proxyTransportCache struct {
@@ -46,21 +48,18 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		return t.Transport, nil
 	}
 
-	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
-	if ds.JsonData != nil {
-		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
-		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
-		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+	tlsConfig, err := ds.GetTLSConfig()
+	if err != nil {
+		return nil, err
 	}
 
+	tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
+
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: tlsSkipVerify,
-			Renegotiation:      tls.RenegotiateFreelyAsClient,
-		},
-		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
+			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
 			DualStack: true,
 		}).Dial,
@@ -68,6 +67,26 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		ExpectContinueTimeout: 1 * time.Second,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
+	}
+
+	ptc.cache[ds.Id] = cachedTransport{
+		Transport: transport,
+		updated:   ds.Updated,
+	}
+
+	return transport, nil
+}
+
+func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
+	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
+	if ds.JsonData != nil {
+		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
+		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
+		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: tlsSkipVerify,
 	}
 
 	if tlsClientAuth || tlsAuthWithCACert {
@@ -78,7 +97,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 			if !ok {
 				return nil, errors.New("Failed to parse TLS CA PEM certificate")
 			}
-			transport.TLSClientConfig.RootCAs = caPool
+			tlsConfig.RootCAs = caPool
 		}
 
 		if tlsClientAuth {
@@ -86,14 +105,9 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 			if err != nil {
 				return nil, err
 			}
-			transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
+			tlsConfig.Certificates = []tls.Certificate{cert}
 		}
 	}
 
-	ptc.cache[ds.Id] = cachedTransport{
-		Transport: transport,
-		updated:   ds.Updated,
-	}
-
-	return transport, nil
+	return tlsConfig, nil
 }

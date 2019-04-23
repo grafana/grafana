@@ -46,3 +46,21 @@ export const getLabelKeys = async (datasource, selectedMetricType) => {
     : [];
   return labelKeys;
 };
+
+export const getAlignmentPickerData = ({ valueType, metricKind, perSeriesAligner }, templateSrv) => {
+  const options = getAlignmentOptionsByMetric(valueType, metricKind).map(option => ({
+    ...option,
+    label: option.text,
+  }));
+  const alignOptions = [
+    {
+      label: 'Alignment options',
+      expanded: true,
+      options,
+    },
+  ];
+  if (!options.some(o => o.value === templateSrv.replace(perSeriesAligner))) {
+    perSeriesAligner = options.length > 0 ? options[0].value : '';
+  }
+  return { alignOptions, perSeriesAligner };
+};

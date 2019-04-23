@@ -24,7 +24,7 @@ type Notifier interface {
 	// ShouldNotify checks this evaluation should send an alert notification
 	ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *models.AlertNotificationState) bool
 
-	GetNotifierId() int64
+	GetNotifierUid() string
 	GetIsDefault() bool
 	GetSendReminder() bool
 	GetDisableResolveMessage() bool

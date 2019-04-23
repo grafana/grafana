@@ -1,7 +1,9 @@
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/core/config', () => {
   return {
-    exploreEnabled: true,
+    bootData: {
+      user: {},
+    },
     panels: {
       test: {
         id: 'test',
@@ -12,49 +14,48 @@ jest.mock('app/core/config', () => {
 });
 
 import q from 'q';
-import { PanelModel } from 'app/features/dashboard/panel_model';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
 
 describe('MetricsPanelCtrl', () => {
-  let ctrl;
-
-  beforeEach(() => {
-    ctrl = setupController();
-  });
-
   describe('when getting additional menu items', () => {
-    let additionalItems;
-
-    describe('and has no datasource set', () => {
-      beforeEach(() => {
-        additionalItems = ctrl.getAdditionalMenuItems();
-      });
-
+    describe('and has no datasource set but user has access to explore', () => {
       it('should not return any items', () => {
-        expect(additionalItems.length).toBe(0);
+        const ctrl = setupController({ hasAccessToExplore: true });
+
+        expect(ctrl.getAdditionalMenuItems().length).toBe(0);
       });
     });
 
-    describe('and has datasource set that supports explore and user has powers', () => {
-      beforeEach(() => {
-        ctrl.contextSrv = { isEditor: true };
-        ctrl.datasource = { meta: { explore: true } };
-        additionalItems = ctrl.getAdditionalMenuItems();
-      });
-
+    describe('and has datasource set that supports explore and user does not have access to explore', () => {
       it('should not return any items', () => {
-        expect(additionalItems.length).toBe(1);
+        const ctrl = setupController({ hasAccessToExplore: false });
+        ctrl.datasource = { meta: { explore: true } } as any;
+
+        expect(ctrl.getAdditionalMenuItems().length).toBe(0);
+      });
+    });
+
+    describe('and has datasource set that supports explore and user has access to explore', () => {
+      it('should return one item', () => {
+        const ctrl = setupController({ hasAccessToExplore: true });
+        ctrl.datasource = { meta: { explore: true } } as any;
+
+        expect(ctrl.getAdditionalMenuItems().length).toBe(1);
       });
     });
   });
 });
 
-function setupController() {
+function setupController({ hasAccessToExplore } = { hasAccessToExplore: false }) {
   const injectorStub = {
     get: type => {
       switch (type) {
         case '$q': {
           return q;
+        }
+        case 'contextSrv': {
+          return { hasAccessToExplore: () => hasAccessToExplore };
         }
         default: {
           return jest.fn();

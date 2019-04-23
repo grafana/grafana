@@ -7,6 +7,13 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: nginx
 
   db:
     image: mysql:5.6
@@ -15,12 +22,23 @@ services:
       MYSQL_DATABASE: grafana
       MYSQL_USER: grafana
       MYSQL_PASSWORD: password
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
     ports:
       - 3306
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
+    ports:
+      - 9104
+    depends_on:
+      db:
+        condition: service_healthy
 
   # db:
   #   image: postgres:9.3
@@ -47,6 +65,7 @@ services:
       - GF_DATABASE_PASSWORD=password
       - GF_DATABASE_TYPE=mysql
       - GF_DATABASE_HOST=db:3306
+      - GF_DATABASE_MAX_OPEN_CONN=300
       - GF_SESSION_PROVIDER=mysql
       - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
       # - GF_DATABASE_TYPE=postgres
@@ -54,12 +73,19 @@ services:
       # - GF_DATABASE_SSL_MODE=disable
       # - GF_SESSION_PROVIDER=postgres
       # - GF_SESSION_PROVIDER_CONFIG=user=grafana password=password host=db port=5432 dbname=grafana sslmode=disable
-      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug
+      - GF_SERVER_ROUTER_LOGGING=true
+      - GF_LOG_CONSOLE_FORMAT=json
+      - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
+      - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
     ports:
       - 3000
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        tag: grafana
 
   prometheus:
     image: prom/prometheus:v2.4.2
@@ -70,9 +96,20 @@ services:
     ports:
       - 9090
 
-  # mysqld-exporter:
-  #   image: prom/mysqld-exporter
-  #   environment:
-  #     - DATA_SOURCE_NAME=grafana:password@(mysql:3306)/
-  #   ports:
-  #     - 9104
+  loki:
+    image: grafana/loki:master
+    environment:
+      - VIRTUAL_HOST=loki.loc
+    ports:
+      - 3100
+    command: -config.file=/etc/loki/local-config.yaml
+
+  fluentd:
+    image: grafana/fluent-plugin-loki:master
+    volumes:
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf
+    links:
+      - loki
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"

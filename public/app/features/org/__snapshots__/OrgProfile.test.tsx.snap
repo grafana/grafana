@@ -23,7 +23,7 @@ exports[`Render should render component 1`] = `
         >
           Organization name
         </span>
-        <input
+        <Input
           className="gf-form-input"
           onChange={[Function]}
           type="text"
@@ -35,7 +35,7 @@ exports[`Render should render component 1`] = `
       className="gf-form-button-row"
     >
       <button
-        className="btn btn-success"
+        className="btn btn-primary"
         type="submit"
       >
         Save

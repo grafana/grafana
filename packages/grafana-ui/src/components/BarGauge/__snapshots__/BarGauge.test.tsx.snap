@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BarGauge Render with basic options should render 1`] = `
+<div
+  style={
+    Object {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "row-reverse",
+      "justifyContent": "flex-end",
+    }
+  }
+>
+  <div
+    className="bar-gauge__value"
+    style={
+      Object {
+        "alignItems": "center",
+        "color": "#73BF69",
+        "display": "flex",
+        "fontSize": "27.27px",
+        "height": "300px",
+        "paddingLeft": "10px",
+        "width": "60px",
+      }
+    }
+  >
+    25
+  </div>
+  <div
+    style={
+      Object {
+        "background": "rgba(115, 191, 105, 0.25)",
+        "borderRadius": "3px",
+        "borderRight": "2px solid #73BF69",
+        "height": "300px",
+        "transition": "width 1s",
+        "width": "60px",
+      }
+    }
+  />
+</div>
+`;

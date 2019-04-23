@@ -97,7 +97,7 @@ Creates an annotation in the Grafana database. The `dashboardId` and `panelId` f
 
 **Example Request**:
 
-```json
+```http
 POST /api/annotations HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -115,7 +115,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -135,7 +135,7 @@ format (string with multiple tags being separated by a space).
 
 **Example Request**:
 
-```json
+```http
 POST /api/annotations/graphite HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -150,7 +150,7 @@ Content-Type: application/json
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -164,11 +164,14 @@ Content-Type: application/json
 
 `PUT /api/annotations/:id`
 
+Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the [Patch Annotation](#patch-annotation) operation.
+
 **Example Request**:
 
-```json
+```http
 PUT /api/annotations/1141 HTTP/1.1
 Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 Content-Type: application/json
 
 {
@@ -177,6 +180,50 @@ Content-Type: application/json
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+    "message":"Annotation updated"
+}
+```
+
+## Patch Annotation
+
+`PATCH /api/annotations/:id`
+
+Updates one or more properties of an annotation that matches the specified id.
+
+This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. It does not handle updating of the `isRegion` and `regionId` properties. To make an annotation regional or vice versa, consider using the [Update Annotation](#update-annotation) operation.
+
+**Example Request**:
+
+```http
+PATCH /api/annotations/1145 HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Content-Type: application/json
+
+{
+  "text":"New Annotation Description",
+  "tags":["tag6","tag7","tag8"]
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+    "message":"Annotation patched"
 }
 ```
 
@@ -201,7 +248,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Annotation deleted"}
+{
+    "message":"Annotation deleted"
+}
 ```
 
 ## Delete Annotation By RegionId
@@ -225,5 +274,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Annotation region deleted"}
+{
+    "message":"Annotation region deleted"
+}
 ```
