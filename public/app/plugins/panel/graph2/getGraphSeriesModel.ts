@@ -72,7 +72,7 @@ export const getGraphSeriesModel = (
             color: seriesColor,
             info: statsDisplayValues,
             isVisible: true,
-            useRightYAxis: seriesOptions[field.name] && !!seriesOptions[field.name].useRightYAxis,
+            yAxis: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
           });
         }
       }

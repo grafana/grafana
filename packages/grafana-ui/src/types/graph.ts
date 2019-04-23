@@ -9,5 +9,5 @@ export interface GraphSeriesXY {
   data: GraphSeriesValue[][]; // [x,y][]
   info?: DisplayValue[]; // Legend info
   isVisible: boolean;
-  useRightYAxis: boolean;
+  yAxis: number;
 }

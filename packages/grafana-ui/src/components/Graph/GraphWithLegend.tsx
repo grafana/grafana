@@ -11,7 +11,7 @@ import { GraphSeriesValue } from '../../types/graph';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
-export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<boolean>;
+export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
 
 export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   decimals?: number;
@@ -79,7 +79,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             label: s.label,
             color: s.color,
             isVisible: s.isVisible,
-            useRightYAxis: s.useRightYAxis,
+            yAxis: s.yAxis,
             displayValues: s.info || [],
           },
         ]);

@@ -52,10 +52,10 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
   return placement === 'under' ? (
     <div className={styles.wrapper}>
       <div className={styles.section}>
-        <InlineList items={items.filter(item => !item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
+        <InlineList items={items.filter(item => item.yAxis === 1)} renderItem={renderItem} getItemKey={getItemKey} />
       </div>
       <div className={cx(styles.section, styles.sectionRight)}>
-        <InlineList items={items.filter(item => item.useRightYAxis)} renderItem={renderItem} getItemKey={getItemKey} />
+        <InlineList items={items.filter(item => item.yAxis !== 1)} renderItem={renderItem} getItemKey={getItemKey} />
       </div>
     </div>
   ) : (

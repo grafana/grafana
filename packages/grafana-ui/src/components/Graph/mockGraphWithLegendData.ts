@@ -1099,7 +1099,7 @@ export const mockGraphWithLegendData = ({
         { title: 'max', text: '18.42', numeric: 18.427101844163694 },
       ],
       isVisible: true,
-      useRightYAxis: false,
+      yAxis: 1,
     },
     {
       label: 'B-series',
@@ -2191,7 +2191,7 @@ export const mockGraphWithLegendData = ({
         { title: 'max', text: '18.42', numeric: 18.427101844163694 },
       ],
       isVisible: true,
-      useRightYAxis: false,
+      yAxis: 1,
     },
     {
       label: 'C-series',
@@ -3283,7 +3283,7 @@ export const mockGraphWithLegendData = ({
         { title: 'max', text: '18.42', numeric: 18.427101844163694 },
       ],
       isVisible: true,
-      useRightYAxis: false,
+      yAxis: 1,
     },
   ],
   timeRange: {
@@ -3307,9 +3307,9 @@ export const mockGraphWithLegendData = ({
       onSeriesColorChange(label, color);
     }
   },
-  onSeriesAxisToggle: (label, useRightYAxis) => {
+  onSeriesAxisToggle: (label, yAxis) => {
     if (onSeriesAxisToggle) {
-      onSeriesAxisToggle(label, useRightYAxis);
+      onSeriesAxisToggle(label, yAxis);
     }
   },
   onToggleSort: () => {},

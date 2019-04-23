@@ -15,8 +15,8 @@ export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: Dis
       label: `${alphabet[i].toUpperCase()}-series`,
       color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
       isVisible: true,
-      useRightYAxis: false,
-      info: statsToDisplay || [],
+      yAxis: 1,
+      displayValues: statsToDisplay || [],
     };
   });
 };
@@ -100,7 +100,7 @@ LegendStories.add('list', () => {
         .map(s => s.trim())
         .indexOf(i.label.split('-')[0]) > -1
     ) {
-      i.useRightYAxis = true;
+      i.yAxis = 2;
     }
 
     return i;
@@ -123,7 +123,7 @@ LegendStories.add('table', () => {
         .map(s => s.trim())
         .indexOf(i.label.split('-')[0]) > -1
     ) {
-      i.useRightYAxis = true;
+      i.yAxis = 2;
     }
 
     return {

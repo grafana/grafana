@@ -26,7 +26,7 @@ export interface LegendItem {
   label: string;
   color: string;
   isVisible: boolean;
-  useRightYAxis: boolean;
+  yAxis: number;
   displayValues?: DisplayValue[];
 }
 

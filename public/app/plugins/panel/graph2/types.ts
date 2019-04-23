@@ -3,7 +3,7 @@ import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export interface SeriesOptions {
   color?: string;
-  useRightYAxis?: boolean;
+  yAxis?: number;
 }
 export interface GraphOptions {
   showBars: boolean;

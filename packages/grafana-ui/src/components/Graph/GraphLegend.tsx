@@ -85,7 +85,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
             item={item}
             onToggleAxis={() => {
               if (onSeriesAxisToggle) {
-                onSeriesAxisToggle(item.label, !item.useRightYAxis);
+                onSeriesAxisToggle(item.label, item.yAxis === 1 ? 2 : 1);
               }
             }}
             className={css`
@@ -107,7 +107,7 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
           item={item}
           onToggleAxis={() => {
             if (onSeriesAxisToggle) {
-              onSeriesAxisToggle(item.label, !item.useRightYAxis);
+              onSeriesAxisToggle(item.label, item.yAxis === 1 ? 2 : 1);
             }
           }}
           {...graphLegendItemProps}

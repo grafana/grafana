@@ -51,8 +51,8 @@ export class Graph extends PureComponent<GraphProps> {
       series.map(s => {
         return {
           show: true,
-          index: s.useRightYAxis ? 2 : 1,
-          position: s.useRightYAxis ? 'right' : 'left',
+          index: s.yAxis,
+          position: s.yAxis === 1 ? 'left' : 'right',
         };
       }),
       yAxisConfig => yAxisConfig.index

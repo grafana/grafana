@@ -27,7 +27,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
         color={item.color}
         onColorChange={color => onSeriesColorChange(item.label, color)}
         onToggleAxis={onToggleAxis}
-        useRightYAxis={item.useRightYAxis}
+        yAxis={item.yAxis}
       />
       <div
         onClick={event => onLabelClick(item, event)}
@@ -77,7 +77,7 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
             color={item.color}
             onColorChange={color => onSeriesColorChange(item.label, color)}
             onToggleAxis={onToggleAxis}
-            useRightYAxis={item.useRightYAxis}
+            yAxis={item.yAxis}
           />
           <div
             onClick={event => onLabelClick(item, event)}
@@ -87,7 +87,7 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
             `}
           >
             {item.label}{' '}
-            {item.useRightYAxis && (
+            {item.yAxis === 2 && (
               <span
                 className={css`
                   color: ${theme.colors.gray2};

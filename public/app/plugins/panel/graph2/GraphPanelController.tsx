@@ -67,17 +67,17 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     });
   }
 
-  onSeriesAxisToggle(label: string, useRightYAxis: boolean) {
+  onSeriesAxisToggle(label: string, yAxis: number) {
     const {
       options: { series },
     } = this.props;
     const seriesOptionsUpdate: SeriesOptions = series[label]
       ? {
           ...series[label],
-          useRightYAxis,
+          yAxis,
         }
       : {
-          useRightYAxis,
+          yAxis,
         };
     this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
   }
