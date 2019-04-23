@@ -55,7 +55,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 					Slug:  item.Slug,
 					Title: item.Title,
 					Uri:   item.Uri,
-					Url:   m.GetDashboardUrl(item.Uid, item.Slug),
+					Url:   item.Url,
 					Order: dashboardTagOrder[tag],
 				})
 			}
