@@ -235,6 +235,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		// This tests six scenarios:
 		// 1. user is an org viewer AND has no permissions for this dashboard
 		// 2. user is an org editor AND has no permissions for this dashboard
@@ -247,7 +251,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_VIEWER
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -260,7 +264,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -305,7 +309,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_EDITOR
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -318,7 +322,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -956,7 +960,11 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 }
 
 func CallGetDashboard(sc *scenarioContext) {
-	sc.handlerFunc = GetDashboard
+	hs := &HTTPServer{
+		Cfg: setting.NewCfg(),
+	}
+
+	sc.handlerFunc = hs.GetDashboard
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
