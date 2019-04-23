@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/ldap.v3"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/ldap.v3"
 )
 
 func TestLdapAuther(t *testing.T) {
@@ -537,9 +538,12 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		sc := &scenarioContext{}
+
 		loginService := &login.LoginService{
 			Bus: bus.GetBus(),
 		}
+
+		bus.AddHandler("test", loginService.UpsertUser)
 
 		bus.AddHandler("test", loginService.UpsertUser)
 
