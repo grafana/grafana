@@ -184,7 +184,7 @@ export class PanelQueryRunner {
 
   // TODO: add throttle to this
   updateFromStream = () => {
-    this.subject.next(this.state.updateFromStream());
+    this.subject.next(this.state.getPanelDataFromStream());
   };
 
   /**

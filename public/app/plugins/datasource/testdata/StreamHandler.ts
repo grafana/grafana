@@ -11,12 +11,11 @@ import {
 import { TestDataQuery, StreamingQuery } from './types';
 import { Unsubscribable } from 'rxjs';
 
-const defaultQuery: StreamingQuery = {
+export const defaultQuery: StreamingQuery = {
   type: 'signal',
-  speed: 1000, // 5hz
+  speed: 250, // ms
   spread: 3.5,
-  noise: 0.9,
-  buffer: 500, // Number of points in buffer
+  noise: 2.2,
 };
 
 type StreamWorkers = {
@@ -94,11 +93,11 @@ export class StreamWorker implements Unsubscribable {
       } as DataQueryError;
     }
     this.observer = observer;
-    setTimeout(this.afterSubscribe.bind(this), 5);
+    setTimeout(this.onSubscribe.bind(this), 5);
     return this;
   };
 
-  afterSubscribe() {
+  onSubscribe() {
     // Allow subclasses to start sending
   }
 
@@ -124,16 +123,19 @@ export class StreamWorker implements Unsubscribable {
     if (this.query.type !== query.stream.type) {
       return false;
     }
+    this.request = request;
     this.query = query.stream;
     console.log('Reuse Test Stream: ', this);
     return true;
   }
 
-  appendRows(append: any[]) {
+  appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { series, query } = this;
+    const { series, query, request } = this;
+    const maxRows = query.buffer ? query.buffer : request.maxDataPoints;
+
     let rows = series.rows.concat(append);
-    const extra = query.buffer - rows.length;
+    const extra = maxRows - rows.length;
     if (extra < 0) {
       rows = rows.slice(extra * -1);
     }
@@ -143,6 +145,7 @@ export class StreamWorker implements Unsubscribable {
     if (this.observer) {
       if (!this.observer.next(this.stream.key, [series])) {
         this.stop();
+        return;
       }
     }
     this.last = Date.now();
@@ -156,16 +159,20 @@ export class SignalWorker extends StreamWorker {
     super(key, query, request);
   }
 
-  afterSubscribe() {
-    console.log('afterSubscribe: ', this);
+  onSubscribe() {
     this.series = this.initBuffer(this.stream.refId);
-    this.looper();
+    this.looper(); // Start looping
   }
 
   nextRow = (time: number) => {
     const { spread, noise } = this.query;
     this.value += (Math.random() - 0.5) * spread;
-    return [time, this.value, this.value - Math.random() * noise, this.value + Math.random() * noise];
+    return [
+      time,
+      this.value, // Value
+      this.value - Math.random() * noise, // MIN
+      this.value + Math.random() * noise, // MAX
+    ];
   };
 
   initBuffer(refId: string): SeriesData {
@@ -189,8 +196,9 @@ export class SignalWorker extends StreamWorker {
     }
 
     this.value = Math.random() * 100;
-    let time = Date.now() - buffer * speed;
-    for (let i = 0; i < buffer; i++) {
+    const maxRows = buffer ? buffer : this.request.maxDataPoints;
+    let time = Date.now() - maxRows * speed;
+    for (let i = 0; i < maxRows; i++) {
       data.rows.push(this.nextRow(time));
       time += speed;
     }
@@ -212,7 +220,7 @@ export class SignalWorker extends StreamWorker {
       query.speed = 5;
     }
 
-    this.appendRows(this.nextRow(Date.now()));
+    this.appendRows([this.nextRow(Date.now())]);
     this.timeoutId = window.setTimeout(this.looper, query.speed);
   };
 }

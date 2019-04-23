@@ -25,7 +25,7 @@ export interface OpenStream {
   lastQuery: number;
   lastEvent: number; // Time
   eventCount: number;
-  subscription: Unsubscribable;
+  subscription: Unsubscribable | null;
   data: SeriesData[];
 }
 
@@ -134,7 +134,9 @@ export class PanelQueryState {
             : undefined;
 
           // Check if any streams were returned
-          this.checkStreams(resp.streams);
+          if (this.checkStreams(resp.streams)) {
+            resolve((this.data = this.getPanelDataFromStream()));
+          }
 
           resolve(
             (this.data = {
@@ -185,20 +187,20 @@ export class PanelQueryState {
     return this.openStreams.find(s => s.key === key);
   }
 
-  checkStreams(streams?: SeriesDataStream[]) {
+  checkStreams(streams?: SeriesDataStream[]): boolean {
     if (streams && streams.length) {
       const active: OpenStream[] = [];
       const now = Date.now();
       for (const stream of streams) {
-        const current = this.getOpenStream(stream.refId);
+        const current = this.getOpenStream(stream.key);
         if (current && current.key === stream.key) {
           current.lastQuery = now;
           active.push(current);
           continue;
         }
 
-        // Open a new subscription
-        const s = {
+        // Add the stream *before* calling subscribe
+        const open: OpenStream = {
           key: stream.key,
           refId: stream.refId,
           openTime: now,
@@ -206,33 +208,39 @@ export class PanelQueryState {
           lastEvent: 0,
           eventCount: 0,
           data: [],
-        } as OpenStream;
-        // Need to add the subscribe *before* calling subscribe
-        this.openStreams.push(s);
-        s.subscription = stream.subscribe(this.streamDataObserver);
-        active.push(s);
+          subscription: null,
+        };
+        this.openStreams.push(open);
+        open.subscription = stream.subscribe(this.streamDataObserver);
+        active.push(open);
       }
 
       if (this.openStreams) {
         // Close any streams that did not come back from the query
         for (const open of this.openStreams) {
-          if (open.lastQuery !== now) {
+          if (open.lastQuery !== now && open.subscription) {
             open.subscription.unsubscribe();
+            open.subscription = null;
           }
         }
       }
       this.openStreams = active;
-      console.log('OPEN STREAMS', this.openStreams);
     } else if (this.openStreams.length) {
       this.closeStreams();
     }
+    return this.openStreams.length > 0;
   }
 
   closeStreams() {
     if (this.openStreams.length) {
       // We have open streams, but query does not think so
       for (const stream of this.openStreams) {
-        stream.subscription.unsubscribe();
+        if (stream.subscription) {
+          try {
+            stream.subscription.unsubscribe();
+          } catch {}
+          stream.subscription = null;
+        }
       }
       this.openStreams = [];
     }
@@ -241,7 +249,7 @@ export class PanelQueryState {
   /**
    * Build PanelData based on the stream state
    */
-  updateFromStream = (): PanelData => {
+  getPanelDataFromStream = (): PanelData => {
     const series: SeriesData[] = [];
     for (const stream of this.openStreams) {
       series.push.apply(series, stream.data);
