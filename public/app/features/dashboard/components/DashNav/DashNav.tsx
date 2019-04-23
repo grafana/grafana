@@ -146,6 +146,7 @@ export class DashNav extends PureComponent<Props> {
             <i className="fa fa-caret-down" />
           </a>
         </div>
+        {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />
       </>
     );
@@ -153,6 +154,10 @@ export class DashNav extends PureComponent<Props> {
 
   get isInFullscreenOrSettings() {
     return this.props.editview || this.props.isFullscreen;
+  }
+
+  get isSettings() {
+    return this.props.editview;
   }
 
   renderBackButton() {

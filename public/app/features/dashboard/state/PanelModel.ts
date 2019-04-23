@@ -118,7 +118,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  queryRunner?: PanelQueryRunner;
+  private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();
@@ -326,8 +326,19 @@ export class PanelModel {
     });
   }
 
+  getQueryRunner(): PanelQueryRunner {
+    if (!this.queryRunner) {
+      this.queryRunner = new PanelQueryRunner();
+    }
+    return this.queryRunner;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
+
+    if (this.queryRunner) {
+      this.queryRunner.destroy();
+    }
   }
 }
