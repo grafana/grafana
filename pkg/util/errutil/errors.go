@@ -1,4 +1,4 @@
-package util
+package errutil
 
 import "golang.org/x/xerrors"
 
