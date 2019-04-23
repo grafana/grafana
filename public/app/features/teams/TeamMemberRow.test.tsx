@@ -80,7 +80,7 @@ describe('Functions', () => {
     };
     const { instance } = setup({ member });
     const permission = TeamPermissionLevel.Admin;
-    const item: SelectOptionItem = { value: permission };
+    const item: SelectOptionItem<TeamPermissionLevel> = { value: permission };
     const expectedTeamMemeber = { ...member, permission };
 
     instance.onPermissionChange(item, member);
