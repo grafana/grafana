@@ -29,7 +29,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     this.setState({ text });
   }
 
-  onSourceChange = (item: SelectOptionItem) => {
+  onSourceChange = (item: SelectOptionItem<string>) => {
     const { datasource, query, onChange, onRunQuery } = this.props;
     let data: SeriesData[] | undefined = undefined;
     if (item.value === 'panel') {
