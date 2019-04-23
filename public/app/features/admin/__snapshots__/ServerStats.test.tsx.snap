@@ -212,10 +212,12 @@ exports[`ServerStats Should render table with stats 1`] = `
       </div>
     </div>
     <div
-      className="track-horizontal"
+      className="css-17l4171 track-horizontal"
       style={
         Object {
-          "visibility": "visible",
+          "display": "none",
+          "height": 6,
+          "position": "absolute",
         }
       }
     >
@@ -231,10 +233,12 @@ exports[`ServerStats Should render table with stats 1`] = `
       />
     </div>
     <div
-      className="track-vertical"
+      className="css-17l4171 track-vertical"
       style={
         Object {
-          "visibility": "visible",
+          "display": "none",
+          "position": "absolute",
+          "width": 6,
         }
       }
     >
