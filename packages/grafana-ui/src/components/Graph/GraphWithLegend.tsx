@@ -71,6 +71,20 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
+  const legendItems = series.reduce<LegendItem[]>((acc, s) => {
+    return shouldHideLegendItem(s.data, hideEmpty, hideZero)
+      ? acc
+      : acc.concat([
+          {
+            label: s.label,
+            color: s.color,
+            isVisible: s.isVisible,
+            useRightYAxis: s.useRightYAxis,
+            info: s.info || [],
+          },
+        ]);
+  }, []);
+
   return (
     <div className={wrapper}>
       <div className={graphContainer}>
@@ -90,19 +104,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         <div className={legendContainer}>
           <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
             <GraphLegend
-              items={series.reduce<LegendItem[]>((acc, s) => {
-                return shouldHideLegendItem(s.data, hideEmpty, hideZero)
-                  ? acc
-                  : acc.concat([
-                      {
-                        label: s.label,
-                        color: s.color,
-                        isVisible: s.isVisible,
-                        useRightYAxis: s.useRightYAxis,
-                        info: s.info || [],
-                      },
-                    ]);
-              }, [])}
+              items={legendItems}
               displayMode={displayMode}
               placement={placement}
               sortBy={sortLegendBy}
