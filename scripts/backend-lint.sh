@@ -43,7 +43,7 @@ exit_if_fail revive -formatter stylish -config ./scripts/revive.toml
 #exit_if_fail gosec -quiet -exclude=G104,G107,G201,G202,G204,G301,G302,G304,G402,G501,G401 ./pkg/...
 =======
 exit_if_fail gosec -quiet \
- -exclude=G104,G201,G202,G204,G304,G401,G402,G501 \
+ -exclude=G104,G201,G202,G204,G304,G401,G402,G501,G505 \
  -conf=./scripts/gosec.json \
  ./pkg/...
 >>>>>>> Chore: set default file permissions for gosec
