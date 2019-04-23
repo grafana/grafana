@@ -177,17 +177,19 @@ export type DataStreamObserver = (event: DataStreamState) => void;
 
 export interface DataStreamState {
   /**
-   * Consistent key across events
-   */
-  key: string;
-
-  /**
    * when Done or Error no more events will be processed
    */
   state: LoadingState;
 
   /**
-   * The initial request for this stream
+   * Consistent key across events.
+   */
+  key: string;
+
+  /**
+   * The stream request.  The properties of this request will be examined
+   * to determine if the stream matches the original query.  If not, it
+   * will be unsubscribed.
    */
   request: DataQueryRequest;
 
