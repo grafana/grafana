@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
+import { cx, css } from 'emotion';
 
 interface Props {
   className?: string;
@@ -12,8 +13,6 @@ interface Props {
   hideTracksWhenNotNeeded?: boolean;
   hideHorizontalTrack?: boolean;
   hideVerticalTrack?: boolean;
-  // renderTrackHorizontal?: React.FunctionComponent<any>;
-  // renderTrackVertical?: React.FunctionComponent<any>;
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
@@ -101,12 +100,24 @@ export class CustomScrollbar extends Component<Props> {
         renderTrackHorizontal={props => (
           <div
             {...props}
-            className="track-horizontal"
-            style={{ visibility: hideHorizontalTrack ? 'none' : 'visible' }}
+            className={cx(
+              css`
+                visibility: ${hideHorizontalTrack ? 'none' : 'visible'};
+              `,
+              'track-horizontal'
+            )}
           />
         )}
         renderTrackVertical={props => (
-          <div {...props} className="track-vertical" style={{ visibility: hideVerticalTrack ? 'none' : 'visible' }} />
+          <div
+            {...props}
+            className={cx(
+              css`
+                visibility: ${hideVerticalTrack ? 'none' : 'visible'};
+              `,
+              'track-vertical'
+            )}
+          />
         )}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
