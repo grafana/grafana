@@ -24,10 +24,13 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*DashboardsAsConfig, e
 	}
 
 	apiVersion := &ConfigVersion{ApiVersion: 0}
-	if err := yaml.Unmarshal(yamlFile, &apiVersion); err != nil {
-		cr.log.Error("can't unmarshal dashboard provisioning file", "filename", yamlFile, "error", err)
-		return nil, err
-	}
+
+	// We ignore the error here because it errors out for version 0 which does not have apiVersion
+	// specified (so 0 is default). This can also error in case the apiVersion is not an integer but at the moment
+	// this does not handle that case and would still go on as if version = 0.
+	// TODO: return appropriate error in case the apiVersion is specified but isn't integer (or even if it is
+	//  integer > max version?).
+	_ = yaml.Unmarshal(yamlFile, &apiVersion)
 
 	if apiVersion.ApiVersion > 0 {
 		v1 := &DashboardAsConfigV1{}
