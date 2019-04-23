@@ -1,22 +1,22 @@
-import _ from 'lodash';
+import defaults from 'lodash/defaults';
 import {
   DataQueryRequest,
   FieldType,
   SeriesData,
   DataQueryResponse,
-  LoadingState,
   DataQueryError,
   SeriesDataStream,
+  SeriesDataStreamObserver,
 } from '@grafana/ui';
 import { TestDataQuery, StreamingQuery } from './types';
-import { Subject } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 
 const defaultQuery: StreamingQuery = {
   type: 'signal',
-  speed: 50,
+  speed: 1000, // 5hz
   spread: 3.5,
   noise: 0.9,
-  buffer: 100, // 100 points
+  buffer: 500, // Number of points in buffer
 };
 
 type StreamWorkers = {
@@ -33,13 +33,13 @@ export class StreamHandler {
         if (!resp) {
           resp = { data: [], streams: [] };
         }
-        query.stream = _.defaults(query.stream, defaultQuery);
+        query.stream = defaults(query.stream, defaultQuery);
 
         const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
         if (this.workers[key]) {
           const existing = this.workers[key];
           if (existing.update(query, req)) {
-            resp.data.push(existing.series);
+            resp.streams.push(existing.stream);
             continue;
           }
           existing.stop();
@@ -47,8 +47,8 @@ export class StreamHandler {
         }
         const type = query.stream.type;
         if (type === 'signal') {
-          const worker = new SignalWorker(query, req);
-          resp.data.push(worker.series);
+          const worker = new SignalWorker(key, query, req);
+          resp.streams.push(worker.stream);
           this.workers[key] = worker;
         } else {
           throw {
@@ -65,24 +65,59 @@ export class StreamHandler {
 /**
  * Manages a single stream request
  */
-export class StreamWorker {
+export class StreamWorker implements Unsubscribable {
   stream: SeriesDataStream;
   series: SeriesData;
   query: StreamingQuery;
   request: DataQueryRequest;
-  subject = new Subject<SeriesData>();
-  state: LoadingState;
-  last: number;
+  observer: SeriesDataStreamObserver;
+  last = -1;
+  timeoutId = 0;
 
-  constructor(query: TestDataQuery, request: DataQueryRequest) {
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
     this.query = query.stream;
     this.request = request;
     this.last = Date.now();
     this.stream = {
+      key,
       refId: query.refId,
-      subscription: this.subject,
+      subscribe: this.subscribe,
     };
-    console.log('Creating Test Stream: ', this.query);
+    console.log('Creating Test Stream: ', this);
+  }
+
+  private subscribe = (observer: SeriesDataStreamObserver): Unsubscribable => {
+    if (this.observer) {
+      throw {
+        refId: this.stream.refId,
+        message: 'Only one subscriber is allowed at a time',
+      } as DataQueryError;
+    }
+    this.observer = observer;
+    setTimeout(this.afterSubscribe.bind(this), 5);
+    return this;
+  };
+
+  afterSubscribe() {
+    // Allow subclasses to start sending
+  }
+
+  stop() {
+    if (this.observer) {
+      this.observer.done(this.stream.key);
+      this.observer = null;
+    }
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = 0;
+    }
+  }
+
+  unsubscribe() {
+    if (!this.observer) {
+      throw new Error('Not listening to: ' + this.stream.refId);
+    }
+    this.observer = null;
   }
 
   update(query: TestDataQuery, request: DataQueryRequest): boolean {
@@ -92,11 +127,6 @@ export class StreamWorker {
     this.query = query.stream;
     console.log('Reuse Test Stream: ', this);
     return true;
-  }
-
-  stop() {
-    this.subject.complete();
-    this.state = LoadingState.Done;
   }
 
   appendRows(append: any[]) {
@@ -110,7 +140,11 @@ export class StreamWorker {
     series.rows = rows;
 
     // Broadcast the changes
-    this.subject.next(series);
+    if (this.observer) {
+      if (!this.observer.next(this.stream.key, [series])) {
+        this.stop();
+      }
+    }
     this.last = Date.now();
   }
 }
@@ -118,10 +152,13 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
-  constructor(query: TestDataQuery, request: DataQueryRequest) {
-    super(query, request);
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest) {
+    super(key, query, request);
+  }
 
-    this.series = this.initBuffer(query.refId);
+  afterSubscribe() {
+    console.log('afterSubscribe: ', this);
+    this.series = this.initBuffer(this.stream.refId);
     this.looper();
   }
 
@@ -161,9 +198,21 @@ export class SignalWorker extends StreamWorker {
   }
 
   looper = () => {
-    this.appendRows(this.nextRow(Date.now()));
-    if (!this.subject.isStopped) {
-      setTimeout(this.looper, this.query.speed);
+    if (!this.observer) {
+      const elapsed = this.request.startTime - Date.now();
+      if (elapsed > 1000) {
+        console.log('Stop looping');
+        return;
+      }
     }
+
+    // Make sure it has a minimum speed
+    const { query } = this;
+    if (query.speed < 5) {
+      query.speed = 5;
+    }
+
+    this.appendRows(this.nextRow(Date.now()));
+    this.timeoutId = window.setTimeout(this.looper, query.speed);
   };
 }

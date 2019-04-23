@@ -1,3 +1,4 @@
+import isString from 'lodash/isString';
 import {
   DataSourceApi,
   DataQueryRequest,
@@ -9,20 +10,23 @@ import {
   DataQueryError,
   SeriesDataStream,
   SeriesData,
+  SeriesDataStreamObserver,
 } from '@grafana/ui';
 import { getProcessedSeriesData } from './PanelQueryRunner';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import isEqual from 'lodash/isEqual';
-import { Unsubscribable, Subscribable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
+import * as dateMath from 'app/core/utils/datemath';
 
 export interface OpenStream {
+  key: string;
   refId: string;
   openTime: number;
+  lastQuery: number;
   lastEvent: number; // Time
   eventCount: number;
-  request: DataQueryRequest;
   subscription: Unsubscribable;
-  source: Subscribable<SeriesData>;
+  data: SeriesData[];
 }
 
 export class PanelQueryState {
@@ -41,7 +45,7 @@ export class PanelQueryState {
   sendSeries = false;
   sendLegacy = false;
 
-  openStreams?: OpenStream[];
+  openStreams: OpenStream[] = [];
 
   // A promise for the running query
   private executor: Promise<PanelData> = {} as any;
@@ -81,6 +85,9 @@ export class PanelQueryState {
     } catch (err) {
       console.log('Error canceling request');
     }
+
+    // Close any open streams
+    this.closeStreams();
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
@@ -144,17 +151,122 @@ export class PanelQueryState {
     }));
   }
 
+  // Send a notice when the stream has updated the current model
+  streamCallback: () => void;
+
+  // This gets all stream events and keeps track of them
+  // it will throttle actuall updates to subscribers
+  streamDataObserver: SeriesDataStreamObserver = {
+    done: (key: string) => {
+      console.log('DONE With', key);
+    },
+    error: (key: string, err: DataQueryError) => {
+      console.log('ERROR With', key, err);
+    },
+    next: (key: string, series: SeriesData[]): boolean => {
+      const stream = this.getOpenStream(key);
+      if (!stream) {
+        console.log('Unknown stream: ', key);
+        return false;
+      }
+      stream.eventCount++;
+      stream.lastEvent = Date.now();
+      stream.data = series;
+      try {
+        this.streamCallback();
+      } catch (err) {
+        console.log('Error in callback', err, stream);
+      }
+      return true;
+    },
+  };
+
+  getOpenStream(key: string): OpenStream | undefined {
+    return this.openStreams.find(s => s.key === key);
+  }
+
   checkStreams(streams?: SeriesDataStream[]) {
     if (streams && streams.length) {
-      console.log('TODO connect streams', streams);
-    } else if (this.openStreams) {
+      const active: OpenStream[] = [];
+      const now = Date.now();
+      for (const stream of streams) {
+        const current = this.getOpenStream(stream.refId);
+        if (current && current.key === stream.key) {
+          current.lastQuery = now;
+          active.push(current);
+          continue;
+        }
+
+        // Open a new subscription
+        const s = {
+          key: stream.key,
+          refId: stream.refId,
+          openTime: now,
+          lastQuery: now,
+          lastEvent: 0,
+          eventCount: 0,
+          data: [],
+        } as OpenStream;
+        // Need to add the subscribe *before* calling subscribe
+        this.openStreams.push(s);
+        s.subscription = stream.subscribe(this.streamDataObserver);
+        active.push(s);
+      }
+
+      if (this.openStreams) {
+        // Close any streams that did not come back from the query
+        for (const open of this.openStreams) {
+          if (open.lastQuery !== now) {
+            open.subscription.unsubscribe();
+          }
+        }
+      }
+      this.openStreams = active;
+      console.log('OPEN STREAMS', this.openStreams);
+    } else if (this.openStreams.length) {
+      this.closeStreams();
+    }
+  }
+
+  closeStreams() {
+    if (this.openStreams.length) {
       // We have open streams, but query does not think so
       for (const stream of this.openStreams) {
         stream.subscription.unsubscribe();
       }
-      this.openStreams = undefined;
+      this.openStreams = [];
     }
   }
+
+  /**
+   * Build PanelData based on the stream state
+   */
+  updateFromStream = (): PanelData => {
+    const series: SeriesData[] = [];
+    for (const stream of this.openStreams) {
+      series.push.apply(series, stream.data);
+    }
+
+    // Update the time range
+    let timeRange = this.request.range;
+    if (isString(timeRange.raw.from)) {
+      timeRange = {
+        from: dateMath.parse(timeRange.raw.from, false),
+        to: dateMath.parse(timeRange.raw.to, true),
+        raw: timeRange.raw,
+      };
+    }
+
+    return (this.data = {
+      state: LoadingState.Done, // TODO, state based on the actual states!
+      series,
+      legacy: this.sendLegacy ? series.map(s => toLegacyResponseData(s)) : undefined,
+      request: {
+        ...this.request,
+        range: timeRange, // update the time range
+      },
+    });
+  };
 
   /**
    * Make sure all requested formats exist on the data
@@ -174,6 +286,7 @@ export class PanelQueryState {
     if (!this.request.endTime) {
       this.request.endTime = Date.now();
     }
+    this.closeStreams();
 
     return (this.data = {
       ...this.data, // Keep any existing data

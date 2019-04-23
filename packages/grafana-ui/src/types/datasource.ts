@@ -3,7 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
-import { Subscribable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -174,9 +174,27 @@ export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
 
+export interface SeriesDataStreamObserver {
+  /**
+   * Return true if processed, and false if the event should shutdown
+   */
+  next: (key: string, data: SeriesData[]) => boolean;
+
+  /**
+   * Error in the stream
+   */
+  error: (key: string, err: DataQueryError) => void;
+
+  /**
+   * Stream closed
+   */
+  done: (key: string) => void;
+}
+
 export interface SeriesDataStream {
-  refId: string; // will match the query and the returned SeriesData
-  subscription: Subscribable<SeriesData>;
+  key: string;
+  refId: string;
+  subscribe: (observer: SeriesDataStreamObserver) => Unsubscribable;
 }
 
 export interface DataQueryResponse {

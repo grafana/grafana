@@ -63,6 +63,8 @@ export class PanelQueryRunner {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
 
+    this.state.streamCallback = this.updateFromStream;
+
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
@@ -179,6 +181,11 @@ export class PanelQueryRunner {
       return data;
     }
   }
+
+  // TODO: add throttle to this
+  updateFromStream = () => {
+    this.subject.next(this.state.updateFromStream());
+  };
 
   /**
    * Called when the panel is closed
