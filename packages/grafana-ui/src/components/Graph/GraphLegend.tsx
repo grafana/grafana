@@ -36,8 +36,8 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   if (displayMode === LegendDisplayMode.Table) {
     const columns = items
       .map(item => {
-        if (item.info) {
-          return item.info.map(i => i.title);
+        if (item.displayValues) {
+          return item.displayValues.map(i => i.title);
         }
         return [];
       })
@@ -50,8 +50,8 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
 
     const sortedItems = sortKey
       ? sortBy(items, item => {
-          if (item.info) {
-            const stat = item.info.filter(stat => stat.title === sortKey)[0];
+          if (item.displayValues) {
+            const stat = item.displayValues.filter(stat => stat.title === sortKey)[0];
             return stat && stat.numeric;
           }
           return undefined;

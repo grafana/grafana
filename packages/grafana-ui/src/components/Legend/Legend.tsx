@@ -27,7 +27,7 @@ export interface LegendItem {
   color: string;
   isVisible: boolean;
   useRightYAxis: boolean;
-  info?: DisplayValue[];
+  displayValues?: DisplayValue[];
 }
 
 export interface LegendComponentProps {

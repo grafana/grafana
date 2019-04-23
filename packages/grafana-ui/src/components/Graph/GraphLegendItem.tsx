@@ -39,7 +39,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
         {item.label}
       </div>
 
-      {item.info && <LegendStatsList stats={item.info} />}
+      {item.displayValues && <LegendStatsList stats={item.displayValues} />}
     </>
   );
 };
@@ -99,8 +99,8 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
           </div>
         </span>
       </td>
-      {item.info &&
-        item.info.map((stat, index) => {
+      {item.displayValues &&
+        item.displayValues.map((stat, index) => {
           return (
             <td
               className={css`
