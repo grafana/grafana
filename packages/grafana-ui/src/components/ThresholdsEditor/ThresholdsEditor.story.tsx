@@ -8,9 +8,9 @@ const ThresholdsEditorStories = storiesOf('UI/ThresholdsEditor', module);
 const thresholds = [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 50, color: 'red' }];
 
 ThresholdsEditorStories.add('default', () => {
-  return <ThresholdsEditor thresholds={[]} onChange={action('Thresholds changed')} />;
+  return <ThresholdsEditor value={[]} onChange={action('Thresholds changed')} />;
 });
 
 ThresholdsEditorStories.add('with thresholds', () => {
-  return <ThresholdsEditor thresholds={thresholds} onChange={action('Thresholds changed')} />;
+  return <ThresholdsEditor value={thresholds} onChange={action('Thresholds changed')} />;
 });

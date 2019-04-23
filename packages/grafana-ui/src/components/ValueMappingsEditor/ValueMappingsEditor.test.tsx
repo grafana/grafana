@@ -7,7 +7,7 @@ import { MappingType } from '../../types';
 const setup = (propOverrides?: object) => {
   const props: Props = {
     onChange: jest.fn(),
-    valueMappings: [
+    value: [
       { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
       { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ],

@@ -5,7 +5,7 @@ import { MappingType, ValueMapping } from '../../types';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
-  valueMappings: ValueMapping[];
+  value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 
@@ -18,7 +18,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const mappings = props.valueMappings;
+    const mappings = props.value;
 
     this.state = {
       valueMappings: mappings,

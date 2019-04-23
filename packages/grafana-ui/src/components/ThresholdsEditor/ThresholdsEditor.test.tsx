@@ -6,7 +6,7 @@ import { colors } from '../../utils';
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     onChange: jest.fn(),
-    thresholds: [],
+    value: [],
   };
 
   Object.assign(props, propOverrides);
@@ -58,7 +58,7 @@ describe('Add threshold', () => {
 
   it('should add another threshold above a first', () => {
     const { instance } = setup({
-      thresholds: [{ index: 0, value: -Infinity, color: colors[0] }, { index: 1, value: 50, color: colors[2] }],
+      value: [{ index: 0, value: -Infinity, color: colors[0] }, { index: 1, value: 50, color: colors[2] }],
     });
 
     instance.onAddThreshold(2);
@@ -72,7 +72,7 @@ describe('Add threshold', () => {
 
   it('should add another threshold between first and second index', () => {
     const { instance } = setup({
-      thresholds: [
+      value: [
         { index: 0, value: -Infinity, color: colors[0] },
         { index: 1, value: 50, color: colors[2] },
         { index: 2, value: 75, color: colors[3] },
@@ -97,7 +97,7 @@ describe('Remove threshold', () => {
       { index: 1, value: 50, color: '#EAB839' },
       { index: 2, value: 75, color: '#6ED0E0' },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ value: thresholds });
 
     instance.onRemoveThreshold(thresholds[0]);
 
@@ -110,7 +110,7 @@ describe('Remove threshold', () => {
       { index: 1, value: 50, color: '#EAB839' },
       { index: 2, value: 75, color: '#6ED0E0' },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ value: thresholds });
 
     instance.onRemoveThreshold(thresholds[1]);
 
@@ -128,7 +128,7 @@ describe('change threshold value', () => {
       { index: 1, value: 50, color: '#EAB839' },
       { index: 2, value: 75, color: '#6ED0E0' },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ value: thresholds });
 
     const mockEvent = ({ target: { value: '12' } } as any) as ChangeEvent<HTMLInputElement>;
 

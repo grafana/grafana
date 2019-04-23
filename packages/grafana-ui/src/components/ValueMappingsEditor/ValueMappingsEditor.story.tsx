@@ -6,5 +6,5 @@ import { ValueMappingsEditor } from './ValueMappingsEditor';
 const ValueMappingsEditorStories = storiesOf('UI/ValueMappingsEditor', module);
 
 ValueMappingsEditorStories.add('default', () => {
-  return <ValueMappingsEditor valueMappings={[]} onChange={action('Mapping changed')} />;
+  return <ValueMappingsEditor value={[]} onChange={action('Mapping changed')} />;
 });
