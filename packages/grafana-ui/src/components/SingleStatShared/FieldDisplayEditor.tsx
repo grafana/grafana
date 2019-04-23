@@ -12,7 +12,7 @@ import { toNumberString, toIntegerOrUndefined } from '../../utils';
 
 const labelWidth = 5;
 
-const showOptions: SelectOptionItem[] = [
+const showOptions: Array<SelectOptionItem<boolean>> = [
   {
     value: true,
     label: 'All Values',
@@ -32,7 +32,7 @@ export interface Props {
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
-  onShowValuesChange = (item: SelectOptionItem) => {
+  onShowValuesChange = (item: SelectOptionItem<boolean>) => {
     const val = item.value === true;
     this.props.onChange({ ...this.props.options, values: val });
   };

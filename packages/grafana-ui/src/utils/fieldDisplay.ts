@@ -98,8 +98,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length; s++) {
-      const series = data[s];
-      scopedVars[VAR_SERIES_NAME] = { text: 'Series', value: series.name ? series.name : `Series[${s}]` };
+      let series = data[s];
+      if (!series.name) {
+        series = {
+          ...series,
+          name: series.refId ? series.refId : `Series[${s}]`,
+        };
+      }
+      scopedVars[VAR_SERIES_NAME] = { text: 'Series', value: series.name };
 
       let timeColumn = -1;
       if (sparkline) {
@@ -119,7 +125,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
 
-        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name ? field.name : `Field[${s}]` };
+        if (!field.name) {
+          field.name = `Field[${s}]`; // it is a copy, so safe to edit
+        }
+
+        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name };
 
         const display = getDisplayProcessor({
           field,

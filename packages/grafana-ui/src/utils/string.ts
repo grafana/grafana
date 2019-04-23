@@ -43,7 +43,7 @@ export function stringToMs(str: string): number {
   }
 }
 
-export function getIntervalFromString(strInterval: string): SelectOptionItem {
+export function getIntervalFromString(strInterval: string): SelectOptionItem<number> {
   return {
     label: strInterval,
     value: stringToMs(strInterval),

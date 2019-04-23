@@ -18,7 +18,8 @@ export interface Props {
 }
 
 export class FieldPropertiesEditor extends PureComponent<Props> {
-  onUnitChange = (unit: SelectOptionItem) => this.props.onChange({ ...this.props.options, unit: unit.value });
+  // @ts-ignore
+  onUnitChange = (unit: SelectOptionItem<string>) => this.props.onChange({ ...this.props.value, unit: unit.value });
 
   onDecimalChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
