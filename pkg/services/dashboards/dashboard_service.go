@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/xerrors"
 )
 
 // DashboardService service for operating on dashboards
@@ -261,7 +260,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, 
 		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
 		err := bus.Dispatch(isDashboardProvisioned)
 		if err != nil {
-			return xerrors.Errorf("failed to check if dashboard is provisioned: %w", err)
+			return util.Wrap("failed to check if dashboard is provisioned", err)
 		}
 
 		if isDashboardProvisioned.Result {
