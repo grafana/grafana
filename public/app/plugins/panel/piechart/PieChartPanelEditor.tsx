@@ -30,7 +30,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor onChange={this.onValueOptionsChanged} value={options.valueOptions} />
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 
