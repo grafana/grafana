@@ -1,12 +1,13 @@
 package notifications
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/Unknwon/com"
+
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,7 +15,7 @@ import (
 const timeLimitCodeLength = 12 + 6 + 40
 
 // create a time limit code
-// code format: 12 length date time string + 6 minutes string + 40 sha1 encoded string
+// code format: 12 length date time string + 6 minutes string + 40 sha256 encoded string
 func createTimeLimitCode(data string, minutes int, startInf interface{}) string {
 	format := "200601021504"
 
@@ -35,8 +36,8 @@ func createTimeLimitCode(data string, minutes int, startInf interface{}) string 
 	end = start.Add(time.Minute * time.Duration(minutes))
 	endStr = end.Format(format)
 
-	// create sha1 encode string
-	sh := sha1.New()
+	// create sha256 encode string
+	sh := sha256.New()
 	sh.Write([]byte(data + setting.SecretKey + startStr + endStr + com.ToStr(minutes)))
 	encoded := hex.EncodeToString(sh.Sum(nil))
 
