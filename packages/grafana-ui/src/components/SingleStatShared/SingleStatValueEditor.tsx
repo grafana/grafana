@@ -23,6 +23,7 @@ export interface Props {
 }
 
 export class SingleStatValueEditor extends PureComponent<Props> {
+  // @ts-ignore
   onUnitChange = (unit: SelectOptionItem<string>) => this.props.onChange({ ...this.props.value, unit: unit.value });
 
   onStatsChange = (stats: string[]) => {
