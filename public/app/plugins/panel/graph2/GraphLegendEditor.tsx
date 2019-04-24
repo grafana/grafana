@@ -1,17 +1,17 @@
 import React from 'react';
 import capitalize from 'lodash/capitalize';
 import without from 'lodash/without';
-import { StatID, LegendOptions, PanelOptionsGroup, Switch, Input } from '@grafana/ui';
+import { LegendOptions, PanelOptionsGroup, Switch, Input } from '@grafana/ui';
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {
-  stats?: StatID[];
+  stats?: string[];
   decimals?: number;
   sortBy?: string;
   sortDesc?: boolean;
 }
 
 interface GraphLegendEditorProps {
-  stats: StatID[];
+  stats: string[];
   options: GraphLegendEditorLegendOptions;
   onChange: (options: GraphLegendEditorLegendOptions) => void;
 }
@@ -19,7 +19,7 @@ interface GraphLegendEditorProps {
 export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> = props => {
   const { stats, options, onChange } = props;
 
-  const onStatToggle = (stat: StatID) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
+  const onStatToggle = (stat: string) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
     let newStats;
     if (!event) {
       return;
@@ -76,7 +76,6 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
             />
           );
         })}
-
         <div className="gf-form">
           <div className="gf-form-label">Decimals</div>
           <Input
