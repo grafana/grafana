@@ -1,6 +1,7 @@
 package login
 
 import (
+	"errors"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -10,58 +11,23 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var errTest = errors.New("Test error")
+
 func TestLdapLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {
-		Convey("Given ldap enabled and a server configured", func() {
-			setting.LdapEnabled = true
-			LDAP.ReadConfig()
-
-			LdapCfg.Servers = append(LdapCfg.Servers,
-				&LdapServerConf{
-					Host: "",
-				})
-
-			ldapLoginScenario("When login with invalid credentials", func(sc *ldapLoginScenarioContext) {
-				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(sc.loginUserQuery)
-
-				Convey("it should return true", func() {
-					So(enabled, ShouldBeTrue)
-				})
-
-				Convey("it should return invalid credentials error", func() {
-					So(err, ShouldEqual, ErrInvalidCredentials)
-				})
-
-				Convey("it should call ldap login", func() {
-					So(sc.ldapAuthenticatorMock.loginCalled, ShouldBeTrue)
-				})
-			})
-
-			ldapLoginScenario("When login with valid credentials", func(sc *ldapLoginScenarioContext) {
-				sc.withLoginResult(true)
-				enabled, err := loginUsingLdap(sc.loginUserQuery)
-
-				Convey("it should return true", func() {
-					So(enabled, ShouldBeTrue)
-				})
-
-				Convey("it should not return error", func() {
-					So(err, ShouldBeNil)
-				})
-
-				Convey("it should call ldap login", func() {
-					So(sc.ldapAuthenticatorMock.loginCalled, ShouldBeTrue)
-				})
-			})
-		})
-
 		Convey("Given ldap enabled and no server configured", func() {
 			setting.LdapEnabled = true
-			LdapCfg.Servers = make([]*LdapServerConf, 0)
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
-				sc.withLoginResult(true)
+				sc.withLoginResult(false)
+				readLDAPConfig = func() (bool, *LDAP.Config) {
+					config := &LDAP.Config{
+						Servers: []*LDAP.LdapServerConf{},
+					}
+
+					return setting.LdapEnabled, config
+				}
+
 				enabled, err := loginUsingLdap(sc.loginUserQuery)
 
 				Convey("it should return true", func() {
@@ -69,7 +35,7 @@ func TestLdapLogin(t *testing.T) {
 				})
 
 				Convey("it should return invalid credentials error", func() {
-					So(err, ShouldEqual, ErrInvalidCredentials)
+					So(err, ShouldEqual, ErrNoLDAPServers)
 				})
 
 				Convey("it should not call ldap login", func() {
@@ -109,7 +75,7 @@ func mockLdapAuthenticator(valid bool) *mockLdapAuther {
 		validLogin: valid,
 	}
 
-	NewLdapAuthenticator = func(server *LdapServerConf) ILdapAuther {
+	newLDAP = func(server *LDAP.LdapServerConf) LDAP.ILdapAuther {
 		return mock
 	}
 
@@ -121,21 +87,21 @@ type mockLdapAuther struct {
 	loginCalled bool
 }
 
-func (a *mockLdapAuther) Login(query *m.LoginUserQuery) error {
-	a.loginCalled = true
+func (auth *mockLdapAuther) Login(query *m.LoginUserQuery) error {
+	auth.loginCalled = true
 
-	if !a.validLogin {
-		return ErrInvalidCredentials
+	if !auth.validLogin {
+		return errTest
 	}
 
 	return nil
 }
 
-func (a *mockLdapAuther) SyncUser(query *m.LoginUserQuery) error {
+func (auth *mockLdapAuther) SyncUser(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *mockLdapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
+func (auth *mockLdapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LDAP.LdapUserInfo) (*m.User, error) {
 	return nil, nil
 }
 
@@ -148,7 +114,7 @@ type ldapLoginScenarioFunc func(c *ldapLoginScenarioContext)
 
 func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 	Convey(desc, func() {
-		origNewLdapAuthenticator := NewLdapAuthenticator
+		mock := &mockLdapAuther{}
 
 		sc := &ldapLoginScenarioContext{
 			loginUserQuery: &m.LoginUserQuery{
@@ -156,11 +122,28 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
-			ldapAuthenticatorMock: &mockLdapAuther{},
+			ldapAuthenticatorMock: mock,
+		}
+
+		readLDAPConfig = func() (bool, *LDAP.Config) {
+			config := &LDAP.Config{
+				Servers: []*LDAP.LdapServerConf{
+					&LDAP.LdapServerConf{
+						Host: "",
+					},
+				},
+			}
+
+			return setting.LdapEnabled, config
+		}
+
+		newLDAP = func(server *LDAP.LdapServerConf) LDAP.ILdapAuther {
+			return mock
 		}
 
 		defer func() {
-			NewLdapAuthenticator = origNewLdapAuthenticator
+			newLDAP = LDAP.New
+			readLDAPConfig = LDAP.ReadConfig
 		}()
 
 		fn(sc)

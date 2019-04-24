@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
+
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 func TestAuthenticateUser(t *testing.T) {

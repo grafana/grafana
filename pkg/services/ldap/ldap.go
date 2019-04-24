@@ -32,7 +32,6 @@ type ILdapAuther interface {
 }
 
 type ldapAuther struct {
-	config            *LdapConfig
 	server            *LdapServerConf
 	conn              ILdapConn
 	requireSecondBind bool
@@ -51,21 +50,16 @@ var (
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
 )
 
-var New = func(server *LdapServerConf) ILdapAuther {
-	return &ldapAuther{server: server, log: log.New("ldap")}
-}
-
-func NewNew(config *LdapConfig) *ldapAuther {
+func New(server *LdapServerConf) ILdapAuther {
 	return &ldapAuther{
-		config: config,
-		server: config.Servers[0],
+		server: server,
 		log:    log.New("ldap"),
 	}
 }
 
 func (a *ldapAuther) Dial() error {
-	if testHookDial != nil {
-		return testHookDial()
+	if hookDial != nil {
+		return hookDial(a)
 	}
 
 	var err error
@@ -101,7 +95,7 @@ func (a *ldapAuther) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if a.server.StartTLS {
-				a.conn, err = ldap.Dial("tcp", address)
+				a.conn, err = dial("tcp", address)
 				if err == nil {
 					if err = a.conn.StartTLS(tlsCfg); err == nil {
 						return nil
@@ -121,35 +115,35 @@ func (a *ldapAuther) Dial() error {
 	return err
 }
 
-func (a *ldapAuther) Login(query *m.LoginUserQuery) error {
+func (auth *ldapAuther) Login(query *m.LoginUserQuery) error {
 	// connect to ldap server
-	if err := a.Dial(); err != nil {
+	if err := auth.Dial(); err != nil {
 		return err
 	}
-	defer a.conn.Close()
+	defer auth.conn.Close()
 
 	// perform initial authentication
-	if err := a.initialBind(query.Username, query.Password); err != nil {
+	if err := auth.initialBind(query.Username, query.Password); err != nil {
 		return err
 	}
 
 	// find user entry & attributes
-	ldapUser, err := a.searchForUser(query.Username)
+	ldapUser, err := auth.searchForUser(query.Username)
 	if err != nil {
 		return err
 	}
 
-	a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
+	auth.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
 
 	// check if a second user bind is needed
-	if a.requireSecondBind {
-		err = a.secondBind(ldapUser, query.Password)
+	if auth.requireSecondBind {
+		err = auth.secondBind(ldapUser, query.Password)
 		if err != nil {
 			return err
 		}
 	}
 
-	grafanaUser, err := a.GetGrafanaUserFor(query.ReqContext, ldapUser)
+	grafanaUser, err := auth.GetGrafanaUserFor(query.ReqContext, ldapUser)
 	if err != nil {
 		return err
 	}
@@ -221,7 +215,8 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		a.log.Info(
 			"Ldap Auth: user does not belong in any of the specified ldap groups",
 			"username", ldapUser.Username,
-			"groups", ldapUser.MemberOf)
+			"groups", ldapUser.MemberOf,
+		)
 		return nil, ErrInvalidCredentials
 	}
 

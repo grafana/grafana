@@ -13,7 +13,7 @@ func (ldap *ldapAuther) Close() {
 func (ldap *ldapAuther) Users() ([]*LdapUserInfo, error) {
 	var result *LDAP.SearchResult
 	var err error
-	server := ldap.config.Servers[0]
+	server := ldap.server
 
 	for _, base := range server.SearchBaseDNs {
 		attributes := make([]string, 0)

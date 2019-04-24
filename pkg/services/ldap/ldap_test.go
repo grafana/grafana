@@ -2,7 +2,6 @@ package ldap
 
 import (
 	"context"
-	"crypto/tls"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -386,10 +384,10 @@ func TestLdapAuther(t *testing.T) {
 	})
 
 	Convey("When calling SyncUser", t, func() {
-
 		mockLdapConnection := &mockLdapConn{}
-		ldapAuther := New(
-			&LdapServerConf{
+
+		auth := &ldapAuther{
+			server: &LdapServerConf{
 				Host:       "",
 				RootCACert: "",
 				LdapGroups: []*LdapGroupToOrgRole{
@@ -404,7 +402,9 @@ func TestLdapAuther(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-		)
+			conn: mockLdapConnection,
+			log:  log.New("test-logger"),
+		}
 
 		dialCalled := false
 		dial = func(network, addr string) (ILdapConn, error) {
@@ -429,6 +429,8 @@ func TestLdapAuther(t *testing.T) {
 				Username: "roelgerrits",
 			}
 
+			hookDial = nil
+
 			sc.userQueryReturns(&m.User{
 				Id:    1,
 				Email: "roel@test.net",
@@ -438,7 +440,7 @@ func TestLdapAuther(t *testing.T) {
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
 
 			// act
-			syncErrResult := ldapAuther.SyncUser(query)
+			syncErrResult := auth.SyncUser(query)
 
 			// assert
 			So(dialCalled, ShouldBeTrue)
@@ -492,146 +494,3 @@ func TestLdapAuther(t *testing.T) {
 		So(len(mockLdapConnection.searchAttributes), ShouldEqual, 3)
 	})
 }
-
-type mockLdapConn struct {
-	result                      *ldap.SearchResult
-	searchCalled                bool
-	searchAttributes            []string
-	bindProvider                func(username, password string) error
-	unauthenticatedBindProvider func(username string) error
-}
-
-func (c *mockLdapConn) Bind(username, password string) error {
-	if c.bindProvider != nil {
-		return c.bindProvider(username, password)
-	}
-
-	return nil
-}
-
-func (c *mockLdapConn) UnauthenticatedBind(username string) error {
-	if c.unauthenticatedBindProvider != nil {
-		return c.unauthenticatedBindProvider(username)
-	}
-
-	return nil
-}
-
-func (c *mockLdapConn) Close() {}
-
-func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
-	c.result = result
-}
-
-func (c *mockLdapConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
-	c.searchCalled = true
-	c.searchAttributes = sr.Attributes
-	return c.result, nil
-}
-
-func (c *mockLdapConn) StartTLS(*tls.Config) error {
-	return nil
-}
-
-func ldapAutherScenario(desc string, fn scenarioFunc) {
-	Convey(desc, func() {
-		defer bus.ClearBusHandlers()
-
-		sc := &scenarioContext{}
-
-		loginService := &login.LoginService{
-			Bus: bus.GetBus(),
-		}
-
-		bus.AddHandler("test", loginService.UpsertUser)
-
-		bus.AddHandler("test", loginService.UpsertUser)
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.SyncTeamsCommand) error {
-			return nil
-		})
-
-		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateUserPermissionsCommand) error {
-			sc.updateUserPermissionsCmd = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.GetUserByAuthInfoQuery) error {
-			sc.getUserByAuthInfoQuery = cmd
-			sc.getUserByAuthInfoQuery.Result = &m.User{Login: cmd.Login}
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.GetUserOrgListQuery) error {
-			sc.getUserOrgListQuery = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
-			sc.createUserCmd = cmd
-			sc.createUserCmd.Result = m.User{Login: cmd.Login}
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.AddOrgUserCommand) error {
-			sc.addOrgUserCmd = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.UpdateOrgUserCommand) error {
-			sc.updateOrgUserCmd = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.RemoveOrgUserCommand) error {
-			sc.removeOrgUserCmd = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.UpdateUserCommand) error {
-			sc.updateUserCmd = cmd
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.SetUsingOrgCommand) error {
-			sc.setUsingOrgCmd = cmd
-			return nil
-		})
-
-		fn(sc)
-	})
-}
-
-type scenarioContext struct {
-	getUserByAuthInfoQuery   *m.GetUserByAuthInfoQuery
-	getUserOrgListQuery      *m.GetUserOrgListQuery
-	createUserCmd            *m.CreateUserCommand
-	addOrgUserCmd            *m.AddOrgUserCommand
-	updateOrgUserCmd         *m.UpdateOrgUserCommand
-	removeOrgUserCmd         *m.RemoveOrgUserCommand
-	updateUserCmd            *m.UpdateUserCommand
-	setUsingOrgCmd           *m.SetUsingOrgCommand
-	updateUserPermissionsCmd *m.UpdateUserPermissionsCommand
-}
-
-func (sc *scenarioContext) userQueryReturns(user *m.User) {
-	bus.AddHandler("test", func(query *m.GetUserByAuthInfoQuery) error {
-		if user == nil {
-			return m.ErrUserNotFound
-		}
-		query.Result = user
-		return nil
-	})
-	bus.AddHandler("test", func(query *m.SetAuthInfoCommand) error {
-		return nil
-	})
-}
-
-func (sc *scenarioContext) userOrgsQueryReturns(orgs []*m.UserOrgDTO) {
-	bus.AddHandler("test", func(query *m.GetUserOrgListQuery) error {
-		query.Result = orgs
-		return nil
-	})
-}
-
-type scenarioFunc func(c *scenarioContext)

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type LdapConfig struct {
+type Config struct {
 	Servers []*LdapServerConf `toml:"servers"`
 }
 
@@ -53,12 +53,12 @@ type LdapGroupToOrgRole struct {
 	OrgRole        m.RoleType `toml:"org_role"`
 }
 
-var LdapCfg LdapConfig
+var LdapCfg Config
 var ldapLogger log.Logger = log.New("ldap")
 
 // ReadConfig reads the config if ldap is enabled
 // TODO: refactor
-func ReadConfig() (bool, *LdapConfig) {
+func ReadConfig() (bool, *Config) {
 	if !setting.LdapEnabled {
 		return false, nil
 	}
