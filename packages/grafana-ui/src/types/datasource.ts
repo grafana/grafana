@@ -1,7 +1,8 @@
 import { ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
+import { PanelData } from './panel';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -94,7 +95,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -140,8 +141,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  queryResponse?: SeriesData[];
-  queryError?: DataQueryError;
+  panelData: PanelData; // The current panel data
+  queryResponse?: PanelData; // data filtered to only this query.  Includes the error.
 }
 
 export enum DataSourceStatus {
@@ -220,10 +221,11 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
+  requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange;
+  timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -232,12 +234,8 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
-}
 
-/**
- * Timestamps when the query starts and stops
- */
-export interface DataRequestInfo extends DataQueryOptions {
+  // Request Timing
   startTime: number;
   endTime?: number;
 }

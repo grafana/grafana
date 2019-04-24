@@ -288,6 +288,21 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result[0].Title, ShouldEqual, "test dash 23")
 			})
 
+			Convey("Should be able to filter by tag and type", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:        1,
+					Type:         "dash-db",
+					Tags:         []string{"prod"},
+					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 3)
+				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+			})
+
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,

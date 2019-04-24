@@ -188,6 +188,5 @@ func TestLoadingSettings(t *testing.T) {
 
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
-
 	})
 }
