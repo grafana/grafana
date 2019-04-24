@@ -65,8 +65,8 @@ type DeleteDatasourceConfigV0 struct {
 }
 
 type DeleteDatasourceConfigV1 struct {
-	OrgId int64  `json:"orgId" yaml:"orgId"`
-	Name  string `json:"name" yaml:"name"`
+	OrgId values.Int64Value  `json:"orgId" yaml:"orgId"`
+	Name  values.StringValue `json:"name" yaml:"name"`
 }
 
 type DataSourceFromConfigV0 struct {
@@ -138,18 +138,26 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 			Editable:          ds.Editable.Value(),
 			Version:           ds.Version.Value(),
 		})
-		if ds.Password != "" {
-			cfg.log.Warn("[Deprecated] the use of password field is deprecated. Please use secureJsonData.password", "datasource name", ds.Name)
+		if len(ds.Password.Raw) > 0 {
+			cfg.log.Warn(
+				"[Deprecated] the use of password field is deprecated. Please use secureJsonData.password",
+				"datasource name",
+				ds.Name.Value(),
+			)
 		}
-		if ds.BasicAuthPassword != "" {
-			cfg.log.Warn("[Deprecated] the use of basicAuthPassword field is deprecated. Please use secureJsonData.basicAuthPassword", "datasource name", ds.Name)
+		if len(ds.BasicAuthPassword.Raw) > 0 {
+			cfg.log.Warn(
+				"[Deprecated] the use of basicAuthPassword field is deprecated. Please use secureJsonData.basicAuthPassword",
+				"datasource name",
+				ds.Name.Value(),
+			)
 		}
 	}
 
 	for _, ds := range cfg.DeleteDatasources {
 		r.DeleteDatasources = append(r.DeleteDatasources, &DeleteDatasourceConfig{
-			OrgId: ds.OrgId,
-			Name:  ds.Name,
+			OrgId: ds.OrgId.Value(),
+			Name:  ds.Name.Value(),
 		})
 	}
 
