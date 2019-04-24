@@ -167,34 +167,42 @@ export class PanelQueryState {
       }
       active.push(stream);
     }
+
     this.streams = active;
     this.streamCallback();
   };
 
   closeStreams(keepSeries = false) {
-    if (this.streams.length) {
-      const series: SeriesData[] = [];
-      for (const stream of this.streams) {
-        if (stream.series) {
-          series.push.apply(series, stream.series);
-        }
-        try {
-          stream.unsubscribe();
-        } catch {}
-      }
-      this.streams = [];
+    if (!this.streams.length) {
+      return;
+    }
 
-      // Move the series from streams to the resposne
-      if (keepSeries) {
-        const { response } = this;
-        this.response = {
-          ...response,
-          series: [
-            ...response.series,
-            ...series, // Append the streamed series
-          ],
-        };
+    const series: SeriesData[] = [];
+
+    for (const stream of this.streams) {
+      if (stream.series) {
+        series.push.apply(series, stream.series);
       }
+
+      try {
+        stream.unsubscribe();
+      } catch {
+        console.log('Failed to unsubscribe to stream');
+      }
+    }
+
+    this.streams = [];
+
+    // Move the series from streams to the resposne
+    if (keepSeries) {
+      const { response } = this;
+      this.response = {
+        ...response,
+        series: [
+          ...response.series,
+          ...series, // Append the streamed series
+        ],
+      };
     }
   }
 
@@ -212,6 +220,7 @@ export class PanelQueryState {
     let done = this.isFinished(response.state);
     const series = [...response.series];
     const active: DataStreamState[] = [];
+
     for (const stream of this.streams) {
       if (shouldDisconnect(request, stream)) {
         stream.unsubscribe();
@@ -220,10 +229,12 @@ export class PanelQueryState {
 
       active.push(stream);
       series.push.apply(series, stream.series);
+
       if (!this.isFinished(stream.state)) {
         done = false;
       }
     }
+
     this.streams = active;
 
     // Update the time range
@@ -239,7 +250,7 @@ export class PanelQueryState {
     return {
       state: done ? LoadingState.Done : LoadingState.Streaming,
       series, // Union of series from response and all streams
-      legacy: this.sendLegacy ? series.map(s => toLegacyResponseData(s)) : undefined,
+      legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
         ...this.request,
         range: timeRange, // update the time range

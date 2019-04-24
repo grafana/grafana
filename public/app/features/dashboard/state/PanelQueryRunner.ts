@@ -98,11 +98,7 @@ export class PanelQueryRunner {
     } = options;
 
     // filter out hidden queries & deep clone them
-    const clonedAndFilteredQueries = cloneDeep(
-      queries.filter(q => {
-        return !q.hide; // Skip any hidden queries
-      })
-    );
+    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
