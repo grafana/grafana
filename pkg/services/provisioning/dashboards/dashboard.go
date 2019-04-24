@@ -53,7 +53,7 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 	return nil
 }
 
-// PollChanges starts polling for changes in dashboard definition files. It creates goruotine for each provider
+// PollChanges starts polling for changes in dashboard definition files. It creates goroutine for each provider
 // defined in the config.
 func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
