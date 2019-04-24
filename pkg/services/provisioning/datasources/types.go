@@ -138,6 +138,9 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 			Editable:          ds.Editable.Value(),
 			Version:           ds.Version.Value(),
 		})
+
+		// Using Raw value for the warnings here so that even if it uses env interpolation and the env var is empty
+		// it will still warn
 		if len(ds.Password.Raw) > 0 {
 			cfg.log.Warn(
 				"[Deprecated] the use of password field is deprecated. Please use secureJsonData.password",
