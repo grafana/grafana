@@ -247,6 +247,9 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
+# golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.4.0
 google.golang.org/appengine
 google.golang.org/appengine/cloudsql

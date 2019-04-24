@@ -190,7 +190,6 @@ func TestLoadingSettings(t *testing.T) {
 
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
-
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {

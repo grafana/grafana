@@ -18,9 +18,10 @@ import (
 	"time"
 
 	"github.com/go-macaron/session"
+	ini "gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
-	ini "gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -184,9 +185,6 @@ var (
 	// Explore UI
 	ExploreEnabled bool
 
-	// logger
-	logger log.Logger
-
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -200,7 +198,8 @@ var (
 
 // TODO move all global vars to this struct
 type Cfg struct {
-	Raw *ini.File
+	Raw    *ini.File
+	Logger log.Logger
 
 	// HTTP Server Settings
 	AppUrl    string
@@ -259,7 +258,6 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	logger = log.New("settings")
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
@@ -549,22 +547,23 @@ func setHomePath(args *CommandLineArgs) {
 
 var skipStaticRootValidation = false
 
-func validateStaticRootPath() error {
+func NewCfg() *Cfg {
+	return &Cfg{
+		Logger: log.New("settings"),
+		Raw:    ini.Empty(),
+	}
+}
+
+func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
 	}
 
 	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
-		logger.Error("Failed to detect generated javascript files in public/build")
+		cfg.Logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
 	return nil
-}
-
-func NewCfg() *Cfg {
-	return &Cfg{
-		Raw: ini.Empty(),
-	}
 }
 
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
@@ -648,7 +647,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
 
-	if err := validateStaticRootPath(); err != nil {
+	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
 	}
 
@@ -911,17 +910,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
-	cfg.PluginsAppsSkipVerifyTLS = iniFile.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
+	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {
 		cfg.PluginsEnableAlpha = true
 	}
 
-	err = cfg.readSessionConfig()
-	if err != nil {
-		return err
-	}
+	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 
@@ -985,36 +981,14 @@ type RemoteCacheOptions struct {
 	ConnStr string
 }
 
-func (cfg *Cfg) readSessionConfig() error {
-	sec := cfg.Raw.Section("session")
-	SessionOptions = session.Options{}
-	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
-	providerConfig, err := valueAsString(sec, "provider_config", "")
-	if err != nil {
-		return err
-	}
-	SessionOptions.ProviderConfig = strings.Trim(providerConfig, "\" ")
-	SessionOptions.CookieName, err = valueAsString(sec, "cookie_name", "grafana_sess")
-	if err != nil {
-		return err
-	}
-	SessionOptions.CookiePath = AppSubUrl
-	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
-	SessionOptions.Gclifetime = cfg.Raw.Section("session").Key("gc_interval_time").MustInt64(86400)
-	SessionOptions.Maxlifetime = cfg.Raw.Section("session").Key("session_life_time").MustInt64(86400)
-	SessionOptions.IDLength = 16
+func (cfg *Cfg) readSessionConfig() {
+	sec, _ := cfg.Raw.GetSection("session")
 
-	if SessionOptions.Provider == "file" {
-		SessionOptions.ProviderConfig = makeAbsolute(SessionOptions.ProviderConfig, cfg.DataPath)
-		os.MkdirAll(path.Dir(SessionOptions.ProviderConfig), os.ModePerm)
+	if sec != nil {
+		cfg.Logger.Warn(
+			"[Removed] Session setting was removed in v6.2, use remote_cache option instead",
+		)
 	}
-
-	if SessionOptions.CookiePath == "" {
-		SessionOptions.CookiePath = "/"
-	}
-
-	SessionConnMaxLifetime = cfg.Raw.Section("session").Key("conn_max_lifetime").MustInt64(14400)
-	return nil
 }
 
 func (cfg *Cfg) initLogging(file *ini.File) error {
@@ -1041,26 +1015,26 @@ func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
 	for _, file := range configFiles {
-		logger.Info("Config loaded from", "file", file)
+		cfg.Logger.Info("Config loaded from", "file", file)
 	}
 
 	if len(appliedCommandLineProperties) > 0 {
 		for _, prop := range appliedCommandLineProperties {
-			logger.Info("Config overridden from command line", "arg", prop)
+			cfg.Logger.Info("Config overridden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
 		for _, prop := range appliedEnvOverrides {
-			logger.Info("Config overridden from Environment variable", "var", prop)
+			cfg.Logger.Info("Config overridden from Environment variable", "var", prop)
 		}
 	}
 
-	logger.Info("Path Home", "path", HomePath)
-	logger.Info("Path Data", "path", cfg.DataPath)
-	logger.Info("Path Logs", "path", cfg.LogsPath)
-	logger.Info("Path Plugins", "path", PluginsPath)
-	logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
-	logger.Info("App mode " + Env)
+	cfg.Logger.Info("Path Home", "path", HomePath)
+	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
+	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
+	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
+	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
+	cfg.Logger.Info("App mode " + Env)
 }

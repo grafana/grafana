@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
@@ -14,9 +13,6 @@ type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
 	UserToken *UserToken
-
-	// This should only be used by the auth_proxy
-	Session session.SessionStore
 
 	IsSignedIn     bool
 	IsRenderCall   bool

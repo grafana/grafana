@@ -1,4 +1,4 @@
-import { ComponentClass } from 'react';
+import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
@@ -21,6 +21,7 @@ export interface PanelProps<T = any> {
 
   timeRange: TimeRange;
   options: T;
+  onOptionsChange: (options: T) => void;
   renderCounter: number;
   width: number;
   height: number;
@@ -53,13 +54,13 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 ) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
-  panel: ComponentClass<PanelProps<TOptions>>;
+  panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
-  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+  constructor(panel: ComponentType<PanelProps<TOptions>>) {
     this.panel = panel;
   }
 

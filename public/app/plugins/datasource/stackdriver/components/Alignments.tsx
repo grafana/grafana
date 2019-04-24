@@ -8,7 +8,7 @@ import { SelectOptionItem } from '@grafana/ui';
 export interface Props {
   onChange: (perSeriesAligner) => void;
   templateSrv: TemplateSrv;
-  alignOptions: SelectOptionItem[];
+  alignOptions: Array<SelectOptionItem<string>>;
   perSeriesAligner: string;
 }
 
