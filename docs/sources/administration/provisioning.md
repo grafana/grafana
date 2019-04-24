@@ -203,13 +203,24 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
+  # <string> provider name
 - name: 'default'
+  # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string, required> name of the dashboard folder. Required
   folder: ''
+  # <string> folder UID. will be automatically generated if not specified
+  folderUid: ''
+  # <string, required> provider type. Required
   type: file
+  # <bool> disable dashboard deletion
   disableDeletion: false
-  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
+  # <bool> enable dashboard editing
+  editable: true
+  # <int> how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10  
   options:
+    # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
 ```
 
