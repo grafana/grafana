@@ -289,86 +289,86 @@ describe('ElasticDatasource', function(this: any) {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
           data: {
-            'genuine.es7._mapping.response' : {
-              'mappings' : {
-                'properties' : {
-                  '@timestamp_millis' : {
-                    'type' : 'date',
-                    'format' : 'epoch_millis'
+            'genuine.es7._mapping.response': {
+              mappings: {
+                properties: {
+                  '@timestamp_millis': {
+                    type: 'date',
+                    format: 'epoch_millis',
                   },
-                  'classification_terms' : {
-                    'type' : 'keyword'
+                  classification_terms: {
+                    type: 'keyword',
                   },
-                  'domains' : {
-                    'type' : 'keyword'
+                  domains: {
+                    type: 'keyword',
                   },
-                  'ip_address' : {
-                    'type' : 'ip'
+                  ip_address: {
+                    type: 'ip',
                   },
-                  'justification_blob' : {
-                    'properties' : {
-                      'criterion' : {
-                        'type' : 'text',
-                        'fields' : {
-                          'keyword' : {
-                            'type' : 'keyword',
-                            'ignore_above' : 256
-                          }
-                        }
+                  justification_blob: {
+                    properties: {
+                      criterion: {
+                        type: 'text',
+                        fields: {
+                          keyword: {
+                            type: 'keyword',
+                            ignore_above: 256,
+                          },
+                        },
                       },
-                      'overall_vote_score' : {
-                        'type' : 'float'
+                      overall_vote_score: {
+                        type: 'float',
                       },
-                      'shallow' : {
-                        'properties' : {
-                          'jsi' : {
-                            'properties' : {
-                              'sdb' : {
-                                'properties' : {
-                                  'dsel2' : {
-                                    'properties' : {
-                                      'bootlegged-gille' : {
-                                        'properties' : {
-                                          'botness' : {
-                                            'type' : 'float'
+                      shallow: {
+                        properties: {
+                          jsi: {
+                            properties: {
+                              sdb: {
+                                properties: {
+                                  dsel2: {
+                                    properties: {
+                                      'bootlegged-gille': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
                                           },
-                                          'general_algorithm_score' : {
-                                            'type' : 'float'
-                                          }
-                                        }
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
                                       },
-                                      'uncombed-boris' : {
-                                        'properties' : {
-                                          'botness' : {
-                                            'type' : 'float'
+                                      'uncombed-boris': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
                                           },
-                                          'general_algorithm_score' : {
-                                            'type' : 'float'
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
                   },
-                  'overall_vote_score' : {
-                    'type' : 'float'
+                  overall_vote_score: {
+                    type: 'float',
                   },
-                  'ua_terms_long' : {
-                    'type' : 'keyword'
+                  ua_terms_long: {
+                    type: 'keyword',
                   },
-                  'ua_terms_short' : {
-                    'type' : 'keyword'
-                  }
-                }
-              }
-            }
+                  ua_terms_short: {
+                    type: 'keyword',
+                  },
+                },
+              },
+            },
           },
         });
       });
@@ -396,7 +396,7 @@ describe('ElasticDatasource', function(this: any) {
             'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
             'overall_vote_score',
             'ua_terms_long',
-            'ua_terms_short'            
+            'ua_terms_short',
           ]);
         });
     });
@@ -416,8 +416,8 @@ describe('ElasticDatasource', function(this: any) {
             'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
             'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
             'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
-            'overall_vote_score'
-            ]);
+            'overall_vote_score',
+          ]);
         });
 
       ctx.ds
@@ -431,7 +431,7 @@ describe('ElasticDatasource', function(this: any) {
           expect(fields).toEqual(['@timestamp_millis']);
         });
     });
-  });  
+  });
 
   describe('When issuing aggregation query on es5.x', () => {
     let requestOptions, parts, header;
