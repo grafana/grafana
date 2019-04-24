@@ -59,8 +59,8 @@ a time pattern for the index name or a wildcard.
 ### Elasticsearch version
 
 Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences on how queries are composed.
-Currently the versions available are `2.x`, `5.x`, `5.6+`, `6.0+` or `7.0+`. The value `5.6+` means version 5.6 or higher, but lower than  6.0. The value `6.0+` means 
-version 6.0 or higher, but lower than 7.0. Finally,  `7.0+` means version 7.0.
+Currently the versions available are `2.x`, `5.x`, `5.6+`, `6.0+` or `7.0+`. The value `5.6+` means version 5.6 or higher, but lower than  6.0. The value `6.0+` means
+version 6.0 or higher, but lower than 7.0. Finally, `7.0+` means version 7.0 or higher, but lower than 8.0.
 
 ### Min time interval
 
