@@ -167,6 +167,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  onOptionsChange = (options: any) => {
+    this.props.panel.updateOptions(options);
+  };
+
   replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
     let vars = this.props.panel.scopedVars;
     if (extraVars) {
@@ -223,6 +227,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
           />
         </div>
       </>
