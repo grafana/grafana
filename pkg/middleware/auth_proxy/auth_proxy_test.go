@@ -5,12 +5,13 @@ import (
 	"net/http"
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	models "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
 )
 
 type TestLDAP struct {
