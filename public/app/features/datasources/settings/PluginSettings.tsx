@@ -5,7 +5,7 @@ import { DataSourceSettings, DataSourcePlugin } from '@grafana/ui/src/types';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 export interface Props {
-  plugin: DataSourcePlugin<any, any>;
+  plugin: DataSourcePlugin;
   dataSource: DataSourceSettings;
   dataSourceMeta: Plugin;
   onModelChange: (dataSource: DataSourceSettings) => void;
@@ -36,7 +36,7 @@ export class PluginSettings extends PureComponent<Props> {
       return;
     }
 
-    if (!plugin.editor) {
+    if (!plugin.components.ConfigEditor) {
       // React editor is not specified, let's render angular editor
       // How to apprach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
       const loader = getAngularLoader();
@@ -47,8 +47,8 @@ export class PluginSettings extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps) {
-    if (!this.props.plugin.editor && this.props.dataSource !== prevProps.dataSource) {
-      console.log('differ');
+    const { plugin } = this.props;
+    if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
       this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
 
       this.component.digest();
@@ -74,8 +74,8 @@ export class PluginSettings extends PureComponent<Props> {
 
     return (
       <div ref={element => (this.element = element)}>
-        {plugin.editor &&
-          React.createElement(plugin.editor, {
+        {plugin.components.ConfigEditor &&
+          React.createElement(plugin.components.ConfigEditor, {
             options: dataSource,
             onOptionsChange: this.onModelChanged,
           })}

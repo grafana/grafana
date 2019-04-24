@@ -37,12 +37,12 @@ export interface Props {
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
-  plugin?: DataSourcePlugin<any, any>;
+  plugin?: DataSourcePlugin;
 }
 
 interface State {
   dataSource: DataSourceSettings;
-  plugin: DataSourcePlugin<any, any>;
+  plugin: DataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
@@ -60,7 +60,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   async loadPlugin(pluginId?: string) {
     const { dataSourceMeta } = this.props;
-    let importedPlugin: DataSourcePlugin<any>;
+    let importedPlugin: DataSourcePlugin;
 
     try {
       importedPlugin = await importDataSourcePlugin(dataSourceMeta.module);

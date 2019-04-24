@@ -30,4 +30,4 @@ const TestDataOptionsEditor: React.FunctionComponent<DataSourcePluginOptionsEdit
 export const plugin = new DataSourcePlugin<TestDataOptions>(TestDataDatasource)
   .setQueryCtrl(TestDataQueryCtrl)
   .setAnnotationQueryCtrl(TestDataAnnotationsQueryCtrl)
-  .setEditor(TestDataOptionsEditor);
+  .setConfigEditor(TestDataOptionsEditor);

@@ -7,7 +7,7 @@ import { getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { setDataSourceName, setIsDefault } from '../state/actions';
 
-const pluginMock = new DataSourcePlugin<any, any>({} as DataSourceConstructor<any>);
+const pluginMock = new DataSourcePlugin({} as DataSourceConstructor<any>);
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

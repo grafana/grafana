@@ -8,20 +8,20 @@ export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
 }
-export class DataSourcePlugin<TOptions, TQuery extends DataQuery = DataQuery> {
+export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
-  components: DataSourcePluginComponents<TQuery>;
-  editor?: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  components: DataSourcePluginComponents<TOptions, TQuery>;
 
   constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
     this.DataSourceClass = DataSourceClass;
     this.components = {};
   }
 
-  setEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
-    this.editor = editor;
+  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+    this.components.ConfigEditor = editor;
     return this;
   }
+
   setConfigCtrl(ConfigCtrl: any) {
     this.components.ConfigCtrl = ConfigCtrl;
     return this;
@@ -68,7 +68,7 @@ export class DataSourcePlugin<TOptions, TQuery extends DataQuery = DataQuery> {
   }
 }
 
-export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery> {
+export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -76,6 +76,7 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
+  ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 }
 
 export interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
