@@ -124,8 +124,7 @@ class NetCrunchConnection {
 
     function getUserProfileData() {
       return new Promise(resolve =>
-        self.serverConnection.ncSrv.ICurrentUserProfile.GetProfileData(userProfile =>
-          resolve(userProfile)));
+        self.serverConnection.ncSrv.ICurrentUserProfile.GetProfileInfo(userProfile => resolve(userProfile)));
     }
 
     if (this.serverConnection == null) {

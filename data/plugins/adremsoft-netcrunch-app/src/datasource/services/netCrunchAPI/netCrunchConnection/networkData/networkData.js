@@ -58,15 +58,10 @@ function NetCrunchNetworkData(adremClient, netCrunchConnection) {
   }
 
   function getAccessRightsParameters(userProfile) {
-    return userProfile.$children.reduce((result, current) => {
-      if (current.$tag === 'User') {
-        return {
-          accessProfileId: current.ACProfileId,
-          orgId: current.orgId
-        };
-      }
-      return result;
-    }, {});
+    return {
+      accessProfileId: userProfile.ACProfileId,
+      orgId: userProfile.OrgId
+    };
   }
 
   return {
