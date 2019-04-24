@@ -1,10 +1,11 @@
 package datasources
 
 import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
-import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type ConfigVersion struct {
 	ApiVersion int64 `json:"apiVersion" yaml:"apiVersion"`
@@ -52,6 +53,7 @@ type DatasourcesAsConfigV0 struct {
 
 type DatasourcesAsConfigV1 struct {
 	ConfigVersion
+	log log.Logger
 
 	Datasources       []*DataSourceFromConfigV1   `json:"datasources" yaml:"datasources"`
 	DeleteDatasources []*DeleteDatasourceConfigV1 `json:"deleteDatasources" yaml:"deleteDatasources"`
@@ -136,6 +138,12 @@ func (cfg *DatasourcesAsConfigV1) mapToDatasourceFromConfig(apiVersion int64) *D
 			Editable:          ds.Editable.Value(),
 			Version:           ds.Version.Value(),
 		})
+		if ds.Password != "" {
+			cfg.log.Warn("[Deprecated] the use of password field is deprecated. Please use secureJsonData.password", "datasource name", ds.Name)
+		}
+		if ds.BasicAuthPassword != "" {
+			cfg.log.Warn("[Deprecated] the use of basicAuthPassword field is deprecated. Please use secureJsonData.basicAuthPassword", "datasource name", ds.Name)
+		}
 	}
 
 	for _, ds := range cfg.DeleteDatasources {

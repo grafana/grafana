@@ -100,7 +100,7 @@ func cleanComment(in []byte) ([]byte, bool) {
 	return in[i:], true
 }
 
-func readKeyName(in []byte) (string, int, error) {
+func readKeyName(delimiters string, in []byte) (string, int, error) {
 	line := string(in)
 
 	// Check if key name surrounded by quotes.
@@ -127,7 +127,7 @@ func readKeyName(in []byte) (string, int, error) {
 		pos += startIdx
 
 		// Find key-value delimiter
-		i := strings.IndexAny(line[pos+startIdx:], "=:")
+		i := strings.IndexAny(line[pos+startIdx:], delimiters)
 		if i < 0 {
 			return "", -1, ErrDelimiterNotFound{line}
 		}
@@ -135,7 +135,7 @@ func readKeyName(in []byte) (string, int, error) {
 		return strings.TrimSpace(line[startIdx:pos]), endIdx + startIdx + 1, nil
 	}
 
-	endIdx = strings.IndexAny(line, "=:")
+	endIdx = strings.IndexAny(line, delimiters)
 	if endIdx < 0 {
 		return "", -1, ErrDelimiterNotFound{line}
 	}
@@ -198,7 +198,7 @@ func hasSurroundedQuote(in string, quote byte) bool {
 
 func (p *parser) readValue(in []byte,
 	parserBufferSize int,
-	ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes, unescapeValueCommentSymbols, allowPythonMultilines bool) (string, error) {
+	ignoreContinuation, ignoreInlineComment, unescapeValueDoubleQuotes, unescapeValueCommentSymbols, allowPythonMultilines, spaceBeforeInlineComment, preserveSurroundedQuote bool) (string, error) {
 
 	line := strings.TrimLeftFunc(string(in), unicode.IsSpace)
 	if len(line) == 0 {
@@ -240,16 +240,27 @@ func (p *parser) readValue(in []byte,
 
 	// Check if ignore inline comment
 	if !ignoreInlineComment {
-		i := strings.IndexAny(line, "#;")
+		var i int
+		if spaceBeforeInlineComment {
+			i = strings.Index(line, " #")
+			if i == -1 {
+				i = strings.Index(line, " ;")
+			}
+
+		} else {
+			i = strings.IndexAny(line, "#;")
+		}
+
 		if i > -1 {
 			p.comment.WriteString(line[i:])
 			line = strings.TrimSpace(line[:i])
 		}
+
 	}
 
 	// Trim single and double quotes
-	if hasSurroundedQuote(line, '\'') ||
-		hasSurroundedQuote(line, '"') {
+	if (hasSurroundedQuote(line, '\'') ||
+		hasSurroundedQuote(line, '"')) && !preserveSurroundedQuote {
 		line = line[1 : len(line)-1]
 	} else if len(valQuote) == 0 && unescapeValueCommentSymbols {
 		if strings.Contains(line, `\;`) {
@@ -262,7 +273,6 @@ func (p *parser) readValue(in []byte,
 		parserBufferPeekResult, _ := p.buf.Peek(parserBufferSize)
 		peekBuffer := bytes.NewBuffer(parserBufferPeekResult)
 
-		identSize := -1
 		val := line
 
 		for {
@@ -279,12 +289,11 @@ func (p *parser) readValue(in []byte,
 				return val, nil
 			}
 
-			currentIdentSize := len(peekMatches[1])
 			// NOTE: Return if not a python-ini multi-line value.
-			if currentIdentSize < 0 {
+			currentIdentSize := len(peekMatches[1])
+			if currentIdentSize <= 0 {
 				return val, nil
 			}
-			identSize = currentIdentSize
 
 			// NOTE: Just advance the parser reader (buffer) in-sync with the peek buffer.
 			_, err := p.readUntil('\n')
@@ -293,12 +302,6 @@ func (p *parser) readValue(in []byte,
 			}
 
 			val += fmt.Sprintf("\n%s", peekMatches[2])
-		}
-
-		// NOTE: If it was a Python multi-line value,
-		// return the appended value.
-		if identSize > 0 {
-			return val, nil
 		}
 	}
 
@@ -328,8 +331,7 @@ func (f *File) parse(reader io.Reader) (err error) {
 
 	// NOTE: Iterate and increase `currentPeekSize` until
 	// the size of the parser buffer is found.
-	// TODO: When Golang 1.10 is the lowest version supported,
-	// replace with `parserBufferSize := p.buf.Size()`.
+	// TODO(unknwon): When Golang 1.10 is the lowest version supported, replace with `parserBufferSize := p.buf.Size()`.
 	parserBufferSize := 0
 	// NOTE: Peek 1kb at a time.
 	currentPeekSize := 1024
@@ -379,8 +381,7 @@ func (f *File) parse(reader io.Reader) (err error) {
 		// Section
 		if line[0] == '[' {
 			// Read to the next ']' (TODO: support quoted strings)
-			// TODO(unknwon): use LastIndexByte when stop supporting Go1.4
-			closeIdx := bytes.LastIndex(line, []byte("]"))
+			closeIdx := bytes.LastIndexByte(line, ']')
 			if closeIdx == -1 {
 				return fmt.Errorf("unclosed section: %s", line)
 			}
@@ -419,27 +420,35 @@ func (f *File) parse(reader io.Reader) (err error) {
 			continue
 		}
 
-		kname, offset, err := readKeyName(line)
+		kname, offset, err := readKeyName(f.options.KeyValueDelimiters, line)
 		if err != nil {
 			// Treat as boolean key when desired, and whole line is key name.
-			if IsErrDelimiterNotFound(err) && f.options.AllowBooleanKeys {
-				kname, err := p.readValue(line,
-					parserBufferSize,
-					f.options.IgnoreContinuation,
-					f.options.IgnoreInlineComment,
-					f.options.UnescapeValueDoubleQuotes,
-					f.options.UnescapeValueCommentSymbols,
-					f.options.AllowPythonMultilineValues)
-				if err != nil {
-					return err
+			if IsErrDelimiterNotFound(err) {
+				switch {
+				case f.options.AllowBooleanKeys:
+					kname, err := p.readValue(line,
+						parserBufferSize,
+						f.options.IgnoreContinuation,
+						f.options.IgnoreInlineComment,
+						f.options.UnescapeValueDoubleQuotes,
+						f.options.UnescapeValueCommentSymbols,
+						f.options.AllowPythonMultilineValues,
+						f.options.SpaceBeforeInlineComment,
+						f.options.PreserveSurroundedQuote)
+					if err != nil {
+						return err
+					}
+					key, err := section.NewBooleanKey(kname)
+					if err != nil {
+						return err
+					}
+					key.Comment = strings.TrimSpace(p.comment.String())
+					p.comment.Reset()
+					continue
+
+				case f.options.SkipUnrecognizableLines:
+					continue
 				}
-				key, err := section.NewBooleanKey(kname)
-				if err != nil {
-					return err
-				}
-				key.Comment = strings.TrimSpace(p.comment.String())
-				p.comment.Reset()
-				continue
 			}
 			return err
 		}
@@ -458,7 +467,9 @@ func (f *File) parse(reader io.Reader) (err error) {
 			f.options.IgnoreInlineComment,
 			f.options.UnescapeValueDoubleQuotes,
 			f.options.UnescapeValueCommentSymbols,
-			f.options.AllowPythonMultilineValues)
+			f.options.AllowPythonMultilineValues,
+			f.options.SpaceBeforeInlineComment,
+			f.options.PreserveSurroundedQuote)
 		if err != nil {
 			return err
 		}

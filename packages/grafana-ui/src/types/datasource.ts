@@ -1,7 +1,8 @@
 import { ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
+import { PanelData } from './panel';
 
 export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -94,7 +95,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -117,6 +118,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   name?: string;
 
   /**
+   *  Set after constructor is called by Grafana
+   */
+  id?: number;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -135,8 +141,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  queryResponse?: SeriesData[];
-  queryError?: DataQueryError;
+  panelData: PanelData; // The current panel data
+  queryResponse?: PanelData; // data filtered to only this query.  Includes the error.
 }
 
 export enum DataSourceStatus {
@@ -215,10 +221,11 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
+  requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange;
+  timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -227,6 +234,10 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+
+  // Request Timing
+  startTime: number;
+  endTime?: number;
 }
 
 export interface QueryFix {
@@ -275,6 +286,7 @@ export interface DataSourceSettings {
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
 export interface DataSourceInstanceSettings {
+  id: number;
   type: string;
   name: string;
   meta: PluginMeta;

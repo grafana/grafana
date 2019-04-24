@@ -200,14 +200,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:21577aafe885f088e8086a3415f154c63c0b7ce956a6994df2ac5776bc01b7e3"
+  digest = "1:f43e840e8efb7b5047c1f60057702550fcdefd2b29e3a73ccea25e27d2e83fda"
   name = "github.com/go-macaron/session"
-  packages = [
-    ".",
-    "memcache",
-    "postgres",
-    "redis",
-  ]
+  packages = ["."]
   pruneopts = "NUT"
   revision = "068d408f9c54c7fa7fcc5e2bdd3241ab21280c9e"
 
@@ -892,9 +887,6 @@
     "github.com/go-macaron/binding",
     "github.com/go-macaron/gzip",
     "github.com/go-macaron/session",
-    "github.com/go-macaron/session/memcache",
-    "github.com/go-macaron/session/postgres",
-    "github.com/go-macaron/session/redis",
     "github.com/go-sql-driver/mysql",
     "github.com/go-stack/stack",
     "github.com/go-xorm/core",

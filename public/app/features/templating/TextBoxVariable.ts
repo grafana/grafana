@@ -9,7 +9,7 @@ export class TextBoxVariable implements Variable {
   defaults = {
     type: 'textbox',
     name: '',
-    hide: 2,
+    hide: 0,
     label: '',
     query: '',
     current: {},

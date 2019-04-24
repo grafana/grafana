@@ -148,7 +148,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, (param, index) => {
+        _.each(partDef.params, (param: any, index: number) => {
           if (param.optional && part.params.length <= index) {
             return;
           }

@@ -21,8 +21,10 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import moment from 'moment';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
+import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 // add move to lodash for backward compatabiltiy
+// @ts-ignore
 _.move = (array: [], fromIndex: number, toIndex: number) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
@@ -145,6 +147,11 @@ export class GrafanaApp {
 
       this.preBootModules = null;
     });
+
+    // Preload selected app plugins
+    for (const modulePath of config.pluginsToPreload) {
+      importPluginModule(modulePath);
+    }
   }
 }
 

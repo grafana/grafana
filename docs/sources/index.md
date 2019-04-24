@@ -3,7 +3,7 @@ title = "Grafana documentation"
 description = "Guides, Installation & Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["v1.1", "guides/reference/admin"]
+aliases = ["v1.1", "guides/reference/admin", "v3.1"]
 +++
 
 # Grafana Documentation

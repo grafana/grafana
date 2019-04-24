@@ -29,6 +29,7 @@
   .navbar-button--share,
   .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
+  .refresh-picker,
   .gf-timepicker-nav {
     display: none;
   }
@@ -135,6 +136,27 @@
     }
   }
 
+  &--refresh {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  &--attached {
+    margin-left: 0;
+    border-radius: 0 2px 2px 0;
+  }
+
+  &--settings {
+    .gicon {
+      filter: $navbar-btn-gicon-brightness;
+    }
+    &:hover {
+      .gicon {
+        filter: brightness(0.8);
+      }
+    }
+  }
+
   &--tight {
     padding: 7px 4px;
 
@@ -189,4 +211,13 @@
     color: $text-color-strong;
     border-color: $text-color-strong;
   }
+}
+
+.navbar-settings-title {
+  display: block;
+  margin: 0;
+  color: $headings-color;
+  font-size: $font-size-lg;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
 }
