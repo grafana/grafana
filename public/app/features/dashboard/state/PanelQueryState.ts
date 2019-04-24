@@ -74,9 +74,10 @@ export class PanelQueryState {
   cancel(reason: string) {
     const { request } = this;
     try {
+      // If no endTime the call to datasource.query did not complete
+      // call rejector to reject the executor promise
       if (!request.endTime) {
         request.endTime = Date.now();
-
         this.rejector('Canceled:' + reason);
       }
 
