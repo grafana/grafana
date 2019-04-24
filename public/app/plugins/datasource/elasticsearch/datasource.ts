@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
+import * as queryString from 'query-string';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -127,6 +128,8 @@ export class ElasticDatasource {
       data['fields'] = [timeField, '_source'];
     }
 
+    // Safe up to and including ES 7.0,
+    // see https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/action/search/MultiSearchRequest.java
     const header: any = {
       search_type: 'query_then_fetch',
       ignore_unavailable: true,
@@ -236,10 +239,6 @@ export class ElasticDatasource {
     };
     if (this.esVersion >= 56 && this.esVersion < 70) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
-    } else if (this.esVersion >= 70) {
-      queryHeader['preference'] = {
-        max_concurrent_shard_requests: this.maxConcurrentShardRequests,
-      };
     }
     return angular.toJson(queryHeader);
   }
@@ -281,7 +280,9 @@ export class ElasticDatasource {
     payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
-    return this.post('_msearch', payload).then(res => {
+    const msearchURLPath = this.msearchURLPath({});
+
+    return this.post(msearchURLPath, payload).then(res => {
       return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
   }
@@ -382,7 +383,9 @@ export class ElasticDatasource {
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
     esQuery = header + '\n' + esQuery + '\n';
 
-    return this.post('_msearch?search_type=' + searchType, esQuery).then(res => {
+    const msearchURLPath = this.msearchURLPath({ search_type: searchType });
+
+    return this.post(msearchURLPath, esQuery).then(res => {
       if (!res.responses[0].aggregations) {
         return [];
       }
@@ -395,6 +398,20 @@ export class ElasticDatasource {
         };
       });
     });
+  }
+
+  msearchURLPath(params) {
+    // For valid keys that can be passed in `params`,
+    // see https://github.com/elastic/elasticsearch/blob/master/rest-api-spec/src/main/resources/rest-api-spec/api/msearch.json
+    const clonedParams = _.clone(params);
+    if (this.esVersion >= 70) {
+      _.assign(clonedParams, { max_concurrent_shard_requests: this.maxConcurrentShardRequests });
+    }
+    if (_.size(clonedParams) > 0) {
+      return '_msearch?' + queryString.stringify(clonedParams);
+    } else {
+      return '_msearch';
+    }
   }
 
   metricFindQuery(query) {
