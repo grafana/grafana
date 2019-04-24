@@ -4,15 +4,24 @@ import { PluginMeta } from './plugin';
 import { TableData, TimeSeries, SeriesData } from './data';
 import { PanelData } from './panel';
 
-export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
+export interface DataSourcePluginOptionsEditorProps<TOptions> {
+  options: TOptions;
+  onOptionsChange: (options: TOptions) => void;
+}
+export class DataSourcePlugin<TOptions, TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TQuery>;
+  editor?: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 
   constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
     this.DataSourceClass = DataSourceClass;
     this.components = {};
   }
 
+  setEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+    this.editor = editor;
+    return this;
+  }
   setConfigCtrl(ConfigCtrl: any) {
     this.components.ConfigCtrl = ConfigCtrl;
     return this;
@@ -69,7 +78,7 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
 }
 
-interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
   new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
 }
 
