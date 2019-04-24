@@ -8,7 +8,9 @@ export class ElasticConfigCtrl {
   constructor($scope) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.esVersion = this.current.jsonData.esVersion || 5;
-    this.current.jsonData.maxConcurrentShardRequests = this.current.jsonData.maxConcurrentShardRequests || 256;
+    const defaultMaxConcurrentShardRequests = this.current.jsonData.esVersion >= 70 ? 5 : 256;
+    this.current.jsonData.maxConcurrentShardRequests =
+      this.current.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
   }
 
   indexPatternTypes = [

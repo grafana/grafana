@@ -328,6 +328,7 @@ func TestClient(t *testing.T) {
 						So(req, ShouldNotBeNil)
 						So(req.Method, ShouldEqual, http.MethodPost)
 						So(req.URL.Path, ShouldEqual, "/_msearch")
+						So(req.URL.RawQuery, ShouldEqual, "max_concurrent_shard_requests=6")
 
 						So(responseBuffer, ShouldNotBeNil)
 
@@ -344,8 +345,6 @@ func TestClient(t *testing.T) {
 						So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
 						So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
 						So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-						So(jHeader.Get("preference").MustMap(), ShouldHaveLength, 1)
-						So(jHeader.GetPath("preference", "max_concurrent_shard_requests").MustInt(), ShouldEqual, 6)
 
 						Convey("and replace $__interval variable", func() {
 							So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")

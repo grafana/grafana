@@ -112,12 +112,12 @@ type multiRequest struct {
 	interval tsdb.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*http.Response, error) {
+func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*http.Response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(http.MethodPost, uriPath, bytes)
+	return c.executeRequest(http.MethodPost, uriPath, uriQuery, bytes)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
@@ -150,9 +150,10 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*http.Response, error) {
+func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*http.Response, error) {
 	u, _ := url.Parse(c.ds.Url)
 	u.Path = path.Join(u.Path, uriPath)
+	u.RawQuery = uriQuery
 
 	var req *http.Request
 	var err error
@@ -197,7 +198,8 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
-	res, err := c.executeBatchRequest("_msearch", multiRequests)
+	queryParams := c.getMultiSearchQueryParameters()
+	res, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -246,17 +248,19 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
 		}
 
-		if c.version >= 70 {
-			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-			mr.header["preference"] = map[string]interface{}{
-				"max_concurrent_shard_requests": maxConcurrentShardRequests,
-			}
-		}
-
 		multiRequests = append(multiRequests, &mr)
 	}
 
 	return multiRequests
+}
+
+func (c *baseClientImpl) getMultiSearchQueryParameters() string {
+	if c.version >= 70 {
+		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+	}
+
+	return ""
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
