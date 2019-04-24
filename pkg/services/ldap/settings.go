@@ -56,12 +56,18 @@ type LdapGroupToOrgRole struct {
 var config *Config
 var logger = log.New("ldap")
 
+// IsEnabled checks if ldap is enabled
+func IsEnabled() bool {
+	return setting.LdapEnabled
+}
+
 // ReadConfig reads the config if ldap is enabled
 func ReadConfig() (bool, *Config) {
-	if !setting.LdapEnabled {
+	if IsEnabled() == false {
 		return false, nil
 	}
 
+	// Make it a singleton
 	if config != nil {
 		return false, config
 	}

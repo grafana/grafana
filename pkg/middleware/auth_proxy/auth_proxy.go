@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,6 +23,7 @@ const (
 
 var (
 	readLDAPConfig = ldap.ReadConfig
+	isLDAPEnabled  = ldap.IsEnabled
 )
 
 // AuthProxy struct
@@ -172,8 +171,7 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 		return id, nil
 	}
 
-	enabled, _ := readLDAPConfig()
-	if enabled {
+	if isLDAPEnabled() {
 		id, err := auth.GetUserIDViaLDAP()
 
 		if err == ldap.ErrInvalidCredentials {
@@ -223,9 +221,7 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 	}
 
 	_, config := readLDAPConfig()
-
 	if len(config.Servers) == 0 {
-		spew.Dump(111)
 		return 0, newError("No LDAP servers available", nil)
 	}
 

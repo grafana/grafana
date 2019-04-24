@@ -63,16 +63,21 @@ func TestMiddlewareContext(t *testing.T) {
 
 		Convey("LDAP", func() {
 			Convey("gets data from the LDAP", func() {
+				isLDAPEnabled = func() bool {
+					return true
+				}
+
 				readLDAPConfig = func() (bool, *ldap.Config) {
 					config := &ldap.Config{
 						Servers: []*ldap.LdapServerConf{
 							&ldap.LdapServerConf{},
 						},
 					}
-					return true, config
+					return isLDAPEnabled(), config
 				}
 
 				defer func() {
+					isLDAPEnabled = ldap.IsEnabled
 					readLDAPConfig = ldap.ReadConfig
 				}()
 
@@ -100,7 +105,21 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			Convey("gets nice error if ldap is enabled but not configured", func() {
-				setting.LdapEnabled = false
+				isLDAPEnabled = func() bool {
+					return true
+				}
+
+				readLDAPConfig = func() (bool, *ldap.Config) {
+					config := &ldap.Config{
+						Servers: []*ldap.LdapServerConf{},
+					}
+					return isLDAPEnabled(), config
+				}
+
+				defer func() {
+					isLDAPEnabled = ldap.IsEnabled
+					readLDAPConfig = ldap.ReadConfig
+				}()
 
 				store := remotecache.NewFakeStore(t)
 
@@ -121,6 +140,7 @@ func TestMiddlewareContext(t *testing.T) {
 				id, err := auth.GetUserID()
 
 				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "Failed to sync user")
 				So(id, ShouldNotEqual, 42)
 				So(stub.syncCalled, ShouldEqual, false)
 			})
