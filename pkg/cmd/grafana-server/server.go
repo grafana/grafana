@@ -12,36 +12,33 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/registry"
-
-	"golang.org/x/sync/errgroup"
-
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/cache"
-	"github.com/grafana/grafana/pkg/setting"
-
-	// self registering services
 	_ "github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/cache"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewGrafanaServer() *GrafanaServerImpl {
@@ -238,7 +235,7 @@ func sendSystemdNotification(state string) error {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
 
 	if notifySocket == "" {
-		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset.")
+		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset")
 	}
 
 	socketAddr := &net.UnixAddr{

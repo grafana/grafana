@@ -22,7 +22,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { PanelQueryRunner, getProcessedSeriesData } from '../state/PanelQueryRunner';
+import { getProcessedSeriesData } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -134,16 +134,17 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('No width yet... wait till we know');
+        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
-      if (!panel.queryRunner) {
-        panel.queryRunner = new PanelQueryRunner();
-      }
+
+      const queryRunner = panel.getQueryRunner();
+
       if (!this.querySubscription) {
-        this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver);
+        this.querySubscription = queryRunner.subscribe(this.panelDataObserver);
       }
-      panel.queryRunner.run({
+
+      queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
         panelId: panel.id,
@@ -152,8 +153,8 @@ export class PanelChrome extends PureComponent<Props, State> {
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
         widthPixels: width,
-        minInterval: undefined, // Currently not passed in DataPanel?
         maxDataPoints: panel.maxDataPoints,
+        minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
       });
@@ -164,6 +165,10 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.setState({
       renderCounter: this.state.renderCounter + 1,
     });
+  };
+
+  onOptionsChange = (options: any) => {
+    this.props.panel.updateOptions(options);
   };
 
   replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
@@ -222,6 +227,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
           />
         </div>
       </>

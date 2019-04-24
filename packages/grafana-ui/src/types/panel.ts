@@ -1,14 +1,14 @@
-import { ComponentClass } from 'react';
+import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
-import { ScopedVars, DataRequestInfo, DataQueryError, LegacyResponseData } from './datasource';
+import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelData {
   state: LoadingState;
   series: SeriesData[];
-  request?: DataRequestInfo;
+  request?: DataQueryRequest;
   error?: DataQueryError;
 
   // Data format expected by Angular panels
@@ -21,6 +21,7 @@ export interface PanelProps<T = any> {
 
   timeRange: TimeRange;
   options: T;
+  onOptionsChange: (options: T) => void;
   renderCounter: number;
   width: number;
   height: number;
@@ -53,13 +54,13 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 ) => Partial<TOptions>;
 
 export class ReactPanelPlugin<TOptions = any> {
-  panel: ComponentClass<PanelProps<TOptions>>;
+  panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
-  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+  constructor(panel: ComponentType<PanelProps<TOptions>>) {
     this.panel = panel;
   }
 

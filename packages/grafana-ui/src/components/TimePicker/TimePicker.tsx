@@ -231,8 +231,10 @@ export class TimePicker extends PureComponent<Props, State> {
     ];
   };
 
-  onSelectChanged = (item: SelectOptionItem) => {
+  onSelectChanged = (item: SelectOptionItem<TimeOption>) => {
     const { isTimezoneUtc, onChange, timezone } = this.props;
+
+    // @ts-ignore
     onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
   };
 
@@ -264,6 +266,7 @@ export class TimePicker extends PureComponent<Props, State> {
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);
     const isAbsolute = moment.isMoment(value.raw.to);
+
     return (
       <div className="time-picker">
         <div className="time-picker-buttons">

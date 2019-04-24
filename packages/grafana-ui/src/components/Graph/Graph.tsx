@@ -1,11 +1,12 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
+import uniqBy from 'lodash/uniqBy';
 
 // Types
 import { TimeRange, GraphSeriesXY } from '../../types';
 
-interface GraphProps {
+export interface GraphProps {
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
@@ -46,7 +47,16 @@ export class Graph extends PureComponent<GraphProps> {
     const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
-
+    const yaxes = uniqBy(
+      series.map(s => {
+        return {
+          show: true,
+          index: s.yAxis,
+          position: s.yAxis === 1 ? 'left' : 'right',
+        };
+      }),
+      yAxisConfig => yAxisConfig.index
+    );
     const flotOptions = {
       legend: {
         show: false,
@@ -80,6 +90,7 @@ export class Graph extends PureComponent<GraphProps> {
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
       },
+      yaxes,
       grid: {
         minBorderMargin: 0,
         markings: [],

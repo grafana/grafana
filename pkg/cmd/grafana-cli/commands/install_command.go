@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -135,7 +136,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 			} else {
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
+					err = fmt.Errorf("Corrupt http response from source. Please try again")
 				} else {
 					panic(r)
 				}
