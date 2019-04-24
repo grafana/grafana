@@ -215,10 +215,10 @@ func (db *mssql) SqlType(c *core.Column) string {
 	var res string
 	switch t := c.SQLType.Name; t {
 	case core.Bool:
-		res = core.TinyInt
-		if c.Default == "true" {
+		res = core.Bit
+		if strings.EqualFold(c.Default, "true") {
 			c.Default = "1"
-		} else if c.Default == "false" {
+		} else {
 			c.Default = "0"
 		}
 	case core.Serial:
@@ -250,6 +250,9 @@ func (db *mssql) SqlType(c *core.Column) string {
 	case core.Uuid:
 		res = core.Varchar
 		c.Length = 40
+	case core.TinyInt:
+		res = core.TinyInt
+		c.Length = 0
 	default:
 		res = t
 	}
@@ -335,9 +338,15 @@ func (db *mssql) TableCheckSql(tableName string) (string, []interface{}) {
 func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
 	args := []interface{}{}
 	s := `select a.name as name, b.name as ctype,a.max_length,a.precision,a.scale,a.is_nullable as nullable,
-	      replace(replace(isnull(c.text,''),'(',''),')','') as vdefault   
-          from sys.columns a left join sys.types b on a.user_type_id=b.user_type_id 
-          left join  sys.syscomments c  on a.default_object_id=c.id 
+	      replace(replace(isnull(c.text,''),'(',''),')','') as vdefault,
+		  ISNULL(i.is_primary_key, 0)
+          from sys.columns a 
+		  left join sys.types b on a.user_type_id=b.user_type_id
+          left join sys.syscomments c on a.default_object_id=c.id
+		  LEFT OUTER JOIN 
+    sys.index_columns ic ON ic.object_id = a.object_id AND ic.column_id = a.column_id
+		  LEFT OUTER JOIN 
+    sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
           where a.object_id=object_id('` + tableName + `')`
 	db.LogSQL(s, args)
 
@@ -352,8 +361,8 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	for rows.Next() {
 		var name, ctype, vdefault string
 		var maxLen, precision, scale int
-		var nullable bool
-		err = rows.Scan(&name, &ctype, &maxLen, &precision, &scale, &nullable, &vdefault)
+		var nullable, isPK bool
+		err = rows.Scan(&name, &ctype, &maxLen, &precision, &scale, &nullable, &vdefault, &isPK)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -363,6 +372,7 @@ func (db *mssql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		col.Name = strings.Trim(name, "` ")
 		col.Nullable = nullable
 		col.Default = vdefault
+		col.IsPrimaryKey = isPK
 		ct := strings.ToUpper(ctype)
 		if ct == "DECIMAL" {
 			col.Length = precision
@@ -468,9 +478,10 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 		}
 
 		colName = strings.Trim(colName, "` ")
-
+		var isRegular bool
 		if strings.HasPrefix(indexName, "IDX_"+tableName) || strings.HasPrefix(indexName, "UQE_"+tableName) {
 			indexName = indexName[5+len(tableName):]
+			isRegular = true
 		}
 
 		var index *core.Index
@@ -479,6 +490,7 @@ WHERE IXS.TYPE_DESC='NONCLUSTERED' and OBJECT_NAME(IXS.OBJECT_ID) =?
 			index = new(core.Index)
 			index.Type = indexType
 			index.Name = indexName
+			index.IsRegular = isRegular
 			indexes[indexName] = index
 		}
 		index.AddColumn(colName)
@@ -534,7 +546,6 @@ type odbcDriver struct {
 func (p *odbcDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
 	kv := strings.Split(dataSourceName, ";")
 	var dbName string
-
 	for _, c := range kv {
 		vv := strings.Split(strings.TrimSpace(c), "=")
 		if len(vv) == 2 {

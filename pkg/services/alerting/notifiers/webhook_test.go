@@ -18,7 +18,7 @@ func TestWebhookNotifier(t *testing.T) {
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
 					Name:     "ops",
-					Type:     "email",
+					Type:     "webhook",
 					Settings: settingsJSON,
 				}
 
@@ -35,7 +35,7 @@ func TestWebhookNotifier(t *testing.T) {
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
 					Name:     "ops",
-					Type:     "email",
+					Type:     "webhook",
 					Settings: settingsJSON,
 				}
 
@@ -44,7 +44,7 @@ func TestWebhookNotifier(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(webhookNotifier.Name, ShouldEqual, "ops")
-				So(webhookNotifier.Type, ShouldEqual, "email")
+				So(webhookNotifier.Type, ShouldEqual, "webhook")
 				So(webhookNotifier.Url, ShouldEqual, "http://google.com")
 			})
 		})

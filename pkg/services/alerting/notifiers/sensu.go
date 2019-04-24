@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -52,7 +51,7 @@ func NewSensuNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &SensuNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Url:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Source:       model.Settings.Get("source").MustString(),
@@ -74,7 +73,6 @@ type SensuNotifier struct {
 
 func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending sensu result")
-	metrics.M_Alerting_Notification_Sent_Sensu.Inc(1)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("ruleId", evalContext.Rule.Id)
@@ -114,7 +112,7 @@ func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Rule.Message != "" {
-		bodyJSON.Set("message", evalContext.Rule.Message)
+		bodyJSON.Set("output", evalContext.Rule.Message)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()

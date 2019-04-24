@@ -1,63 +1,19 @@
 package api
 
 import (
-	"net/http"
-	"net/url"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-
-	m "github.com/grafana/grafana/pkg/models"
 )
 
-func TestDataSourceProxy(t *testing.T) {
-	Convey("When getting graphite datasource proxy", t, func() {
-		ds := m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
-		targetUrl, err := url.Parse(ds.Url)
-		proxy := NewReverseProxy(&ds, "/render", targetUrl)
-		proxy.Transport, err = ds.GetHttpTransport()
-		So(err, ShouldBeNil)
-
-		transport, ok := proxy.Transport.(*http.Transport)
-		So(ok, ShouldBeTrue)
-		So(transport.TLSClientConfig.InsecureSkipVerify, ShouldBeTrue)
-
-		requestUrl, _ := url.Parse("http://grafana.com/sub")
-		req := http.Request{URL: requestUrl}
-
-		proxy.Director(&req)
-
-		Convey("Can translate request url and path", func() {
-			So(req.URL.Host, ShouldEqual, "graphite:8080")
-			So(req.URL.Path, ShouldEqual, "/render")
-		})
-	})
-
-	Convey("When getting influxdb datasource proxy", t, func() {
-		ds := m.DataSource{
-			Type:     m.DS_INFLUXDB_08,
-			Url:      "http://influxdb:8083",
-			Database: "site",
-			User:     "user",
-			Password: "password",
-		}
-
-		targetUrl, _ := url.Parse(ds.Url)
-		proxy := NewReverseProxy(&ds, "", targetUrl)
-
-		requestUrl, _ := url.Parse("http://grafana.com/sub")
-		req := http.Request{URL: requestUrl}
-
-		proxy.Director(&req)
-
-		Convey("Should add db to url", func() {
-			So(req.URL.Path, ShouldEqual, "/db/site/")
+func TestDataProxy(t *testing.T) {
+	Convey("Data proxy test", t, func() {
+		Convey("Should append trailing slash to proxy path if original path has a trailing slash", func() {
+			So(ensureProxyPathTrailingSlash("/api/datasources/proxy/6/api/v1/query_range/", "api/v1/query_range/"), ShouldEqual, "api/v1/query_range/")
 		})
 
-		Convey("Should add username and password", func() {
-			queryVals := req.URL.Query()
-			So(queryVals["u"][0], ShouldEqual, "user")
-			So(queryVals["p"][0], ShouldEqual, "password")
+		Convey("Should not append trailing slash to proxy path if original path doesn't have a trailing slash", func() {
+			So(ensureProxyPathTrailingSlash("/api/datasources/proxy/6/api/v1/query_range", "api/v1/query_range"), ShouldEqual, "api/v1/query_range")
 		})
 	})
 }

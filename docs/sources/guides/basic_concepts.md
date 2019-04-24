@@ -7,6 +7,7 @@ type = "docs"
 name = "Basic Concepts"
 identifier = "basic_concepts"
 parent = "guides"
+weight = 2
 +++
 
 # Basic Concepts
@@ -53,7 +54,7 @@ We utilize a unit abstraction so that Grafana looks great on all screens both sm
 
  > Note: With MaxDataPoint functionality, Grafana can show you the perfect amount of datapoints no matter your resolution or time-range.
 
-Utilize the [Repeating Row functionality](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) to dynamically create or remove entire Rows (that can be filled with Panels), based on the Template variables selected.
+Utilize the [Repeating Rows functionality](/reference/templating/#repeating-rows) to dynamically create or remove entire Rows (that can be filled with Panels), based on the Template variables selected.
 
 Rows can be collapsed by clicking on the Row Title. If you save a Dashboard with a Row collapsed, it will save in that state and will not preload those graphs until the row is expanded.
 
@@ -71,7 +72,7 @@ Panels like the [Graph](/reference/graph/) panel allow you to graph as many metr
 
 Panels can be made more dynamic by utilizing [Dashboard Templating](/reference/templating/) variable strings within the panel configuration (including queries to your Data Source configured via the Query Editor).
 
-Utilize the [Repeating Panel](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) selected.
+Utilize the [Repeating Panel](/reference/templating/#repeating-panels) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#repeating-panels) selected.
 
 The time range on Panels is normally what is set in the [Dashboard time picker](/reference/timerange/) but this can be overridden by utilizes [Panel specific time overrides](/reference/timerange/#panel-time-overrides-timeshift).
 

@@ -1,24 +1,31 @@
-
 .json-formatter-row {
   font-family: monospace;
 
-  &, a, a:hover {
+  &,
+  a,
+  a:hover {
     color: $json-explorer-default-color;
     text-decoration: none;
   }
 
   .json-formatter-row {
-    margin-left: 1rem;
+    margin-left: $space-md;
   }
 
   .json-formatter-children {
     &.json-formatter-empty {
       opacity: 0.5;
-      margin-left: 1rem;
+      margin-left: $space-md;
 
-      &::after { display: none; }
-      &.json-formatter-object::after { content: "No properties"; }
-      &.json-formatter-array::after { content: "[]"; }
+      &::after {
+        display: none;
+      }
+      &.json-formatter-object::after {
+        content: 'No properties';
+      }
+      &.json-formatter-array::after {
+        content: '[]';
+      }
     }
   }
 
@@ -26,24 +33,40 @@
     color: $json-explorer-string-color;
     white-space: normal;
     word-wrap: break-word;
+    word-break: break-all;
   }
-  .json-formatter-number { color: $json-explorer-number-color; }
-  .json-formatter-boolean { color: $json-explorer-boolean-color; }
-  .json-formatter-null { color: $json-explorer-null-color; }
-  .json-formatter-undefined { color: $json-explorer-undefined-color; }
-  .json-formatter-function { color: $json-explorer-function-color; }
-  .json-formatter-date { background-color: fade($json-explorer-default-color, 5%); }
+
+  .json-formatter-number {
+    color: $json-explorer-number-color;
+  }
+  .json-formatter-boolean {
+    color: $json-explorer-boolean-color;
+  }
+  .json-formatter-null {
+    color: $json-explorer-null-color;
+  }
+  .json-formatter-undefined {
+    color: $json-explorer-undefined-color;
+  }
+  .json-formatter-function {
+    color: $json-explorer-function-color;
+  }
+  .json-formatter-date {
+    background-color: fade($json-explorer-default-color, 5%);
+  }
   .json-formatter-url {
     text-decoration: underline;
     color: $json-explorer-url-color;
     cursor: pointer;
   }
 
-  .json-formatter-bracket { color: $json-explorer-bracket-color; }
+  .json-formatter-bracket {
+    color: $json-explorer-bracket-color;
+  }
   .json-formatter-key {
     color: $json-explorer-key-color;
     cursor: pointer;
-    padding-right: 0.2rem;
+    padding-right: $space-xxs;
     margin-right: 4px;
   }
 
@@ -51,27 +74,29 @@
     cursor: pointer;
   }
 
-  .json-formatter-array-comma { margin-right: 4px; }
+  .json-formatter-array-comma {
+    margin-right: 4px;
+  }
 
   .json-formatter-toggler {
-    line-height: 1.2rem;
-    font-size: 0.7rem;
+    line-height: 16px;
+    font-size: $font-size-xs;
     vertical-align: middle;
     opacity: $json-explorer-toggler-opacity;
     cursor: pointer;
-    padding-right: 0.2rem;
+    padding-right: $space-xxs;
 
     &::after {
       display: inline-block;
       transition: transform $json-explorer-rotate-time ease-in;
-      content: "►";
+      content: '►';
     }
   }
 
   // Inline preview on hover (optional)
   > a > .json-formatter-preview-text {
     opacity: 0;
-    transition: opacity .15s ease-in;
+    transition: opacity 0.15s ease-in;
     font-style: italic;
   }
 
@@ -81,7 +106,7 @@
 
   // Open state
   &.json-formatter-open {
-    > .json-formatter-toggler-link .json-formatter-toggler::after{
+    > .json-formatter-toggler-link .json-formatter-toggler::after {
       transform: rotate(90deg);
     }
     > .json-formatter-children::after {
@@ -95,4 +120,3 @@
     }
   }
 }
-

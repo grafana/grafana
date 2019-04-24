@@ -1,0 +1,44 @@
+
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<textarea rows="10" class="gf-form-input" ng-model="ctrl.annotation.rawQuery" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+  </div>
+
+  <div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info"><h6>Annotation Query Format</h6>
+An annotation is an event that is overlaid on top of graphs. The query can have up to three columns per row, the time column is mandatory. Annotation rendering is expensive so it is important to limit the number of rows returned.
+
+- column with alias: <b>time</b> for the annotation event time. Use epoch time or any native date data type.
+- column with alias: <b>text</b> for the annotation text
+- column with alias: <b>tags</b> for annotation tags. This is a comma separated string of tags e.g. 'tag1,tag2'
+
+
+Macros:
+- $__time(column) -&gt; column as "time"
+- $__timeEpoch -&gt; extract(epoch from column) as "time"
+- $__timeFilter(column) -&gt; column BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:01:17Z'
+- $__unixEpochFilter(column) -&gt;  column &gt;= 1492750877 AND column &lt;= 1492750877
+- $__unixEpochNanoFilter(column) -&gt;  column &gt;= 1494410783152415214 AND column &lt;= 1494497183142514872
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  '2017-04-21T05:01:17Z'
+- $__timeTo() -&gt;  '2017-04-21T05:01:17Z'
+- $__unixEpochFrom() -&gt;  1492750877
+- $__unixEpochTo() -&gt;  1492750877
+- $__unixEpochNanoFrom() -&gt;  1494410783152415214
+- $__unixEpochNanoTo() -&gt;  1494497183142514872
+		</pre>
+	</div>
+</div>

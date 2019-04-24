@@ -25,6 +25,7 @@ stopGrafana() {
 	fi
 }
 
+
 # Initial installation: $1 == 1
 # Upgrade: $1 == 2, and configured to restart on upgrade
 if [ $1 -eq 1 ] ; then
@@ -42,6 +43,17 @@ if [ $1 -eq 1 ] ; then
   if [ ! -f $CONF_FILE ]; then
     cp /usr/share/grafana/conf/sample.ini $CONF_FILE
     cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/dashboards $PROVISIONING_CFG_DIR/datasources
+    cp /usr/share/grafana/conf/provisioning/dashboards/sample.yaml $PROVISIONING_CFG_DIR/dashboards/sample.yaml
+    cp /usr/share/grafana/conf/provisioning/datasources/sample.yaml $PROVISIONING_CFG_DIR/datasources/sample.yaml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR/notifiers ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/notifiers
+    cp /usr/share/grafana/conf/provisioning/notifiers/sample.yaml $PROVISIONING_CFG_DIR/notifiers/sample.yaml
   fi
 
  	# Set user permissions on /var/log/grafana, /var/lib/grafana

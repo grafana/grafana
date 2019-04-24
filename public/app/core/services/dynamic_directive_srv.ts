@@ -1,15 +1,12 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import coreModule from '../core_module';
 
 class DynamicDirectiveSrv {
-
   /** @ngInject */
-  constructor(private $compile, private $parse, private $rootScope) {}
+  constructor(private $compile) {}
 
   addDirective(element, name, scope) {
-    var child = angular.element(document.createElement(name));
+    const child = angular.element(document.createElement(name));
     this.$compile(child)(scope);
 
     element.empty();
@@ -17,26 +14,22 @@ class DynamicDirectiveSrv {
   }
 
   link(scope, elem, attrs, options) {
-    options.directive(scope).then(directiveInfo => {
-      if (!directiveInfo || !directiveInfo.fn) {
-        elem.empty();
-        return;
-      }
+    const directiveInfo = options.directive(scope);
+    if (!directiveInfo || !directiveInfo.fn) {
+      elem.empty();
+      return;
+    }
 
-      if (!directiveInfo.fn.registered) {
-        coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
-        directiveInfo.fn.registered = true;
-      }
+    if (!directiveInfo.fn.registered) {
+      coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
+      directiveInfo.fn.registered = true;
+    }
 
-      this.addDirective(elem, directiveInfo.name, scope);
-    }).catch(err => {
-      console.log('Plugin load:', err);
-      this.$rootScope.appEvent('alert-error', ['Plugin error', err.toString()]);
-    });
+    this.addDirective(elem, directiveInfo.name, scope);
   }
 
   create(options) {
-    let directiveDef = {
+    const directiveDef = {
       restrict: 'E',
       scope: options.scope,
       link: (scope, elem, attrs) => {
@@ -52,7 +45,7 @@ class DynamicDirectiveSrv {
         } else {
           this.link(scope, elem, attrs, options);
         }
-      }
+      },
     };
 
     return directiveDef;
@@ -60,5 +53,3 @@ class DynamicDirectiveSrv {
 }
 
 coreModule.service('dynamicDirectiveSrv', DynamicDirectiveSrv);
-
-

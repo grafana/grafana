@@ -3,7 +3,10 @@
   "name": "Plugin list",
   "id": "pluginlist",
 
+  "dataFormats": [],
+
   "info": {
+    "description": "Plugin List for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

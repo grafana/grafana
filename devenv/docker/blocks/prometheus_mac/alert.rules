@@ -1,0 +1,10 @@
+# Alert Rules
+
+ALERT AppCrash
+  IF process_open_fds > 0
+  FOR 15s
+  LABELS { severity="critical" }
+  ANNOTATIONS {
+   summary = "Number of open fds > 0",
+   description = "Just testing"
+  }

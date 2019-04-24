@@ -4,6 +4,7 @@
   "id": "mysql",
 
   "info": {
+    "description": "MySQL Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -14,8 +15,12 @@
     }
   },
 
-  "state": "alpha",
   "alerting": true,
   "annotations": true,
-  "metrics": true
+  "metrics": true,
+  "tables": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
 }

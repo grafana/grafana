@@ -1,5 +1,11 @@
 # Go Longest Common Subsequence (LCS)
 
+[![GoDoc](https://godoc.org/github.com/yudai/golcs?status.svg)][godoc]
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)][license]
+
+[godoc]: https://godoc.org/github.com/yudai/golcs
+[license]: https://github.com/yudai/golcs/blob/master/LICENSE
+
 A package to calculate [LCS](http://en.wikipedia.org/wiki/Longest_common_subsequence_problem) of slices.
 
 ## Usage

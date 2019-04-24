@@ -1,9 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class CustomVariable implements Variable {
   query: string;
@@ -11,6 +7,7 @@ export class CustomVariable implements Variable {
   includeAll: boolean;
   multi: boolean;
   current: any;
+  skipUrlSync: boolean;
 
   defaults = {
     type: 'custom',
@@ -23,10 +20,11 @@ export class CustomVariable implements Variable {
     includeAll: false,
     multi: false,
     allValue: null,
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  /** @ngInject */
+  constructor(private model, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -40,8 +38,9 @@ export class CustomVariable implements Variable {
   }
 
   updateOptions() {
-    // extract options in comma separated string
-    this.options = _.map(this.query.split(/[,]+/), function(text) {
+    // extract options in comma separated string (use backslash to escape wanted commas)
+    this.options = _.map(this.query.match(/(?:\\,|[^,])+/g), text => {
+      text = text.replace(/\\,/g, ',');
       return { text: text.trim(), value: text.trim() };
     });
 
@@ -53,7 +52,7 @@ export class CustomVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({text: 'All', value: "$__all"});
+    this.options.unshift({ text: 'All', value: '$__all' });
   }
 
   dependsOn(variable) {
@@ -75,6 +74,6 @@ export class CustomVariable implements Variable {
 variableTypes['custom'] = {
   name: 'Custom',
   ctor: CustomVariable,
-  description: 'Define variable values manually' ,
+  description: 'Define variable values manually',
   supportsMulti: true,
 };

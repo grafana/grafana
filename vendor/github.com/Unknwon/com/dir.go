@@ -32,7 +32,7 @@ func IsDir(dir string) bool {
 	return f.IsDir()
 }
 
-func statDir(dirPath, recPath string, includeDir, isDirOnly bool) ([]string, error) {
+func statDir(dirPath, recPath string, includeDir, isDirOnly, followSymlinks bool) ([]string, error) {
 	dir, err := os.Open(dirPath)
 	if err != nil {
 		return nil, err
@@ -56,13 +56,29 @@ func statDir(dirPath, recPath string, includeDir, isDirOnly bool) ([]string, err
 			if includeDir {
 				statList = append(statList, relPath+"/")
 			}
-			s, err := statDir(curPath, relPath, includeDir, isDirOnly)
+			s, err := statDir(curPath, relPath, includeDir, isDirOnly, followSymlinks)
 			if err != nil {
 				return nil, err
 			}
 			statList = append(statList, s...)
 		} else if !isDirOnly {
 			statList = append(statList, relPath)
+		} else if followSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+			link, err := os.Readlink(curPath)
+			if err != nil {
+				return nil, err
+			}
+
+			if IsDir(link) {
+				if includeDir {
+					statList = append(statList, relPath+"/")
+				}
+				s, err := statDir(curPath, relPath, includeDir, isDirOnly, followSymlinks)
+				if err != nil {
+					return nil, err
+				}
+				statList = append(statList, s...)
+			}
 		}
 	}
 	return statList, nil
@@ -84,7 +100,26 @@ func StatDir(rootPath string, includeDir ...bool) ([]string, error) {
 	if len(includeDir) >= 1 {
 		isIncludeDir = includeDir[0]
 	}
-	return statDir(rootPath, "", isIncludeDir, false)
+	return statDir(rootPath, "", isIncludeDir, false, false)
+}
+
+// LstatDir gathers information of given directory by depth-first.
+// It returns slice of file list, follows symbolic links and includes subdirectories if enabled;
+// it returns error and nil slice when error occurs in underlying functions,
+// or given path is not a directory or does not exist.
+//
+// Slice does not include given path itself.
+// If subdirectories is enabled, they will have suffix '/'.
+func LstatDir(rootPath string, includeDir ...bool) ([]string, error) {
+	if !IsDir(rootPath) {
+		return nil, errors.New("not a directory or does not exist: " + rootPath)
+	}
+
+	isIncludeDir := false
+	if len(includeDir) >= 1 {
+		isIncludeDir = includeDir[0]
+	}
+	return statDir(rootPath, "", isIncludeDir, false, true)
 }
 
 // GetAllSubDirs returns all subdirectories of given root path.
@@ -93,7 +128,17 @@ func GetAllSubDirs(rootPath string) ([]string, error) {
 	if !IsDir(rootPath) {
 		return nil, errors.New("not a directory or does not exist: " + rootPath)
 	}
-	return statDir(rootPath, "", true, true)
+	return statDir(rootPath, "", true, true, false)
+}
+
+// LgetAllSubDirs returns all subdirectories of given root path, including
+// following symbolic links, if any.
+// Slice does not include given path itself.
+func LgetAllSubDirs(rootPath string) ([]string, error) {
+	if !IsDir(rootPath) {
+		return nil, errors.New("not a directory or does not exist: " + rootPath)
+	}
+	return statDir(rootPath, "", true, true, true)
 }
 
 // GetFileListBySuffix returns an ordered list of file paths.

@@ -3,11 +3,6 @@ title = "What's New in Grafana v2.0"
 description = "Feature & improvement highlights for Grafana v2.0"
 keywords = ["grafana", "new", "documentation", "2.0"]
 type = "docs"
-[menu.docs]
-name = "Version 2.0"
-identifier = "v2.0"
-parent = "whatsnew"
-weight = 11
 +++
 
 # What's New in Grafana v2.0
@@ -39,7 +34,7 @@ Organizations via a role. That role can be:
 
 There are currently no permissions on individual dashboards.
 
-Read more about Grafanas new user model on the [Admin section](../reference/admin/)
+Read more about Grafana's new user model on the [Admin section](../reference/admin/)
 
 ## Dashboard Snapshot sharing
 

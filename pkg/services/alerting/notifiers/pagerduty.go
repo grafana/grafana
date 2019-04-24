@@ -1,12 +1,15 @@
 package notifiers
 
 import (
+	"os"
 	"strconv"
+	"time"
+
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -21,7 +24,7 @@ func init() {
       <h3 class="page-heading">PagerDuty settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-14">Integration Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty integeration Key"></input>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
         <gf-form-switch
@@ -37,18 +40,18 @@ func init() {
 }
 
 var (
-	pagerdutyEventApiUrl string = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+	pagerdutyEventApiUrl = "https://events.pagerduty.com/v2/enqueue"
 )
 
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
-	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
+	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Key:          key,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.pagerduty"),
@@ -63,7 +66,6 @@ type PagerdutyNotifier struct {
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)
@@ -74,30 +76,48 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
+	customData := triggMetrString
+	for _, evt := range evalContext.EvalMatches {
+		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
 
+	payloadJSON := simplejson.New()
+	payloadJSON.Set("summary", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
+	if hostname, err := os.Hostname(); err == nil {
+		payloadJSON.Set("source", hostname)
+	}
+	payloadJSON.Set("severity", "critical")
+	payloadJSON.Set("timestamp", time.Now())
+	payloadJSON.Set("component", "Grafana")
+	payloadJSON.Set("custom_details", customData)
+
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("service_key", this.Key)
-	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
-	bodyJSON.Set("client", "Grafana")
-	bodyJSON.Set("event_type", eventType)
-	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("routing_key", this.Key)
+	bodyJSON.Set("event_action", eventType)
+	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("payload", payloadJSON)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return err
 	}
+	links := make([]interface{}, 1)
+	linkJSON := simplejson.New()
+	linkJSON.Set("href", ruleUrl)
 	bodyJSON.Set("client_url", ruleUrl)
+	bodyJSON.Set("client", "Grafana")
+	links[0] = linkJSON
+	bodyJSON.Set("links", links)
 
 	if evalContext.ImagePublicUrl != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
-		imageJSON.Set("type", "image")
 		imageJSON.Set("src", evalContext.ImagePublicUrl)
 		contexts[0] = imageJSON
-		bodyJSON.Set("contexts", contexts)
+		bodyJSON.Set("images", contexts)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()
@@ -106,6 +126,9 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Url:        pagerdutyEventApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": "application/json",
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

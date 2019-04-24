@@ -1,86 +1,57 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import {NavModel} from 'app/core/core';
 
-var pluginInfoCache = {};
+import { getPluginSettings } from './PluginSettingsCache';
+import { PluginMeta } from '@grafana/ui';
 
 export class AppPageCtrl {
   page: any;
   pluginId: any;
   appModel: any;
-  navModel: NavModel;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $routeParams: any, private $rootScope) {
+  constructor(private $routeParams: any, private $rootScope, private navModelSrv, private $q) {
     this.pluginId = $routeParams.pluginId;
 
-    if (pluginInfoCache[this.pluginId]) {
-      this.initPage(pluginInfoCache[this.pluginId]);
-    } else {
-      this.loadPluginInfo();
-    }
+    this.$q
+      .when(getPluginSettings(this.pluginId))
+      .then(settings => {
+        this.initPage(settings);
+      })
+      .catch(err => {
+        this.$rootScope.appEvent('alert-error', ['Unknown Plugin', '']);
+        this.navModel = this.navModelSrv.getNotFoundNav();
+      });
   }
 
-  initPage(app) {
+  initPage(app: PluginMeta) {
     this.appModel = app;
-    this.page = _.find(app.includes, {slug: this.$routeParams.slug});
-
-    pluginInfoCache[this.pluginId] = app;
+    this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
     if (!this.page) {
       this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
-
-      this.navModel = {
-        section: {
-          title: "Page not found",
-          url: app.defaultNavUrl,
-          icon: 'icon-gf icon-gf-sadface',
-        },
-        menu: [],
-      };
-
+      this.navModel = this.navModelSrv.getNotFoundNav();
+      return;
+    }
+    if (app.type !== 'app' || !app.enabled) {
+      this.$rootScope.appEvent('alert-error', ['Applicaiton Not Enabled', '']);
+      this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
 
-    let menu = [];
-
-    for (let item of app.includes) {
-      if (item.addToNav) {
-        if (item.type === 'dashboard') {
-          menu.push({
-            title: item.name,
-            url: 'dashboard/db/' + item.slug,
-            icon: 'fa fa-fw fa-dot-circle-o',
-          });
-        }
-        if (item.type === 'page') {
-          menu.push({
-            title: item.name,
-            url: `plugins/${app.id}/page/${item.slug}`,
-            icon: 'fa fa-fw fa-dot-circle-o',
-          });
-        }
-      }
-    }
+    const pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
 
     this.navModel = {
-      section: {
-        title: app.name,
-        url: app.defaultNavUrl,
-        iconUrl: app.info.logos.small,
+      main: {
+        img: app.info.logos.large,
+        subTitle: app.name,
+        url: '',
+        text: this.page.name,
+        breadcrumbs: [{ title: app.name, url: pluginNav.main.url }],
       },
-      menu: menu,
     };
-  }
-
-  loadPluginInfo() {
-    this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(app => {
-      this.initPage(app);
-    });
   }
 }
 
 angular.module('grafana.controllers').controller('AppPageCtrl', AppPageCtrl);
-

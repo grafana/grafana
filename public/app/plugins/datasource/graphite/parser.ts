@@ -1,7 +1,6 @@
+import { Lexer } from './lexer';
 
-import {Lexer} from './lexer';
-
-export function Parser(expression) {
+export function Parser(this: any, expression) {
   this.expression = expression;
   this.lexer = new Lexer(expression);
   this.tokens = this.lexer.tokenize();
@@ -9,27 +8,25 @@ export function Parser(expression) {
 }
 
 Parser.prototype = {
-
-  getAst: function () {
+  getAst: function() {
     return this.start();
   },
 
-  start: function () {
+  start: function() {
     try {
       return this.functionCall() || this.metricExpression();
     } catch (e) {
       return {
         type: 'error',
         message: e.message,
-        pos: e.pos
+        pos: e.pos,
       };
     }
   },
 
   curlyBraceSegment: function() {
     if (this.match('identifier', '{') || this.match('{')) {
-
-      var curlySegment = "";
+      let curlySegment = '';
 
       while (!this.match('') && !this.match('}')) {
         curlySegment += this.consumeToken().value;
@@ -49,7 +46,7 @@ Parser.prototype = {
 
       return {
         type: 'segment',
-        value: curlySegment
+        value: curlySegment,
       };
     } else {
       return null;
@@ -57,22 +54,25 @@ Parser.prototype = {
   },
 
   metricSegment: function() {
-    var curly = this.curlyBraceSegment();
+    const curly = this.curlyBraceSegment();
     if (curly) {
       return curly;
     }
 
     if (this.match('identifier') || this.match('number')) {
       // hack to handle float numbers in metric segments
-      var parts = this.consumeToken().value.split('.');
+      const parts = this.consumeToken().value.split('.');
       if (parts.length === 2) {
         this.tokens.splice(this.index, 0, { type: '.' });
-        this.tokens.splice(this.index + 1, 0, { type: 'number', value: parts[1] });
+        this.tokens.splice(this.index + 1, 0, {
+          type: 'number',
+          value: parts[1],
+        });
       }
 
       return {
         type: 'segment',
-        value: parts[0]
+        value: parts[0],
       };
     }
 
@@ -86,9 +86,9 @@ Parser.prototype = {
       this.errorMark('Expected identifier after templateStart');
     }
 
-    var node = {
+    const node = {
       type: 'template',
-      value: this.consumeToken().value
+      value: this.consumeToken().value,
     };
 
     if (!this.match('templateEnd')) {
@@ -104,9 +104,9 @@ Parser.prototype = {
       return null;
     }
 
-    var node = {
+    const node = {
       type: 'metric',
-      segments: []
+      segments: [],
     };
 
     node.segments.push(this.metricSegment());
@@ -114,7 +114,7 @@ Parser.prototype = {
     while (this.match('.')) {
       this.consumeToken();
 
-      var segment = this.metricSegment();
+      const segment = this.metricSegment();
       if (!segment) {
         this.errorMark('Expected metric identifier');
       }
@@ -130,7 +130,7 @@ Parser.prototype = {
       return null;
     }
 
-    var node: any = {
+    const node: any = {
       type: 'function',
       name: this.consumeToken().value,
     };
@@ -160,12 +160,12 @@ Parser.prototype = {
     };
   },
 
-  functionParameters: function () {
+  functionParameters: function() {
     if (this.match(')') || this.match('')) {
       return [];
     }
 
-    var param =
+    const param =
       this.functionCall() ||
       this.numericLiteral() ||
       this.seriesRefExpression() ||
@@ -186,52 +186,52 @@ Parser.prototype = {
       return null;
     }
 
-    var value = this.tokens[this.index].value;
+    const value = this.tokens[this.index].value;
     if (!value.match(/\#[A-Z]/)) {
       return null;
     }
 
-    var token = this.consumeToken();
+    const token = this.consumeToken();
 
     return {
       type: 'series-ref',
-      value: token.value
+      value: token.value,
     };
   },
 
-  numericLiteral: function () {
+  numericLiteral: function() {
     if (!this.match('number')) {
       return null;
     }
 
     return {
       type: 'number',
-      value: parseFloat(this.consumeToken().value)
+      value: parseFloat(this.consumeToken().value),
     };
   },
 
-  stringLiteral: function () {
+  stringLiteral: function() {
     if (!this.match('string')) {
       return null;
     }
 
-    var token = this.consumeToken();
+    const token = this.consumeToken();
     if (token.isUnclosed) {
       throw { message: 'Unclosed string parameter', pos: token.pos };
     }
 
     return {
       type: 'string',
-      value: token.value
+      value: token.value,
     };
   },
 
   errorMark: function(text) {
-    var currentToken = this.tokens[this.index];
-    var type = currentToken ? currentToken.type : 'end of string';
+    const currentToken = this.tokens[this.index];
+    const type = currentToken ? currentToken.type : 'end of string';
     throw {
-      message: text + " instead found " + type,
-      pos: currentToken ? currentToken.pos : this.lexer.char
+      message: text + ' instead found ' + type,
+      pos: currentToken ? currentToken.pos : this.lexer.char,
     };
   },
 
@@ -242,14 +242,11 @@ Parser.prototype = {
   },
 
   matchToken: function(type, index) {
-    var token = this.tokens[this.index + index];
-    return (token === undefined && type === '') ||
-      token && token.type === type;
+    const token = this.tokens[this.index + index];
+    return (token === undefined && type === '') || (token && token.type === type);
   },
 
   match: function(token1, token2) {
-    return this.matchToken(token1, 0) &&
-      (!token2 || this.matchToken(token2, 1));
+    return this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1));
   },
 };
-

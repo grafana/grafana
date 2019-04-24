@@ -2,10 +2,8 @@ package alerting
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -29,6 +27,16 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 				Conditions: []Condition{&conditionStub{
 					firing: true,
 				}},
+			})
+
+			handler.Eval(context)
+			So(context.Firing, ShouldEqual, true)
+			So(context.ConditionEvals, ShouldEqual, "true = true")
+		})
+
+		Convey("Show return triggered with single passing condition2", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
 			})
 
 			handler.Eval(context)
@@ -131,6 +139,33 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.ConditionEvals, ShouldEqual, "[[true OR false] OR true] = true")
 		})
 
+		Convey("Should return false if no condition is firing using OR operator", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{firing: false, operator: "or"},
+					&conditionStub{firing: false, operator: "or"},
+					&conditionStub{firing: false, operator: "or"},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.Firing, ShouldEqual, false)
+			So(context.ConditionEvals, ShouldEqual, "[[false OR false] OR false] = false")
+		})
+
+		Convey("Should retuasdfrn no data if one condition has nodata", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{operator: "or", noData: false},
+					&conditionStub{operator: "or", noData: false},
+					&conditionStub{operator: "or", noData: false},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.NoDataFound, ShouldBeFalse)
+		})
+
 		Convey("Should return no data if one condition has nodata", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
@@ -165,74 +200,6 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.NoDataFound, ShouldBeTrue)
-		})
-
-		Convey("EvalHandler can replace alert state based for errors and no_data", func() {
-			ctx := NewEvalContext(context.TODO(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}})
-			dummieError := fmt.Errorf("dummie error")
-			Convey("Should update alert state", func() {
-
-				Convey("ok -> alerting", func() {
-					ctx.PrevAlertState = models.AlertStateOK
-					ctx.Firing = true
-
-					So(handler.getNewState(ctx), ShouldEqual, models.AlertStateAlerting)
-				})
-
-				Convey("ok -> error(alerting)", func() {
-					ctx.PrevAlertState = models.AlertStateOK
-					ctx.Error = dummieError
-					ctx.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStateAlerting)
-				})
-
-				Convey("ok -> error(keep_last)", func() {
-					ctx.PrevAlertState = models.AlertStateOK
-					ctx.Error = dummieError
-					ctx.Rule.ExecutionErrorState = models.ExecutionErrorKeepState
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStateOK)
-				})
-
-				Convey("pending -> error(keep_last)", func() {
-					ctx.PrevAlertState = models.AlertStatePending
-					ctx.Error = dummieError
-					ctx.Rule.ExecutionErrorState = models.ExecutionErrorKeepState
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStatePending)
-				})
-
-				Convey("ok -> no_data(alerting)", func() {
-					ctx.PrevAlertState = models.AlertStateOK
-					ctx.Rule.NoDataState = models.NoDataSetAlerting
-					ctx.NoDataFound = true
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStateAlerting)
-				})
-
-				Convey("ok -> no_data(keep_last)", func() {
-					ctx.PrevAlertState = models.AlertStateOK
-					ctx.Rule.NoDataState = models.NoDataKeepState
-					ctx.NoDataFound = true
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStateOK)
-				})
-
-				Convey("pending -> no_data(keep_last)", func() {
-					ctx.PrevAlertState = models.AlertStatePending
-					ctx.Rule.NoDataState = models.NoDataKeepState
-					ctx.NoDataFound = true
-
-					ctx.Rule.State = handler.getNewState(ctx)
-					So(ctx.Rule.State, ShouldEqual, models.AlertStatePending)
-				})
-			})
 		})
 	})
 }

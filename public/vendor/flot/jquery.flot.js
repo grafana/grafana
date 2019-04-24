@@ -602,6 +602,7 @@ Licensed under the MIT license.
                     tickColor: null, // color for the ticks, e.g. "rgba(0,0,0,0.15)"
                     margin: 0, // distance from the canvas edge to the grid
                     labelMargin: 5, // in pixels
+                    eventSectionHeight: 0, // space for event section
                     axisMargin: 8, // in pixels
                     borderWidth: 2, // in pixels
                     minBorderMargin: null, // in pixels, null means taken from points radius
@@ -631,6 +632,7 @@ Licensed under the MIT license.
             processRawData: [],
             processDatapoints: [],
             processOffset: [],
+            processRange: [],
             drawBackground: [],
             drawSeries: [],
             draw: [],
@@ -929,13 +931,13 @@ Licensed under the MIT license.
             var res = {}, i, axis;
             for (i = 0; i < xaxes.length; ++i) {
                 axis = xaxes[i];
-                if (axis && axis.used)
+                if (axis)
                     res["x" + axis.n] = axis.c2p(pos.left);
             }
 
             for (i = 0; i < yaxes.length; ++i) {
                 axis = yaxes[i];
-                if (axis && axis.used)
+                if (axis)
                     res["y" + axis.n] = axis.c2p(pos.top);
             }
 
@@ -1127,7 +1129,7 @@ Licensed under the MIT license.
                     format.push({ x: true, number: true, required: true });
                     format.push({ y: true, number: true, required: true });
 
-                    if (s.bars.show || (s.lines.show && s.lines.fill)) {
+                    if (s.stack || s.bars.show || (s.lines.show && s.lines.fill)) {
                         var autoscale = !!((s.bars.show && s.bars.zero) || (s.lines.show && s.lines.zero));
                         format.push({ y: true, number: true, required: false, defaultValue: 0, autoscale: autoscale });
                         if (s.bars.horizontal) {
@@ -1450,6 +1452,7 @@ Licensed under the MIT license.
                 tickLength = axis.options.tickLength,
                 axisMargin = options.grid.axisMargin,
                 padding = options.grid.labelMargin,
+                eventSectionPadding = options.grid.eventSectionHeight,
                 innermost = true,
                 outermost = true,
                 first = true,
@@ -1490,7 +1493,9 @@ Licensed under the MIT license.
                 padding += +tickLength;
 
             if (isXAxis) {
+                // Add space for event section
                 lh += padding;
+                lh += eventSectionPadding;
 
                 if (pos == "bottom") {
                     plotOffset.bottom += lh + axisMargin;
@@ -1518,6 +1523,7 @@ Licensed under the MIT license.
             axis.position = pos;
             axis.tickLength = tickLength;
             axis.box.padding = padding;
+            axis.box.eventSectionPadding = eventSectionPadding;
             axis.innermost = innermost;
         }
 
@@ -1608,20 +1614,32 @@ Licensed under the MIT license.
                 setRange(axis);
             });
 
+            executeHooks(hooks.processRange, []);
+
             if (showGrid) {
 
                 var allocatedAxes = $.grep(axes, function (axis) {
                     return axis.show || axis.reserveSpace;
                 });
 
-                $.each(allocatedAxes, function (_, axis) {
-                    // make the ticks
-                    setupTickGeneration(axis);
-                    setTicks(axis);
-                    snapRangeToTicks(axis, axis.ticks);
-                    // find labelWidth/Height for axis
-                    measureTickLabels(axis);
-                });
+                var snaped = false;
+                for (var i = 0; i < 2; i++) {
+                    $.each(allocatedAxes, function (_, axis) {
+                        // make the ticks
+                        setupTickGeneration(axis);
+                        setTicks(axis);
+                        snaped = snapRangeToTicks(axis, axis.ticks) || snaped;
+                        // find labelWidth/Height for axis
+                        measureTickLabels(axis);
+                    });
+
+                    if (snaped && hooks.processRange.length > 0) {
+                        executeHooks(hooks.processRange, []);
+                        snaped = false;
+                    } else {
+                        break;
+                    }
+                }
 
                 // with all dimensions calculated, we can compute the
                 // axis bounding boxes, start from the outside
@@ -1637,6 +1655,7 @@ Licensed under the MIT license.
                     allocateAxisBoxSecondPhase(axis);
                 });
             }
+
 
             plotWidth = surface.width - plotOffset.left - plotOffset.right;
             plotHeight = surface.height - plotOffset.bottom - plotOffset.top;
@@ -1745,7 +1764,9 @@ Licensed under the MIT license.
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
             // grafana addition
-            axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+            if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
+              axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+            }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it
             // we'll add an especially friendly reminder to make sure they included it.
@@ -1871,13 +1892,19 @@ Licensed under the MIT license.
         }
 
         function snapRangeToTicks(axis, ticks) {
+            var changed = false;
             if (axis.options.autoscaleMargin && ticks.length > 0) {
                 // snap to ticks
-                if (axis.options.min == null)
+                if (axis.options.min == null) {
                     axis.min = Math.min(axis.min, ticks[0].v);
-                if (axis.options.max == null && ticks.length > 1)
+                    changed = true;
+                }
+                if (axis.options.max == null && ticks.length > 1) {
                     axis.max = Math.max(axis.max, ticks[ticks.length - 1].v);
+                    changed = true;
+                }
             }
+            return changed;
         }
 
         function draw() {
@@ -2225,7 +2252,7 @@ Licensed under the MIT license.
                         halign = "center";
                         x = plotOffset.left + axis.p2c(tick.v);
                         if (axis.position == "bottom") {
-                            y = box.top + box.padding;
+                            y = box.top + box.padding + box.eventSectionPadding;
                         } else {
                             y = box.top + box.height - box.padding;
                             valign = "bottom";
@@ -2246,9 +2273,52 @@ Licensed under the MIT license.
             });
         }
 
+        function drawOrphanedPoints(series) {
+            /* Filters series data for points with no neighbors before or after
+             * and plots single 0.5 radius points for them so that they are displayed.
+             */
+            var abandonedPoints = [];
+            var beforeX = null;
+            var afterX = null;
+            var datapoints = series.datapoints;
+            // find any points with no neighbors before or after
+            var emptyPoints = [];
+            for (var j = 0; j < datapoints.pointsize - 2; j++) {
+                emptyPoints.push(0);
+            }
+            for (var i = 0; i < datapoints.points.length; i += datapoints.pointsize) {
+                var x = datapoints.points[i], y = datapoints.points[i + 1];
+                if (i === datapoints.points.length - datapoints.pointsize) {
+                    afterX = null;
+                } else {
+                    afterX = datapoints.points[i + datapoints.pointsize];
+                }
+                if (x !== null && y !== null && beforeX === null && afterX === null) {
+                    abandonedPoints.push(x);
+                    abandonedPoints.push(y);
+                    abandonedPoints.push.apply(abandonedPoints, emptyPoints);
+                }
+                beforeX = x;
+
+            }
+            var olddatapoints = datapoints.points
+            datapoints.points = abandonedPoints;
+
+            series.points.radius = series.lines.lineWidth/2;
+            // plot the orphan points with a radius of lineWidth/2
+            drawSeriesPoints(series);
+            // reset old info
+            datapoints.points = olddatapoints;
+        }
+
         function drawSeries(series) {
-            if (series.lines.show)
+            if (series.lines.show) {
                 drawSeriesLines(series);
+                if (!series.points.show && !series.bars.show) {
+                    // not necessary if user wants points displayed for everything
+                    drawOrphanedPoints(series);
+                }
+            }
             if (series.bars.show)
                 drawSeriesBars(series);
             if (series.points.show)
@@ -2957,8 +3027,11 @@ Licensed under the MIT license.
         }
 
         function onClick(e) {
-            triggerClickHoverEvent("plotclick", e,
-                                   function (s) { return s["clickable"] != false; });
+          if (plot.isSelecting) {
+            return;
+          }
+
+          triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
         }
 
         // trigger click or hover event (they send the same parameters

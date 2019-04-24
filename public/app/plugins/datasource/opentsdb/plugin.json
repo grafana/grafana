@@ -7,8 +7,10 @@
   "defaultMatchFormat": "pipe",
   "annotations": true,
   "alerting": true,
+  "tables": false,
 
   "info": {
+    "description": "OpenTSDB Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

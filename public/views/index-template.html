@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width">
+  <meta name="theme-color" content="#000">
+
+  <title>Grafana</title>
+
+  <base href="[[.AppSubUrl]]/" />
+
+  <link rel="icon" type="image/png" href="public/img/fav32.png">
+  <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
+  <link rel="apple-touch-icon" sizes="180x180" href="public/img/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css">
+
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <meta name="msapplication-TileColor" content="#2b5797">
+  <meta name="msapplication-config" content="public/img/browserconfig.xml">
+</head>
+
+<body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
+
+  <style>
+    .preloader {
+      height: 100%;
+      flex-direction: column;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .preloader__enter {
+      opacity: 0;
+      animation-name: preloader-fade-in;
+      animation-iteration-count: 1;
+      animation-duration: .9s;
+      animation-delay: 1.35s;
+      animation-fill-mode: forwards;
+    }
+
+    .preloader__bounce {
+      text-align: center;
+      animation-name: preloader-bounce;
+      animation-duration: .9s;
+      animation-iteration-count: infinite;
+    }
+
+    .preloader__logo {
+      display: inline-block;
+      animation-name: preloader-squash;
+      animation-duration: .9s;
+      animation-iteration-count: infinite;
+      width: 60px;
+      height: 60px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url("data:image/svg+xml,%3csvg version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='351px' height='365px' viewBox='0 0 351 365' style='enable-background:new 0 0 351 365%3b' xml:space='preserve'%3e %3cstyle type='text/css'%3e .st0%7bfill:url(%23SVGID_1_)%3b%7d %3c/style%3e %3cg id='Layer_1_1_'%3e %3c/g%3e %3clinearGradient id='SVGID_1_' gradientUnits='userSpaceOnUse' x1='175.5' y1='445.4948' x2='175.5' y2='114.0346'%3e %3cstop offset='0' style='stop-color:%23FFF100'/%3e %3cstop offset='1' style='stop-color:%23F05A28'/%3e %3c/linearGradient%3e %3cpath class='st0' d='M342%2c161.2c-0.6-6.1-1.6-13.1-3.6-20.9c-2-7.7-5-16.2-9.4-25c-4.4-8.8-10.1-17.9-17.5-26.8 c-2.9-3.5-6.1-6.9-9.5-10.2c5.1-20.3-6.2-37.9-6.2-37.9c-19.5-1.2-31.9%2c6.1-36.5%2c9.4c-0.8-0.3-1.5-0.7-2.3-1 c-3.3-1.3-6.7-2.6-10.3-3.7c-3.5-1.1-7.1-2.1-10.8-3c-3.7-0.9-7.4-1.6-11.2-2.2c-0.7-0.1-1.3-0.2-2-0.3 c-8.5-27.2-32.9-38.6-32.9-38.6c-27.3%2c17.3-32.4%2c41.5-32.4%2c41.5s-0.1%2c0.5-0.3%2c1.4c-1.5%2c0.4-3%2c0.9-4.5%2c1.3c-2.1%2c0.6-4.2%2c1.4-6.2%2c2.2 c-2.1%2c0.8-4.1%2c1.6-6.2%2c2.5c-4.1%2c1.8-8.2%2c3.8-12.2%2c6c-3.9%2c2.2-7.7%2c4.6-11.4%2c7.1c-0.5-0.2-1-0.4-1-0.4c-37.8-14.4-71.3%2c2.9-71.3%2c2.9 c-3.1%2c40.2%2c15.1%2c65.5%2c18.7%2c70.1c-0.9%2c2.5-1.7%2c5-2.5%2c7.5c-2.8%2c9.1-4.9%2c18.4-6.2%2c28.1c-0.2%2c1.4-0.4%2c2.8-0.5%2c4.2 C18.8%2c192.7%2c8.5%2c228%2c8.5%2c228c29.1%2c33.5%2c63.1%2c35.6%2c63.1%2c35.6c0%2c0%2c0.1-0.1%2c0.1-0.1c4.3%2c7.7%2c9.3%2c15%2c14.9%2c21.9c2.4%2c2.9%2c4.8%2c5.6%2c7.4%2c8.3 c-10.6%2c30.4%2c1.5%2c55.6%2c1.5%2c55.6c32.4%2c1.2%2c53.7-14.2%2c58.2-17.7c3.2%2c1.1%2c6.5%2c2.1%2c9.8%2c2.9c10%2c2.6%2c20.2%2c4.1%2c30.4%2c4.5 c2.5%2c0.1%2c5.1%2c0.2%2c7.6%2c0.1l1.2%2c0l0.8%2c0l1.6%2c0l1.6-0.1l0%2c0.1c15.3%2c21.8%2c42.1%2c24.9%2c42.1%2c24.9c19.1-20.1%2c20.2-40.1%2c20.2-44.4l0%2c0 c0%2c0%2c0-0.1%2c0-0.3c0-0.4%2c0-0.6%2c0-0.6l0%2c0c0-0.3%2c0-0.6%2c0-0.9c4-2.8%2c7.8-5.8%2c11.4-9.1c7.6-6.9%2c14.3-14.8%2c19.9-23.3 c0.5-0.8%2c1-1.6%2c1.5-2.4c21.6%2c1.2%2c36.9-13.4%2c36.9-13.4c-3.6-22.5-16.4-33.5-19.1-35.6l0%2c0c0%2c0-0.1-0.1-0.3-0.2 c-0.2-0.1-0.2-0.2-0.2-0.2c0%2c0%2c0%2c0%2c0%2c0c-0.1-0.1-0.3-0.2-0.5-0.3c0.1-1.4%2c0.2-2.7%2c0.3-4.1c0.2-2.4%2c0.2-4.9%2c0.2-7.3l0-1.8l0-0.9 l0-0.5c0-0.6%2c0-0.4%2c0-0.6l-0.1-1.5l-0.1-2c0-0.7-0.1-1.3-0.2-1.9c-0.1-0.6-0.1-1.3-0.2-1.9l-0.2-1.9l-0.3-1.9 c-0.4-2.5-0.8-4.9-1.4-7.4c-2.3-9.7-6.1-18.9-11-27.2c-5-8.3-11.2-15.6-18.3-21.8c-7-6.2-14.9-11.2-23.1-14.9 c-8.3-3.7-16.9-6.1-25.5-7.2c-4.3-0.6-8.6-0.8-12.9-0.7l-1.6%2c0l-0.4%2c0c-0.1%2c0-0.6%2c0-0.5%2c0l-0.7%2c0l-1.6%2c0.1c-0.6%2c0-1.2%2c0.1-1.7%2c0.1 c-2.2%2c0.2-4.4%2c0.5-6.5%2c0.9c-8.6%2c1.6-16.7%2c4.7-23.8%2c9c-7.1%2c4.3-13.3%2c9.6-18.3%2c15.6c-5%2c6-8.9%2c12.7-11.6%2c19.6c-2.7%2c6.9-4.2%2c14.1-4.6%2c21 c-0.1%2c1.7-0.1%2c3.5-0.1%2c5.2c0%2c0.4%2c0%2c0.9%2c0%2c1.3l0.1%2c1.4c0.1%2c0.8%2c0.1%2c1.7%2c0.2%2c2.5c0.3%2c3.5%2c1%2c6.9%2c1.9%2c10.1c1.9%2c6.5%2c4.9%2c12.4%2c8.6%2c17.4 c3.7%2c5%2c8.2%2c9.1%2c12.9%2c12.4c4.7%2c3.2%2c9.8%2c5.5%2c14.8%2c7c5%2c1.5%2c10%2c2.1%2c14.7%2c2.1c0.6%2c0%2c1.2%2c0%2c1.7%2c0c0.3%2c0%2c0.6%2c0%2c0.9%2c0c0.3%2c0%2c0.6%2c0%2c0.9-0.1 c0.5%2c0%2c1-0.1%2c1.5-0.1c0.1%2c0%2c0.3%2c0%2c0.4-0.1l0.5-0.1c0.3%2c0%2c0.6-0.1%2c0.9-0.1c0.6-0.1%2c1.1-0.2%2c1.7-0.3c0.6-0.1%2c1.1-0.2%2c1.6-0.4 c1.1-0.2%2c2.1-0.6%2c3.1-0.9c2-0.7%2c4-1.5%2c5.7-2.4c1.8-0.9%2c3.4-2%2c5-3c0.4-0.3%2c0.9-0.6%2c1.3-1c1.6-1.3%2c1.9-3.7%2c0.6-5.3 c-1.1-1.4-3.1-1.8-4.7-0.9c-0.4%2c0.2-0.8%2c0.4-1.2%2c0.6c-1.4%2c0.7-2.8%2c1.3-4.3%2c1.8c-1.5%2c0.5-3.1%2c0.9-4.7%2c1.2c-0.8%2c0.1-1.6%2c0.2-2.5%2c0.3 c-0.4%2c0-0.8%2c0.1-1.3%2c0.1c-0.4%2c0-0.9%2c0-1.2%2c0c-0.4%2c0-0.8%2c0-1.2%2c0c-0.5%2c0-1%2c0-1.5-0.1c0%2c0-0.3%2c0-0.1%2c0l-0.2%2c0l-0.3%2c0 c-0.2%2c0-0.5%2c0-0.7-0.1c-0.5-0.1-0.9-0.1-1.4-0.2c-3.7-0.5-7.4-1.6-10.9-3.2c-3.6-1.6-7-3.8-10.1-6.6c-3.1-2.8-5.8-6.1-7.9-9.9 c-2.1-3.8-3.6-8-4.3-12.4c-0.3-2.2-0.5-4.5-0.4-6.7c0-0.6%2c0.1-1.2%2c0.1-1.8c0%2c0.2%2c0-0.1%2c0-0.1l0-0.2l0-0.5c0-0.3%2c0.1-0.6%2c0.1-0.9 c0.1-1.2%2c0.3-2.4%2c0.5-3.6c1.7-9.6%2c6.5-19%2c13.9-26.1c1.9-1.8%2c3.9-3.4%2c6-4.9c2.1-1.5%2c4.4-2.8%2c6.8-3.9c2.4-1.1%2c4.8-2%2c7.4-2.7 c2.5-0.7%2c5.1-1.1%2c7.8-1.4c1.3-0.1%2c2.6-0.2%2c4-0.2c0.4%2c0%2c0.6%2c0%2c0.9%2c0l1.1%2c0l0.7%2c0c0.3%2c0%2c0%2c0%2c0.1%2c0l0.3%2c0l1.1%2c0.1 c2.9%2c0.2%2c5.7%2c0.6%2c8.5%2c1.3c5.6%2c1.2%2c11.1%2c3.3%2c16.2%2c6.1c10.2%2c5.7%2c18.9%2c14.5%2c24.2%2c25.1c2.7%2c5.3%2c4.6%2c11%2c5.5%2c16.9c0.2%2c1.5%2c0.4%2c3%2c0.5%2c4.5 l0.1%2c1.1l0.1%2c1.1c0%2c0.4%2c0%2c0.8%2c0%2c1.1c0%2c0.4%2c0%2c0.8%2c0%2c1.1l0%2c1l0%2c1.1c0%2c0.7-0.1%2c1.9-0.1%2c2.6c-0.1%2c1.6-0.3%2c3.3-0.5%2c4.9 c-0.2%2c1.6-0.5%2c3.2-0.8%2c4.8c-0.3%2c1.6-0.7%2c3.2-1.1%2c4.7c-0.8%2c3.1-1.8%2c6.2-3%2c9.3c-2.4%2c6-5.6%2c11.8-9.4%2c17.1 c-7.7%2c10.6-18.2%2c19.2-30.2%2c24.7c-6%2c2.7-12.3%2c4.7-18.8%2c5.7c-3.2%2c0.6-6.5%2c0.9-9.8%2c1l-0.6%2c0l-0.5%2c0l-1.1%2c0l-1.6%2c0l-0.8%2c0 c0.4%2c0-0.1%2c0-0.1%2c0l-0.3%2c0c-1.8%2c0-3.5-0.1-5.3-0.3c-7-0.5-13.9-1.8-20.7-3.7c-6.7-1.9-13.2-4.6-19.4-7.8 c-12.3-6.6-23.4-15.6-32-26.5c-4.3-5.4-8.1-11.3-11.2-17.4c-3.1-6.1-5.6-12.6-7.4-19.1c-1.8-6.6-2.9-13.3-3.4-20.1l-0.1-1.3l0-0.3 l0-0.3l0-0.6l0-1.1l0-0.3l0-0.4l0-0.8l0-1.6l0-0.3c0%2c0%2c0%2c0.1%2c0-0.1l0-0.6c0-0.8%2c0-1.7%2c0-2.5c0.1-3.3%2c0.4-6.8%2c0.8-10.2 c0.4-3.4%2c1-6.9%2c1.7-10.3c0.7-3.4%2c1.5-6.8%2c2.5-10.2c1.9-6.7%2c4.3-13.2%2c7.1-19.3c5.7-12.2%2c13.1-23.1%2c22-31.8c2.2-2.2%2c4.5-4.2%2c6.9-6.2 c2.4-1.9%2c4.9-3.7%2c7.5-5.4c2.5-1.7%2c5.2-3.2%2c7.9-4.6c1.3-0.7%2c2.7-1.4%2c4.1-2c0.7-0.3%2c1.4-0.6%2c2.1-0.9c0.7-0.3%2c1.4-0.6%2c2.1-0.9 c2.8-1.2%2c5.7-2.2%2c8.7-3.1c0.7-0.2%2c1.5-0.4%2c2.2-0.7c0.7-0.2%2c1.5-0.4%2c2.2-0.6c1.5-0.4%2c3-0.8%2c4.5-1.1c0.7-0.2%2c1.5-0.3%2c2.3-0.5 c0.8-0.2%2c1.5-0.3%2c2.3-0.5c0.8-0.1%2c1.5-0.3%2c2.3-0.4l1.1-0.2l1.2-0.2c0.8-0.1%2c1.5-0.2%2c2.3-0.3c0.9-0.1%2c1.7-0.2%2c2.6-0.3 c0.7-0.1%2c1.9-0.2%2c2.6-0.3c0.5-0.1%2c1.1-0.1%2c1.6-0.2l1.1-0.1l0.5-0.1l0.6%2c0c0.9-0.1%2c1.7-0.1%2c2.6-0.2l1.3-0.1c0%2c0%2c0.5%2c0%2c0.1%2c0l0.3%2c0 l0.6%2c0c0.7%2c0%2c1.5-0.1%2c2.2-0.1c2.9-0.1%2c5.9-0.1%2c8.8%2c0c5.8%2c0.2%2c11.5%2c0.9%2c17%2c1.9c11.1%2c2.1%2c21.5%2c5.6%2c31%2c10.3 c9.5%2c4.6%2c17.9%2c10.3%2c25.3%2c16.5c0.5%2c0.4%2c0.9%2c0.8%2c1.4%2c1.2c0.4%2c0.4%2c0.9%2c0.8%2c1.3%2c1.2c0.9%2c0.8%2c1.7%2c1.6%2c2.6%2c2.4c0.9%2c0.8%2c1.7%2c1.6%2c2.5%2c2.4 c0.8%2c0.8%2c1.6%2c1.6%2c2.4%2c2.5c3.1%2c3.3%2c6%2c6.6%2c8.6%2c10c5.2%2c6.7%2c9.4%2c13.5%2c12.7%2c19.9c0.2%2c0.4%2c0.4%2c0.8%2c0.6%2c1.2c0.2%2c0.4%2c0.4%2c0.8%2c0.6%2c1.2 c0.4%2c0.8%2c0.8%2c1.6%2c1.1%2c2.4c0.4%2c0.8%2c0.7%2c1.5%2c1.1%2c2.3c0.3%2c0.8%2c0.7%2c1.5%2c1%2c2.3c1.2%2c3%2c2.4%2c5.9%2c3.3%2c8.6c1.5%2c4.4%2c2.6%2c8.3%2c3.5%2c11.7 c0.3%2c1.4%2c1.6%2c2.3%2c3%2c2.1c1.5-0.1%2c2.6-1.3%2c2.6-2.8C342.6%2c170.4%2c342.5%2c166.1%2c342%2c161.2z'/%3e %3c/svg%3e");
+    }
+
+    .preloader__text {
+      margin-top: 16px;
+      font-weight: 500;
+      font-size: 14px;
+      font-family: Sans-serif;
+      opacity: 0;
+      animation-name: preloader-fade-in;
+      animation-duration: .9s;
+      animation-delay: 1.8s;
+      animation-fill-mode: forwards;
+    }
+
+    .theme-light .preloader__text {
+      color: #52545c;
+    }
+
+    .theme-dark .preloader__text {
+      color: #d8d9da;
+    }
+
+    @keyframes preloader-fade-in {
+      0% {
+        opacity: 0;
+        /*animation-timing-function: linear;*/
+        animation-timing-function: cubic-bezier(0, 0, 0.5, 1)
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes preloader-bounce {
+      from,
+      to {
+        transform: translateY(0px);
+        animation-timing-function: cubic-bezier(0.3, 0.0, 0.1, 1)
+      }
+      50% {
+        transform: translateY(-50px);
+        animation-timing-function: cubic-bezier(.9, 0, .7, 1)
+      }
+    }
+
+    @keyframes preloader-squash {
+      0% {
+        transform: scaleX(1.3) scaleY(.8);
+        animation-timing-function: cubic-bezier(.3, 0, .1, 1);
+        transform-origin: bottom center;
+      }
+      15% {
+        transform: scaleX(.75) scaleY(1.25);
+        animation-timing-function: cubic-bezier(0, 0, .7, .75);
+        transform-origin: bottom center;
+      }
+      55% {
+        transform: scaleX(1.05) scaleY(.95);
+        animation-timing-function: cubic-bezier(.9, 0, 1, 1);
+        transform-origin: top center;
+      }
+      95% {
+        transform: scaleX(.75) scaleY(1.25);
+        animation-timing-function: cubic-bezier(0, 0, 0, 1);
+        transform-origin: bottom center;
+      }
+      100% {
+        transform: scaleX(1.3) scaleY(.8);
+        transform-origin: bottom center;
+        animation-timing-function: cubic-bezier(0, 0, 0.7, 1);
+      }
+    }
+
+    /* Fail info */
+    .preloader__text--fail {
+      display: none;
+    }
+
+    /* stop logo animation */
+    .preloader--done .preloader__bounce,
+    .preloader--done .preloader__logo {
+      animation-name: none;
+      display: none;
+    }
+
+    .preloader--done .preloader__logo,
+    .preloader--done .preloader__text {
+      display: none;
+      color: #ff5705 !important;
+      font-size: 15px;
+    }
+
+    .preloader--done .preloader__text--fail {
+      display: block;
+    }
+
+    [ng\:cloak],
+    [ng-cloak],
+    .ng-cloak {
+      display: none !important;
+    }
+  </style>
+
+  <div class="preloader">
+    <div class="preloader__enter">
+      <div class="preloader__bounce">
+        <div class="preloader__logo"></div>
+      </div>
+    </div>
+    <div class="preloader__text">Loading Grafana</div>
+    <div class="preloader__text preloader__text--fail">
+      <p>
+      <strong>If you're seeing this Grafana has failed to load its application files</strong>
+        <br />
+        <br />
+      </p>
+      <p>
+        1. This could be caused by your reverse proxy settings.<br /><br />
+        2. If you host grafana under subpath make sure your grafana.ini root_url setting includes subpath<br /> <br />
+        3. If you have a local dev build make sure you build frontend using: yarn start, yarn start:hot, or yarn build<br /> <br />
+        4. Sometimes restarting grafana-server can help<br />
+      </p>
+    </div>
+  </div>
+
+  <grafana-app class="grafana-app" ng-cloak>
+    <sidemenu class="sidemenu"></sidemenu>
+    <app-notifications-list class="page-alert-list"></app-notifications-list>
+    <dashboard-search></dashboard-search>
+
+    <div class="main-view">
+      <div class="scroll-canvas">
+        <div ng-view></div>
+
+        <footer class="footer">
+          <div class="text-center">
+            <ul>
+              <li>
+                <a href="http://docs.grafana.org" target="_blank">
+                  <i class="fa fa-file-code-o"></i>
+                  Docs
+                </a>
+              </li>
+              <li>
+                <a href="https://grafana.com/services/support" target="_blank">
+                  <i class="fa fa-support"></i>
+                  Support Plans
+                </a>
+              </li>
+              <li>
+                <a href="https://community.grafana.com/" target="_blank">
+                  <i class="fa fa-comments-o"></i>
+                  Community
+                </a>
+              </li>
+              <li>
+                <a href="https://grafana.com" target="_blank">[[.AppName]]</a>
+                <span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
+              </li>
+              [[if .NewGrafanaVersionExists]]
+              <li>
+                <a href="https://grafana.com/get" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
+                  New version available!
+                </a>
+              </li>
+              [[end]]
+            </ul>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </grafana-app>
+
+  <script>
+    window.grafanaBootData = {
+      user: [[.User]],
+      settings: [[.Settings]],
+      navTree: [[.NavTree]]
+    };
+
+		// In case the js files fails to load the code below will show an info message.
+    window.onload = function() {
+      var preloader = document.getElementsByClassName("preloader");
+      if (preloader.length) {
+        preloader[0].className = "preloader preloader--done";
+      }
+    };
+  </script>
+
+	[[if .GoogleTagManagerId]]
+		<!-- Google Tag Manager -->
+		<script>
+			dataLayer = [{
+				'IsSignedIn': '[[.User.IsSignedIn]]',
+				'Email': '[[.User.Email]]',
+				'Name': '[[.User.Name]]',
+				'UserId': '[[.User.Id]]',
+				'OrgId': '[[.User.OrgId]]',
+				'OrgName': '[[.User.OrgName]]',
+			}];
+		</script>
+		<noscript>
+			<iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+		</noscript>
+		<script>(function (w, d, s, l, i) {
+				w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0],
+					j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+			})(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');</script>
+		<!-- End Google Tag Manager -->
+  [[end]]
+
+</body>
+
+</html>

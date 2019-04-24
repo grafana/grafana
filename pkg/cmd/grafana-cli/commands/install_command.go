@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -33,7 +34,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
 		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
-			return errors.New(fmt.Sprintf("pluginsDir (%s) is not a directory", pluginsDir))
+			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
 	}
@@ -57,42 +58,46 @@ func installCommand(c CommandLine) error {
 	return InstallPlugin(pluginToInstall, version, c)
 }
 
+// InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
+// and then extracts the zip into the plugins directory.
 func InstallPlugin(pluginName, version string, c CommandLine) error {
-	plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
 	pluginFolder := c.PluginDirectory()
-	if err != nil {
-		return err
+	downloadURL := c.PluginURL()
+	if downloadURL == "" {
+		plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
+		if err != nil {
+			return err
+		}
+
+		v, err := SelectVersion(plugin, version)
+		if err != nil {
+			return err
+		}
+
+		if version == "" {
+			version = v.Version
+		}
+		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
+			c.GlobalString("repo"),
+			pluginName,
+			version)
 	}
 
-	v, err := SelectVersion(plugin, version)
-	if err != nil {
-		return err
-	}
-
-	if version == "" {
-		version = v.Version
-	}
-
-	downloadURL := fmt.Sprintf("%s/%s/versions/%s/download",
-		c.GlobalString("repo"),
-		pluginName,
-		version)
-
-	logger.Infof("installing %v @ %v\n", plugin.Id, version)
+	logger.Infof("installing %v @ %v\n", pluginName, version)
 	logger.Infof("from url: %v\n", downloadURL)
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
-	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
+	err := downloadFile(pluginName, pluginFolder, downloadURL)
 	if err != nil {
 		return err
 	}
 
-	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
+	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		InstallPlugin(v.Id, version, c)
+		InstallPlugin(v.Id, "", c)
 		logger.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
 
@@ -110,7 +115,7 @@ func SelectVersion(plugin m.Plugin, version string) (m.Version, error) {
 		}
 	}
 
-	return m.Version{}, errors.New("Could not find the version your looking for")
+	return m.Version{}, errors.New("Could not find the version you're looking for")
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
@@ -131,7 +136,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 			} else {
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
+					err = fmt.Errorf("Corrupt http response from source. Please try again")
 				} else {
 					panic(r)
 				}
@@ -150,7 +155,11 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		return err
 	}
 
-	r, err := zip.NewReader(bytes.NewReader(body), resp.ContentLength)
+	return extractFiles(body, pluginName, filePath)
+}
+
+func extractFiles(body []byte, pluginName string, filePath string) error {
+	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return err
 	}
@@ -159,12 +168,18 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 
 		if zf.FileInfo().IsDir() {
 			err := os.Mkdir(newFile, 0777)
-			if PermissionsError(err) {
+			if permissionsError(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 		} else {
-			dst, err := os.Create(newFile)
-			if PermissionsError(err) {
+			fileMode := zf.Mode()
+
+			if strings.HasSuffix(newFile, "_linux_amd64") || strings.HasSuffix(newFile, "_darwin_amd64") {
+				fileMode = os.FileMode(0755)
+			}
+
+			dst, err := os.OpenFile(newFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
+			if permissionsError(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 
@@ -182,6 +197,6 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 	return nil
 }
 
-func PermissionsError(err error) bool {
+func permissionsError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "permission denied")
 }

@@ -1,1 +1,0 @@
-import './snapshot_ctrl';

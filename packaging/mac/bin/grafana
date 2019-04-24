@@ -6,10 +6,12 @@ HOMEPATH=/usr/local/share/grafana
 LOGPATH=/usr/local/var/log/grafana
 DATAPATH=/usr/local/var/lib/grafana
 PLUGINPATH=/usr/local/var/lib/grafana/plugins
+DATASOURCECFGPATH=/usr/local/etc/grafana/datasources
+DASHBOARDSCFGPATH=/usr/local/etc/grafana/dashboards
 
 case "$1" in
 start)
-  $EXECUTABLE --config=$CONFIG --homepath=$HOMEPATH cfg:default.paths.logs=$LOGPATH cfg:default.paths.data=$DATAPATH cfg:default.paths.plugins=$PLUGINPATH 2> /dev/null &
+  $EXECUTABLE --config=$CONFIG --homepath=$HOMEPATH cfg:default.paths.datasources=$DATASOURCECFGPATH cfg:default.paths.dashboards=$DASHBOARDSCFGPATH cfg:default.paths.logs=$LOGPATH cfg:default.paths.data=$DATAPATH cfg:default.paths.plugins=$PLUGINPATH 2> /dev/null &
   [ $? -eq 0 ] && echo "$DAEMON started"
 ;;
 stop)

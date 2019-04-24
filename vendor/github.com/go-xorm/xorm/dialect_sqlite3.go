@@ -14,10 +14,6 @@ import (
 	"github.com/go-xorm/core"
 )
 
-// func init() {
-// 	RegisterDialect("sqlite3", &sqlite3{})
-// }
-
 var (
 	sqlite3ReservedWords = map[string]bool{
 		"ABORT":             true,
@@ -237,7 +233,7 @@ func (db *sqlite3) TableCheckSql(tableName string) (string, []interface{}) {
 }
 
 func (db *sqlite3) DropIndexSql(tableName string, index *core.Index) string {
-	//var unique string
+	// var unique string
 	quote := db.Quote
 	idxName := index.Name
 
@@ -310,11 +306,25 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 	for _, colStr := range colCreates {
 		reg = regexp.MustCompile(`,\s`)
 		colStr = reg.ReplaceAllString(colStr, ",")
+		if strings.HasPrefix(strings.TrimSpace(colStr), "PRIMARY KEY") {
+			parts := strings.Split(strings.TrimSpace(colStr), "(")
+			if len(parts) == 2 {
+				pkCols := strings.Split(strings.TrimRight(strings.TrimSpace(parts[1]), ")"), ",")
+				for _, pk := range pkCols {
+					if col, ok := cols[strings.Trim(strings.TrimSpace(pk), "`")]; ok {
+						col.IsPrimaryKey = true
+					}
+				}
+			}
+			continue
+		}
+
 		fields := strings.Fields(strings.TrimSpace(colStr))
 		col := new(core.Column)
 		col.Indexes = make(map[string]int)
 		col.Nullable = true
 		col.DefaultIsEmpty = true
+
 		for idx, field := range fields {
 			if idx == 0 {
 				col.Name = strings.Trim(strings.Trim(field, "`[] "), `"`)
@@ -405,8 +415,10 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 		}
 
 		indexName := strings.Trim(sql[nNStart+6:nNEnd], "` []")
+		var isRegular bool
 		if strings.HasPrefix(indexName, "IDX_"+tableName) || strings.HasPrefix(indexName, "UQE_"+tableName) {
 			index.Name = indexName[5+len(tableName):]
+			isRegular = true
 		} else {
 			index.Name = indexName
 		}
@@ -425,6 +437,7 @@ func (db *sqlite3) GetIndexes(tableName string) (map[string]*core.Index, error) 
 		for _, col := range colIndexes {
 			index.Cols = append(index.Cols, strings.Trim(col, "` []"))
 		}
+		index.IsRegular = isRegular
 		indexes[index.Name] = index
 	}
 
@@ -439,5 +452,9 @@ type sqlite3Driver struct {
 }
 
 func (p *sqlite3Driver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	if strings.Contains(dataSourceName, "?") {
+		dataSourceName = dataSourceName[:strings.Index(dataSourceName, "?")]
+	}
+
 	return &core.Uri{DbType: core.SQLITE, DbName: dataSourceName}, nil
 }

@@ -34,4 +34,13 @@ func addPreferencesMigrations(mg *Migrator) {
 		{Name: "timezone", Type: DB_NVarchar, Length: 50, Nullable: false},
 		{Name: "theme", Type: DB_NVarchar, Length: 20, Nullable: false},
 	}))
+
+	mg.AddMigration("Add column team_id in preferences", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "team_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("Update team_id column values in preferences", NewRawSqlMigration("").
+		Sqlite("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
+		Postgres("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
+		Mysql("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;"))
 }

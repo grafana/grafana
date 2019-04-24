@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"sync"
+	"time"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -10,7 +11,7 @@ import (
 var renderKeysLock sync.Mutex
 var renderKeys map[string]*m.SignedInUser = make(map[string]*m.SignedInUser)
 
-func initContextWithRenderAuth(ctx *Context) bool {
+func initContextWithRenderAuth(ctx *m.ReqContext) bool {
 	key := ctx.GetCookie("renderKey")
 	if key == "" {
 		return false
@@ -19,28 +20,28 @@ func initContextWithRenderAuth(ctx *Context) bool {
 	renderKeysLock.Lock()
 	defer renderKeysLock.Unlock()
 
-	if renderUser, exists := renderKeys[key]; !exists {
+	renderUser, exists := renderKeys[key]
+	if !exists {
 		ctx.JsonApiErr(401, "Invalid Render Key", nil)
 		return true
-	} else {
-
-		ctx.IsSignedIn = true
-		ctx.SignedInUser = renderUser
-		ctx.IsRenderCall = true
-		return true
 	}
+
+	ctx.IsSignedIn = true
+	ctx.SignedInUser = renderUser
+	ctx.IsRenderCall = true
+	ctx.LastSeenAt = time.Now()
+	return true
 }
 
-type renderContextFunc func(key string) (string, error)
-
-func AddRenderAuthKey(orgId int64) string {
+func AddRenderAuthKey(orgId int64, userId int64, orgRole m.RoleType) string {
 	renderKeysLock.Lock()
 
 	key := util.GetRandomString(32)
 
 	renderKeys[key] = &m.SignedInUser{
 		OrgId:   orgId,
-		OrgRole: m.ROLE_VIEWER,
+		OrgRole: orgRole,
+		UserId:  userId,
 	}
 
 	renderKeysLock.Unlock()

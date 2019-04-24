@@ -1285,6 +1285,7 @@ func (dmp *DiffMatchPatch) DiffToDelta(diffs []Diff) string {
 // DiffFromDelta given the original text1, and an encoded string which describes the operations required to transform text1 into text2, comAdde the full diff.
 func (dmp *DiffMatchPatch) DiffFromDelta(text1 string, delta string) (diffs []Diff, err error) {
 	i := 0
+	runes := []rune(text1)
 
 	for _, token := range strings.Split(delta, "\t") {
 		if len(token) == 0 {
@@ -1316,9 +1317,13 @@ func (dmp *DiffMatchPatch) DiffFromDelta(text1 string, delta string) (diffs []Di
 				return nil, errors.New("Negative number in DiffFromDelta: " + param)
 			}
 
-			// Remember that string slicing is by byte - we want by rune here.
-			text := string([]rune(text1)[i : i+int(n)])
 			i += int(n)
+			// Break out if we are out of bounds, go1.6 can't handle this very well
+			if i > len(runes) {
+				break
+			}
+			// Remember that string slicing is by byte - we want by rune here.
+			text := string(runes[i-int(n) : i])
 
 			if op == '=' {
 				diffs = append(diffs, Diff{DiffEqual, text})
@@ -1331,8 +1336,8 @@ func (dmp *DiffMatchPatch) DiffFromDelta(text1 string, delta string) (diffs []Di
 		}
 	}
 
-	if i != len([]rune(text1)) {
-		return nil, fmt.Errorf("Delta length (%v) smaller than source text length (%v)", i, len(text1))
+	if i != len(runes) {
+		return nil, fmt.Errorf("Delta length (%v) is different from source text length (%v)", i, len(text1))
 	}
 
 	return diffs, nil

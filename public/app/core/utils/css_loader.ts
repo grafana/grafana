@@ -1,20 +1,18 @@
-///<reference path="../../headers/common.d.ts" />
-
-var waitSeconds = 100;
-var head = document.getElementsByTagName('head')[0];
+const waitSeconds = 100;
+const head = document.getElementsByTagName('head')[0];
 
 // get all link tags in the page
-var links = document.getElementsByTagName('link');
-var linkHrefs = [];
-for (var i = 0; i < links.length; i++) {
+const links = document.getElementsByTagName('link');
+const linkHrefs = [];
+for (let i = 0; i < links.length; i++) {
   linkHrefs.push(links[i].href);
 }
 
-var isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
-var webkitLoadCheck = function(link, callback) {
-  setTimeout(function() {
-    for (var i = 0; i < document.styleSheets.length; i++) {
-      var sheet = document.styleSheets[i];
+const isWebkit = !!window.navigator.userAgent.match(/AppleWebKit\/([^ ;]*)/);
+const webkitLoadCheck = (link, callback) => {
+  setTimeout(() => {
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      const sheet = document.styleSheets[i];
       if (sheet.href === link.href) {
         return callback();
       }
@@ -23,19 +21,19 @@ var webkitLoadCheck = function(link, callback) {
   }, 10);
 };
 
-var noop = function() {};
+const noop = () => {};
 
-var loadCSS = function(url) {
-  return new Promise(function(resolve, reject) {
-    var link = document.createElement('link');
-    var timeout = setTimeout(function() {
+const loadCSS = url => {
+  return new Promise((resolve, reject) => {
+    const link = document.createElement('link');
+    const timeout = setTimeout(() => {
       reject('Unable to load CSS');
     }, waitSeconds * 1000);
 
-    var _callback = function(error) {
+    const _callback = error => {
       clearTimeout(timeout);
       link.onload = link.onerror = noop;
-      setTimeout(function() {
+      setTimeout(() => {
         if (error) {
           reject(error);
         } else {
@@ -49,12 +47,14 @@ var loadCSS = function(url) {
     link.href = url;
 
     if (!isWebkit) {
-      link.onload = function() { _callback(undefined); };
+      link.onload = () => {
+        _callback(undefined);
+      };
     } else {
       webkitLoadCheck(link, _callback);
     }
 
-    link.onerror = function(evt: any) {
+    link.onerror = (evt: any) => {
       _callback(evt.error || new Error('Error loading CSS file.'));
     };
 
@@ -67,12 +67,11 @@ export function fetch(load): any {
     return '';
   }
 
-  // dont reload styles loaded in the head
-  for (var i = 0; i < linkHrefs.length; i++) {
+  // don't reload styles loaded in the head
+  for (let i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
       return '';
     }
   }
   return loadCSS(load.address);
 }
-

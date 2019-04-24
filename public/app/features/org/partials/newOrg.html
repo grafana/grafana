@@ -1,11 +1,11 @@
-<navbar model="navModel"></navbar>
+<page-header model="navModel"></page-header>
 
-<div class="page-container" ng-form="playlistEditForm">
-	<div class="page-header">
-		<h1>New Organization</h1>
-	</div>
+<div class="page-container page-body" ng-form="playlistEditForm">
+	<h3 class="page-sub-heading">
+		New Organization
+	</h3>
 
-	<p class="playlist-description">Each organization contains their own dashboards, data sources and configuration, and cannot be shared between orgs. While users may belong to more than one, mutiple organization are most frequently used in multi-tenant deployments. </p>
+	<p class="playlist-description">Each organization contains their own dashboards, data sources and configuration, and cannot be shared between orgs. While users may belong to more than one, multiple organization are most frequently used in multi-tenant deployments. </p>
 
 	<form>
 		<div class="gf-form-group">
@@ -15,7 +15,7 @@
 			</div>
 			<br>
 			<div class="gf-form-buttons-row">
-				<button type="submit" class="btn btn-success" ng-click="createOrg()">Create</button>
+				<button type="submit" class="btn btn-primary" ng-click="createOrg()">Create</button>
 			</div>
 		</div>
 	</form>

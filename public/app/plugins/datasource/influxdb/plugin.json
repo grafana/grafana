@@ -7,8 +7,14 @@
   "metrics": true,
   "annotations": true,
   "alerting": true,
+  "tables": true,
+
+  "queryOptions": {
+    "minInterval": true
+  },
 
   "info": {
+    "description": "InfluxDB Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

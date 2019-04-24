@@ -2,7 +2,6 @@
 // Typography
 // --------------------------------------------------
 
-
 // Body text
 // -------------------------
 
@@ -21,85 +20,125 @@ p {
 // -------------------------
 
 // Ex: 14px base font * 85% = about 12px
-small   { font-size: 85%; }
-strong  { font-weight: bold; }
-em      { font-style: italic; color: $headings-color; }
-cite    { font-style: normal; }
+small {
+  font-size: 85%;
+}
+strong {
+  font-weight: $font-weight-semi-bold;
+}
+em {
+  font-style: italic;
+  color: $headings-color;
+}
+cite {
+  font-style: normal;
+}
 
 // Utility classes
-.muted               { color: $text-muted; }
+.muted {
+  color: $text-muted;
+}
 a.muted:hover,
-a.muted:focus        { color: darken($text-muted, 10%); }
+a.muted:focus {
+  color: darken($text-muted, 10%);
+}
 
-.text-warning        { color: $state-warning-text; }
+.text-warning {
+  color: $warning-text-color;
+}
 a.text-warning:hover,
-a.text-warning:focus { color: darken($state-warning-text, 10%); }
+a.text-warning:focus {
+  color: darken($warning-text-color, 10%);
+}
 
-.text-error          { color: $errorText; }
+.text-error {
+  color: $error-text-color;
+}
 a.text-error:hover,
-a.text-error:focus   { color: darken($errorText, 10%); }
+a.text-error:focus {
+  color: darken($error-text-color, 10%);
+}
 
-.text-info           { color: $infoText; }
-a.text-info:hover,
-a.text-info:focus    { color: darken($infoText, 10%); }
-
-.text-success        { color: $successText; }
+.text-success {
+  color: $success-text-color;
+}
 a.text-success:hover,
-a.text-success:focus { color: darken($successText, 10%); }
-a { cursor: pointer; }
+a.text-success:focus {
+  color: darken($success-text-color, 10%);
+}
+a {
+  cursor: pointer;
+}
+
+.text-link {
+  text-decoration: underline;
+}
+
+a:focus {
+  outline: 0 none !important;
+}
 
 a[disabled] {
   cursor: default;
   pointer-events: none !important;
 }
 
-.text-left           { text-align: left; }
-.text-right          { text-align: right; }
-.text-center         { text-align: center; }
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
 
 //
 // Headings
 //
 
-h1, h2, h3, h4, h5, h6,
-.h1, .h2, .h3, .h4, .h5, .h6 {
-  margin-bottom: $headings-margin-bottom;
-  font-family: $headings-font-family;
-  font-weight: $headings-font-weight;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  margin-bottom: $space-sm;
+  font-weight: $font-weight-regular;
   line-height: $headings-line-height;
   color: $headings-color;
 }
 
-h1, .h1 { font-size: $font-size-h1; font-style: italic; }
-h2, .h2 { font-size: $font-size-h2; }
-h3, .h3 { font-size: $font-size-h3; }
-h4, .h4 { font-size: $font-size-h4; }
-h5, .h5 { font-size: $font-size-h5; }
-h6, .h6 { font-size: $font-size-h6; }
-
-.lead {
-  font-size: $lead-font-size;
-  font-weight: $lead-font-weight;
+h1,
+.h1 {
+  font-size: $font-size-h1;
 }
-
-// Type display classes
-.display-1 {
-  font-size: $display1-size;
-  font-weight: $display1-weight;
+h2,
+.h2 {
+  font-size: $font-size-h2;
 }
-.display-2 {
-  font-size: $display2-size;
-  font-weight: $display2-weight;
+h3,
+.h3 {
+  font-size: $font-size-h3;
 }
-.display-3 {
-  font-size: $display3-size;
-  font-weight: $display3-weight;
+h4,
+.h4 {
+  font-size: $font-size-h4;
 }
-.display-4 {
-  font-size: $display4-size;
-  font-weight: $display4-weight;
+h5,
+.h5 {
+  font-size: $font-size-h5;
 }
-
+h6,
+.h6 {
+  font-size: $font-size-h6;
+}
 
 //
 // Horizontal rules
@@ -109,9 +148,8 @@ hr {
   margin-top: $spacer-y;
   margin-bottom: $spacer-y;
   border: 0;
-  border-top: $hr-border-width solid $hr-border-color;
+  border-top: $border-width solid $hr-border-color;
 }
-
 
 //
 // Emphasis
@@ -129,16 +167,15 @@ small,
 
 mark,
 .mark {
-  padding: .2em;
-  background-color: $state-warning-bg;
+  background: $alert-warning-bg;
 }
-
 
 // Lists
 // --------------------------------------------------
 
 // Unordered and Ordered lists
-ul, ol {
+ul,
+ol {
   padding: 0;
 }
 ul ul,
@@ -179,7 +216,7 @@ dd {
   line-height: $line-height-base;
 }
 dt {
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 dd {
   margin-left: $line-height-base / 2;
@@ -203,12 +240,11 @@ dd {
 // ----
 
 // Abbreviations and acronyms
-abbr[title],
-// Added data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
-abbr[data-original-title] {
+abbr[title] {
   cursor: help;
-  border-bottom: 1px dotted $gray-2;
+  border-bottom: 1px dotted $abbr-border-color;
 }
+
 abbr.initialism {
   font-size: 90%;
   text-transform: uppercase;
@@ -261,7 +297,7 @@ q:before,
 q:after,
 blockquote:before,
 blockquote:after {
-  content: "";
+  content: '';
 }
 
 // Addresses
@@ -273,10 +309,9 @@ address {
 }
 
 a.external-link {
-  color: $blue;
+  color: $external-link-color;
   text-decoration: underline;
 }
-
 
 .link {
   color: $link-color;
@@ -296,22 +331,26 @@ a.external-link {
     max-width: 100%;
   }
 
-  ul {
-    padding-left: $spacer*1.5;
+  ul,
+  ol {
+    padding-left: $spacer * 1.5;
     margin-bottom: $spacer;
   }
 
   table {
-    td, th {
-      padding: $spacer*.5 $spacer;
+    td,
+    th {
+      padding: $spacer * 0.5 $spacer;
     }
     th {
-      font-weight: normal;
+      font-weight: $font-weight-semi-bold;
       background: $table-bg-accent;
     }
   }
 
-  table, th, td {
+  table,
+  th,
+  td {
     border: 1px solid $table-border;
     border-collapse: collapse;
   }
@@ -328,8 +367,22 @@ a.external-link {
     margin-bottom: 0;
   }
 
-  ul:last-child {
+  ul:last-child,
+  ol:last-child {
     margin-bottom: 0;
   }
 }
 
+.no-wrap {
+  white-space: nowrap;
+}
+
+.highlight-search-match {
+  background: transparent;
+  color: $yellow;
+  padding: 0;
+}
+
+th {
+  font-weight: $font-weight-semi-bold;
+}

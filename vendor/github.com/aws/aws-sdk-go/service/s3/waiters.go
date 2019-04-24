@@ -11,7 +11,7 @@ import (
 
 // WaitUntilBucketExists uses the Amazon S3 API operation
 // HeadBucket to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *S3) WaitUntilBucketExists(input *HeadBucketInput) error {
 	return c.WaitUntilBucketExistsWithContext(aws.BackgroundContext(), input)
@@ -72,7 +72,7 @@ func (c *S3) WaitUntilBucketExistsWithContext(ctx aws.Context, input *HeadBucket
 
 // WaitUntilBucketNotExists uses the Amazon S3 API operation
 // HeadBucket to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *S3) WaitUntilBucketNotExists(input *HeadBucketInput) error {
 	return c.WaitUntilBucketNotExistsWithContext(aws.BackgroundContext(), input)
@@ -118,7 +118,7 @@ func (c *S3) WaitUntilBucketNotExistsWithContext(ctx aws.Context, input *HeadBuc
 
 // WaitUntilObjectExists uses the Amazon S3 API operation
 // HeadObject to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *S3) WaitUntilObjectExists(input *HeadObjectInput) error {
 	return c.WaitUntilObjectExistsWithContext(aws.BackgroundContext(), input)
@@ -169,7 +169,7 @@ func (c *S3) WaitUntilObjectExistsWithContext(ctx aws.Context, input *HeadObject
 
 // WaitUntilObjectNotExists uses the Amazon S3 API operation
 // HeadObject to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *S3) WaitUntilObjectNotExists(input *HeadObjectInput) error {
 	return c.WaitUntilObjectNotExistsWithContext(aws.BackgroundContext(), input)

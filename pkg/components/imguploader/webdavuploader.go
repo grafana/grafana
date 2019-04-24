@@ -2,12 +2,14 @@ package imguploader
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -23,7 +25,8 @@ type WebdavUploader struct {
 var netTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout: 60 * time.Second,
+		Timeout:   60 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }
@@ -33,20 +36,36 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (u *WebdavUploader) Upload(pa string) (string, error) {
+func (u *WebdavUploader) PublicURL(filename string) string {
+	if strings.Contains(u.public_url, "${file}") {
+		return strings.Replace(u.public_url, "${file}", filename, -1)
+	}
+
+	publicURL, _ := url.Parse(u.public_url)
+	publicURL.Path = path.Join(publicURL.Path, filename)
+	return publicURL.String()
+}
+
+func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) {
 	url, _ := url.Parse(u.url)
 	filename := util.GetRandomString(20) + ".png"
 	url.Path = path.Join(url.Path, filename)
 
 	imgData, err := ioutil.ReadFile(pa)
+	if err != nil {
+		return "", err
+	}
+
 	req, err := http.NewRequest("PUT", url.String(), bytes.NewReader(imgData))
+	if err != nil {
+		return "", err
+	}
 
 	if u.username != "" {
 		req.SetBasicAuth(u.username, u.password)
 	}
 
 	res, err := netClient.Do(req)
-
 	if err != nil {
 		return "", err
 	}
@@ -57,9 +76,7 @@ func (u *WebdavUploader) Upload(pa string) (string, error) {
 	}
 
 	if u.public_url != "" {
-		publicURL, _ := url.Parse(u.public_url)
-		publicURL.Path = path.Join(publicURL.Path, filename)
-		return publicURL.String(), nil
+		return u.PublicURL(filename), nil
 	}
 
 	return url.String(), nil

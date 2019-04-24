@@ -10,7 +10,13 @@ import "fmt"
 func WriteMap(w Writer, data map[string]interface{}, op string) error {
 	var args = make([]interface{}, 0, len(data))
 	var i = 0
-	for k, v := range data {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+
+	for _, k := range keys {
+		v := data[k]
 		switch v.(type) {
 		case expr:
 			if _, err := fmt.Fprintf(w, "%s%s(", k, op); err != nil {

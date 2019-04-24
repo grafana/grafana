@@ -24,6 +24,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
+
+	gocache "github.com/patrickmn/go-cache"
 )
 
 var gravatarSource string
@@ -65,7 +68,7 @@ func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
 		reqParams: url.Values{
-			"d":    {"404"},
+			"d":    {"retro"},
 			"size": {"200"},
 			"r":    {"pg"}}.Encode(),
 	}
@@ -89,27 +92,20 @@ func (this *Avatar) Update() (err error) {
 	return err
 }
 
-type service struct {
+type CacheServer struct {
 	notFound *Avatar
-	cache    map[string]*Avatar
+	cache    *gocache.Cache
 }
 
-func (this *service) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
-	for _, k := range keys {
-		if _, err := fmt.Sscanf(r.FormValue(k), "%d", &v); err == nil {
-			defaultValue = v
-		}
-	}
-	return defaultValue
-}
-
-func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
+func (this *CacheServer) Handler(ctx *macaron.Context) {
+	urlPath := ctx.Req.URL.Path
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
 
 	var avatar *Avatar
 
-	if avatar, _ = this.cache[hash]; avatar == nil {
+	if obj, exist := this.cache.Get(hash); exist {
+		avatar = obj.(*Avatar)
+	} else {
 		avatar = New(hash)
 	}
 
@@ -123,36 +119,40 @@ func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if avatar.notFound {
 		avatar = this.notFound
 	} else {
-		this.cache[hash] = avatar
+		this.cache.Add(hash, avatar, gocache.DefaultExpiration)
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Header().Set("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
-	w.Header().Set("Cache-Control", "private, max-age=3600")
+	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
 
-	if err := avatar.Encode(w); err != nil {
+	if !setting.EnableGzip {
+		ctx.Resp.Header().Add("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
+	}
+
+	ctx.Resp.Header().Add("Cache-Control", "private, max-age=3600")
+
+	if err := avatar.Encode(ctx.Resp); err != nil {
 		log.Warn("avatar encode error: %v", err)
-		w.WriteHeader(500)
+		ctx.WriteHeader(500)
 	}
 }
 
-func CacheServer() http.Handler {
+func NewCacheServer() *CacheServer {
 	UpdateGravatarSource()
 
-	return &service{
+	return &CacheServer{
 		notFound: newNotFound(),
-		cache:    make(map[string]*Avatar),
+		cache:    gocache.New(time.Hour, time.Hour*2),
 	}
 }
 
 func newNotFound() *Avatar {
-	avatar := &Avatar{}
+	avatar := &Avatar{notFound: true}
 
-	// load transparent png into buffer
-	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
+	// load user_profile png into buffer
+	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
 
 	if data, err := ioutil.ReadFile(path); err != nil {
-		log.Error(3, "Failed to read transparent.png, %v", path)
+		log.Error(3, "Failed to read user_profile.png, %v", path)
 	} else {
 		avatar.data = bytes.NewBuffer(data)
 	}
@@ -217,7 +217,10 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client = &http.Client{}
+var client = &http.Client{
+	Timeout:   time.Second * 2,
+	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+}
 
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()
@@ -246,9 +249,6 @@ func (this *thunderTask) fetch() error {
 	this.Avatar.data = &bytes.Buffer{}
 	writer := bufio.NewWriter(this.Avatar.data)
 
-	if _, err = io.Copy(writer, resp.Body); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(writer, resp.Body)
+	return err
 }

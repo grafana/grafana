@@ -1,28 +1,38 @@
 {
-    "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "noImplicitReturns":false,
-        "noImplicitThis":false,
-        "noImplicitUseStrict":false,
-        "noUnusedLocals":false,
-        "moduleResolution": "classic"
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "outDir": "public/dist",
+    "target": "es5",
+    "lib": ["es6", "dom"],
+    "rootDirs": ["public/"],
+    "jsx": "react",
+    "module": "esnext",
+    "declaration": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "noEmitHelpers": true,
+    "removeComments": false,
+    "inlineSourceMap": false,
+    "sourceMap": true,
+    "noEmitOnError": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitUseStrict": false,
+    "noImplicitAny": false,
+    "downlevelIteration": true,
+    "noUnusedLocals": true,
+    "baseUrl": "public",
+    "pretty": true,
+    "typeRoots": ["node_modules/@types", "public/app/types"],
+    "paths": {
+      "app": ["app"],
+      "sass": ["sass"]
     },
-    "include": [
-        "public/app/**/*.ts",
-        "public/test/**/*.ts"
-    ],
-    "exclude": [
-        "public/vendor/**/*",
-        "public/**/*.d.ts"
-    ]
-
+    "skipLibCheck": true
+  },
+  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
 }

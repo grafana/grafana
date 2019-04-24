@@ -55,7 +55,7 @@ of another alert in your conditions, and `Time Of Day`.
 Alerting would not be very useful if there was no way to send notifications when rules trigger and change state. You
 can setup notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
 pipe that will be added during beta period. The notifications can then be added to your alert rules.
-If you have configured an external image store in the grafana.ini config file (s3 and webdav options available)
+If you have configured an external image store in the grafana.ini config file (s3, webdav, and azure_blob options available)
 you can get very rich notifications with an image of the graph and the metric
 values all included in the notification.
 
@@ -134,7 +134,7 @@ continue work on a `build mode` for a future release.
 The new row menu automatically slides out when you mouse over the edge of the row. You no longer need
 to hover over the small green icon and then click it to expand the row menu.
 
-There are some minor improvements to drag and drop behaviour. Now when dragging a panel from one row
+There are some minor improvements to drag and drop behavior. Now when dragging a panel from one row
 to another you will insert the panel and Grafana will automatically make room for it.
 When you drag a panel within a row you will simply reorder the panels.
 

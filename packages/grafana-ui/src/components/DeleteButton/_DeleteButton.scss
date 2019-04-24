@@ -1,0 +1,50 @@
+// sets a fixed width so that the rest of the table
+// isn't affected by the animation
+.delete-button-container {
+  width: 24px;
+  direction: rtl;
+  display: flex;
+  align-items: center;
+}
+
+//this container is used to make sure confirm-delete isn't
+//shown outside of table
+.confirm-delete-container {
+  overflow: hidden;
+  width: 145px;
+  position: absolute;
+  z-index: 1;
+}
+
+.delete-button {
+  position: absolute;
+
+  &.show {
+    opacity: 1;
+    transition: opacity 0.1s ease;
+    z-index: 2;
+  }
+
+  &.hide {
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 0;
+  }
+}
+
+.confirm-delete {
+  display: flex;
+  align-items: flex-start;
+
+  &.show {
+    opacity: 1;
+    transition: opacity 0.08s ease-out, transform 0.1s ease-out;
+    transform: translateX(0);
+  }
+
+  &.hide {
+    opacity: 0;
+    transition: opacity 0.12s ease-in, transform 0.14s ease-in;
+    transform: translateX(100px);
+  }
+}

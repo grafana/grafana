@@ -1,8 +1,0 @@
-# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
-
-elasticsearch5:
-  image: elasticsearch:5
-  command: elasticsearch
-  ports:
-    - "10200:9200"
-    - "10300:9300"

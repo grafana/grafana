@@ -19,9 +19,9 @@ type PluginSetting struct {
 	JsonData      map[string]interface{}      `json:"jsonData"`
 	DefaultNavUrl string                      `json:"defaultNavUrl"`
 
-	LatestVersion string `json:"latestVersion"`
-	HasUpdate     bool   `json:"hasUpdate"`
-	State         string `json:"state"`
+	LatestVersion string              `json:"latestVersion"`
+	HasUpdate     bool                `json:"hasUpdate"`
+	State         plugins.PluginState `json:"state"`
 }
 
 type PluginListItem struct {
@@ -34,7 +34,7 @@ type PluginListItem struct {
 	LatestVersion string              `json:"latestVersion"`
 	HasUpdate     bool                `json:"hasUpdate"`
 	DefaultNavUrl string              `json:"defaultNavUrl"`
-	State         string              `json:"state"`
+	State         plugins.PluginState `json:"state"`
 }
 
 type PluginList []PluginListItem
@@ -57,4 +57,5 @@ type ImportDashboardCommand struct {
 	Overwrite bool                           `json:"overwrite"`
 	Dashboard *simplejson.Json               `json:"dashboard"`
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
+	FolderId  int64                          `json:"folderId"`
 }

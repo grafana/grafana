@@ -2,6 +2,7 @@ package util
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -22,5 +23,17 @@ func TestSplitString(t *testing.T) {
 		So(SplitString("test1,test2,test3"), ShouldResemble, []string{"test1", "test2", "test3"})
 		So(SplitString("test1, test2, test3"), ShouldResemble, []string{"test1", "test2", "test3"})
 		So(SplitString("test1 , test2 test3"), ShouldResemble, []string{"test1", "test2", "test3"})
+	})
+}
+
+func TestDateAge(t *testing.T) {
+	Convey("GetAgeString", t, func() {
+		So(GetAgeString(time.Time{}), ShouldEqual, "?")
+		So(GetAgeString(time.Now().Add(-time.Second*2)), ShouldEqual, "< 1m")
+		So(GetAgeString(time.Now().Add(-time.Minute*2)), ShouldEqual, "2m")
+		So(GetAgeString(time.Now().Add(-time.Hour*2)), ShouldEqual, "2h")
+		So(GetAgeString(time.Now().Add(-time.Hour*24*3)), ShouldEqual, "3d")
+		So(GetAgeString(time.Now().Add(-time.Hour*24*67)), ShouldEqual, "2M")
+		So(GetAgeString(time.Now().Add(-time.Hour*24*409)), ShouldEqual, "1y")
 	})
 }

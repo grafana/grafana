@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -107,7 +106,7 @@ func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &ThreemaNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		GatewayID:    gatewayID,
 		RecipientID:  recipientID,
 		APISecret:    apiSecret,
@@ -118,7 +117,6 @@ func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	notifier.log.Info("Sending alert notification from", "threema_id", notifier.GatewayID)
 	notifier.log.Info("Sending alert notification to", "threema_id", notifier.RecipientID)
-	metrics.M_Alerting_Notification_Sent_Threema.Inc(1)
 
 	// Set up basic API request data
 	data := url.Values{}

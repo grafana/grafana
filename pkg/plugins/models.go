@@ -17,6 +17,13 @@ var (
 	PluginTypeDashboard  = "dashboard"
 )
 
+type PluginState string
+
+var (
+	PluginStateAlpha PluginState = "alpha"
+	PluginStateBeta  PluginState = "beta"
+)
+
 type PluginNotFoundError struct {
 	PluginId string
 }
@@ -38,8 +45,9 @@ type PluginBase struct {
 	Includes     []*PluginInclude   `json:"includes"`
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
-	HideFromList bool               `json:"hideFromList"`
-	State        string             `json:"state"`
+	HideFromList bool               `json:"hideFromList,omitempty"`
+	Preload      bool               `json:"preload"`
+	State        PluginState        `json:"state,omitempty"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
@@ -48,9 +56,6 @@ type PluginBase struct {
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
-
-	// cache for readme file contents
-	Readme []byte `json:"-"`
 }
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
@@ -72,7 +77,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 
 	for _, include := range pb.Includes {
 		if include.Role == "" {
-			include.Role = m.RoleType(m.ROLE_VIEWER)
+			include.Role = m.ROLE_VIEWER
 		}
 	}
 

@@ -8,7 +8,7 @@
   }
 
   tr td {
-    background-color: $grafanaListBackground;
+    background-color: $list-item-bg;
     padding: 5px 10px;
     white-space: nowrap;
     border-bottom: 4px solid $panel-bg;
@@ -37,7 +37,7 @@
   display: block;
   padding: 1px 10px;
   line-height: 34px;
-  background-color: $tight-form-bg;
+  background-color: $list-item-bg;
   margin-bottom: 4px;
   cursor: pointer;
 }

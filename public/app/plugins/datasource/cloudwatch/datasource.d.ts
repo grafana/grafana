@@ -1,3 +1,2 @@
 declare var CloudWatchDatasource: any;
-export {CloudWatchDatasource};
-
+export default CloudWatchDatasource;

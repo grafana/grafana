@@ -1,0 +1,76 @@
+<page-header model="ctrl.navModel"></page-header>
+
+<div class="page-container page-body">
+  <h3 class="page-sub-heading">User Profile</h3>
+
+  <form name="ctrl.userForm" class="gf-form-group">
+
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-8">Name</span>
+      <input class="gf-form-input max-width-22" type="text" required ng-model="ctrl.user.name">
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-8">Email</span>
+      <input class="gf-form-input max-width-22" type="email" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.email">
+      <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
+    </div>
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-8">Username</span>
+      <input class="gf-form-input max-width-22" type="text" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.login">
+      <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
+    </div>
+    <div class="gf-form-button-row">
+      <button type="submit" class="btn btn-primary" ng-click="ctrl.update()">Save</button>
+    </div>
+  </form>
+
+  <prefs-control resource-uri="'user'"></prefs-control>
+
+  <h3 class="page-heading" ng-show="ctrl.showTeamsList">Teams</h3>
+  <div class="gf-form-group" ng-show="ctrl.showTeamsList">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Members</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="team in ctrl.teams">
+          <td class="width-4 text-center"><img class="filter-table__avatar" src={{team.avatarUrl}}></td>
+          <td>{{team.name}}</td>
+          <td>{{team.email}}</td>
+          <td>{{team.memberCount}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="page-heading" ng-show="ctrl.showOrgsList">Organizations</h3>
+  <div class="gf-form-group" ng-show="ctrl.showOrgsList">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="org in ctrl.orgs">
+          <td>{{org.name}}</td>
+          <td>{{org.role}}</td>
+          <td class="text-right">
+            <span class="btn btn-primary btn-small" ng-show="org.orgId === contextSrv.user.orgId">
+              Current
+            </span>
+            <a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-small" ng-show="org.orgId !== contextSrv.user.orgId">
+              Select
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>

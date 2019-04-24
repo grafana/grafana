@@ -1,20 +1,31 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import {PanelCtrl} from 'app/plugins/sdk';
+import { PanelCtrl } from 'app/plugins/sdk';
+import Remarkable from 'remarkable';
+import { sanitize } from 'app/core/utils/text';
+import config from 'app/core/config';
+
+const defaultContent = `
+# Title
+
+For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
+
+
+
+`;
 
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
+  static scrollable = true;
 
   remarkable: any;
   content: string;
   // Set and populate defaults
   panelDefaults = {
-    mode    : "markdown", // 'html', 'markdown', 'text'
-    content : "# title",
+    mode: 'markdown', // 'html', 'markdown', 'text'
+    content: defaultContent,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 
@@ -23,11 +34,22 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
+
+    const renderWhenChanged = (scope: any) => {
+      const { panel } = scope.ctrl;
+      return [panel.content, panel.mode].join();
+    };
+
+    $scope.$watch(
+      renderWhenChanged,
+      _.throttle(() => {
+        this.render();
+      }, 100)
+    );
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
-    this.editorTabIndex = 1;
 
     if (this.panel.mode === 'text') {
       this.panel.mode = 'markdown';
@@ -47,29 +69,27 @@ export class TextPanelCtrl extends PanelCtrl {
     this.renderingCompleted();
   }
 
-  renderText(content) {
+  renderText(content: string) {
     content = content
-    .replace(/&/g, '&amp;')
-    .replace(/>/g, '&gt;')
-    .replace(/</g, '&lt;')
-    .replace(/\n/g, '<br/>');
+      .replace(/&/g, '&amp;')
+      .replace(/>/g, '&gt;')
+      .replace(/</g, '&lt;')
+      .replace(/\n/g, '<br/>');
     this.updateContent(content);
   }
 
-  renderMarkdown(content) {
+  renderMarkdown(content: string) {
     if (!this.remarkable) {
-      return System.import('remarkable').then(Remarkable => {
-        this.remarkable = new Remarkable();
-        this.$scope.$apply(() => {
-          this.updateContent(this.remarkable.render(content));
-        });
-      });
+      this.remarkable = new Remarkable();
     }
 
-    this.updateContent(this.remarkable.render(content));
+    this.$scope.$applyAsync(() => {
+      this.updateContent(this.remarkable.render(content));
+    });
   }
 
-  updateContent(html) {
+  updateContent(html: string) {
+    html = config.disableSanitizeHtml ? html : sanitize(html);
     try {
       this.content = this.$sce.trustAsHtml(this.templateSrv.replace(html, this.panel.scopedVars));
     } catch (e) {
@@ -79,4 +99,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-export {TextPanelCtrl as PanelCtrl};
+export { TextPanelCtrl as PanelCtrl };

@@ -1,0 +1,104 @@
+.thresholds {
+  margin-bottom: 20px;
+}
+
+.thresholds-row {
+  display: flex;
+  flex-direction: row;
+  height: 62px;
+}
+
+.thresholds-row:first-child > .thresholds-row-color-indicator {
+  border-top-left-radius: $border-radius;
+  border-top-right-radius: $border-radius;
+  overflow: hidden;
+}
+
+.thresholds-row:last-child > .thresholds-row-color-indicator {
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
+  overflow: hidden;
+}
+
+.thresholds-row-add-button {
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl, #fff);
+
+  align-self: center;
+  margin-right: 5px;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    color: $white;
+  }
+}
+
+.thresholds-row-color-indicator {
+  width: 10px;
+}
+
+.thresholds-row-input {
+  margin-top: 44px;
+  margin-left: 2px;
+}
+
+.thresholds-row-input-inner {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+}
+
+.thresholds-row-input-inner > *:last-child {
+  border-top-right-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
+}
+
+.thresholds-row-input-inner-arrow {
+  align-self: center;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid $input-label-border-color;
+}
+
+.thresholds-row-input-inner-value > input {
+  height: $input-height;
+  padding: $input-padding;
+  width: 150px;
+  border-top: 1px solid $input-label-border-color;
+  border-bottom: 1px solid $input-label-border-color;
+}
+
+.thresholds-row-input-inner-color {
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $input-bg;
+  border: 1px solid $input-label-border-color;
+}
+
+.thresholds-row-input-inner-color-colorpicker {
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.thresholds-row-input-inner-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: $input-height;
+  padding: $input-padding;
+  width: 42px;
+  background-color: $input-label-bg;
+  border: 1px solid $input-label-border-color;
+  cursor: pointer;
+}

@@ -56,26 +56,39 @@ Data and bucket options can be found in the `Axes` tab.
 Data format | Description
 ------------ | -------------
 *Time series* | Grafana does the bucketing by going through all time series values. The bucket sizes & intervals will be determined using the Buckets options.
-*Time series buckets* | Each time series already represents a Y-Axis bucket. The time series name (alias) needs to be a numeric value representing the upper interval for the bucket. Grafana does no bucketing so the bucket size options are hidden.
+*Time series buckets* | Each time series already represents a Y-Axis bucket. The time series name (alias) needs to be a numeric value representing the upper or lower interval for the bucket. Grafana does no bucketing so the bucket size options are hidden.
+
+### Bucket bound
+
+When Data format is *Time series buckets* datasource returns series with names representing bucket bound. But depending
+on datasource, a bound may be *upper* or *lower*. This option allows to adjust a bound type. If *Auto* is set, a bound
+option will be chosen based on panels' datasource type.
 
 ### Bucket Size
 
 The Bucket count & size options are used by Grafana to calculate how big each cell in the heatmap is. You can
 define the bucket size either by count (the first input box) or by specifying a size interval. For the Y-Axis
 the size interval is just a value but for the X-bucket you can specify a time range in the *Size* input, for example,
-the time range `1h`.  This will make the cells 1h wide on the X-axis.
+the time range `1h`. This will make the cells 1h wide on the X-axis.
 
 ### Pre-bucketed data
 
-If you have a data that is already organized into buckets you can use the `Time series buckets` data format. This format requires that your metric query return regular time series and that each time series has a numeric name
-that represent the upper or lower bound of the interval.
+If you have a data that is already organized into buckets you can use the `Time series buckets` data format. This format
+requires that your metric query return regular time series and that each time series has a numeric name that represent
+the upper or lower bound of the interval.
 
-The only data source that supports histograms over time is Elasticsearch. You do this by adding a *Histogram*
-bucket aggregation before the *Date Histogram*.
+There are a number of datasources supporting histogram over time like Elasticsearch (by using a Histogram bucket
+aggregation) or Prometheus (with [histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) metric type
+and *Format as* option set to Heatmap). But generally, any datasource could be used if it meets the requirements:
+returns series with names representing bucket bound or returns series sorted by the bound in ascending order.
 
-![](/img/docs/v43/elastic_histogram.png)
+With Elasticsearch you control the size of the buckets using the Histogram interval (Y-Axis) and the Date Histogram interval (X-axis).
 
-You control the size of the buckets using the Histogram interval (Y-Axis) and the Date Histogram interval (X-axis).
+![Elastic histogram](/img/docs/v43/elastic_histogram.png)
+
+With Prometheus you can only control X-axis by adjusting *Min step* and *Resolution* options.
+
+![Prometheus histogram](/img/docs/v51/prometheus_histogram.png)
 
 ## Display Options
 
@@ -100,8 +113,8 @@ but include a group by time interval or maxDataPoints limit coupled with an aggr
 
 This all depends on the time range of your query of course. But the important point is to know that the Histogram bucketing
 that Grafana performs may be done on already aggregated and averaged data. To get more accurate heatmaps it is better
-to do the bucketing during metric collection or store the data in Elasticsearch, which currently is the only data source
-data supports doing Histogram bucketing on the raw data.
+to do the bucketing during metric collection or store the data in Elasticsearch, or in the other data source which
+supports doing Histogram bucketing on the raw data.
 
 If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points your heatmap will be
 more accurate but this can also be very CPU & Memory taxing for your browser and could cause hangs and crashes if the number of

@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+Array [
+  <a
+    className="sidemenu__logo"
+    href="/"
+    key="logo"
+  >
+    <img
+      alt="Grafana"
+      src="public/img/grafana_icon.svg"
+    />
+  </a>,
+  <div
+    className="sidemenu__logo_small_breakpoint"
+    key="hamburger"
+    onClick={[Function]}
+  >
+    <i
+      className="fa fa-bars"
+    />
+    <span
+      className="sidemenu__close"
+    >
+      <i
+        className="fa fa-times"
+      />
+       Close
+    </span>
+  </div>,
+  <TopSection
+    key="topsection"
+  />,
+  <BottomSection
+    key="bottomsection"
+  />,
+]
+`;

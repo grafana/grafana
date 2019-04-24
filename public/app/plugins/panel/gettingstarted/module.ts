@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
+import { PanelCtrl } from 'app/plugins/sdk';
 
-import {PanelCtrl} from 'app/plugins/sdk';
-
-import {contextSrv} from 'app/core/core';
+import { contextSrv } from 'app/core/core';
 
 class GettingStartedPanelCtrl extends PanelCtrl {
   static templateUrl = 'public/app/plugins/panel/gettingstarted/module.html';
@@ -10,8 +8,8 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   stepIndex: number;
   steps: any;
 
-  /** @ngInject **/
-  constructor($scope, $injector, private backendSrv, private datasourceSrv, private $q) {
+  /** @ngInject */
+  constructor($scope, $injector, private backendSrv, datasourceSrv, private $q) {
     super($scope, $injector);
 
     this.stepIndex = 0;
@@ -29,52 +27,51 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Create your first data source',
       cta: 'Add data source',
-      icon: 'icon-gf icon-gf-datasources',
+      icon: 'gicon gicon-datasources',
       href: 'datasources/new?gettingstarted',
       check: () => {
         return $q.when(
           datasourceSrv.getMetricSources().filter(item => {
-            return item.meta.builtIn === false;
+            return item.meta.builtIn !== true;
           }).length > 0
         );
-      }
+      },
     });
 
     this.steps.push({
       title: 'Create your first dashboard',
       cta: 'New dashboard',
-      icon: 'icon-gf icon-gf-dashboard',
+      icon: 'gicon gicon-dashboard',
       href: 'dashboard/new?gettingstarted',
       check: () => {
-        return this.backendSrv.search({limit: 1}).then(result => {
+        return this.backendSrv.search({ limit: 1 }).then(result => {
           return result.length > 0;
         });
-      }
+      },
     });
 
     this.steps.push({
       title: 'Invite your team',
       cta: 'Add Users',
-      icon: 'icon-gf icon-gf-users',
+      icon: 'gicon gicon-team',
       href: 'org/users?gettingstarted',
       check: () => {
-        return  this.backendSrv.get('/api/org/users').then(res => {
+        return this.backendSrv.get('/api/org/users').then(res => {
           return res.length > 1;
         });
-      }
+      },
     });
-
 
     this.steps.push({
       title: 'Install apps & plugins',
       cta: 'Explore plugin repository',
-      icon: 'icon-gf icon-gf-apps',
+      icon: 'gicon gicon-plugins',
       href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
       check: () => {
-        return this.backendSrv.get('/api/plugins', {embedded: 0, core: 0}).then(plugins => {
+        return this.backendSrv.get('/api/plugins', { embedded: 0, core: 0 }).then(plugins => {
           return plugins.length > 0;
         });
-      }
+      },
     });
   }
 
@@ -91,7 +88,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     }
 
     this.stepIndex += 1;
-    var currentStep = this.steps[this.stepIndex];
+    const currentStep = this.steps[this.stepIndex];
     return currentStep.check().then(passed => {
       if (passed) {
         currentStep.cssClass = 'completed';
@@ -104,16 +101,18 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   }
 
   dismiss() {
-    this.row.removePanel(this.panel, false);
+    this.dashboard.removePanel(this.panel, false);
 
-    this.backendSrv.request({
-      method: 'PUT',
-      url: '/api/user/helpflags/1',
-      showSuccessAlert: false,
-    }).then(res => {
-      contextSrv.user.helpFlags1 = res.helpFlags1;
-    });
+    this.backendSrv
+      .request({
+        method: 'PUT',
+        url: '/api/user/helpflags/1',
+        showSuccessAlert: false,
+      })
+      .then(res => {
+        contextSrv.user.helpFlags1 = res.helpFlags1;
+      });
   }
 }
 
-export {GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl};
+export { GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl };

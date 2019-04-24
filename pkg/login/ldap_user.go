@@ -1,5 +1,9 @@
 package login
 
+import (
+	"strings"
+)
+
 type LdapUserInfo struct {
 	DN        string
 	FirstName string
@@ -15,7 +19,7 @@ func (u *LdapUserInfo) isMemberOf(group string) bool {
 	}
 
 	for _, member := range u.MemberOf {
-		if member == group {
+		if strings.EqualFold(member, group) {
 			return true
 		}
 	}

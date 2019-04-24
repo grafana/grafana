@@ -1,11 +1,10 @@
-
 .ui-list {
   margin: 0;
   padding: 0;
   list-style: none;
 
   > li {
-    margin-bottom: 0.3125rem;
+    margin-bottom: $space-xs;
 
     &:last-child {
       margin-bottom: 0;

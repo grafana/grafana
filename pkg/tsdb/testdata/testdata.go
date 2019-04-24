@@ -13,7 +13,7 @@ type TestDataExecutor struct {
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	return &TestDataExecutor{
 		DataSource: dsInfo,
 		log:        log.New("tsdb.testdata"),
@@ -21,22 +21,22 @@ func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
 }
 
 func init() {
-	tsdb.RegisterExecutor("grafana-testdata-datasource", NewTestDataExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("testdata", NewTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
+func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
+	result.Results = make(map[string]*tsdb.QueryResult)
 
-	for _, query := range queries {
+	for _, query := range tsdbQuery.Queries {
 		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
 		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
-			result.QueryResults[query.RefId] = scenario.Handler(query, context)
-			result.QueryResults[query.RefId].RefId = query.RefId
+			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
+			result.Results[query.RefId].RefId = query.RefId
 		} else {
 			e.log.Error("Scenario not found", "scenarioId", scenarioId)
 		}
 	}
 
-	return result
+	return result, nil
 }

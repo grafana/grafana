@@ -1,18 +1,17 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class IntervalVariable implements Variable {
-  auto_count: number;
-  auto_min: number;
+  name: string;
+  auto_count: number; // tslint:disable-line variable-name
+  auto_min: number; // tslint:disable-line variable-name
   options: any;
   auto: boolean;
   query: string;
   refresh: number;
   current: any;
+  skipUrlSync: boolean;
 
   defaults = {
     type: 'interval',
@@ -26,9 +25,10 @@ export class IntervalVariable implements Variable {
     auto: false,
     auto_min: '10s',
     auto_count: 30,
+    skipUrlSync: false,
   };
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
@@ -51,18 +51,23 @@ export class IntervalVariable implements Variable {
 
     // add auto option if missing
     if (this.options.length && this.options[0].text !== 'auto') {
-      this.options.unshift({ text: 'auto', value: '$__auto_interval' });
+      this.options.unshift({
+        text: 'auto',
+        value: '$__auto_interval_' + this.name,
+      });
     }
 
-    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, (this.auto_min ? ">"+this.auto_min : null));
+    const res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
+    this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
+    // for backward compatibility, to be removed eventually
     this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   }
 
   updateOptions() {
     // extract options between quotes and/or comma
-    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(text) {
+    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), text => {
       text = text.replace(/["']+/g, '');
-      return {text: text.trim(), value: text.trim()};
+      return { text: text.trim(), value: text.trim() };
     });
 
     this.updateAutoValue();

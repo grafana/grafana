@@ -261,6 +261,10 @@ func (t *Tree) Add(pattern string, handle Handle) *Leaf {
 }
 
 func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool) {
+	url, err := PathUnescape(url)
+	if err != nil {
+		return nil, false
+	}
 	for i := 0; i < len(t.leaves); i++ {
 		switch t.leaves[i].typ {
 		case _PATTERN_STATIC:
@@ -300,16 +304,20 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 }
 
 func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (Handle, bool) {
+	unescapedSegment, err := PathUnescape(segment)
+	if err != nil {
+		return nil, false
+	}
 	for i := 0; i < len(t.subtrees); i++ {
 		switch t.subtrees[i].typ {
 		case _PATTERN_STATIC:
-			if t.subtrees[i].pattern == segment {
+			if t.subtrees[i].pattern == unescapedSegment {
 				if handle, ok := t.subtrees[i].matchNextSegment(globLevel, url, params); ok {
 					return handle, true
 				}
 			}
 		case _PATTERN_REGEXP:
-			results := t.subtrees[i].reg.FindStringSubmatch(segment)
+			results := t.subtrees[i].reg.FindStringSubmatch(unescapedSegment)
 			if len(results)-1 != len(t.subtrees[i].wildcards) {
 				break
 			}
@@ -322,12 +330,12 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 			}
 		case _PATTERN_HOLDER:
 			if handle, ok := t.subtrees[i].matchNextSegment(globLevel+1, url, params); ok {
-				params[t.subtrees[i].wildcards[0]] = segment
+				params[t.subtrees[i].wildcards[0]] = unescapedSegment
 				return handle, true
 			}
 		case _PATTERN_MATCH_ALL:
 			if handle, ok := t.subtrees[i].matchNextSegment(globLevel+1, url, params); ok {
-				params["*"+com.ToStr(globLevel)] = segment
+				params["*"+com.ToStr(globLevel)] = unescapedSegment
 				return handle, true
 			}
 		}
@@ -335,19 +343,22 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 
 	if len(t.leaves) > 0 {
 		leaf := t.leaves[len(t.leaves)-1]
+		unescapedURL, err := PathUnescape(segment + "/" + url)
+		if err != nil {
+			return nil, false
+		}
 		if leaf.typ == _PATTERN_PATH_EXT {
-			url = segment + "/" + url
-			j := strings.LastIndex(url, ".")
+			j := strings.LastIndex(unescapedURL, ".")
 			if j > -1 {
-				params[":path"] = url[:j]
-				params[":ext"] = url[j+1:]
+				params[":path"] = unescapedURL[:j]
+				params[":ext"] = unescapedURL[j+1:]
 			} else {
-				params[":path"] = url
+				params[":path"] = unescapedURL
 			}
 			return leaf.handle, true
 		} else if leaf.typ == _PATTERN_MATCH_ALL {
-			params["*"] = segment + "/" + url
-			params["*"+com.ToStr(globLevel)] = segment + "/" + url
+			params["*"] = unescapedURL
+			params["*"+com.ToStr(globLevel)] = unescapedURL
 			return leaf.handle, true
 		}
 	}

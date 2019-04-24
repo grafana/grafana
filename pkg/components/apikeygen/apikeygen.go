@@ -33,7 +33,7 @@ func New(orgId int64, name string) KeyGenResult {
 
 	jsonString, _ := json.Marshal(jsonKey)
 
-	result.ClientSecret = base64.StdEncoding.EncodeToString([]byte(jsonString))
+	result.ClientSecret = base64.StdEncoding.EncodeToString(jsonString)
 	return result
 }
 
@@ -44,7 +44,7 @@ func Decode(keyString string) (*ApiKeyJson, error) {
 	}
 
 	var keyObj ApiKeyJson
-	err = json.Unmarshal([]byte(jsonString), &keyObj)
+	err = json.Unmarshal(jsonString, &keyObj)
 	if err != nil {
 		return nil, ErrInvalidApiKey
 	}

@@ -4,71 +4,64 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ini.v1"
 )
 
 func TestDashboardImport(t *testing.T) {
-
-	Convey("When importing plugin dashboard", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
-
-		So(err, ShouldBeNil)
-
-		var importedDash *m.Dashboard
-		bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
-			importedDash = cmd.GetDashboardModel()
-			cmd.Result = importedDash
-			return nil
-		})
+	pluginScenario("When importing a plugin dashboard", t, func() {
+		origNewDashboardService := dashboards.NewService
+		mock := &dashboards.FakeDashboardService{}
+		dashboards.MockDashboardService(mock)
 
 		cmd := ImportDashboardCommand{
 			PluginId: "test-app",
 			Path:     "dashboards/connections.json",
 			OrgId:    1,
-			UserId:   1,
+			User:     &m.SignedInUser{UserId: 1, OrgRole: m.ROLE_ADMIN},
 			Inputs: []ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			},
 		}
 
-		err = ImportDashboard(&cmd)
+		err := ImportDashboard(&cmd)
 		So(err, ShouldBeNil)
 
 		Convey("should install dashboard", func() {
-			So(importedDash, ShouldNotBeNil)
+			So(cmd.Result, ShouldNotBeNil)
 
-			resultStr, _ := importedDash.Data.EncodePretty()
-			expectedBytes, _ := ioutil.ReadFile("../../tests/test-app/dashboards/connections_result.json")
+			resultStr, _ := mock.SavedDashboards[0].Dashboard.Data.EncodePretty()
+			expectedBytes, _ := ioutil.ReadFile("testdata/test-app/dashboards/connections_result.json")
 			expectedJson, _ := simplejson.NewJson(expectedBytes)
 			expectedStr, _ := expectedJson.EncodePretty()
 
 			So(string(resultStr), ShouldEqual, string(expectedStr))
 
-			panel := importedDash.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
+			panel := mock.SavedDashboards[0].Dashboard.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
 			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
+		})
+
+		Reset(func() {
+			dashboards.NewService = origNewDashboardService
 		})
 	})
 
 	Convey("When evaling dashboard template", t, func() {
 		template, _ := simplejson.NewJson([]byte(`{
-      "__inputs": [
-        {
-					"name": "DS_NAME",
-          "type": "datasource"
-        }
-      ],
-      "test": {
-        "prop": "${DS_NAME}"
-      }
-    }`))
+		"__inputs": [
+			{
+						"name": "DS_NAME",
+			"type": "datasource"
+			}
+		],
+		"test": {
+			"prop": "${DS_NAME}"
+		}
+		}`))
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,
@@ -90,5 +83,18 @@ func TestDashboardImport(t *testing.T) {
 		})
 
 	})
+}
 
+func pluginScenario(desc string, t *testing.T, fn func()) {
+	Convey("Given a plugin", t, func() {
+		setting.Raw = ini.Empty()
+		sec, _ := setting.Raw.NewSection("plugin.test-app")
+		sec.NewKey("path", "testdata/test-app")
+
+		pm := &PluginManager{}
+		err := pm.Init()
+
+		So(err, ShouldBeNil)
+		Convey(desc, fn)
+	})
 }

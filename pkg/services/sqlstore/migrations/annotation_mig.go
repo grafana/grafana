@@ -57,4 +57,56 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add column region_id to annotation table", NewAddColumnMigration(table, &Column{
 		Name: "region_id", Type: DB_BigInt, Nullable: true, Default: "0",
 	}))
+
+	categoryIdIndex := &Index{Cols: []string{"org_id", "category_id"}, Type: IndexType}
+	mg.AddMigration("Drop category_id index", NewDropIndexMigration(table, categoryIdIndex))
+
+	mg.AddMigration("Add column tags to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "tags", Type: DB_NVarchar, Nullable: true, Length: 500,
+	}))
+
+	///
+	/// Annotation tag
+	///
+	annotationTagTable := Table{
+		Name: "annotation_tag",
+		Columns: []*Column{
+			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"annotation_id", "tag_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
+	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
+
+	//
+	// clear alert text
+	//
+	updateTextFieldSql := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
+	mg.AddMigration("Update alert annotations and set TEXT to empty", NewRawSqlMigration(updateTextFieldSql))
+
+	//
+	// Add a 'created' & 'updated' column
+	//
+	mg.AddMigration("Add created time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "created", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+	mg.AddMigration("Add updated time to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "updated", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
+	mg.AddMigration("Add index for created in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "created"}, Type: IndexType,
+	}))
+	mg.AddMigration("Add index for updated in annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "updated"}, Type: IndexType,
+	}))
+
+	//
+	// Convert epoch saved as seconds to milliseconds
+	//
+	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
+	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
 }

@@ -15,56 +15,91 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.4.2 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.2-1.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [x86-64](https://grafana.com/grafana/download?platform=linux)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARM64](https://grafana.com/grafana/download?platform=arm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [ARMv7](https://grafana.com/grafana/download?platform=arm)
 
-Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
-installation.
+Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
 ## Install Stable
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.2-1.x86_64.rpm
+```bash
+$ sudo yum install <rpm package url>
+```
 
-Or install manually using `rpm`.
+Example:
 
-#### On CentOS / Fedora / Redhat:
+```bash
+$ sudo yum install https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
+```
 
-    $ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.2-1.x86_64.rpm
-    $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-4.4.2-1.x86_64.rpm
+Or install manually using `rpm`. First execute
 
-#### On OpenSuse:
+```bash
+$ wget <rpm package url>
+```
 
-    $ sudo rpm -i --nodeps grafana-4.4.1-1.x86_64.rpm
+Example:
+
+```bash
+$ wget https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
+```
+
+### On CentOS / Fedora / Redhat:
+
+```bash
+$ sudo yum install initscripts urw-fonts
+$ sudo rpm -Uvh <local rpm package>
+```
+
+### On OpenSuse:
+
+```bash
+$ sudo rpm -i --nodeps <local rpm package>
+```
 
 ## Install via YUM Repository
 
 Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 
-    [grafana]
-    name=grafana
-    baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
-    repo_gpgcheck=1
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
-    sslverify=1
-    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```bash
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
 
-There is also a testing repository if you want beta or release
-candidates.
+There is a separate repository if you want beta releases.
 
-    baseurl=https://packagecloud.io/grafana/testing/el/6/$basearch
+```bash
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm-beta
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
 
 Then install Grafana via the `yum` command.
 
-    $ sudo yum install grafana
+```bash
+$ sudo yum install grafana
+```
 
 ### RPM GPG Key
 
 The RPMs are signed, you can verify the signature with this [public GPG
-key](https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana).
+key](https://packages.grafana.com/gpg.key).
 
 ## Package details
 
@@ -80,25 +115,35 @@ key](https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana).
 
 You can start Grafana by running:
 
-    $ sudo service grafana-server start
+```bash
+$ sudo service grafana-server start
+```
 
 This will start the `grafana-server` process as the `grafana` user,
 which is created during package installation. The default HTTP port is
 `3000`, and default user and group is `admin`.
 
+Default login and password `admin`/ `admin`
+
 To configure the Grafana server to start at boot time:
 
-    $ sudo /sbin/chkconfig --add grafana-server
+```bash
+$ sudo /sbin/chkconfig --add grafana-server
+```
 
 ## Start the server (via systemd)
 
-    $ systemctl daemon-reload
-    $ systemctl start grafana-server
-    $ systemctl status grafana-server
+```bash
+$ systemctl daemon-reload
+$ systemctl start grafana-server
+$ systemctl status grafana-server
+```
 
 ### Enable the systemd service to start at boot
 
-    sudo systemctl enable grafana-server.service
+```bash
+sudo systemctl enable grafana-server.service
+```
 
 ## Environment file
 
@@ -137,7 +182,7 @@ for example in alert notifications.
 
 If the image is missing text make sure you have font packages installed.
 
-```
+```bash
 yum install fontconfig
 yum install freetype*
 yum install urw-fonts
@@ -158,3 +203,7 @@ Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
 
+## Logging in for the first time
+
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+Then follow the instructions [here](/guides/getting_started/).

@@ -1,0 +1,504 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render with base threshold 1`] = `
+<ThresholdsEditor
+  onChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Array [
+            Object {
+              "color": "#7EB26D",
+              "index": 0,
+              "value": -Infinity,
+            },
+          ],
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  thresholds={Array []}
+>
+  <Component
+    title="Thresholds"
+  >
+    <div
+      className="panel-options-group"
+    >
+      <div
+        className="panel-options-group__header"
+      >
+        <span
+          className="panel-options-group__title"
+        >
+          Thresholds
+        </span>
+      </div>
+      <div
+        className="panel-options-group__body"
+      >
+        <div
+          className="thresholds"
+        >
+          <div
+            className="thresholds-row"
+            key="0-0"
+          >
+            <div
+              className="thresholds-row-add-button"
+              onClick={[Function]}
+            >
+              <i
+                className="fa fa-plus"
+              />
+            </div>
+            <div
+              className="thresholds-row-color-indicator"
+              style={
+                Object {
+                  "backgroundColor": "#7EB26D",
+                }
+              }
+            />
+            <div
+              className="thresholds-row-input"
+            >
+              <div
+                className="thresholds-row-input-inner"
+              >
+                <span
+                  className="thresholds-row-input-inner-arrow"
+                />
+                <div
+                  className="thresholds-row-input-inner-color"
+                >
+                  <div
+                    className="thresholds-row-input-inner-color-colorpicker"
+                  >
+                    <WithTheme(ColorPicker)
+                      color="#7EB26D"
+                      enableNamedColors={true}
+                      onChange={[Function]}
+                    >
+                      <ColorPicker
+                        color="#7EB26D"
+                        enableNamedColors={true}
+                        onChange={[Function]}
+                        theme={
+                          Object {
+                            "background": Object {
+                              "dropdown": "#1f1f20",
+                              "scrollbar": "#343436",
+                              "scrollbar2": "#343436",
+                            },
+                            "border": Object {
+                              "radius": Object {
+                                "lg": "5px",
+                                "md": "3px",
+                                "sm": "2px",
+                              },
+                              "width": Object {
+                                "sm": "1px",
+                              },
+                            },
+                            "breakpoints": Object {
+                              "lg": "992px",
+                              "md": "768px",
+                              "sm": "544px",
+                              "xl": "1200px",
+                              "xs": "0",
+                            },
+                            "colors": Object {
+                              "black": "#000000",
+                              "blue": "#33b5e5",
+                              "blueBase": "#3274d9",
+                              "blueFaint": "#041126",
+                              "blueLight": "#5794f2",
+                              "blueShade": "#1f60c4",
+                              "body": "#d8d9da",
+                              "bodyBg": "#161719",
+                              "brandDanger": "#e02f44",
+                              "brandPrimary": "#eb7b18",
+                              "brandSuccess": "#299c46",
+                              "brandWarning": "#eb7b18",
+                              "critical": "#e02f44",
+                              "dark1": "#141414",
+                              "dark10": "#424345",
+                              "dark2": "#161719",
+                              "dark3": "#1f1f20",
+                              "dark4": "#212124",
+                              "dark5": "#222426",
+                              "dark6": "#262628",
+                              "dark7": "#292a2d",
+                              "dark8": "#2f2f32",
+                              "dark9": "#343436",
+                              "gray1": "#555555",
+                              "gray2": "#8e8e8e",
+                              "gray3": "#b3b3b3",
+                              "gray4": "#d8d9da",
+                              "gray5": "#ececec",
+                              "gray6": "#f4f5f8",
+                              "gray7": "#fbfbfb",
+                              "grayBlue": "#212327",
+                              "greenBase": "#299c46",
+                              "greenShade": "#23843b",
+                              "headingColor": "#d8d9da",
+                              "inputBlack": "#09090b",
+                              "link": "#d8d9da",
+                              "linkDisabled": "#8e8e8e",
+                              "linkExternal": "#33b5e5",
+                              "linkHover": "#ffffff",
+                              "online": "#299c46",
+                              "orange": "#eb7b18",
+                              "pageBg": "#161719",
+                              "purple": "#9933cc",
+                              "queryGreen": "#74e680",
+                              "queryKeyword": "#66d9ef",
+                              "queryOrange": "#eb7b18",
+                              "queryPurple": "#fe85fc",
+                              "queryRed": "#e02f44",
+                              "red": "#d44a3a",
+                              "redBase": "#e02f44",
+                              "redShade": "#c4162a",
+                              "text": "#d8d9da",
+                              "textEmphasis": "#ececec",
+                              "textFaint": "#222426",
+                              "textStrong": "#ffffff",
+                              "textWeak": "#8e8e8e",
+                              "variable": "#32d1df",
+                              "warn": "#f79520",
+                              "white": "#ffffff",
+                              "yellow": "#ecbb13",
+                            },
+                            "height": Object {
+                              "lg": "48px",
+                              "md": "32px",
+                              "sm": "24px",
+                            },
+                            "name": "Grafana Dark",
+                            "panelPadding": Object {
+                              "horizontal": 16,
+                              "vertical": 8,
+                            },
+                            "spacing": Object {
+                              "d": "14px",
+                              "gutter": "30px",
+                              "insetSquishMd": "4px 8px",
+                              "lg": "24px",
+                              "md": "16px",
+                              "sm": "8px",
+                              "xl": "32px",
+                              "xs": "4px",
+                              "xxs": "2px",
+                            },
+                            "type": "dark",
+                            "typography": Object {
+                              "fontFamily": Object {
+                                "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
+                                "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
+                              },
+                              "heading": Object {
+                                "h1": "28px",
+                                "h2": "24px",
+                                "h3": "21px",
+                                "h4": "18px",
+                                "h5": "16px",
+                                "h6": "14px",
+                              },
+                              "lineHeight": Object {
+                                "lg": 1.5,
+                                "md": 1.3333333333333333,
+                                "sm": 1.1,
+                                "xs": 1,
+                              },
+                              "link": Object {
+                                "decoration": "none",
+                                "hoverDecoration": "none",
+                              },
+                              "size": Object {
+                                "base": "13px",
+                                "lg": "18px",
+                                "md": "14px",
+                                "root": "14px",
+                                "sm": "12px",
+                                "xs": "10px",
+                              },
+                              "weight": Object {
+                                "light": 300,
+                                "regular": 400,
+                                "semibold": 500,
+                              },
+                            },
+                            "zIndex": Object {
+                              "dropdown": "1000",
+                              "modal": "1050",
+                              "modalBackdrop": "1040",
+                              "navbarFixed": "1020",
+                              "sidemenu": "1025",
+                              "tooltip": "1030",
+                              "typeahead": "1060",
+                            },
+                          }
+                        }
+                      >
+                        <PopperController
+                          content={
+                            <ColorPickerPopover
+                              color="#7EB26D"
+                              enableNamedColors={true}
+                              onChange={[Function]}
+                              theme={
+                                Object {
+                                  "background": Object {
+                                    "dropdown": "#1f1f20",
+                                    "scrollbar": "#343436",
+                                    "scrollbar2": "#343436",
+                                  },
+                                  "border": Object {
+                                    "radius": Object {
+                                      "lg": "5px",
+                                      "md": "3px",
+                                      "sm": "2px",
+                                    },
+                                    "width": Object {
+                                      "sm": "1px",
+                                    },
+                                  },
+                                  "breakpoints": Object {
+                                    "lg": "992px",
+                                    "md": "768px",
+                                    "sm": "544px",
+                                    "xl": "1200px",
+                                    "xs": "0",
+                                  },
+                                  "colors": Object {
+                                    "black": "#000000",
+                                    "blue": "#33b5e5",
+                                    "blueBase": "#3274d9",
+                                    "blueFaint": "#041126",
+                                    "blueLight": "#5794f2",
+                                    "blueShade": "#1f60c4",
+                                    "body": "#d8d9da",
+                                    "bodyBg": "#161719",
+                                    "brandDanger": "#e02f44",
+                                    "brandPrimary": "#eb7b18",
+                                    "brandSuccess": "#299c46",
+                                    "brandWarning": "#eb7b18",
+                                    "critical": "#e02f44",
+                                    "dark1": "#141414",
+                                    "dark10": "#424345",
+                                    "dark2": "#161719",
+                                    "dark3": "#1f1f20",
+                                    "dark4": "#212124",
+                                    "dark5": "#222426",
+                                    "dark6": "#262628",
+                                    "dark7": "#292a2d",
+                                    "dark8": "#2f2f32",
+                                    "dark9": "#343436",
+                                    "gray1": "#555555",
+                                    "gray2": "#8e8e8e",
+                                    "gray3": "#b3b3b3",
+                                    "gray4": "#d8d9da",
+                                    "gray5": "#ececec",
+                                    "gray6": "#f4f5f8",
+                                    "gray7": "#fbfbfb",
+                                    "grayBlue": "#212327",
+                                    "greenBase": "#299c46",
+                                    "greenShade": "#23843b",
+                                    "headingColor": "#d8d9da",
+                                    "inputBlack": "#09090b",
+                                    "link": "#d8d9da",
+                                    "linkDisabled": "#8e8e8e",
+                                    "linkExternal": "#33b5e5",
+                                    "linkHover": "#ffffff",
+                                    "online": "#299c46",
+                                    "orange": "#eb7b18",
+                                    "pageBg": "#161719",
+                                    "purple": "#9933cc",
+                                    "queryGreen": "#74e680",
+                                    "queryKeyword": "#66d9ef",
+                                    "queryOrange": "#eb7b18",
+                                    "queryPurple": "#fe85fc",
+                                    "queryRed": "#e02f44",
+                                    "red": "#d44a3a",
+                                    "redBase": "#e02f44",
+                                    "redShade": "#c4162a",
+                                    "text": "#d8d9da",
+                                    "textEmphasis": "#ececec",
+                                    "textFaint": "#222426",
+                                    "textStrong": "#ffffff",
+                                    "textWeak": "#8e8e8e",
+                                    "variable": "#32d1df",
+                                    "warn": "#f79520",
+                                    "white": "#ffffff",
+                                    "yellow": "#ecbb13",
+                                  },
+                                  "height": Object {
+                                    "lg": "48px",
+                                    "md": "32px",
+                                    "sm": "24px",
+                                  },
+                                  "name": "Grafana Dark",
+                                  "panelPadding": Object {
+                                    "horizontal": 16,
+                                    "vertical": 8,
+                                  },
+                                  "spacing": Object {
+                                    "d": "14px",
+                                    "gutter": "30px",
+                                    "insetSquishMd": "4px 8px",
+                                    "lg": "24px",
+                                    "md": "16px",
+                                    "sm": "8px",
+                                    "xl": "32px",
+                                    "xs": "4px",
+                                    "xxs": "2px",
+                                  },
+                                  "type": "dark",
+                                  "typography": Object {
+                                    "fontFamily": Object {
+                                      "monospace": "Menlo, Monaco, Consolas, 'Courier New', monospace",
+                                      "sansSerif": "'Roboto', 'Helvetica Neue', Arial, sans-serif",
+                                    },
+                                    "heading": Object {
+                                      "h1": "28px",
+                                      "h2": "24px",
+                                      "h3": "21px",
+                                      "h4": "18px",
+                                      "h5": "16px",
+                                      "h6": "14px",
+                                    },
+                                    "lineHeight": Object {
+                                      "lg": 1.5,
+                                      "md": 1.3333333333333333,
+                                      "sm": 1.1,
+                                      "xs": 1,
+                                    },
+                                    "link": Object {
+                                      "decoration": "none",
+                                      "hoverDecoration": "none",
+                                    },
+                                    "size": Object {
+                                      "base": "13px",
+                                      "lg": "18px",
+                                      "md": "14px",
+                                      "root": "14px",
+                                      "sm": "12px",
+                                      "xs": "10px",
+                                    },
+                                    "weight": Object {
+                                      "light": 300,
+                                      "regular": 400,
+                                      "semibold": 500,
+                                    },
+                                  },
+                                  "zIndex": Object {
+                                    "dropdown": "1000",
+                                    "modal": "1050",
+                                    "modalBackdrop": "1040",
+                                    "navbarFixed": "1020",
+                                    "sidemenu": "1025",
+                                    "tooltip": "1030",
+                                    "typeahead": "1060",
+                                  },
+                                }
+                              }
+                            />
+                          }
+                          hideAfter={300}
+                        >
+                          <ForwardRef(ColorPickerTrigger)
+                            color="#7EB26D"
+                            onClick={[Function]}
+                            onMouseLeave={[Function]}
+                          >
+                            <div
+                              onClick={[Function]}
+                              onMouseLeave={[Function]}
+                              style={
+                                Object {
+                                  "background": "inherit",
+                                  "border": "none",
+                                  "borderRadius": 10,
+                                  "color": "inherit",
+                                  "cursor": "pointer",
+                                  "overflow": "hidden",
+                                  "padding": 0,
+                                }
+                              }
+                            >
+                              <div
+                                style={
+                                  Object {
+                                    "backgroundImage": "url(data:image/png,base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==)",
+                                    "border": "none",
+                                    "float": "left",
+                                    "height": 15,
+                                    "margin": 0,
+                                    "position": "relative",
+                                    "width": 15,
+                                    "zIndex": 0,
+                                  }
+                                }
+                              >
+                                <div
+                                  style={
+                                    Object {
+                                      "backgroundColor": "#7EB26D",
+                                      "bottom": 0,
+                                      "display": "block",
+                                      "left": 0,
+                                      "position": "absolute",
+                                      "right": 0,
+                                      "top": 0,
+                                    }
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </ForwardRef(ColorPickerTrigger)>
+                        </PopperController>
+                      </ColorPicker>
+                    </WithTheme(ColorPicker)>
+                  </div>
+                </div>
+                <div
+                  className="thresholds-row-input-inner-value"
+                >
+                  <Input
+                    className=""
+                    readOnly={true}
+                    type="text"
+                    value="Base"
+                  >
+                    <div
+                      style={
+                        Object {
+                          "flexGrow": 1,
+                        }
+                      }
+                    >
+                      <input
+                        className="gf-form-input"
+                        readOnly={true}
+                        type="text"
+                        value="Base"
+                      />
+                    </div>
+                  </Input>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Component>
+</ThresholdsEditor>
+`;

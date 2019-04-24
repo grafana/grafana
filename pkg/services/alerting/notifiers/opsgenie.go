@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -25,6 +24,10 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiKey" placeholder="OpsGenie API Key"></input>
       </div>
       <div class="gf-form">
+        <span class="gf-form-label width-14">Alert API Url</span>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiUrl" placeholder="https://api.opsgenie.com/v2/alerts"></input>
+      </div>
+      <div class="gf-form">
         <gf-form-switch
            class="gf-form"
            label="Auto close incidents"
@@ -38,20 +41,24 @@ func init() {
 }
 
 var (
-	opsgenieCreateAlertURL string = "https://api.opsgenie.com/v1/json/alert"
-	opsgenieCloseAlertURL  string = "https://api.opsgenie.com/v1/json/alert/close"
+	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	apiKey := model.Settings.Get("apiKey").MustString()
+	apiUrl := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
 	}
+	if apiUrl == "" {
+		apiUrl = opsgenieAlertURL
+	}
 
 	return &OpsGenieNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		ApiKey:       apiKey,
+		ApiUrl:       apiUrl,
 		AutoClose:    autoClose,
 		log:          log.New("alerting.notifier.opsgenie"),
 	}, nil
@@ -60,12 +67,12 @@ func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 type OpsGenieNotifier struct {
 	NotifierBase
 	ApiKey    string
+	ApiUrl    string
 	AutoClose bool
 	log       log.Logger
 }
 
 func (this *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_OpsGenie.Inc(1)
 
 	var err error
 	switch evalContext.Rule.State {
@@ -88,12 +95,16 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 		return err
 	}
 
+	customData := triggMetrString
+	for _, evt := range evalContext.EvalMatches {
+		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
+
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("apiKey", this.ApiKey)
 	bodyJSON.Set("message", evalContext.Rule.Name)
 	bodyJSON.Set("source", "Grafana")
 	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
-	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message))
+	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message, customData))
 
 	details := simplejson.New()
 	details.Set("url", ruleUrl)
@@ -105,9 +116,13 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        opsgenieCreateAlertURL,
+		Url:        this.ApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -121,14 +136,17 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 	this.log.Info("Closing OpsGenie alert", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("apiKey", this.ApiKey)
-	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("source", "Grafana")
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        opsgenieCloseAlertURL,
+		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", this.ApiUrl, evalContext.Rule.Id),
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

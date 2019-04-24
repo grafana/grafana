@@ -3,11 +3,10 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func ValidateOrgPlaylist(c *middleware.Context) {
+func ValidateOrgPlaylist(c *m.ReqContext) {
 	id := c.ParamsInt64(":id")
 	query := m.GetPlaylistByIdQuery{Id: id}
 	err := bus.Dispatch(&query)
@@ -34,13 +33,13 @@ func ValidateOrgPlaylist(c *middleware.Context) {
 		return
 	}
 
-	if len(items) == 0 {
+	if len(items) == 0 && c.Context.Req.Method != "DELETE" {
 		c.JsonApiErr(404, "Playlist is empty", itemsErr)
 		return
 	}
 }
 
-func SearchPlaylists(c *middleware.Context) Response {
+func SearchPlaylists(c *m.ReqContext) Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
@@ -56,18 +55,18 @@ func SearchPlaylists(c *middleware.Context) Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return ApiError(500, "Search failed", err)
+		return Error(500, "Search failed", err)
 	}
 
-	return Json(200, searchQuery.Result)
+	return JSON(200, searchQuery.Result)
 }
 
-func GetPlaylist(c *middleware.Context) Response {
+func GetPlaylist(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 	cmd := m.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Playlist not found", err)
+		return Error(500, "Playlist not found", err)
 	}
 
 	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
@@ -80,7 +79,7 @@ func GetPlaylist(c *middleware.Context) Response {
 		Items:    playlistDTOs,
 	}
 
-	return Json(200, dto)
+	return JSON(200, dto)
 }
 
 func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
@@ -115,62 +114,63 @@ func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	return *itemQuery.Result, nil
 }
 
-func GetPlaylistItems(c *middleware.Context) Response {
+func GetPlaylistItems(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(id)
 
 	if err != nil {
-		return ApiError(500, "Could not load playlist items", err)
+		return Error(500, "Could not load playlist items", err)
 	}
 
-	return Json(200, playlistDTOs)
+	return JSON(200, playlistDTOs)
 }
 
-func GetPlaylistDashboards(c *middleware.Context) Response {
-	playlistId := c.ParamsInt64(":id")
+func GetPlaylistDashboards(c *m.ReqContext) Response {
+	playlistID := c.ParamsInt64(":id")
 
-	playlists, err := LoadPlaylistDashboards(c.OrgId, c.UserId, playlistId)
+	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
-		return ApiError(500, "Could not load dashboards", err)
+		return Error(500, "Could not load dashboards", err)
 	}
 
-	return Json(200, playlists)
+	return JSON(200, playlists)
 }
 
-func DeletePlaylist(c *middleware.Context) Response {
+func DeletePlaylist(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := m.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete playlist", err)
+		return Error(500, "Failed to delete playlist", err)
 	}
 
-	return Json(200, "")
+	return JSON(200, "")
 }
 
-func CreatePlaylist(c *middleware.Context, cmd m.CreatePlaylistCommand) Response {
+func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to create playlist", err)
+		return Error(500, "Failed to create playlist", err)
 	}
 
-	return Json(200, cmd.Result)
+	return JSON(200, cmd.Result)
 }
 
-func UpdatePlaylist(c *middleware.Context, cmd m.UpdatePlaylistCommand) Response {
+func UpdatePlaylist(c *m.ReqContext, cmd m.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
+	cmd.Id = c.ParamsInt64(":id")
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to save playlist", err)
+		return Error(500, "Failed to save playlist", err)
 	}
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(cmd.Id)
 	if err != nil {
-		return ApiError(500, "Failed to save playlist", err)
+		return Error(500, "Failed to save playlist", err)
 	}
 
 	cmd.Result.Items = playlistDTOs
-	return Json(200, cmd.Result)
+	return JSON(200, cmd.Result)
 }

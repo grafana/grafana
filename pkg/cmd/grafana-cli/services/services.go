@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -20,9 +21,10 @@ var (
 	IoHelper       m.IoUtil = IoUtilImp{}
 	HttpClient     http.Client
 	grafanaVersion string
+	NotFoundError  = errors.New("404 not found error")
 )
 
-func Init(version string) {
+func Init(version string, skipTLSVerify bool) {
 	grafanaVersion = version
 
 	tr := &http.Transport{
@@ -30,17 +32,19 @@ func Init(version string) {
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
+			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLSVerify,
+		},
 	}
 
 	HttpClient = http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
 }
@@ -60,7 +64,7 @@ func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	var data m.PluginRepo
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.PluginRepo{}, err
 	}
 
@@ -123,10 +127,14 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
+	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to send request", "error", err)
+		logger.Info("Failed to send request: ", err)
+		if err == NotFoundError {
+			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
+		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
 	}
 
@@ -137,7 +145,7 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 	var data m.Plugin
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		logger.Info("Failed to unmarshal plugin repo response error:", err)
 		return m.Plugin{}, err
 	}
 
@@ -153,6 +161,8 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 
 	req.Header.Set("grafana-version", grafanaVersion)
+	req.Header.Set("grafana-os", runtime.GOOS)
+	req.Header.Set("grafana-arch", runtime.GOARCH)
 	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
 	if err != nil {
@@ -164,6 +174,9 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	if res.StatusCode == 404 {
+		return []byte{}, NotFoundError
+	}
 	if res.StatusCode/100 != 2 {
 		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
 	}

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,7 +12,7 @@ func init() {
 	bus.AddHandler("sql", GetApiKeys)
 	bus.AddHandler("sql", GetApiKeyById)
 	bus.AddHandler("sql", GetApiKeyByName)
-	bus.AddHandler("sql", DeleteApiKey)
+	bus.AddHandlerCtx("sql", DeleteApiKeyCtx)
 	bus.AddHandler("sql", AddApiKey)
 }
 
@@ -22,8 +23,8 @@ func GetApiKeys(query *m.GetApiKeysQuery) error {
 	return sess.Find(&query.Result)
 }
 
-func DeleteApiKey(cmd *m.DeleteApiKeyCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func DeleteApiKeyCtx(ctx context.Context, cmd *m.DeleteApiKeyCommand) error {
+	return withDbSession(ctx, func(sess *DBSession) error {
 		var rawSql = "DELETE FROM api_key WHERE id=? and org_id=?"
 		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		return err
@@ -55,7 +56,7 @@ func GetApiKeyById(query *m.GetApiKeyByIdQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrInvalidApiKey
 	}
 
@@ -69,7 +70,7 @@ func GetApiKeyByName(query *m.GetApiKeyByNameQuery) error {
 
 	if err != nil {
 		return err
-	} else if has == false {
+	} else if !has {
 		return m.ErrInvalidApiKey
 	}
 

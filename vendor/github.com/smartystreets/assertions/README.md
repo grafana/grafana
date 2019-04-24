@@ -8,6 +8,8 @@ referenced in goconvey's `convey` package
 (github.com/smartystreets/gunit) for use with the So(...) method. They can also
 be used in traditional Go test functions and even in applications.
 
+https://smartystreets.com
+
 Many of the assertions lean heavily on work done by Aaron Jacobs in his
 excellent oglematchers library. (https://github.com/jacobsa/oglematchers) The
 ShouldResemble assertion leans heavily on work done by Daniel Jacques in his
@@ -25,7 +27,7 @@ the assertions in this package from the convey package JSON results are very
 helpful and can be rendered in a DIFF view. In that case, this function will be
 called with a true value to enable the JSON serialization. By default, the
 assertions in this package will not serializer a JSON result, making standalone
-ussage more convenient.
+usage more convenient.
 
 #### func  ShouldAlmostEqual
 
@@ -67,7 +69,7 @@ to "".
 ```go
 func ShouldBeChronological(actual interface{}, expected ...interface{}) string
 ```
-ShouldBeChronological receives a []time.Time slice and asserts that the are in
+ShouldBeChronological receives a []time.Time slice and asserts that they are in
 chronological order starting with the first time.Time as the earliest.
 
 #### func  ShouldBeEmpty
@@ -78,6 +80,15 @@ func ShouldBeEmpty(actual interface{}, expected ...interface{}) string
 ShouldBeEmpty receives a single parameter (actual) and determines whether or not
 calling len(actual) would return `0`. It obeys the rules specified by the len
 function for determining length: http://golang.org/pkg/builtin/#len
+
+#### func  ShouldBeError
+
+```go
+func ShouldBeError(actual interface{}, expected ...interface{}) string
+```
+ShouldBeError asserts that the first argument implements the error interface. It
+also compares the first argument against the second argument if provided (which
+must be an error message string or another error value).
 
 #### func  ShouldBeFalse
 
@@ -187,7 +198,19 @@ ends with the second.
 ```go
 func ShouldEqual(actual interface{}, expected ...interface{}) string
 ```
-ShouldEqual receives exactly two parameters and does an equality check.
+ShouldEqual receives exactly two parameters and does an equality check using the
+following semantics: 1. If the expected and actual values implement an Equal
+method in the form `func (this T) Equal(that T) bool` then call the method. If
+true, they are equal. 2. The expected and actual values are judged equal or not
+by oglematchers.Equals.
+
+#### func  ShouldEqualJSON
+
+```go
+func ShouldEqualJSON(actual interface{}, expected ...interface{}) string
+```
+ShouldEqualJSON receives exactly two parameters and does an equality check by
+marshalling to JSON
 
 #### func  ShouldEqualTrimSpace
 
@@ -322,6 +345,14 @@ func ShouldNotBeBlank(actual interface{}, expected ...interface{}) string
 ShouldNotBeBlank receives exactly 1 string parameter and ensures that it is
 equal to "".
 
+#### func  ShouldNotBeChronological
+
+```go
+func ShouldNotBeChronological(actual interface{}, expected ...interface{}) string
+```
+ShouldNotBeChronological receives a []time.Time slice and asserts that they are
+NOT in chronological order.
+
 #### func  ShouldNotBeEmpty
 
 ```go
@@ -348,6 +379,14 @@ ensures that the proposed member is NOT in the collection (using ShouldEqual).
 func ShouldNotBeNil(actual interface{}, expected ...interface{}) string
 ```
 ShouldNotBeNil receives a single parameter and ensures that it is not nil.
+
+#### func  ShouldNotBeZeroValue
+
+```go
+func ShouldNotBeZeroValue(actual interface{}, expected ...interface{}) string
+```
+ShouldBeZeroValue receives a single parameter and ensures that it is NOT the Go
+equivalent of the default value, or "zero" value.
 
 #### func  ShouldNotContain
 
@@ -386,7 +425,8 @@ does not end with the second.
 ```go
 func ShouldNotEqual(actual interface{}, expected ...interface{}) string
 ```
-ShouldNotEqual receives exactly two parameters and does an inequality check.
+ShouldNotEqual receives exactly two parameters and does an inequality check. See
+ShouldEqual for details on how equality is determined.
 
 #### func  ShouldNotHappenOnOrBetween
 
@@ -520,6 +560,10 @@ Example:
     if ok, message := So(x, ShouldBeGreaterThan, y); !ok {
          log.Println(message)
     }
+
+For an alternative implementation of So (that provides more flexible return
+options) see the `So` function in the package at
+github.com/smartystreets/assertions/assert.
 
 #### type Assertion
 

@@ -1,0 +1,16 @@
+.page-loader-wrapper {
+  padding-top: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  &__spinner {
+    font-size: 32px;
+    margin-bottom: $space-sm;
+  }
+
+  &__text {
+    font-size: 14px;
+  }
+}

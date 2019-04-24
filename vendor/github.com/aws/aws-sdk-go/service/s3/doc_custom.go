@@ -35,7 +35,7 @@
 //
 // The s3manager package's Downloader provides concurrently downloading of Objects
 // from S3. The Downloader will write S3 Object content with an io.WriterAt.
-// Once the Downloader instance is created you can call Upload concurrently from
+// Once the Downloader instance is created you can call Download concurrently from
 // multiple goroutines safely.
 //
 //   // The session the S3 Downloader will use
@@ -56,7 +56,7 @@
 //       Key:    aws.String(myString),
 //   })
 //   if err != nil {
-//       return fmt.Errorf("failed to upload file, %v", err)
+//       return fmt.Errorf("failed to download file, %v", err)
 //   }
 //   fmt.Printf("file downloaded, %d bytes\n", n)
 //

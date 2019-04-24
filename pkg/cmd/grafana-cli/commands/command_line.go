@@ -19,6 +19,7 @@ type CommandLine interface {
 
 	PluginDirectory() string
 	RepoDirectory() string
+	PluginURL() string
 }
 
 type contextCommandLine struct {
@@ -43,4 +44,8 @@ func (c *contextCommandLine) PluginDirectory() string {
 
 func (c *contextCommandLine) RepoDirectory() string {
 	return c.GlobalString("repo")
+}
+
+func (c *contextCommandLine) PluginURL() string {
+	return c.GlobalString("pluginUrl")
 }

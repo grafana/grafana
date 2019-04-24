@@ -94,7 +94,7 @@ weight = 10
     </a>
     <figcaption>
        <a href="https://youtu.be/FC13uhFRsVw?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-       #3 Whats New In Grafana 2.0
+       #3 What's New In Grafana 2.0
        </a>
     </figcaption>
   </figure>

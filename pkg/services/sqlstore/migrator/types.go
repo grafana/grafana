@@ -3,12 +3,15 @@ package migrator
 import (
 	"fmt"
 	"strings"
+
+	"github.com/go-xorm/xorm"
 )
 
 const (
 	POSTGRES = "postgres"
 	SQLITE   = "sqlite3"
 	MYSQL    = "mysql"
+	MSSQL    = "mssql"
 )
 
 type Migration interface {
@@ -16,6 +19,11 @@ type Migration interface {
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+}
+
+type CodeMigration interface {
+	Migration
+	Exec(sess *xorm.Session, migrator *Migrator) error
 }
 
 type SQLType string
@@ -46,7 +54,7 @@ type Index struct {
 
 func (index *Index) XName(tableName string) string {
 	if index.Name == "" {
-		index.Name = fmt.Sprintf("%s", strings.Join(index.Cols, "_"))
+		index.Name = strings.Join(index.Cols, "_")
 	}
 
 	if !strings.HasPrefix(index.Name, "UQE_") &&

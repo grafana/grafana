@@ -3,6 +3,18 @@ gls
 
 Goroutine local storage
 
+### IMPORTANT NOTE ###
+
+It is my duty to point you to https://blog.golang.org/context, which is how 
+Google solves all of the problems you'd perhaps consider using this package
+for at scale. 
+
+One downside to Google's approach is that *all* of your functions must have
+a new first argument, but after clearing that hurdle everything else is much
+better.
+
+If you aren't interested in this warning, read on.
+
 ### Huhwaht? Why? ###
 
 Every so often, a thread shows up on the
@@ -57,8 +69,21 @@ this library.
 
 "This is the most terrible thing I have seen in a very long time."
 
-"Where is it getting a context from? Is this serializing all the requests? What the heck is the client being bound to? What are these tags? Why does he need callers? Oh god no. No no no."
+"Where is it getting a context from? Is this serializing all the requests? 
+What the heck is the client being bound to? What are these tags? Why does he 
+need callers? Oh god no. No no no."
 
 ### Docs ###
 
 Please see the docs at http://godoc.org/github.com/jtolds/gls
+
+### Related ###
+
+If you're okay relying on the string format of the current runtime stacktrace 
+including a unique goroutine id (not guaranteed by the spec or anything, but 
+very unlikely to change within a Go release), you might be able to squeeze 
+out a bit more performance by using this similar library, inspired by some 
+code Brad Fitzpatrick wrote for debugging his HTTP/2 library: 
+https://github.com/tylerb/gls (in contrast, jtolds/gls doesn't require 
+any knowledge of the string format of the runtime stacktrace, which 
+probably adds unnecessary overhead).

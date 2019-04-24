@@ -1,0 +1,7 @@
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+delete_datasources:
+  - name: old-graphite

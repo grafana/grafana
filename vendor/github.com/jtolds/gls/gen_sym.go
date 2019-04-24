@@ -1,13 +1,21 @@
 package gls
 
+import (
+	"sync"
+)
+
 var (
-	symPool = &idPool{}
+	keyMtx     sync.Mutex
+	keyCounter uint64
 )
 
 // ContextKey is a throwaway value you can use as a key to a ContextManager
-type ContextKey struct{ id uint }
+type ContextKey struct{ id uint64 }
 
 // GenSym will return a brand new, never-before-used ContextKey
 func GenSym() ContextKey {
-	return ContextKey{id: symPool.Acquire()}
+	keyMtx.Lock()
+	defer keyMtx.Unlock()
+	keyCounter += 1
+	return ContextKey{id: keyCounter}
 }

@@ -824,6 +824,12 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 
 		indexName = strings.Trim(indexName, `" `)
 
+		var isRegular bool
+		if strings.HasPrefix(indexName, "IDX_"+tableName) || strings.HasPrefix(indexName, "UQE_"+tableName) {
+			indexName = indexName[5+len(tableName):]
+			isRegular = true
+		}
+
 		if uniqueness == "UNIQUE" {
 			indexType = core.UniqueType
 		} else {
@@ -836,6 +842,7 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 			index = new(core.Index)
 			index.Type = indexType
 			index.Name = indexName
+			index.IsRegular = isRegular
 			indexes[indexName] = index
 		}
 		index.AddColumn(colName)

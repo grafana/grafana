@@ -1,4 +1,3 @@
-
 @mixin drop-theme($themeName, $theme-bg, $theme-color, $border-color: $theme-bg) {
   .drop-element.drop-#{$themeName} {
     max-width: 100%;
@@ -10,18 +9,13 @@
       font-family: inherit;
       background: $theme-bg;
       color: $theme-color;
-      padding: 0.65rem;
-      font-size: $font-size-sm;
+      padding: $space-sm;
       word-wrap: break-word;
-      max-width: 20rem;
+      max-width: 280px;
       border: 1px solid $border-color;
 
-      @if $theme-bg != $border-color {
-        box-shadow: 0 0 15px $border-color;
-      }
-
       &:before {
-        content: "";
+        content: '';
         display: block;
         position: absolute;
         width: 0;
@@ -35,7 +29,7 @@
 
     &.drop-wide {
       .drop-content {
-        max-width: 40rem;
+        max-width: 560px;
       }
     }
 
@@ -47,7 +41,7 @@
       &:before {
         top: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-top-color: $border-color;
       }
     }
@@ -58,7 +52,7 @@
       &:before {
         bottom: 100%;
         left: 50%;
-        margin-left: - $popover-arrow-size;
+        margin-left: -$popover-arrow-size;
         border-bottom-color: $border-color;
       }
     }
@@ -69,7 +63,7 @@
       &:before {
         left: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-left-color: $border-color;
       }
     }
@@ -80,14 +74,14 @@
       &:before {
         right: 100%;
         top: 50%;
-        margin-top: - $popover-arrow-size;
+        margin-top: -$popover-arrow-size;
         border-right-color: $border-color;
       }
     }
 
     // Target middle/center, element corner
     &.drop-element-attached-left.drop-target-attached-center .drop-content {
-      left: - $popover-arrow-size * 2;
+      left: -$popover-arrow-size * 2;
     }
 
     &.drop-element-attached-right.drop-target-attached-center .drop-content {
@@ -218,7 +212,7 @@
   }
 }
 
-@mixin drop-animation-scale($themePrefix: "drop", $themeName: "default", $attachmentOffset: 0, $easing: "linear") {
+@mixin drop-animation-scale($themePrefix: 'drop', $themeName: 'default', $attachmentOffset: 0, $easing: 'linear') {
   .#{$themePrefix}-element.#{$themePrefix}-#{$themeName} {
     transform: translateZ(0);
     transition: opacity 100ms;
@@ -254,31 +248,38 @@
       transform-origin: -($attachmentOffset 50%);
     }
     // Top and bottom corners
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom
+      .#{$themePrefix}-content {
       transform-origin: 0 (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom
+      .#{$themePrefix}-content {
       transform-origin: 100% (-$attachmentOffset);
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top
+      .#{$themePrefix}-content {
       transform-origin: 0 calc(100% + #{$attachmentOffset});
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top
+      .#{$themePrefix}-content {
       transform-origin: 100% calc(100% + #{$attachmentOffset});
     }
     // Side corners
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
+      .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 0;
     }
-    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
+      .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 0;
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left
+      .#{$themePrefix}-content {
       transform-origin: calc(100% + #{$attachmentOffset}) 100%;
     }
-    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right
+      .#{$themePrefix}-content {
       transform-origin: (-$attachmentOffset) 100%;
     }
   }
 }
-

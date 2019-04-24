@@ -3,101 +3,26 @@ package middleware
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
+
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
-func Quota(target string) macaron.Handler {
-	return func(c *Context) {
-		limitReached, err := QuotaReached(c, target)
-		if err != nil {
-			c.JsonApiErr(500, "failed to get quota", err)
-			return
-		}
-		if limitReached {
-			c.JsonApiErr(403, fmt.Sprintf("%s Quota reached", target), nil)
-			return
-		}
-	}
-}
-
-func QuotaReached(c *Context, target string) (bool, error) {
-	if !setting.Quota.Enabled {
-		return false, nil
-	}
-
-	// get the list of scopes that this target is valid for. Org, User, Global
-	scopes, err := m.GetQuotaScopes(target)
-	if err != nil {
-		return false, err
-	}
-
-	for _, scope := range scopes {
-		c.Logger.Debug("Checking quota", "target", target, "scope", scope)
-
-		switch scope.Name {
-		case "global":
-			if scope.DefaultLimit < 0 {
-				continue
+// Quota returns a function that returns a function used to call quotaservice based on target name
+func Quota(quotaService *quota.QuotaService) func(target string) macaron.Handler {
+	//https://open.spotify.com/track/7bZSoBEAEEUsGEuLOf94Jm?si=T1Tdju5qRSmmR0zph_6RBw fuuuuunky
+	return func(target string) macaron.Handler {
+		return func(c *m.ReqContext) {
+			limitReached, err := quotaService.QuotaReached(c, target)
+			if err != nil {
+				c.JsonApiErr(500, "failed to get quota", err)
+				return
 			}
-			if scope.DefaultLimit == 0 {
-				return true, nil
-			}
-			if target == "session" {
-				usedSessions := getSessionCount()
-				if int64(usedSessions) > scope.DefaultLimit {
-					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
-					return true, nil
-				}
-				continue
-			}
-			query := m.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Used >= scope.DefaultLimit {
-				return true, nil
-			}
-		case "org":
-			if !c.IsSignedIn {
-				continue
-			}
-			query := m.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Limit < 0 {
-				continue
-			}
-			if query.Result.Limit == 0 {
-				return true, nil
-			}
-
-			if query.Result.Used >= query.Result.Limit {
-				return true, nil
-			}
-		case "user":
-			if !c.IsSignedIn || c.UserId == 0 {
-				continue
-			}
-			query := m.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Limit < 0 {
-				continue
-			}
-			if query.Result.Limit == 0 {
-				return true, nil
-			}
-
-			if query.Result.Used >= query.Result.Limit {
-				return true, nil
+			if limitReached {
+				c.JsonApiErr(403, fmt.Sprintf("%s Quota reached", target), nil)
+				return
 			}
 		}
 	}
-
-	return false, nil
 }

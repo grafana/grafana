@@ -28,15 +28,14 @@
     this.$element = $(element);
     this.$element.hide();
 
+    this.widthClass = options.widthClass || 'width-9';
     this.isSelect = (element.tagName === 'SELECT');
     this.multiple = (this.isSelect && element.hasAttribute('multiple'));
     this.objectItems = options && options.itemValue;
     this.placeholderText = element.hasAttribute('placeholder') ? this.$element.attr('placeholder') : '';
-    this.inputSize = Math.max(1, this.placeholderText.length);
 
     this.$container = $('<div class="bootstrap-tagsinput"></div>');
-    this.$input = $('<input class="gf-form-input" size="' +
-                    this.inputSize + '" type="text" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
+    this.$input = $('<input class="gf-form-input ' + this.widthClass + '" type="text" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
 
     this.$element.after(this.$container);
 
@@ -292,6 +291,13 @@
         self.$input.focus();
       }, self));
 
+      self.$container.on('blur', 'input', $.proxy(function(event) {
+        var $input = $(event.target);
+        self.add($input.val());
+        $input.val('');
+        event.preventDefault();
+      }, self));
+
       self.$container.on('keydown', 'input', $.proxy(function(event) {
         var $input = $(event.target),
             $inputWrapper = self.findInputWrapper();
@@ -352,6 +358,8 @@
       // Remove icon clicked
       self.$container.on('click', '[data-role=remove]', $.proxy(function(event) {
         self.remove($(event.target).closest('.tag').data('item'));
+        // Grafana mod, if tags input used in popover the click event will bubble up and hide popover
+        event.stopPropagation();
       }, self));
 
       // Only add existing value as tags when using strings as tags

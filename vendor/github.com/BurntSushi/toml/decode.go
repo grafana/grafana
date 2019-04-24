@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-var e = fmt.Errorf
+func e(format string, args ...interface{}) error {
+	return fmt.Errorf("toml: "+format, args...)
+}
 
 // Unmarshaler is the interface implemented by objects that can unmarshal a
 // TOML description of themselves.
@@ -103,6 +105,13 @@ func (md *MetaData) PrimitiveDecode(primValue Primitive, v interface{}) error {
 // This decoder will not handle cyclic types. If a cyclic type is passed,
 // `Decode` will not terminate.
 func Decode(data string, v interface{}) (MetaData, error) {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Ptr {
+		return MetaData{}, e("Decode of non-pointer %s", reflect.TypeOf(v))
+	}
+	if rv.IsNil() {
+		return MetaData{}, e("Decode of nil %s", reflect.TypeOf(v))
+	}
 	p, err := parse(data)
 	if err != nil {
 		return MetaData{}, err
@@ -111,7 +120,7 @@ func Decode(data string, v interface{}) (MetaData, error) {
 		p.mapping, p.types, p.ordered,
 		make(map[string]bool, len(p.ordered)), nil,
 	}
-	return md, md.unify(p.mapping, rvalue(v))
+	return md, md.unify(p.mapping, indirect(rv))
 }
 
 // DecodeFile is just like Decode, except it will automatically read the
@@ -211,7 +220,7 @@ func (md *MetaData) unify(data interface{}, rv reflect.Value) error {
 	case reflect.Interface:
 		// we only support empty interfaces.
 		if rv.NumMethod() > 0 {
-			return e("Unsupported type '%s'.", rv.Kind())
+			return e("unsupported type %s", rv.Type())
 		}
 		return md.unifyAnything(data, rv)
 	case reflect.Float32:
@@ -219,13 +228,17 @@ func (md *MetaData) unify(data interface{}, rv reflect.Value) error {
 	case reflect.Float64:
 		return md.unifyFloat64(data, rv)
 	}
-	return e("Unsupported type '%s'.", rv.Kind())
+	return e("unsupported type %s", rv.Kind())
 }
 
 func (md *MetaData) unifyStruct(mapping interface{}, rv reflect.Value) error {
 	tmap, ok := mapping.(map[string]interface{})
 	if !ok {
-		return mismatch(rv, "map", mapping)
+		if mapping == nil {
+			return nil
+		}
+		return e("type mismatch for %s: expected table but found %T",
+			rv.Type().String(), mapping)
 	}
 
 	for key, datum := range tmap {
@@ -250,14 +263,13 @@ func (md *MetaData) unifyStruct(mapping interface{}, rv reflect.Value) error {
 				md.decoded[md.context.add(key).String()] = true
 				md.context = append(md.context, key)
 				if err := md.unify(datum, subv); err != nil {
-					return e("Type mismatch for '%s.%s': %s",
-						rv.Type().String(), f.name, err)
+					return err
 				}
 				md.context = md.context[0 : len(md.context)-1]
 			} else if f.name != "" {
 				// Bad user! No soup for you!
-				return e("Field '%s.%s' is unexported, and therefore cannot "+
-					"be loaded with reflection.", rv.Type().String(), f.name)
+				return e("cannot write unexported field %s.%s",
+					rv.Type().String(), f.name)
 			}
 		}
 	}
@@ -267,6 +279,9 @@ func (md *MetaData) unifyStruct(mapping interface{}, rv reflect.Value) error {
 func (md *MetaData) unifyMap(mapping interface{}, rv reflect.Value) error {
 	tmap, ok := mapping.(map[string]interface{})
 	if !ok {
+		if tmap == nil {
+			return nil
+		}
 		return badtype("map", mapping)
 	}
 	if rv.IsNil() {
@@ -292,6 +307,9 @@ func (md *MetaData) unifyMap(mapping interface{}, rv reflect.Value) error {
 func (md *MetaData) unifyArray(data interface{}, rv reflect.Value) error {
 	datav := reflect.ValueOf(data)
 	if datav.Kind() != reflect.Slice {
+		if !datav.IsValid() {
+			return nil
+		}
 		return badtype("slice", data)
 	}
 	sliceLen := datav.Len()
@@ -305,12 +323,16 @@ func (md *MetaData) unifyArray(data interface{}, rv reflect.Value) error {
 func (md *MetaData) unifySlice(data interface{}, rv reflect.Value) error {
 	datav := reflect.ValueOf(data)
 	if datav.Kind() != reflect.Slice {
+		if !datav.IsValid() {
+			return nil
+		}
 		return badtype("slice", data)
 	}
-	sliceLen := datav.Len()
-	if rv.IsNil() {
-		rv.Set(reflect.MakeSlice(rv.Type(), sliceLen, sliceLen))
+	n := datav.Len()
+	if rv.IsNil() || rv.Cap() < n {
+		rv.Set(reflect.MakeSlice(rv.Type(), n, n))
 	}
+	rv.SetLen(n)
 	return md.unifySliceArray(datav, rv)
 }
 
@@ -365,15 +387,15 @@ func (md *MetaData) unifyInt(data interface{}, rv reflect.Value) error {
 				// No bounds checking necessary.
 			case reflect.Int8:
 				if num < math.MinInt8 || num > math.MaxInt8 {
-					return e("Value '%d' is out of range for int8.", num)
+					return e("value %d is out of range for int8", num)
 				}
 			case reflect.Int16:
 				if num < math.MinInt16 || num > math.MaxInt16 {
-					return e("Value '%d' is out of range for int16.", num)
+					return e("value %d is out of range for int16", num)
 				}
 			case reflect.Int32:
 				if num < math.MinInt32 || num > math.MaxInt32 {
-					return e("Value '%d' is out of range for int32.", num)
+					return e("value %d is out of range for int32", num)
 				}
 			}
 			rv.SetInt(num)
@@ -384,15 +406,15 @@ func (md *MetaData) unifyInt(data interface{}, rv reflect.Value) error {
 				// No bounds checking necessary.
 			case reflect.Uint8:
 				if num < 0 || unum > math.MaxUint8 {
-					return e("Value '%d' is out of range for uint8.", num)
+					return e("value %d is out of range for uint8", num)
 				}
 			case reflect.Uint16:
 				if num < 0 || unum > math.MaxUint16 {
-					return e("Value '%d' is out of range for uint16.", num)
+					return e("value %d is out of range for uint16", num)
 				}
 			case reflect.Uint32:
 				if num < 0 || unum > math.MaxUint32 {
-					return e("Value '%d' is out of range for uint32.", num)
+					return e("value %d is out of range for uint32", num)
 				}
 			}
 			rv.SetUint(unum)
@@ -458,7 +480,7 @@ func rvalue(v interface{}) reflect.Value {
 // interest to us (like encoding.TextUnmarshaler).
 func indirect(v reflect.Value) reflect.Value {
 	if v.Kind() != reflect.Ptr {
-		if v.CanAddr() {
+		if v.CanSet() {
 			pv := v.Addr()
 			if _, ok := pv.Interface().(TextUnmarshaler); ok {
 				return pv
@@ -483,10 +505,5 @@ func isUnifiable(rv reflect.Value) bool {
 }
 
 func badtype(expected string, data interface{}) error {
-	return e("Expected %s but found '%T'.", expected, data)
-}
-
-func mismatch(user reflect.Value, expected string, data interface{}) error {
-	return e("Type mismatch for %s. Expected %s but found '%T'.",
-		user.Type().String(), expected, data)
+	return e("cannot load TOML value of type %T into a Go %s", data, expected)
 }

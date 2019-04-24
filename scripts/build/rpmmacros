@@ -1,4 +1,4 @@
 %_signature gpg
-%_gpg_path /home/ubuntu/.gnupg
+%_gpg_path /root/.gnupg
 %_gpg_name Grafana
 %_gpgbin /usr/bin/gpg

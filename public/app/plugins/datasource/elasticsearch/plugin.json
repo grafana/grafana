@@ -14,12 +14,14 @@
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
     },
-    "links": [
-      {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
-    ],
-    "version": "3.0.0"
+    "links": [{ "name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch" }]
   },
 
+  "alerting": true,
   "annotations": true,
-  "metrics": true
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
 }

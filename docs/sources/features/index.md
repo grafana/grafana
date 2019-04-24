@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "Features"
 identifier = "features"
-weight = 3
+weight = 4
 +++
 
 

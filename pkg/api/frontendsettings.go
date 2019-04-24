@@ -1,18 +1,18 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/util"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
-func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, error) {
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
 	orgDataSources := make([]*m.DataSource, 0)
 
 	if c.OrgId != 0 {
@@ -23,7 +23,20 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			return nil, err
 		}
 
-		orgDataSources = query.Result
+		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+			User:        c.SignedInUser,
+			Datasources: query.Result,
+		}
+
+		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err != bus.ErrHandlerNotFound {
+				return nil, err
+			}
+
+			orgDataSources = query.Result
+		} else {
+			orgDataSources = dsFilterQuery.Result
+		}
 	}
 
 	datasources := make(map[string]interface{})
@@ -32,6 +45,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
+	}
+
+	pluginsToPreload := []string{}
+
+	for _, app := range enabledPlugins.Apps {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
 	}
 
 	for _, ds := range orgDataSources {
@@ -54,6 +75,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			continue
 		}
 
+		if meta.Preload {
+			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		}
+
 		dsMap["meta"] = meta
 
 		if ds.IsDefault {
@@ -62,11 +87,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
+		} else {
+			dsMap["jsonData"] = make(map[string]string)
 		}
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
-				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword)
+				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
 			if ds.WithCredentials {
 				dsMap["withCredentials"] = ds.WithCredentials
@@ -74,14 +101,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 			if ds.Type == m.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == m.DS_INFLUXDB {
 				dsMap["username"] = ds.User
-				dsMap["password"] = ds.Password
-				dsMap["database"] = ds.Database
+				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
@@ -119,6 +145,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
+		if panel.State == plugins.PluginStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		if panel.Preload {
+			pluginsToPreload = append(pluginsToPreload, panel.Module)
+		}
+
 		panels[panel.Id] = map[string]interface{}{
 			"module":       panel.Module,
 			"baseUrl":      panel.BaseUrl,
@@ -127,24 +161,32 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"info":         panel.Info,
 			"hideFromList": panel.HideFromList,
 			"sort":         getPanelSort(panel.Id),
+			"dataFormats":  panel.DataFormats,
+			"state":        panel.State,
 		}
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":       defaultDatasource,
-		"datasources":             datasources,
-		"panels":                  panels,
-		"appSubUrl":               setting.AppSubUrl,
-		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":        setting.AuthProxyEnabled,
-		"ldapEnabled":             setting.LdapEnabled,
-		"alertingEnabled":         setting.AlertingEnabled,
-		"googleAnalyticsId":       setting.GoogleAnalyticsId,
-		"disableLoginForm":        setting.DisableLoginForm,
-		"disableSignoutMenu":      setting.DisableSignoutMenu,
-		"externalUserMngInfo":     setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
+		"defaultDatasource":          defaultDatasource,
+		"datasources":                datasources,
+		"panels":                     panels,
+		"appSubUrl":                  setting.AppSubUrl,
+		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":           setting.AuthProxyEnabled,
+		"ldapEnabled":                setting.LdapEnabled,
+		"alertingEnabled":            setting.AlertingEnabled,
+		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
+		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"exploreEnabled":             setting.ExploreEnabled,
+		"googleAnalyticsId":          setting.GoogleAnalyticsId,
+		"disableLoginForm":           setting.DisableLoginForm,
+		"externalUserMngInfo":        setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":     setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName":    setting.ExternalUserMngLinkName,
+		"viewersCanEdit":             setting.ViewersCanEdit,
+		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
+		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
+		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
@@ -152,6 +194,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
+			"isEnterprise":  setting.IsEnterprise,
 		},
 	}
 
@@ -165,22 +208,26 @@ func getPanelSort(id string) int {
 		sort = 1
 	case "singlestat":
 		sort = 2
-	case "table":
+	case "gauge":
 		sort = 3
-	case "text":
+	case "bargauge":
 		sort = 4
-	case "heatmap":
+	case "table":
 		sort = 5
-	case "alertlist":
+	case "text":
 		sort = 6
-	case "dashlist":
+	case "heatmap":
 		sort = 7
+	case "alertlist":
+		sort = 8
+	case "dashlist":
+		sort = 9
 	}
 	return sort
 }
 
-func GetFrontendSettings(c *middleware.Context) {
-	settings, err := getFrontendSettingsMap(c)
+func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
 		return

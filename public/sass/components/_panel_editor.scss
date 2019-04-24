@@ -1,0 +1,232 @@
+.panel-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-wrapper {
+  height: 100%;
+
+  &--edit {
+    height: 40%;
+    margin: 0 $dashboard-padding;
+  }
+
+  &--view {
+    flex: 1 1 0;
+    height: 90%;
+    margin: 0 $dashboard-padding;
+    padding-top: $dashboard-padding;
+  }
+}
+
+.panel-editor-container__editor {
+  margin-top: $space-lg;
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+  position: relative;
+  min-height: 0;
+}
+
+.panel-editor__right {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  background: $input-bg;
+  margin: 0 20px 0 84px;
+  width: calc(100% - 84px);
+  border-radius: 3px;
+  box-shadow: $panel-editor-shadow;
+  min-height: 0;
+}
+
+.panel-editor__close {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
+  position: absolute;
+  left: 11px;
+  top: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+
+  i {
+    flex-grow: 1;
+    text-align: center;
+    font-size: 20px;
+  }
+}
+
+.panel-editor__scroll {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  min-height: 0;
+}
+
+.panel-editor__content {
+  padding: 15px;
+}
+
+.panel-in-fullscreen {
+  .sidemenu {
+    display: none;
+  }
+
+  .dashboard-container {
+    padding: 0;
+  }
+
+  .submenu-controls {
+    padding: 0 $dashboard-padding $space-sm $dashboard-padding;
+  }
+
+  .search-container {
+    left: 0 !important;
+  }
+}
+
+.panel-editor-container__resizer {
+  position: relative;
+  margin-top: -3px;
+}
+
+.panel-editor-resizer__handle {
+  position: relative;
+  display: block;
+  background: $vertical-resize-handle-bg;
+  width: 150px;
+  margin-left: -75px;
+  height: 6px;
+  cursor: ns-resize;
+  border-radius: 3px;
+  margin: 0 auto;
+
+  &::before {
+    content: ' ';
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 2px;
+    border-top: 2px dotted $vertical-resize-handle-dots;
+  }
+
+  &:hover::before {
+    border-color: $vertical-resize-handle-dots-hover;
+  }
+}
+
+.viz-picker {
+  position: relative;
+}
+
+.viz-picker-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.viz-picker__item {
+  background: $panel-editor-viz-item-bg;
+  border: $panel-editor-viz-item-border;
+  border-radius: 3px;
+  height: 100px;
+  width: 145px;
+  flex-shrink: 0;
+  flex-direction: column;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 6px;
+  transition: transform 1 ease;
+
+  &:hover {
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
+  }
+
+  &--current {
+    box-shadow: 0 0 6px $orange !important;
+    border: 1px solid $orange !important;
+    background: $panel-editor-viz-item-bg !important;
+  }
+}
+
+.viz-picker__item-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  height: 23px;
+  font-weight: 500;
+}
+
+.viz-picker__item-img {
+  height: 55px;
+}
+
+.panel-editor-tabs {
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 44px;
+  left: 20px;
+  align-items: flex-start;
+
+  &::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 21px;
+    width: 2px;
+    background: $panel-editor-tabs-line-color;
+  }
+}
+
+.panel-editor-tabs__item {
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.panel-editor-tabs__link {
+  display: inline-block;
+
+  &.active {
+    position: relative;
+  }
+
+  .gicon {
+    height: 44px;
+    width: 53px;
+    margin-right: 5px;
+    transition: transform 0.1s ease 0.1s;
+
+    &:hover {
+      filter: $panel-editor-side-menu-shadow;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.ds-picker {
+  position: relative;
+  min-width: 200px;
+}

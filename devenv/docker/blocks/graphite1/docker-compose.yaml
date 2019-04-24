@@ -1,0 +1,21 @@
+  graphite:
+    build:
+      context: docker/blocks/graphite1
+      args:
+        version: master
+    ports:
+      - "8080:80"
+      - "2003:2003"
+      - "8125:8125/udp"
+      - "8126:8126"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  fake-graphite-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: graphite
+      FD_PORT: 2003
+

@@ -24,7 +24,7 @@ A dashboard snapshot is an instant way to share an interactive dashboard publicl
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
 snapshots can be accessed by anyone who has the link and can reach the URL.
 
-![](/img/docs/v4/share_panel_modal.png)
+{{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
 
 ### Publish snapshots
 
@@ -39,11 +39,11 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ### Direct Link Rendered Image
 
-You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `vendor/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig) are available.
+You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `tools/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig1) are available.
 
 Example of a link to a server-side rendered PNG:
 
-```
+```bash
 http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panelId=4&from=1499272191563&to=1499279391563&width=1000&height=500&tz=UTC%2B02%3A00&timeout=5000
 ```
 
@@ -58,6 +58,8 @@ http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panel
 
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
 
+> *Notice* This sharing require either anonymous access or setting [cookie_samesite]({{< relref "installation/configuration.md#cookie-samesite" >}}) to none
+
 Example:
 
 ```html
@@ -70,9 +72,9 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 ### Export Panel Data
 
-![](/img/docs/v4/export_panel_data.png)
+{{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 
-The submenu for a panel can be found by clicking on the title of a panel and then on the hamburger (three horizontal lines) submenu on the left of the context menu.
+The submenu for a panel can be found by clicking on the title of a panel and then on the More submenu.
 
 This menu contains two options for exporting data:
 

@@ -1,7 +1,6 @@
-
 @mixin clearfix() {
   &::after {
-    content: "";
+    content: '';
     display: table;
     clear: both;
   }
@@ -18,6 +17,10 @@
   // WebKit
   outline: 5px auto -webkit-focus-ring-color;
   outline-offset: -2px;
+}
+
+@mixin no-focus() {
+  outline: none;
 }
 
 // Center-align a block level element
@@ -73,13 +76,8 @@
   border: 0;
 }
 
-
 // FONTS
 // --------------------------------------------------
-
-@mixin font-family-serif() {
-  font-family: $font-family-serif;
-}
 
 @mixin font-family-sans-serif() {
   font-family: $font-family-sans-serif;
@@ -95,11 +93,6 @@
   line-height: $lineHeight;
 }
 
-@mixin font-serif($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
-  @include font-family-serif();
-  @include font-shorthand($size, $weight, $lineHeight);
-}
-
 @mixin font-sans-serif($size: $font-size-base, $weight: normal, $lineHeight: $line-height-base) {
   @include font-family-sans-serif();
   @include font-shorthand($size, $weight, $lineHeight);
@@ -109,7 +102,6 @@
   @include font-family-monospace;
   @include font-shorthand($size, $weight, $lineHeight);
 }
-
 
 // FORMS
 // --------------------------------------------------
@@ -121,7 +113,6 @@
   min-height: $input-line-height; // Make inputs at least the height of their button counterpart (base line-height + padding + border)
   @include box-sizing(border-box); // Makes inputs behave like true block-level elements
 }
-
 
 // CSS3 PROPERTIES
 // --------------------------------------------------
@@ -146,13 +137,13 @@
 }
 @mixin border-bottom-right-radius($radius) {
   -webkit-border-bottom-right-radius: $radius;
-      -moz-border-radius-bottomright: $radius;
-          border-bottom-right-radius: $radius;
+  -moz-border-radius-bottomright: $radius;
+  border-bottom-right-radius: $radius;
 }
 @mixin border-bottom-left-radius($radius) {
   -webkit-border-bottom-left-radius: $radius;
-      -moz-border-radius-bottomleft: $radius;
-          border-bottom-left-radius: $radius;
+  -moz-border-radius-bottomleft: $radius;
+  border-bottom-left-radius: $radius;
 }
 
 // Single Side Border Radius
@@ -241,21 +232,21 @@
 // CSS3 Content Columns
 @mixin content-columns($columnCount, $columnGap: $gridGutterWidth) {
   -webkit-column-count: $columnCount;
-     -moz-column-count: $columnCount;
-          column-count: $columnCount;
+  -moz-column-count: $columnCount;
+  column-count: $columnCount;
   -webkit-column-gap: $columnGap;
-     -moz-column-gap: $columnGap;
-          column-gap: $columnGap;
+  -moz-column-gap: $columnGap;
+  column-gap: $columnGap;
 }
 
 // Optional hyphenation
 @mixin hyphens($mode: auto) {
   word-wrap: break-word;
   -webkit-hyphens: $mode;
-     -moz-hyphens: $mode;
-      -ms-hyphens: $mode;
-       -o-hyphens: $mode;
-          hyphens: $mode;
+  -moz-hyphens: $mode;
+  -ms-hyphens: $mode;
+  -o-hyphens: $mode;
+  hyphens: $mode;
 }
 
 // Opacity
@@ -278,7 +269,7 @@
 }
 
 // Gradient Bar Colors for buttons and alerts
-@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0,0,0,.25)) {
+@mixin gradientBar($primaryColor, $secondaryColor, $text-color: #fff, $textShadow: 0 -1px 0 rgba(0, 0, 0, 0.25)) {
   color: $text-color;
   text-shadow: $textShadow;
   @include gradient-vertical($primaryColor, $secondaryColor);
@@ -327,16 +318,24 @@
 
 @mixin striped($color: #555, $angle: 45deg) {
   background-color: $color;
-  background-image: linear-gradient($angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(
+    $angle,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
 }
 
-@mixin left-brand-border() {
-  border-left: 2px solid transparent;
+@mixin left-brand-border($color: transparent) {
+  border-left: 2px solid $color;
 }
 
 @mixin left-brand-border-gradient() {
-  border: none;
-  border-image: linear-gradient(rgba(255,213,0,1) 0%, rgba(255,68,0,1) 99%, rgba(255,68,0,1) 100%);
+  border-image: linear-gradient(rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
   border-image-slice: 1;
   border-style: solid;
   border-top: 0;
@@ -355,4 +354,16 @@
   border-bottom-width: 1px;
 }
 
+@mixin list-item() {
+  display: block;
+  margin: 3px;
+  padding: 7px;
+  background: $list-item-bg;
+  box-shadow: $list-item-shadow;
+  color: $list-item-link-color;
 
+  &:hover {
+    background: $list-item-hover-bg;
+    color: $list-item-link-color;
+  }
+}

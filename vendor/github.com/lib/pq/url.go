@@ -2,6 +2,7 @@ package pq
 
 import (
 	"fmt"
+	"net"
 	nurl "net/url"
 	"sort"
 	"strings"
@@ -34,7 +35,7 @@ func ParseURL(url string) (string, error) {
 		return "", err
 	}
 
-	if u.Scheme != "postgres" {
+	if u.Scheme != "postgres" && u.Scheme != "postgresql" {
 		return "", fmt.Errorf("invalid connection protocol: %s", u.Scheme)
 	}
 
@@ -54,12 +55,11 @@ func ParseURL(url string) (string, error) {
 		accrue("password", v)
 	}
 
-	i := strings.Index(u.Host, ":")
-	if i < 0 {
+	if host, port, err := net.SplitHostPort(u.Host); err != nil {
 		accrue("host", u.Host)
 	} else {
-		accrue("host", u.Host[:i])
-		accrue("port", u.Host[i+1:])
+		accrue("host", host)
+		accrue("port", port)
 	}
 
 	if u.Path != "" {

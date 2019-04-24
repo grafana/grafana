@@ -1,9 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
-import config from 'app/core/config';
 
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
@@ -13,25 +9,20 @@ export class PlaylistEditCtrl {
   playlist: any = {
     interval: '5m',
   };
+
   playlistItems: any = [];
   dashboardresult: any = [];
   tagresult: any = [];
   navModel: any;
+  isNew: boolean;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private playlistSrv,
-    private backendSrv,
-    private $location,
-    private $route,
-    private navModelSrv
-  ) {
-
-    this.navModel = navModelSrv.getPlaylistsNav(0);
+  constructor(private $scope, private backendSrv, private $location, $route, navModelSrv) {
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
+    this.isNew = !$route.current.params.id;
 
     if ($route.current.params.id) {
-      var playlistId = $route.current.params.id;
+      const playlistId = $route.current.params.id;
 
       backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
@@ -44,14 +35,14 @@ export class PlaylistEditCtrl {
   }
 
   filterFoundPlaylistItems() {
-    this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
-      return _.find(this.playlistItems, (listPlaylistItem) => {
-        return parseInt(listPlaylistItem.value) === playlistItem.id;
+    this.filteredDashboards = _.reject(this.dashboardresult, playlistItem => {
+      return _.find(this.playlistItems, listPlaylistItem => {
+        return parseInt(listPlaylistItem.value, 10) === playlistItem.id;
       });
     });
 
-    this.filteredTags = _.reject(this.tagresult, (tag) => {
-      return _.find(this.playlistItems, (listPlaylistItem) => {
+    this.filteredTags = _.reject(this.tagresult, tag => {
+      return _.find(this.playlistItems, listPlaylistItem => {
         return listPlaylistItem.value === tag.term;
       });
     });
@@ -67,11 +58,11 @@ export class PlaylistEditCtrl {
   }
 
   addTagPlaylistItem(tag) {
-    var playlistItem: any = {
+    const playlistItem: any = {
       value: tag.term,
       type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
-      title: tag.term
+      title: tag.term,
     };
 
     this.playlistItems.push(playlistItem);
@@ -79,14 +70,14 @@ export class PlaylistEditCtrl {
   }
 
   removePlaylistItem(playlistItem) {
-    _.remove(this.playlistItems, (listedPlaylistItem) => {
+    _.remove(this.playlistItems, listedPlaylistItem => {
       return playlistItem === listedPlaylistItem;
     });
     this.filterFoundPlaylistItems();
   }
 
   savePlaylist(playlist, playlistItems) {
-    var savePromise;
+    let savePromise;
 
     playlist.items = playlistItems;
 
@@ -94,17 +85,15 @@ export class PlaylistEditCtrl {
       ? this.backendSrv.put('/api/playlists/' + playlist.id, playlist)
       : this.backendSrv.post('/api/playlists', playlist);
 
-      savePromise
-      .then(() => {
+    savePromise.then(
+      () => {
         this.$scope.appEvent('alert-success', ['Playlist saved', '']);
         this.$location.path('/playlists');
-      }, () => {
+      },
+      () => {
         this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
-      });
-  }
-
-  isNew() {
-    return !this.playlist.id;
+      }
+    );
   }
 
   isPlaylistEmpty() {
@@ -116,7 +105,7 @@ export class PlaylistEditCtrl {
   }
 
   searchStarted(promise) {
-    promise.then((data) => {
+    promise.then(data => {
       this.dashboardresult = data.dashboardResult;
       this.tagresult = data.tagResult;
       this.filterFoundPlaylistItems();
@@ -124,8 +113,8 @@ export class PlaylistEditCtrl {
   }
 
   movePlaylistItem(playlistItem, offset) {
-    var currentPosition = this.playlistItems.indexOf(playlistItem);
-    var newPosition = currentPosition + offset;
+    const currentPosition = this.playlistItems.indexOf(playlistItem);
+    const newPosition = currentPosition + offset;
 
     if (newPosition >= 0 && newPosition < this.playlistItems.length) {
       this.playlistItems.splice(currentPosition, 1);

@@ -291,7 +291,7 @@ Content-Type: text/html; charset=UTF-8
 </p>
 ```
 
-The response is a textual respresentation of the diff, with the dashboard values being in JSON, similar to the diffs seen on sites like GitHub or GitLab.
+The response is a textual representation of the diff, with the dashboard values being in JSON, similar to the diffs seen on sites like GitHub or GitLab.
 
 Status Codes:
 

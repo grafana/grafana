@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type ImportDashboardCommand struct {
@@ -15,9 +16,10 @@ type ImportDashboardCommand struct {
 	Path      string
 	Inputs    []ImportDashboardInput
 	Overwrite bool
+	FolderId  int64
 
 	OrgId    int64
-	UserId   int64
+	User     *m.SignedInUser
 	PluginId string
 	Result   *PluginDashboardInfoDTO
 }
@@ -34,7 +36,7 @@ type DashboardInputMissingError struct {
 }
 
 func (e DashboardInputMissingError) Error() string {
-	return fmt.Sprintf("Dashbord input variable: %v missing from import command", e.VariableName)
+	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
 }
 
 func init() {
@@ -66,21 +68,33 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 	saveCmd := m.SaveDashboardCommand{
 		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
-		UserId:    cmd.UserId,
+		UserId:    cmd.User.UserId,
 		Overwrite: cmd.Overwrite,
 		PluginId:  cmd.PluginId,
+		FolderId:  cmd.FolderId,
 	}
 
-	if err := bus.Dispatch(&saveCmd); err != nil {
+	dto := &dashboards.SaveDashboardDTO{
+		OrgId:     cmd.OrgId,
+		Dashboard: saveCmd.GetDashboardModel(),
+		Overwrite: saveCmd.Overwrite,
+		User:      cmd.User,
+	}
+
+	savedDash, err := dashboards.NewService().ImportDashboard(dto)
+
+	if err != nil {
 		return err
 	}
 
 	cmd.Result = &PluginDashboardInfoDTO{
 		PluginId:         cmd.PluginId,
-		Title:            dashboard.Title,
+		Title:            savedDash.Title,
 		Path:             cmd.Path,
-		Revision:         dashboard.Data.Get("revision").MustInt64(1),
-		ImportedUri:      "db/" + saveCmd.Result.Slug,
+		Revision:         savedDash.Data.Get("revision").MustInt64(1),
+		FolderId:         savedDash.FolderId,
+		ImportedUri:      "db/" + savedDash.Slug,
+		ImportedUrl:      savedDash.GetUrl(),
 		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
 	}
@@ -136,11 +150,11 @@ func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{
 	switch v := sourceValue.(type) {
 	case string:
 		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
-			if replacement, exists := this.variables[match]; exists {
+			replacement, exists := this.variables[match]
+			if exists {
 				return replacement
-			} else {
-				return match
 			}
+			return match
 		})
 		return interpolated
 	case bool:

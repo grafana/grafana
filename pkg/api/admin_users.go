@@ -3,13 +3,12 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
+func AdminCreateUser(c *m.ReqContext, form dtos.AdminCreateUserForm) {
 	cmd := m.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -35,7 +34,7 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 		return
 	}
 
-	metrics.M_Api_Admin_User_Create.Inc(1)
+	metrics.M_Api_Admin_User_Create.Inc()
 
 	user := cmd.Result
 
@@ -47,15 +46,15 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 	c.JSON(200, result)
 }
 
-func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPasswordForm) {
-	userId := c.ParamsInt64(":id")
+func AdminUpdateUserPassword(c *m.ReqContext, form dtos.AdminUpdateUserPasswordForm) {
+	userID := c.ParamsInt64(":id")
 
 	if len(form.Password) < 4 {
 		c.JsonApiErr(400, "New password too short", nil)
 		return
 	}
 
-	userQuery := m.GetUserByIdQuery{Id: userId}
+	userQuery := m.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		c.JsonApiErr(500, "Could not read user from database", err)
@@ -65,7 +64,7 @@ func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPas
 	passwordHashed := util.EncodePassword(form.Password, userQuery.Result.Salt)
 
 	cmd := m.ChangeUserPasswordCommand{
-		UserId:      userId,
+		UserId:      userID,
 		NewPassword: passwordHashed,
 	}
 
@@ -77,15 +76,21 @@ func AdminUpdateUserPassword(c *middleware.Context, form dtos.AdminUpdateUserPas
 	c.JsonOK("User password updated")
 }
 
-func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUserPermissionsForm) {
-	userId := c.ParamsInt64(":id")
+// PUT /api/admin/users/:id/permissions
+func AdminUpdateUserPermissions(c *m.ReqContext, form dtos.AdminUpdateUserPermissionsForm) {
+	userID := c.ParamsInt64(":id")
 
 	cmd := m.UpdateUserPermissionsCommand{
-		UserId:         userId,
+		UserId:         userID,
 		IsGrafanaAdmin: form.IsGrafanaAdmin,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrLastGrafanaAdmin {
+			c.JsonApiErr(400, m.ErrLastGrafanaAdmin.Error(), nil)
+			return
+		}
+
 		c.JsonApiErr(500, "Failed to update user permissions", err)
 		return
 	}
@@ -93,10 +98,10 @@ func AdminUpdateUserPermissions(c *middleware.Context, form dtos.AdminUpdateUser
 	c.JsonOK("User permissions updated")
 }
 
-func AdminDeleteUser(c *middleware.Context) {
-	userId := c.ParamsInt64(":id")
+func AdminDeleteUser(c *m.ReqContext) {
+	userID := c.ParamsInt64(":id")
 
-	cmd := m.DeleteUserCommand{UserId: userId}
+	cmd := m.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		c.JsonApiErr(500, "Failed to delete user", err)
@@ -104,4 +109,27 @@ func AdminDeleteUser(c *middleware.Context) {
 	}
 
 	c.JsonOK("User deleted")
+}
+
+// POST /api/admin/users/:id/logout
+func (server *HTTPServer) AdminLogoutUser(c *m.ReqContext) Response {
+	userID := c.ParamsInt64(":id")
+
+	if c.UserId == userID {
+		return Error(400, "You cannot logout yourself", nil)
+	}
+
+	return server.logoutUserFromAllDevicesInternal(userID)
+}
+
+// GET /api/admin/users/:id/auth-tokens
+func (server *HTTPServer) AdminGetUserAuthTokens(c *m.ReqContext) Response {
+	userID := c.ParamsInt64(":id")
+	return server.getUserAuthTokensInternal(c, userID)
+}
+
+// POST /api/admin/users/:id/revoke-auth-token
+func (server *HTTPServer) AdminRevokeUserAuthToken(c *m.ReqContext, cmd m.RevokeAuthTokenCmd) Response {
+	userID := c.ParamsInt64(":id")
+	return server.revokeUserAuthTokenInternal(c, userID, cmd)
 }

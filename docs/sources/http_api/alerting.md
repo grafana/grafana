@@ -1,7 +1,7 @@
 +++
 title = "Alerting HTTP API "
-description = "Grafana Alerting HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "alerting"]
+description = "Grafana Alerts HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts"]
 aliases = ["/http_api/alerting/"]
 type = "docs"
 [menu.docs]
@@ -9,13 +9,10 @@ name = "Alerting"
 parent = "http_api"
 +++
 
-
 # Alerting API
 
 You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard json that contains the alerts.
-
-This API can also be used to create, update and delete alert notifications.
 
 ## Get alerts
 
@@ -23,88 +20,119 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/alerts HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
+```http
+GET /api/alerts HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
   Querystring Parameters:
 
   These parameters are used as querystring parameters. For example:
 
   `/api/alerts?dashboardId=1`
 
-  - **dashboardId** – Return alerts for a specified dashboard.
-  - **panelId** – Return alerts for a specified panel on a dashboard.
-  - **limit** - Limit response to x number of alerts.
+  - **dashboardId** – Limit response to alerts in specified dashboard(s). You can specify multiple dashboards, e.g. dashboardId=23&dashboardId=35.
+  - **panelId** – Limit response to alert for a specified panel on a dashboard.
+  - **query** - Limit response to alerts having a name like this value.
   - **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
+  - **limit** - Limit response to *X* number of alerts.
+  - **folderId** – Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders, e.g. folderId=23&folderId=35.
+  - **dashboardQuery** - Limit response to alerts having a dashboard name like this value.
+  - **dashboardTag** - Limit response to alerts of dashboards with specified tags. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. dashboardTag=tag1&dashboardTag=tag2.
+
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    [
-      {
-        "id": 1,
-        "dashboardId": 1,
-        "panelId": 1,
-        "name": "fire place sensor",
-        "message": "Someone is trying to break in through the fire place",
-        "state": "alerting",
-        "evalDate": "0001-01-01T00:00:00Z",
-        "evalData": [
-          {
-            "metric": "fire",
-            "tags": null,
-            "value": 5.349999999999999
-          }
-        "newStateDate": "2016-12-25",
-        "executionError": "",
-        "dashboardUri": "http://grafana.com/dashboard/db/sensors"
-      }
-    ]
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-## Get one alert
+[
+  {
+    "id": 1,
+    "dashboardId": 1,
+    "dashboardUId": "ABcdEFghij"
+    "dashboardSlug": "sensors",
+    "panelId": 1,
+    "name": "fire place sensor",
+    "state": "alerting",
+    "newStateDate": "2018-05-14T05:55:20+02:00",
+    "evalDate": "0001-01-01T00:00:00Z",
+    "evalData": null,
+    "executionError": "",
+    "url": "http://grafana.com/dashboard/db/sensors"
+  }
+]
+```
+
+## Get alert by id
 
 `GET /api/alerts/:id`
 
 **Example Request**:
 
-    GET /api/alerts/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/alerts/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "dashboardId": 1,
-      "panelId": 1,
-      "name": "fire place sensor",
-      "message": "Someone is trying to break in through the fire place",
-      "state": "alerting",
-      "newStateDate": "2016-12-25",
-      "executionError": "",
-      "dashboardUri": "http://grafana.com/dashboard/db/sensors"
-    }
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-## Pause alert
+{
+  "id": 1,
+  "dashboardId": 1,
+  "dashboardUId": "ABcdEFghij"
+  "dashboardSlug": "sensors",
+  "panelId": 1,
+  "name": "fire place sensor",
+  "state": "alerting",
+  "message": "Someone is trying to break in through the fire place",
+  "newStateDate": "2018-05-14T05:55:20+02:00",
+  "evalDate": "0001-01-01T00:00:00Z",
+  "evalData": "evalMatches": [
+    {
+      "metric": "movement",
+      "tags": {
+        "name": "fireplace_chimney"
+      },
+      "value": 98.765
+    }
+  ],
+  "executionError": "",
+  "url": "http://grafana.com/dashboard/db/sensors"
+}
+```
+
+**Important Note**:
+"evalMatches" data is cached in the db when and only when the state of the alert changes
+(e.g. transitioning from "ok" to "alerting" state).
+
+If data from one server triggers the alert first and, before that server is seen leaving alerting state,
+a second server also enters a state that would trigger the alert, the second server will not be visible in "evalMatches" data.
+
+## Pause alert by id
 
 `POST /api/alerts/:id/pause`
 
 **Example Request**:
 
-    POST /api/alerts/1/pause HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+POST /api/alerts/1/pause HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "paused": true
-    }
+{
+  "paused": true
+}
+```
 
 The :id query parameter is the id of the alert to be paused or unpaused.
 
@@ -114,127 +142,17 @@ JSON Body Schema:
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "alertId": 1,
-      "state":   "Paused",
-      "message": "alert paused"
-    }
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-## Get alert notifications
+{
+  "alertId": 1,
+  "state":   "Paused",
+  "message": "alert paused"
+}
+```
 
-`GET /api/alert-notifications`
+## Pause all alerts
 
-**Example Request**:
-
-    GET /api/alert-notifications HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-
-
-**Example Response**:
-
-    HTTP/1.1 200
-    Content-Type: application/json
-
-    {
-      "id": 1,
-      "name": "Team A",
-      "type": "email",
-      "isDefault": true,
-      "created": "2017-01-01 12:45",
-      "updated": "2017-01-01 12:45"
-    }
-
-## Create alert notification
-
-`POST /api/alert-notifications`
-
-**Example Request**:
-
-    POST /api/alert-notifications HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-    {
-      "name": "new alert notification",  //Required
-      "type":  "email", //Required
-      "isDefault": false,
-      "settings": {
-        "addresses": "carl@grafana.com;dev@grafana.com"
-      }
-    }
-
-
-**Example Response**:
-
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "name": "new alert notification",
-      "type": "email",
-      "isDefault": false,
-      "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34",
-      "updated": "2017-01-01 12:34"
-    }
-
-## Update alert notification
-
-`PUT /api/alert-notifications/1`
-
-**Example Request**:
-
-    PUT /api/alert-notifications/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-    {
-      "id": 1,
-      "name": "new alert notification",  //Required
-      "type":  "email", //Required
-      "isDefault": false,
-      "settings": {
-        "addresses: "carl@grafana.com;dev@grafana.com"
-      }
-    }
-
-
-**Example Response**:
-
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "name": "new alert notification",
-      "type": "email",
-      "isDefault": false,
-      "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34",
-      "updated": "2017-01-01 12:34"
-    }
-
-## Delete alert notification
-
-`DELETE /api/alert-notifications/:notificationId`
-
-**Example Request**:
-
-    DELETE /api/alert-notifications/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-**Example Response**:
-
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "message": "Notification deleted"
-    }
+See [Admin API]({{< relref "http_api/admin.md#pause-all-alerts" >}}).

@@ -48,7 +48,7 @@ type StaticOptions struct {
 	// Expires defines which user-defined function to use for producing a HTTP Expires Header
 	// https://developers.google.com/speed/docs/insights/LeverageBrowserCaching
 	AddHeaders func(ctx *macaron.Context)
-	// FileSystem is the interface for supporting any implmentation of file system.
+	// FileSystem is the interface for supporting any implementation of file system.
 	FileSystem http.FileSystem
 }
 

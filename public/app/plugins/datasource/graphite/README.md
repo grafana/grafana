@@ -7,3 +7,7 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 Read more about it here:
 
 [http://docs.grafana.org/datasources/graphite/](http://docs.grafana.org/datasources/graphite/)
+
+Graphite 1.1 Release:
+
+[https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/](https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/)

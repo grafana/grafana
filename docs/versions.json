@@ -1,0 +1,15 @@
+[
+  { "version": "v6.1", "path": "/", "archived": false, "current": true },
+  { "version": "v6.0", "path": "/v6.0", "archived": true },
+  { "version": "v5.4", "path": "/v5.4", "archived": true },
+  { "version": "v5.3", "path": "/v5.3", "archived": true },
+  { "version": "v5.2", "path": "/v5.2", "archived": true },
+  { "version": "v5.1", "path": "/v5.1", "archived": true },
+  { "version": "v5.0", "path": "/v5.0", "archived": true },
+  { "version": "v4.6", "path": "/v4.6", "archived": true },
+  { "version": "v4.5", "path": "/v4.5", "archived": true },
+  { "version": "v4.4", "path": "/v4.4", "archived": true },
+  { "version": "v4.3", "path": "/v4.3", "archived": true },
+  { "version": "v4.1", "path": "/v4.1", "archived": true },
+  { "version": "v3.1", "path": "/v3.1", "archived": true }
+]

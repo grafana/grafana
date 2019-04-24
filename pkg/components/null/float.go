@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+const (
+	nullString = "null"
+)
+
 // Float is a nullable float64.
 // It does not consider zero values to be null.
 // It will decode to null, not zero, if null.
@@ -50,7 +54,7 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 	}
 	switch x := v.(type) {
 	case float64:
-		f.Float64 = float64(x)
+		f.Float64 = x
 	case map[string]interface{}:
 		err = json.Unmarshal(data, &f.NullFloat64)
 	case nil:
@@ -68,7 +72,7 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 // It will return an error if the input is not an integer, blank, or "null".
 func (f *Float) UnmarshalText(text []byte) error {
 	str := string(text)
-	if str == "" || str == "null" {
+	if str == "" || str == nullString {
 		f.Valid = false
 		return nil
 	}
@@ -82,7 +86,7 @@ func (f *Float) UnmarshalText(text []byte) error {
 // It will encode null if this Float is null.
 func (f Float) MarshalJSON() ([]byte, error) {
 	if !f.Valid {
-		return []byte("null"), nil
+		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
 }
@@ -100,10 +104,19 @@ func (f Float) MarshalText() ([]byte, error) {
 // It will encode a blank string if this Float is null.
 func (f Float) String() string {
 	if !f.Valid {
-		return "null"
+		return nullString
 	}
 
 	return fmt.Sprintf("%1.3f", f.Float64)
+}
+
+// FullString returns float as string in full precision
+func (f Float) FullString() string {
+	if !f.Valid {
+		return nullString
+	}
+
+	return fmt.Sprintf("%f", f.Float64)
 }
 
 // SetValid changes this Float's value and also sets it to be non-null.

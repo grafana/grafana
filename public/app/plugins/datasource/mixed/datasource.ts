@@ -1,33 +1,43 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 
-class MixedDatasource {
+import { DataSourceApi, DataQuery, DataQueryRequest } from '@grafana/ui';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
+class MixedDatasource implements DataSourceApi<DataQuery> {
   /** @ngInject */
-  constructor(private $q, private datasourceSrv) {
-  }
+  constructor(private datasourceSrv: DatasourceSrv) {}
 
-  query(options) {
-    var sets = _.groupBy(options.targets, 'datasource');
-    var promises = _.map(sets, targets => {
-      var dsName = targets[0].datasource;
+  query(options: DataQueryRequest<DataQuery>) {
+    const sets = _.groupBy(options.targets, 'datasource');
+    const promises: any = _.map(sets, (targets: DataQuery[]) => {
+      const dsName = targets[0].datasource;
       if (dsName === '-- Mixed --') {
-        return this.$q([]);
+        return Promise.resolve([]);
       }
 
-      return this.datasourceSrv.get(dsName).then(function(ds) {
-        var opt = angular.copy(options);
-        opt.targets = targets;
+      const filtered = _.filter(targets, (t: DataQuery) => {
+        return !t.hide;
+      });
+
+      if (filtered.length === 0) {
+        return { data: [] };
+      }
+
+      return this.datasourceSrv.get(dsName).then(ds => {
+        const opt = _.cloneDeep(options);
+        opt.targets = filtered;
         return ds.query(opt);
       });
     });
 
-    return this.$q.all(promises).then(function(results) {
+    return Promise.all(promises).then(results => {
       return { data: _.flatten(_.map(results, 'data')) };
     });
   }
+
+  testDatasource() {
+    return Promise.resolve({});
+  }
 }
 
-export {MixedDatasource, MixedDatasource as Datasource};
+export { MixedDatasource, MixedDatasource as Datasource };

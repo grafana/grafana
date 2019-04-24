@@ -1,9 +1,10 @@
-<navbar model="navModel"></navbar>
+<page-header model="navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Edit User</h1>
-	</div>
+<div class="page-container page-body">
+
+
+	<h3 class="page-sub-heading">Edit User</h3>
+
 
 	<form name="userForm" class="gf-form-group">
 			<div class="gf-form">
@@ -20,7 +21,7 @@
 			</div>
 
 			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+				<button type="submit" class="btn btn-primary" ng-click="update()" ng-show="!createMode">Update</button>
 			</div>
 	</form>
 
@@ -33,7 +34,7 @@
 		</div>
 
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="setPassword()">Update</button>
+			<button type="submit" class="btn btn-primary" ng-click="setPassword()">Update</button>
 		</div>
 	</form>
 
@@ -41,11 +42,11 @@
 
 	<form name="passwordForm" class="gf-form-group">
 		<div class="gf-form" >
-			<editor-checkbox text="Grafana Admin" model="permissions.isGrafanaAdmin" style="line-height: 1.5rem;"></editor-checkbox>
+			<gf-form-switch class="gf-form" label="Grafana Admin" checked="permissions.isGrafanaAdmin" switch-class="max-width-6"></gf-form-switch>
 		</div>
 
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="updatePermissions()">Update</button>
+			<button type="submit" class="btn btn-primary" ng-click="updatePermissions()">Update</button>
 		</div>
 	</form>
 
@@ -54,35 +55,43 @@
 	<form name="addOrgForm" class="gf-form-group">
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<span class="gf-form-label width-12">Add organization</span>
+				<span class="gf-form-label">Add</span>
 				<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"	required class="gf-form-input max-width-20" placeholder="organization name">
 			</div>
 			<div class="gf-form">
-				<span class="gf-form-label">Role</span>
-				<select type="text" ng-model="newOrg.role" class="gf-form-input width-10" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']"></select>
+        	<span class="gf-form-label">Role</span>
+        	<span class="gf-form-select-wrapper">
+            	<select type="text" ng-model="newOrg.role" class="gf-form-input width-10" ng-options="f for f in ['Viewer', 'Editor', 'Admin']"></select>
+        	</span>
 			</div>
 			<div class="gf-form">
-				<button class="btn btn-success gf-form-btn" ng-click="addOrgUser()">Add</button>
+				<button class="btn btn-primary gf-form-btn" ng-click="addOrgUser()">Add</button>
 			</div>
 		</div>
 	</form>
 
-	<table class="grafana-options-table">
-		<tr>
-			<th>Name</th>
-			<th>Role</th>
-			<th></th>
-		</tr>
+	<table class="filter-table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
+		</thead>
 		<tr ng-repeat="org in orgs">
 			<td>
 				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
 			</td>
 			<td>
-				<select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
-				</select>
+        <div class="gf-form">
+            <span class="gf-form-select-wrapper">
+                <select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(org)">
+                </select>
+            </span>
+        </div>
 			</td>
 			<td style="width: 1%">
-				<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-mini">
+				<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-small">
 					<i class="fa fa-remove"></i>
 				</a>
 			</td>

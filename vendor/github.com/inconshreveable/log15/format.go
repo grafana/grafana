@@ -18,6 +18,7 @@ const (
 	termMsgJust    = 40
 )
 
+// Format  is the interface implemented by StreamHandler formatters.
 type Format interface {
 	Format(r *Record) []byte
 }
@@ -38,7 +39,7 @@ func (f formatFunc) Format(r *Record) []byte {
 // a terminal with color-coded level output and terser human friendly timestamp.
 // This format should only be used for interactive programs or while developing.
 //
-//     [TIME] [LEVEL] MESAGE key=value key=value ...
+//     [TIME] [LEVEL] MESSAGE key=value key=value ...
 //
 // Example:
 //
@@ -147,7 +148,7 @@ func JsonFormatEx(pretty, lineSeparated bool) Format {
 			if !ok {
 				props[errorKey] = fmt.Sprintf("%+v is not a string key", r.Ctx[i])
 			}
-			props[k] = formatJsonValue(r.Ctx[i+1])
+			props[k] = formatJSONValue(r.Ctx[i+1])
 		}
 
 		b, err := jsonMarshal(props)
@@ -192,10 +193,13 @@ func formatShared(value interface{}) (result interface{}) {
 	}
 }
 
-func formatJsonValue(value interface{}) interface{} {
+func formatJSONValue(value interface{}) interface{} {
 	value = formatShared(value)
+
 	switch value.(type) {
 	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64, string:
+		return value
+	case interface{}, map[string]interface{}, []interface{}:
 		return value
 	default:
 		return fmt.Sprintf("%+v", value)

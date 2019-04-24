@@ -1,19 +1,19 @@
 @mixin keyframes($animation-name) {
-    @-webkit-keyframes #{$animation-name} {
-        @content;
-    }
-    @-moz-keyframes #{$animation-name} {
-        @content;
-    }
-    @-ms-keyframes #{$animation-name} {
-        @content;
-    }
-    @-o-keyframes #{$animation-name} {
-        @content;
-    }
-    @keyframes #{$animation-name} {
-        @content;
-    }
+  @-webkit-keyframes #{$animation-name} {
+    @content;
+  }
+  @-moz-keyframes #{$animation-name} {
+    @content;
+  }
+  @-ms-keyframes #{$animation-name} {
+    @content;
+  }
+  @-o-keyframes #{$animation-name} {
+    @content;
+  }
+  @keyframes #{$animation-name} {
+    @content;
+  }
 }
 
 @mixin animation($str) {
@@ -22,4 +22,15 @@
   -ms-animation: #{$str};
   -o-animation: #{$str};
   animation: #{$str};
+}
+
+.animate-height {
+  max-height: 0;
+  overflow: hidden;
+
+  &--open {
+    max-height: 1000px;
+    overflow: auto;
+    transition: max-height 250ms ease-in-out;
+  }
 }

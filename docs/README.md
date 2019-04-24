@@ -65,7 +65,7 @@ make docs-build
 
 This will rebuild the docs docker container. 
 
-To be able to use the image your have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image. 
+To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image. 
 
 ### Editing content
 

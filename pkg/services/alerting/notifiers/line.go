@@ -2,12 +2,12 @@ package notifiers
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"net/url"
 )
 
 func init() {
@@ -39,7 +39,7 @@ func NewLINENotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &LineNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		Token:        token,
 		log:          log.New("alerting.notifier.line"),
 	}, nil
@@ -53,7 +53,6 @@ type LineNotifier struct {
 
 func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	metrics.M_Alerting_Notification_Sent_LINE.Inc(1)
 
 	var err error
 	switch evalContext.Rule.State {
@@ -91,7 +90,7 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to LINE", "error", err, "body", string(body))
+		this.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return err
 	}
 

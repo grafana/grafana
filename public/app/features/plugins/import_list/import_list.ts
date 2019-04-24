@@ -1,6 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -11,7 +8,7 @@ export class DashImportListCtrl {
   datasource: any;
 
   /** @ngInject */
-  constructor($scope, private $http, private backendSrv, private $rootScope) {
+  constructor($scope, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
     backendSrv.get(`/api/plugins/${this.plugin.id}/dashboards`).then(dashboards => {
@@ -22,33 +19,37 @@ export class DashImportListCtrl {
   }
 
   importAll(payload) {
-    return this.importNext(0).then(() => {
-      payload.resolve("All dashboards imported");
-    }).catch(err => {
-      payload.reject(err);
-    });
+    return this.importNext(0)
+      .then(() => {
+        payload.resolve('All dashboards imported');
+      })
+      .catch(err => {
+        payload.reject(err);
+      });
   }
 
   importNext(index) {
     return this.import(this.dashboards[index], true).then(() => {
-      if (index+1 < this.dashboards.length) {
+      if (index + 1 < this.dashboards.length) {
         return new Promise(resolve => {
           setTimeout(() => {
-            this.importNext(index+1).then(() => {
+            this.importNext(index + 1).then(() => {
               resolve();
             });
           }, 500);
         });
+      } else {
+        return Promise.resolve();
       }
     });
   }
 
   import(dash, overwrite) {
-    var installCmd = {
+    const installCmd = {
       pluginId: this.plugin.id,
       path: dash.path,
       overwrite: overwrite,
-      inputs: []
+      inputs: [],
     };
 
     if (this.datasource) {
@@ -56,7 +57,7 @@ export class DashImportListCtrl {
         name: '*',
         type: 'datasource',
         pluginId: this.datasource.type,
-        value: this.datasource.name
+        value: this.datasource.name,
       });
     }
 
@@ -82,9 +83,9 @@ export function dashboardImportList() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      plugin: "=",
-      datasource: "="
-    }
+      plugin: '=',
+      datasource: '=',
+    },
   };
 }
 

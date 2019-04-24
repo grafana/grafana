@@ -4,10 +4,11 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
@@ -15,17 +16,7 @@ type AuthOptions struct {
 	ReqSignedIn     bool
 }
 
-func getRequestUserId(c *Context) int64 {
-	userId := c.Session.Get(SESS_KEY_USERID)
-
-	if userId != nil {
-		return userId.(int64)
-	}
-
-	return 0
-}
-
-func getApiKey(c *Context) string {
+func getApiKey(c *m.ReqContext) string {
 	header := c.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -33,31 +24,42 @@ func getApiKey(c *Context) string {
 		return key
 	}
 
+	username, password, err := util.DecodeBasicAuthHeader(header)
+	if err == nil && username == "api_key" {
+		return password
+	}
+
 	return ""
 }
 
-func accessForbidden(c *Context) {
+func accessForbidden(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
 	}
 
-	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
-	c.Redirect(setting.AppSubUrl + "/login")
+	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *Context) {
+func notAuthorized(c *m.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
 	}
 
-	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
+	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, false, true)
+
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
+func EnsureEditorOrViewerCanEdit(c *m.ReqContext) {
+	if !c.SignedInUser.HasRole(m.ROLE_EDITOR) && !setting.ViewersCanEdit {
+		accessForbidden(c)
+	}
+}
+
 func RoleAuth(roles ...m.RoleType) macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -72,7 +74,7 @@ func RoleAuth(roles ...m.RoleType) macaron.Handler {
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
-	return func(c *Context) {
+	return func(c *m.ReqContext) {
 		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
 			notAuthorized(c)
 			return
@@ -81,6 +83,23 @@ func Auth(options *AuthOptions) macaron.Handler {
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
 			accessForbidden(c)
 			return
+		}
+	}
+}
+
+// AdminOrFeatureEnabled creates a middleware that allows access
+// if the signed in user is either an Org Admin or if the
+// feature flag is enabled.
+// Intended for when feature flags open up access to APIs that
+// are otherwise only available to admins.
+func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
+	return func(c *m.ReqContext) {
+		if c.OrgRole == m.ROLE_ADMIN {
+			return
+		}
+
+		if !enabled {
+			accessForbidden(c)
 		}
 	}
 }

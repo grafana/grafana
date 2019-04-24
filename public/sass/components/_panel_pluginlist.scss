@@ -8,14 +8,7 @@
 }
 
 .pluginlist-link {
-  display: block;
-  margin: 5px;
-  padding: 7px;
-  background-color: $tight-form-bg;
-
-  &:hover {
-    background-color: $tight-form-func-bg;
-  }
+  @include list-item();
 }
 
 .pluginlist-icon {
@@ -25,7 +18,7 @@
 }
 
 .pluginlist-image {
-  width: 20px;
+  width: 17px;
 }
 
 .pluginlist-title {
@@ -43,14 +36,14 @@
 }
 
 .pluginlist-message--update {
-   &:hover {
+  &:hover {
     border-bottom: 1px solid $text-color;
   }
 }
 
-.pluginlist-message--enable{
+.pluginlist-message--enable {
   color: $external-link-color;
-   &:hover {
+  &:hover {
     border-bottom: 1px solid $external-link-color;
   }
 }

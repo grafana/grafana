@@ -1,0 +1,171 @@
+.page-header-canvas {
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+}
+
+.page-header {
+  padding: $space-xl 0 0 0;
+
+  .btn {
+    float: right;
+    margin-left: $space-md;
+
+    // better align icons
+    .fa {
+      position: relative;
+      top: 1px;
+    }
+  }
+}
+
+.page-header__inner {
+  flex-grow: 1;
+  display: flex;
+  margin-bottom: $space-xl;
+}
+
+.page-header__title {
+  font-size: $font-size-h2;
+  margin-bottom: 1px;
+  padding-top: $spacer;
+}
+
+.page-header__img {
+  position: relative;
+  top: 10px;
+  height: 50px;
+}
+
+.page-header__icon {
+  font-size: 50px;
+  width: 50px;
+  height: 50px;
+  position: relative;
+
+  &.fa {
+    top: 10px;
+  }
+
+  &.gicon {
+    top: 10px;
+  }
+
+  &.icon-gf {
+    top: 3px;
+  }
+}
+
+.page-header__logo {
+  margin: 0 $spacer;
+}
+
+.page-header__sub-title {
+  color: $text-muted;
+}
+
+.page-header-stamps-type {
+  color: $link-color-disabled;
+  text-transform: uppercase;
+}
+
+.page-header__select-nav {
+  margin-bottom: 10px;
+  max-width: 100%;
+
+  @include media-breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+.page-header__tabs {
+  display: none;
+  @include media-breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.page-breadcrumbs {
+  display: flex;
+  padding: 10px 0;
+  line-height: 0.5;
+}
+
+.breadcrumb {
+  display: inline-block;
+  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border-radius: 5px;
+  counter-reset: flag;
+}
+
+.breadcrumb-item {
+  @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+
+  text-decoration: none;
+  outline: none;
+  display: block;
+  float: left;
+  font-size: 12px;
+  line-height: 30px;
+  padding: 0 7px 0 37px;
+  position: relative;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    padding-left: 10px;
+    border-radius: 5px 0 0 5px; /*to match with the parent's radius*/
+    font-size: 18px;
+  }
+
+  &:first-child::before {
+    left: 14px;
+  }
+
+  &:last-child {
+    border-radius: 0 5px 5px 0; /*this was to prevent glitches on hover*/
+    padding-right: 20px;
+  }
+
+  &.active,
+  &:hover {
+    background: #333;
+    background: linear-gradient(#333, #000);
+  }
+
+  &.active::after,
+  &:hover::after {
+    background: #333;
+    background: linear-gradient(135deg, #333, #000);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -14px; // half of square's length
+
+    // same dimension as the line-height of .breadcrumb-item
+    width: 30px;
+    height: 30px;
+
+    transform: scale(0.707) rotate(45deg);
+    // we need to prevent the arrows from getting buried under the next link
+    z-index: 1;
+
+    // background same as links but the gradient will be rotated to compensate with the transform applied
+    background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
+
+    // stylish arrow design using box shadow
+    box-shadow: 2px -2px 0 2px rgb(35, 31, 31), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
+
+    // 5px - for rounded arrows and
+    // 50px - to prevent hover glitches on the border created using shadows*/
+    border-radius: 0 5px 0 50px;
+  }
+
+  // we dont need an arrow after the last link
+  &:last-child::after {
+    content: none;
+  }
+}

@@ -5,9 +5,10 @@
 package log
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,10 +99,7 @@ func (w *FileLogWriter) StartLogger() error {
 		return err
 	}
 	w.mw.SetFd(fd)
-	if err = w.initFd(); err != nil {
-		return err
-	}
-	return nil
+	return w.initFd()
 }
 
 func (w *FileLogWriter) docheck(size int) {
@@ -124,20 +122,44 @@ func (w *FileLogWriter) createLogFile() (*os.File, error) {
 	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 }
 
+func (w *FileLogWriter) lineCounter() (int, error) {
+	r, err := os.OpenFile(w.Filename, os.O_RDONLY, 0644)
+	if err != nil {
+		return 0, fmt.Errorf("lineCounter Open File : %s", err)
+	}
+	buf := make([]byte, 32*1024)
+	count := 0
+
+	for {
+		c, err := r.Read(buf)
+		count += bytes.Count(buf[:c], []byte{'\n'})
+		switch {
+		case err == io.EOF:
+			if err := r.Close(); err != nil {
+				return count, err
+			}
+			return count, nil
+
+		case err != nil:
+			return count, err
+		}
+	}
+}
+
 func (w *FileLogWriter) initFd() error {
 	fd := w.mw.fd
 	finfo, err := fd.Stat()
 	if err != nil {
-		return fmt.Errorf("get stat: %s\n", err)
+		return fmt.Errorf("get stat: %s", err)
 	}
 	w.maxsize_cursize = int(finfo.Size())
 	w.daily_opendate = time.Now().Day()
 	if finfo.Size() > 0 {
-		content, err := ioutil.ReadFile(w.Filename)
+		count, err := w.lineCounter()
 		if err != nil {
 			return err
 		}
-		w.maxlines_curlines = len(strings.Split(string(content), "\n"))
+		w.maxlines_curlines = count
 	} else {
 		w.maxlines_curlines = 0
 	}
@@ -158,7 +180,7 @@ func (w *FileLogWriter) DoRotate() error {
 		}
 		// return error if the last file checked still existed
 		if err == nil {
-			return fmt.Errorf("rotate: cannot find free log number to rename %s\n", w.Filename)
+			return fmt.Errorf("rotate: cannot find free log number to rename %s", w.Filename)
 		}
 
 		// block Logger's io.Writer
@@ -171,12 +193,12 @@ func (w *FileLogWriter) DoRotate() error {
 		// close fd before rename
 		// Rename the file to its newfound home
 		if err = os.Rename(w.Filename, fname); err != nil {
-			return fmt.Errorf("Rotate: %s\n", err)
+			return fmt.Errorf("Rotate: %s", err)
 		}
 
 		// re-start logger
 		if err = w.StartLogger(); err != nil {
-			return fmt.Errorf("Rotate StartLogger: %s\n", err)
+			return fmt.Errorf("Rotate StartLogger: %s", err)
 		}
 
 		go w.deleteOldLog()
@@ -213,4 +235,21 @@ func (w *FileLogWriter) Close() {
 // flush file means sync file from disk.
 func (w *FileLogWriter) Flush() {
 	w.mw.fd.Sync()
+}
+
+// Reload file logger
+func (w *FileLogWriter) Reload() {
+	// block Logger's io.Writer
+	w.mw.Lock()
+	defer w.mw.Unlock()
+
+	// Close
+	fd := w.mw.fd
+	fd.Close()
+
+	// Open again
+	err := w.StartLogger()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Reload StartLogger: %s\n", err)
+	}
 }

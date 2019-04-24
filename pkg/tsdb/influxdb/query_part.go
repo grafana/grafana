@@ -15,7 +15,7 @@ type DefinitionParameters struct {
 }
 
 type QueryDefinition struct {
-	Renderer func(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string
+	Renderer func(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string
 	Params   []DefinitionParameters
 }
 
@@ -31,6 +31,9 @@ func init() {
 	renders["mean"] = QueryDefinition{Renderer: functionRenderer}
 	renders["median"] = QueryDefinition{Renderer: functionRenderer}
 	renders["sum"] = QueryDefinition{Renderer: functionRenderer}
+	renders["mode"] = QueryDefinition{Renderer: functionRenderer}
+	renders["cumulative_sum"] = QueryDefinition{Renderer: functionRenderer}
+	renders["non_negative_difference"] = QueryDefinition{Renderer: functionRenderer}
 
 	renders["holt_winters"] = QueryDefinition{
 		Renderer: functionRenderer,
@@ -94,14 +97,14 @@ func init() {
 	renders["alias"] = QueryDefinition{Renderer: aliasRenderer}
 }
 
-func fieldRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+func fieldRenderer(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
 	if part.Params[0] == "*" {
 		return "*"
 	}
 	return fmt.Sprintf(`"%s"`, part.Params[0])
 }
 
-func functionRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+func functionRenderer(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
 	for i, param := range part.Params {
 		if part.Type == "time" && param == "auto" {
 			part.Params[i] = "$__interval"
@@ -117,15 +120,15 @@ func functionRenderer(query *Query, queryContext *tsdb.QueryContext, part *Query
 	return fmt.Sprintf("%s(%s)", part.Type, params)
 }
 
-func suffixRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+func suffixRenderer(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
 	return fmt.Sprintf("%s %s", innerExpr, part.Params[0])
 }
 
-func aliasRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+func aliasRenderer(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
 	return fmt.Sprintf(`%s AS "%s"`, innerExpr, part.Params[0])
 }
 
-func (r QueryDefinition) Render(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+func (r QueryDefinition) Render(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
 	return r.Renderer(query, queryContext, part, innerExpr)
 }
 
@@ -149,6 +152,6 @@ type QueryPart struct {
 	Params []string
 }
 
-func (qp *QueryPart) Render(query *Query, queryContext *tsdb.QueryContext, expr string) string {
+func (qp *QueryPart) Render(query *Query, queryContext *tsdb.TsdbQuery, expr string) string {
 	return qp.Def.Renderer(query, queryContext, qp, expr)
 }

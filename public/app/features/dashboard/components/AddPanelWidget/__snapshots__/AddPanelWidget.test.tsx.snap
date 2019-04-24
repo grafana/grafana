@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render component 1`] = `
+<div
+  className="panel-container add-panel-widget-container"
+>
+  <div
+    className="add-panel-widget"
+  >
+    <div
+      className="add-panel-widget__header grid-drag-handle"
+    >
+      <i
+        className="gicon gicon-add-panel"
+      />
+      <span
+        className="add-panel-widget__title"
+      >
+        New Panel
+      </span>
+      <button
+        className="add-panel-widget__close"
+        onClick={[Function]}
+      >
+        <i
+          className="fa fa-close"
+        />
+      </button>
+    </div>
+    <div
+      className="add-panel-widget__btn-container"
+    >
+      <div
+        className="add-panel-widget__create"
+      >
+        <div>
+          <a
+            className="add-panel-widget__link btn btn-inverse"
+            href="#"
+            onClick={[Function]}
+          >
+            <div
+              className="add-panel-widget__icon"
+            >
+              <i
+                className="gicon gicon-queries"
+              />
+            </div>
+            <span>
+              Add Query
+            </span>
+          </a>
+        </div>
+        <div>
+          <a
+            className="add-panel-widget__link btn btn-inverse"
+            href="#"
+            onClick={[Function]}
+          >
+            <div
+              className="add-panel-widget__icon"
+            >
+              <i
+                className="gicon gicon-visualization"
+              />
+            </div>
+            <span>
+              Choose Visualization
+            </span>
+          </a>
+        </div>
+      </div>
+      <div
+        className="add-panel-widget__actions"
+      >
+        <button
+          className="btn btn-inverse add-panel-widget__action"
+          onClick={[Function]}
+        >
+          Convert to row
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

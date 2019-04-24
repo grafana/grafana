@@ -1,30 +1,42 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './add_graphite_func';
 import './func_editor';
 
-import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
-import gfunc from './gfunc';
-import {Parser} from './parser';
-import {QueryCtrl} from 'app/plugins/sdk';
+import GraphiteQuery from './graphite_query';
+import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
+
+const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
+const TAG_PREFIX = 'tag: ';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  functions: any[];
+  queryModel: GraphiteQuery;
   segments: any[];
+  addTagSegments: any[];
+  removeTagValue: string;
+  supportsTags: boolean;
+  paused: boolean;
 
-  /** @ngInject **/
-  constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
+  /** @ngInject */
+  constructor($scope, $injector, private uiSegmentSrv, private templateSrv, $timeout) {
     super($scope, $injector);
+    this.supportsTags = this.datasource.supportsTags;
+    this.paused = false;
+    this.target.target = this.target.target || '';
 
-    if (this.target) {
-      this.target.target = this.target.target || '';
-      this.parseTarget();
-    }
+    this.datasource.waitForFuncDefsLoaded().then(() => {
+      this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
+      this.buildSegments();
+    });
+
+    this.removeTagValue = '-- remove tag --';
+  }
+
+  parseTarget() {
+    this.queryModel.parseTarget();
+    this.buildSegments();
   }
 
   toggleEditorMode() {
@@ -32,122 +44,59 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.parseTarget();
   }
 
-  parseTarget() {
-    this.functions = [];
-    this.segments = [];
-    this.error = null;
+  buildSegments() {
+    this.segments = _.map(this.queryModel.segments, segment => {
+      return this.uiSegmentSrv.newSegment(segment);
+    });
 
-    if (this.target.textEditor) {
-      return;
-    }
+    const checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
+    this.checkOtherSegments(checkOtherSegmentsIndex);
 
-    var parser = new Parser(this.target.target);
-    var astNode = parser.getAst();
-    if (astNode === null) {
-      this.checkOtherSegments(0);
-      return;
-    }
-
-    if (astNode.type === 'error') {
-      this.error = astNode.message + " at position: " + astNode.pos;
-      this.target.textEditor = true;
-      return;
-    }
-
-    try {
-      this.parseTargetRecursive(astNode, null, 0);
-    } catch (err) {
-      console.log('error parsing target:', err.message);
-      this.error = err.message;
-      this.target.textEditor = true;
-    }
-
-    this.checkOtherSegments(this.segments.length - 1);
-  }
-
-  addFunctionParameter(func, value, index, shiftBack) {
-    if (shiftBack) {
-      index = Math.max(index - 1, 0);
-    }
-    func.params[index] = value;
-  }
-
-  parseTargetRecursive(astNode, func, index) {
-    if (astNode === null) {
-      return null;
-    }
-
-    switch (astNode.type) {
-      case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
-        _.each(astNode.params, (param, index) => {
-          this.parseTargetRecursive(param, innerFunc, index);
-        });
-
-        innerFunc.updateText();
-        this.functions.push(innerFunc);
-        break;
-      case 'series-ref':
-        this.addFunctionParameter(func, astNode.value, index, this.segments.length > 0);
-        break;
-      case 'bool':
-      case 'string':
-      case 'number':
-        if ((index-1) >= func.def.params.length) {
-          throw { message: 'invalid number of parameters to method ' + func.def.name };
-        }
-        this.addFunctionParameter(func, astNode.value, index, true);
-      break;
-      case 'metric':
-        if (this.segments.length > 0) {
-        if (astNode.segments.length !== 1) {
-          throw { message: 'Multiple metric params not supported, use text editor.' };
-        }
-        this.addFunctionParameter(func, astNode.segments[0].value, index, true);
-        break;
-      }
-
-      this.segments = _.map(astNode.segments, segment => {
-        return this.uiSegmentSrv.newSegment(segment);
-      });
+    if (this.queryModel.seriesByTagUsed) {
+      this.fixTagSegments();
     }
   }
 
-  getSegmentPathUpTo(index) {
-    var arr = this.segments.slice(0, index);
-
-    return _.reduce(arr, function(result, segment) {
-      return result ? (result + "." + segment.value) : segment.value;
-    }, "");
+  addSelectMetricSegment() {
+    this.queryModel.addSelectMetricSegment();
+    this.segments.push(this.uiSegmentSrv.newSelectMetric());
   }
 
   checkOtherSegments(fromIndex) {
-    if (fromIndex === 0) {
-      this.segments.push(this.uiSegmentSrv.newSelectMetric());
+    if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
       return;
     }
 
-    var path = this.getSegmentPathUpTo(fromIndex + 1);
-    if (path === "") {
+    if (fromIndex === 0) {
+      this.addSelectMetricSegment();
+      return;
+    }
+
+    const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
+    if (path === '') {
       return Promise.resolve();
     }
 
-    return this.datasource.metricFindQuery(path).then(segments => {
-      if (segments.length === 0) {
-        if (path !== '') {
-          this.segments = this.segments.splice(0, fromIndex);
-          this.segments.push(this.uiSegmentSrv.newSelectMetric());
+    return this.datasource
+      .metricFindQuery(path)
+      .then(segments => {
+        if (segments.length === 0) {
+          if (path !== '') {
+            this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
+            this.segments = this.segments.splice(0, fromIndex);
+            this.addSelectMetricSegment();
+          }
+        } else if (segments[0].expandable) {
+          if (this.segments.length === fromIndex) {
+            this.addSelectMetricSegment();
+          } else {
+            return this.checkOtherSegments(fromIndex + 1);
+          }
         }
-      } else if (segments[0].expandable) {
-        if (this.segments.length === fromIndex) {
-          this.segments.push(this.uiSegmentSrv.newSelectMetric());
-        } else {
-          return this.checkOtherSegments(fromIndex + 1);
-        }
-      }
-    }).catch(err => {
-      appEvents.emit('alert-error', ['Error', err]);
-    });
+      })
+      .catch(err => {
+        appEvents.emit('alert-error', ['Error', err]);
+      });
   }
 
   setSegmentFocus(segmentIndex) {
@@ -156,44 +105,100 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
   }
 
-  wrapFunction(target, func) {
-    return func.render(target);
+  getAltSegments(index, prefix) {
+    let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
+    if (index > 0) {
+      query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
+    }
+    const options = {
+      range: this.panelCtrl.range,
+      requestId: 'get-alt-segments',
+    };
+
+    return this.datasource
+      .metricFindQuery(query, options)
+      .then(segments => {
+        const altSegments = _.map(segments, segment => {
+          return this.uiSegmentSrv.newSegment({
+            value: segment.text,
+            expandable: segment.expandable,
+          });
+        });
+
+        if (index > 0 && altSegments.length === 0) {
+          return altSegments;
+        }
+
+        // add query references
+        if (index === 0) {
+          _.eachRight(this.panelCtrl.panel.targets, target => {
+            if (target.refId === this.queryModel.target.refId) {
+              return;
+            }
+
+            altSegments.unshift(
+              this.uiSegmentSrv.newSegment({
+                type: 'series-ref',
+                value: '#' + target.refId,
+                expandable: false,
+              })
+            );
+          });
+        }
+
+        // add template variables
+        _.eachRight(this.templateSrv.variables, variable => {
+          altSegments.unshift(
+            this.uiSegmentSrv.newSegment({
+              type: 'template',
+              value: '$' + variable.name,
+              expandable: true,
+            })
+          );
+        });
+
+        // add wildcard option
+        altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
+
+        if (this.supportsTags && index === 0) {
+          this.removeTaggedEntry(altSegments);
+          return this.addAltTagSegments(prefix, altSegments);
+        } else {
+          return altSegments;
+        }
+      })
+      .catch(err => {
+        return [];
+      });
   }
 
-  getAltSegments(index) {
-    var query = index === 0 ?  '*' : this.getSegmentPathUpTo(index) + '.*';
-    var options = {range: this.panelCtrl.range, requestId: "get-alt-segments"};
-
-    return this.datasource.metricFindQuery(query, options).then(segments => {
-      var altSegments = _.map(segments, segment => {
-        return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
+  addAltTagSegments(prefix, altSegments) {
+    return this.getTagsAsSegments(prefix).then(tagSegments => {
+      tagSegments = _.map(tagSegments, segment => {
+        segment.value = TAG_PREFIX + segment.value;
+        return segment;
       });
-
-      if (altSegments.length === 0) { return altSegments; }
-
-      // add template variables
-      _.each(this.templateSrv.variables, variable => {
-        altSegments.unshift(this.uiSegmentSrv.newSegment({
-          type: 'template',
-          value: '$' + variable.name,
-          expandable: true,
-        }));
-      });
-
-      // add wildcard option
-      altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
-      return altSegments;
-    }).catch(err => {
-      appEvents.emit('alert-error', ['Error', err]);
-      return [];
+      return altSegments.concat(...tagSegments);
     });
+  }
+
+  removeTaggedEntry(altSegments: any[]) {
+    altSegments = _.remove(altSegments, s => s.value === '_tagged');
   }
 
   segmentValueChanged(segment, segmentIndex) {
     this.error = null;
+    this.queryModel.updateSegmentValue(segment, segmentIndex);
 
-    if (this.functions.length > 0 && this.functions[0].def.fake) {
-      this.functions = [];
+    if (this.queryModel.functions.length > 0 && this.queryModel.functions[0].def.fake) {
+      this.queryModel.functions = [];
+    }
+
+    if (segment.type === 'tag') {
+      const tag = removeTagPrefix(segment.value);
+      this.pause();
+      this.addSeriesByTagFunc(tag);
+      return;
     }
 
     if (segment.expandable) {
@@ -202,11 +207,21 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         this.targetChanged();
       });
     } else {
-      this.segments = this.segments.splice(0, segmentIndex + 1);
+      this.spliceSegments(segmentIndex + 1);
     }
 
     this.setSegmentFocus(segmentIndex + 1);
     this.targetChanged();
+  }
+
+  spliceSegments(index) {
+    this.segments = this.segments.splice(0, index);
+    this.queryModel.segments = this.queryModel.segments.splice(0, index);
+  }
+
+  emptySegments() {
+    this.queryModel.segments = [];
+    this.segments = [];
   }
 
   targetTextChanged() {
@@ -215,108 +230,65 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   updateModelTarget() {
-    // render query
-    if (!this.target.textEditor) {
-      var metricPath = this.getSegmentPathUpTo(this.segments.length);
-      this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
-    }
-
-    this.updateRenderedTarget(this.target);
-
-    // loop through other queries and update targetFull as needed
-    for (const target of this.panelCtrl.panel.targets || []) {
-      if (target.refId !== this.target.refId) {
-        this.updateRenderedTarget(target);
-      }
-    }
-  }
-
-  updateRenderedTarget(target) {
-    // render nested query
-    var targetsByRefId = _.keyBy(this.panelCtrl.panel.targets, 'refId');
-
-    // no references to self
-    delete targetsByRefId[target.refId];
-
-    var nestedSeriesRefRegex = /\#([A-Z])/g;
-    var targetWithNestedQueries = target.target;
-
-    // Keep interpolating until there are no query references
-    // The reason for the loop is that the referenced query might contain another reference to another query
-    while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
-      var updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
-        var t = targetsByRefId[g1];
-        if (!t) {
-          return match;
-        }
-
-        // no circular references
-        delete targetsByRefId[g1];
-        return t.target;
-      });
-
-      if (updated === targetWithNestedQueries) {
-        break;
-      }
-
-      targetWithNestedQueries = updated;
-    }
-
-    delete target.targetFull;
-    if (target.target !== targetWithNestedQueries) {
-      target.targetFull = targetWithNestedQueries;
-    }
+    this.queryModel.updateModelTarget(this.panelCtrl.panel.targets);
   }
 
   targetChanged() {
-    if (this.error) {
+    if (this.queryModel.error) {
       return;
     }
 
-    var oldTarget = this.target.target;
+    const oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
-    if (this.target.target !== oldTarget) {
-      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
-      if (lastSegment.value !== 'select metric') {
-        this.panelCtrl.refresh();
-      }
+    if (this.queryModel.target !== oldTarget && !this.paused) {
+      this.panelCtrl.refresh();
     }
   }
 
-  removeFunction(func) {
-    this.functions = _.without(this.functions, func);
-    this.targetChanged();
-  }
-
   addFunction(funcDef) {
-    var newFunc = gfunc.createFuncInstance(funcDef, { withDefaultParams: true });
+    const newFunc = this.datasource.createFuncInstance(funcDef, {
+      withDefaultParams: true,
+    });
     newFunc.added = true;
-    this.functions.push(newFunc);
-
-    this.moveAliasFuncLast();
+    this.queryModel.addFunction(newFunc);
     this.smartlyHandleNewAliasByNode(newFunc);
 
     if (this.segments.length === 1 && this.segments[0].fake) {
-      this.segments = [];
+      this.emptySegments();
     }
 
     if (!newFunc.params.length && newFunc.added) {
       this.targetChanged();
     }
+
+    if (newFunc.def.name === 'seriesByTag') {
+      this.parseTarget();
+    }
   }
 
-  moveAliasFuncLast() {
-    var aliasFunc = _.find(this.functions, function(func) {
-      return func.def.name === 'alias' ||
-        func.def.name === 'aliasByNode' ||
-        func.def.name === 'aliasByMetric';
-    });
+  removeFunction(func) {
+    this.queryModel.removeFunction(func);
+    this.targetChanged();
+  }
 
-    if (aliasFunc) {
-      this.functions = _.without(this.functions, aliasFunc);
-      this.functions.push(aliasFunc);
-    }
+  moveFunction(func, offset) {
+    this.queryModel.moveFunction(func, offset);
+    this.targetChanged();
+  }
+
+  addSeriesByTagFunc(tag) {
+    const newFunc = this.datasource.createFuncInstance('seriesByTag', {
+      withDefaultParams: false,
+    });
+    const tagParam = `${tag}=`;
+    newFunc.params = [tagParam];
+    this.queryModel.addFunction(newFunc);
+    newFunc.added = true;
+
+    this.emptySegments();
+    this.targetChanged();
+    this.parseTarget();
   }
 
   smartlyHandleNewAliasByNode(func) {
@@ -324,8 +296,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       return;
     }
 
-    for (var i = 0; i < this.segments.length; i++) {
-      if (this.segments[i].value.indexOf('*') >= 0)  {
+    for (let i = 0; i < this.segments.length; i++) {
+      if (this.segments[i].value.indexOf('*') >= 0) {
         func.params[0] = i;
         func.added = false;
         this.targetChanged();
@@ -333,4 +305,109 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       }
     }
   }
+
+  getAllTags() {
+    return this.datasource.getTags().then(values => {
+      const altTags = _.map(values, 'text');
+      altTags.splice(0, 0, this.removeTagValue);
+      return mapToDropdownOptions(altTags);
+    });
+  }
+
+  getTags(index, tagPrefix) {
+    const tagExpressions = this.queryModel.renderTagExpressions(index);
+    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then(values => {
+      const altTags = _.map(values, 'text');
+      altTags.splice(0, 0, this.removeTagValue);
+      return mapToDropdownOptions(altTags);
+    });
+  }
+
+  getTagsAsSegments(tagPrefix) {
+    const tagExpressions = this.queryModel.renderTagExpressions();
+    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then(values => {
+      return _.map(values, val => {
+        return this.uiSegmentSrv.newSegment({
+          value: val.text,
+          type: 'tag',
+          expandable: false,
+        });
+      });
+    });
+  }
+
+  getTagOperators() {
+    return mapToDropdownOptions(GRAPHITE_TAG_OPERATORS);
+  }
+
+  getAllTagValues(tag) {
+    const tagKey = tag.key;
+    return this.datasource.getTagValues(tagKey).then(values => {
+      const altValues = _.map(values, 'text');
+      return mapToDropdownOptions(altValues);
+    });
+  }
+
+  getTagValues(tag, index, valuePrefix) {
+    const tagExpressions = this.queryModel.renderTagExpressions(index);
+    const tagKey = tag.key;
+    return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then(values => {
+      const altValues = _.map(values, 'text');
+      // Add template variables as additional values
+      _.eachRight(this.templateSrv.variables, variable => {
+        altValues.push('${' + variable.name + ':regex}');
+      });
+      return mapToDropdownOptions(altValues);
+    });
+  }
+
+  tagChanged(tag, tagIndex) {
+    this.queryModel.updateTag(tag, tagIndex);
+    this.targetChanged();
+  }
+
+  addNewTag(segment) {
+    const newTagKey = segment.value;
+    const newTag = { key: newTagKey, operator: '=', value: '' };
+    this.queryModel.addTag(newTag);
+    this.targetChanged();
+    this.fixTagSegments();
+  }
+
+  removeTag(index) {
+    this.queryModel.removeTag(index);
+    this.targetChanged();
+  }
+
+  fixTagSegments() {
+    // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
+    this.addTagSegments = [this.uiSegmentSrv.newPlusButton()];
+  }
+
+  showDelimiter(index) {
+    return index !== this.queryModel.tags.length - 1;
+  }
+
+  pause() {
+    this.paused = true;
+  }
+
+  unpause() {
+    this.paused = false;
+    this.panelCtrl.refresh();
+  }
+
+  getCollapsedText() {
+    return this.target.target;
+  }
+}
+
+function mapToDropdownOptions(results) {
+  return _.map(results, value => {
+    return { text: value, value: value };
+  });
+}
+
+function removeTagPrefix(value: string): string {
+  return value.replace(TAG_PREFIX, '');
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,7 +51,7 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	}
 
 	return &VictoropsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model),
 		URL:          url,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.victorops"),
@@ -72,7 +71,6 @@ type VictoropsNotifier struct {
 // Notify sends notification to Victorops via POST to URL endpoint
 func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	metrics.M_Alerting_Notification_Sent_Victorops.Inc(1)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {
@@ -85,27 +83,6 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return nil
 	}
 
-	fields := make([]map[string]interface{}, 0)
-	fieldLimitCount := 4
-	for index, evt := range evalContext.EvalMatches {
-		fields = append(fields, map[string]interface{}{
-			"title": evt.Metric,
-			"value": evt.Value,
-			"short": true,
-		})
-		if index > fieldLimitCount {
-			break
-		}
-	}
-
-	if evalContext.Error != nil {
-		fields = append(fields, map[string]interface{}{
-			"title": "Error message",
-			"value": evalContext.Error.Error(),
-			"short": false,
-		})
-	}
-
 	messageType := evalContext.Rule.State
 	if evalContext.Rule.State == models.AlertStateAlerting { // translate 'Alerting' to 'CRITICAL' (Victorops analog)
 		messageType = AlertStateCritical
@@ -115,14 +92,29 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageType = AlertStateRecovery
 	}
 
+	fields := make(map[string]interface{}, 0)
+	fieldLimitCount := 4
+	for index, evt := range evalContext.EvalMatches {
+		fields[evt.Metric] = evt.Value
+		if index > fieldLimitCount {
+			break
+		}
+	}
+
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message_type", messageType)
 	bodyJSON.Set("entity_id", evalContext.Rule.Name)
+	bodyJSON.Set("entity_display_name", evalContext.GetNotificationTitle())
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_start_time", evalContext.StartTime.Unix())
 	bodyJSON.Set("state_message", evalContext.Rule.Message)
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 	bodyJSON.Set("alert_url", ruleUrl)
+	bodyJSON.Set("metrics", fields)
+
+	if evalContext.Error != nil {
+		bodyJSON.Set("error_message", evalContext.Error.Error())
+	}
 
 	if evalContext.ImagePublicUrl != "" {
 		bodyJSON.Set("image_url", evalContext.ImagePublicUrl)

@@ -5,7 +5,6 @@
 // Global resets to common HTML elements and more for easier usage by Bootstrap.
 // Adds additional rules on top of Normalize.css, including several overrides.
 
-
 // Reset the box-sizing
 //
 // Change from `box-sizing: content-box` to `border-box` so that when you add
@@ -29,7 +28,6 @@ html {
   box-sizing: inherit;
 }
 
-
 // Make viewport responsive
 //
 // @viewport is needed because IE 10+ doesn't honor <meta name="viewport"> in
@@ -46,9 +44,10 @@ html {
 // Wrap `@viewport` with `@at-root` for when folks do a nested import (e.g.,
 // `.class-name { @import "bootstrap"; }`).
 @at-root {
-  @-ms-viewport { width: device-width; }
+  @-ms-viewport {
+    width: device-width;
+  }
 }
-
 
 //
 // Reset HTML, body, and more
@@ -65,13 +64,13 @@ html {
   // See https://github.com/twbs/bootstrap/issues/18543
   -ms-overflow-style: scrollbar;
   // Changes the default tap highlight to be completely transparent in iOS.
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   height: 100%;
 }
 
 body {
   // Make the `body` use the `font-size-root`
-  font-family: $font-family-base;
+  font-family: $font-family-sans-serif;
   font-size: $font-size-base;
   line-height: $line-height-base;
   // Go easy on the eyes and use something other than `#000` for text
@@ -79,6 +78,8 @@ body {
   // By default, `<body>` has no `background-color` so we set one as a best practice.
   background-color: $body-bg;
   height: 100%;
+  width: 100%;
+  position: absolute;
 }
 
 // Suppress the focus outline on elements that cannot be accessed via keyboard.
@@ -86,10 +87,9 @@ body {
 // might still respond to pointer events.
 //
 // Credit: https://github.com/suitcss/base
-[tabindex="-1"]:focus {
+[tabindex='-1']:focus {
   outline: none !important;
 }
-
 
 //
 // Typography
@@ -99,9 +99,14 @@ body {
 //
 // By default, `<h1>`-`<h6>` all receive top and bottom margins. We nuke the top
 // margin for easier control within type scales as it avoids margin collapsing.
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 0;
-  margin-bottom: .5rem;
+  margin-bottom: $space-sm;
 }
 
 // Reset margins on paragraphs
@@ -110,19 +115,17 @@ h1, h2, h3, h4, h5, h6 {
 // bottom margin to use `rem` units instead of `em`.
 p {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 // Abbreviations and acronyms
-abbr[title],
-// Add data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
-abbr[data-original-title] {
+abbr[title] {
   cursor: help;
   border-bottom: 1px dotted $abbr-border-color;
 }
 
 address {
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
   font-style: normal;
   line-height: inherit;
 }
@@ -131,7 +134,7 @@ ol,
 ul,
 dl {
   margin-top: 0;
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
 ol ol,
@@ -142,18 +145,17 @@ ul ol {
 }
 
 dt {
-  font-weight: $dt-font-weight;
+  font-weight: $font-weight-semi-bold;
 }
 
 dd {
-  margin-bottom: .5rem;
+  margin-bottom: $space-sm;
   margin-left: 0; // Undo browser default
 }
 
 blockquote {
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
-
 
 //
 // Links
@@ -169,10 +171,9 @@ a {
   }
 
   &:focus {
-    @include tab-focus();
+    @include no-focus();
   }
 }
-
 
 //
 // Code
@@ -182,9 +183,8 @@ pre {
   // Remove browser default top margin
   margin-top: 0;
   // Reset browser default of `1em` to use `rem`s
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
-
 
 //
 // Figures
@@ -193,9 +193,8 @@ pre {
 figure {
   // Normalize adds `margin` to `figure`s as browsers apply it inconsistently.
   // We reset that to create a better flow in-page.
-  margin: 0 0 1rem;
+  margin: 0 0 $space-md;
 }
-
 
 //
 // Images
@@ -209,17 +208,15 @@ img {
   // For the rationale behind this, see the comments on the `.img-fluid` class.
 }
 
-
 // iOS "clickable elements" fix for role="button"
 //
 // Fixes "clickability" issue (and more generally, the firing of events such as focus as well)
 // for traditionally non-focusable elements with role="button"
 // see https://developer.mozilla.org/en-US/docs/Web/Events/click#Safari_Mobile
 
-[role="button"] {
+[role='button'] {
   cursor: pointer;
 }
-
 
 // Avoid 300ms click delay on touch devices that support the `touch-action` CSS property.
 //
@@ -234,7 +231,7 @@ img {
 a,
 area,
 button,
-[role="button"],
+[role='button'],
 input,
 label,
 select,
@@ -243,19 +240,18 @@ textarea {
   touch-action: manipulation;
 }
 
-
 //
 // Tables
 //
 
 table {
   // Reset for nesting within parents with `background-color`.
-  background-color: $table-bg;
+  background-color: transparent;
 }
 
 caption {
-  padding-top: $table-cell-padding;
-  padding-bottom: $table-cell-padding;
+  padding-top: $space-inset-squish-md;
+  padding-bottom: $space-inset-squish-md;
   color: $text-muted;
   text-align: left;
   caption-side: bottom;
@@ -265,7 +261,6 @@ th {
   // Centered by default, but left-align-ed to match the `td`s below.
   text-align: left;
 }
-
 
 //
 // Forms
@@ -319,13 +314,13 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: .5rem;
-  font-size: 1.5rem;
+  margin-bottom: $space-sm;
+  font-size: $space-lg;
   line-height: inherit;
-//  border: 0;
+  //  border: 0;
 }
 
-input[type="search"] {
+input[type='search'] {
   // This overrides the extra rounded corners on search inputs in iOS so that our
   // `.form-control` class can properly style them. Note that this cannot simply
   // be added to `.form-control` as it's not specific enough. For details, see
@@ -336,9 +331,9 @@ input[type="search"] {
 // todo: needed?
 output {
   display: inline-block;
-//  font-size: $font-size-base;
-//  line-height: $line-height;
-//  color: $input-color;
+  //  font-size: $font-size-base;
+  //  line-height: $line-height;
+  //  color: $input-color;
 }
 
 // Always hide an element with the `hidden` HTML attribute (from PureCSS).

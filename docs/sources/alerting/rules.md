@@ -27,20 +27,20 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data soures are supported right now. They include `Graphite`, `Prometheus`,
-`InfluxDB` and `OpenTSDB`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
+`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL` and `OpenTSDB`.
+
+> Alerting support for Azure Monitor is only available in Grafana v6.0 and above.
 
 ### Clustering
 
-We have not implemented clustering yet. So if you run multiple instances of grafana-server
-you have to make sure [execute_alerts]({{< relref "installation/configuration.md#alerting" >}})
-is true on only one instance or otherwise you will get duplicated notifications.
+Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
 
 <div class="clearfix"></div>
 
 ## Rule Config
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+
 
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
 panels as well in a future release.
@@ -48,6 +48,19 @@ panels as well in a future release.
 ### Name & Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+
+### For
+
+> This setting is available in Grafana 5.4 and above.
+
+If an alert rule has a configured `For` and the query violates the configured threshold it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
+
+Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state.
+
+Below you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`.
+{{< imgbox img="/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}
+
+{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 ### Conditions
 
@@ -58,11 +71,11 @@ specify a query letter, time range and an aggregation function.
 ### Query condition example
 
 ```sql
-avg() OF query(A, 5m, now) IS BELOW 14
+avg() OF query(A, 15m, now) IS BELOW 14
 ```
 
-- `avg()` Controls how the values for **each** serie should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters defines the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
+- `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
+- `query(A, 15m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `15m, now` means 15 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
@@ -76,7 +89,7 @@ of another alert in your conditions, and `Time Of Day`.
 #### Multiple Series
 
 If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series.
-What Grafana does not do currently is track alert rule state **per series**. This has implications that is exemplified
+What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed
 in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
@@ -89,10 +102,14 @@ So as you can see from the above scenario Grafana will not send out notification
 to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series
 we plan to track state **per series** in a future release.
 
+> Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
+> when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will
+> be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage
+> of this feature for identifying new/existing series causing alert to fire. [Read more about notification reminders here](/alerting/notifications/#send-reminders).
+
 ### No Data / Null values
 
-Below you condition you can configure how the rule evaluation engine should handle queries that return no data or only null valued
-data.
+Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
 
 No Data Option | Description
 ------------ | -------------
@@ -102,23 +119,23 @@ Keep Last State | Keep the current alert rule state, what ever it is.
 
 ### Execution errors or timeouts
 
-The last option is how to handle execution or timeout errors.
+The last option tells how to handle execution or timeout errors.
 
 Error or timeout option | Description
 ------------ | -------------
 Alerting | Set alert rule state to `Alerting`
 Keep Last State | Keep the current alert rule state, what ever it is.
 
-If you an unreliable time series store that where queries sometime timeout or fail randomly you can set this option
-t `Keep Last State` to basically ignore them.
+If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option
+to `Keep Last State` in order to basically ignore them.
 
 ## Notifications
 
-In alert tab you can also specify alert rule notifications along with a detailed messsage about the alert rule.
-The message can contain anything, information about how you might solve the issue, link to runbook etc.
+In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule.
+The message can contain anything, information about how you might solve the issue, link to runbook, etc.
 
 The actual notifications are configured and shared between multiple alerts. Read the
-[Notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
+[notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
 ## Alert State History & Annotations
 
@@ -131,7 +148,7 @@ submenu in the alert tab to view & clear state history.
 {{< imgbox max-width="40%" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
 
 First level of troubleshooting you can do is hit the **Test Rule** button. You will get result back that you can expand
-to the point where you can see the raw data that was returned form your query.
+to the point where you can see the raw data that was returned from your query.
 
 Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason
 the log does not say anything you can enable debug logging for some relevant components. This is done
@@ -156,6 +173,8 @@ filters = alerting.scheduler:debug \
           tsdb.prometheus:debug \
           tsdb.opentsdb:debug \
           tsdb.influxdb:debug \
+          tsdb.elasticsearch:debug \
+          tsdb.elasticsearch.client:debug \
 ```
 
 If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to

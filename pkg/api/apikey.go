@@ -4,15 +4,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func GetApiKeys(c *middleware.Context) Response {
+func GetAPIKeys(c *m.ReqContext) Response {
 	query := m.GetApiKeysQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to list api keys", err)
+		return Error(500, "Failed to list api keys", err)
 	}
 
 	result := make([]*m.ApiKeyDTO, len(query.Result))
@@ -24,25 +23,25 @@ func GetApiKeys(c *middleware.Context) Response {
 		}
 	}
 
-	return Json(200, result)
+	return JSON(200, result)
 }
 
-func DeleteApiKey(c *middleware.Context) Response {
+func DeleteAPIKey(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := &m.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		return ApiError(500, "Failed to delete API key", err)
+		return Error(500, "Failed to delete API key", err)
 	}
 
-	return ApiSuccess("API key deleted")
+	return Success("API key deleted")
 }
 
-func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
+func AddAPIKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
-		return ApiError(400, "Invalid role specified", nil)
+		return Error(400, "Invalid role specified", nil)
 	}
 
 	cmd.OrgId = c.OrgId
@@ -51,12 +50,12 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to add API key", err)
+		return Error(500, "Failed to add API key", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
 		Name: cmd.Result.Name,
 		Key:  newKeyInfo.ClientSecret}
 
-	return Json(200, result)
+	return JSON(200, result)
 }

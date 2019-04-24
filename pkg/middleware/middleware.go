@@ -1,41 +1,36 @@
 package middleware
 
 import (
+	"net/http"
+	"net/url"
 	"strconv"
-	"strings"
-
-	"gopkg.in/macaron.v1"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/log"
-	l "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
-type Context struct {
-	*macaron.Context
-	*m.SignedInUser
+var (
+	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
+	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
+	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
+)
 
-	Session SessionStore
-
-	IsSignedIn     bool
-	IsRenderCall   bool
-	AllowAnonymous bool
-	Logger         log.Logger
-}
-
-func GetContextHandler() macaron.Handler {
+func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
 	return func(c *macaron.Context) {
-		ctx := &Context{
+		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			SkipCache:      false,
 			Logger:         log.New("context"),
 		}
 
@@ -50,22 +45,31 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithRenderAuth(ctx) ||
-			initContextWithApiKey(ctx) ||
-			initContextWithBasicAuth(ctx, orgId) ||
-			initContextWithAuthProxy(ctx, orgId) ||
-			initContextWithUserSessionCookie(ctx, orgId) ||
-			initContextWithAnonymousUser(ctx) {
+		switch {
+		case initContextWithRenderAuth(ctx):
+		case initContextWithApiKey(ctx):
+		case initContextWithBasicAuth(ctx, orgId):
+		case initContextWithAuthProxy(remoteCache, ctx, orgId):
+		case initContextWithToken(ats, ctx, orgId):
+		case initContextWithAnonymousUser(ctx):
 		}
 
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
+
+		// update last seen every 5min
+		if ctx.ShouldUpdateLastSeenAt() {
+			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
+			if err := bus.Dispatch(&m.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+			}
+		}
 	}
 }
 
-func initContextWithAnonymousUser(ctx *Context) bool {
+func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 	if !setting.AnonymousEnabled {
 		return false
 	}
@@ -78,37 +82,14 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 
 	ctx.IsSignedIn = false
 	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser = &m.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
 	return true
 }
 
-func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
-	// initialize session
-	if err := ctx.Session.Start(ctx); err != nil {
-		ctx.Logger.Error("Failed to start session", "error", err)
-		return false
-	}
-
-	var userId int64
-	if userId = getRequestUserId(ctx); userId == 0 {
-		return false
-	}
-
-	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId)
-		return false
-	}
-
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
-	return true
-}
-
-func initContextWithApiKey(ctx *Context) bool {
+func initContextWithApiKey(ctx *m.ReqContext) bool {
 	var keyString string
 	if keyString = getApiKey(ctx); keyString == "" {
 		return false
@@ -144,7 +125,7 @@ func initContextWithApiKey(ctx *Context) bool {
 	return true
 }
 
-func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
+func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	if !setting.BasicAuthEnabled {
 		return false
@@ -169,7 +150,7 @@ func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
 
 	user := loginQuery.Result
 
-	loginUserQuery := l.LoginUserQuery{Username: username, Password: password, User: user}
+	loginUserQuery := m.LoginUserQuery{Username: username, Password: password, User: user}
 	if err := bus.Dispatch(&loginUserQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid username or password", err)
 		return true
@@ -186,68 +167,71 @@ func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
 	return true
 }
 
-// Handle handles and logs error by given status.
-func (ctx *Context) Handle(status int, title string, err error) {
+func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext, orgID int64) bool {
+	rawToken := ctx.GetCookie(setting.LoginCookieName)
+	if rawToken == "" {
+		return false
+	}
+
+	token, err := authTokenService.LookupToken(rawToken)
 	if err != nil {
-		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.PROD {
-			ctx.Data["ErrorMsg"] = err
-		}
+		ctx.Logger.Error("failed to look up user based on cookie", "error", err)
+		WriteSessionCookie(ctx, "", -1)
+		return false
 	}
 
-	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
-	ctx.HTML(status, strconv.Itoa(status))
-}
+	query := m.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
+	if err := bus.Dispatch(&query); err != nil {
+		ctx.Logger.Error("failed to get user with id", "userId", token.UserId, "error", err)
+		return false
+	}
 
-func (ctx *Context) JsonOK(message string) {
-	resp := make(map[string]interface{})
-	resp["message"] = message
-	ctx.JSON(200, resp)
-}
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	ctx.UserToken = token
 
-func (ctx *Context) IsApiRequest() bool {
-	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
-}
-
-func (ctx *Context) JsonApiErr(status int, message string, err error) {
-	resp := make(map[string]interface{})
-
+	rotated, err := authTokenService.TryRotateToken(token, ctx.RemoteAddr(), ctx.Req.UserAgent())
 	if err != nil {
-		ctx.Logger.Error(message, "error", err)
-		if setting.Env != setting.PROD {
-			resp["error"] = err.Error()
-		}
+		ctx.Logger.Error("failed to rotate token", "error", err)
+		return true
 	}
 
-	switch status {
-	case 404:
-		resp["message"] = "Not Found"
-	case 500:
-		resp["message"] = "Internal Server Error"
+	if rotated {
+		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
 	}
 
-	if message != "" {
-		resp["message"] = message
+	return true
+}
+
+func WriteSessionCookie(ctx *m.ReqContext, value string, maxLifetimeDays int) {
+	if setting.Env == setting.DEV {
+		ctx.Logger.Info("new token", "unhashed token", value)
 	}
 
-	ctx.JSON(status, resp)
-}
+	var maxAge int
+	if maxLifetimeDays <= 0 {
+		maxAge = -1
+	} else {
+		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAge = int(maxAgeHours.Seconds())
+	}
 
-func (ctx *Context) HasUserRole(role m.RoleType) bool {
-	return ctx.OrgRole.Includes(role)
-}
+	ctx.Resp.Header().Del("Set-Cookie")
+	cookie := http.Cookie{
+		Name:     setting.LoginCookieName,
+		Value:    url.QueryEscape(value),
+		HttpOnly: true,
+		Path:     setting.AppSubUrl + "/",
+		Secure:   setting.CookieSecure,
+		MaxAge:   maxAge,
+		SameSite: setting.CookieSameSite,
+	}
 
-func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
-	return ctx.HelpFlags1.HasFlag(flag)
-}
-
-func (ctx *Context) TimeRequest(timer metrics.Timer) {
-	ctx.Data["perfmon.timer"] = timer
+	http.SetCookie(ctx.Resp, &cookie)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
-	return func(ctx *Context) {
+	return func(ctx *m.ReqContext) {
 		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
 			ctx.Resp.Header().Add("Cache-Control", "no-cache")
 			ctx.Resp.Header().Add("Pragma", "no-cache")

@@ -1,5 +1,5 @@
 # Versioning Library for Go
-[![Build Status](https://travis-ci.org/hashicorp/go-version.svg?branch=master)](https://travis-ci.org/hashicorp/go-version) 
+[![Build Status](https://travis-ci.org/hashicorp/go-version.svg?branch=master)](https://travis-ci.org/hashicorp/go-version)
 
 go-version is a library for parsing versions and version constraints,
 and verifying versions against a set of constraints. go-version

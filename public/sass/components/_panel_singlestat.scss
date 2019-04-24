@@ -2,53 +2,24 @@
   position: relative;
   display: table;
   width: 100%;
+  height: 100%;
 }
 
 .singlestat-panel-value-container {
+  line-height: 1;
   display: table-cell;
   vertical-align: middle;
   text-align: center;
   position: relative;
   z-index: 1;
   font-size: 3em;
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 
 .singlestat-panel-prefix {
   padding-right: 20px;
 }
 
-.singlestat-panel-table {
-  width: 100%;
-  td {
-    padding: 5px 10px;
-    white-space: nowrap;
-    text-align: right;
-    border-bottom: 1px solid $grafanaListBorderBottom;
-  }
-
-  th {
-    text-align: right;
-    padding: 5px 10px;
-    font-weight: bold;
-    color: $blue
-  }
-
-  td:first-child {
-    text-align: left;
-  }
-
-  tr:nth-child(odd) td {
-    background-color: $grafanaListAccent;
-  }
-
-  tr:last-child td {
-    border: none;
-  }
-}
-
 #flotGagueValue0 {
   font-weight: bold; //please dont hurt me for this!
 }
-
-

@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -21,14 +19,22 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   addTagMode: boolean;
   addFilterMode: boolean;
 
-  /** @ngInject **/
+  /** @ngInject */
   constructor($scope, $injector) {
     super($scope, $injector);
 
     this.errors = this.validateTarget();
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
-    this.filterTypes = ['wildcard','iliteral_or','not_iliteral_or','not_literal_or','iwildcard','literal_or','regexp'];
+    this.filterTypes = [
+      'wildcard',
+      'iliteral_or',
+      'not_iliteral_or',
+      'not_literal_or',
+      'iwildcard',
+      'literal_or',
+      'regexp',
+    ];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
 
@@ -44,13 +50,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       this.target.downsampleFillPolicy = 'none';
     }
 
-    this.datasource.getAggregators().then((aggs) => {
+    this.datasource.getAggregators().then(aggs => {
       if (aggs.length !== 0) {
         this.aggregators = aggs;
       }
     });
 
-    this.datasource.getFilterTypes().then((filterTypes) => {
+    this.datasource.getFilterTypes().then(filterTypes => {
       if (filterTypes.length !== 0) {
         this.filterTypes = filterTypes;
       }
@@ -58,9 +64,10 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     // needs to be defined here as it is called from typeahead
     this.suggestMetrics = (query, callback) => {
-      this.datasource.metricFindQuery('metrics(' + query + ')')
-      .then(this.getTextValues)
-      .then(callback);
+      this.datasource
+        .metricFindQuery('metrics(' + query + ')')
+        .then(this.getTextValues)
+        .then(callback);
     };
 
     this.suggestTagKeys = (query, callback) => {
@@ -68,9 +75,10 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     };
 
     this.suggestTagValues = (query, callback) => {
-      this.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-      .then(this.getTextValues)
-      .then(callback);
+      this.datasource
+        .metricFindQuery('suggest_tagv(' + query + ')')
+        .then(this.getTextValues)
+        .then(callback);
     };
   }
 
@@ -80,13 +88,14 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   getTextValues(metricFindResult) {
-    return _.map(metricFindResult, function(value) { return value.text; });
+    return _.map(metricFindResult, value => {
+      return value.text;
+    });
   }
 
   addTag() {
-
     if (this.target.filters && this.target.filters.length > 0) {
-      this.errors.tags = "Please remove filters to use tags, tags and filters are mutually exclusive.";
+      this.errors.tags = 'Please remove filters to use tags, tags and filters are mutually exclusive.';
     }
 
     if (!this.addTagMode) {
@@ -128,9 +137,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   addFilter() {
-
     if (this.target.tags && _.size(this.target.tags) > 0) {
-      this.errors.filters = "Please remove tags to use filters, tags and filters are mutually exclusive.";
+      this.errors.filters = 'Please remove tags to use filters, tags and filters are mutually exclusive.';
     }
 
     if (!this.addFilterMode) {
@@ -153,11 +161,11 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.errors = this.validateTarget();
 
     if (!this.errors.filters) {
-      var currentFilter = {
-        type:    this.target.currentFilterType,
-        tagk:     this.target.currentFilterKey,
-        filter:   this.target.currentFilterValue,
-        groupBy: this.target.currentFilterGroupBy
+      const currentFilter = {
+        type: this.target.currentFilterType,
+        tagk: this.target.currentFilterKey,
+        filter: this.target.currentFilterValue,
+        groupBy: this.target.currentFilterGroupBy,
       };
       this.target.filters.push(currentFilter);
       this.target.currentFilterType = 'literal_or';
@@ -190,7 +198,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   validateTarget() {
-    var errs: any = {};
+    const errs: any = {};
 
     if (this.target.shouldDownsample) {
       try {

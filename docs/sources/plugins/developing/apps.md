@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 name = "Developing App Plugins"
 parent = "developing"
-weight = 6
+weight = 4
 +++
 
 # Grafana Apps

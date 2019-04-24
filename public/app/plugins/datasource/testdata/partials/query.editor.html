@@ -1,0 +1,39 @@
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Scenario</label>
+			<div class="gf-form-select-wrapper width-15">
+				<select class="gf-form-input" ng-model="ctrl.target.scenarioId" ng-options="v.id as v.name for v in ctrl.scenarioList" ng-change="ctrl.scenarioChanged()"></select>
+			</div>
+		</div>
+		<div class="gf-form gf-form gf-form--grow" ng-if="ctrl.scenario.stringInput">
+			<label class="gf-form-label query-keyword">String Input</label>
+      <input type="text" class="gf-form-input" placeholder="{{ctrl.scenario.stringInput}}" ng-model="ctrl.target.stringInput" ng-change="ctrl.refresh()" ng-model-onblur>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Alias</label>
+			<input type="text" class="gf-form-input max-width-7" placeholder="optional" ng-model="ctrl.target.alias" ng-change="ctrl.refresh()" ng-model-onblur>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'manual_entry'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">New value</label>
+      <input type="number" class="gf-form-input width-15" placeholder="value" ng-model="ctrl.newPointValue">
+			<label class="gf-form-label query-keyword">Time</label>
+      <input type="string" class="gf-form-input width-12" placeholder="time" ng-model="ctrl.newPointTime" input-datetime>
+			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addPoint()">Add</button>
+			<label class="gf-form-label query-keyword">All values</label>
+			<gf-form-dropdown css-class="width-12" model="ctrl.selectedPoint" get-options="ctrl.getPoints()" on-change="ctrl.pointSelected($option)">
+			</gf-form-dropdown>
+		</div>
+		<div class="gf-form gf-form" ng-if="ctrl.selectedPoint.value !== null">
+			<button class="btn btn-danger gf-form-btn" ng-click="ctrl.deletePoint()">Delete</button>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+</query-editor-row>

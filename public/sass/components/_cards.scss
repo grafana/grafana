@@ -1,17 +1,15 @@
 .layout-selector {
   @include clearfix();
 
+  margin-left: $space-md;
   text-align: right;
-  margin: 0 $spacer*1.5 $spacer;
-  position: relative;
-  top: -0.5rem;
 
   button {
     background: $input-label-bg;
     color: $text-color-weak;
     box-shadow: $card-shadow;
     border: none;
-    padding: 0.5rem;
+    padding: $space-sm;
     line-height: 1;
     font-size: 130%;
     float: right;
@@ -27,7 +25,7 @@
 
     &:nth-child(2) {
       border-radius: 3px 0 0 3px;
-      border-right: 1px solid $panel-border;
+      border-right: $panel-border;
     }
 
     &:nth-child(1) {
@@ -37,7 +35,7 @@
 }
 
 .card-section {
-  margin-bottom: $spacer*2;
+  margin-bottom: $space-xl;
 }
 
 .card-list {
@@ -52,7 +50,7 @@
   height: 100%;
   background: $card-background;
   box-shadow: $card-shadow;
-  padding: 1rem;
+  padding: $space-md;
   border-radius: 4px;
 
   &:hover {
@@ -60,16 +58,9 @@
   }
 
   .label-tag {
-    margin-left: 6px;
+    margin-left: $space-sm;
     font-size: 11px;
     padding: 2px 6px;
-  }
-
-  &--alert {
-    padding: 0.5rem 1rem;
-    .card-item-name a {
-      font-size: $font-size-h5;
-    }
   }
 }
 
@@ -82,22 +73,15 @@
   overflow: hidden;
 }
 
-.card-item-cog {
-  font-size: 130%;
-  position: relative;
-  top: 1rem;
-  color: $text-muted;
-}
-
 .card-item-header {
-  margin-bottom: $spacer;
+  margin-bottom: $space-md;
 }
 
 .card-item-type {
   color: $text-color-weak;
   text-transform: uppercase;
   font-size: $font-size-sm;
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 
 .card-item-notice {
@@ -111,6 +95,10 @@
   width: 100%;
 }
 
+.card-item-label {
+  margin-left: $space-sm;
+}
+
 .card-item-sub-name {
   color: $text-color-weak;
   overflow: hidden;
@@ -121,13 +109,12 @@
 .card-item-sub-name--header {
   color: $text-color-weak;
   text-transform: uppercase;
-  margin-bottom: $spacer;
+  margin-bottom: $space-md;
   font-size: $font-size-sm;
   font-weight: bold;
 }
 
 .card-list-layout-grid {
-
   .card-item-type {
     display: inline-block;
   }
@@ -135,7 +122,7 @@
   .card-item-notice {
     font-size: $font-size-sm;
     display: inline-block;
-    margin-left: $spacer;
+    margin-left: $space-md;
   }
 
   .card-item-header-action {
@@ -144,7 +131,7 @@
 
   .card-item-wrapper {
     width: 100%;
-    padding: 0 1.5rem 1.5rem 0rem;
+    padding: 0 $space-md $space-md 0;
   }
 
   .card-item-wrapper--clickable {
@@ -152,11 +139,11 @@
   }
 
   .card-item-figure {
-    margin: 0 $spacer $spacer 0;
-    height: 6rem;
+    margin: 0 $space-md $space-md 0;
+    height: 80px;
 
     img {
-      width: 6rem;
+      width: 80px;
     }
   }
 
@@ -186,10 +173,10 @@
 }
 
 .card-list-layout-list {
-
   .card-item-wrapper {
     padding: 0;
     width: 100%;
+    margin-bottom: $space-xs;
   }
 
   .card-item-wrapper--clickable {
@@ -197,9 +184,7 @@
   }
 
   .card-item {
-    border-bottom: .2rem solid $page-bg;
-    border-radius: 0;
-    box-shadow: none;
+    border-radius: 2px;
   }
 
   .card-item-header {
@@ -208,9 +193,9 @@
   }
 
   .card-item-figure {
-    margin: 0 $spacer 0 0;
+    margin: 0 $space-md 0 0;
     img {
-      width: 3.5rem;
+      width: 48px;
     }
   }
 

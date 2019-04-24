@@ -1,0 +1,35 @@
+.toggle-button-group {
+  display: flex;
+  padding-top: 5px;
+
+  .btn {
+    @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
+
+    padding: 7px 10px;
+    font-weight: $font-weight-semi-bold;
+    font-size: $font-size-sm;
+    border-radius: 0;
+    border-right: $button-toggle-group-btn-seperator-border;
+
+    &.active {
+      background: $button-toggle-group-btn-active-bg;
+      box-shadow: $button-toggle-group-btn-active-shadow;
+      border-right: 0;
+      color: $white;
+
+      &:hover {
+        cursor: default;
+      }
+    }
+
+    &:first-child {
+      border-radius: $border-radius 0 0 $border-radius;
+      margin: 0;
+    }
+
+    &:last-child {
+      border-radius: 0 $border-radius $border-radius 0;
+      margin-left: 0;
+    }
+  }
+}

@@ -1,7 +1,6 @@
-.table-panel-wrapper {
-  .panel-content {
-    padding: 0;
-  }
+.table-panel-content {
+  padding: 0;
+
   .panel-title-container {
     padding-bottom: 4px;
   }
@@ -27,9 +26,11 @@
     margin-left: 0;
     margin-bottom: 0;
   }
+
   ul > li {
     display: inline; // Remove list-style and block-level defaults
   }
+
   ul > li > a {
     float: left; // Collapse white-space
     padding: 4px 12px;
@@ -84,21 +85,37 @@
       a {
         padding: 0.45em 0 0.45em 1.1em;
         height: 100%;
-        width: 100%;
+        display: inline-block;
+        text-decoration: underline;
+        text-underline-position: under;
       }
     }
 
     &.cell-highlighted:hover {
       background-color: $tight-form-func-bg;
     }
+
+    &:hover {
+      .table-panel-filter-link {
+        visibility: visible;
+      }
+    }
   }
 }
 
+.table-panel-filter-link {
+  visibility: hidden;
+  color: $text-color-weak;
+  float: right;
+  display: block;
+  padding: 0 5px;
+}
+
 .table-panel-header-bg {
-  background: $grafanaListAccent;
+  background: $list-item-bg;
   border-top: 2px solid $body-bg;
   border-bottom: 2px solid $body-bg;
-  height: 2.0em;
+  height: 2em;
   position: absolute;
   top: 0;
   right: 0;
@@ -117,4 +134,18 @@
   visibility: hidden;
   height: 0px;
   line-height: 0px;
+}
+
+.table-panel-color-cell {
+  color: white;
+  a {
+    color: white;
+  }
+}
+
+.table-panel-color-row {
+  color: white;
+  a {
+    color: white;
+  }
 }

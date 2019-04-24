@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	gocontext "context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -51,7 +53,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
-		if reducedValue.Valid == false {
+		if !reducedValue.Valid {
 			emptySerieCount++
 		}
 
@@ -104,14 +106,18 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource")
+		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(context.Ctx, req)
+	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
+		if err == gocontext.DeadlineExceeded {
+			return nil, fmt.Errorf("Alert execution exceeded the timeout")
+		}
+
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
 
@@ -133,8 +139,8 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.Request {
-	req := &tsdb.Request{
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
+	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{

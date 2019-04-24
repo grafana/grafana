@@ -1,44 +1,44 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/user  (current authenticated user)
-func GetSignedInUser(c *middleware.Context) Response {
+func GetSignedInUser(c *m.ReqContext) Response {
 	return getUserUserProfile(c.UserId)
 }
 
 // GET /api/users/:id
-func GetUserById(c *middleware.Context) Response {
+func GetUserByID(c *m.ReqContext) Response {
 	return getUserUserProfile(c.ParamsInt64(":id"))
 }
 
-func getUserUserProfile(userId int64) Response {
-	query := m.GetUserProfileQuery{UserId: userId}
+func getUserUserProfile(userID int64) Response {
+	query := m.GetUserProfileQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrUserNotFound {
-			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+			return Error(404, m.ErrUserNotFound.Error(), nil)
 		}
-		return ApiError(500, "Failed to get user", err)
+		return Error(500, "Failed to get user", err)
 	}
 
-	return Json(200, query.Result)
+	return JSON(200, query.Result)
 }
 
 // GET /api/users/lookup
-func GetUserByLoginOrEmail(c *middleware.Context) Response {
+func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrUserNotFound {
-			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+			return Error(404, m.ErrUserNotFound.Error(), nil)
 		}
-		return ApiError(500, "Failed to get user", err)
+		return Error(500, "Failed to get user", err)
 	}
 	user := query.Result
 	result := m.UserProfileDTO{
@@ -50,17 +50,17 @@ func GetUserByLoginOrEmail(c *middleware.Context) Response {
 		IsGrafanaAdmin: user.IsAdmin,
 		OrgId:          user.OrgId,
 	}
-	return Json(200, &result)
+	return JSON(200, &result)
 }
 
 // POST /api/user
-func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+func UpdateSignedInUser(c *m.ReqContext, cmd m.UpdateUserCommand) Response {
 	if setting.AuthProxyEnabled {
 		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
-			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
+			return Error(400, "Not allowed to change email when auth proxy is using email property", nil)
 		}
 		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
-			return ApiError(400, "Not allowed to change username when auth proxy is using username property", nil)
+			return Error(400, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
 	cmd.UserId = c.UserId
@@ -68,66 +68,89 @@ func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response
 }
 
 // POST /api/users/:id
-func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+func UpdateUser(c *m.ReqContext, cmd m.UpdateUserCommand) Response {
 	cmd.UserId = c.ParamsInt64(":id")
 	return handleUpdateUser(cmd)
 }
 
 //POST /api/users/:id/using/:orgId
-func UpdateUserActiveOrg(c *middleware.Context) Response {
-	userId := c.ParamsInt64(":id")
-	orgId := c.ParamsInt64(":orgId")
+func UpdateUserActiveOrg(c *m.ReqContext) Response {
+	userID := c.ParamsInt64(":id")
+	orgID := c.ParamsInt64(":orgId")
 
-	if !validateUsingOrg(userId, orgId) {
-		return ApiError(401, "Not a valid organization", nil)
+	if !validateUsingOrg(userID, orgID) {
+		return Error(401, "Not a valid organization", nil)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to change active organization", err)
+		return Error(500, "Failed to change active organization", err)
 	}
 
-	return ApiSuccess("Active organization changed")
+	return Success("Active organization changed")
 }
 
 func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
-			return ApiError(400, "Validation error, need to specify either username or email", nil)
+			return Error(400, "Validation error, need to specify either username or email", nil)
 		}
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to update user", err)
+		return Error(500, "Failed to update user", err)
 	}
 
-	return ApiSuccess("User updated")
+	return Success("User updated")
 }
 
 // GET /api/user/orgs
-func GetSignedInUserOrgList(c *middleware.Context) Response {
+func GetSignedInUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.UserId)
 }
 
-// GET /api/user/:id/orgs
-func GetUserOrgList(c *middleware.Context) Response {
+// GET /api/user/teams
+func GetSignedInUserTeamList(c *m.ReqContext) Response {
+	return getUserTeamList(c.OrgId, c.UserId)
+}
+
+// GET /api/users/:id/teams
+func GetUserTeams(c *m.ReqContext) Response {
+	return getUserTeamList(c.OrgId, c.ParamsInt64(":id"))
+}
+
+func getUserTeamList(orgID int64, userID int64) Response {
+	query := m.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get user teams", err)
+	}
+
+	for _, team := range query.Result {
+		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+	}
+	return JSON(200, query.Result)
+}
+
+// GET /api/users/:id/orgs
+func GetUserOrgList(c *m.ReqContext) Response {
 	return getUserOrgList(c.ParamsInt64(":id"))
 }
 
-func getUserOrgList(userId int64) Response {
-	query := m.GetUserOrgListQuery{UserId: userId}
+func getUserOrgList(userID int64) Response {
+	query := m.GetUserOrgListQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to get user organizations", err)
+		return Error(500, "Failed to get user organizations", err)
 	}
 
-	return Json(200, query.Result)
+	return JSON(200, query.Result)
 }
 
-func validateUsingOrg(userId int64, orgId int64) bool {
-	query := m.GetUserOrgListQuery{UserId: userId}
+func validateUsingOrg(userID int64, orgID int64) bool {
+	query := m.GetUserOrgListQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return false
@@ -136,7 +159,7 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 	// validate that the org id in the list
 	valid := false
 	for _, other := range query.Result {
-		if other.OrgId == orgId {
+		if other.OrgId == orgID {
 			valid = true
 		}
 	}
@@ -145,91 +168,91 @@ func validateUsingOrg(userId int64, orgId int64) bool {
 }
 
 // POST /api/user/using/:id
-func UserSetUsingOrg(c *middleware.Context) Response {
-	orgId := c.ParamsInt64(":id")
+func UserSetUsingOrg(c *m.ReqContext) Response {
+	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgId) {
-		return ApiError(401, "Not a valid organization", nil)
+	if !validateUsingOrg(c.UserId, orgID) {
+		return Error(401, "Not a valid organization", nil)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to change active organization", err)
+		return Error(500, "Failed to change active organization", err)
 	}
 
-	return ApiSuccess("Active organization changed")
+	return Success("Active organization changed")
 }
 
 // GET /profile/switch-org/:id
-func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
-	orgId := c.ParamsInt64(":id")
+func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
+	orgID := c.ParamsInt64(":id")
 
-	if !validateUsingOrg(c.UserId, orgId) {
-		NotFoundHandler(c)
+	if !validateUsingOrg(c.UserId, orgID) {
+		hs.NotFoundHandler(c)
 	}
 
-	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		NotFoundHandler(c)
+		hs.NotFoundHandler(c)
 	}
 
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Response {
 	if setting.LdapEnabled || setting.AuthProxyEnabled {
-		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
+		return Error(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
 	}
 
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		return ApiError(500, "Could not read user from database", err)
+		return Error(500, "Could not read user from database", err)
 	}
 
 	passwordHashed := util.EncodePassword(cmd.OldPassword, userQuery.Result.Salt)
 	if passwordHashed != userQuery.Result.Password {
-		return ApiError(401, "Invalid old password", nil)
+		return Error(401, "Invalid old password", nil)
 	}
 
 	password := m.Password(cmd.NewPassword)
 	if password.IsWeak() {
-		return ApiError(400, "New password is too short", nil)
+		return Error(400, "New password is too short", nil)
 	}
 
 	cmd.UserId = c.UserId
 	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to change user password", err)
+		return Error(500, "Failed to change user password", err)
 	}
 
-	return ApiSuccess("User password changed")
+	return Success("User password changed")
 }
 
 // GET /api/users
-func SearchUsers(c *middleware.Context) Response {
+func SearchUsers(c *m.ReqContext) Response {
 	query, err := searchUser(c)
 	if err != nil {
-		return ApiError(500, "Failed to fetch users", err)
+		return Error(500, "Failed to fetch users", err)
 	}
 
-	return Json(200, query.Result.Users)
+	return JSON(200, query.Result.Users)
 }
 
-// GET /api/search
-func SearchUsersWithPaging(c *middleware.Context) Response {
+// GET /api/users/search
+func SearchUsersWithPaging(c *m.ReqContext) Response {
 	query, err := searchUser(c)
 	if err != nil {
-		return ApiError(500, "Failed to fetch users", err)
+		return Error(500, "Failed to fetch users", err)
 	}
 
-	return Json(200, query.Result)
+	return JSON(200, query.Result)
 }
 
-func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
+func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -247,13 +270,17 @@ func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
 		return nil, err
 	}
 
+	for _, user := range query.Result.Users {
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+	}
+
 	query.Result.Page = page
 	query.Result.PerPage = perPage
 
 	return query, nil
 }
 
-func SetHelpFlag(c *middleware.Context) Response {
+func SetHelpFlag(c *m.ReqContext) Response {
 	flag := c.ParamsInt64(":id")
 
 	bitmask := &c.HelpFlags1
@@ -265,21 +292,21 @@ func SetHelpFlag(c *middleware.Context) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to update help flag", err)
+		return Error(500, "Failed to update help flag", err)
 	}
 
-	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }
 
-func ClearHelpFlags(c *middleware.Context) Response {
+func ClearHelpFlags(c *m.ReqContext) Response {
 	cmd := m.SetUserHelpFlagCommand{
 		UserId:     c.UserId,
 		HelpFlags1: m.HelpFlags1(0),
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to update help flag", err)
+		return Error(500, "Failed to update help flag", err)
 	}
 
-	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }

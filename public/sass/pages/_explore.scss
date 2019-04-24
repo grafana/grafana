@@ -1,0 +1,431 @@
+.icon-margin-right {
+  margin-right: 0.25em;
+}
+
+.icon-margin-left {
+  margin-left: 0.25em;
+}
+
+.run-icon {
+  transform: rotate(90deg);
+}
+
+.timepicker {
+  display: flex;
+}
+
+.timepicker-rangestring {
+  margin-left: 0.5em;
+}
+
+.datasource-picker {
+  .ds-picker {
+    min-width: 200px;
+    max-width: 200px;
+  }
+}
+
+.explore-toolbar {
+  background: inherit;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  height: auto;
+  padding: 0 $dashboard-padding;
+  border-bottom: 1px solid #0000;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
+}
+
+.explore-toolbar-item {
+  position: relative;
+  align-self: center;
+}
+
+.explore-toolbar.splitted {
+  .explore-toolbar-item {
+    flex: 1 1 100%;
+  }
+
+  .explore-toolbar-content-item:first-child {
+    padding-left: 0;
+    margin-right: auto;
+  }
+}
+
+.explore-toolbar-item:last-child {
+  flex: auto;
+}
+
+.explore-toolbar-header {
+  display: flex;
+  flex: 1 1 0;
+  flex-flow: row nowrap;
+  font-size: 18px;
+  min-height: 55px;
+  line-height: 55px;
+  justify-content: space-between;
+  margin-left: $space-xl;
+}
+
+.explore-toolbar-header {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.explore-toolbar-header-close {
+  margin-left: auto;
+  color: $text-color-weak;
+}
+
+.explore-toolbar-content {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.explore-toolbar-content-item {
+  padding: 10px 2px;
+}
+
+.explore-toolbar-content-item:first-child {
+  padding-left: $dashboard-padding;
+  margin-right: auto;
+}
+
+@media only screen and (max-width: 1545px) {
+  .explore-toolbar.splitted {
+    .timepicker-rangestring {
+      display: none;
+    }
+  }
+}
+
+@media only screen and (max-width: 1070px) {
+  .timepicker {
+    .timepicker-rangestring {
+      display: none;
+    }
+  }
+
+  .explore-toolbar-content {
+    justify-content: flex-start;
+  }
+
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      padding: 2px 0;
+      margin: 0;
+    }
+  }
+
+  .explore-toolbar-content-item {
+    padding: 2px 2px;
+  }
+}
+
+@media only screen and (max-width: 803px) {
+  .btn-title {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 702px) {
+  .explore-toolbar-content-item:first-child {
+    padding-left: 2px;
+    margin-right: 0;
+  }
+}
+
+@media only screen and (max-width: 544px) {
+  .explore-toolbar-header-title {
+    .navbar-page-btn {
+      margin-left: $dashboard-padding;
+    }
+  }
+}
+
+.explore {
+  flex: 1 1 auto;
+}
+
+.explore + .explore {
+  border-left: 1px dotted $table-border;
+}
+
+.explore-container {
+  padding: $dashboard-padding;
+}
+
+.explore-wrapper {
+  display: flex;
+
+  > .explore-split {
+    width: 50%;
+  }
+}
+
+.explore-panel {
+  margin-top: $space-sm;
+}
+
+.explore-panel__body {
+  padding: $panel-padding;
+}
+
+.explore-panel__header {
+  padding: $space-sm $space-md 0 $space-md;
+  display: flex;
+  cursor: pointer;
+  margin-bottom: $space-sm;
+  transition: all 0.1s linear;
+}
+
+.explore-panel__header-label {
+  font-weight: 500;
+  margin-right: $space-sm;
+  font-size: $font-size-h6;
+  box-shadow: $text-shadow-faint;
+}
+
+.explore-panel__header-buttons {
+  margin-right: $space-sm;
+  font-size: $font-size-lg;
+  line-height: $font-size-h6;
+}
+
+.time-series-disclaimer {
+  width: 300px;
+  margin: $space-sm auto;
+  padding: 10px 0;
+  border-radius: $border-radius;
+  text-align: center;
+  background-color: $panel-bg;
+
+  .disclaimer-icon {
+    color: $yellow;
+    margin-right: $space-xs;
+  }
+
+  .show-all-time-series {
+    cursor: pointer;
+    color: $external-link-color;
+  }
+}
+
+.navbar .elapsed-time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.graph-legend {
+  flex-wrap: wrap;
+}
+
+.explore-panel__loader {
+  height: 2px;
+  position: relative;
+  overflow: hidden;
+  background: none;
+  margin: $space-xs;
+}
+
+.explore-panel__loader--active:after {
+  content: ' ';
+  display: block;
+  width: 25%;
+  top: 0;
+  top: -50%;
+  height: 250%;
+  position: absolute;
+  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
+  animation-iteration-count: 100;
+  left: -25%;
+  background: $blue;
+}
+
+@keyframes loader {
+  from {
+    left: -25%;
+    opacity: 0.1;
+  }
+  to {
+    left: 100%;
+    opacity: 1;
+  }
+}
+
+.query-row {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+
+  & + & {
+    margin-top: $space-sm;
+  }
+}
+
+.query-row-tools {
+  white-space: nowrap;
+}
+
+.query-row-status {
+  position: absolute;
+  top: 0;
+  right: 105px;
+  z-index: 1015;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: $input-height;
+}
+
+.query-row-field {
+  margin-right: 3px;
+  flex-grow: 1;
+}
+
+.query-transactions {
+  display: table;
+}
+
+.query-transaction {
+  display: table-row;
+  color: $text-color-faint;
+  line-height: 1.44;
+}
+
+.query-transaction--loading {
+  animation: query-loading-color-change 1s alternate 100;
+}
+
+@keyframes query-loading-color-change {
+  from {
+    color: $text-color-faint;
+  }
+  to {
+    color: $blue;
+  }
+}
+
+.query-transaction__type,
+.query-transaction__duration {
+  display: table-cell;
+  font-size: $font-size-xs;
+  text-align: right;
+  padding-right: 0.25em;
+}
+
+// Prometheus-specifics, to be extracted to datasource soon
+
+.explore {
+  .prom-query-field-info {
+    margin: 0.25em 0.5em 0.5em;
+    display: flex;
+
+    details {
+      margin-left: 1em;
+    }
+  }
+}
+
+// ReactTable basic overrides (does not include pivot/groups/filters)
+// When integrating ReactTable as new panel plugin, move to _panel_table.scss
+
+.ReactTable {
+  border: none;
+}
+
+.ReactTable .rt-table {
+  // Allow some space for the no-data text
+  min-height: 90px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  background: $list-item-bg;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
+  height: 2em;
+}
+.ReactTable .rt-thead.-header .rt-th {
+  text-align: left;
+  color: $blue;
+  font-weight: 500;
+}
+.ReactTable .rt-thead .rt-td,
+.ReactTable .rt-thead .rt-th {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-right: none;
+  box-shadow: none;
+}
+.ReactTable .rt-tbody .rt-td {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-bottom: 2px solid $body-bg;
+  border-right: 2px solid $body-bg;
+}
+.ReactTable .rt-tbody .rt-td:last-child {
+  border-right: none;
+}
+.ReactTable .-pagination {
+  border-top: none;
+  box-shadow: none;
+  margin-top: $space-sm;
+}
+.ReactTable .-pagination .-btn {
+  color: $blue;
+  background: $list-item-bg;
+}
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
+  color: $input-color;
+  background-color: $input-bg;
+}
+.ReactTable .-loading {
+  background: $input-bg;
+}
+.ReactTable .-loading.-active {
+  opacity: 0.8;
+}
+.ReactTable .-loading > div {
+  color: $input-color;
+}
+.ReactTable .rt-tr .rt-td:last-child {
+  text-align: right;
+}
+.ReactTable .rt-noData {
+  top: 60px;
+  z-index: inherit;
+}
+
+// React-component cascade fix: show "loading" even though item can expand
+
+.rc-cascader-menu-item-loading:after {
+  position: absolute;
+  right: 12px;
+  content: 'loading';
+  color: #767980;
+  font-style: italic;
+}
+
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: $space-lg 0;
+  width: 50%;
+}
+
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
+}
+
+.cheat-sheet-item__expression {
+  margin: $space-xs 0;
+  cursor: pointer;
+}

@@ -19,10 +19,12 @@ import (
 	"unsafe"
 )
 
+// SQLiteBackup implement interface of Backup.
 type SQLiteBackup struct {
 	b *C.sqlite3_backup
 }
 
+// Backup make backup from src to dest.
 func (c *SQLiteConn) Backup(dest string, conn *SQLiteConn, src string) (*SQLiteBackup, error) {
 	destptr := C.CString(dest)
 	defer C.free(unsafe.Pointer(destptr))
@@ -37,10 +39,10 @@ func (c *SQLiteConn) Backup(dest string, conn *SQLiteConn, src string) (*SQLiteB
 	return nil, c.lastError()
 }
 
-// Backs up for one step. Calls the underlying `sqlite3_backup_step` function.
-// This function returns a boolean indicating if the backup is done and
-// an error signalling any other error. Done is returned if the underlying C
-// function returns SQLITE_DONE (Code 101)
+// Step to backs up for one step. Calls the underlying `sqlite3_backup_step`
+// function.  This function returns a boolean indicating if the backup is done
+// and an error signalling any other error. Done is returned if the underlying
+// C function returns SQLITE_DONE (Code 101)
 func (b *SQLiteBackup) Step(p int) (bool, error) {
 	ret := C.sqlite3_backup_step(b.b, C.int(p))
 	if ret == C.SQLITE_DONE {
@@ -51,24 +53,33 @@ func (b *SQLiteBackup) Step(p int) (bool, error) {
 	return false, nil
 }
 
+// Remaining return whether have the rest for backup.
 func (b *SQLiteBackup) Remaining() int {
 	return int(C.sqlite3_backup_remaining(b.b))
 }
 
+// PageCount return count of pages.
 func (b *SQLiteBackup) PageCount() int {
 	return int(C.sqlite3_backup_pagecount(b.b))
 }
 
+// Finish close backup.
 func (b *SQLiteBackup) Finish() error {
 	return b.Close()
 }
 
+// Close close backup.
 func (b *SQLiteBackup) Close() error {
 	ret := C.sqlite3_backup_finish(b.b)
+
+	// sqlite3_backup_finish() never fails, it just returns the
+	// error code from previous operations, so clean up before
+	// checking and returning an error
+	b.b = nil
+	runtime.SetFinalizer(b, nil)
+
 	if ret != 0 {
 		return Error{Code: ErrNo(ret)}
 	}
-	b.b = nil
-	runtime.SetFinalizer(b, nil)
 	return nil
 }

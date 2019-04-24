@@ -21,7 +21,7 @@ import (
 //
 // The best way to use this interface is so the SDK's service client's calls
 // can be stubbed out for unit testing your code with the SDK without needing
-// to inject custom request handlers into the the SDK's request pipeline.
+// to inject custom request handlers into the SDK's request pipeline.
 //
 //    // myFunc uses an SDK service client to make a request to
 //    // Amazon Elastic Compute Cloud.
@@ -64,9 +64,21 @@ type EC2API interface {
 	AcceptReservedInstancesExchangeQuoteWithContext(aws.Context, *ec2.AcceptReservedInstancesExchangeQuoteInput, ...request.Option) (*ec2.AcceptReservedInstancesExchangeQuoteOutput, error)
 	AcceptReservedInstancesExchangeQuoteRequest(*ec2.AcceptReservedInstancesExchangeQuoteInput) (*request.Request, *ec2.AcceptReservedInstancesExchangeQuoteOutput)
 
+	AcceptTransitGatewayVpcAttachment(*ec2.AcceptTransitGatewayVpcAttachmentInput) (*ec2.AcceptTransitGatewayVpcAttachmentOutput, error)
+	AcceptTransitGatewayVpcAttachmentWithContext(aws.Context, *ec2.AcceptTransitGatewayVpcAttachmentInput, ...request.Option) (*ec2.AcceptTransitGatewayVpcAttachmentOutput, error)
+	AcceptTransitGatewayVpcAttachmentRequest(*ec2.AcceptTransitGatewayVpcAttachmentInput) (*request.Request, *ec2.AcceptTransitGatewayVpcAttachmentOutput)
+
+	AcceptVpcEndpointConnections(*ec2.AcceptVpcEndpointConnectionsInput) (*ec2.AcceptVpcEndpointConnectionsOutput, error)
+	AcceptVpcEndpointConnectionsWithContext(aws.Context, *ec2.AcceptVpcEndpointConnectionsInput, ...request.Option) (*ec2.AcceptVpcEndpointConnectionsOutput, error)
+	AcceptVpcEndpointConnectionsRequest(*ec2.AcceptVpcEndpointConnectionsInput) (*request.Request, *ec2.AcceptVpcEndpointConnectionsOutput)
+
 	AcceptVpcPeeringConnection(*ec2.AcceptVpcPeeringConnectionInput) (*ec2.AcceptVpcPeeringConnectionOutput, error)
 	AcceptVpcPeeringConnectionWithContext(aws.Context, *ec2.AcceptVpcPeeringConnectionInput, ...request.Option) (*ec2.AcceptVpcPeeringConnectionOutput, error)
 	AcceptVpcPeeringConnectionRequest(*ec2.AcceptVpcPeeringConnectionInput) (*request.Request, *ec2.AcceptVpcPeeringConnectionOutput)
+
+	AdvertiseByoipCidr(*ec2.AdvertiseByoipCidrInput) (*ec2.AdvertiseByoipCidrOutput, error)
+	AdvertiseByoipCidrWithContext(aws.Context, *ec2.AdvertiseByoipCidrInput, ...request.Option) (*ec2.AdvertiseByoipCidrOutput, error)
+	AdvertiseByoipCidrRequest(*ec2.AdvertiseByoipCidrInput) (*request.Request, *ec2.AdvertiseByoipCidrOutput)
 
 	AllocateAddress(*ec2.AllocateAddressInput) (*ec2.AllocateAddressOutput, error)
 	AllocateAddressWithContext(aws.Context, *ec2.AllocateAddressInput, ...request.Option) (*ec2.AllocateAddressOutput, error)
@@ -75,6 +87,10 @@ type EC2API interface {
 	AllocateHosts(*ec2.AllocateHostsInput) (*ec2.AllocateHostsOutput, error)
 	AllocateHostsWithContext(aws.Context, *ec2.AllocateHostsInput, ...request.Option) (*ec2.AllocateHostsOutput, error)
 	AllocateHostsRequest(*ec2.AllocateHostsInput) (*request.Request, *ec2.AllocateHostsOutput)
+
+	ApplySecurityGroupsToClientVpnTargetNetwork(*ec2.ApplySecurityGroupsToClientVpnTargetNetworkInput) (*ec2.ApplySecurityGroupsToClientVpnTargetNetworkOutput, error)
+	ApplySecurityGroupsToClientVpnTargetNetworkWithContext(aws.Context, *ec2.ApplySecurityGroupsToClientVpnTargetNetworkInput, ...request.Option) (*ec2.ApplySecurityGroupsToClientVpnTargetNetworkOutput, error)
+	ApplySecurityGroupsToClientVpnTargetNetworkRequest(*ec2.ApplySecurityGroupsToClientVpnTargetNetworkInput) (*request.Request, *ec2.ApplySecurityGroupsToClientVpnTargetNetworkOutput)
 
 	AssignIpv6Addresses(*ec2.AssignIpv6AddressesInput) (*ec2.AssignIpv6AddressesOutput, error)
 	AssignIpv6AddressesWithContext(aws.Context, *ec2.AssignIpv6AddressesInput, ...request.Option) (*ec2.AssignIpv6AddressesOutput, error)
@@ -87,6 +103,10 @@ type EC2API interface {
 	AssociateAddress(*ec2.AssociateAddressInput) (*ec2.AssociateAddressOutput, error)
 	AssociateAddressWithContext(aws.Context, *ec2.AssociateAddressInput, ...request.Option) (*ec2.AssociateAddressOutput, error)
 	AssociateAddressRequest(*ec2.AssociateAddressInput) (*request.Request, *ec2.AssociateAddressOutput)
+
+	AssociateClientVpnTargetNetwork(*ec2.AssociateClientVpnTargetNetworkInput) (*ec2.AssociateClientVpnTargetNetworkOutput, error)
+	AssociateClientVpnTargetNetworkWithContext(aws.Context, *ec2.AssociateClientVpnTargetNetworkInput, ...request.Option) (*ec2.AssociateClientVpnTargetNetworkOutput, error)
+	AssociateClientVpnTargetNetworkRequest(*ec2.AssociateClientVpnTargetNetworkInput) (*request.Request, *ec2.AssociateClientVpnTargetNetworkOutput)
 
 	AssociateDhcpOptions(*ec2.AssociateDhcpOptionsInput) (*ec2.AssociateDhcpOptionsOutput, error)
 	AssociateDhcpOptionsWithContext(aws.Context, *ec2.AssociateDhcpOptionsInput, ...request.Option) (*ec2.AssociateDhcpOptionsOutput, error)
@@ -103,6 +123,10 @@ type EC2API interface {
 	AssociateSubnetCidrBlock(*ec2.AssociateSubnetCidrBlockInput) (*ec2.AssociateSubnetCidrBlockOutput, error)
 	AssociateSubnetCidrBlockWithContext(aws.Context, *ec2.AssociateSubnetCidrBlockInput, ...request.Option) (*ec2.AssociateSubnetCidrBlockOutput, error)
 	AssociateSubnetCidrBlockRequest(*ec2.AssociateSubnetCidrBlockInput) (*request.Request, *ec2.AssociateSubnetCidrBlockOutput)
+
+	AssociateTransitGatewayRouteTable(*ec2.AssociateTransitGatewayRouteTableInput) (*ec2.AssociateTransitGatewayRouteTableOutput, error)
+	AssociateTransitGatewayRouteTableWithContext(aws.Context, *ec2.AssociateTransitGatewayRouteTableInput, ...request.Option) (*ec2.AssociateTransitGatewayRouteTableOutput, error)
+	AssociateTransitGatewayRouteTableRequest(*ec2.AssociateTransitGatewayRouteTableInput) (*request.Request, *ec2.AssociateTransitGatewayRouteTableOutput)
 
 	AssociateVpcCidrBlock(*ec2.AssociateVpcCidrBlockInput) (*ec2.AssociateVpcCidrBlockOutput, error)
 	AssociateVpcCidrBlockWithContext(aws.Context, *ec2.AssociateVpcCidrBlockInput, ...request.Option) (*ec2.AssociateVpcCidrBlockOutput, error)
@@ -128,6 +152,10 @@ type EC2API interface {
 	AttachVpnGatewayWithContext(aws.Context, *ec2.AttachVpnGatewayInput, ...request.Option) (*ec2.AttachVpnGatewayOutput, error)
 	AttachVpnGatewayRequest(*ec2.AttachVpnGatewayInput) (*request.Request, *ec2.AttachVpnGatewayOutput)
 
+	AuthorizeClientVpnIngress(*ec2.AuthorizeClientVpnIngressInput) (*ec2.AuthorizeClientVpnIngressOutput, error)
+	AuthorizeClientVpnIngressWithContext(aws.Context, *ec2.AuthorizeClientVpnIngressInput, ...request.Option) (*ec2.AuthorizeClientVpnIngressOutput, error)
+	AuthorizeClientVpnIngressRequest(*ec2.AuthorizeClientVpnIngressInput) (*request.Request, *ec2.AuthorizeClientVpnIngressOutput)
+
 	AuthorizeSecurityGroupEgress(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error)
 	AuthorizeSecurityGroupEgressWithContext(aws.Context, *ec2.AuthorizeSecurityGroupEgressInput, ...request.Option) (*ec2.AuthorizeSecurityGroupEgressOutput, error)
 	AuthorizeSecurityGroupEgressRequest(*ec2.AuthorizeSecurityGroupEgressInput) (*request.Request, *ec2.AuthorizeSecurityGroupEgressOutput)
@@ -143,6 +171,10 @@ type EC2API interface {
 	CancelBundleTask(*ec2.CancelBundleTaskInput) (*ec2.CancelBundleTaskOutput, error)
 	CancelBundleTaskWithContext(aws.Context, *ec2.CancelBundleTaskInput, ...request.Option) (*ec2.CancelBundleTaskOutput, error)
 	CancelBundleTaskRequest(*ec2.CancelBundleTaskInput) (*request.Request, *ec2.CancelBundleTaskOutput)
+
+	CancelCapacityReservation(*ec2.CancelCapacityReservationInput) (*ec2.CancelCapacityReservationOutput, error)
+	CancelCapacityReservationWithContext(aws.Context, *ec2.CancelCapacityReservationInput, ...request.Option) (*ec2.CancelCapacityReservationOutput, error)
+	CancelCapacityReservationRequest(*ec2.CancelCapacityReservationInput) (*request.Request, *ec2.CancelCapacityReservationOutput)
 
 	CancelConversionTask(*ec2.CancelConversionTaskInput) (*ec2.CancelConversionTaskOutput, error)
 	CancelConversionTaskWithContext(aws.Context, *ec2.CancelConversionTaskInput, ...request.Option) (*ec2.CancelConversionTaskOutput, error)
@@ -172,6 +204,10 @@ type EC2API interface {
 	ConfirmProductInstanceWithContext(aws.Context, *ec2.ConfirmProductInstanceInput, ...request.Option) (*ec2.ConfirmProductInstanceOutput, error)
 	ConfirmProductInstanceRequest(*ec2.ConfirmProductInstanceInput) (*request.Request, *ec2.ConfirmProductInstanceOutput)
 
+	CopyFpgaImage(*ec2.CopyFpgaImageInput) (*ec2.CopyFpgaImageOutput, error)
+	CopyFpgaImageWithContext(aws.Context, *ec2.CopyFpgaImageInput, ...request.Option) (*ec2.CopyFpgaImageOutput, error)
+	CopyFpgaImageRequest(*ec2.CopyFpgaImageInput) (*request.Request, *ec2.CopyFpgaImageOutput)
+
 	CopyImage(*ec2.CopyImageInput) (*ec2.CopyImageOutput, error)
 	CopyImageWithContext(aws.Context, *ec2.CopyImageInput, ...request.Option) (*ec2.CopyImageOutput, error)
 	CopyImageRequest(*ec2.CopyImageInput) (*request.Request, *ec2.CopyImageOutput)
@@ -180,9 +216,25 @@ type EC2API interface {
 	CopySnapshotWithContext(aws.Context, *ec2.CopySnapshotInput, ...request.Option) (*ec2.CopySnapshotOutput, error)
 	CopySnapshotRequest(*ec2.CopySnapshotInput) (*request.Request, *ec2.CopySnapshotOutput)
 
+	CreateCapacityReservation(*ec2.CreateCapacityReservationInput) (*ec2.CreateCapacityReservationOutput, error)
+	CreateCapacityReservationWithContext(aws.Context, *ec2.CreateCapacityReservationInput, ...request.Option) (*ec2.CreateCapacityReservationOutput, error)
+	CreateCapacityReservationRequest(*ec2.CreateCapacityReservationInput) (*request.Request, *ec2.CreateCapacityReservationOutput)
+
+	CreateClientVpnEndpoint(*ec2.CreateClientVpnEndpointInput) (*ec2.CreateClientVpnEndpointOutput, error)
+	CreateClientVpnEndpointWithContext(aws.Context, *ec2.CreateClientVpnEndpointInput, ...request.Option) (*ec2.CreateClientVpnEndpointOutput, error)
+	CreateClientVpnEndpointRequest(*ec2.CreateClientVpnEndpointInput) (*request.Request, *ec2.CreateClientVpnEndpointOutput)
+
+	CreateClientVpnRoute(*ec2.CreateClientVpnRouteInput) (*ec2.CreateClientVpnRouteOutput, error)
+	CreateClientVpnRouteWithContext(aws.Context, *ec2.CreateClientVpnRouteInput, ...request.Option) (*ec2.CreateClientVpnRouteOutput, error)
+	CreateClientVpnRouteRequest(*ec2.CreateClientVpnRouteInput) (*request.Request, *ec2.CreateClientVpnRouteOutput)
+
 	CreateCustomerGateway(*ec2.CreateCustomerGatewayInput) (*ec2.CreateCustomerGatewayOutput, error)
 	CreateCustomerGatewayWithContext(aws.Context, *ec2.CreateCustomerGatewayInput, ...request.Option) (*ec2.CreateCustomerGatewayOutput, error)
 	CreateCustomerGatewayRequest(*ec2.CreateCustomerGatewayInput) (*request.Request, *ec2.CreateCustomerGatewayOutput)
+
+	CreateDefaultSubnet(*ec2.CreateDefaultSubnetInput) (*ec2.CreateDefaultSubnetOutput, error)
+	CreateDefaultSubnetWithContext(aws.Context, *ec2.CreateDefaultSubnetInput, ...request.Option) (*ec2.CreateDefaultSubnetOutput, error)
+	CreateDefaultSubnetRequest(*ec2.CreateDefaultSubnetInput) (*request.Request, *ec2.CreateDefaultSubnetOutput)
 
 	CreateDefaultVpc(*ec2.CreateDefaultVpcInput) (*ec2.CreateDefaultVpcOutput, error)
 	CreateDefaultVpcWithContext(aws.Context, *ec2.CreateDefaultVpcInput, ...request.Option) (*ec2.CreateDefaultVpcOutput, error)
@@ -195,6 +247,10 @@ type EC2API interface {
 	CreateEgressOnlyInternetGateway(*ec2.CreateEgressOnlyInternetGatewayInput) (*ec2.CreateEgressOnlyInternetGatewayOutput, error)
 	CreateEgressOnlyInternetGatewayWithContext(aws.Context, *ec2.CreateEgressOnlyInternetGatewayInput, ...request.Option) (*ec2.CreateEgressOnlyInternetGatewayOutput, error)
 	CreateEgressOnlyInternetGatewayRequest(*ec2.CreateEgressOnlyInternetGatewayInput) (*request.Request, *ec2.CreateEgressOnlyInternetGatewayOutput)
+
+	CreateFleet(*ec2.CreateFleetInput) (*ec2.CreateFleetOutput, error)
+	CreateFleetWithContext(aws.Context, *ec2.CreateFleetInput, ...request.Option) (*ec2.CreateFleetOutput, error)
+	CreateFleetRequest(*ec2.CreateFleetInput) (*request.Request, *ec2.CreateFleetOutput)
 
 	CreateFlowLogs(*ec2.CreateFlowLogsInput) (*ec2.CreateFlowLogsOutput, error)
 	CreateFlowLogsWithContext(aws.Context, *ec2.CreateFlowLogsInput, ...request.Option) (*ec2.CreateFlowLogsOutput, error)
@@ -219,6 +275,14 @@ type EC2API interface {
 	CreateKeyPair(*ec2.CreateKeyPairInput) (*ec2.CreateKeyPairOutput, error)
 	CreateKeyPairWithContext(aws.Context, *ec2.CreateKeyPairInput, ...request.Option) (*ec2.CreateKeyPairOutput, error)
 	CreateKeyPairRequest(*ec2.CreateKeyPairInput) (*request.Request, *ec2.CreateKeyPairOutput)
+
+	CreateLaunchTemplate(*ec2.CreateLaunchTemplateInput) (*ec2.CreateLaunchTemplateOutput, error)
+	CreateLaunchTemplateWithContext(aws.Context, *ec2.CreateLaunchTemplateInput, ...request.Option) (*ec2.CreateLaunchTemplateOutput, error)
+	CreateLaunchTemplateRequest(*ec2.CreateLaunchTemplateInput) (*request.Request, *ec2.CreateLaunchTemplateOutput)
+
+	CreateLaunchTemplateVersion(*ec2.CreateLaunchTemplateVersionInput) (*ec2.CreateLaunchTemplateVersionOutput, error)
+	CreateLaunchTemplateVersionWithContext(aws.Context, *ec2.CreateLaunchTemplateVersionInput, ...request.Option) (*ec2.CreateLaunchTemplateVersionOutput, error)
+	CreateLaunchTemplateVersionRequest(*ec2.CreateLaunchTemplateVersionInput) (*request.Request, *ec2.CreateLaunchTemplateVersionOutput)
 
 	CreateNatGateway(*ec2.CreateNatGatewayInput) (*ec2.CreateNatGatewayOutput, error)
 	CreateNatGatewayWithContext(aws.Context, *ec2.CreateNatGatewayInput, ...request.Option) (*ec2.CreateNatGatewayOutput, error)
@@ -276,6 +340,22 @@ type EC2API interface {
 	CreateTagsWithContext(aws.Context, *ec2.CreateTagsInput, ...request.Option) (*ec2.CreateTagsOutput, error)
 	CreateTagsRequest(*ec2.CreateTagsInput) (*request.Request, *ec2.CreateTagsOutput)
 
+	CreateTransitGateway(*ec2.CreateTransitGatewayInput) (*ec2.CreateTransitGatewayOutput, error)
+	CreateTransitGatewayWithContext(aws.Context, *ec2.CreateTransitGatewayInput, ...request.Option) (*ec2.CreateTransitGatewayOutput, error)
+	CreateTransitGatewayRequest(*ec2.CreateTransitGatewayInput) (*request.Request, *ec2.CreateTransitGatewayOutput)
+
+	CreateTransitGatewayRoute(*ec2.CreateTransitGatewayRouteInput) (*ec2.CreateTransitGatewayRouteOutput, error)
+	CreateTransitGatewayRouteWithContext(aws.Context, *ec2.CreateTransitGatewayRouteInput, ...request.Option) (*ec2.CreateTransitGatewayRouteOutput, error)
+	CreateTransitGatewayRouteRequest(*ec2.CreateTransitGatewayRouteInput) (*request.Request, *ec2.CreateTransitGatewayRouteOutput)
+
+	CreateTransitGatewayRouteTable(*ec2.CreateTransitGatewayRouteTableInput) (*ec2.CreateTransitGatewayRouteTableOutput, error)
+	CreateTransitGatewayRouteTableWithContext(aws.Context, *ec2.CreateTransitGatewayRouteTableInput, ...request.Option) (*ec2.CreateTransitGatewayRouteTableOutput, error)
+	CreateTransitGatewayRouteTableRequest(*ec2.CreateTransitGatewayRouteTableInput) (*request.Request, *ec2.CreateTransitGatewayRouteTableOutput)
+
+	CreateTransitGatewayVpcAttachment(*ec2.CreateTransitGatewayVpcAttachmentInput) (*ec2.CreateTransitGatewayVpcAttachmentOutput, error)
+	CreateTransitGatewayVpcAttachmentWithContext(aws.Context, *ec2.CreateTransitGatewayVpcAttachmentInput, ...request.Option) (*ec2.CreateTransitGatewayVpcAttachmentOutput, error)
+	CreateTransitGatewayVpcAttachmentRequest(*ec2.CreateTransitGatewayVpcAttachmentInput) (*request.Request, *ec2.CreateTransitGatewayVpcAttachmentOutput)
+
 	CreateVolume(*ec2.CreateVolumeInput) (*ec2.Volume, error)
 	CreateVolumeWithContext(aws.Context, *ec2.CreateVolumeInput, ...request.Option) (*ec2.Volume, error)
 	CreateVolumeRequest(*ec2.CreateVolumeInput) (*request.Request, *ec2.Volume)
@@ -287,6 +367,14 @@ type EC2API interface {
 	CreateVpcEndpoint(*ec2.CreateVpcEndpointInput) (*ec2.CreateVpcEndpointOutput, error)
 	CreateVpcEndpointWithContext(aws.Context, *ec2.CreateVpcEndpointInput, ...request.Option) (*ec2.CreateVpcEndpointOutput, error)
 	CreateVpcEndpointRequest(*ec2.CreateVpcEndpointInput) (*request.Request, *ec2.CreateVpcEndpointOutput)
+
+	CreateVpcEndpointConnectionNotification(*ec2.CreateVpcEndpointConnectionNotificationInput) (*ec2.CreateVpcEndpointConnectionNotificationOutput, error)
+	CreateVpcEndpointConnectionNotificationWithContext(aws.Context, *ec2.CreateVpcEndpointConnectionNotificationInput, ...request.Option) (*ec2.CreateVpcEndpointConnectionNotificationOutput, error)
+	CreateVpcEndpointConnectionNotificationRequest(*ec2.CreateVpcEndpointConnectionNotificationInput) (*request.Request, *ec2.CreateVpcEndpointConnectionNotificationOutput)
+
+	CreateVpcEndpointServiceConfiguration(*ec2.CreateVpcEndpointServiceConfigurationInput) (*ec2.CreateVpcEndpointServiceConfigurationOutput, error)
+	CreateVpcEndpointServiceConfigurationWithContext(aws.Context, *ec2.CreateVpcEndpointServiceConfigurationInput, ...request.Option) (*ec2.CreateVpcEndpointServiceConfigurationOutput, error)
+	CreateVpcEndpointServiceConfigurationRequest(*ec2.CreateVpcEndpointServiceConfigurationInput) (*request.Request, *ec2.CreateVpcEndpointServiceConfigurationOutput)
 
 	CreateVpcPeeringConnection(*ec2.CreateVpcPeeringConnectionInput) (*ec2.CreateVpcPeeringConnectionOutput, error)
 	CreateVpcPeeringConnectionWithContext(aws.Context, *ec2.CreateVpcPeeringConnectionInput, ...request.Option) (*ec2.CreateVpcPeeringConnectionOutput, error)
@@ -304,6 +392,14 @@ type EC2API interface {
 	CreateVpnGatewayWithContext(aws.Context, *ec2.CreateVpnGatewayInput, ...request.Option) (*ec2.CreateVpnGatewayOutput, error)
 	CreateVpnGatewayRequest(*ec2.CreateVpnGatewayInput) (*request.Request, *ec2.CreateVpnGatewayOutput)
 
+	DeleteClientVpnEndpoint(*ec2.DeleteClientVpnEndpointInput) (*ec2.DeleteClientVpnEndpointOutput, error)
+	DeleteClientVpnEndpointWithContext(aws.Context, *ec2.DeleteClientVpnEndpointInput, ...request.Option) (*ec2.DeleteClientVpnEndpointOutput, error)
+	DeleteClientVpnEndpointRequest(*ec2.DeleteClientVpnEndpointInput) (*request.Request, *ec2.DeleteClientVpnEndpointOutput)
+
+	DeleteClientVpnRoute(*ec2.DeleteClientVpnRouteInput) (*ec2.DeleteClientVpnRouteOutput, error)
+	DeleteClientVpnRouteWithContext(aws.Context, *ec2.DeleteClientVpnRouteInput, ...request.Option) (*ec2.DeleteClientVpnRouteOutput, error)
+	DeleteClientVpnRouteRequest(*ec2.DeleteClientVpnRouteInput) (*request.Request, *ec2.DeleteClientVpnRouteOutput)
+
 	DeleteCustomerGateway(*ec2.DeleteCustomerGatewayInput) (*ec2.DeleteCustomerGatewayOutput, error)
 	DeleteCustomerGatewayWithContext(aws.Context, *ec2.DeleteCustomerGatewayInput, ...request.Option) (*ec2.DeleteCustomerGatewayOutput, error)
 	DeleteCustomerGatewayRequest(*ec2.DeleteCustomerGatewayInput) (*request.Request, *ec2.DeleteCustomerGatewayOutput)
@@ -316,9 +412,17 @@ type EC2API interface {
 	DeleteEgressOnlyInternetGatewayWithContext(aws.Context, *ec2.DeleteEgressOnlyInternetGatewayInput, ...request.Option) (*ec2.DeleteEgressOnlyInternetGatewayOutput, error)
 	DeleteEgressOnlyInternetGatewayRequest(*ec2.DeleteEgressOnlyInternetGatewayInput) (*request.Request, *ec2.DeleteEgressOnlyInternetGatewayOutput)
 
+	DeleteFleets(*ec2.DeleteFleetsInput) (*ec2.DeleteFleetsOutput, error)
+	DeleteFleetsWithContext(aws.Context, *ec2.DeleteFleetsInput, ...request.Option) (*ec2.DeleteFleetsOutput, error)
+	DeleteFleetsRequest(*ec2.DeleteFleetsInput) (*request.Request, *ec2.DeleteFleetsOutput)
+
 	DeleteFlowLogs(*ec2.DeleteFlowLogsInput) (*ec2.DeleteFlowLogsOutput, error)
 	DeleteFlowLogsWithContext(aws.Context, *ec2.DeleteFlowLogsInput, ...request.Option) (*ec2.DeleteFlowLogsOutput, error)
 	DeleteFlowLogsRequest(*ec2.DeleteFlowLogsInput) (*request.Request, *ec2.DeleteFlowLogsOutput)
+
+	DeleteFpgaImage(*ec2.DeleteFpgaImageInput) (*ec2.DeleteFpgaImageOutput, error)
+	DeleteFpgaImageWithContext(aws.Context, *ec2.DeleteFpgaImageInput, ...request.Option) (*ec2.DeleteFpgaImageOutput, error)
+	DeleteFpgaImageRequest(*ec2.DeleteFpgaImageInput) (*request.Request, *ec2.DeleteFpgaImageOutput)
 
 	DeleteInternetGateway(*ec2.DeleteInternetGatewayInput) (*ec2.DeleteInternetGatewayOutput, error)
 	DeleteInternetGatewayWithContext(aws.Context, *ec2.DeleteInternetGatewayInput, ...request.Option) (*ec2.DeleteInternetGatewayOutput, error)
@@ -327,6 +431,14 @@ type EC2API interface {
 	DeleteKeyPair(*ec2.DeleteKeyPairInput) (*ec2.DeleteKeyPairOutput, error)
 	DeleteKeyPairWithContext(aws.Context, *ec2.DeleteKeyPairInput, ...request.Option) (*ec2.DeleteKeyPairOutput, error)
 	DeleteKeyPairRequest(*ec2.DeleteKeyPairInput) (*request.Request, *ec2.DeleteKeyPairOutput)
+
+	DeleteLaunchTemplate(*ec2.DeleteLaunchTemplateInput) (*ec2.DeleteLaunchTemplateOutput, error)
+	DeleteLaunchTemplateWithContext(aws.Context, *ec2.DeleteLaunchTemplateInput, ...request.Option) (*ec2.DeleteLaunchTemplateOutput, error)
+	DeleteLaunchTemplateRequest(*ec2.DeleteLaunchTemplateInput) (*request.Request, *ec2.DeleteLaunchTemplateOutput)
+
+	DeleteLaunchTemplateVersions(*ec2.DeleteLaunchTemplateVersionsInput) (*ec2.DeleteLaunchTemplateVersionsOutput, error)
+	DeleteLaunchTemplateVersionsWithContext(aws.Context, *ec2.DeleteLaunchTemplateVersionsInput, ...request.Option) (*ec2.DeleteLaunchTemplateVersionsOutput, error)
+	DeleteLaunchTemplateVersionsRequest(*ec2.DeleteLaunchTemplateVersionsInput) (*request.Request, *ec2.DeleteLaunchTemplateVersionsOutput)
 
 	DeleteNatGateway(*ec2.DeleteNatGatewayInput) (*ec2.DeleteNatGatewayOutput, error)
 	DeleteNatGatewayWithContext(aws.Context, *ec2.DeleteNatGatewayInput, ...request.Option) (*ec2.DeleteNatGatewayOutput, error)
@@ -380,6 +492,22 @@ type EC2API interface {
 	DeleteTagsWithContext(aws.Context, *ec2.DeleteTagsInput, ...request.Option) (*ec2.DeleteTagsOutput, error)
 	DeleteTagsRequest(*ec2.DeleteTagsInput) (*request.Request, *ec2.DeleteTagsOutput)
 
+	DeleteTransitGateway(*ec2.DeleteTransitGatewayInput) (*ec2.DeleteTransitGatewayOutput, error)
+	DeleteTransitGatewayWithContext(aws.Context, *ec2.DeleteTransitGatewayInput, ...request.Option) (*ec2.DeleteTransitGatewayOutput, error)
+	DeleteTransitGatewayRequest(*ec2.DeleteTransitGatewayInput) (*request.Request, *ec2.DeleteTransitGatewayOutput)
+
+	DeleteTransitGatewayRoute(*ec2.DeleteTransitGatewayRouteInput) (*ec2.DeleteTransitGatewayRouteOutput, error)
+	DeleteTransitGatewayRouteWithContext(aws.Context, *ec2.DeleteTransitGatewayRouteInput, ...request.Option) (*ec2.DeleteTransitGatewayRouteOutput, error)
+	DeleteTransitGatewayRouteRequest(*ec2.DeleteTransitGatewayRouteInput) (*request.Request, *ec2.DeleteTransitGatewayRouteOutput)
+
+	DeleteTransitGatewayRouteTable(*ec2.DeleteTransitGatewayRouteTableInput) (*ec2.DeleteTransitGatewayRouteTableOutput, error)
+	DeleteTransitGatewayRouteTableWithContext(aws.Context, *ec2.DeleteTransitGatewayRouteTableInput, ...request.Option) (*ec2.DeleteTransitGatewayRouteTableOutput, error)
+	DeleteTransitGatewayRouteTableRequest(*ec2.DeleteTransitGatewayRouteTableInput) (*request.Request, *ec2.DeleteTransitGatewayRouteTableOutput)
+
+	DeleteTransitGatewayVpcAttachment(*ec2.DeleteTransitGatewayVpcAttachmentInput) (*ec2.DeleteTransitGatewayVpcAttachmentOutput, error)
+	DeleteTransitGatewayVpcAttachmentWithContext(aws.Context, *ec2.DeleteTransitGatewayVpcAttachmentInput, ...request.Option) (*ec2.DeleteTransitGatewayVpcAttachmentOutput, error)
+	DeleteTransitGatewayVpcAttachmentRequest(*ec2.DeleteTransitGatewayVpcAttachmentInput) (*request.Request, *ec2.DeleteTransitGatewayVpcAttachmentOutput)
+
 	DeleteVolume(*ec2.DeleteVolumeInput) (*ec2.DeleteVolumeOutput, error)
 	DeleteVolumeWithContext(aws.Context, *ec2.DeleteVolumeInput, ...request.Option) (*ec2.DeleteVolumeOutput, error)
 	DeleteVolumeRequest(*ec2.DeleteVolumeInput) (*request.Request, *ec2.DeleteVolumeOutput)
@@ -387,6 +515,14 @@ type EC2API interface {
 	DeleteVpc(*ec2.DeleteVpcInput) (*ec2.DeleteVpcOutput, error)
 	DeleteVpcWithContext(aws.Context, *ec2.DeleteVpcInput, ...request.Option) (*ec2.DeleteVpcOutput, error)
 	DeleteVpcRequest(*ec2.DeleteVpcInput) (*request.Request, *ec2.DeleteVpcOutput)
+
+	DeleteVpcEndpointConnectionNotifications(*ec2.DeleteVpcEndpointConnectionNotificationsInput) (*ec2.DeleteVpcEndpointConnectionNotificationsOutput, error)
+	DeleteVpcEndpointConnectionNotificationsWithContext(aws.Context, *ec2.DeleteVpcEndpointConnectionNotificationsInput, ...request.Option) (*ec2.DeleteVpcEndpointConnectionNotificationsOutput, error)
+	DeleteVpcEndpointConnectionNotificationsRequest(*ec2.DeleteVpcEndpointConnectionNotificationsInput) (*request.Request, *ec2.DeleteVpcEndpointConnectionNotificationsOutput)
+
+	DeleteVpcEndpointServiceConfigurations(*ec2.DeleteVpcEndpointServiceConfigurationsInput) (*ec2.DeleteVpcEndpointServiceConfigurationsOutput, error)
+	DeleteVpcEndpointServiceConfigurationsWithContext(aws.Context, *ec2.DeleteVpcEndpointServiceConfigurationsInput, ...request.Option) (*ec2.DeleteVpcEndpointServiceConfigurationsOutput, error)
+	DeleteVpcEndpointServiceConfigurationsRequest(*ec2.DeleteVpcEndpointServiceConfigurationsInput) (*request.Request, *ec2.DeleteVpcEndpointServiceConfigurationsOutput)
 
 	DeleteVpcEndpoints(*ec2.DeleteVpcEndpointsInput) (*ec2.DeleteVpcEndpointsOutput, error)
 	DeleteVpcEndpointsWithContext(aws.Context, *ec2.DeleteVpcEndpointsInput, ...request.Option) (*ec2.DeleteVpcEndpointsOutput, error)
@@ -408,6 +544,10 @@ type EC2API interface {
 	DeleteVpnGatewayWithContext(aws.Context, *ec2.DeleteVpnGatewayInput, ...request.Option) (*ec2.DeleteVpnGatewayOutput, error)
 	DeleteVpnGatewayRequest(*ec2.DeleteVpnGatewayInput) (*request.Request, *ec2.DeleteVpnGatewayOutput)
 
+	DeprovisionByoipCidr(*ec2.DeprovisionByoipCidrInput) (*ec2.DeprovisionByoipCidrOutput, error)
+	DeprovisionByoipCidrWithContext(aws.Context, *ec2.DeprovisionByoipCidrInput, ...request.Option) (*ec2.DeprovisionByoipCidrOutput, error)
+	DeprovisionByoipCidrRequest(*ec2.DeprovisionByoipCidrInput) (*request.Request, *ec2.DeprovisionByoipCidrOutput)
+
 	DeregisterImage(*ec2.DeregisterImageInput) (*ec2.DeregisterImageOutput, error)
 	DeregisterImageWithContext(aws.Context, *ec2.DeregisterImageInput, ...request.Option) (*ec2.DeregisterImageOutput, error)
 	DeregisterImageRequest(*ec2.DeregisterImageInput) (*request.Request, *ec2.DeregisterImageOutput)
@@ -420,6 +560,10 @@ type EC2API interface {
 	DescribeAddressesWithContext(aws.Context, *ec2.DescribeAddressesInput, ...request.Option) (*ec2.DescribeAddressesOutput, error)
 	DescribeAddressesRequest(*ec2.DescribeAddressesInput) (*request.Request, *ec2.DescribeAddressesOutput)
 
+	DescribeAggregateIdFormat(*ec2.DescribeAggregateIdFormatInput) (*ec2.DescribeAggregateIdFormatOutput, error)
+	DescribeAggregateIdFormatWithContext(aws.Context, *ec2.DescribeAggregateIdFormatInput, ...request.Option) (*ec2.DescribeAggregateIdFormatOutput, error)
+	DescribeAggregateIdFormatRequest(*ec2.DescribeAggregateIdFormatInput) (*request.Request, *ec2.DescribeAggregateIdFormatOutput)
+
 	DescribeAvailabilityZones(*ec2.DescribeAvailabilityZonesInput) (*ec2.DescribeAvailabilityZonesOutput, error)
 	DescribeAvailabilityZonesWithContext(aws.Context, *ec2.DescribeAvailabilityZonesInput, ...request.Option) (*ec2.DescribeAvailabilityZonesOutput, error)
 	DescribeAvailabilityZonesRequest(*ec2.DescribeAvailabilityZonesInput) (*request.Request, *ec2.DescribeAvailabilityZonesOutput)
@@ -428,9 +572,37 @@ type EC2API interface {
 	DescribeBundleTasksWithContext(aws.Context, *ec2.DescribeBundleTasksInput, ...request.Option) (*ec2.DescribeBundleTasksOutput, error)
 	DescribeBundleTasksRequest(*ec2.DescribeBundleTasksInput) (*request.Request, *ec2.DescribeBundleTasksOutput)
 
+	DescribeByoipCidrs(*ec2.DescribeByoipCidrsInput) (*ec2.DescribeByoipCidrsOutput, error)
+	DescribeByoipCidrsWithContext(aws.Context, *ec2.DescribeByoipCidrsInput, ...request.Option) (*ec2.DescribeByoipCidrsOutput, error)
+	DescribeByoipCidrsRequest(*ec2.DescribeByoipCidrsInput) (*request.Request, *ec2.DescribeByoipCidrsOutput)
+
+	DescribeCapacityReservations(*ec2.DescribeCapacityReservationsInput) (*ec2.DescribeCapacityReservationsOutput, error)
+	DescribeCapacityReservationsWithContext(aws.Context, *ec2.DescribeCapacityReservationsInput, ...request.Option) (*ec2.DescribeCapacityReservationsOutput, error)
+	DescribeCapacityReservationsRequest(*ec2.DescribeCapacityReservationsInput) (*request.Request, *ec2.DescribeCapacityReservationsOutput)
+
 	DescribeClassicLinkInstances(*ec2.DescribeClassicLinkInstancesInput) (*ec2.DescribeClassicLinkInstancesOutput, error)
 	DescribeClassicLinkInstancesWithContext(aws.Context, *ec2.DescribeClassicLinkInstancesInput, ...request.Option) (*ec2.DescribeClassicLinkInstancesOutput, error)
 	DescribeClassicLinkInstancesRequest(*ec2.DescribeClassicLinkInstancesInput) (*request.Request, *ec2.DescribeClassicLinkInstancesOutput)
+
+	DescribeClientVpnAuthorizationRules(*ec2.DescribeClientVpnAuthorizationRulesInput) (*ec2.DescribeClientVpnAuthorizationRulesOutput, error)
+	DescribeClientVpnAuthorizationRulesWithContext(aws.Context, *ec2.DescribeClientVpnAuthorizationRulesInput, ...request.Option) (*ec2.DescribeClientVpnAuthorizationRulesOutput, error)
+	DescribeClientVpnAuthorizationRulesRequest(*ec2.DescribeClientVpnAuthorizationRulesInput) (*request.Request, *ec2.DescribeClientVpnAuthorizationRulesOutput)
+
+	DescribeClientVpnConnections(*ec2.DescribeClientVpnConnectionsInput) (*ec2.DescribeClientVpnConnectionsOutput, error)
+	DescribeClientVpnConnectionsWithContext(aws.Context, *ec2.DescribeClientVpnConnectionsInput, ...request.Option) (*ec2.DescribeClientVpnConnectionsOutput, error)
+	DescribeClientVpnConnectionsRequest(*ec2.DescribeClientVpnConnectionsInput) (*request.Request, *ec2.DescribeClientVpnConnectionsOutput)
+
+	DescribeClientVpnEndpoints(*ec2.DescribeClientVpnEndpointsInput) (*ec2.DescribeClientVpnEndpointsOutput, error)
+	DescribeClientVpnEndpointsWithContext(aws.Context, *ec2.DescribeClientVpnEndpointsInput, ...request.Option) (*ec2.DescribeClientVpnEndpointsOutput, error)
+	DescribeClientVpnEndpointsRequest(*ec2.DescribeClientVpnEndpointsInput) (*request.Request, *ec2.DescribeClientVpnEndpointsOutput)
+
+	DescribeClientVpnRoutes(*ec2.DescribeClientVpnRoutesInput) (*ec2.DescribeClientVpnRoutesOutput, error)
+	DescribeClientVpnRoutesWithContext(aws.Context, *ec2.DescribeClientVpnRoutesInput, ...request.Option) (*ec2.DescribeClientVpnRoutesOutput, error)
+	DescribeClientVpnRoutesRequest(*ec2.DescribeClientVpnRoutesInput) (*request.Request, *ec2.DescribeClientVpnRoutesOutput)
+
+	DescribeClientVpnTargetNetworks(*ec2.DescribeClientVpnTargetNetworksInput) (*ec2.DescribeClientVpnTargetNetworksOutput, error)
+	DescribeClientVpnTargetNetworksWithContext(aws.Context, *ec2.DescribeClientVpnTargetNetworksInput, ...request.Option) (*ec2.DescribeClientVpnTargetNetworksOutput, error)
+	DescribeClientVpnTargetNetworksRequest(*ec2.DescribeClientVpnTargetNetworksInput) (*request.Request, *ec2.DescribeClientVpnTargetNetworksOutput)
 
 	DescribeConversionTasks(*ec2.DescribeConversionTasksInput) (*ec2.DescribeConversionTasksOutput, error)
 	DescribeConversionTasksWithContext(aws.Context, *ec2.DescribeConversionTasksInput, ...request.Option) (*ec2.DescribeConversionTasksOutput, error)
@@ -456,9 +628,25 @@ type EC2API interface {
 	DescribeExportTasksWithContext(aws.Context, *ec2.DescribeExportTasksInput, ...request.Option) (*ec2.DescribeExportTasksOutput, error)
 	DescribeExportTasksRequest(*ec2.DescribeExportTasksInput) (*request.Request, *ec2.DescribeExportTasksOutput)
 
+	DescribeFleetHistory(*ec2.DescribeFleetHistoryInput) (*ec2.DescribeFleetHistoryOutput, error)
+	DescribeFleetHistoryWithContext(aws.Context, *ec2.DescribeFleetHistoryInput, ...request.Option) (*ec2.DescribeFleetHistoryOutput, error)
+	DescribeFleetHistoryRequest(*ec2.DescribeFleetHistoryInput) (*request.Request, *ec2.DescribeFleetHistoryOutput)
+
+	DescribeFleetInstances(*ec2.DescribeFleetInstancesInput) (*ec2.DescribeFleetInstancesOutput, error)
+	DescribeFleetInstancesWithContext(aws.Context, *ec2.DescribeFleetInstancesInput, ...request.Option) (*ec2.DescribeFleetInstancesOutput, error)
+	DescribeFleetInstancesRequest(*ec2.DescribeFleetInstancesInput) (*request.Request, *ec2.DescribeFleetInstancesOutput)
+
+	DescribeFleets(*ec2.DescribeFleetsInput) (*ec2.DescribeFleetsOutput, error)
+	DescribeFleetsWithContext(aws.Context, *ec2.DescribeFleetsInput, ...request.Option) (*ec2.DescribeFleetsOutput, error)
+	DescribeFleetsRequest(*ec2.DescribeFleetsInput) (*request.Request, *ec2.DescribeFleetsOutput)
+
 	DescribeFlowLogs(*ec2.DescribeFlowLogsInput) (*ec2.DescribeFlowLogsOutput, error)
 	DescribeFlowLogsWithContext(aws.Context, *ec2.DescribeFlowLogsInput, ...request.Option) (*ec2.DescribeFlowLogsOutput, error)
 	DescribeFlowLogsRequest(*ec2.DescribeFlowLogsInput) (*request.Request, *ec2.DescribeFlowLogsOutput)
+
+	DescribeFpgaImageAttribute(*ec2.DescribeFpgaImageAttributeInput) (*ec2.DescribeFpgaImageAttributeOutput, error)
+	DescribeFpgaImageAttributeWithContext(aws.Context, *ec2.DescribeFpgaImageAttributeInput, ...request.Option) (*ec2.DescribeFpgaImageAttributeOutput, error)
+	DescribeFpgaImageAttributeRequest(*ec2.DescribeFpgaImageAttributeInput) (*request.Request, *ec2.DescribeFpgaImageAttributeOutput)
 
 	DescribeFpgaImages(*ec2.DescribeFpgaImagesInput) (*ec2.DescribeFpgaImagesOutput, error)
 	DescribeFpgaImagesWithContext(aws.Context, *ec2.DescribeFpgaImagesInput, ...request.Option) (*ec2.DescribeFpgaImagesOutput, error)
@@ -508,6 +696,10 @@ type EC2API interface {
 	DescribeInstanceAttributeWithContext(aws.Context, *ec2.DescribeInstanceAttributeInput, ...request.Option) (*ec2.DescribeInstanceAttributeOutput, error)
 	DescribeInstanceAttributeRequest(*ec2.DescribeInstanceAttributeInput) (*request.Request, *ec2.DescribeInstanceAttributeOutput)
 
+	DescribeInstanceCreditSpecifications(*ec2.DescribeInstanceCreditSpecificationsInput) (*ec2.DescribeInstanceCreditSpecificationsOutput, error)
+	DescribeInstanceCreditSpecificationsWithContext(aws.Context, *ec2.DescribeInstanceCreditSpecificationsInput, ...request.Option) (*ec2.DescribeInstanceCreditSpecificationsOutput, error)
+	DescribeInstanceCreditSpecificationsRequest(*ec2.DescribeInstanceCreditSpecificationsInput) (*request.Request, *ec2.DescribeInstanceCreditSpecificationsOutput)
+
 	DescribeInstanceStatus(*ec2.DescribeInstanceStatusInput) (*ec2.DescribeInstanceStatusOutput, error)
 	DescribeInstanceStatusWithContext(aws.Context, *ec2.DescribeInstanceStatusInput, ...request.Option) (*ec2.DescribeInstanceStatusOutput, error)
 	DescribeInstanceStatusRequest(*ec2.DescribeInstanceStatusInput) (*request.Request, *ec2.DescribeInstanceStatusOutput)
@@ -526,9 +718,20 @@ type EC2API interface {
 	DescribeInternetGatewaysWithContext(aws.Context, *ec2.DescribeInternetGatewaysInput, ...request.Option) (*ec2.DescribeInternetGatewaysOutput, error)
 	DescribeInternetGatewaysRequest(*ec2.DescribeInternetGatewaysInput) (*request.Request, *ec2.DescribeInternetGatewaysOutput)
 
+	DescribeInternetGatewaysPages(*ec2.DescribeInternetGatewaysInput, func(*ec2.DescribeInternetGatewaysOutput, bool) bool) error
+	DescribeInternetGatewaysPagesWithContext(aws.Context, *ec2.DescribeInternetGatewaysInput, func(*ec2.DescribeInternetGatewaysOutput, bool) bool, ...request.Option) error
+
 	DescribeKeyPairs(*ec2.DescribeKeyPairsInput) (*ec2.DescribeKeyPairsOutput, error)
 	DescribeKeyPairsWithContext(aws.Context, *ec2.DescribeKeyPairsInput, ...request.Option) (*ec2.DescribeKeyPairsOutput, error)
 	DescribeKeyPairsRequest(*ec2.DescribeKeyPairsInput) (*request.Request, *ec2.DescribeKeyPairsOutput)
+
+	DescribeLaunchTemplateVersions(*ec2.DescribeLaunchTemplateVersionsInput) (*ec2.DescribeLaunchTemplateVersionsOutput, error)
+	DescribeLaunchTemplateVersionsWithContext(aws.Context, *ec2.DescribeLaunchTemplateVersionsInput, ...request.Option) (*ec2.DescribeLaunchTemplateVersionsOutput, error)
+	DescribeLaunchTemplateVersionsRequest(*ec2.DescribeLaunchTemplateVersionsInput) (*request.Request, *ec2.DescribeLaunchTemplateVersionsOutput)
+
+	DescribeLaunchTemplates(*ec2.DescribeLaunchTemplatesInput) (*ec2.DescribeLaunchTemplatesOutput, error)
+	DescribeLaunchTemplatesWithContext(aws.Context, *ec2.DescribeLaunchTemplatesInput, ...request.Option) (*ec2.DescribeLaunchTemplatesOutput, error)
+	DescribeLaunchTemplatesRequest(*ec2.DescribeLaunchTemplatesInput) (*request.Request, *ec2.DescribeLaunchTemplatesOutput)
 
 	DescribeMovingAddresses(*ec2.DescribeMovingAddressesInput) (*ec2.DescribeMovingAddressesOutput, error)
 	DescribeMovingAddressesWithContext(aws.Context, *ec2.DescribeMovingAddressesInput, ...request.Option) (*ec2.DescribeMovingAddressesOutput, error)
@@ -545,6 +748,9 @@ type EC2API interface {
 	DescribeNetworkAclsWithContext(aws.Context, *ec2.DescribeNetworkAclsInput, ...request.Option) (*ec2.DescribeNetworkAclsOutput, error)
 	DescribeNetworkAclsRequest(*ec2.DescribeNetworkAclsInput) (*request.Request, *ec2.DescribeNetworkAclsOutput)
 
+	DescribeNetworkAclsPages(*ec2.DescribeNetworkAclsInput, func(*ec2.DescribeNetworkAclsOutput, bool) bool) error
+	DescribeNetworkAclsPagesWithContext(aws.Context, *ec2.DescribeNetworkAclsInput, func(*ec2.DescribeNetworkAclsOutput, bool) bool, ...request.Option) error
+
 	DescribeNetworkInterfaceAttribute(*ec2.DescribeNetworkInterfaceAttributeInput) (*ec2.DescribeNetworkInterfaceAttributeOutput, error)
 	DescribeNetworkInterfaceAttributeWithContext(aws.Context, *ec2.DescribeNetworkInterfaceAttributeInput, ...request.Option) (*ec2.DescribeNetworkInterfaceAttributeOutput, error)
 	DescribeNetworkInterfaceAttributeRequest(*ec2.DescribeNetworkInterfaceAttributeInput) (*request.Request, *ec2.DescribeNetworkInterfaceAttributeOutput)
@@ -557,6 +763,9 @@ type EC2API interface {
 	DescribeNetworkInterfacesWithContext(aws.Context, *ec2.DescribeNetworkInterfacesInput, ...request.Option) (*ec2.DescribeNetworkInterfacesOutput, error)
 	DescribeNetworkInterfacesRequest(*ec2.DescribeNetworkInterfacesInput) (*request.Request, *ec2.DescribeNetworkInterfacesOutput)
 
+	DescribeNetworkInterfacesPages(*ec2.DescribeNetworkInterfacesInput, func(*ec2.DescribeNetworkInterfacesOutput, bool) bool) error
+	DescribeNetworkInterfacesPagesWithContext(aws.Context, *ec2.DescribeNetworkInterfacesInput, func(*ec2.DescribeNetworkInterfacesOutput, bool) bool, ...request.Option) error
+
 	DescribePlacementGroups(*ec2.DescribePlacementGroupsInput) (*ec2.DescribePlacementGroupsOutput, error)
 	DescribePlacementGroupsWithContext(aws.Context, *ec2.DescribePlacementGroupsInput, ...request.Option) (*ec2.DescribePlacementGroupsOutput, error)
 	DescribePlacementGroupsRequest(*ec2.DescribePlacementGroupsInput) (*request.Request, *ec2.DescribePlacementGroupsOutput)
@@ -564,6 +773,14 @@ type EC2API interface {
 	DescribePrefixLists(*ec2.DescribePrefixListsInput) (*ec2.DescribePrefixListsOutput, error)
 	DescribePrefixListsWithContext(aws.Context, *ec2.DescribePrefixListsInput, ...request.Option) (*ec2.DescribePrefixListsOutput, error)
 	DescribePrefixListsRequest(*ec2.DescribePrefixListsInput) (*request.Request, *ec2.DescribePrefixListsOutput)
+
+	DescribePrincipalIdFormat(*ec2.DescribePrincipalIdFormatInput) (*ec2.DescribePrincipalIdFormatOutput, error)
+	DescribePrincipalIdFormatWithContext(aws.Context, *ec2.DescribePrincipalIdFormatInput, ...request.Option) (*ec2.DescribePrincipalIdFormatOutput, error)
+	DescribePrincipalIdFormatRequest(*ec2.DescribePrincipalIdFormatInput) (*request.Request, *ec2.DescribePrincipalIdFormatOutput)
+
+	DescribePublicIpv4Pools(*ec2.DescribePublicIpv4PoolsInput) (*ec2.DescribePublicIpv4PoolsOutput, error)
+	DescribePublicIpv4PoolsWithContext(aws.Context, *ec2.DescribePublicIpv4PoolsInput, ...request.Option) (*ec2.DescribePublicIpv4PoolsOutput, error)
+	DescribePublicIpv4PoolsRequest(*ec2.DescribePublicIpv4PoolsInput) (*request.Request, *ec2.DescribePublicIpv4PoolsOutput)
 
 	DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error)
 	DescribeRegionsWithContext(aws.Context, *ec2.DescribeRegionsInput, ...request.Option) (*ec2.DescribeRegionsOutput, error)
@@ -595,6 +812,9 @@ type EC2API interface {
 	DescribeRouteTablesWithContext(aws.Context, *ec2.DescribeRouteTablesInput, ...request.Option) (*ec2.DescribeRouteTablesOutput, error)
 	DescribeRouteTablesRequest(*ec2.DescribeRouteTablesInput) (*request.Request, *ec2.DescribeRouteTablesOutput)
 
+	DescribeRouteTablesPages(*ec2.DescribeRouteTablesInput, func(*ec2.DescribeRouteTablesOutput, bool) bool) error
+	DescribeRouteTablesPagesWithContext(aws.Context, *ec2.DescribeRouteTablesInput, func(*ec2.DescribeRouteTablesOutput, bool) bool, ...request.Option) error
+
 	DescribeScheduledInstanceAvailability(*ec2.DescribeScheduledInstanceAvailabilityInput) (*ec2.DescribeScheduledInstanceAvailabilityOutput, error)
 	DescribeScheduledInstanceAvailabilityWithContext(aws.Context, *ec2.DescribeScheduledInstanceAvailabilityInput, ...request.Option) (*ec2.DescribeScheduledInstanceAvailabilityOutput, error)
 	DescribeScheduledInstanceAvailabilityRequest(*ec2.DescribeScheduledInstanceAvailabilityInput) (*request.Request, *ec2.DescribeScheduledInstanceAvailabilityOutput)
@@ -610,6 +830,9 @@ type EC2API interface {
 	DescribeSecurityGroups(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error)
 	DescribeSecurityGroupsWithContext(aws.Context, *ec2.DescribeSecurityGroupsInput, ...request.Option) (*ec2.DescribeSecurityGroupsOutput, error)
 	DescribeSecurityGroupsRequest(*ec2.DescribeSecurityGroupsInput) (*request.Request, *ec2.DescribeSecurityGroupsOutput)
+
+	DescribeSecurityGroupsPages(*ec2.DescribeSecurityGroupsInput, func(*ec2.DescribeSecurityGroupsOutput, bool) bool) error
+	DescribeSecurityGroupsPagesWithContext(aws.Context, *ec2.DescribeSecurityGroupsInput, func(*ec2.DescribeSecurityGroupsOutput, bool) bool, ...request.Option) error
 
 	DescribeSnapshotAttribute(*ec2.DescribeSnapshotAttributeInput) (*ec2.DescribeSnapshotAttributeOutput, error)
 	DescribeSnapshotAttributeWithContext(aws.Context, *ec2.DescribeSnapshotAttributeInput, ...request.Option) (*ec2.DescribeSnapshotAttributeOutput, error)
@@ -667,6 +890,22 @@ type EC2API interface {
 	DescribeTagsPages(*ec2.DescribeTagsInput, func(*ec2.DescribeTagsOutput, bool) bool) error
 	DescribeTagsPagesWithContext(aws.Context, *ec2.DescribeTagsInput, func(*ec2.DescribeTagsOutput, bool) bool, ...request.Option) error
 
+	DescribeTransitGatewayAttachments(*ec2.DescribeTransitGatewayAttachmentsInput) (*ec2.DescribeTransitGatewayAttachmentsOutput, error)
+	DescribeTransitGatewayAttachmentsWithContext(aws.Context, *ec2.DescribeTransitGatewayAttachmentsInput, ...request.Option) (*ec2.DescribeTransitGatewayAttachmentsOutput, error)
+	DescribeTransitGatewayAttachmentsRequest(*ec2.DescribeTransitGatewayAttachmentsInput) (*request.Request, *ec2.DescribeTransitGatewayAttachmentsOutput)
+
+	DescribeTransitGatewayRouteTables(*ec2.DescribeTransitGatewayRouteTablesInput) (*ec2.DescribeTransitGatewayRouteTablesOutput, error)
+	DescribeTransitGatewayRouteTablesWithContext(aws.Context, *ec2.DescribeTransitGatewayRouteTablesInput, ...request.Option) (*ec2.DescribeTransitGatewayRouteTablesOutput, error)
+	DescribeTransitGatewayRouteTablesRequest(*ec2.DescribeTransitGatewayRouteTablesInput) (*request.Request, *ec2.DescribeTransitGatewayRouteTablesOutput)
+
+	DescribeTransitGatewayVpcAttachments(*ec2.DescribeTransitGatewayVpcAttachmentsInput) (*ec2.DescribeTransitGatewayVpcAttachmentsOutput, error)
+	DescribeTransitGatewayVpcAttachmentsWithContext(aws.Context, *ec2.DescribeTransitGatewayVpcAttachmentsInput, ...request.Option) (*ec2.DescribeTransitGatewayVpcAttachmentsOutput, error)
+	DescribeTransitGatewayVpcAttachmentsRequest(*ec2.DescribeTransitGatewayVpcAttachmentsInput) (*request.Request, *ec2.DescribeTransitGatewayVpcAttachmentsOutput)
+
+	DescribeTransitGateways(*ec2.DescribeTransitGatewaysInput) (*ec2.DescribeTransitGatewaysOutput, error)
+	DescribeTransitGatewaysWithContext(aws.Context, *ec2.DescribeTransitGatewaysInput, ...request.Option) (*ec2.DescribeTransitGatewaysOutput, error)
+	DescribeTransitGatewaysRequest(*ec2.DescribeTransitGatewaysInput) (*request.Request, *ec2.DescribeTransitGatewaysOutput)
+
 	DescribeVolumeAttribute(*ec2.DescribeVolumeAttributeInput) (*ec2.DescribeVolumeAttributeOutput, error)
 	DescribeVolumeAttributeWithContext(aws.Context, *ec2.DescribeVolumeAttributeInput, ...request.Option) (*ec2.DescribeVolumeAttributeOutput, error)
 	DescribeVolumeAttributeRequest(*ec2.DescribeVolumeAttributeInput) (*request.Request, *ec2.DescribeVolumeAttributeOutput)
@@ -701,6 +940,22 @@ type EC2API interface {
 	DescribeVpcClassicLinkDnsSupportWithContext(aws.Context, *ec2.DescribeVpcClassicLinkDnsSupportInput, ...request.Option) (*ec2.DescribeVpcClassicLinkDnsSupportOutput, error)
 	DescribeVpcClassicLinkDnsSupportRequest(*ec2.DescribeVpcClassicLinkDnsSupportInput) (*request.Request, *ec2.DescribeVpcClassicLinkDnsSupportOutput)
 
+	DescribeVpcEndpointConnectionNotifications(*ec2.DescribeVpcEndpointConnectionNotificationsInput) (*ec2.DescribeVpcEndpointConnectionNotificationsOutput, error)
+	DescribeVpcEndpointConnectionNotificationsWithContext(aws.Context, *ec2.DescribeVpcEndpointConnectionNotificationsInput, ...request.Option) (*ec2.DescribeVpcEndpointConnectionNotificationsOutput, error)
+	DescribeVpcEndpointConnectionNotificationsRequest(*ec2.DescribeVpcEndpointConnectionNotificationsInput) (*request.Request, *ec2.DescribeVpcEndpointConnectionNotificationsOutput)
+
+	DescribeVpcEndpointConnections(*ec2.DescribeVpcEndpointConnectionsInput) (*ec2.DescribeVpcEndpointConnectionsOutput, error)
+	DescribeVpcEndpointConnectionsWithContext(aws.Context, *ec2.DescribeVpcEndpointConnectionsInput, ...request.Option) (*ec2.DescribeVpcEndpointConnectionsOutput, error)
+	DescribeVpcEndpointConnectionsRequest(*ec2.DescribeVpcEndpointConnectionsInput) (*request.Request, *ec2.DescribeVpcEndpointConnectionsOutput)
+
+	DescribeVpcEndpointServiceConfigurations(*ec2.DescribeVpcEndpointServiceConfigurationsInput) (*ec2.DescribeVpcEndpointServiceConfigurationsOutput, error)
+	DescribeVpcEndpointServiceConfigurationsWithContext(aws.Context, *ec2.DescribeVpcEndpointServiceConfigurationsInput, ...request.Option) (*ec2.DescribeVpcEndpointServiceConfigurationsOutput, error)
+	DescribeVpcEndpointServiceConfigurationsRequest(*ec2.DescribeVpcEndpointServiceConfigurationsInput) (*request.Request, *ec2.DescribeVpcEndpointServiceConfigurationsOutput)
+
+	DescribeVpcEndpointServicePermissions(*ec2.DescribeVpcEndpointServicePermissionsInput) (*ec2.DescribeVpcEndpointServicePermissionsOutput, error)
+	DescribeVpcEndpointServicePermissionsWithContext(aws.Context, *ec2.DescribeVpcEndpointServicePermissionsInput, ...request.Option) (*ec2.DescribeVpcEndpointServicePermissionsOutput, error)
+	DescribeVpcEndpointServicePermissionsRequest(*ec2.DescribeVpcEndpointServicePermissionsInput) (*request.Request, *ec2.DescribeVpcEndpointServicePermissionsOutput)
+
 	DescribeVpcEndpointServices(*ec2.DescribeVpcEndpointServicesInput) (*ec2.DescribeVpcEndpointServicesOutput, error)
 	DescribeVpcEndpointServicesWithContext(aws.Context, *ec2.DescribeVpcEndpointServicesInput, ...request.Option) (*ec2.DescribeVpcEndpointServicesOutput, error)
 	DescribeVpcEndpointServicesRequest(*ec2.DescribeVpcEndpointServicesInput) (*request.Request, *ec2.DescribeVpcEndpointServicesOutput)
@@ -713,9 +968,15 @@ type EC2API interface {
 	DescribeVpcPeeringConnectionsWithContext(aws.Context, *ec2.DescribeVpcPeeringConnectionsInput, ...request.Option) (*ec2.DescribeVpcPeeringConnectionsOutput, error)
 	DescribeVpcPeeringConnectionsRequest(*ec2.DescribeVpcPeeringConnectionsInput) (*request.Request, *ec2.DescribeVpcPeeringConnectionsOutput)
 
+	DescribeVpcPeeringConnectionsPages(*ec2.DescribeVpcPeeringConnectionsInput, func(*ec2.DescribeVpcPeeringConnectionsOutput, bool) bool) error
+	DescribeVpcPeeringConnectionsPagesWithContext(aws.Context, *ec2.DescribeVpcPeeringConnectionsInput, func(*ec2.DescribeVpcPeeringConnectionsOutput, bool) bool, ...request.Option) error
+
 	DescribeVpcs(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error)
 	DescribeVpcsWithContext(aws.Context, *ec2.DescribeVpcsInput, ...request.Option) (*ec2.DescribeVpcsOutput, error)
 	DescribeVpcsRequest(*ec2.DescribeVpcsInput) (*request.Request, *ec2.DescribeVpcsOutput)
+
+	DescribeVpcsPages(*ec2.DescribeVpcsInput, func(*ec2.DescribeVpcsOutput, bool) bool) error
+	DescribeVpcsPagesWithContext(aws.Context, *ec2.DescribeVpcsInput, func(*ec2.DescribeVpcsOutput, bool) bool, ...request.Option) error
 
 	DescribeVpnConnections(*ec2.DescribeVpnConnectionsInput) (*ec2.DescribeVpnConnectionsOutput, error)
 	DescribeVpnConnectionsWithContext(aws.Context, *ec2.DescribeVpnConnectionsInput, ...request.Option) (*ec2.DescribeVpnConnectionsOutput, error)
@@ -745,6 +1006,10 @@ type EC2API interface {
 	DetachVpnGatewayWithContext(aws.Context, *ec2.DetachVpnGatewayInput, ...request.Option) (*ec2.DetachVpnGatewayOutput, error)
 	DetachVpnGatewayRequest(*ec2.DetachVpnGatewayInput) (*request.Request, *ec2.DetachVpnGatewayOutput)
 
+	DisableTransitGatewayRouteTablePropagation(*ec2.DisableTransitGatewayRouteTablePropagationInput) (*ec2.DisableTransitGatewayRouteTablePropagationOutput, error)
+	DisableTransitGatewayRouteTablePropagationWithContext(aws.Context, *ec2.DisableTransitGatewayRouteTablePropagationInput, ...request.Option) (*ec2.DisableTransitGatewayRouteTablePropagationOutput, error)
+	DisableTransitGatewayRouteTablePropagationRequest(*ec2.DisableTransitGatewayRouteTablePropagationInput) (*request.Request, *ec2.DisableTransitGatewayRouteTablePropagationOutput)
+
 	DisableVgwRoutePropagation(*ec2.DisableVgwRoutePropagationInput) (*ec2.DisableVgwRoutePropagationOutput, error)
 	DisableVgwRoutePropagationWithContext(aws.Context, *ec2.DisableVgwRoutePropagationInput, ...request.Option) (*ec2.DisableVgwRoutePropagationOutput, error)
 	DisableVgwRoutePropagationRequest(*ec2.DisableVgwRoutePropagationInput) (*request.Request, *ec2.DisableVgwRoutePropagationOutput)
@@ -761,6 +1026,10 @@ type EC2API interface {
 	DisassociateAddressWithContext(aws.Context, *ec2.DisassociateAddressInput, ...request.Option) (*ec2.DisassociateAddressOutput, error)
 	DisassociateAddressRequest(*ec2.DisassociateAddressInput) (*request.Request, *ec2.DisassociateAddressOutput)
 
+	DisassociateClientVpnTargetNetwork(*ec2.DisassociateClientVpnTargetNetworkInput) (*ec2.DisassociateClientVpnTargetNetworkOutput, error)
+	DisassociateClientVpnTargetNetworkWithContext(aws.Context, *ec2.DisassociateClientVpnTargetNetworkInput, ...request.Option) (*ec2.DisassociateClientVpnTargetNetworkOutput, error)
+	DisassociateClientVpnTargetNetworkRequest(*ec2.DisassociateClientVpnTargetNetworkInput) (*request.Request, *ec2.DisassociateClientVpnTargetNetworkOutput)
+
 	DisassociateIamInstanceProfile(*ec2.DisassociateIamInstanceProfileInput) (*ec2.DisassociateIamInstanceProfileOutput, error)
 	DisassociateIamInstanceProfileWithContext(aws.Context, *ec2.DisassociateIamInstanceProfileInput, ...request.Option) (*ec2.DisassociateIamInstanceProfileOutput, error)
 	DisassociateIamInstanceProfileRequest(*ec2.DisassociateIamInstanceProfileInput) (*request.Request, *ec2.DisassociateIamInstanceProfileOutput)
@@ -773,9 +1042,17 @@ type EC2API interface {
 	DisassociateSubnetCidrBlockWithContext(aws.Context, *ec2.DisassociateSubnetCidrBlockInput, ...request.Option) (*ec2.DisassociateSubnetCidrBlockOutput, error)
 	DisassociateSubnetCidrBlockRequest(*ec2.DisassociateSubnetCidrBlockInput) (*request.Request, *ec2.DisassociateSubnetCidrBlockOutput)
 
+	DisassociateTransitGatewayRouteTable(*ec2.DisassociateTransitGatewayRouteTableInput) (*ec2.DisassociateTransitGatewayRouteTableOutput, error)
+	DisassociateTransitGatewayRouteTableWithContext(aws.Context, *ec2.DisassociateTransitGatewayRouteTableInput, ...request.Option) (*ec2.DisassociateTransitGatewayRouteTableOutput, error)
+	DisassociateTransitGatewayRouteTableRequest(*ec2.DisassociateTransitGatewayRouteTableInput) (*request.Request, *ec2.DisassociateTransitGatewayRouteTableOutput)
+
 	DisassociateVpcCidrBlock(*ec2.DisassociateVpcCidrBlockInput) (*ec2.DisassociateVpcCidrBlockOutput, error)
 	DisassociateVpcCidrBlockWithContext(aws.Context, *ec2.DisassociateVpcCidrBlockInput, ...request.Option) (*ec2.DisassociateVpcCidrBlockOutput, error)
 	DisassociateVpcCidrBlockRequest(*ec2.DisassociateVpcCidrBlockInput) (*request.Request, *ec2.DisassociateVpcCidrBlockOutput)
+
+	EnableTransitGatewayRouteTablePropagation(*ec2.EnableTransitGatewayRouteTablePropagationInput) (*ec2.EnableTransitGatewayRouteTablePropagationOutput, error)
+	EnableTransitGatewayRouteTablePropagationWithContext(aws.Context, *ec2.EnableTransitGatewayRouteTablePropagationInput, ...request.Option) (*ec2.EnableTransitGatewayRouteTablePropagationOutput, error)
+	EnableTransitGatewayRouteTablePropagationRequest(*ec2.EnableTransitGatewayRouteTablePropagationInput) (*request.Request, *ec2.EnableTransitGatewayRouteTablePropagationOutput)
 
 	EnableVgwRoutePropagation(*ec2.EnableVgwRoutePropagationInput) (*ec2.EnableVgwRoutePropagationOutput, error)
 	EnableVgwRoutePropagationWithContext(aws.Context, *ec2.EnableVgwRoutePropagationInput, ...request.Option) (*ec2.EnableVgwRoutePropagationOutput, error)
@@ -793,6 +1070,18 @@ type EC2API interface {
 	EnableVpcClassicLinkDnsSupportWithContext(aws.Context, *ec2.EnableVpcClassicLinkDnsSupportInput, ...request.Option) (*ec2.EnableVpcClassicLinkDnsSupportOutput, error)
 	EnableVpcClassicLinkDnsSupportRequest(*ec2.EnableVpcClassicLinkDnsSupportInput) (*request.Request, *ec2.EnableVpcClassicLinkDnsSupportOutput)
 
+	ExportClientVpnClientCertificateRevocationList(*ec2.ExportClientVpnClientCertificateRevocationListInput) (*ec2.ExportClientVpnClientCertificateRevocationListOutput, error)
+	ExportClientVpnClientCertificateRevocationListWithContext(aws.Context, *ec2.ExportClientVpnClientCertificateRevocationListInput, ...request.Option) (*ec2.ExportClientVpnClientCertificateRevocationListOutput, error)
+	ExportClientVpnClientCertificateRevocationListRequest(*ec2.ExportClientVpnClientCertificateRevocationListInput) (*request.Request, *ec2.ExportClientVpnClientCertificateRevocationListOutput)
+
+	ExportClientVpnClientConfiguration(*ec2.ExportClientVpnClientConfigurationInput) (*ec2.ExportClientVpnClientConfigurationOutput, error)
+	ExportClientVpnClientConfigurationWithContext(aws.Context, *ec2.ExportClientVpnClientConfigurationInput, ...request.Option) (*ec2.ExportClientVpnClientConfigurationOutput, error)
+	ExportClientVpnClientConfigurationRequest(*ec2.ExportClientVpnClientConfigurationInput) (*request.Request, *ec2.ExportClientVpnClientConfigurationOutput)
+
+	ExportTransitGatewayRoutes(*ec2.ExportTransitGatewayRoutesInput) (*ec2.ExportTransitGatewayRoutesOutput, error)
+	ExportTransitGatewayRoutesWithContext(aws.Context, *ec2.ExportTransitGatewayRoutesInput, ...request.Option) (*ec2.ExportTransitGatewayRoutesOutput, error)
+	ExportTransitGatewayRoutesRequest(*ec2.ExportTransitGatewayRoutesInput) (*request.Request, *ec2.ExportTransitGatewayRoutesOutput)
+
 	GetConsoleOutput(*ec2.GetConsoleOutputInput) (*ec2.GetConsoleOutputOutput, error)
 	GetConsoleOutputWithContext(aws.Context, *ec2.GetConsoleOutputInput, ...request.Option) (*ec2.GetConsoleOutputOutput, error)
 	GetConsoleOutputRequest(*ec2.GetConsoleOutputInput) (*request.Request, *ec2.GetConsoleOutputOutput)
@@ -805,6 +1094,10 @@ type EC2API interface {
 	GetHostReservationPurchasePreviewWithContext(aws.Context, *ec2.GetHostReservationPurchasePreviewInput, ...request.Option) (*ec2.GetHostReservationPurchasePreviewOutput, error)
 	GetHostReservationPurchasePreviewRequest(*ec2.GetHostReservationPurchasePreviewInput) (*request.Request, *ec2.GetHostReservationPurchasePreviewOutput)
 
+	GetLaunchTemplateData(*ec2.GetLaunchTemplateDataInput) (*ec2.GetLaunchTemplateDataOutput, error)
+	GetLaunchTemplateDataWithContext(aws.Context, *ec2.GetLaunchTemplateDataInput, ...request.Option) (*ec2.GetLaunchTemplateDataOutput, error)
+	GetLaunchTemplateDataRequest(*ec2.GetLaunchTemplateDataInput) (*request.Request, *ec2.GetLaunchTemplateDataOutput)
+
 	GetPasswordData(*ec2.GetPasswordDataInput) (*ec2.GetPasswordDataOutput, error)
 	GetPasswordDataWithContext(aws.Context, *ec2.GetPasswordDataInput, ...request.Option) (*ec2.GetPasswordDataOutput, error)
 	GetPasswordDataRequest(*ec2.GetPasswordDataInput) (*request.Request, *ec2.GetPasswordDataOutput)
@@ -812,6 +1105,22 @@ type EC2API interface {
 	GetReservedInstancesExchangeQuote(*ec2.GetReservedInstancesExchangeQuoteInput) (*ec2.GetReservedInstancesExchangeQuoteOutput, error)
 	GetReservedInstancesExchangeQuoteWithContext(aws.Context, *ec2.GetReservedInstancesExchangeQuoteInput, ...request.Option) (*ec2.GetReservedInstancesExchangeQuoteOutput, error)
 	GetReservedInstancesExchangeQuoteRequest(*ec2.GetReservedInstancesExchangeQuoteInput) (*request.Request, *ec2.GetReservedInstancesExchangeQuoteOutput)
+
+	GetTransitGatewayAttachmentPropagations(*ec2.GetTransitGatewayAttachmentPropagationsInput) (*ec2.GetTransitGatewayAttachmentPropagationsOutput, error)
+	GetTransitGatewayAttachmentPropagationsWithContext(aws.Context, *ec2.GetTransitGatewayAttachmentPropagationsInput, ...request.Option) (*ec2.GetTransitGatewayAttachmentPropagationsOutput, error)
+	GetTransitGatewayAttachmentPropagationsRequest(*ec2.GetTransitGatewayAttachmentPropagationsInput) (*request.Request, *ec2.GetTransitGatewayAttachmentPropagationsOutput)
+
+	GetTransitGatewayRouteTableAssociations(*ec2.GetTransitGatewayRouteTableAssociationsInput) (*ec2.GetTransitGatewayRouteTableAssociationsOutput, error)
+	GetTransitGatewayRouteTableAssociationsWithContext(aws.Context, *ec2.GetTransitGatewayRouteTableAssociationsInput, ...request.Option) (*ec2.GetTransitGatewayRouteTableAssociationsOutput, error)
+	GetTransitGatewayRouteTableAssociationsRequest(*ec2.GetTransitGatewayRouteTableAssociationsInput) (*request.Request, *ec2.GetTransitGatewayRouteTableAssociationsOutput)
+
+	GetTransitGatewayRouteTablePropagations(*ec2.GetTransitGatewayRouteTablePropagationsInput) (*ec2.GetTransitGatewayRouteTablePropagationsOutput, error)
+	GetTransitGatewayRouteTablePropagationsWithContext(aws.Context, *ec2.GetTransitGatewayRouteTablePropagationsInput, ...request.Option) (*ec2.GetTransitGatewayRouteTablePropagationsOutput, error)
+	GetTransitGatewayRouteTablePropagationsRequest(*ec2.GetTransitGatewayRouteTablePropagationsInput) (*request.Request, *ec2.GetTransitGatewayRouteTablePropagationsOutput)
+
+	ImportClientVpnClientCertificateRevocationList(*ec2.ImportClientVpnClientCertificateRevocationListInput) (*ec2.ImportClientVpnClientCertificateRevocationListOutput, error)
+	ImportClientVpnClientCertificateRevocationListWithContext(aws.Context, *ec2.ImportClientVpnClientCertificateRevocationListInput, ...request.Option) (*ec2.ImportClientVpnClientCertificateRevocationListOutput, error)
+	ImportClientVpnClientCertificateRevocationListRequest(*ec2.ImportClientVpnClientCertificateRevocationListInput) (*request.Request, *ec2.ImportClientVpnClientCertificateRevocationListOutput)
 
 	ImportImage(*ec2.ImportImageInput) (*ec2.ImportImageOutput, error)
 	ImportImageWithContext(aws.Context, *ec2.ImportImageInput, ...request.Option) (*ec2.ImportImageOutput, error)
@@ -833,6 +1142,22 @@ type EC2API interface {
 	ImportVolumeWithContext(aws.Context, *ec2.ImportVolumeInput, ...request.Option) (*ec2.ImportVolumeOutput, error)
 	ImportVolumeRequest(*ec2.ImportVolumeInput) (*request.Request, *ec2.ImportVolumeOutput)
 
+	ModifyCapacityReservation(*ec2.ModifyCapacityReservationInput) (*ec2.ModifyCapacityReservationOutput, error)
+	ModifyCapacityReservationWithContext(aws.Context, *ec2.ModifyCapacityReservationInput, ...request.Option) (*ec2.ModifyCapacityReservationOutput, error)
+	ModifyCapacityReservationRequest(*ec2.ModifyCapacityReservationInput) (*request.Request, *ec2.ModifyCapacityReservationOutput)
+
+	ModifyClientVpnEndpoint(*ec2.ModifyClientVpnEndpointInput) (*ec2.ModifyClientVpnEndpointOutput, error)
+	ModifyClientVpnEndpointWithContext(aws.Context, *ec2.ModifyClientVpnEndpointInput, ...request.Option) (*ec2.ModifyClientVpnEndpointOutput, error)
+	ModifyClientVpnEndpointRequest(*ec2.ModifyClientVpnEndpointInput) (*request.Request, *ec2.ModifyClientVpnEndpointOutput)
+
+	ModifyFleet(*ec2.ModifyFleetInput) (*ec2.ModifyFleetOutput, error)
+	ModifyFleetWithContext(aws.Context, *ec2.ModifyFleetInput, ...request.Option) (*ec2.ModifyFleetOutput, error)
+	ModifyFleetRequest(*ec2.ModifyFleetInput) (*request.Request, *ec2.ModifyFleetOutput)
+
+	ModifyFpgaImageAttribute(*ec2.ModifyFpgaImageAttributeInput) (*ec2.ModifyFpgaImageAttributeOutput, error)
+	ModifyFpgaImageAttributeWithContext(aws.Context, *ec2.ModifyFpgaImageAttributeInput, ...request.Option) (*ec2.ModifyFpgaImageAttributeOutput, error)
+	ModifyFpgaImageAttributeRequest(*ec2.ModifyFpgaImageAttributeInput) (*request.Request, *ec2.ModifyFpgaImageAttributeOutput)
+
 	ModifyHosts(*ec2.ModifyHostsInput) (*ec2.ModifyHostsOutput, error)
 	ModifyHostsWithContext(aws.Context, *ec2.ModifyHostsInput, ...request.Option) (*ec2.ModifyHostsOutput, error)
 	ModifyHostsRequest(*ec2.ModifyHostsInput) (*request.Request, *ec2.ModifyHostsOutput)
@@ -853,9 +1178,25 @@ type EC2API interface {
 	ModifyInstanceAttributeWithContext(aws.Context, *ec2.ModifyInstanceAttributeInput, ...request.Option) (*ec2.ModifyInstanceAttributeOutput, error)
 	ModifyInstanceAttributeRequest(*ec2.ModifyInstanceAttributeInput) (*request.Request, *ec2.ModifyInstanceAttributeOutput)
 
+	ModifyInstanceCapacityReservationAttributes(*ec2.ModifyInstanceCapacityReservationAttributesInput) (*ec2.ModifyInstanceCapacityReservationAttributesOutput, error)
+	ModifyInstanceCapacityReservationAttributesWithContext(aws.Context, *ec2.ModifyInstanceCapacityReservationAttributesInput, ...request.Option) (*ec2.ModifyInstanceCapacityReservationAttributesOutput, error)
+	ModifyInstanceCapacityReservationAttributesRequest(*ec2.ModifyInstanceCapacityReservationAttributesInput) (*request.Request, *ec2.ModifyInstanceCapacityReservationAttributesOutput)
+
+	ModifyInstanceCreditSpecification(*ec2.ModifyInstanceCreditSpecificationInput) (*ec2.ModifyInstanceCreditSpecificationOutput, error)
+	ModifyInstanceCreditSpecificationWithContext(aws.Context, *ec2.ModifyInstanceCreditSpecificationInput, ...request.Option) (*ec2.ModifyInstanceCreditSpecificationOutput, error)
+	ModifyInstanceCreditSpecificationRequest(*ec2.ModifyInstanceCreditSpecificationInput) (*request.Request, *ec2.ModifyInstanceCreditSpecificationOutput)
+
+	ModifyInstanceEventStartTime(*ec2.ModifyInstanceEventStartTimeInput) (*ec2.ModifyInstanceEventStartTimeOutput, error)
+	ModifyInstanceEventStartTimeWithContext(aws.Context, *ec2.ModifyInstanceEventStartTimeInput, ...request.Option) (*ec2.ModifyInstanceEventStartTimeOutput, error)
+	ModifyInstanceEventStartTimeRequest(*ec2.ModifyInstanceEventStartTimeInput) (*request.Request, *ec2.ModifyInstanceEventStartTimeOutput)
+
 	ModifyInstancePlacement(*ec2.ModifyInstancePlacementInput) (*ec2.ModifyInstancePlacementOutput, error)
 	ModifyInstancePlacementWithContext(aws.Context, *ec2.ModifyInstancePlacementInput, ...request.Option) (*ec2.ModifyInstancePlacementOutput, error)
 	ModifyInstancePlacementRequest(*ec2.ModifyInstancePlacementInput) (*request.Request, *ec2.ModifyInstancePlacementOutput)
+
+	ModifyLaunchTemplate(*ec2.ModifyLaunchTemplateInput) (*ec2.ModifyLaunchTemplateOutput, error)
+	ModifyLaunchTemplateWithContext(aws.Context, *ec2.ModifyLaunchTemplateInput, ...request.Option) (*ec2.ModifyLaunchTemplateOutput, error)
+	ModifyLaunchTemplateRequest(*ec2.ModifyLaunchTemplateInput) (*request.Request, *ec2.ModifyLaunchTemplateOutput)
 
 	ModifyNetworkInterfaceAttribute(*ec2.ModifyNetworkInterfaceAttributeInput) (*ec2.ModifyNetworkInterfaceAttributeOutput, error)
 	ModifyNetworkInterfaceAttributeWithContext(aws.Context, *ec2.ModifyNetworkInterfaceAttributeInput, ...request.Option) (*ec2.ModifyNetworkInterfaceAttributeOutput, error)
@@ -877,6 +1218,10 @@ type EC2API interface {
 	ModifySubnetAttributeWithContext(aws.Context, *ec2.ModifySubnetAttributeInput, ...request.Option) (*ec2.ModifySubnetAttributeOutput, error)
 	ModifySubnetAttributeRequest(*ec2.ModifySubnetAttributeInput) (*request.Request, *ec2.ModifySubnetAttributeOutput)
 
+	ModifyTransitGatewayVpcAttachment(*ec2.ModifyTransitGatewayVpcAttachmentInput) (*ec2.ModifyTransitGatewayVpcAttachmentOutput, error)
+	ModifyTransitGatewayVpcAttachmentWithContext(aws.Context, *ec2.ModifyTransitGatewayVpcAttachmentInput, ...request.Option) (*ec2.ModifyTransitGatewayVpcAttachmentOutput, error)
+	ModifyTransitGatewayVpcAttachmentRequest(*ec2.ModifyTransitGatewayVpcAttachmentInput) (*request.Request, *ec2.ModifyTransitGatewayVpcAttachmentOutput)
+
 	ModifyVolume(*ec2.ModifyVolumeInput) (*ec2.ModifyVolumeOutput, error)
 	ModifyVolumeWithContext(aws.Context, *ec2.ModifyVolumeInput, ...request.Option) (*ec2.ModifyVolumeOutput, error)
 	ModifyVolumeRequest(*ec2.ModifyVolumeInput) (*request.Request, *ec2.ModifyVolumeOutput)
@@ -893,9 +1238,25 @@ type EC2API interface {
 	ModifyVpcEndpointWithContext(aws.Context, *ec2.ModifyVpcEndpointInput, ...request.Option) (*ec2.ModifyVpcEndpointOutput, error)
 	ModifyVpcEndpointRequest(*ec2.ModifyVpcEndpointInput) (*request.Request, *ec2.ModifyVpcEndpointOutput)
 
+	ModifyVpcEndpointConnectionNotification(*ec2.ModifyVpcEndpointConnectionNotificationInput) (*ec2.ModifyVpcEndpointConnectionNotificationOutput, error)
+	ModifyVpcEndpointConnectionNotificationWithContext(aws.Context, *ec2.ModifyVpcEndpointConnectionNotificationInput, ...request.Option) (*ec2.ModifyVpcEndpointConnectionNotificationOutput, error)
+	ModifyVpcEndpointConnectionNotificationRequest(*ec2.ModifyVpcEndpointConnectionNotificationInput) (*request.Request, *ec2.ModifyVpcEndpointConnectionNotificationOutput)
+
+	ModifyVpcEndpointServiceConfiguration(*ec2.ModifyVpcEndpointServiceConfigurationInput) (*ec2.ModifyVpcEndpointServiceConfigurationOutput, error)
+	ModifyVpcEndpointServiceConfigurationWithContext(aws.Context, *ec2.ModifyVpcEndpointServiceConfigurationInput, ...request.Option) (*ec2.ModifyVpcEndpointServiceConfigurationOutput, error)
+	ModifyVpcEndpointServiceConfigurationRequest(*ec2.ModifyVpcEndpointServiceConfigurationInput) (*request.Request, *ec2.ModifyVpcEndpointServiceConfigurationOutput)
+
+	ModifyVpcEndpointServicePermissions(*ec2.ModifyVpcEndpointServicePermissionsInput) (*ec2.ModifyVpcEndpointServicePermissionsOutput, error)
+	ModifyVpcEndpointServicePermissionsWithContext(aws.Context, *ec2.ModifyVpcEndpointServicePermissionsInput, ...request.Option) (*ec2.ModifyVpcEndpointServicePermissionsOutput, error)
+	ModifyVpcEndpointServicePermissionsRequest(*ec2.ModifyVpcEndpointServicePermissionsInput) (*request.Request, *ec2.ModifyVpcEndpointServicePermissionsOutput)
+
 	ModifyVpcPeeringConnectionOptions(*ec2.ModifyVpcPeeringConnectionOptionsInput) (*ec2.ModifyVpcPeeringConnectionOptionsOutput, error)
 	ModifyVpcPeeringConnectionOptionsWithContext(aws.Context, *ec2.ModifyVpcPeeringConnectionOptionsInput, ...request.Option) (*ec2.ModifyVpcPeeringConnectionOptionsOutput, error)
 	ModifyVpcPeeringConnectionOptionsRequest(*ec2.ModifyVpcPeeringConnectionOptionsInput) (*request.Request, *ec2.ModifyVpcPeeringConnectionOptionsOutput)
+
+	ModifyVpcTenancy(*ec2.ModifyVpcTenancyInput) (*ec2.ModifyVpcTenancyOutput, error)
+	ModifyVpcTenancyWithContext(aws.Context, *ec2.ModifyVpcTenancyInput, ...request.Option) (*ec2.ModifyVpcTenancyOutput, error)
+	ModifyVpcTenancyRequest(*ec2.ModifyVpcTenancyInput) (*request.Request, *ec2.ModifyVpcTenancyOutput)
 
 	MonitorInstances(*ec2.MonitorInstancesInput) (*ec2.MonitorInstancesOutput, error)
 	MonitorInstancesWithContext(aws.Context, *ec2.MonitorInstancesInput, ...request.Option) (*ec2.MonitorInstancesOutput, error)
@@ -904,6 +1265,10 @@ type EC2API interface {
 	MoveAddressToVpc(*ec2.MoveAddressToVpcInput) (*ec2.MoveAddressToVpcOutput, error)
 	MoveAddressToVpcWithContext(aws.Context, *ec2.MoveAddressToVpcInput, ...request.Option) (*ec2.MoveAddressToVpcOutput, error)
 	MoveAddressToVpcRequest(*ec2.MoveAddressToVpcInput) (*request.Request, *ec2.MoveAddressToVpcOutput)
+
+	ProvisionByoipCidr(*ec2.ProvisionByoipCidrInput) (*ec2.ProvisionByoipCidrOutput, error)
+	ProvisionByoipCidrWithContext(aws.Context, *ec2.ProvisionByoipCidrInput, ...request.Option) (*ec2.ProvisionByoipCidrOutput, error)
+	ProvisionByoipCidrRequest(*ec2.ProvisionByoipCidrInput) (*request.Request, *ec2.ProvisionByoipCidrOutput)
 
 	PurchaseHostReservation(*ec2.PurchaseHostReservationInput) (*ec2.PurchaseHostReservationOutput, error)
 	PurchaseHostReservationWithContext(aws.Context, *ec2.PurchaseHostReservationInput, ...request.Option) (*ec2.PurchaseHostReservationOutput, error)
@@ -924,6 +1289,14 @@ type EC2API interface {
 	RegisterImage(*ec2.RegisterImageInput) (*ec2.RegisterImageOutput, error)
 	RegisterImageWithContext(aws.Context, *ec2.RegisterImageInput, ...request.Option) (*ec2.RegisterImageOutput, error)
 	RegisterImageRequest(*ec2.RegisterImageInput) (*request.Request, *ec2.RegisterImageOutput)
+
+	RejectTransitGatewayVpcAttachment(*ec2.RejectTransitGatewayVpcAttachmentInput) (*ec2.RejectTransitGatewayVpcAttachmentOutput, error)
+	RejectTransitGatewayVpcAttachmentWithContext(aws.Context, *ec2.RejectTransitGatewayVpcAttachmentInput, ...request.Option) (*ec2.RejectTransitGatewayVpcAttachmentOutput, error)
+	RejectTransitGatewayVpcAttachmentRequest(*ec2.RejectTransitGatewayVpcAttachmentInput) (*request.Request, *ec2.RejectTransitGatewayVpcAttachmentOutput)
+
+	RejectVpcEndpointConnections(*ec2.RejectVpcEndpointConnectionsInput) (*ec2.RejectVpcEndpointConnectionsOutput, error)
+	RejectVpcEndpointConnectionsWithContext(aws.Context, *ec2.RejectVpcEndpointConnectionsInput, ...request.Option) (*ec2.RejectVpcEndpointConnectionsOutput, error)
+	RejectVpcEndpointConnectionsRequest(*ec2.RejectVpcEndpointConnectionsInput) (*request.Request, *ec2.RejectVpcEndpointConnectionsOutput)
 
 	RejectVpcPeeringConnection(*ec2.RejectVpcPeeringConnectionInput) (*ec2.RejectVpcPeeringConnectionOutput, error)
 	RejectVpcPeeringConnectionWithContext(aws.Context, *ec2.RejectVpcPeeringConnectionInput, ...request.Option) (*ec2.RejectVpcPeeringConnectionOutput, error)
@@ -957,6 +1330,10 @@ type EC2API interface {
 	ReplaceRouteTableAssociationWithContext(aws.Context, *ec2.ReplaceRouteTableAssociationInput, ...request.Option) (*ec2.ReplaceRouteTableAssociationOutput, error)
 	ReplaceRouteTableAssociationRequest(*ec2.ReplaceRouteTableAssociationInput) (*request.Request, *ec2.ReplaceRouteTableAssociationOutput)
 
+	ReplaceTransitGatewayRoute(*ec2.ReplaceTransitGatewayRouteInput) (*ec2.ReplaceTransitGatewayRouteOutput, error)
+	ReplaceTransitGatewayRouteWithContext(aws.Context, *ec2.ReplaceTransitGatewayRouteInput, ...request.Option) (*ec2.ReplaceTransitGatewayRouteOutput, error)
+	ReplaceTransitGatewayRouteRequest(*ec2.ReplaceTransitGatewayRouteInput) (*request.Request, *ec2.ReplaceTransitGatewayRouteOutput)
+
 	ReportInstanceStatus(*ec2.ReportInstanceStatusInput) (*ec2.ReportInstanceStatusOutput, error)
 	ReportInstanceStatusWithContext(aws.Context, *ec2.ReportInstanceStatusInput, ...request.Option) (*ec2.ReportInstanceStatusOutput, error)
 	ReportInstanceStatusRequest(*ec2.ReportInstanceStatusInput) (*request.Request, *ec2.ReportInstanceStatusOutput)
@@ -968,6 +1345,10 @@ type EC2API interface {
 	RequestSpotInstances(*ec2.RequestSpotInstancesInput) (*ec2.RequestSpotInstancesOutput, error)
 	RequestSpotInstancesWithContext(aws.Context, *ec2.RequestSpotInstancesInput, ...request.Option) (*ec2.RequestSpotInstancesOutput, error)
 	RequestSpotInstancesRequest(*ec2.RequestSpotInstancesInput) (*request.Request, *ec2.RequestSpotInstancesOutput)
+
+	ResetFpgaImageAttribute(*ec2.ResetFpgaImageAttributeInput) (*ec2.ResetFpgaImageAttributeOutput, error)
+	ResetFpgaImageAttributeWithContext(aws.Context, *ec2.ResetFpgaImageAttributeInput, ...request.Option) (*ec2.ResetFpgaImageAttributeOutput, error)
+	ResetFpgaImageAttributeRequest(*ec2.ResetFpgaImageAttributeInput) (*request.Request, *ec2.ResetFpgaImageAttributeOutput)
 
 	ResetImageAttribute(*ec2.ResetImageAttributeInput) (*ec2.ResetImageAttributeOutput, error)
 	ResetImageAttributeWithContext(aws.Context, *ec2.ResetImageAttributeInput, ...request.Option) (*ec2.ResetImageAttributeOutput, error)
@@ -989,6 +1370,10 @@ type EC2API interface {
 	RestoreAddressToClassicWithContext(aws.Context, *ec2.RestoreAddressToClassicInput, ...request.Option) (*ec2.RestoreAddressToClassicOutput, error)
 	RestoreAddressToClassicRequest(*ec2.RestoreAddressToClassicInput) (*request.Request, *ec2.RestoreAddressToClassicOutput)
 
+	RevokeClientVpnIngress(*ec2.RevokeClientVpnIngressInput) (*ec2.RevokeClientVpnIngressOutput, error)
+	RevokeClientVpnIngressWithContext(aws.Context, *ec2.RevokeClientVpnIngressInput, ...request.Option) (*ec2.RevokeClientVpnIngressOutput, error)
+	RevokeClientVpnIngressRequest(*ec2.RevokeClientVpnIngressInput) (*request.Request, *ec2.RevokeClientVpnIngressOutput)
+
 	RevokeSecurityGroupEgress(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error)
 	RevokeSecurityGroupEgressWithContext(aws.Context, *ec2.RevokeSecurityGroupEgressInput, ...request.Option) (*ec2.RevokeSecurityGroupEgressOutput, error)
 	RevokeSecurityGroupEgressRequest(*ec2.RevokeSecurityGroupEgressInput) (*request.Request, *ec2.RevokeSecurityGroupEgressOutput)
@@ -1005,6 +1390,10 @@ type EC2API interface {
 	RunScheduledInstancesWithContext(aws.Context, *ec2.RunScheduledInstancesInput, ...request.Option) (*ec2.RunScheduledInstancesOutput, error)
 	RunScheduledInstancesRequest(*ec2.RunScheduledInstancesInput) (*request.Request, *ec2.RunScheduledInstancesOutput)
 
+	SearchTransitGatewayRoutes(*ec2.SearchTransitGatewayRoutesInput) (*ec2.SearchTransitGatewayRoutesOutput, error)
+	SearchTransitGatewayRoutesWithContext(aws.Context, *ec2.SearchTransitGatewayRoutesInput, ...request.Option) (*ec2.SearchTransitGatewayRoutesOutput, error)
+	SearchTransitGatewayRoutesRequest(*ec2.SearchTransitGatewayRoutesInput) (*request.Request, *ec2.SearchTransitGatewayRoutesOutput)
+
 	StartInstances(*ec2.StartInstancesInput) (*ec2.StartInstancesOutput, error)
 	StartInstancesWithContext(aws.Context, *ec2.StartInstancesInput, ...request.Option) (*ec2.StartInstancesOutput, error)
 	StartInstancesRequest(*ec2.StartInstancesInput) (*request.Request, *ec2.StartInstancesOutput)
@@ -1012,6 +1401,10 @@ type EC2API interface {
 	StopInstances(*ec2.StopInstancesInput) (*ec2.StopInstancesOutput, error)
 	StopInstancesWithContext(aws.Context, *ec2.StopInstancesInput, ...request.Option) (*ec2.StopInstancesOutput, error)
 	StopInstancesRequest(*ec2.StopInstancesInput) (*request.Request, *ec2.StopInstancesOutput)
+
+	TerminateClientVpnConnections(*ec2.TerminateClientVpnConnectionsInput) (*ec2.TerminateClientVpnConnectionsOutput, error)
+	TerminateClientVpnConnectionsWithContext(aws.Context, *ec2.TerminateClientVpnConnectionsInput, ...request.Option) (*ec2.TerminateClientVpnConnectionsOutput, error)
+	TerminateClientVpnConnectionsRequest(*ec2.TerminateClientVpnConnectionsInput) (*request.Request, *ec2.TerminateClientVpnConnectionsOutput)
 
 	TerminateInstances(*ec2.TerminateInstancesInput) (*ec2.TerminateInstancesOutput, error)
 	TerminateInstancesWithContext(aws.Context, *ec2.TerminateInstancesInput, ...request.Option) (*ec2.TerminateInstancesOutput, error)
@@ -1028,6 +1421,18 @@ type EC2API interface {
 	UnmonitorInstances(*ec2.UnmonitorInstancesInput) (*ec2.UnmonitorInstancesOutput, error)
 	UnmonitorInstancesWithContext(aws.Context, *ec2.UnmonitorInstancesInput, ...request.Option) (*ec2.UnmonitorInstancesOutput, error)
 	UnmonitorInstancesRequest(*ec2.UnmonitorInstancesInput) (*request.Request, *ec2.UnmonitorInstancesOutput)
+
+	UpdateSecurityGroupRuleDescriptionsEgress(*ec2.UpdateSecurityGroupRuleDescriptionsEgressInput) (*ec2.UpdateSecurityGroupRuleDescriptionsEgressOutput, error)
+	UpdateSecurityGroupRuleDescriptionsEgressWithContext(aws.Context, *ec2.UpdateSecurityGroupRuleDescriptionsEgressInput, ...request.Option) (*ec2.UpdateSecurityGroupRuleDescriptionsEgressOutput, error)
+	UpdateSecurityGroupRuleDescriptionsEgressRequest(*ec2.UpdateSecurityGroupRuleDescriptionsEgressInput) (*request.Request, *ec2.UpdateSecurityGroupRuleDescriptionsEgressOutput)
+
+	UpdateSecurityGroupRuleDescriptionsIngress(*ec2.UpdateSecurityGroupRuleDescriptionsIngressInput) (*ec2.UpdateSecurityGroupRuleDescriptionsIngressOutput, error)
+	UpdateSecurityGroupRuleDescriptionsIngressWithContext(aws.Context, *ec2.UpdateSecurityGroupRuleDescriptionsIngressInput, ...request.Option) (*ec2.UpdateSecurityGroupRuleDescriptionsIngressOutput, error)
+	UpdateSecurityGroupRuleDescriptionsIngressRequest(*ec2.UpdateSecurityGroupRuleDescriptionsIngressInput) (*request.Request, *ec2.UpdateSecurityGroupRuleDescriptionsIngressOutput)
+
+	WithdrawByoipCidr(*ec2.WithdrawByoipCidrInput) (*ec2.WithdrawByoipCidrOutput, error)
+	WithdrawByoipCidrWithContext(aws.Context, *ec2.WithdrawByoipCidrInput, ...request.Option) (*ec2.WithdrawByoipCidrOutput, error)
+	WithdrawByoipCidrRequest(*ec2.WithdrawByoipCidrInput) (*request.Request, *ec2.WithdrawByoipCidrOutput)
 
 	WaitUntilBundleTaskComplete(*ec2.DescribeBundleTasksInput) error
 	WaitUntilBundleTaskCompleteWithContext(aws.Context, *ec2.DescribeBundleTasksInput, ...request.WaiterOption) error

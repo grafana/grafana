@@ -18,13 +18,16 @@ type NotificationTestCommand struct {
 	Settings *simplejson.Json
 }
 
+var (
+	logger = log.New("alerting.testnotification")
+)
+
 func init() {
 	bus.AddHandler("alerting", handleNotificationTestCommand)
-
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := newNotificationService()
+	notifier := NewNotificationService(nil).(*notificationService)
 
 	model := &m.AlertNotification{
 		Name:     cmd.Name,
@@ -32,14 +35,14 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		Settings: cmd.Settings,
 	}
 
-	notifiers, err := notifier.createNotifierFor(model)
+	notifiers, err := InitNotifier(model)
 
 	if err != nil {
-		log.Error2("Failed to create notifier", "error", err.Error())
+		logger.Error("Failed to create notifier", "error", err.Error())
 		return err
 	}
 
-	return notifier.sendNotifications(createTestEvalContext(cmd), []Notifier{notifiers})
+	return notifier.sendNotifications(createTestEvalContext(cmd), notifierStateSlice{{notifier: notifiers}})
 }
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
@@ -53,7 +56,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 
 	ctx := NewEvalContext(context.Background(), testRule)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
-		ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
+		ctx.ImagePublicUrl = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true

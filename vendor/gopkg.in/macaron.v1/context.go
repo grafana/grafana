@@ -262,10 +262,15 @@ func (ctx *Context) Params(name string) string {
 
 // SetParams sets value of param with given name.
 func (ctx *Context) SetParams(name, val string) {
-	if !strings.HasPrefix(name, ":") {
+	if name != "*" && !strings.HasPrefix(name, ":") {
 		name = ":" + name
 	}
 	ctx.params[name] = val
+}
+
+// ReplaceAllParams replace all current params with given params
+func (ctx *Context) ReplaceAllParams(params Params) {
+	ctx.params = params
 }
 
 // ParamsEscape returns escapred params result.
