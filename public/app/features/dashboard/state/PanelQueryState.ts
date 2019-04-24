@@ -1,21 +1,25 @@
+// Libraries
 import isString from 'lodash/isString';
+import isEqual from 'lodash/isEqual';
+
+// Utils & Services
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import * as dateMath from 'app/core/utils/datemath';
+import { guessFieldTypes, toSeriesData, isSeriesData } from '@grafana/ui/src/utils';
+
+// Types
 import {
   DataSourceApi,
   DataQueryRequest,
   PanelData,
   LoadingState,
   toLegacyResponseData,
-  isSeriesData,
-  toSeriesData,
   DataQueryError,
   DataStreamObserver,
   DataStreamState,
   SeriesData,
+  DataQueryResponseData,
 } from '@grafana/ui';
-import { getProcessedSeriesData } from './PanelQueryRunner';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import isEqual from 'lodash/isEqual';
-import * as dateMath from 'app/core/utils/datemath';
 
 export class PanelQueryState {
   // The current/last running request
@@ -107,7 +111,7 @@ export class PanelQueryState {
 
     // Set the loading state immediatly
     this.response.state = LoadingState.Loading;
-    return (this.executor = new Promise<PanelData>((resolve, reject) => {
+    this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
       return ds
@@ -125,21 +129,16 @@ export class PanelQueryState {
             state: LoadingState.Done,
             request: this.request,
             series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
-            legacy: this.sendLegacy
-              ? resp.data.map(v => {
-                  if (isSeriesData(v)) {
-                    return toLegacyResponseData(v);
-                  }
-                  return v;
-                })
-              : undefined,
+            legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
           resolve(this.getPanelData());
         })
         .catch(err => {
           resolve(this.setError(err));
         });
-    }));
+    });
+
+    return this.executor;
   }
 
   // Send a notice when the stream has updated the current model
@@ -308,4 +307,33 @@ export function toDataQueryError(err: any): DataQueryError {
     error.message = message;
   }
   return error;
+}
+
+function translateToLegacyData(data: DataQueryResponseData) {
+  return data.map(v => {
+    if (isSeriesData(v)) {
+      return toLegacyResponseData(v);
+    }
+    return v;
+  });
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedSeriesData(results?: any[]): SeriesData[] {
+  if (!results) {
+    return [];
+  }
+
+  const series: SeriesData[] = [];
+  for (const r of results) {
+    if (r) {
+      series.push(guessFieldTypes(toSeriesData(r)));
+    }
+  }
+
+  return series;
 }
