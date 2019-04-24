@@ -54,12 +54,12 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
-  onSelectionChange = (item: SelectOptionItem) => {
+  onSelectionChange = (item: SelectOptionItem<string>) => {
     const { onChange } = this.props;
     if (isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
-      onChange([item.value]);
+      onChange(item.value ? [item.value] : []);
     }
   };
 
@@ -73,7 +73,7 @@ export class StatsPicker extends PureComponent<Props> {
       };
     });
 
-    const value: SelectOptionItem[] = options.filter(option => stats.find(stat => option.value === stat));
+    const value: Array<SelectOptionItem<string>> = options.filter(option => stats.find(stat => option.value === stat));
 
     return (
       <Select
