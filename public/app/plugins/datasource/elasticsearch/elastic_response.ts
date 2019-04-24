@@ -316,8 +316,6 @@ export class ElasticResponse {
       target: 'docs',
       type: 'docs',
       datapoints: [],
-      // XXX: `hits.total` is an object in ES 7, not a number
-      // ... leaving comment while trying to determine where this is called ...
       total: hitsTotal,
       filterable: true,
     };
