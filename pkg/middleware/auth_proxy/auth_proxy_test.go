@@ -9,13 +9,13 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/login"
-	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TestLDAP struct {
-	login.ILdapAuther
+	ldap.ILdapAuther
 	ID         int64
 	syncCalled bool
 }
@@ -63,13 +63,18 @@ func TestMiddlewareContext(t *testing.T) {
 
 		Convey("LDAP", func() {
 			Convey("gets data from the LDAP", func() {
-				login.LdapCfg = login.LdapConfig{
-					Servers: []*login.LdapServerConf{
-						{},
-					},
+				readLDAPConfig = func() (bool, *ldap.Config) {
+					config := &ldap.Config{
+						Servers: []*ldap.LdapServerConf{
+							&ldap.LdapServerConf{},
+						},
+					}
+					return true, config
 				}
 
-				setting.LdapEnabled = true
+				defer func() {
+					readLDAPConfig = ldap.ReadConfig
+				}()
 
 				store := remotecache.NewFakeStore(t)
 
@@ -83,7 +88,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *login.LdapServerConf) login.ILdapAuther {
+				auth.LDAP = func(server *ldap.LdapServerConf) ldap.ILdapAuther {
 					return stub
 				}
 
@@ -109,7 +114,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *login.LdapServerConf) login.ILdapAuther {
+				auth.LDAP = func(server *ldap.LdapServerConf) ldap.ILdapAuther {
 					return stub
 				}
 

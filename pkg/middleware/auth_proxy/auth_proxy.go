@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,6 +21,10 @@ const (
 
 	// CachePrefix is a prefix for the cache key
 	CachePrefix = "auth-proxy-sync-ttl:%s"
+)
+
+var (
+	readLDAPConfig = ldap.ReadConfig
 )
 
 // AuthProxy struct
@@ -82,7 +87,6 @@ func New(options *Options) *AuthProxy {
 		headers:     setting.AuthProxyHeaders,
 		whitelistIP: setting.AuthProxyWhitelist,
 		cacheTTL:    setting.AuthProxyLdapSyncTtl,
-		ldapEnabled: setting.LdapEnabled,
 	}
 }
 
@@ -168,11 +172,15 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 		return id, nil
 	}
 
-	if auth.ldapEnabled {
+	enabled, _ := readLDAPConfig()
+	if enabled {
 		id, err := auth.GetUserIDViaLDAP()
 
-		if err == login.ErrInvalidCredentials {
-			return 0, newError("Proxy authentication required", login.ErrInvalidCredentials)
+		if err == ldap.ErrInvalidCredentials {
+			return 0, newError(
+				"Proxy authentication required",
+				ldap.ErrInvalidCredentials,
+			)
 		}
 
 		if err != nil {
@@ -184,7 +192,10 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 
 	id, err := auth.GetUserIDViaHeader()
 	if err != nil {
-		return 0, newError("Failed to login as user specified in auth proxy header", err)
+		return 0, newError(
+			"Failed to login as user specified in auth proxy header",
+			err,
+		)
 	}
 
 	return id, nil
@@ -211,8 +222,10 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 		Username:   auth.header,
 	}
 
-	_, config := ldap.ReadConfig()
-	if len(config.Servers) < 1 {
+	_, config := readLDAPConfig()
+
+	if len(config.Servers) == 0 {
+		spew.Dump(111)
 		return 0, newError("No LDAP servers available", nil)
 	}
 

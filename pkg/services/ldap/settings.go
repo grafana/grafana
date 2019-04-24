@@ -53,37 +53,40 @@ type LdapGroupToOrgRole struct {
 	OrgRole        m.RoleType `toml:"org_role"`
 }
 
-var LdapCfg Config
-var ldapLogger log.Logger = log.New("ldap")
+var config *Config
+var logger = log.New("ldap")
 
 // ReadConfig reads the config if ldap is enabled
-// TODO: refactor
 func ReadConfig() (bool, *Config) {
 	if !setting.LdapEnabled {
 		return false, nil
 	}
 
-	loadLdapConfig()
+	if config != nil {
+		return false, config
+	}
 
-	return true, &LdapCfg
+	getConfig(setting.LdapConfigFile, config)
+
+	return true, config
 }
 
-func loadLdapConfig() {
-	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
+func getConfig(configFile string, config *Config) {
+	logger.Info("Ldap enabled, reading config file", "file", configFile)
 
-	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
+	_, err := toml.DecodeFile(configFile, config)
 	if err != nil {
-		ldapLogger.Crit("Failed to load ldap config file", "error", err)
+		logger.Crit("Failed to load ldap config file", "error", err)
 		os.Exit(1)
 	}
 
-	if len(LdapCfg.Servers) == 0 {
-		ldapLogger.Crit("ldap enabled but no ldap servers defined in config file")
+	if len(config.Servers) == 0 {
+		logger.Crit("ldap enabled but no ldap servers defined in config file")
 		os.Exit(1)
 	}
 
 	// set default org id
-	for _, server := range LdapCfg.Servers {
+	for _, server := range config.Servers {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
@@ -99,12 +102,12 @@ func assertNotEmptyCfg(val interface{}, propName string) {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			logger.Crit("LDAP config file is missing option", "option", propName)
 			os.Exit(1)
 		}
 	case []string:
 		if len(v) == 0 {
-			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			logger.Crit("LDAP config file is missing option", "option", propName)
 			os.Exit(1)
 		}
 	default:
