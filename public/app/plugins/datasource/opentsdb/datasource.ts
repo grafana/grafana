@@ -10,6 +10,7 @@ export default class OpenTsDatasource {
   basicAuth: any;
   tsdbVersion: any;
   tsdbResolution: any;
+  lookupLimit: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
@@ -25,6 +26,7 @@ export default class OpenTsDatasource {
     instanceSettings.jsonData = instanceSettings.jsonData || {};
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
+    this.lookupLimit = instanceSettings.jsonData.lookupLimit || 1000;
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;
@@ -181,7 +183,7 @@ export default class OpenTsDatasource {
   }
 
   _performSuggestQuery(query, type) {
-    return this._get('/api/suggest', { type: type, q: query, max: 1000 }).then(result => {
+    return this._get('/api/suggest', { type: type, q: query, max: this.lookupLimit }).then(result => {
       return result.data;
     });
   }
@@ -203,7 +205,7 @@ export default class OpenTsDatasource {
 
     const m = metric + '{' + keysQuery + '}';
 
-    return this._get('/api/search/lookup', { m: m, limit: 3000 }).then(result => {
+    return this._get('/api/search/lookup', { m: m, limit: this.lookupLimit }).then(result => {
       result = result.data.results;
       const tagvs = [];
       _.each(result, r => {
