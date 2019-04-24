@@ -19,18 +19,20 @@ import (
 
 type IntValue struct {
 	value int
+	Raw   string
 }
 
 func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	strValue, err := getInterpolated(unmarshal)
+	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
 	}
-	if len(strValue) == 0 {
+	if len(interpolated.value) == 0 {
 		// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
 		return nil
 	}
-	val.value, err = strconv.Atoi(strValue)
+	val.Raw = interpolated.raw
+	val.value, err = strconv.Atoi(interpolated.value)
 	return errors.Wrap(err, "cannot convert value int")
 }
 
@@ -40,18 +42,20 @@ func (val *IntValue) Value() int {
 
 type Int64Value struct {
 	value int64
+	Raw   string
 }
 
 func (val *Int64Value) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	strValue, err := getInterpolated(unmarshal)
+	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
 	}
-	if len(strValue) == 0 {
+	if len(interpolated.value) == 0 {
 		// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
 		return nil
 	}
-	val.value, err = strconv.ParseInt(strValue, 10, 64)
+	val.Raw = interpolated.raw
+	val.value, err = strconv.ParseInt(interpolated.value, 10, 64)
 	return err
 }
 
@@ -61,11 +65,16 @@ func (val *Int64Value) Value() int64 {
 
 type StringValue struct {
 	value string
+	Raw   string
 }
 
 func (val *StringValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	strValue, err := getInterpolated(unmarshal)
-	val.value = strValue
+	interpolated, err := getInterpolated(unmarshal)
+	if err != nil {
+		return err
+	}
+	val.Raw = interpolated.raw
+	val.value = interpolated.value
 	return err
 }
 
@@ -75,14 +84,16 @@ func (val *StringValue) Value() string {
 
 type BoolValue struct {
 	value bool
+	Raw   string
 }
 
 func (val *BoolValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	strValue, err := getInterpolated(unmarshal)
+	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
 	}
-	val.value, err = strconv.ParseBool(strValue)
+	val.Raw = interpolated.raw
+	val.value, err = strconv.ParseBool(interpolated.value)
 	return err
 }
 
@@ -92,18 +103,21 @@ func (val *BoolValue) Value() bool {
 
 type JSONValue struct {
 	value map[string]interface{}
+	Raw   map[string]interface{}
 }
 
 func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	d := make(map[string]interface{})
-	err := unmarshal(d)
+	unmarshaled := make(map[string]interface{})
+	err := unmarshal(unmarshaled)
 	if err != nil {
 		return err
 	}
-	for key, val := range d {
-		d[key] = tranformInterface(val)
+	val.Raw = unmarshaled
+	interpolated := make(map[string]interface{})
+	for key, val := range unmarshaled {
+		interpolated[key] = tranformInterface(val)
 	}
-	val.value = d
+	val.value = interpolated
 	return err
 }
 
@@ -113,18 +127,21 @@ func (val *JSONValue) Value() map[string]interface{} {
 
 type StringMapValue struct {
 	value map[string]string
+	Raw   map[string]string
 }
 
 func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	d := make(map[string]string)
-	err := unmarshal(d)
+	unmarshaled := make(map[string]string)
+	err := unmarshal(unmarshaled)
 	if err != nil {
 		return err
 	}
-	for key, val := range d {
-		d[key] = interpolateValue(val)
+	val.Raw = unmarshaled
+	interpolated := make(map[string]string)
+	for key, val := range unmarshaled {
+		interpolated[key] = interpolateValue(val)
 	}
-	val.value = d
+	val.value = interpolated
 	return err
 }
 
@@ -133,7 +150,8 @@ func (val *StringMapValue) Value() map[string]string {
 }
 
 // tranformInterface tries to transform any interface type into proper value with env expansion. It travers maps and
-// slices and the actual interpolation is done on all simple string values in the structure.
+// slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
+// map or slice value instead of modifying them in place.
 func tranformInterface(i interface{}) interface{} {
 	switch reflect.TypeOf(i).Kind() {
 	case reflect.Slice:
@@ -170,14 +188,19 @@ func interpolateValue(val string) string {
 	return os.ExpandEnv(val)
 }
 
+type interpolated struct {
+	value string
+	raw   string
+}
+
 // getInterpolated unmarshals the value as string and runs interpolation on it. It is the responsibility of each
 // value type to convert this string value to appropriate type.
-func getInterpolated(unmarshal func(interface{}) error) (string, error) {
-	var d string
-	err := unmarshal(&d)
+func getInterpolated(unmarshal func(interface{}) error) (*interpolated, error) {
+	var raw string
+	err := unmarshal(&raw)
 	if err != nil {
-		return "", err
+		return &interpolated{}, err
 	}
-	d = interpolateValue(d)
-	return d, nil
+	value := interpolateValue(raw)
+	return &interpolated{raw: raw, value: value}, nil
 }
