@@ -118,7 +118,7 @@ describe('stream handling', () => {
     // Post a stream event
     state.dataStreamObserver({
       state: LoadingState.Loading,
-      key: 'A',
+      key: 'C',
       request: state.request, // From the same request
       series: [makeSeriesStub('C')],
       unsubscribe: () => {},
@@ -131,12 +131,39 @@ describe('stream handling', () => {
     expect(data.series[2].refId).toBe('C');
   });
 
+  it('add another stream event (with a differnet key)', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Loading,
+      key: 'D',
+      request: state.request, // From the same request
+      series: [makeSeriesStub('D')],
+      unsubscribe: () => {},
+    });
+    expect(state.streams.length).toBe(2);
+
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(4);
+    expect(data.state).toBe(LoadingState.Streaming);
+    expect(data.series[3].refId).toBe('D');
+  });
+
+  it('replace the first stream value, but keep the order', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Loading,
+      key: 'C', // The key to replace previous index 2
+      request: state.request, // From the same request
+      series: [makeSeriesStub('X')],
+      unsubscribe: () => {},
+    });
+    expect(state.streams.length).toBe(2);
+
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series[2].refId).toBe('X');
+  });
+
   it('ignores streams from a differnet request', () => {
-    expect(state.streams.length).toBe(1);
-
-    let data = state.validateStreamsAndGetPanelData();
-    expect(data.series.length).toBe(3);
-
     // Post a stream event
     state.dataStreamObserver({
       state: LoadingState.Loading,
@@ -149,32 +176,14 @@ describe('stream handling', () => {
       unsubscribe: () => {},
     });
 
-    expect(state.streams.length).toBe(1); // no change
-    data = state.validateStreamsAndGetPanelData();
-    expect(data.series.length).toBe(3);
-  });
-
-  it('keeps streams if the requestId has the same prefix', () => {
-    // Post a stream event
-    state.dataStreamObserver({
-      state: LoadingState.Loading,
-      key: 'A',
-      request: {
-        ...state.request,
-        requestId: state.request.requestId + '_sub', // Same prefix
-      } as any,
-      series: [makeSeriesStub('D')],
-      unsubscribe: () => {},
-    });
-    expect(state.streams.length).toBe(2); // added one
-
+    expect(state.streams.length).toBe(2); // no change
     const data = state.validateStreamsAndGetPanelData();
     expect(data.series.length).toBe(4);
-    expect(data.series[4].refId).toBe('D');
   });
 
   it('removes streams when the query changes', () => {
     state.request = {
+      ...state.request,
       requestId: 'somethine else',
     } as any;
     state.response = {
