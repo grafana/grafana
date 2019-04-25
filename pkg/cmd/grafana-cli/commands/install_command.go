@@ -167,7 +167,7 @@ func extractFiles(body []byte, pluginName string, filePath string) error {
 		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			err := os.Mkdir(newFile, 0750)
+			err := os.Mkdir(newFile, 0755)
 			if permissionsError(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
