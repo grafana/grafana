@@ -146,10 +146,11 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
 
       // Check if we can reuse the already issued query
-      if (state.isRunning()) {
+      const active = state.getActiveRunner();
+      if (active) {
         if (state.isSameQuery(ds, request)) {
           // TODO? maybe cancel if it has run too long?
-          return state.getCurrentExecutor();
+          return active;
         } else {
           state.cancel('Query Changed while running');
         }
@@ -157,7 +158,7 @@ export class PanelQueryRunner {
 
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
-        if (this.state.isRunning()) {
+        if (state.getActiveRunner()) {
           this.subject.next(this.state.getPanelData());
         }
       }, delayStateNotification || 500);

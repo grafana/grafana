@@ -41,17 +41,12 @@ export class PanelQueryState {
   sendLegacy = false;
 
   // A promise for the running query
-  private executor: Promise<PanelData> = {} as any;
+  private executor?: Promise<PanelData>;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
 
   isFinished(state: LoadingState) {
     return state === LoadingState.Done || state === LoadingState.Error;
-  }
-
-  isRunning() {
-    const state = this.response.state;
-    return state === LoadingState.Loading || state === LoadingState.Streaming;
   }
 
   isStarted() {
@@ -67,12 +62,17 @@ export class PanelQueryState {
     return isEqual(this.request.targets, req.targets);
   }
 
-  getCurrentExecutor() {
+  /**
+   * Return the currently running query
+   */
+  getActiveRunner(): Promise<PanelData> | undefined {
     return this.executor;
   }
 
   cancel(reason: string) {
     const { request } = this;
+    this.executor = null;
+
     try {
       // If no endTime the call to datasource.query did not complete
       // call rejector to reject the executor promise
@@ -112,13 +112,14 @@ export class PanelQueryState {
 
     // Set the loading state immediatly
     this.response.state = LoadingState.Loading;
-    this.executor = new Promise<PanelData>((resolve, reject) => {
+    return (this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
       return ds
         .query(this.request, this.dataStreamObserver)
         .then(resp => {
           this.request.endTime = Date.now();
+          this.executor = null;
 
           // Make sure we send something back -- called run() w/o subscribe!
           if (!(this.sendSeries || this.sendLegacy)) {
@@ -135,11 +136,10 @@ export class PanelQueryState {
           resolve(this.getPanelData());
         })
         .catch(err => {
+          this.executor = null;
           resolve(this.setError(err));
         });
-    });
-
-    return this.executor;
+    }));
   }
 
   // Send a notice when the stream has updated the current model
@@ -210,7 +210,7 @@ export class PanelQueryState {
   getPanelData(): PanelData {
     const { response, streams, request } = this;
 
-    // Without streams it is just the result+request
+    // When not streaming, return the response + request
     if (!streams.length) {
       return {
         ...response,
