@@ -18,6 +18,7 @@ export interface QueryResultMeta {
 
   // Match the result to the query
   requestId?: string;
+  transformations?: string[]; // id of any transformations that were applied
 }
 
 export interface QueryResultBase {
