@@ -133,7 +133,7 @@ export class PanelQueryState {
             series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
-          resolve(this.getPanelData());
+          resolve(this.validateStreamsAndGetPanelData());
         })
         .catch(err => {
           this.executor = null;
@@ -210,7 +210,12 @@ export class PanelQueryState {
     }
   }
 
-  getPanelData(): PanelData {
+  /**
+   * This is called before broadcasting data to listeners.  Given that
+   * stream events can happen at any point, we need to make sure to
+   * only return data from active streams.
+   */
+  validateStreamsAndGetPanelData(): PanelData {
     const { response, streams, request } = this;
 
     // When not streaming, return the response + request
@@ -274,7 +279,7 @@ export class PanelQueryState {
     if (sendSeries && !response.series.length && response.legacy) {
       response.series = response.legacy.map(v => toSeriesData(v));
     }
-    return this.getPanelData();
+    return this.validateStreamsAndGetPanelData();
   }
 
   setError(err: any): PanelData {
@@ -287,7 +292,7 @@ export class PanelQueryState {
       state: LoadingState.Error,
       error: toDataQueryError(err),
     };
-    return this.getPanelData();
+    return this.validateStreamsAndGetPanelData();
   }
 }
 

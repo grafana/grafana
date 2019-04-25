@@ -159,7 +159,7 @@ export class PanelQueryRunner {
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
         if (state.getActiveRunner()) {
-          this.subject.next(this.state.getPanelData());
+          this.subject.next(this.state.validateStreamsAndGetPanelData());
         }
       }, delayStateNotification || 500);
 
@@ -186,7 +186,7 @@ export class PanelQueryRunner {
    */
   onDataStreamEvent = throttle(
     () => {
-      this.subject.next(this.state.getPanelData());
+      this.subject.next(this.state.validateStreamsAndGetPanelData());
     },
     50,
     { trailing: true, leading: true }
