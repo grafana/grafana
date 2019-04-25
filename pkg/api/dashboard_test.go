@@ -909,12 +909,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
-			query.Result = &m.Dashboard{Id: 1}
+			query.Result = &m.Dashboard{Id: 1, Data: &simplejson.Json{}}
 			return nil
 		})
 
 		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
-			query.Result = &m.DashboardProvisioning{}
+			query.Result = &m.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}
 			return nil
 		})
 
@@ -944,11 +944,22 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
 			})
 		})
+
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			cfg := setting.NewCfg()
+			cfg.ProvisioningPath = "/tmp/grafana/dashboards"
+
+			dash := GetDashboardShouldReturn200WithConfig(sc, cfg)
+
+			Convey("Should return relative path to provisioning file", func() {
+				So(dash.Meta.ProvisioningFilePath, ShouldEqual, "test/dashboard1.json")
+			})
+		})
 	})
 }
 
-func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
-	CallGetDashboard(sc)
+func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, cfg *setting.Cfg) dtos.DashboardFullWithMeta {
+	CallGetDashboard(sc, cfg)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -959,9 +970,16 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	return dash
 }
 
-func CallGetDashboard(sc *scenarioContext) {
+func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
+	return GetDashboardShouldReturn200WithConfig(sc, nil)
+}
+
+func CallGetDashboard(sc *scenarioContext, cfg *setting.Cfg) {
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
 	hs := &HTTPServer{
-		Cfg: setting.NewCfg(),
+		Cfg: cfg,
 	}
 
 	sc.handlerFunc = hs.GetDashboard
