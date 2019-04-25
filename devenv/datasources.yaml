@@ -99,12 +99,43 @@ datasources:
   - name: gdev-elasticsearch-v6-filebeat
     type: elasticsearch
     access: proxy
-    database: "[filebeat-6.2.4-]YYYY.MM.DD"
+    database: "[filebeat-]YYYY.MM.DD"
     url: http://localhost:11200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 60
+
+  - name: gdev-elasticsearch-v7-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      timeInterval: 10s
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+
+  - name: gdev-elasticsearch-v7-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+
+  - name: gdev-elasticsearch-v7-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
 
   - name: gdev-mysql
     type: mysql

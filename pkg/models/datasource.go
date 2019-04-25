@@ -30,7 +30,7 @@ var (
 	ErrDataSourceNotFound           = errors.New("Data source not found")
 	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
 	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
-	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
+	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration")
 	ErrDataSourceAccessDenied       = errors.New("Data source access denied")
 )
 
