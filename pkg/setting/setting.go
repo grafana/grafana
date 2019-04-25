@@ -166,6 +166,7 @@ var (
 	// LDAP
 	LdapEnabled     bool
 	LdapConfigFile  string
+	LdapSyncCron    string
 	LdapAllowSignup = true
 
 	// QUOTA
@@ -877,14 +878,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	ldapSec := iniFile.Section("auth.ldap")
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapConfigFile, err = valueAsString(ldapSec, "config_file", "")
-	if err != nil {
-		return err
-	}
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
-
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
@@ -917,6 +910,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readLDAPConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -979,6 +973,14 @@ func valueAsString(section *ini.Section, keyName string, defaultValue string) (v
 type RemoteCacheOptions struct {
 	Name    string
 	ConnStr string
+}
+
+func (cfg *Cfg) readLDAPConfig() {
+	ldapSec := cfg.Raw.Section("auth.ldap")
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	LdapSyncCron = ldapSec.Key("sync_cron").String()
 }
 
 func (cfg *Cfg) readSessionConfig() {
