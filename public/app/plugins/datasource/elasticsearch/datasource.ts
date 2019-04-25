@@ -234,7 +234,7 @@ export class ElasticDatasource {
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
-    if (this.esVersion >= 56) {
+    if (this.esVersion >= 56 && this.esVersion < 70) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
     return angular.toJson(queryHeader);
@@ -277,12 +277,15 @@ export class ElasticDatasource {
     payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
-    return this.post('_msearch', payload).then(res => {
+    const url = this.getMultiSearchUrl();
+
+    return this.post(url, payload).then(res => {
       return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
   }
 
   getFields(query) {
+    const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then(result => {
       const typeMap = {
         float: 'number',
@@ -347,8 +350,14 @@ export class ElasticDatasource {
         const index = result[indexName];
         if (index && index.mappings) {
           const mappings = index.mappings;
-          for (const typeName in mappings) {
-            const properties = mappings[typeName].properties;
+
+          if (configuredEsVersion < 70) {
+            for (const typeName in mappings) {
+              const properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
+            }
+          } else {
+            const properties = mappings.properties;
             getFieldsRecursively(properties);
           }
         }
@@ -371,7 +380,9 @@ export class ElasticDatasource {
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
     esQuery = header + '\n' + esQuery + '\n';
 
-    return this.post('_msearch?search_type=' + searchType, esQuery).then(res => {
+    const url = this.getMultiSearchUrl();
+
+    return this.post(url, esQuery).then(res => {
       if (!res.responses[0].aggregations) {
         return [];
       }
@@ -384,6 +395,14 @@ export class ElasticDatasource {
         };
       });
     });
+  }
+
+  getMultiSearchUrl() {
+    if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
+      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+    }
+
+    return '_msearch';
   }
 
   metricFindQuery(query) {
