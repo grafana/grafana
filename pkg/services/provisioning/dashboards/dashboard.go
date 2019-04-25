@@ -3,44 +3,79 @@ package dashboards
 import (
 	"context"
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/pkg/errors"
 )
 
-type DashboardProvisioner struct {
-	cfgReader *configReader
-	log       log.Logger
+type DashboardProvisioner interface {
+	Provision() error
+	PollChanges(ctx context.Context)
 }
 
-func NewDashboardProvisioner(configDirectory string) *DashboardProvisioner {
-	log := log.New("provisioning.dashboard")
-	d := &DashboardProvisioner{
-		cfgReader: &configReader{path: configDirectory, log: log},
-		log:       log,
-	}
-
-	return d
+type DashboardProvisionerImpl struct {
+	log         log.Logger
+	fileReaders []*fileReader
 }
 
-func (provider *DashboardProvisioner) Provision(ctx context.Context) error {
-	cfgs, err := provider.cfgReader.readConfig()
+type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+
+func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
+	logger := log.New("provisioning.dashboard")
+	cfgReader := &configReader{path: configDirectory, log: logger}
+	configs, err := cfgReader.readConfig()
+
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "Failed to read dashboards config")
 	}
 
-	for _, cfg := range cfgs {
-		switch cfg.Type {
-		case "file":
-			fileReader, err := NewDashboardFileReader(cfg, provider.log.New("type", cfg.Type, "name", cfg.Name))
-			if err != nil {
-				return err
-			}
+	fileReaders, err := getFileReaders(configs, logger)
 
-			go fileReader.ReadAndListen(ctx)
-		default:
-			return fmt.Errorf("type %s is not supported", cfg.Type)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to initialize file readers")
+	}
+
+	d := &DashboardProvisionerImpl{
+		log:         logger,
+		fileReaders: fileReaders,
+	}
+
+	return d, nil
+}
+
+func (provider *DashboardProvisionerImpl) Provision() error {
+	for _, reader := range provider.fileReaders {
+		err := reader.startWalkingDisk()
+		if err != nil {
+			return errors.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
 		}
 	}
 
 	return nil
+}
+
+// PollChanges starts polling for changes in dashboard definition files. It creates goroutine for each provider
+// defined in the config.
+func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
+	for _, reader := range provider.fileReaders {
+		go reader.pollChanges(ctx)
+	}
+}
+
+func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {
+	var readers []*fileReader
+
+	for _, config := range configs {
+		switch config.Type {
+		case "file":
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
+			if err != nil {
+				return nil, errors.Wrapf(err, "Failed to create file reader for config %v", config.Name)
+			}
+			readers = append(readers, fileReader)
+		default:
+			return nil, fmt.Errorf("type %s is not supported", config.Type)
+		}
+	}
+
+	return readers, nil
 }
