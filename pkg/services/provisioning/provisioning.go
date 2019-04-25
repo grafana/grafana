@@ -14,9 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type DashboardProvisioner interface {
+	Provision() error
+	PollChanges(ctx context.Context)
+	GetFileReaderByName(name string) *dashboards.FileReader
+}
+
+type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+		func(path string) (DashboardProvisioner, error) {
 			return dashboards.NewDashboardProvisionerImpl(path)
 		},
 		notifiers.Provision,
@@ -24,14 +32,8 @@ func init() {
 	))
 }
 
-type ProvisioningService interface {
-	ProvisionDatasources() error
-	ProvisionNotifications() error
-	ProvisionDashboards() error
-}
-
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
+	newDashboardProvisioner DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -47,8 +49,8 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory
-	dashboardProvisioner    dashboards.DashboardProvisioner
+	newDashboardProvisioner DashboardProvisionerFactory
+	dashboardProvisioner    DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 	mutex                   sync.Mutex
@@ -125,6 +127,10 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	}
 	ps.dashboardProvisioner = dashProvisioner
 	return nil
+}
+
+func (ps *provisioningServiceImpl) GetDashboardFileReaderByName(name string) *dashboards.FileReader {
+	return ps.dashboardProvisioner.GetFileReaderByName(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

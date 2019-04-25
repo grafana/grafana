@@ -79,7 +79,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 func setup() (*provisioningServiceImpl, *dashboards.DashboardProvisionerMock) {
 	dashMock := dashboards.NewDashboardProvisionerMock()
 	service := NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+		func(path string) (DashboardProvisioner, error) {
 			return dashMock, nil
 		},
 		nil,

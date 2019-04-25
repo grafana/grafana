@@ -107,19 +107,23 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningDataQuery := &m.GetProvisionedDashboardDataByIdQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(provisioningDataQuery)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	if provisioningDataQuery.Result != nil {
+	if provisioningData != nil {
 		meta.Provisioned = true
-		meta.ProvisioningFilePath, err = filepath.Rel(hs.Cfg.ProvisioningPath, provisioningDataQuery.Result.ExternalId)
-		if err != nil {
-			// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
-			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
-			hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
+		fileReader := hs.ProvisioningService.GetDashboardFileReaderByName(provisioningData.Name)
+		if fileReader != nil {
+			meta.ProvisioningFilePath, err = filepath.Rel(fileReader.ResolvedPath(), provisioningData.ExternalId)
+			if err != nil {
+				// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
+				// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+				hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
+			}
+		} else {
+			hs.log.Error("Failed to get FileReader", "name", provisioningData.Name)
 		}
 	}
 

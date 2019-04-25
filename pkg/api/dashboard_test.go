@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/log"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -11,6 +12,8 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+	dashboards2 "github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -946,10 +949,21 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
-			cfg := setting.NewCfg()
-			cfg.ProvisioningPath = "/tmp/grafana/dashboards"
+			mock := provisioning.NewProvisioningServiceMock()
+			mock.GetDashboardFileReaderByNameFunc = func(name string) *dashboards2.FileReader {
+				fileReader, err := dashboards2.NewDashboardFileReader(
+					&dashboards2.DashboardsAsConfig{
+						Options: map[string]interface{}{
+							"path": "/tmp/grafana/dashboards",
+						},
+					},
+					log.New("test-dashboard-file-reader"),
+				)
+				So(err, ShouldBeNil)
+				return fileReader
+			}
 
-			dash := GetDashboardShouldReturn200WithConfig(sc, cfg)
+			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
 
 			Convey("Should return relative path to provisioning file", func() {
 				So(dash.Meta.ProvisioningFilePath, ShouldEqual, "test/dashboard1.json")
@@ -958,8 +972,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 }
 
-func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, cfg *setting.Cfg) dtos.DashboardFullWithMeta {
-	CallGetDashboard(sc, cfg)
+func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService ProvisioningService) dtos.DashboardFullWithMeta {
+	if provisioningService == nil {
+		provisioningService = provisioning.NewProvisioningServiceMock()
+	}
+
+	hs := &HTTPServer{
+		Cfg:                 setting.NewCfg(),
+		ProvisioningService: provisioningService,
+	}
+	CallGetDashboard(sc, hs)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -974,13 +996,7 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	return GetDashboardShouldReturn200WithConfig(sc, nil)
 }
 
-func CallGetDashboard(sc *scenarioContext, cfg *setting.Cfg) {
-	if cfg == nil {
-		cfg = setting.NewCfg()
-	}
-	hs := &HTTPServer{
-		Cfg: cfg,
-	}
+func CallGetDashboard(sc *scenarioContext, hs *HTTPServer) {
 
 	sc.handlerFunc = hs.GetDashboard
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()

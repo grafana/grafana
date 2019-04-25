@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"net"
 	"net/http"
 	"os"
@@ -25,13 +26,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -42,6 +42,13 @@ func init() {
 	})
 }
 
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardFileReaderByName(name string) *dashboards.FileReader
+}
+
 type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
@@ -49,17 +56,17 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister       routing.RouteRegister            `inject:""`
-	Bus                 bus.Bus                          `inject:""`
-	RenderService       rendering.Service                `inject:""`
-	Cfg                 *setting.Cfg                     `inject:""`
-	HooksService        *hooks.HooksService              `inject:""`
-	CacheService        *cache.CacheService              `inject:""`
-	DatasourceCache     datasources.CacheService         `inject:""`
-	AuthTokenService    models.UserTokenService          `inject:""`
-	QuotaService        *quota.QuotaService              `inject:""`
-	RemoteCacheService  *remotecache.RemoteCache         `inject:""`
-	ProvisioningService provisioning.ProvisioningService `inject:""`
+	RouteRegister       routing.RouteRegister    `inject:""`
+	Bus                 bus.Bus                  `inject:""`
+	RenderService       rendering.Service        `inject:""`
+	Cfg                 *setting.Cfg             `inject:""`
+	HooksService        *hooks.HooksService      `inject:""`
+	CacheService        *cache.CacheService      `inject:""`
+	DatasourceCache     datasources.CacheService `inject:""`
+	AuthTokenService    models.UserTokenService  `inject:""`
+	QuotaService        *quota.QuotaService      `inject:""`
+	RemoteCacheService  *remotecache.RemoteCache `inject:""`
+	ProvisioningService ProvisioningService      `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {

@@ -7,17 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DashboardProvisioner interface {
-	Provision() error
-	PollChanges(ctx context.Context)
-}
-
 type DashboardProvisionerImpl struct {
 	log         log.Logger
-	fileReaders []*fileReader
+	fileReaders []*FileReader
 }
-
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
 	logger := log.New("provisioning.dashboard")
@@ -61,8 +54,19 @@ func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
 	}
 }
 
-func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {
-	var readers []*fileReader
+// GetFileReaderByName returns FileReader for the specified name which can be useful to get data about the config if
+// you have only ProvisionedDashboard data (which contains name of the provisioner).
+func (provider *DashboardProvisionerImpl) GetFileReaderByName(name string) *FileReader {
+	for _, reader := range provider.fileReaders {
+		if reader.Cfg.Name == name {
+			return reader
+		}
+	}
+	return nil
+}
+
+func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*FileReader, error) {
+	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {

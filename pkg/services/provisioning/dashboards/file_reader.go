@@ -24,14 +24,14 @@ var (
 	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
-type fileReader struct {
+type FileReader struct {
 	Cfg                          *DashboardsAsConfig
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
-func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
+func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -43,7 +43,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
-	return &fileReader{
+	return &FileReader{
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
@@ -52,7 +52,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 }
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
-func (fr *fileReader) pollChanges(ctx context.Context) {
+func (fr *FileReader) pollChanges(ctx context.Context) {
 	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
@@ -68,9 +68,9 @@ func (fr *fileReader) pollChanges(ctx context.Context) {
 
 // startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
 // to the database.
-func (fr *fileReader) startWalkingDisk() error {
+func (fr *FileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
-	resolvedPath := fr.resolvePath(fr.Path)
+	resolvedPath := fr.ResolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
@@ -111,7 +111,7 @@ func (fr *fileReader) startWalkingDisk() error {
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
+func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
@@ -144,7 +144,7 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+func (fr *FileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -295,7 +295,7 @@ type dashboardJsonFile struct {
 	lastModified time.Time
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
+func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -329,24 +329,23 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}, nil
 }
 
-func (fr *fileReader) resolvePath(path string) string {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func (fr *FileReader) ResolvedPath() string {
+	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}
 
-	copy := path
-	path, err := filepath.Abs(path)
+	path, err := filepath.Abs(fr.Path)
 	if err != nil {
-		fr.log.Error("Could not create absolute path", "path", copy, "error", err)
+		fr.log.Error("Could not create absolute path", "path", fr.Path, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path", "path", copy, "error", err)
+		fr.log.Error("Failed to read content of symlinked path", "path", fr.Path, "error", err)
 	}
 
 	if path == "" {
-		path = copy
+		path = fr.Path
 		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
 	}
 	return path
