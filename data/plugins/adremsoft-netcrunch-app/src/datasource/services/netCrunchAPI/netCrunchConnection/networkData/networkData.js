@@ -59,7 +59,7 @@ function NetCrunchNetworkData(adremClient, netCrunchConnection) {
 
   function getAccessRightsParameters(userProfile) {
     return {
-      accessProfileId: userProfile.ACProfileId,
+      accessProfileId: userProfile.AccessProfile,
       orgId: userProfile.OrgId
     };
   }
