@@ -1,6 +1,6 @@
 import { toDataQueryError, PanelQueryState, getProcessedSeriesData } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataQueryResponse, LoadingState } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -78,5 +78,114 @@ describe('getProcessedSeriesData', () => {
     expect(getProcessedSeriesData(undefined)).toEqual([]);
     expect(getProcessedSeriesData((null as unknown) as any[])).toEqual([]);
     expect(getProcessedSeriesData([])).toEqual([]);
+  });
+});
+
+function makeSeriesStub(refId: string) {
+  return {
+    fields: [{ name: 'a' }],
+    rows: [],
+    refId,
+  };
+}
+
+describe('stream handling', () => {
+  const state = new PanelQueryState();
+  state.onStreamingDataUpdated = () => {
+    // nothing
+  };
+  state.request = {
+    requestId: '123',
+    range: {
+      raw: {
+        from: 123, // if string it gets revaluated
+      },
+    },
+  } as any;
+  state.response = {
+    state: LoadingState.Done,
+    series: [makeSeriesStub('A'), makeSeriesStub('B')],
+  };
+
+  it('gets the response', () => {
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(2);
+    expect(data.state).toBe(LoadingState.Done);
+    expect(data.series[0].refId).toBe('A');
+  });
+
+  it('adds a stream event', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Loading,
+      key: 'A',
+      request: state.request, // From the same request
+      series: [makeSeriesStub('C')],
+      unsubscribe: () => {},
+    });
+    expect(state.streams.length).toBe(1);
+
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(3);
+    expect(data.state).toBe(LoadingState.Streaming);
+    expect(data.series[2].refId).toBe('C');
+  });
+
+  it('ignores streams from a differnet request', () => {
+    expect(state.streams.length).toBe(1);
+
+    let data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(3);
+
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Loading,
+      key: 'Z', // Note with key 'A' it would still overwrite
+      request: {
+        ...state.request,
+        requestId: 'XXX', // Different request and id
+      } as any,
+      series: [makeSeriesStub('C')],
+      unsubscribe: () => {},
+    });
+
+    expect(state.streams.length).toBe(1); // no change
+    data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(3);
+  });
+
+  it('keeps streams if the requestId has the same prefix', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Loading,
+      key: 'A',
+      request: {
+        ...state.request,
+        requestId: state.request.requestId + '_sub', // Same prefix
+      } as any,
+      series: [makeSeriesStub('D')],
+      unsubscribe: () => {},
+    });
+    expect(state.streams.length).toBe(2); // added one
+
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(4);
+    expect(data.series[4].refId).toBe('D');
+  });
+
+  it('removes streams when the query changes', () => {
+    state.request = {
+      requestId: 'somethine else',
+    } as any;
+    state.response = {
+      state: LoadingState.Done,
+      series: [makeSeriesStub('F')],
+    };
+    expect(state.streams.length).toBe(2); // unchanged
+
+    const data = state.validateStreamsAndGetPanelData();
+    expect(data.series.length).toBe(1);
+    expect(data.series[0].refId).toBe('F');
+    expect(state.streams.length).toBe(0); // no streams
   });
 });
