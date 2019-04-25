@@ -22,7 +22,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData } from '../state/PanelQueryRunner';
+import { getProcessedSeriesData } from '../state/PanelQueryState';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -48,6 +48,7 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
+  delayedStateUpdate: Partial<State>;
 
   constructor(props: Props) {
     super(props);
@@ -118,7 +119,15 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
       }
 
-      this.setState({ isFirstLoad, errorMessage, data });
+      const stateUpdate = { isFirstLoad, errorMessage, data };
+
+      if (this.isVisible) {
+        this.setState(stateUpdate);
+      } else {
+        // if we are getting data while another panel is in fullscreen / edit mode
+        // we need to store the data but not update state yet
+        this.delayedStateUpdate = stateUpdate;
+      }
     },
   };
 
@@ -162,9 +171,15 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   onRender = () => {
-    this.setState({
-      renderCounter: this.state.renderCounter + 1,
-    });
+    const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
+
+    // If we have received a data update while hidden copy over that state as well
+    if (this.delayedStateUpdate) {
+      Object.assign(stateUpdate, this.delayedStateUpdate);
+      this.delayedStateUpdate = null;
+    }
+
+    this.setState(stateUpdate);
   };
 
   onOptionsChange = (options: any) => {
