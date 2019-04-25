@@ -20,11 +20,13 @@ const fontSizeOptions = percents.map(v => {
 });
 
 export class FontSizeEditor extends PureComponent<Props> {
-  setPrefixFontSize = (v: SelectOptionItem) => this.props.onChange({ ...this.props.options, prefixFontSize: v.value });
+  setPrefixFontSize = (v: SelectOptionItem<string>) =>
+    this.props.onChange({ ...this.props.options, prefixFontSize: v.value });
 
-  setValueFontSize = (v: SelectOptionItem) => this.props.onChange({ ...this.props.options, valueFontSize: v.value });
+  setValueFontSize = (v: SelectOptionItem<string>) =>
+    this.props.onChange({ ...this.props.options, valueFontSize: v.value });
 
-  setPostfixFontSize = (v: SelectOptionItem) =>
+  setPostfixFontSize = (v: SelectOptionItem<string>) =>
     this.props.onChange({ ...this.props.options, postfixFontSize: v.value });
 
   render() {

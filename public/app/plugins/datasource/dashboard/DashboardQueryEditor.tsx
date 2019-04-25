@@ -123,8 +123,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const { query } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
 
-    let selected: SelectOptionItem;
-    const panels: SelectOptionItem[] = [];
+    let selected: SelectOptionItem<number>;
+    const panels: Array<SelectOptionItem<number>> = [];
     for (const panel of dashboard.panels) {
       if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
         const plugin = config.panels[panel.type];
