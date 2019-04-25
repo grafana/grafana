@@ -1,11 +1,17 @@
 import { SelectOptionItem } from '../components/Select/Select';
+import { JSONSchema7 } from 'json-schema';
 
 /**
  * Option editors, i.e. BooleanOption have to comply to OptionInputAPI.
  * OptionInputAPI represents UI elements that allow value modification, name it string, boolean, complex object, whatever
  */
 
+interface OptionInputConfig {
+  required: boolean;
+  label?: string;
+}
 export interface OptionInputAPI<T> {
+  properties?: OptionInputConfig;
   value: T;
   onChange: (value: T, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
@@ -14,17 +20,46 @@ export interface OptionsRowModel<TOptions> {
   columns: number;
   content: Array<OptionUIModel<TOptions, any> | GroupLayoutUIModel<any>>;
 }
+
+export enum OptionsUIType {
+  Layout = 'options:layout',
+  Group = 'options:group',
+  Editor = 'options:editor',
+}
+
+export interface OptionsUI<T> {
+  type: T;
+}
+export interface OptionsGrid extends OptionsUI<OptionsUIType.Layout> {
+  config: {
+    columns: number;
+  };
+  content: Array<OptionsGrid | OptionsGroup<any> | OptionEditor<any, any>>; // Not allowing nested grids for now
+}
+
+// tmp type
+export interface OptionsPanelGroup extends OptionsGroup<{ title: string }> {}
+export interface OptionsFieldsetGroup extends OptionsGroup<{ legend: string }> {}
+
+export interface OptionsGroup<TConfig> extends OptionsUI<OptionsUIType.Group> {
+  config: TConfig;
+  component?: React.ComponentType<TConfig>;
+  content: Array<OptionEditor<any, any>>; // For matter of simpliocity I'm not allowing nesting layuts, groups
+}
+
+export interface OptionEditor<TOptions, TKey extends keyof TOptions> extends OptionsUI<OptionsUIType.Editor> {
+  editor: AbstractOptionUIModel<OptionInputAPI<TOptions[TKey]>, TKey>;
+}
+
 export interface OptionsUIModel<TOptions> {
-  rows: Array<OptionsRowModel<TOptions>>;
+  model: OptionsGrid | OptionsGroup<any> | OptionEditor<TOptions, any>;
 }
 
 export enum OptionType {
   Text = 'text',
-  Float = 'float',
-  Integer = 'integer',
+  Number = 'number', // Not specifying integer/float as this will be handled on options data schema level
   Boolean = 'boolean',
   Object = 'object',
-  Array = 'array',
 }
 
 /**
@@ -44,7 +79,7 @@ export interface SelectOptionUIComponentProps<T> extends OptionInputAPI<SelectOp
 }
 
 interface AbstractOptionUIModel<ComponentProps, P> {
-  type: OptionType;
+  optionType: OptionType;
   /**
    * Name of the options object property
    * i.e. for GaugeOptions type:
@@ -56,7 +91,7 @@ interface AbstractOptionUIModel<ComponentProps, P> {
    * it could be 'minValue'
    * Question: Should we name it option instead of path?
    */
-  path: P;
+  property: P;
   /**
    * Keeping component as optional on purpose to enable default components for simple types,
    * i.e. number
@@ -97,7 +132,7 @@ export interface GroupLayoutUIModel<K> {
 
 /**
  * Represents a container for a group of options.
- * Panel UI for options is characterised by a title with a gradient background
+ * Panel UI for options is characterised by a tit le with a gradient background
  * Use it for grouping related options:
  *
  *      ++++++++++++++++++++++++++++++++++++++
@@ -134,12 +169,12 @@ export interface FieldsetUIModel
  * Below are typeguards used by PanelOptionsBuilder components
  */
 export function isOptionsUIModel(model: any): model is OptionsUIModel<any> {
-  return (model as OptionsUIModel<any>).rows !== undefined;
+  return (model as OptionsUIModel<any>).model !== undefined;
 }
 export function isOptionModel(
   option: OptionUIModel<any, any> | GroupLayoutUIModel<any>
 ): option is OptionUIModel<any, any> {
-  return (option as OptionUIModel<any, any>).path !== undefined;
+  return (option as OptionUIModel<any, any>).property !== undefined;
 }
 
 export function isOptionsPanelModel(ui: PanelUIModel | FieldsetUIModel): ui is PanelUIModel {
@@ -151,31 +186,9 @@ export function isSelectOption(
 ): option is SelectOptionUIModel<any, any> {
   return (option as SelectOptionUIModel<any, any>).options !== undefined;
 }
-
-// // const uiOptionModel = new UIModel<GaugeOptions>()
-// //   .addRow(/*{row config }*/)
-// //     .addColumn()
-// //       .addPanel('Basic settings') // Creates
-// //         .useStatsPicker('Show', 'valueMappings.stats')
-// //         .useUnitPicker('Unit', 'valueMappings.unit')
-// //         .useDecimalsInput('Decimals', 'valueMappings.decimals')
-// //         .useTextInput('Prefix', 'valueMappings.prefix')
-// //         .useTextInput('Suffix', 'valueMappings.suffix')
-// //         .addBooleanOption('Title', 'option.path')
-// //         .addSelectOption('Title', 'option.path', )
-// //       .endPanel()
-// //     .endColumn()
-// //     .addColumn()
-// //       .addPanel('Gauge')
-// //         .useNumber('Min value', 'minValue')
-// //         .useNumber('Max value', 'maxValue')
-// //         .useToggle('Show labels', 'showThresholdLabels')
-// //         .useToggle('Show markers', 'showThresholdMarkers')
-// //       .endPanel()
-// //     .endColumn()
-// //     .addColumn()
-// //       .addPanel('Threshold')
-// //         .useThresholdEditor('thresholds')
-// //       .endPanel()
-// //     .endColumn()
-// //   .endRow();
+export interface OptionsDataSchema<TOptions> extends JSONSchema7 {
+  properties?: { [K in keyof TOptions]: OptionsDataSchema<any> };
+}
+export interface ObjectOptionDataSchema<TOptions> extends JSONSchema7 {
+  properties: { [K in keyof TOptions]: OptionsDataSchema<any> };
+}

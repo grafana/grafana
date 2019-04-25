@@ -9,10 +9,11 @@ interface NumericOptionProps extends OptionInputAPI<number> {
   float?: boolean;
 }
 
-const NumericOption: React.FunctionComponent<NumericOptionProps> = ({ float, label, value, onChange }) => {
+const NumericOption: React.FunctionComponent<NumericOptionProps> = ({ float, label, value, onChange, properties }) => {
   return (
     <FormField
-      label={label}
+      required={!!properties && properties.required}
+      label={properties ? `${properties.label} ${properties.required ? '*' : ''}` : ''}
       inputEl={
         <Input
           type="number"

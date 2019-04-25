@@ -2,105 +2,131 @@ import {
   ReactPanelPlugin,
   sharedSingleStatMigrationCheck,
   sharedSingleStatOptionsCheck,
-  GroupLayoutType,
   OptionType,
-  OptionUIModel,
-  PanelUIModel,
   SingleStatValueEditor,
   ThresholdsEditor,
-  ValueMappingsEditor,
-  BooleanOption,
   IntegerOption,
-  FloatOption,
+  OptionsUIType,
+  OptionsUIModel,
+  PanelOptionsGroup,
+  OptionEditor,
+  OptionsPanelGroup,
+  OptionsGrid,
+  ObjectOptionDataSchema,
+  SingleStatBaseOptions,
+  OptionsDataSchema,
 } from '@grafana/ui';
-// import { GaugePanelEditor } from './GaugePanelEditor';
+
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
 
-const getGaugePanelOptionsUIModel = () => ({
-  rows: [
-    {
-      columns: 3,
-      content: [
-        {
-          type: GroupLayoutType.Panel,
-          groupOptions: {
-            title: 'Gauge',
-          },
-          options: [
-            {
-              type: OptionType.Float,
-              path: 'minValue',
-              component: IntegerOption,
-              label: 'Min value',
-              placeholder: 'Min value',
-            } as OptionUIModel<GaugeOptions, 'minValue'>,
-            {
-              type: OptionType.Float,
-              path: 'maxValue',
-              component: FloatOption,
-              label: 'Max value',
-              placeholder: 'Max value',
-            } as OptionUIModel<GaugeOptions, 'maxValue'>,
-            {
-              type: OptionType.Boolean,
-              path: 'showThresholdLabels',
-              component: BooleanOption,
-              label: 'Show labels',
-            } as OptionUIModel<GaugeOptions, 'showThresholdLabels'>,
-            {
-              type: OptionType.Boolean,
-              path: 'showThresholdMarkers',
-              component: BooleanOption,
-              label: 'Show markers',
-            } as OptionUIModel<GaugeOptions, 'showThresholdMarkers'>,
-          ],
-        } as PanelUIModel,
-        {
-          type: GroupLayoutType.Panel,
-          groupOptions: {
-            title: 'Value Settings',
-          },
-          options: [
-            {
-              type: OptionType.Object,
-              path: 'valueOptions',
-              component: SingleStatValueEditor,
-            } as OptionUIModel<GaugeOptions, 'valueOptions'>,
-          ],
-        } as PanelUIModel,
-        {
-          type: GroupLayoutType.Panel,
-          groupOptions: {
-            title: 'Thresholds',
-          },
-          options: [
-            {
-              type: OptionType.Array,
-              path: 'thresholds',
-              component: ThresholdsEditor,
-            } as OptionUIModel<GaugeOptions, 'thresholds'>,
-          ],
-        } as PanelUIModel,
-      ],
-    },
-    {
+const optionsModel: OptionsUIModel<GaugeOptions> = {
+  model: {
+    type: OptionsUIType.Layout,
+    config: {
       columns: 1,
-      content: [
-        {
-          type: OptionType.Object,
-          path: 'valueMappings',
-          component: ValueMappingsEditor,
-          label: 'Min value',
-          placeholder: 'Min value',
-        } as OptionUIModel<GaugeOptions, 'valueMappings'>,
-      ],
     },
-  ],
-});
+    content: [
+      {
+        type: OptionsUIType.Layout,
+        config: { columns: 3 },
+        content: [
+          {
+            type: OptionsUIType.Group,
+            config: { title: 'Thresholds' },
+            component: PanelOptionsGroup,
+            content: [
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Object,
+                  component: ThresholdsEditor,
+                  property: 'thresholds',
+                },
+              } as OptionEditor<GaugeOptions, 'thresholds'>,
+            ],
+          } as OptionsPanelGroup,
+          {
+            type: OptionsUIType.Group,
+            config: { title: 'Value settings' },
+            component: PanelOptionsGroup,
+            content: [
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Object,
+                  component: SingleStatValueEditor,
+                  property: 'valueOptions',
+                },
+              } as OptionEditor<GaugeOptions, 'valueOptions'>,
+            ],
+          } as OptionsPanelGroup,
+          {
+            type: OptionsUIType.Group,
+            config: { title: 'Gauge' },
+            component: PanelOptionsGroup,
+            content: [
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Number,
+                  component: IntegerOption,
+                  property: 'minValue',
+                  label: 'Min value',
+                },
+              } as OptionEditor<GaugeOptions, 'minValue'>,
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Number,
+                  component: IntegerOption,
+                  property: 'maxValue',
+                  label: 'Max value',
+                },
+              } as OptionEditor<GaugeOptions, 'maxValue'>,
+            ],
+          } as OptionsPanelGroup,
+        ],
+      } as OptionsGrid,
+    ],
+  } as OptionsGrid,
+};
+
+const valueOptionsSchema: ObjectOptionDataSchema<SingleStatBaseOptions> = {
+  properties: {
+    orientation: {},
+    thresholds: {},
+    valueMappings: {},
+    valueOptions: {},
+  },
+};
+
+const optionsSchema: OptionsDataSchema<GaugeOptions> = {
+  title: 'GaugeOptions',
+  type: 'object',
+  required: ['minValue', 'maxValue'],
+  properties: {
+    minValue: {
+      type: 'number',
+      description: 'Hint for min value...',
+    },
+    maxValue: {
+      type: 'number',
+      description: 'Hint for min value...',
+    },
+    showThresholdMarkers: {
+      type: 'boolean',
+    },
+    showThresholdLabels: {
+      type: 'boolean',
+    },
+    ...valueOptionsSchema.properties,
+  },
+};
 
 export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
-  .setEditor(getGaugePanelOptionsUIModel())
+  .setEditor(optionsModel)
+  .setOptionsSchema(optionsSchema)
   .setPanelChangeHandler(sharedSingleStatOptionsCheck)
   .setMigrationHandler(sharedSingleStatMigrationCheck);

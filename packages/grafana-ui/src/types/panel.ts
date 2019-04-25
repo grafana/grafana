@@ -2,7 +2,7 @@ import { ComponentClass } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataRequestInfo, DataQueryError, LegacyResponseData } from './datasource';
-import { OptionsUIModel } from './panelOptions';
+import { OptionsUIModel, OptionsDataSchema } from './panelOptions';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -56,6 +56,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
 export class ReactPanelPlugin<TOptions = any> {
   panel: ComponentClass<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>> | OptionsUIModel<TOptions>;
+  optionsSchema?: OptionsDataSchema<TOptions>;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -66,6 +67,10 @@ export class ReactPanelPlugin<TOptions = any> {
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>> | OptionsUIModel<TOptions>) {
     this.editor = editor;
+    return this;
+  }
+  setOptionsSchema(schema: OptionsDataSchema<TOptions>) {
+    this.optionsSchema = schema;
     return this;
   }
 

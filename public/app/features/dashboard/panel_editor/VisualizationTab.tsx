@@ -72,6 +72,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
         if (isOptionsUIModel(PanelEditor)) {
           return (
             <PanelOptionsUIBuilder
+              optionsSchema={plugin.reactPlugin.optionsSchema}
               uiModel={PanelEditor as OptionsUIModel<any>}
               options={this.getReactPanelOptions()}
               onOptionsChange={(key, value) => {

@@ -1,15 +1,12 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Threshold } from '../../types';
+import { Threshold, OptionInputAPI } from '../../types';
 import { ColorPicker } from '..';
 import { Input, PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes';
 import { getColorFromHexRgbOrName } from '../../utils';
 
-export interface Props {
-  value: Threshold[];
-  onChange: (thresholds: Threshold[]) => void;
-}
+export interface Props extends OptionInputAPI<Threshold[]> {}
 
 interface State {
   thresholds: Threshold[];
