@@ -86,7 +86,7 @@ export class PanelQueryState {
         getBackendSrv().resolveCancelerIfExists(request.requestId);
       }
     } catch (err) {
-      console.log('Error canceling request');
+      console.log('Error canceling request', err);
     }
 
     // Close any open streams
