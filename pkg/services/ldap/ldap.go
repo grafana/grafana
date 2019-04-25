@@ -17,7 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type ILdapConn interface {
+// IConnection is interface for LDAP connection manipulation
+type IConnection interface {
 	Bind(username, password string) error
 	UnauthenticatedBind(username string) error
 	Search(*ldap.SearchRequest) (*ldap.SearchResult, error)
@@ -25,15 +26,18 @@ type ILdapConn interface {
 	Close()
 }
 
+// IAuth is interface for LDAP authorization
 type IAuth interface {
 	Login(query *m.LoginUserQuery) error
 	SyncUser(query *m.LoginUserQuery) error
 	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *UserInfo) (*m.User, error)
+	Users() ([]*UserInfo, error)
 }
 
+// Auth is basic struct of LDAP authorization
 type Auth struct {
-	server            *LdapServerConf
-	conn              ILdapConn
+	server            *ServerConfig
+	conn              IConnection
 	requireSecondBind bool
 	log               log.Logger
 }
@@ -44,12 +48,12 @@ var (
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
 
-var dial = func(network, addr string) (ILdapConn, error) {
+var dial = func(network, addr string) (IConnection, error) {
 	return ldap.Dial(network, addr)
 }
 
 // New creates the new LDAP auth
-func New(server *LdapServerConf) IAuth {
+func New(server *ServerConfig) IAuth {
 	return &Auth{
 		server: server,
 		log:    log.New("ldap"),
@@ -121,7 +125,7 @@ func (auth *Auth) Login(query *m.LoginUserQuery) error {
 	if err := auth.Dial(); err != nil {
 		return err
 	}
-	defer auth.Close()
+	defer auth.conn.Close()
 
 	// perform initial authentication
 	if err := auth.initialBind(query.Username, query.Password); err != nil {

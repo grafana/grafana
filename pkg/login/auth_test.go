@@ -102,13 +102,13 @@ func TestAuthenticateUser(t *testing.T) {
 		authScenario("When a non-existing grafana user authenticate and invalid ldap credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
 			mockLoginUsingGrafanaDB(m.ErrUserNotFound, sc)
-			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockLoginUsingLdap(true, LDAP.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
 			err := AuthenticateUser(sc.loginUserQuery)
 
 			Convey("it should result in", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				So(err, ShouldEqual, LDAP.ErrInvalidCredentials)
 				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
@@ -160,7 +160,7 @@ func TestAuthenticateUser(t *testing.T) {
 			err := AuthenticateUser(sc.loginUserQuery)
 
 			Convey("it should result in", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				So(err, ShouldEqual, LDAP.ErrInvalidCredentials)
 				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)

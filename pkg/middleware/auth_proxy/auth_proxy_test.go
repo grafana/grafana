@@ -69,8 +69,8 @@ func TestMiddlewareContext(t *testing.T) {
 
 				readLDAPConfig = func() *ldap.Config {
 					config := &ldap.Config{
-						Servers: []*ldap.LdapServerConf{
-							&ldap.LdapServerConf{},
+						Servers: []*ldap.ServerConfig{
+							&ldap.ServerConfig{},
 						},
 					}
 					return config
@@ -93,7 +93,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.LdapServerConf) ldap.IAuth {
+				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
 					return stub
 				}
 
@@ -111,7 +111,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				readLDAPConfig = func() *ldap.Config {
 					config := &ldap.Config{
-						Servers: []*ldap.LdapServerConf{},
+						Servers: []*ldap.ServerConfig{},
 					}
 					return config
 				}
@@ -133,7 +133,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.LdapServerConf) ldap.IAuth {
+				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
 					return stub
 				}
 

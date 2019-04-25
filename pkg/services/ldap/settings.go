@@ -12,21 +12,21 @@ import (
 )
 
 type Config struct {
-	Servers []*LdapServerConf `toml:"servers"`
+	Servers []*ServerConfig `toml:"servers"`
 }
 
-type LdapServerConf struct {
-	Host          string           `toml:"host"`
-	Port          int              `toml:"port"`
-	UseSSL        bool             `toml:"use_ssl"`
-	StartTLS      bool             `toml:"start_tls"`
-	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
-	RootCACert    string           `toml:"root_ca_cert"`
-	ClientCert    string           `toml:"client_cert"`
-	ClientKey     string           `toml:"client_key"`
-	BindDN        string           `toml:"bind_dn"`
-	BindPassword  string           `toml:"bind_password"`
-	Attr          LdapAttributeMap `toml:"attributes"`
+type ServerConfig struct {
+	Host          string       `toml:"host"`
+	Port          int          `toml:"port"`
+	UseSSL        bool         `toml:"use_ssl"`
+	StartTLS      bool         `toml:"start_tls"`
+	SkipVerifySSL bool         `toml:"ssl_skip_verify"`
+	RootCACert    string       `toml:"root_ca_cert"`
+	ClientCert    string       `toml:"client_cert"`
+	ClientKey     string       `toml:"client_key"`
+	BindDN        string       `toml:"bind_dn"`
+	BindPassword  string       `toml:"bind_password"`
+	Attr          AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
@@ -35,10 +35,10 @@ type LdapServerConf struct {
 	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
 	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
 
-	LdapGroups []*LdapGroupToOrgRole `toml:"group_mappings"`
+	LdapGroups []*GroupToOrgRole `toml:"group_mappings"`
 }
 
-type LdapAttributeMap struct {
+type AttributeMap struct {
 	Username string `toml:"username"`
 	Name     string `toml:"name"`
 	Surname  string `toml:"surname"`
@@ -46,7 +46,7 @@ type LdapAttributeMap struct {
 	MemberOf string `toml:"member_of"`
 }
 
-type LdapGroupToOrgRole struct {
+type GroupToOrgRole struct {
 	GroupDN        string     `toml:"group_dn"`
 	OrgId          int64      `toml:"org_id"`
 	IsGrafanaAdmin *bool      `toml:"grafana_admin"` // This is a pointer to know if it was set or not (for backwards compatibility)

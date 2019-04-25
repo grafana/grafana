@@ -6,14 +6,15 @@ import (
 	LDAP "gopkg.in/ldap.v3"
 )
 
-func (ldap *Auth) Close() {
-	ldap.conn.Close()
-}
-
 func (ldap *Auth) Users() ([]*UserInfo, error) {
 	var result *LDAP.SearchResult
 	var err error
 	server := ldap.server
+
+	if err := ldap.Dial(); err != nil {
+		return nil, err
+	}
+	defer ldap.conn.Close()
 
 	for _, base := range server.SearchBaseDNs {
 		attributes := make([]string, 0)

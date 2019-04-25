@@ -22,7 +22,7 @@ func TestLdapLogin(t *testing.T) {
 				sc.withLoginResult(false)
 				readLDAPConfig = func() *LDAP.Config {
 					config := &LDAP.Config{
-						Servers: []*LDAP.LdapServerConf{},
+						Servers: []*LDAP.ServerConfig{},
 					}
 
 					return config
@@ -34,7 +34,7 @@ func TestLdapLogin(t *testing.T) {
 					So(enabled, ShouldBeTrue)
 				})
 
-				Convey("it should return invalid credentials error", func() {
+				Convey("it should return no LDAP servers error", func() {
 					So(err, ShouldEqual, ErrNoLDAPServers)
 				})
 
@@ -75,7 +75,7 @@ func mockLdapAuthenticator(valid bool) *mockAuth {
 		validLogin: valid,
 	}
 
-	newLDAP = func(server *LDAP.LdapServerConf) LDAP.IAuth {
+	newLDAP = func(server *LDAP.ServerConfig) LDAP.IAuth {
 		return mock
 	}
 
@@ -95,6 +95,10 @@ func (auth *mockAuth) Login(query *m.LoginUserQuery) error {
 	}
 
 	return nil
+}
+
+func (auth *mockAuth) Users() ([]*LDAP.UserInfo, error) {
+	return nil, nil
 }
 
 func (auth *mockAuth) SyncUser(query *m.LoginUserQuery) error {
@@ -127,8 +131,8 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 
 		readLDAPConfig = func() *LDAP.Config {
 			config := &LDAP.Config{
-				Servers: []*LDAP.LdapServerConf{
-					&LDAP.LdapServerConf{
+				Servers: []*LDAP.ServerConfig{
+					&LDAP.ServerConfig{
 						Host: "",
 					},
 				},
@@ -137,7 +141,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 			return config
 		}
 
-		newLDAP = func(server *LDAP.LdapServerConf) LDAP.IAuth {
+		newLDAP = func(server *LDAP.ServerConfig) LDAP.IAuth {
 			return mock
 		}
 

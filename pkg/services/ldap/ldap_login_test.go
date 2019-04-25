@@ -23,8 +23,8 @@ func TestLdapLogin(t *testing.T) {
 				}
 			}
 			auth := &Auth{
-				server: &LdapServerConf{
-					Attr: LdapAttributeMap{
+				server: &ServerConfig{
+					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
 						MemberOf: "memberof",
@@ -60,8 +60,8 @@ func TestLdapLogin(t *testing.T) {
 				return nil
 			}
 			auth := &Auth{
-				server: &LdapServerConf{
-					Attr: LdapAttributeMap{
+				server: &ServerConfig{
+					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
 						MemberOf: "memberof",

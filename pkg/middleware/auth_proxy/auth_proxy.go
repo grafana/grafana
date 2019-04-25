@@ -33,14 +33,13 @@ type AuthProxy struct {
 	orgID  int64
 	header string
 
-	LDAP func(server *ldap.LdapServerConf) ldap.IAuth
+	LDAP func(server *ldap.ServerConfig) ldap.IAuth
 
 	enabled     bool
 	whitelistIP string
 	headerType  string
 	headers     map[string]string
 	cacheTTL    int
-	ldapEnabled bool
 }
 
 // Error auth proxy specific error
