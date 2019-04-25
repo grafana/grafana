@@ -61,20 +61,21 @@ func IsEnabled() bool {
 	return setting.LdapEnabled
 }
 
-// ReadConfig reads the config if ldap is enabled
-func ReadConfig() (bool, *Config) {
+// ReadConfig reads the config if
+// ldap is enabled otherwise it will return nil
+func ReadConfig() *Config {
 	if IsEnabled() == false {
-		return false, nil
+		return nil
 	}
 
 	// Make it a singleton
 	if config != nil {
-		return false, config
+		return config
 	}
 
 	getConfig(setting.LdapConfigFile, config)
 
-	return true, config
+	return config
 }
 
 func getConfig(configFile string, config *Config) {

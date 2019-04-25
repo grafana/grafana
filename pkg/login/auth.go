@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
 )
 
 var (
@@ -40,14 +41,14 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 
 	ldapEnabled, ldapErr := loginUsingLdap(query)
 	if ldapEnabled {
-		if ldapErr == nil || ldapErr != ErrInvalidCredentials {
+		if ldapErr == nil || ldapErr != LDAP.ErrInvalidCredentials {
 			return ldapErr
 		}
 
 		err = ldapErr
 	}
 
-	if err == ErrInvalidCredentials {
+	if err == ErrInvalidCredentials || err == LDAP.ErrInvalidCredentials {
 		saveInvalidLoginAttempt(query)
 	}
 

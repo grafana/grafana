@@ -7,6 +7,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	m "github.com/grafana/grafana/pkg/models"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
 )
 
 func TestAuthenticateUser(t *testing.T) {
@@ -153,7 +154,7 @@ func TestAuthenticateUser(t *testing.T) {
 		authScenario("When grafana user authenticate with invalid credentials and invalid ldap credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
 			mockLoginUsingGrafanaDB(ErrInvalidCredentials, sc)
-			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockLoginUsingLdap(true, LDAP.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
 			err := AuthenticateUser(sc.loginUserQuery)

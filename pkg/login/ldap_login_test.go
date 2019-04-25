@@ -20,12 +20,12 @@ func TestLdapLogin(t *testing.T) {
 
 			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
 				sc.withLoginResult(false)
-				readLDAPConfig = func() (bool, *LDAP.Config) {
+				readLDAPConfig = func() *LDAP.Config {
 					config := &LDAP.Config{
 						Servers: []*LDAP.LdapServerConf{},
 					}
 
-					return setting.LdapEnabled, config
+					return config
 				}
 
 				enabled, err := loginUsingLdap(sc.loginUserQuery)
@@ -125,7 +125,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 			ldapAuthenticatorMock: mock,
 		}
 
-		readLDAPConfig = func() (bool, *LDAP.Config) {
+		readLDAPConfig = func() *LDAP.Config {
 			config := &LDAP.Config{
 				Servers: []*LDAP.LdapServerConf{
 					&LDAP.LdapServerConf{
@@ -134,7 +134,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 				},
 			}
 
-			return setting.LdapEnabled, config
+			return config
 		}
 
 		newLDAP = func(server *LDAP.LdapServerConf) LDAP.IAuth {

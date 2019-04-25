@@ -220,7 +220,7 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 		Username:   auth.header,
 	}
 
-	_, config := readLDAPConfig()
+	config := readLDAPConfig()
 	if len(config.Servers) == 0 {
 		return 0, newError("No LDAP servers available", nil)
 	}

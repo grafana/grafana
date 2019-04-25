@@ -67,13 +67,13 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
-				readLDAPConfig = func() (bool, *ldap.Config) {
+				readLDAPConfig = func() *ldap.Config {
 					config := &ldap.Config{
 						Servers: []*ldap.LdapServerConf{
 							&ldap.LdapServerConf{},
 						},
 					}
-					return isLDAPEnabled(), config
+					return config
 				}
 
 				defer func() {
@@ -109,11 +109,11 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
-				readLDAPConfig = func() (bool, *ldap.Config) {
+				readLDAPConfig = func() *ldap.Config {
 					config := &ldap.Config{
 						Servers: []*ldap.LdapServerConf{},
 					}
-					return isLDAPEnabled(), config
+					return config
 				}
 
 				defer func() {
