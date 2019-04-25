@@ -1,6 +1,7 @@
 import { Field, SeriesData } from '../../types/data';
 import { ExtensionRegistry, Extension } from '../extensions';
 
+// A list of some (but not all) matcher IDs
 export enum SeriesDataMatcherID {
   // Field Type
   numericFields = 'numericFields',
@@ -14,6 +15,7 @@ export enum SeriesDataMatcherID {
   always = '_allways',
   never = '_never',
 }
+
 /**
  * A configurable way to say if somthing should apply to a field or series
  */
@@ -26,7 +28,7 @@ export interface SeriesDataMatcher<TOptions = any> extends Extension<TOptions> {
 
 export interface SeriesDataMatcherConfig<TOptions = any> {
   id: string;
-  options: TOptions;
+  options?: TOptions;
 }
 
 export function seriesDataMatches(config: SeriesDataMatcherConfig, series: SeriesData, field?: Field): boolean {
