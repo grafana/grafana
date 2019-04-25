@@ -42,20 +42,17 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 
 	falseStr := dialect.BooleanStr(false)
 
-	sb.sql.WriteString(` AND EXISTS
+	sb.sql.WriteString(` AND
 	(
-		SELECT * FROM (
-			SELECT dashboard.id
-			UNION ALL
-			SELECT cd.id FROM dashboard cd
-			WHERE  cd.folder_id = dashboard.id)
-			INTERSECT 
+		dashboard.id IN (
 			SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
-			 	LEFT JOIN dashboard folder on folder.id = d.folder_id
-			    LEFT JOIN dashboard_acl AS da ON
+			LEFT JOIN dashboard folder on folder.id = d.folder_id
+			LEFT JOIN dashboard child_dashboard on child_dashboard.folder_id = d.id
+			LEFT JOIN dashboard_acl AS da ON
 	 			da.dashboard_id = d.id OR
 	 			da.dashboard_id = d.folder_id OR
+				da.dashboard_id = child_dashboard.id OR
 	 			(
 	 				-- include default permissions -->
 					da.org_id = -1 AND (
@@ -63,7 +60,7 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
 					)
 	 			)
-				LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
+			LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
 			WHERE
 				d.org_id = ? AND
 				da.permission >= ? AND
@@ -71,7 +68,8 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *m.SignedInUser, permi
 					da.user_id = ? OR
 					ugm.user_id = ? OR
 					da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
-				)	
+				)
+		)
 	)`)
 
 	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)
