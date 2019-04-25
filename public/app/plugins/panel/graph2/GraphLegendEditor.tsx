@@ -1,7 +1,5 @@
 import React from 'react';
-import capitalize from 'lodash/capitalize';
-import without from 'lodash/without';
-import { LegendOptions, PanelOptionsGroup, Switch, Input } from '@grafana/ui';
+import { LegendOptions, PanelOptionsGroup, Switch, Input, StatsPicker } from '@grafana/ui';
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {
   stats?: string[];
@@ -11,29 +9,17 @@ export interface GraphLegendEditorLegendOptions extends LegendOptions {
 }
 
 interface GraphLegendEditorProps {
-  stats: string[];
   options: GraphLegendEditorLegendOptions;
   onChange: (options: GraphLegendEditorLegendOptions) => void;
 }
 
 export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> = props => {
-  const { stats, options, onChange } = props;
+  const { options, onChange } = props;
 
-  const onStatToggle = (stat: string) => (event?: React.SyntheticEvent<HTMLInputElement>) => {
-    let newStats;
-    if (!event) {
-      return;
-    }
-
-    // @ts-ignore
-    if (event.target.checked) {
-      newStats = (options.stats || []).concat([stat]);
-    } else {
-      newStats = without(options.stats, stat);
-    }
+  const onStatsChanged = (stats: string[]) => {
     onChange({
       ...options,
-      stats: newStats,
+      stats,
     });
   };
 
@@ -56,26 +42,42 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
     });
   };
 
+  const labelWidth = 8;
   return (
     <PanelOptionsGroup title="Legend">
       <div className="section gf-form-group">
         <h4>Options</h4>
-        <Switch label="Show legend" checked={options.isVisible} onChange={onOptionToggle('isVisible')} />
-        <Switch label="Display as table" checked={options.asTable} onChange={onOptionToggle('asTable')} />
-        <Switch label="To the right" checked={options.placement === 'right'} onChange={onOptionToggle('placement')} />
+        <Switch
+          label="Show legend"
+          labelClass={`width-${labelWidth}`}
+          checked={options.isVisible}
+          onChange={onOptionToggle('isVisible')}
+        />
+        <Switch
+          label="Display as table"
+          labelClass={`width-${labelWidth}`}
+          checked={options.asTable}
+          onChange={onOptionToggle('asTable')}
+        />
+        <Switch
+          label="To the right"
+          labelClass={`width-${labelWidth}`}
+          checked={options.placement === 'right'}
+          onChange={onOptionToggle('placement')}
+        />
       </div>
+
       <div className="section gf-form-group">
-        <h4>Values</h4>
-        {stats.map(stat => {
-          return (
-            <Switch
-              label={capitalize(stat)}
-              checked={!!options.stats && options.stats.indexOf(stat) > -1}
-              onChange={onStatToggle(stat)}
-              key={stat}
-            />
-          );
-        })}
+        <h4>Show</h4>
+        <div className="gf-form">
+          <StatsPicker
+            allowMultiple={true}
+            stats={options.stats ? options.stats : []}
+            onChange={onStatsChanged}
+            placeholder={'Pick Values'}
+          />
+        </div>
+
         <div className="gf-form">
           <div className="gf-form-label">Decimals</div>
           <Input
