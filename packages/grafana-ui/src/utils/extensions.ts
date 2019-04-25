@@ -45,7 +45,10 @@ export class ExtensionRegistry<T extends Extension> {
   get(id: string): T {
     const v = this.byId.get(id);
     if (!v) {
-      throw new Error('Undefined: ' + v);
+      for (const key of this.byId.keys()) {
+        console.log('KEY: ', key);
+      }
+      throw new Error('Undefined: ' + id);
     }
     return v;
   }

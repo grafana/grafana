@@ -14,3 +14,6 @@ export { getMappedValue } from './valueMappings';
 export * from './validate';
 export { getFlotPairs } from './flotPairs';
 export * from './object';
+
+export * from './transform';
+export * from './matchers';
