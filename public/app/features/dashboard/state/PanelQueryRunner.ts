@@ -45,7 +45,7 @@ export class PanelQueryRunner {
   private state = new PanelQueryState();
 
   constructor() {
-    this.state.streamCallback = this.onDataStreamEvent;
+    this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
   }
 
   /**
@@ -184,7 +184,7 @@ export class PanelQueryRunner {
    * Called after every streaming event.  This should be throttled so we
    * avoid accidentally overwhelming the browser
    */
-  onDataStreamEvent = throttle(
+  onStreamingDataUpdated = throttle(
     () => {
       this.subject.next(this.state.validateStreamsAndGetPanelData());
     },

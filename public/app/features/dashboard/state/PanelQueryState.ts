@@ -145,7 +145,7 @@ export class PanelQueryState {
   }
 
   // Send a notice when the stream has updated the current model
-  streamCallback: () => void;
+  onStreamingDataUpdated: () => void;
 
   // This gets all stream events and keeps track of them
   // it will then delegate real changes to the PanelQueryRunner
@@ -173,7 +173,7 @@ export class PanelQueryState {
     }
 
     this.streams = active;
-    this.streamCallback();
+    this.onStreamingDataUpdated();
   };
 
   closeStreams(keepSeries = false) {
