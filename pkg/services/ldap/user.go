@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-type LdapUserInfo struct {
+type UserInfo struct {
 	DN        string
 	FirstName string
 	LastName  string
@@ -13,7 +13,7 @@ type LdapUserInfo struct {
 	MemberOf  []string
 }
 
-func (u *LdapUserInfo) isMemberOf(group string) bool {
+func (u *UserInfo) isMemberOf(group string) bool {
 	if group == "*" {
 		return true
 	}

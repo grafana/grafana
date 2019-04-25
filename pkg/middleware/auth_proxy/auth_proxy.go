@@ -33,7 +33,7 @@ type AuthProxy struct {
 	orgID  int64
 	header string
 
-	LDAP func(server *ldap.LdapServerConf) ldap.ILdapAuther
+	LDAP func(server *ldap.LdapServerConf) ldap.IAuth
 
 	enabled     bool
 	whitelistIP string

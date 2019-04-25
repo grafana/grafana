@@ -1,5 +1,5 @@
 package ldap
 
 var (
-	hookDial func(*ldapAuther) error
+	hookDial func(*Auth) error
 )

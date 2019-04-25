@@ -6,11 +6,11 @@ import (
 	LDAP "gopkg.in/ldap.v3"
 )
 
-func (ldap *ldapAuther) Close() {
+func (ldap *Auth) Close() {
 	ldap.conn.Close()
 }
 
-func (ldap *ldapAuther) Users() ([]*LdapUserInfo, error) {
+func (ldap *Auth) Users() ([]*UserInfo, error) {
 	var result *LDAP.SearchResult
 	var err error
 	server := ldap.server
@@ -50,12 +50,11 @@ func (ldap *ldapAuther) Users() ([]*LdapUserInfo, error) {
 	return ldap.serializeUsers(result), nil
 }
 
-func (ldap *ldapAuther) serializeUsers(users *LDAP.SearchResult) []*LdapUserInfo {
-
-	var serialized []*LdapUserInfo
+func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*UserInfo {
+	var serialized []*UserInfo
 
 	for index := range users.Entries {
-		serialize := &LdapUserInfo{
+		serialize := &UserInfo{
 			DN: getLdapAttrN(
 				"dn",
 				users,

@@ -15,7 +15,7 @@ import (
 )
 
 type TestLDAP struct {
-	ldap.ILdapAuther
+	ldap.Auth
 	ID         int64
 	syncCalled bool
 }
@@ -93,7 +93,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.LdapServerConf) ldap.ILdapAuther {
+				auth.LDAP = func(server *ldap.LdapServerConf) ldap.IAuth {
 					return stub
 				}
 
@@ -133,7 +133,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.LdapServerConf) ldap.ILdapAuther {
+				auth.LDAP = func(server *ldap.LdapServerConf) ldap.IAuth {
 					return stub
 				}
 

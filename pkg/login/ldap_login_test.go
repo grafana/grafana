@@ -70,24 +70,24 @@ func TestLdapLogin(t *testing.T) {
 	})
 }
 
-func mockLdapAuthenticator(valid bool) *mockLdapAuther {
-	mock := &mockLdapAuther{
+func mockLdapAuthenticator(valid bool) *mockAuth {
+	mock := &mockAuth{
 		validLogin: valid,
 	}
 
-	newLDAP = func(server *LDAP.LdapServerConf) LDAP.ILdapAuther {
+	newLDAP = func(server *LDAP.LdapServerConf) LDAP.IAuth {
 		return mock
 	}
 
 	return mock
 }
 
-type mockLdapAuther struct {
+type mockAuth struct {
 	validLogin  bool
 	loginCalled bool
 }
 
-func (auth *mockLdapAuther) Login(query *m.LoginUserQuery) error {
+func (auth *mockAuth) Login(query *m.LoginUserQuery) error {
 	auth.loginCalled = true
 
 	if !auth.validLogin {
@@ -97,24 +97,24 @@ func (auth *mockLdapAuther) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (auth *mockLdapAuther) SyncUser(query *m.LoginUserQuery) error {
+func (auth *mockAuth) SyncUser(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (auth *mockLdapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LDAP.LdapUserInfo) (*m.User, error) {
+func (auth *mockAuth) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LDAP.UserInfo) (*m.User, error) {
 	return nil, nil
 }
 
 type ldapLoginScenarioContext struct {
 	loginUserQuery        *m.LoginUserQuery
-	ldapAuthenticatorMock *mockLdapAuther
+	ldapAuthenticatorMock *mockAuth
 }
 
 type ldapLoginScenarioFunc func(c *ldapLoginScenarioContext)
 
 func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 	Convey(desc, func() {
-		mock := &mockLdapAuther{}
+		mock := &mockAuth{}
 
 		sc := &ldapLoginScenarioContext{
 			loginUserQuery: &m.LoginUserQuery{
@@ -137,7 +137,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 			return setting.LdapEnabled, config
 		}
 
-		newLDAP = func(server *LDAP.LdapServerConf) LDAP.ILdapAuther {
+		newLDAP = func(server *LDAP.LdapServerConf) LDAP.IAuth {
 			return mock
 		}
 

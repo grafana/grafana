@@ -52,7 +52,7 @@ func (c *mockLdapConn) StartTLS(*tls.Config) error {
 	return nil
 }
 
-func ldapAutherScenario(desc string, fn scenarioFunc) {
+func AuthScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -64,7 +64,7 @@ func ldapAutherScenario(desc string, fn scenarioFunc) {
 			},
 		}
 
-		hookDial = func(auth *ldapAuther) error {
+		hookDial = func(auth *Auth) error {
 			return nil
 		}
 

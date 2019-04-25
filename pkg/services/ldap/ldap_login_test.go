@@ -11,7 +11,7 @@ import (
 
 func TestLdapLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {
-		ldapAutherScenario("When login with invalid credentials", func(scenario *scenarioContext) {
+		AuthScenario("When login with invalid credentials", func(scenario *scenarioContext) {
 			conn := &mockLdapConn{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
@@ -22,7 +22,7 @@ func TestLdapLogin(t *testing.T) {
 					ResultCode: 49,
 				}
 			}
-			auth := &ldapAuther{
+			auth := &Auth{
 				server: &LdapServerConf{
 					Attr: LdapAttributeMap{
 						Username: "username",
@@ -42,7 +42,7 @@ func TestLdapLogin(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("When login with valid credentials", func(scenario *scenarioContext) {
+		AuthScenario("When login with valid credentials", func(scenario *scenarioContext) {
 			conn := &mockLdapConn{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
@@ -59,7 +59,7 @@ func TestLdapLogin(t *testing.T) {
 			conn.bindProvider = func(username, password string) error {
 				return nil
 			}
-			auth := &ldapAuther{
+			auth := &Auth{
 				server: &LdapServerConf{
 					Attr: LdapAttributeMap{
 						Username: "username",

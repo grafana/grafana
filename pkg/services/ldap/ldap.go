@@ -25,13 +25,13 @@ type ILdapConn interface {
 	Close()
 }
 
-type ILdapAuther interface {
+type IAuth interface {
 	Login(query *m.LoginUserQuery) error
 	SyncUser(query *m.LoginUserQuery) error
-	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error)
+	GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *UserInfo) (*m.User, error)
 }
 
-type ldapAuther struct {
+type Auth struct {
 	server            *LdapServerConf
 	conn              ILdapConn
 	requireSecondBind bool
@@ -39,34 +39,34 @@ type ldapAuther struct {
 }
 
 var (
-	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
-	ErrInvalidCredentials    = errors.New("Invalid Username or Password")
-	ErrNoEmail               = errors.New("Login provider didn't return an email address")
-	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
-	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
-	ErrTooManyLoginAttempts  = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked")
-	ErrPasswordEmpty         = errors.New("No password provided.")
-	ErrUsersQuotaReached     = errors.New("Users quota reached")
-	ErrGettingUserQuota      = errors.New("Error getting user quota")
+
+	// ErrInvalidCredentials is returned if username and password do not match
+	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
 
-func New(server *LdapServerConf) ILdapAuther {
-	return &ldapAuther{
+var dial = func(network, addr string) (ILdapConn, error) {
+	return ldap.Dial(network, addr)
+}
+
+// New creates the new LDAP auth
+func New(server *LdapServerConf) IAuth {
+	return &Auth{
 		server: server,
 		log:    log.New("ldap"),
 	}
 }
 
-func (a *ldapAuther) Dial() error {
+// Dial dials in the LDAP
+func (auth *Auth) Dial() error {
 	if hookDial != nil {
-		return hookDial(a)
+		return hookDial(auth)
 	}
 
 	var err error
 	var certPool *x509.CertPool
-	if a.server.RootCACert != "" {
+	if auth.server.RootCACert != "" {
 		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
+		for _, caCertFile := range strings.Split(auth.server.RootCACert, " ") {
 			pem, err := ioutil.ReadFile(caCertFile)
 			if err != nil {
 				return err
@@ -77,35 +77,35 @@ func (a *ldapAuther) Dial() error {
 		}
 	}
 	var clientCert tls.Certificate
-	if a.server.ClientCert != "" && a.server.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(a.server.ClientCert, a.server.ClientKey)
+	if auth.server.ClientCert != "" && auth.server.ClientKey != "" {
+		clientCert, err = tls.LoadX509KeyPair(auth.server.ClientCert, auth.server.ClientKey)
 		if err != nil {
 			return err
 		}
 	}
-	for _, host := range strings.Split(a.server.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, a.server.Port)
-		if a.server.UseSSL {
+	for _, host := range strings.Split(auth.server.Host, " ") {
+		address := fmt.Sprintf("%s:%d", host, auth.server.Port)
+		if auth.server.UseSSL {
 			tlsCfg := &tls.Config{
-				InsecureSkipVerify: a.server.SkipVerifySSL,
+				InsecureSkipVerify: auth.server.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
-			if a.server.StartTLS {
-				a.conn, err = dial("tcp", address)
+			if auth.server.StartTLS {
+				auth.conn, err = dial("tcp", address)
 				if err == nil {
-					if err = a.conn.StartTLS(tlsCfg); err == nil {
+					if err = auth.conn.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+				auth.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
 			}
 		} else {
-			a.conn, err = dial("tcp", address)
+			auth.conn, err = dial("tcp", address)
 		}
 
 		if err == nil {
@@ -115,12 +115,13 @@ func (a *ldapAuther) Dial() error {
 	return err
 }
 
-func (auth *ldapAuther) Login(query *m.LoginUserQuery) error {
+// Login logs in the user
+func (auth *Auth) Login(query *m.LoginUserQuery) error {
 	// connect to ldap server
 	if err := auth.Dial(); err != nil {
 		return err
 	}
-	defer auth.conn.Close()
+	defer auth.Close()
 
 	// perform initial authentication
 	if err := auth.initialBind(query.Username, query.Password); err != nil {
@@ -152,29 +153,30 @@ func (auth *ldapAuther) Login(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *ldapAuther) SyncUser(query *m.LoginUserQuery) error {
+// SyncUser syncs user with Grafana
+func (auth *Auth) SyncUser(query *m.LoginUserQuery) error {
 	// connect to ldap server
-	err := a.Dial()
+	err := auth.Dial()
 	if err != nil {
 		return err
 	}
-	defer a.conn.Close()
+	defer auth.conn.Close()
 
-	err = a.serverBind()
+	err = auth.serverBind()
 	if err != nil {
 		return err
 	}
 
 	// find user entry & attributes
-	ldapUser, err := a.searchForUser(query.Username)
+	ldapUser, err := auth.searchForUser(query.Username)
 	if err != nil {
-		a.log.Error("Failed searching for user in ldap", "error", err)
+		auth.log.Error("Failed searching for user in ldap", "error", err)
 		return err
 	}
 
-	a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
+	auth.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
 
-	grafanaUser, err := a.GetGrafanaUserFor(query.ReqContext, ldapUser)
+	grafanaUser, err := auth.GetGrafanaUserFor(query.ReqContext, ldapUser)
 	if err != nil {
 		return err
 	}
@@ -183,7 +185,7 @@ func (a *ldapAuther) SyncUser(query *m.LoginUserQuery) error {
 	return nil
 }
 
-func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo) (*m.User, error) {
+func (auth *Auth) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *UserInfo) (*m.User, error) {
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "ldap",
 		AuthId:     ldapUser.DN,
@@ -194,7 +196,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		OrgRoles:   map[int64]m.RoleType{},
 	}
 
-	for _, group := range a.server.LdapGroups {
+	for _, group := range auth.server.LdapGroups {
 		// only use the first match for each org
 		if extUser.OrgRoles[group.OrgId] != "" {
 			continue
@@ -211,8 +213,8 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	// validate that the user has access
 	// if there are no ldap group mappings access is true
 	// otherwise a single group must match
-	if len(a.server.LdapGroups) > 0 && len(extUser.OrgRoles) < 1 {
-		a.log.Info(
+	if len(auth.server.LdapGroups) > 0 && len(extUser.OrgRoles) < 1 {
+		auth.log.Info(
 			"Ldap Auth: user does not belong in any of the specified ldap groups",
 			"username", ldapUser.Username,
 			"groups", ldapUser.MemberOf,
@@ -235,20 +237,20 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	return upsertUserCmd.Result, nil
 }
 
-func (a *ldapAuther) serverBind() error {
+func (auth *Auth) serverBind() error {
 	bindFn := func() error {
-		return a.conn.Bind(a.server.BindDN, a.server.BindPassword)
+		return auth.conn.Bind(auth.server.BindDN, auth.server.BindPassword)
 	}
 
-	if a.server.BindPassword == "" {
+	if auth.server.BindPassword == "" {
 		bindFn = func() error {
-			return a.conn.UnauthenticatedBind(a.server.BindDN)
+			return auth.conn.UnauthenticatedBind(auth.server.BindDN)
 		}
 	}
 
 	// bind_dn and bind_password to bind
 	if err := bindFn(); err != nil {
-		a.log.Info("LDAP initial bind failed, %v", err)
+		auth.log.Info("LDAP initial bind failed, %v", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -261,9 +263,9 @@ func (a *ldapAuther) serverBind() error {
 	return nil
 }
 
-func (a *ldapAuther) secondBind(ldapUser *LdapUserInfo, userPassword string) error {
-	if err := a.conn.Bind(ldapUser.DN, userPassword); err != nil {
-		a.log.Info("Second bind failed", "error", err)
+func (auth *Auth) secondBind(ldapUser *UserInfo, userPassword string) error {
+	if err := auth.conn.Bind(ldapUser.DN, userPassword); err != nil {
+		auth.log.Info("Second bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -276,29 +278,29 @@ func (a *ldapAuther) secondBind(ldapUser *LdapUserInfo, userPassword string) err
 	return nil
 }
 
-func (a *ldapAuther) initialBind(username, userPassword string) error {
-	if a.server.BindPassword != "" || a.server.BindDN == "" {
-		userPassword = a.server.BindPassword
-		a.requireSecondBind = true
+func (auth *Auth) initialBind(username, userPassword string) error {
+	if auth.server.BindPassword != "" || auth.server.BindDN == "" {
+		userPassword = auth.server.BindPassword
+		auth.requireSecondBind = true
 	}
 
-	bindPath := a.server.BindDN
+	bindPath := auth.server.BindDN
 	if strings.Contains(bindPath, "%s") {
-		bindPath = fmt.Sprintf(a.server.BindDN, username)
+		bindPath = fmt.Sprintf(auth.server.BindDN, username)
 	}
 
 	bindFn := func() error {
-		return a.conn.Bind(bindPath, userPassword)
+		return auth.conn.Bind(bindPath, userPassword)
 	}
 
 	if userPassword == "" {
 		bindFn = func() error {
-			return a.conn.UnauthenticatedBind(bindPath)
+			return auth.conn.UnauthenticatedBind(bindPath)
 		}
 	}
 
 	if err := bindFn(); err != nil {
-		a.log.Info("Initial bind failed", "error", err)
+		auth.log.Info("Initial bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -311,22 +313,13 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	return nil
 }
 
-func appendIfNotEmpty(slice []string, values ...string) []string {
-	for _, v := range values {
-		if v != "" {
-			slice = append(slice, v)
-		}
-	}
-	return slice
-}
-
-func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
+func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 	var searchResult *ldap.SearchResult
 	var err error
 
-	for _, searchBase := range a.server.SearchBaseDNs {
+	for _, searchBase := range auth.server.SearchBaseDNs {
 		attributes := make([]string, 0)
-		inputs := a.server.Attr
+		inputs := auth.server.Attr
 		attributes = appendIfNotEmpty(attributes,
 			inputs.Username,
 			inputs.Surname,
@@ -339,12 +332,12 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			Scope:        ldap.ScopeWholeSubtree,
 			DerefAliases: ldap.NeverDerefAliases,
 			Attributes:   attributes,
-			Filter:       strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
+			Filter:       strings.Replace(auth.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
-		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
+		auth.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
 
-		searchResult, err = a.conn.Search(&searchReq)
+		searchResult, err = auth.conn.Search(&searchReq)
 		if err != nil {
 			return nil, err
 		}
@@ -363,25 +356,25 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	}
 
 	var memberOf []string
-	if a.server.GroupSearchFilter == "" {
-		memberOf = getLdapAttrArray(a.server.Attr.MemberOf, searchResult)
+	if auth.server.GroupSearchFilter == "" {
+		memberOf = getLdapAttrArray(auth.server.Attr.MemberOf, searchResult)
 	} else {
 		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
 		var groupSearchResult *ldap.SearchResult
-		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
+		for _, groupSearchBase := range auth.server.GroupSearchBaseDNs {
 			var filter_replace string
-			if a.server.GroupSearchFilterUserAttribute == "" {
-				filter_replace = getLdapAttr(a.server.Attr.Username, searchResult)
+			if auth.server.GroupSearchFilterUserAttribute == "" {
+				filter_replace = getLdapAttr(auth.server.Attr.Username, searchResult)
 			} else {
-				filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
+				filter_replace = getLdapAttr(auth.server.GroupSearchFilterUserAttribute, searchResult)
 			}
 
-			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
+			filter := strings.Replace(auth.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
-			a.log.Info("Searching for user's groups", "filter", filter)
+			auth.log.Info("Searching for user's groups", "filter", filter)
 
 			// support old way of reading settings
-			groupIdAttribute := a.server.Attr.MemberOf
+			groupIdAttribute := auth.server.Attr.MemberOf
 			// but prefer dn attribute if default settings are used
 			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
 				groupIdAttribute = "dn"
@@ -395,7 +388,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 				Filter:       filter,
 			}
 
-			groupSearchResult, err = a.conn.Search(&groupSearchReq)
+			groupSearchResult, err = auth.conn.Search(&groupSearchReq)
 			if err != nil {
 				return nil, err
 			}
@@ -409,18 +402,23 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 		}
 	}
 
-	return &LdapUserInfo{
+	return &UserInfo{
 		DN:        searchResult.Entries[0].DN,
-		LastName:  getLdapAttr(a.server.Attr.Surname, searchResult),
-		FirstName: getLdapAttr(a.server.Attr.Name, searchResult),
-		Username:  getLdapAttr(a.server.Attr.Username, searchResult),
-		Email:     getLdapAttr(a.server.Attr.Email, searchResult),
+		LastName:  getLdapAttr(auth.server.Attr.Surname, searchResult),
+		FirstName: getLdapAttr(auth.server.Attr.Name, searchResult),
+		Username:  getLdapAttr(auth.server.Attr.Username, searchResult),
+		Email:     getLdapAttr(auth.server.Attr.Email, searchResult),
 		MemberOf:  memberOf,
 	}, nil
 }
 
-var dial = func(network, addr string) (ILdapConn, error) {
-	return ldap.Dial(network, addr)
+func appendIfNotEmpty(slice []string, values ...string) []string {
+	for _, v := range values {
+		if v != "" {
+			slice = append(slice, v)
+		}
+	}
+	return slice
 }
 
 func getLdapAttr(name string, result *ldap.SearchResult) string {

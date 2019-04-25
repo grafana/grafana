@@ -12,7 +12,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func TestLdapAuther(t *testing.T) {
+func TestAuth(t *testing.T) {
 	Convey("initialBind", t, func() {
 		Convey("Given bind dn and password configured", func() {
 			conn := &mockLdapConn{}
@@ -22,16 +22,16 @@ func TestLdapAuther(t *testing.T) {
 				actualPassword = password
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn: conn,
 				server: &LdapServerConf{
 					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
 			}
-			err := ldapAuther.initialBind("user", "pwd")
+			err := Auth.initialBind("user", "pwd")
 			So(err, ShouldBeNil)
-			So(ldapAuther.requireSecondBind, ShouldBeTrue)
+			So(Auth.requireSecondBind, ShouldBeTrue)
 			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
 			So(actualPassword, ShouldEqual, "bindpwd")
 		})
@@ -44,15 +44,15 @@ func TestLdapAuther(t *testing.T) {
 				actualPassword = password
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn: conn,
 				server: &LdapServerConf{
 					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
 				},
 			}
-			err := ldapAuther.initialBind("user", "pwd")
+			err := Auth.initialBind("user", "pwd")
 			So(err, ShouldBeNil)
-			So(ldapAuther.requireSecondBind, ShouldBeFalse)
+			So(Auth.requireSecondBind, ShouldBeFalse)
 			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
 			So(actualPassword, ShouldEqual, "pwd")
 		})
@@ -66,13 +66,13 @@ func TestLdapAuther(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn:   conn,
 				server: &LdapServerConf{},
 			}
-			err := ldapAuther.initialBind("user", "pwd")
+			err := Auth.initialBind("user", "pwd")
 			So(err, ShouldBeNil)
-			So(ldapAuther.requireSecondBind, ShouldBeTrue)
+			So(Auth.requireSecondBind, ShouldBeTrue)
 			So(unauthenticatedBindWasCalled, ShouldBeTrue)
 			So(actualUsername, ShouldBeEmpty)
 		})
@@ -87,14 +87,14 @@ func TestLdapAuther(t *testing.T) {
 				actualPassword = password
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn: conn,
 				server: &LdapServerConf{
 					BindDN:       "o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
 			}
-			err := ldapAuther.serverBind()
+			err := Auth.serverBind()
 			So(err, ShouldBeNil)
 			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
 			So(actualPassword, ShouldEqual, "bindpwd")
@@ -109,13 +109,13 @@ func TestLdapAuther(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn: conn,
 				server: &LdapServerConf{
 					BindDN: "o=users,dc=grafana,dc=org",
 				},
 			}
-			err := ldapAuther.serverBind()
+			err := Auth.serverBind()
 			So(err, ShouldBeNil)
 			So(unauthenticatedBindWasCalled, ShouldBeTrue)
 			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
@@ -130,11 +130,11 @@ func TestLdapAuther(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			ldapAuther := &ldapAuther{
+			Auth := &Auth{
 				conn:   conn,
 				server: &LdapServerConf{},
 			}
-			err := ldapAuther.serverBind()
+			err := Auth.serverBind()
 			So(err, ShouldBeNil)
 			So(unauthenticatedBindWasCalled, ShouldBeTrue)
 			So(actualUsername, ShouldBeEmpty)
@@ -152,16 +152,16 @@ func TestLdapAuther(t *testing.T) {
 		})
 
 		Convey("Given no ldap group map match", func() {
-			ldapAuther := New(&LdapServerConf{
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{{}},
 			})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{})
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{})
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
 
-		ldapAutherScenario("Given wildcard group match", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("Given wildcard group match", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "*", OrgRole: "Admin"},
 				},
@@ -169,13 +169,13 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{})
+			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
 
-		ldapAutherScenario("Given exact group match", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("Given exact group match", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
 				},
@@ -183,13 +183,13 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{MemberOf: []string{"cn=users"}})
+			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{MemberOf: []string{"cn=users"}})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
 
-		ldapAutherScenario("Given group match with different case", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("Given group match with different case", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
 				},
@@ -197,13 +197,13 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{MemberOf: []string{"CN=users"}})
+			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{MemberOf: []string{"CN=users"}})
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
 
-		ldapAutherScenario("Given no existing grafana user", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("Given no existing grafana user", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=admin", OrgRole: "Admin"},
 					{GroupDN: "cn=editor", OrgRole: "Editor"},
@@ -213,7 +213,7 @@ func TestLdapAuther(t *testing.T) {
 
 			sc.userQueryReturns(nil)
 
-			result, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				DN:       "torkelo",
 				Username: "torkelo",
 				Email:    "my@email.com",
@@ -235,15 +235,15 @@ func TestLdapAuther(t *testing.T) {
 	})
 
 	Convey("When syncing ldap groups to grafana org roles", t, func() {
-		ldapAutherScenario("given no current user orgs", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given no current user orgs", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
 				},
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -254,15 +254,15 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given different current org role", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given different current org role", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
 				},
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -274,8 +274,8 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=users", OrgId: 2, OrgRole: "Admin"},
 				},
@@ -285,7 +285,7 @@ func TestLdapAuther(t *testing.T) {
 				{OrgId: 1, Role: m.ROLE_EDITOR},
 				{OrgId: 2, Role: m.ROLE_EDITOR},
 			})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -296,8 +296,8 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given org role is updated in config", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given org role is updated in config", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=admin", OrgId: 1, OrgRole: "Admin"},
 					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Viewer"},
@@ -305,7 +305,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=users"},
 			})
 
@@ -317,8 +317,8 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
 					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
@@ -326,7 +326,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=admins"},
 			})
 
@@ -337,8 +337,8 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
-			ldapAuther := New(&LdapServerConf{
+		AuthScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
 					{GroupDN: "*", OrgId: 1, OrgRole: "Viewer"},
@@ -346,7 +346,7 @@ func TestLdapAuther(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=admins"},
 			})
 
@@ -362,17 +362,17 @@ func TestLdapAuther(t *testing.T) {
 			})
 		})
 
-		ldapAutherScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
+		AuthScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
 			trueVal := true
 
-			ldapAuther := New(&LdapServerConf{
+			Auth := New(&LdapServerConf{
 				LdapGroups: []*LdapGroupToOrgRole{
 					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin", IsGrafanaAdmin: &trueVal},
 				},
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := ldapAuther.GetGrafanaUserFor(nil, &LdapUserInfo{
+			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
 				MemberOf: []string{"cn=admins"},
 			})
 
@@ -386,7 +386,7 @@ func TestLdapAuther(t *testing.T) {
 	Convey("When calling SyncUser", t, func() {
 		mockLdapConnection := &mockLdapConn{}
 
-		auth := &ldapAuther{
+		auth := &Auth{
 			server: &LdapServerConf{
 				Host:       "",
 				RootCACert: "",
@@ -423,7 +423,7 @@ func TestLdapAuther(t *testing.T) {
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 		mockLdapConnection.setSearchResult(&result)
 
-		ldapAutherScenario("When ldapUser found call syncInfo and orgRoles", func(sc *scenarioContext) {
+		AuthScenario("When ldapUser found call syncInfo and orgRoles", func(sc *scenarioContext) {
 			// arrange
 			query := &m.LoginUserQuery{
 				Username: "roelgerrits",
@@ -469,7 +469,7 @@ func TestLdapAuther(t *testing.T) {
 		mockLdapConnection.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
-		ldapAuther := &ldapAuther{
+		Auth := &Auth{
 			server: &LdapServerConf{
 				Attr: LdapAttributeMap{
 					Username: "username",
@@ -482,7 +482,7 @@ func TestLdapAuther(t *testing.T) {
 			log:  log.New("test-logger"),
 		}
 
-		searchResult, err := ldapAuther.searchForUser("roelgerrits")
+		searchResult, err := Auth.searchForUser("roelgerrits")
 
 		So(err, ShouldBeNil)
 		So(searchResult, ShouldNotBeNil)
