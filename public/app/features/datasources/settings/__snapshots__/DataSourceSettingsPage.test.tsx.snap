@@ -85,6 +85,12 @@ exports[`Render should render alpha info text 1`] = `
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -186,6 +192,12 @@ exports[`Render should render beta info text 1`] = `
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -284,6 +296,12 @@ exports[`Render should render component 1`] = `
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -387,6 +405,12 @@ exports[`Render should render is ready only message 1`] = `
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"

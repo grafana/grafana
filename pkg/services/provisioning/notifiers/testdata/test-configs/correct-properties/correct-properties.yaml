@@ -1,5 +1,5 @@
 notifiers:
-  - name: default-slack-notification
+  - name: $TEST_VAR-slack-notification
     type: slack
     uid: notifier1
     org_id: 2

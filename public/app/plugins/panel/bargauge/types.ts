@@ -6,13 +6,13 @@ export interface BarGaugeOptions extends SingleStatBaseOptions {
   displayMode: 'basic' | 'lcd' | 'gradient';
 }
 
-export const displayModes: SelectOptionItem[] = [
+export const displayModes: Array<SelectOptionItem<string>> = [
   { value: 'gradient', label: 'Gradient' },
   { value: 'lcd', label: 'Retro LCD' },
   { value: 'basic', label: 'Basic' },
 ];
 
-export const orientationOptions: SelectOptionItem[] = [
+export const orientationOptions: Array<SelectOptionItem<VizOrientation>> = [
   { value: VizOrientation.Horizontal, label: 'Horizontal' },
   { value: VizOrientation.Vertical, label: 'Vertical' },
 ];

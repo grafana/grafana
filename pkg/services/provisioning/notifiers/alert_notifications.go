@@ -131,39 +131,6 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 	return nil
 }
 
-func (cfg *notificationsAsConfig) mapToNotificationFromConfig() *notificationsAsConfig {
-	r := &notificationsAsConfig{}
-	if cfg == nil {
-		return r
-	}
-
-	for _, notification := range cfg.Notifications {
-		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			Uid:                   notification.Uid,
-			OrgId:                 notification.OrgId,
-			OrgName:               notification.OrgName,
-			Name:                  notification.Name,
-			Type:                  notification.Type,
-			IsDefault:             notification.IsDefault,
-			Settings:              notification.Settings,
-			DisableResolveMessage: notification.DisableResolveMessage,
-			Frequency:             notification.Frequency,
-			SendReminder:          notification.SendReminder,
-		})
-	}
-
-	for _, notification := range cfg.DeleteNotifications {
-		r.DeleteNotifications = append(r.DeleteNotifications, &deleteNotificationConfig{
-			Uid:     notification.Uid,
-			OrgId:   notification.OrgId,
-			OrgName: notification.OrgName,
-			Name:    notification.Name,
-		})
-	}
-
-	return r
-}
-
 func (dc *NotificationProvisioner) applyChanges(configPath string) error {
 	configs, err := dc.cfgProvider.readConfig(configPath)
 	if err != nil {

@@ -6,12 +6,13 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   LoadingState,
-  DataStreamEvent,
+  DataStreamState,
   DataStreamObserver,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryRunner';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -32,7 +33,7 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
 
     // Update the sub request list
     request.subRequests = [];
-    const streams: DataStreamEvent[] = [];
+    const streams: DataStreamState[] = [];
     for (const query of queries) {
       const sub = cloneDeep(request);
       sub.requestId = request.requestId + '_' + request.subRequests.length;
@@ -41,7 +42,8 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       request.subRequests.push(sub);
       streams.push(this.startStreamingQuery(query.datasource, query.refId, sub, observer));
     }
-    return Promise.resolve({ data: [], streams });
+
+    return Promise.resolve({ data: [] });
   }
 
   startStreamingQuery(
@@ -50,15 +52,17 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
     request: DataQueryRequest<DataQuery>,
     observer: DataStreamObserver
   ) {
-    const event: DataStreamEvent = {
+    const event: DataStreamState = {
       key,
       state: LoadingState.Loading,
       request,
       series: [],
-      shutdown: () => {
-        console.log('SHUTDOWN');
+      unsubscribe: () => {
+        console.log('Cancel async query', request);
+        getBackendSrv().resolveCancelerIfExists(request.requestId);
       },
     };
+
     // Starts background process
     getDatasourceSrv()
       .get(datasource)
@@ -77,6 +81,7 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
             observer(event);
           });
       });
+
     return event;
   }
 
