@@ -50,7 +50,6 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
-  delayedStateUpdate: Partial<State>;
 
   constructor(props: Props) {
     super(props);
@@ -95,9 +94,25 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    // Check if we need a delayed refresh
-    if (this.props.isInView && this.state.refreshWhenInView) {
-      this.onRefresh();
+    const { isInView } = this.props;
+
+    // View state has changed
+    if (isInView !== prevProps.isInView) {
+      if (isInView) {
+        // Subscribe will kick of a notice of the last known state
+        if (!this.querySubscription && this.wantsQueryExecution) {
+          const runner = this.props.panel.getQueryRunner();
+          this.querySubscription = runner.subscribe(this.panelDataObserver);
+        }
+
+        // Check if we need a delayed refresh
+        if (this.state.refreshWhenInView) {
+          this.onRefresh();
+        }
+      } else if (this.querySubscription) {
+        this.querySubscription.unsubscribe();
+        this.querySubscription = null;
+      }
     }
   }
 
@@ -106,7 +121,12 @@ export class PanelChrome extends PureComponent<Props, State> {
   // So in this context we can only do a single call to setState
   panelDataObserver = {
     next: (data: PanelData) => {
-      const { dashboard, isInView } = this.props;
+      if (!this.props.isInView) {
+        // Ignore events when not visible.
+        // The call will be repeated when the panel comes into view
+        return;
+      }
+
       let { errorMessage, isFirstLoad } = this.state;
 
       if (data.state === LoadingState.Error) {
@@ -122,7 +142,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
       if (data.state === LoadingState.Done) {
         // If we are doing a snapshot save data in panel model
-        if (dashboard.snapshot) {
+        if (this.props.dashboard.snapshot) {
           this.props.panel.snapshotData = data.series;
         }
         if (isFirstLoad) {
@@ -130,15 +150,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
       }
 
-      const stateUpdate = { isFirstLoad, errorMessage, data };
-
-      if (isInView) {
-        this.setState(stateUpdate);
-      } else {
-        // if we are getting data while another panel is in fullscreen / edit mode
-        // we need to store the data but not update state yet
-        this.delayedStateUpdate = stateUpdate;
-      }
+      this.setState({ isFirstLoad, errorMessage, data });
     },
   };
 
@@ -187,12 +199,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
-
-    // If we have received a data update while hidden copy over that state as well
-    if (this.delayedStateUpdate) {
-      Object.assign(stateUpdate, this.delayedStateUpdate);
-      this.delayedStateUpdate = null;
-    }
 
     this.setState(stateUpdate);
   };
