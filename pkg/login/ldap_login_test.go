@@ -132,7 +132,7 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 		readLDAPConfig = func() *LDAP.Config {
 			config := &LDAP.Config{
 				Servers: []*LDAP.ServerConfig{
-					&LDAP.ServerConfig{
+					{
 						Host: "",
 					},
 				},

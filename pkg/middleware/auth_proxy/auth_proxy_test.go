@@ -70,7 +70,7 @@ func TestMiddlewareContext(t *testing.T) {
 				readLDAPConfig = func() *ldap.Config {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{
-							&ldap.ServerConfig{},
+							{},
 						},
 					}
 					return config
