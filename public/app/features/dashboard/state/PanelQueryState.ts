@@ -112,7 +112,7 @@ export class PanelQueryState {
 
     // Set the loading state immediatly
     this.response.state = LoadingState.Loading;
-    return (this.executor = new Promise<PanelData>((resolve, reject) => {
+    this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
 
       return ds
@@ -139,7 +139,9 @@ export class PanelQueryState {
           this.executor = null;
           resolve(this.setError(err));
         });
-    }));
+    });
+
+    return this.executor;
   }
 
   // Send a notice when the stream has updated the current model
@@ -163,6 +165,7 @@ export class PanelQueryState {
 
     if (!found) {
       if (shouldDisconnect(this.request, stream)) {
+        console.log('Got stream update from old stream, unsubscribing');
         stream.unsubscribe();
         return;
       }
@@ -224,6 +227,7 @@ export class PanelQueryState {
 
     for (const stream of this.streams) {
       if (shouldDisconnect(request, stream)) {
+        console.log('getPanelData() - shouldDisconnect true, unsubscribing to steam');
         stream.unsubscribe();
         continue;
       }
