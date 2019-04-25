@@ -174,9 +174,6 @@ export class SignalWorker extends StreamWorker {
     } as SeriesData;
 
     const request = this.stream.request;
-    data.meta = {
-      request: request.requestId,
-    };
 
     this.value = Math.random() * 100;
     const maxRows = buffer ? buffer : request.maxDataPoints;
@@ -248,9 +245,6 @@ export class LogsWorker extends StreamWorker {
     } as SeriesData;
 
     const request = this.stream.request;
-    data.meta = {
-      request: request.requestId,
-    };
 
     const maxRows = buffer ? buffer : request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
