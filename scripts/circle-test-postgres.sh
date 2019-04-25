@@ -12,6 +12,7 @@ function exit_if_fail {
 
 export GRAFANA_TEST_DB=postgres
 
-time for d in $(go list ./pkg/...); do
-  exit_if_fail go test -tags=integration $d
-done
+exit_if_fail go test -v -run="StatsDataAccess" -tags=integration ./pkg/services/sqlstore/...
+#time for d in $(go list ./pkg/...); do
+#  exit_if_fail go test -tags=integration $d
+#done

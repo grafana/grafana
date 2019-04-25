@@ -160,10 +160,10 @@ export function importPluginModule(path: string): Promise<any> {
   return System.import(path);
 }
 
-export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> {
+export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin<any>> {
   return importPluginModule(path).then(pluginExports => {
     if (pluginExports.plugin) {
-      return pluginExports.plugin as DataSourcePlugin;
+      return pluginExports.plugin as DataSourcePlugin<any>;
     }
 
     if (pluginExports.Datasource) {
