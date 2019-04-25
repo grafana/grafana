@@ -387,6 +387,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
 		adminRoute.Get("/users/:id/auth-tokens", Wrap(hs.AdminGetUserAuthTokens))
 		adminRoute.Post("/users/:id/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
+
+		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
+		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
+		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 	}, reqGrafanaAdmin)
 
 	// rendering
