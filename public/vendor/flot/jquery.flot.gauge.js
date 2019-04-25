@@ -89,21 +89,26 @@
             var canvasWidth = placeholder.width();
             var canvasHeight = placeholder.height();
 
+
+
             // calculate cell size
             var columns = Math.min(series.length, gaugeOptions.layout.columns);
             var rows = Math.ceil(series.length / columns);
+
+
 
             var margin = gaugeOptions.layout.margin;
             var hMargin = gaugeOptions.layout.hMargin;
             var vMargin = gaugeOptions.layout.vMargin;
             var cellWidth = (canvasWidth - (margin * 2) - (hMargin * (columns - 1))) / columns;
             var cellHeight = (canvasHeight - (margin * 2) - (vMargin * (rows - 1))) / rows;
-
             if (gaugeOptions.layout.square) {
                 var cell = Math.min(cellWidth, cellHeight);
                 cellWidth = cell;
                 cellHeight = cell;
             }
+
+
 
             // calculate 'auto' values
             calculateAutoValues(gaugeOptions, cellWidth);
@@ -143,9 +148,9 @@
                 heightRatioV = Math.max(heightRatioV, Math.sin(toRad(a)));
             }
             heightRatioV = Math.max(heightRatioV, Math.sin(toRad(endAngle)));
-            var outerRadiusV = (cellHeight - (cellMargin * 2)) / (1 + heightRatioV);
+            var outerRadiusV = (cellHeight - (cellMargin * 2) - (labelMargin * 2) - labelFontSize) / (1 + heightRatioV);
             if (outerRadiusV * heightRatioV < valueMargin + (valueFontSize / 2)) {
-                outerRadiusV = cellHeight - (cellMargin * 2) - valueMargin - (valueFontSize / 2);
+                outerRadiusV = cellHeight - (cellMargin * 2) - (labelMargin * 2) - labelFontSize - valueMargin - (valueFontSize / 2);
             }
             var maxRadiusV = outerRadiusV - (thresholdLabelMargin * 2) - thresholdLabelFontSize - thresholdWidth;
 
@@ -239,9 +244,9 @@
             var x = layout.margin + (layout.cellWidth + layout.hMargin) * c;
             var y = layout.margin + (layout.cellHeight + layout.vMargin) * r;
             var cx = x + (layout.cellWidth / 2);
-            var cy = y + layout.cellMargin + layout.thresholdWidth
+            var cy = y + layout.cellMargin + (layout.labelMargin * 2) + layout.labelFontSize + layout.thresholdWidth
                         + layout.thresholdLabelFontSize + (layout.thresholdLabelMargin * 2) + layout.radius;
-            var blank = layout.cellHeight - (layout.cellMargin * 2) - layout.gaugeOuterHeight;
+            var blank = layout.cellHeight - (layout.cellMargin * 2) - (layout.labelMargin * 2) - layout.labelFontSize - layout.gaugeOuterHeight;
             var offsetY = 0;
             if (gaugeOptionsi.cell.vAlign === "middle") {
                 offsetY = (blank / 2);
@@ -473,10 +478,10 @@
          * @param  {Object} item the item of the series
          */
         Gauge.prototype.drawLable = function(gaugeOptionsi, layout, cellLayout, i, item) {
-          console.log(layout, cellLayout);
+
             drawText(
                 cellLayout.cx,
-                cellLayout.cy + (gaugeOptionsi.value.font.size / 2) - (layout.labelFontSize / 2) + layout.labelMargin,
+                cellLayout.y + cellLayout.cellMargin + layout.labelMargin + cellLayout.offsetY,
                 "flotGagueLabel" + i,
                 gaugeOptionsi.label.formatter ? gaugeOptionsi.label.formatter(item.label, item.data[0][1]) : text,
                 gaugeOptionsi.label);
@@ -946,3 +951,4 @@
     });
 
 })(jQuery);
+

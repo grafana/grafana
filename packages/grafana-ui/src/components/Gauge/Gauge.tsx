@@ -62,17 +62,25 @@ export class Gauge extends PureComponent<Props> {
 
   draw() {
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const showLabel = value.title !== null && value.title !== undefined;
 
-    const dimension = Math.min(width, height * 1.3);
+    const labelFontSize = Math.min((height * 0.1) / 1.5, 40); // 20% of height * line-height, max 40px
+    const labelMargin = labelFontSize / 2;
+    const labelHeight = labelFontSize * 1.5 + labelMargin;
+    const gaugeHeight = showLabel ? height - labelHeight : height;
+
+    const dimension = Math.min(width, gaugeHeight);
+
     const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
-
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
-    const labelFontSize = Math.min(dimension / 5.5, 100) * (value.title ? this.getFontScale(value.title.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
-    const showLabel = value.title !== null && value.title !== undefined;
+    console.log('height', height);
+    console.log('width', width);
+    console.log('labelFontSize', labelFontSize);
+    console.log('labelFontSize', labelHeight);
 
     const options: any = {
       series: {
@@ -86,7 +94,11 @@ export class Gauge extends PureComponent<Props> {
             width: gaugeWidth,
           },
           frame: { show: false },
-          label: { show: showLabel, margin: labelFontSize, size: labelFontSize },
+          label: {
+            show: showLabel,
+            margin: labelMargin,
+            font: { size: labelFontSize, family: theme.typography.fontFamily.sansSerif },
+          },
           layout: { margin: 0, thresholdWidth: 0 },
           cell: { border: { width: 0 } },
           threshold: {
@@ -104,7 +116,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return value.text;
             },
-            font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },
           show: true,
         },
