@@ -73,11 +73,11 @@ func ReadConfig() *Config {
 		return config
 	}
 
+	config := &Config{}
 	getConfig(setting.LdapConfigFile, config)
 
 	return config
 }
-
 func getConfig(configFile string, config *Config) {
 	logger.Info("Ldap enabled, reading config file", "file", configFile)
 
