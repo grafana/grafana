@@ -30,33 +30,19 @@ Checkout the [configuration](/installation/configuration) page for more informat
 
 ### Using Environment Variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
+of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+configuration.
+Example:
 
-```bash
-GF_<SectionName>_<KeyName>
-```
-
-Where the section name is the text within the brackets. Everything
-should be upper case and `.` should be replaced by `_`. For example, given these configuration settings:
-
-```bash
-# default section
-instance_name = ${HOSTNAME}
-
-[security]
-admin_user = admin
-
-[auth.google]
-client_secret = 0ldS3cretKey
-```
-
-Overriding will be done like so:
-
-```bash
-export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
-export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```yaml
+datasources:
+- name: Graphite
+  url: http://localhost:$PORT
+  user: $USER
+  secureJsonData:
+    password: $PASSWORD
 ```
 
 <hr />
@@ -160,7 +146,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60) |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60/70) |
 | timeField | string | Elasticsearch | Which field that should be used as timestamp |
 | interval | string | Elasticsearch | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
@@ -203,13 +189,24 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
+  # <string> provider name
 - name: 'default'
+  # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string, required> name of the dashboard folder. Required
   folder: ''
+  # <string> folder UID. will be automatically generated if not specified
+  folderUid: ''
+  # <string, required> provider type. Required
   type: file
+  # <bool> disable dashboard deletion
   disableDeletion: false
-  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
+  # <bool> enable dashboard editing
+  editable: true
+  # <int> how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10  
   options:
+    # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
 ```
 

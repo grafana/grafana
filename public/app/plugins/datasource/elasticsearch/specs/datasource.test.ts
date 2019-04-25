@@ -187,7 +187,7 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'metricbeat' });
+      createDatasource({ url: 'http://es.com', index: 'metricbeat', jsonData: { esVersion: 50 } });
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -236,49 +236,191 @@ describe('ElasticDatasource', function(this: any) {
       });
     });
 
-    it('should return nested fields', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual([
-            '@timestamp',
-            'beat.name.raw',
-            'beat.name',
-            'beat.hostname',
-            'system.cpu.system',
-            'system.cpu.user',
-            'system.process.cpu.total',
-            'system.process.name',
-          ]);
-        });
+    it('should return nested fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        '@timestamp',
+        'beat.name.raw',
+        'beat.name',
+        'beat.hostname',
+        'system.cpu.system',
+        'system.cpu.user',
+        'system.process.cpu.total',
+        'system.process.name',
+      ]);
     });
 
-    it('should return fields related to query type', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'number',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-        });
+    it('should return number fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'number',
+      });
 
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'date',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['@timestamp']);
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+    });
+
+    it('should return date fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'date',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp']);
+    });
+  });
+
+  describe('When getting fields from ES 7.0', () => {
+    beforeEach(() => {
+      createDatasource({ url: 'http://es.com', index: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({
+          data: {
+            'genuine.es7._mapping.response': {
+              mappings: {
+                properties: {
+                  '@timestamp_millis': {
+                    type: 'date',
+                    format: 'epoch_millis',
+                  },
+                  classification_terms: {
+                    type: 'keyword',
+                  },
+                  domains: {
+                    type: 'keyword',
+                  },
+                  ip_address: {
+                    type: 'ip',
+                  },
+                  justification_blob: {
+                    properties: {
+                      criterion: {
+                        type: 'text',
+                        fields: {
+                          keyword: {
+                            type: 'keyword',
+                            ignore_above: 256,
+                          },
+                        },
+                      },
+                      overall_vote_score: {
+                        type: 'float',
+                      },
+                      shallow: {
+                        properties: {
+                          jsi: {
+                            properties: {
+                              sdb: {
+                                properties: {
+                                  dsel2: {
+                                    properties: {
+                                      'bootlegged-gille': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
+                                          },
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
+                                      },
+                                      'uncombed-boris': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
+                                          },
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  overall_vote_score: {
+                    type: 'float',
+                  },
+                  ua_terms_long: {
+                    type: 'keyword',
+                  },
+                  ua_terms_short: {
+                    type: 'keyword',
+                  },
+                },
+              },
+            },
+          },
         });
+      });
+    });
+
+    it('should return nested fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        '@timestamp_millis',
+        'classification_terms',
+        'domains',
+        'ip_address',
+        'justification_blob.criterion.keyword',
+        'justification_blob.criterion',
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+        'ua_terms_long',
+        'ua_terms_short',
+      ]);
+    });
+
+    it('should return number fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'number',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+      ]);
+    });
+
+    it('should return date fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'date',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp_millis']);
     });
   });
 

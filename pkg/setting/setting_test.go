@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"gopkg.in/ini.v1"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -188,5 +190,30 @@ func TestLoadingSettings(t *testing.T) {
 
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
 		})
+	})
+
+	Convey("Test reading string values from .ini file", t, func() {
+
+		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
+		So(err, ShouldBeNil)
+
+		Convey("If key is found - should return value from ini file", func() {
+			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
+			So(err, ShouldBeNil)
+			So(value, ShouldEqual, "https://grafana.com/")
+		})
+
+		Convey("If key is not found - should return default value", func() {
+			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
+			So(err, ShouldBeNil)
+			So(value, ShouldEqual, "default_url_val")
+		})
+
+		Convey("In case of panic - should return user-friendly error", func() {
+			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
+			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
+			So(value, ShouldEqual, "")
+		})
+
 	})
 }

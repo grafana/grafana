@@ -16,7 +16,15 @@
   "gnetId": null,
   "graphTooltip": 0,
   "iteration": 1554902936982,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "title": "Dashboards",
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "aliasColors": {
