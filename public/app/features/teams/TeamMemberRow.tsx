@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DeleteButton, Select, SelectOptionItem } from '@grafana/ui';
 
-import { TeamMember, teamsPermissionLevels } from 'app/types';
+import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { updateTeamMember, removeTeamMember } from './state/actions';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -27,7 +27,7 @@ export class TeamMemberRow extends PureComponent<Props> {
     this.props.removeTeamMember(member.userId);
   }
 
-  onPermissionChange = (item: SelectOptionItem, member: TeamMember) => {
+  onPermissionChange = (item: SelectOptionItem<TeamPermissionLevel>, member: TeamMember) => {
     const permission = item.value;
     const updatedTeamMember = { ...member, permission };
 

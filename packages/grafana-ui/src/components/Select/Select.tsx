@@ -20,22 +20,22 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
 import { Tooltip } from '@grafana/ui';
 
-export interface SelectOptionItem {
+export interface SelectOptionItem<T> {
   label?: string;
-  value?: any;
+  value?: T;
   imgUrl?: string;
   description?: string;
   [key: string]: any;
 }
 
-export interface CommonProps {
+export interface CommonProps<T> {
   defaultValue?: any;
-  getOptionLabel?: (item: SelectOptionItem) => string;
-  getOptionValue?: (item: SelectOptionItem) => string;
-  onChange: (item: SelectOptionItem) => {} | void;
+  getOptionLabel?: (item: SelectOptionItem<T>) => string;
+  getOptionValue?: (item: SelectOptionItem<T>) => string;
+  onChange: (item: SelectOptionItem<T>) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: SelectOptionItem;
+  value?: SelectOptionItem<T>;
   className?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;
@@ -55,13 +55,13 @@ export interface CommonProps {
   onCloseMenu?: () => void;
 }
 
-export interface SelectProps {
-  options: SelectOptionItem[];
+export interface SelectProps<T> {
+  options: Array<SelectOptionItem<T>>;
 }
 
-interface AsyncProps {
+interface AsyncProps<T> {
   defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<SelectOptionItem[]>;
+  loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
   loadingMessage?: () => string;
 }
 
@@ -95,7 +95,7 @@ export const MenuList = (props: any) => {
   );
 };
 
-export class Select extends PureComponent<CommonProps & SelectProps> {
+export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
   static defaultProps = {
     width: null,
     className: '',
@@ -201,7 +201,7 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
   }
 }
 
-export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
+export class AsyncSelect<T> extends PureComponent<CommonProps<T> & AsyncProps<T>> {
   static defaultProps = {
     width: null,
     className: '',

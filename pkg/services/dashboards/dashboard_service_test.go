@@ -6,9 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/pkg/errors"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/xerrors"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -116,7 +115,7 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return errors.New("Alert validation error")
+					return xerrors.New("Alert validation error")
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")

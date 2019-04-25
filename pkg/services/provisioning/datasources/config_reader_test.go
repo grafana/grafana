@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -146,8 +147,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 1", func() {
+			_ = os.Setenv("TEST_VAR", "name")
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(allProperties)
+			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
