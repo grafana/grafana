@@ -105,9 +105,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
-	} else {
-		return nil, fmt.Errorf("No renderer found")
 	}
+	return nil, fmt.Errorf("No renderer found")
 }
 
 func (rs *RenderingService) getFilePathForNewImage() string {

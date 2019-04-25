@@ -33,15 +33,16 @@ export class RefreshPicker extends PureComponent<Props> {
     return false;
   };
 
-  intervalsToOptions = (intervals: string[] = defaultIntervals): SelectOptionItem[] => {
+  intervalsToOptions = (intervals: string[] = defaultIntervals): Array<SelectOptionItem<string>> => {
     const options = intervals.map(interval => ({ label: interval, value: interval }));
     options.unshift(offOption);
     return options;
   };
 
-  onChangeSelect = (item: SelectOptionItem) => {
+  onChangeSelect = (item: SelectOptionItem<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
+      // @ts-ignore
       onIntervalChanged(item.value);
     }
   };

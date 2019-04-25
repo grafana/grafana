@@ -51,34 +51,25 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}, nil
 }
 
-func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	if err := fr.startWalkingDisk(); err != nil {
-		fr.log.Error("failed to search for dashboards", "error", err)
-	}
-
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
-
-	running := false
-
+// pollChanges periodically runs startWalkingDisk based on interval specified in the config.
+func (fr *fileReader) pollChanges(ctx context.Context) {
+	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
-		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
-				running = true
-				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
-						fr.log.Error("failed to search for dashboards", "error", err)
-					}
-					running = false
-				}()
+		case <-ticker:
+			if err := fr.startWalkingDisk(); err != nil {
+				fr.log.Error("failed to search for dashboards", "error", err)
 			}
 		case <-ctx.Done():
-			return nil
+			return
 		}
 	}
 }
 
+// startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
+// to the database.
 func (fr *fileReader) startWalkingDisk() error {
+	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvePath(fr.Path)
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
@@ -119,6 +110,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	return nil
 }
 
+// handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
 func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
@@ -151,6 +143,7 @@ func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 	}
 }
 
+// saveDashboard saves or updates the dashboard provisioning file at path.
 func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
@@ -189,7 +182,7 @@ func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.Fil
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
-	fr.log.Debug("saving new dashboard", "provisoner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
+	fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
 	dp := &models.DashboardProvisioning{
 		ExternalId: path,
 		Name:       fr.Cfg.Name,
@@ -234,6 +227,8 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgId
+		// set dashboard folderUid if given
+		dash.Dashboard.SetUid(cfg.FolderUid)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(dash)
 		if err != nil {
 			return 0, err
