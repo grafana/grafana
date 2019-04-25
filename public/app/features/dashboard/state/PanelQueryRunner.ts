@@ -7,20 +7,10 @@ import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-
-// Components & Types
-import {
-  guessFieldTypes,
-  toSeriesData,
-  PanelData,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataQueryRequest,
-  SeriesData,
-  DataSourceApi,
-} from '@grafana/ui';
 import { PanelQueryState } from './PanelQueryState';
+
+// Types
+import { PanelData, DataQuery, TimeRange, ScopedVars, DataQueryRequest, DataSourceApi } from '@grafana/ui';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   datasource: string | DataSourceApi<TQuery>;
@@ -107,6 +97,9 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
+    // filter out hidden queries & deep clone them
+    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
+
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
       timezone,
@@ -116,26 +109,20 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: cloneDeep(
-        queries.filter(q => {
-          return !q.hide; // Skip any hidden queries
-        })
-      ),
+      targets: clonedAndFilteredQueries,
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
     };
-    // Deprecated
+
+    // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
 
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds =
-        datasource && (datasource as any).query
-          ? (datasource as DataSourceApi)
-          : await getDatasourceSrv().get(datasource as string, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars);
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {
@@ -218,22 +205,12 @@ export class PanelQueryRunner {
   }
 }
 
-/**
- * All panels will be passed tables that have our best guess at colum type set
- *
- * This is also used by PanelChrome for snapshot support
- */
-export function getProcessedSeriesData(results?: any[]): SeriesData[] {
-  if (!results) {
-    return [];
+async function getDataSource(
+  datasource: string | DataSourceApi | null,
+  scopedVars: ScopedVars
+): Promise<DataSourceApi> {
+  if (datasource && (datasource as any).query) {
+    return datasource as DataSourceApi;
   }
-
-  const series: SeriesData[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toSeriesData(r)));
-    }
-  }
-
-  return series;
+  return await getDatasourceSrv().get(datasource as string, scopedVars);
 }

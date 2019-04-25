@@ -51,16 +51,23 @@ type GetAlertNotifierUsageStatsQuery struct {
 }
 
 type AdminStats struct {
-	Users       int `json:"users"`
-	Orgs        int `json:"orgs"`
-	Dashboards  int `json:"dashboards"`
-	Snapshots   int `json:"snapshots"`
-	Tags        int `json:"tags"`
-	Datasources int `json:"datasources"`
-	Playlists   int `json:"playlists"`
-	Stars       int `json:"stars"`
-	Alerts      int `json:"alerts"`
-	ActiveUsers int `json:"activeUsers"`
+	Orgs           int `json:"orgs"`
+	Dashboards     int `json:"dashboards"`
+	Snapshots      int `json:"snapshots"`
+	Tags           int `json:"tags"`
+	Datasources    int `json:"datasources"`
+	Playlists      int `json:"playlists"`
+	Stars          int `json:"stars"`
+	Alerts         int `json:"alerts"`
+	Users          int `json:"users"`
+	Admins         int `json:"admins"`
+	Editors        int `json:"editors"`
+	Viewers        int `json:"viewers"`
+	ActiveUsers    int `json:"activeUsers"`
+	ActiveAdmins   int `json:"activeAdmins"`
+	ActiveEditors  int `json:"activeEditors"`
+	ActiveViewers  int `json:"activeViewers"`
+	ActiveSessions int `json:"activeSessions"`
 }
 
 type GetAdminStatsQuery struct {

@@ -27,33 +27,40 @@ export class StreamHandler {
 
   process(req: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver): DataQueryResponse | undefined {
     let resp: DataQueryResponse;
-    for (const query of req.targets) {
-      if ('streaming_client' === query.scenarioId) {
-        if (!resp) {
-          resp = { data: [] };
-        }
-        query.stream = defaults(query.stream, defaultQuery);
 
-        const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
-        if (this.workers[key]) {
-          const existing = this.workers[key];
-          if (existing.update(query, req)) {
-            continue;
-          }
-          existing.unsubscribe();
-          delete this.workers[key];
+    for (const query of req.targets) {
+      if ('streaming_client' !== query.scenarioId) {
+        continue;
+      }
+
+      if (!resp) {
+        resp = { data: [] };
+      }
+
+      // set stream option defaults
+      query.stream = defaults(query.stream, defaultQuery);
+      // create stream key
+      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
+
+      if (this.workers[key]) {
+        const existing = this.workers[key];
+        if (existing.update(query, req)) {
+          continue;
         }
-        const type = query.stream.type;
-        if (type === 'signal') {
-          this.workers[key] = new SignalWorker(key, query, req, observer);
-        } else if (type === 'logs') {
-          this.workers[key] = new LogsWorker(key, query, req, observer);
-        } else {
-          throw {
-            message: 'Unknown Stream type: ' + type,
-            refId: query.refId,
-          } as DataQueryError;
-        }
+        existing.unsubscribe();
+        delete this.workers[key];
+      }
+
+      const type = query.stream.type;
+      if (type === 'signal') {
+        this.workers[key] = new SignalWorker(key, query, req, observer);
+      } else if (type === 'logs') {
+        this.workers[key] = new LogsWorker(key, query, req, observer);
+      } else {
+        throw {
+          message: 'Unknown Stream type: ' + type,
+          refId: query.refId,
+        } as DataQueryError;
       }
     }
     return resp;
@@ -92,7 +99,8 @@ export class StreamWorker {
   };
 
   update(query: TestDataQuery, request: DataQueryRequest): boolean {
-    if (this.query.type !== query.stream.type) {
+    // Check if stream has been unsubscribed or query changed type
+    if (this.observer === null || this.query.type !== query.stream.type) {
       return false;
     }
     this.query = query.stream;
@@ -121,7 +129,10 @@ export class StreamWorker {
     // Broadcast the changes
     if (this.observer) {
       this.observer(stream);
+    } else {
+      console.log('StreamWorker working without any observer');
     }
+
     this.last = Date.now();
   }
 }
@@ -131,7 +142,7 @@ export class SignalWorker extends StreamWorker {
 
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
-    window.setTimeout(() => {
+    setTimeout(() => {
       this.stream.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
