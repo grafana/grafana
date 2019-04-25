@@ -139,7 +139,7 @@ export class PanelQueryRunner {
       // and add built in variables interval and interval_ms
       request.scopedVars = Object.assign({}, request.scopedVars, {
         __interval: { text: norm.interval, value: norm.interval },
-        __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
+        __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
       });
 
       request.interval = norm.interval;
@@ -149,7 +149,8 @@ export class PanelQueryRunner {
       const active = state.getActiveRunner();
       if (active) {
         if (state.isSameQuery(ds, request)) {
-          // TODO? maybe cancel if it has run too long?
+          // Maybe cancel if it has run too long?
+          console.log('Trying to execute query while last one has yet to complete, returning same promise');
           return active;
         } else {
           state.cancel('Query Changed while running');
