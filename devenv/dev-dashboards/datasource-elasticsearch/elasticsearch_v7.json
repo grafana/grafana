@@ -13,7 +13,7 @@
         "type": "dashboard"
       },
       {
-        "datasource": "Elastic 5 Logs",
+        "datasource": "gdev-elasticsearch-v7-logs",
         "enable": false,
         "iconColor": "rgba(255, 96, 96, 1)",
         "limit": 100,
@@ -28,7 +28,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1554310942895,
+  "id": 2342,
+  "iteration": 1555593977614,
   "links": [
     {
       "asDropdown": true,
@@ -44,7 +45,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-elasticsearch-v2-metrics",
+      "datasource": "gdev-elasticsearch-v7-metrics",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -167,7 +168,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-elasticsearch-v2-metrics",
+      "datasource": "gdev-elasticsearch-v7-metrics",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -289,7 +290,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-elasticsearch-v2-metrics",
+      "datasource": "gdev-elasticsearch-v7-metrics",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -424,7 +425,7 @@
           "value": "Sum"
         }
       ],
-      "datasource": "gdev-elasticsearch-v2-metrics",
+      "datasource": "gdev-elasticsearch-v7-metrics",
       "editable": true,
       "error": false,
       "fontSize": "100%",
@@ -526,7 +527,7 @@
           "value": "description"
         }
       ],
-      "datasource": "gdev-elasticsearch-v2-logs",
+      "datasource": "gdev-elasticsearch-v7-logs",
       "editable": true,
       "error": false,
       "fontSize": "100%",
@@ -580,7 +581,7 @@
       "circleMaxSize": 30,
       "circleMinSize": 2,
       "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-      "datasource": "gdev-elasticsearch-v2-metrics",
+      "datasource": "gdev-elasticsearch-v7-metrics",
       "decimals": 0,
       "esGeoPoint": "@location",
       "esMetric": "Average",
@@ -593,7 +594,7 @@
       "hideEmpty": false,
       "hideZero": false,
       "id": 8,
-      "initialZoom": 1,
+      "initialZoom": "1",
       "links": [],
       "locationData": "geohash",
       "mapCenter": "(0°, 0°)",
@@ -651,7 +652,7 @@
   "templating": {
     "list": [
       {
-        "datasource": "gdev-elasticsearch-v2-metrics",
+        "datasource": "gdev-elasticsearch-v7-metrics",
         "filters": [],
         "hide": 0,
         "label": "",
@@ -676,7 +677,7 @@
     "type": "timepicker"
   },
   "timezone": "browser",
-  "title": "Datasource tests - Elasticsearch v2",
-  "uid": "RlqLq2fiz",
-  "version": 5
+  "title": "Datasource tests - Elasticsearch v7",
+  "uid": "Y-RvmuRWk",
+  "version": 1
 }

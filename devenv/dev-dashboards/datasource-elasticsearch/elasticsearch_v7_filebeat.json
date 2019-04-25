@@ -15,7 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1554902936982,
+  "id": 2341,
+  "iteration": 1555591591930,
   "links": [
     {
       "asDropdown": true,
@@ -33,7 +34,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-elasticsearch-v6-filebeat",
+      "datasource": "gdev-elasticsearch-v7-filebeat",
       "fill": 1,
       "gridPos": {
         "h": 5,
@@ -156,7 +157,7 @@
           "value": "message"
         }
       ],
-      "datasource": "gdev-elasticsearch-v6-filebeat",
+      "datasource": "gdev-elasticsearch-v7-filebeat",
       "fontSize": "100%",
       "gridPos": {
         "h": 22,
@@ -234,11 +235,11 @@
   ],
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["gdev", "elasticsearch", "datasource-test"],
+  "tags": ["elasticsearch", "gdev", "datasource-test"],
   "templating": {
     "list": [
       {
-        "datasource": "gdev-elasticsearch-v6-filebeat",
+        "datasource": "gdev-elasticsearch-v7-filebeat",
         "filters": [],
         "hide": 0,
         "label": "",
@@ -257,7 +258,7 @@
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
-  "title": "Datasource tests - Elasticsearch v6 Filebeat",
-  "uid": "06tPt4gZz",
-  "version": 8
+  "title": "Datasource tests - Elasticsearch v7 Filebeat",
+  "uid": "M94gguRWz",
+  "version": 1
 }

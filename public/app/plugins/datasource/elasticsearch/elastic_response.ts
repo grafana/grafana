@@ -184,7 +184,7 @@ export class ElasticResponse {
   }
 
   // This is quite complex
-  // need to recurise down the nested buckets to build series
+  // need to recurse down the nested buckets to build series
   processBuckets(aggs, target, seriesList, table, props, depth) {
     let bucket, aggDef, esAgg, aggId;
     const maxDepth = target.bucketAggs.length - 1;
@@ -310,11 +310,13 @@ export class ElasticResponse {
   }
 
   processHits(hits, seriesList) {
+    const hitsTotal = typeof hits.total === 'number' ? hits.total : hits.total.value; // <- Works with Elasticsearch 7.0+
+
     const series = {
       target: 'docs',
       type: 'docs',
       datapoints: [],
-      total: hits.total,
+      total: hitsTotal,
       filterable: true,
     };
     let propName, hit, doc, i;
