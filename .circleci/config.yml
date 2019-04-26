@@ -239,6 +239,7 @@ jobs:
           root: /go/src/github.com/grafana/grafana
           paths:
             - public/build/*
+            - node_modules/*
 
   build-fast-package:
     docker:
