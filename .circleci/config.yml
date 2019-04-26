@@ -176,7 +176,6 @@ jobs:
     docker:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
-    parallelism: 2
     steps:
       - checkout
       - run:
@@ -203,20 +202,27 @@ jobs:
     docker:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
+    parallelism: 3
     steps:
       - checkout
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
       - run:
-          name: build and package grafana
-          command: './scripts/build/build.sh --fast'
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
       - save_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'

@@ -17,6 +17,7 @@ REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 BUILD_FAST=0
 BUILD_BACKEND=1
 BUILD_FRONTEND=1
+BUILD_PACKAGE=1
 
 while [ "$1" != "" ]; do
   case "$1" in
@@ -27,12 +28,20 @@ while [ "$1" != "" ]; do
       ;;
     "--backend-only")
       BUILD_FRONTEND=0
+      BUILD_PACKAGE=0
       echo "Building only backend"
       shift
       ;;
     "--frontend-only")
       BUILD_BACKEND=0
+      BUILD_PACKAGE=0
       echo "Building only frontend"
+      shift
+      ;;
+    "--package-only")
+      BUILD_BACKEND=0
+      BUILD_FRONTEND=0
+      echo "Building only packaging"
       shift
       ;;
     * )
@@ -107,10 +116,16 @@ if [ $BUILD_FAST = "0" ]; then
   package_setup
   package_all
 else
-  build_backend_linux_amd64
-  build_frontend
-  package_setup
-  package_linux_amd64
+  if [ $BUILD_BACKEND = "1" ]; then
+    build_backend_linux_amd64
+  fi
+  if [ $BUILD_FRONTEND = "1" ]; then
+    build_frontend
+  fi
+  if [ $BUILD_PACKAGE = "1" ]; then
+    package_setup
+    package_linux_amd64
+  fi
 fi
 
 # last step
