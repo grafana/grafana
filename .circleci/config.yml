@@ -176,6 +176,7 @@ jobs:
     docker:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
+    parallelism: 2
     steps:
       - checkout
       - run:
