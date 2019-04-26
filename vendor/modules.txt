@@ -77,9 +77,6 @@ github.com/go-macaron/gzip
 github.com/go-macaron/inject
 # github.com/go-macaron/session v0.0.0-20190131233854-0a0a789bf193
 github.com/go-macaron/session
-github.com/go-macaron/session/memcache
-github.com/go-macaron/session/postgres
-github.com/go-macaron/session/redis
 # github.com/go-sql-driver/mysql v1.4.1
 github.com/go-sql-driver/mysql
 # github.com/go-stack/stack v1.8.0
