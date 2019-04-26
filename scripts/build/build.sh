@@ -94,7 +94,10 @@ function build_frontend() {
   yarn install --pure-lockfile --no-progress
   echo "Building frontend"
   go run build.go ${OPT} build-frontend
-  ls -la dist
+  echo "current dir: $(pwd)"
+  if [ -d "dist" ]; then
+    ls -al dist
+  fi
   if [ -d "/dist" ]; then
     ls -al /dist
   fi
