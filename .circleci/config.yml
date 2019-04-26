@@ -198,11 +198,76 @@ jobs:
           paths:
             - dist/*
 
-  build-fast:
+  build-fast-backend:
     docker:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
-    parallelism: 3
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
+  build-fast-frontend:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
+  build-fast-package:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
+  build-fast-save:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
@@ -595,8 +660,15 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build-fast:
+        - build-fast-backend:
             filters: *filter-not-release-or-master
+        - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-fast-package:
+            filters: *filter-not-release-or-master
+            requires:
+              - build-fast-backend
+              - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
         - backend-lint:
@@ -613,7 +685,7 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build-fast
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
@@ -624,7 +696,7 @@ workflows:
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
-              - build-fast
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
