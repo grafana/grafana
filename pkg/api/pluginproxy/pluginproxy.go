@@ -116,16 +116,10 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 		}
 
 		if len(route.Url) > 0 {
-			log.Trace("before: route.Url %v", route.Url)
-			log.Trace("before: req.URL.Scheme value %v", req.URL.Scheme)
-			log.Trace("before: req.URL.Host value %v", req.URL.Host)
-			log.Trace("before: req.URL.Path value %v", req.URL.Path)
-			log.Trace("before: req.Host value %v", req.Host)
 			interpolatedURL, err := updateURL(route, ctx.OrgId, appID)
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
 			}
-			log.Trace("after: interpolatedURL %v", interpolatedURL)
 			targetURL, err := url.Parse(interpolatedURL)
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not parse custom url: %v", err)
@@ -135,10 +129,6 @@ func NewApiPluginProxy(ctx *m.ReqContext, proxyPath string, route *plugins.AppPl
 			req.URL.Host = targetURL.Host
 			req.Host = targetURL.Host
 			req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
-			log.Trace("after: req.URL.Scheme value %v", req.URL.Scheme)
-			log.Trace("after: req.URL.Host value %v", req.URL.Host)
-			log.Trace("after: req.URL.Path value %v", req.URL.Path)
-			log.Trace("after: req.Host value %v", req.Host)
 
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
