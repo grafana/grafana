@@ -99,7 +99,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
                 width={12}
                 placeholder="Choose Stat"
                 defaultStat={StatID.mean}
-                allowMultiple={true}
+                allowMultiple={false}
                 stats={stats}
                 onChange={this.onStatsChange}
               />
