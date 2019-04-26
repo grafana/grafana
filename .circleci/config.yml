@@ -205,12 +205,18 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
       - run:
           name: build and package grafana
           command: './scripts/build/build.sh --fast'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
