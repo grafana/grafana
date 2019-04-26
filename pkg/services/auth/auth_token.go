@@ -36,7 +36,7 @@ func (s *UserAuthTokenService) Init() error {
 	return nil
 }
 
-func (s *UserAuthTokenService) ActiveTokenCount() (int64, error) {
+func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
 
 	var count int64
 	var err error
@@ -53,7 +53,7 @@ func (s *UserAuthTokenService) ActiveTokenCount() (int64, error) {
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error) {
 	clientIP = util.ParseIPAddress(clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *UserAuthTokenService) CreateToken(userId int64, clientIP, userAgent str
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserToken, error) {
+func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	if setting.Env == setting.DEV {
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
@@ -190,7 +190,7 @@ func (s *UserAuthTokenService) LookupToken(unhashedToken string) (*models.UserTo
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) TryRotateToken(token *models.UserToken, clientIP, userAgent string) (bool, error) {
+func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
@@ -258,7 +258,7 @@ func (s *UserAuthTokenService) TryRotateToken(token *models.UserToken, clientIP,
 	return false, nil
 }
 
-func (s *UserAuthTokenService) RevokeToken(token *models.UserToken) error {
+func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken) error {
 	if token == nil {
 		return models.ErrUserTokenNotFound
 	}
@@ -286,7 +286,7 @@ func (s *UserAuthTokenService) RevokeToken(token *models.UserToken) error {
 	return nil
 }
 
-func (s *UserAuthTokenService) RevokeAllUserTokens(userId int64) error {
+func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId int64) error {
 	return s.SQLStore.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
 		sql := `DELETE from user_auth_token WHERE user_id = ?`
 		res, err := dbSession.Exec(sql, userId)
@@ -305,7 +305,7 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(userId int64) error {
 	})
 }
 
-func (s *UserAuthTokenService) GetUserToken(userId, userTokenId int64) (*models.UserToken, error) {
+func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 
 	var result models.UserToken
 	err := s.SQLStore.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
@@ -326,7 +326,7 @@ func (s *UserAuthTokenService) GetUserToken(userId, userTokenId int64) (*models.
 	return &result, err
 }
 
-func (s *UserAuthTokenService) GetUserTokens(userId int64) ([]*models.UserToken, error) {
+func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
 
 	result := []*models.UserToken{}
 	err := s.SQLStore.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {

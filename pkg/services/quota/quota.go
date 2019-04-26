@@ -1,6 +1,8 @@
 package quota
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -20,6 +22,17 @@ func (qs *QuotaService) Init() error {
 }
 
 func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, error) {
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+	fmt.Println("kasdgfkjhgsdafkjhgasdkjhf")
+
 	if !setting.Quota.Enabled {
 		return false, nil
 	}
@@ -43,7 +56,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 			}
 			if target == "session" {
 
-				usedSessions, err := qs.AuthTokenService.ActiveTokenCount()
+				usedSessions, err := qs.AuthTokenService.ActiveTokenCount(c.Req.Context())
 				if err != nil {
 					return false, err
 				}
