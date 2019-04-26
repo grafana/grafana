@@ -36,7 +36,7 @@ export default class QueryTransactionStatus extends PureComponent<QueryTransacti
     return (
       <div className="query-transactions">
         {transactions.map((t, i) => (
-          <QueryTransactionStatusItem key={`${t.rowIndex}:${t.resultType}`} transaction={t} />
+          <QueryTransactionStatusItem key={`${i}:${t.resultType}`} transaction={t} />
         ))}
       </div>
     );

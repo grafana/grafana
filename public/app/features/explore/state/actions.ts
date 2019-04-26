@@ -31,7 +31,6 @@ import {
   DataSourceApi,
   DataQuery,
   DataSourceSelectItem,
-  QueryHint,
   QueryFixAction,
   TimeRange,
 } from '@grafana/ui/src/types';
@@ -62,7 +61,6 @@ import {
   loadDatasourceReadyAction,
   modifyQueriesAction,
   queryTransactionFailureAction,
-  queryTransactionStartAction,
   queryTransactionSuccessAction,
   scanRangeAction,
   scanStartAction,
@@ -82,6 +80,7 @@ import {
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
   loadExploreDatasources,
+  queryTransactionStartAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -412,54 +411,54 @@ export function queryTransactionFailure(
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, queryTransactions } = getState().explore[exploreId];
+    const { datasourceInstance } = getState().explore[exploreId];
     if (datasourceInstance.meta.id !== datasourceId || response.cancelled) {
       // Navigated away, queries did not matter
       return;
     }
 
     // Transaction might have been discarded
-    if (!queryTransactions.find(qt => qt.id === transactionId)) {
-      return;
-    }
+    // if (!queryTransactions.find(qt => qt.id === transactionId)) {
+    //   return;
+    // }
 
     console.error(response);
 
-    let error: string;
-    let errorDetails: string;
-    if (response.data) {
-      if (typeof response.data === 'string') {
-        error = response.data;
-      } else if (response.data.error) {
-        error = response.data.error;
-        if (response.data.response) {
-          errorDetails = response.data.response;
-        }
-      } else {
-        throw new Error('Could not handle error response');
-      }
-    } else if (response.message) {
-      error = response.message;
-    } else if (typeof response === 'string') {
-      error = response;
-    } else {
-      error = 'Unknown error during query transaction. Please check JS console logs.';
-    }
+    // let error: string;
+    // let errorDetails: string;
+    // if (response.data) {
+    //   if (typeof response.data === 'string') {
+    //     error = response.data;
+    //   } else if (response.data.error) {
+    //     error = response.data.error;
+    //     if (response.data.response) {
+    //       errorDetails = response.data.response;
+    //     }
+    //   } else {
+    //     throw new Error('Could not handle error response');
+    //   }
+    // } else if (response.message) {
+    //   error = response.message;
+    // } else if (typeof response === 'string') {
+    //   error = response;
+    // } else {
+    //   error = 'Unknown error during query transaction. Please check JS console logs.';
+    // }
 
     // Mark transactions as complete
-    const nextQueryTransactions = queryTransactions.map(qt => {
-      if (qt.id === transactionId) {
-        return {
-          ...qt,
-          error,
-          errorDetails,
-          done: true,
-        };
-      }
-      return qt;
-    });
+    // const nextQueryTransactions = queryTransactions.map(qt => {
+    //   if (qt.id === transactionId) {
+    //     return {
+    //       ...qt,
+    //       error,
+    //       errorDetails,
+    //       done: true,
+    //     };
+    //   }
+    //   return qt;
+    // });
 
-    dispatch(queryTransactionFailureAction({ exploreId, queryTransactions: nextQueryTransactions }));
+    dispatch(queryTransactionFailureAction({ exploreId, queryTransactions: [] }));
   };
 }
 
@@ -480,10 +479,11 @@ export function queryTransactionSuccess(
   result: any,
   latency: number,
   queries: DataQuery[],
-  datasourceId: string
+  datasourceId: string,
+  resultType: ResultType
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, history, queryTransactions, scanner, scanning } = getState().explore[exploreId];
+    const { datasourceInstance, history } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
@@ -491,30 +491,30 @@ export function queryTransactionSuccess(
     }
 
     // Transaction might have been discarded
-    const transaction = queryTransactions.find(qt => qt.id === transactionId);
-    if (!transaction) {
-      return;
-    }
+    // const transaction = queryTransactions.find(qt => qt.id === transactionId);
+    // if (!transaction) {
+    //   return;
+    // }
 
     // Get query hints
-    let hints: QueryHint[];
-    if (datasourceInstance.getQueryHints) {
-      hints = datasourceInstance.getQueryHints(transaction.query, result);
-    }
+    // let hints: QueryHint[];
+    // if (datasourceInstance.getQueryHints) {
+    //   hints = datasourceInstance.getQueryHints(transaction.query, result);
+    // }
 
     // Mark transactions as complete and attach result
-    const nextQueryTransactions = queryTransactions.map(qt => {
-      if (qt.id === transactionId) {
-        return {
-          ...qt,
-          hints,
-          latency,
-          result,
-          done: true,
-        };
-      }
-      return qt;
-    });
+    // const nextQueryTransactions = queryTransactions.map(qt => {
+    //   if (qt.id === transactionId) {
+    //     return {
+    //       ...qt,
+    //       hints,
+    //       latency,
+    //       result,
+    //       done: true,
+    //     };
+    //   }
+    //   return qt;
+    // });
 
     // Side-effect: Saving history in localstorage
     const nextHistory = updateHistory(history, datasourceId, queries);
@@ -523,23 +523,24 @@ export function queryTransactionSuccess(
       queryTransactionSuccessAction({
         exploreId,
         history: nextHistory,
-        queryTransactions: nextQueryTransactions,
+        result,
+        resultType,
       })
     );
 
     // Keep scanning for results if this was the last scanning transaction
-    if (scanning) {
-      if (_.size(result) === 0) {
-        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
-        if (!other) {
-          const range = scanner();
-          dispatch(scanRangeAction({ exploreId, range }));
-        }
-      } else {
-        // We can stop scanning if we have a result
-        dispatch(scanStopAction({ exploreId }));
-      }
-    }
+    // if (scanning) {
+    //   if (_.size(result) === 0) {
+    //     const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
+    //     if (!other) {
+    //       const range = scanner();
+    //       dispatch(scanRangeAction({ exploreId, range }));
+    //     }
+    //   } else {
+    //     // We can stop scanning if we have a result
+    //     dispatch(scanStopAction({ exploreId }));
+    //   }
+    // }
   };
 }
 
@@ -632,32 +633,45 @@ function runQueriesForType(
   return async (dispatch, getState) => {
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
-    // Run all queries concurrently
-    for (let rowIndex = 0; rowIndex < queries.length; rowIndex++) {
-      const query = queries[rowIndex];
-      const transaction = buildQueryTransaction(
-        query,
-        rowIndex,
-        resultType,
-        queryOptions,
-        range,
-        queryIntervals,
-        scanning
-      );
-      dispatch(queryTransactionStartAction({ exploreId, resultType, rowIndex, transaction }));
-      try {
-        const now = Date.now();
-        const res = await datasourceInstance.query(transaction.options);
-        eventBridge.emit('data-received', res.data || []);
-        const latency = Date.now() - now;
-        const { queryTransactions } = getState().explore[exploreId];
-        const results = resultGetter ? resultGetter(res.data, transaction, queryTransactions) : res.data;
-        dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId));
-      } catch (response) {
-        eventBridge.emit('data-error', response);
-        dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
-      }
+    const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
+    dispatch(queryTransactionStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
+    try {
+      const now = Date.now();
+      const res = await datasourceInstance.query(transaction.options);
+      eventBridge.emit('data-received', res.data || []);
+      const latency = Date.now() - now;
+      // const { queryTransactions } = getState().explore[exploreId];
+      const results = resultGetter ? resultGetter(res.data, transaction, []) : res.data;
+      dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId, resultType));
+    } catch (response) {
+      eventBridge.emit('data-error', response);
+      dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
     }
+    // Run all queries concurrently
+    // const queryPromises = queries.map(async (query, rowIndex) => {
+    //   const transaction = buildQueryTransaction(
+    //     query,
+    //     rowIndex,
+    //     resultType,
+    //     queryOptions,
+    //     range,
+    //     queryIntervals,
+    //     scanning
+    //   );
+    //   dispatch(queryTransactionStartAction({ exploreId, resultType, rowIndex, transaction }));
+    //   try {
+    //     const now = Date.now();
+    //     const res = await datasourceInstance.query(transaction.options);
+    //     eventBridge.emit('data-received', res.data || []);
+    //     const latency = Date.now() - now;
+    //     // const { queryTransactions } = getState().explore[exploreId];
+    //     const results = resultGetter ? resultGetter(res.data, transaction, []) : res.data;
+    //     dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId));
+    //   } catch (response) {
+    //     eventBridge.emit('data-error', response);
+    //     dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
+    //   }
+    // });
   };
 }
 

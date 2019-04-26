@@ -147,7 +147,8 @@ export interface QueryTransactionStartPayload {
 export interface QueryTransactionSuccessPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
-  queryTransactions: QueryTransaction[];
+  result: any;
+  resultType: ResultType;
 }
 
 export interface RemoveQueryRowPayload {
