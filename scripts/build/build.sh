@@ -103,10 +103,12 @@ function package_setup() {
 
 if [ $BUILD_FAST = "0" ]; then
   build_backend
+  build_frontend
   package_setup
   package_all
 else
   build_backend_linux_amd64
+  build_frontend
   package_setup
   package_linux_amd64
 fi
