@@ -6,6 +6,17 @@
 
 set -e
 
+BUILD_FAST=0
+if [ "$1" != "" ]; then
+  if [ "$1" === "--fast"]; then
+    BUILD_FAST=1
+    echo "Fast build enabled"
+    shift
+  fi
+else
+  echo "Fast build disabled"
+fi
+
 EXTRA_OPTS="$@"
 
 CCARMV6=/opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
@@ -31,10 +42,11 @@ fi
 echo "Build arguments: $OPT"
 echo "current dir: $(pwd)"
 
-go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
-go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
-go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
-
+if [ $BUILD_FAST = "0"]; then
+  go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
+  go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+  go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+fi
 CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
@@ -54,8 +66,10 @@ source /etc/profile.d/rvm.sh
 
 echo "Packaging"
 go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
-go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
-go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
-go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+if [ $BUILD_FAST = "0"]; then
+  go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
+  go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+fi
 
 go run build.go latest

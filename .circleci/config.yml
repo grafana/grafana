@@ -198,6 +198,32 @@ jobs:
           paths:
             - dist/*
 
+  build-fast:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build and package grafana
+          command: './scripts/build/build.sh --fast'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
   grafana-docker-master:
     machine:
       image: circleci/classic:201808-01
@@ -574,7 +600,7 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build
+              - build-fast
               - test-backend
               - test-frontend
               - codespell
@@ -585,7 +611,7 @@ workflows:
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
-              - build
+              - build-fast
               - test-backend
               - test-frontend
               - codespell
