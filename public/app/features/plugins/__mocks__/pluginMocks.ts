@@ -1,4 +1,4 @@
-import { Plugin, PanelPlugin, PanelDataFormat } from 'app/types';
+import { Plugin, PanelPluginMeta, PanelDataFormat } from 'app/types';
 import { PluginType } from '@grafana/ui';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
@@ -34,7 +34,7 @@ export const getMockPlugins = (amount: number): Plugin[] => {
   return plugins;
 };
 
-export const getPanelPlugin = (options: Partial<PanelPlugin>): PanelPlugin => {
+export const getPanelPlugin = (options: Partial<PanelPluginMeta>): PanelPluginMeta => {
   return {
     id: options.id,
     type: PluginType.panel,

@@ -13,16 +13,16 @@ import { AngularComponent } from 'app/core/services/AngularLoader';
 
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelPlugin } from 'app/types/plugins';
+import { PanelPluginMeta } from 'app/types/plugins';
 
 import { Tooltip } from '@grafana/ui';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  onTypeChanged: (newType: PanelPluginMeta) => void;
 }
 
 interface PanelEditorTab {

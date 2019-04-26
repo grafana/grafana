@@ -1,6 +1,6 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { VizPanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
 
 class TablePanelCtrl {}
 
@@ -123,7 +123,7 @@ describe('PanelModel', () => {
 
     describe('when changing to react panel', () => {
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = new VizPanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = new PanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
         model.changePlugin(

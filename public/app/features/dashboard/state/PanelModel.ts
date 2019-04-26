@@ -7,7 +7,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
 import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -117,7 +117,7 @@ export class PanelModel {
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean };
-  plugin?: PanelPlugin;
+  plugin?: PanelPluginMeta;
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
@@ -249,11 +249,11 @@ export class PanelModel {
     });
   }
 
-  private getPluginVersion(plugin: PanelPlugin): string {
+  private getPluginVersion(plugin: PanelPluginMeta): string {
     return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  pluginLoaded(plugin: PanelPluginMeta) {
     this.plugin = plugin;
 
     if (plugin.vizPlugin && plugin.vizPlugin.onPanelMigration) {
@@ -265,7 +265,7 @@ export class PanelModel {
     }
   }
 
-  changePlugin(newPlugin: PanelPlugin) {
+  changePlugin(newPlugin: PanelPluginMeta) {
     const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;

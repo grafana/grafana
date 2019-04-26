@@ -16,7 +16,7 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 import { LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
@@ -30,7 +30,7 @@ const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   isFullscreen: boolean;
   width: number;
   height: number;

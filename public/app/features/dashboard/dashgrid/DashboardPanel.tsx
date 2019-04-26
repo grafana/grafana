@@ -17,8 +17,8 @@ import { PanelResizer } from './PanelResizer';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
-import { PanelPlugin } from 'app/types';
-import { AngularPanelPlugin, VizPanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPluginMeta } from 'app/types';
+import { AngularPanelPlugin, PanelPlugin } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
@@ -29,7 +29,7 @@ export interface Props {
 }
 
 export interface State {
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   angularPanel: AngularComponent;
 }
 
@@ -61,7 +61,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
-  onPluginTypeChanged = (plugin: PanelPlugin) => {
+  onPluginTypeChanged = (plugin: PanelPluginMeta) => {
     this.loadPlugin(plugin.id);
   };
 
@@ -92,7 +92,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  async importPanelPluginModule(plugin: PanelPlugin): Promise<PanelPlugin> {
+  async importPanelPluginModule(plugin: PanelPluginMeta): Promise<PanelPluginMeta> {
     if (plugin.hasBeenImported) {
       return plugin;
     }
@@ -101,8 +101,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
       const importedPlugin = await importPanelPlugin(plugin.module);
       if (importedPlugin instanceof AngularPanelPlugin) {
         plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
-      } else if (importedPlugin instanceof VizPanelPlugin) {
-        plugin.vizPlugin = importedPlugin as VizPanelPlugin;
+      } else if (importedPlugin instanceof PanelPlugin) {
+        plugin.vizPlugin = importedPlugin as PanelPlugin;
       }
     } catch (e) {
       plugin = getPanelPluginNotFound(plugin.id);

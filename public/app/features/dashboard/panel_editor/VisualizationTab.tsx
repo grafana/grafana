@@ -16,16 +16,16 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 // Types
 import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
-import { PanelPlugin } from 'app/types/plugins';
+import { PanelPluginMeta } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  onTypeChanged: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
 }
@@ -197,7 +197,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  onTypeChanged = (plugin: PanelPlugin) => {
+  onTypeChanged = (plugin: PanelPluginMeta) => {
     if (plugin.id === this.props.plugin.id) {
       this.setState({ isVizPickerOpen: false });
     } else {
