@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"net"
+	"sync"
 )
 
 // watcher interface is used for context support (From Go 1.8)
@@ -35,12 +36,17 @@ type MySQLDriver struct{}
 // Custom dial functions must be registered with RegisterDial
 type DialFunc func(addr string) (net.Conn, error)
 
-var dials map[string]DialFunc
+var (
+	dialsLock sync.RWMutex
+	dials     map[string]DialFunc
+)
 
 // RegisterDial registers a custom dial function. It can then be used by the
 // network address mynet(addr), where mynet is the registered new network.
 // addr is passed as a parameter to the dial function.
 func RegisterDial(net string, dial DialFunc) {
+	dialsLock.Lock()
+	defer dialsLock.Unlock()
 	if dials == nil {
 		dials = make(map[string]DialFunc)
 	}
@@ -66,7 +72,10 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	mc.parseTime = mc.cfg.ParseTime
 
 	// Connect to Server
-	if dial, ok := dials[mc.cfg.Net]; ok {
+	dialsLock.RLock()
+	dial, ok := dials[mc.cfg.Net]
+	dialsLock.RUnlock()
+	if ok {
 		mc.netConn, err = dial(mc.cfg.Addr)
 	} else {
 		nd := net.Dialer{Timeout: mc.cfg.Timeout}
@@ -98,20 +107,34 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	mc.writeTimeout = mc.cfg.WriteTimeout
 
 	// Reading Handshake Initialization Packet
-	cipher, err := mc.readInitPacket()
+	authData, plugin, err := mc.readHandshakePacket()
 	if err != nil {
 		mc.cleanup()
 		return nil, err
 	}
+	if plugin == "" {
+		plugin = defaultAuthPlugin
+	}
 
 	// Send Client Authentication Packet
-	if err = mc.writeAuthPacket(cipher); err != nil {
+	authResp, err := mc.auth(authData, plugin)
+	if err != nil {
+		// try the default auth plugin, if using the requested plugin failed
+		errLog.Print("could not use requested auth plugin '"+plugin+"': ", err.Error())
+		plugin = defaultAuthPlugin
+		authResp, err = mc.auth(authData, plugin)
+		if err != nil {
+			mc.cleanup()
+			return nil, err
+		}
+	}
+	if err = mc.writeHandshakeResponsePacket(authResp, plugin); err != nil {
 		mc.cleanup()
 		return nil, err
 	}
 
 	// Handle response to auth packet, switch methods if possible
-	if err = handleAuthResult(mc, cipher); err != nil {
+	if err = mc.handleAuthResult(authData, plugin); err != nil {
 		// Authentication failed and MySQL has already closed the connection
 		// (https://dev.mysql.com/doc/internals/en/authentication-fails.html).
 		// Do not send COM_QUIT, just cleanup and return the error.
@@ -142,50 +165,6 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	}
 
 	return mc, nil
-}
-
-func handleAuthResult(mc *mysqlConn, oldCipher []byte) error {
-	// Read Result Packet
-	cipher, err := mc.readResultOK()
-	if err == nil {
-		return nil // auth successful
-	}
-
-	if mc.cfg == nil {
-		return err // auth failed and retry not possible
-	}
-
-	// Retry auth if configured to do so.
-	if mc.cfg.AllowOldPasswords && err == ErrOldPassword {
-		// Retry with old authentication method. Note: there are edge cases
-		// where this should work but doesn't; this is currently "wontfix":
-		// https://github.com/go-sql-driver/mysql/issues/184
-
-		// If CLIENT_PLUGIN_AUTH capability is not supported, no new cipher is
-		// sent and we have to keep using the cipher sent in the init packet.
-		if cipher == nil {
-			cipher = oldCipher
-		}
-
-		if err = mc.writeOldAuthPacket(cipher); err != nil {
-			return err
-		}
-		_, err = mc.readResultOK()
-	} else if mc.cfg.AllowCleartextPasswords && err == ErrCleartextPassword {
-		// Retry with clear text password for
-		// http://dev.mysql.com/doc/refman/5.7/en/cleartext-authentication-plugin.html
-		// http://dev.mysql.com/doc/refman/5.7/en/pam-authentication-plugin.html
-		if err = mc.writeClearAuthPacket(); err != nil {
-			return err
-		}
-		_, err = mc.readResultOK()
-	} else if mc.cfg.AllowNativePasswords && err == ErrNativePassword {
-		if err = mc.writeNativeAuthPacket(cipher); err != nil {
-			return err
-		}
-		_, err = mc.readResultOK()
-	}
-	return err
 }
 
 func init() {

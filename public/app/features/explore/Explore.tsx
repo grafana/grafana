@@ -117,7 +117,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const initialQueries: DataQuery[] = ensureQueries(queries);
     const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
     const width = this.el ? this.el.offsetWidth : 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
       this.props.initializeExplore(

@@ -151,6 +151,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         if (textChanged && invokeParentOnValueChanged) {
           this.executeOnQueryChangeAndExecuteQueries();
         }
+        if (textChanged && !invokeParentOnValueChanged) {
+          this.updateLogsHighlights();
+        }
       }
     });
 
@@ -160,6 +163,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       window.requestAnimationFrame(this.handleTypeahead);
     } else if (!this.resetTimer) {
       this.resetTypeahead();
+    }
+  };
+
+  updateLogsHighlights = () => {
+    const { onQueryChange } = this.props;
+    if (onQueryChange) {
+      onQueryChange(Plain.serialize(this.state.value));
     }
   };
 

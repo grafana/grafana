@@ -119,7 +119,7 @@ export class PanelCtrl {
     menu.push({
       text: 'View',
       click: 'ctrl.viewPanel();',
-      icon: 'fa fa-fw fa-eye',
+      icon: 'gicon gicon-viewer',
       shortcut: 'v',
     });
 
@@ -128,7 +128,7 @@ export class PanelCtrl {
         text: 'Edit',
         click: 'ctrl.editPanel();',
         role: 'Editor',
-        icon: 'fa fa-fw fa-edit',
+        icon: 'gicon gicon-editor',
         shortcut: 'e',
       });
     }

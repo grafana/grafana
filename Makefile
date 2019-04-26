@@ -13,15 +13,15 @@ deps: deps-js
 
 build-go:
 	@echo "build go files"
-	go run build.go build
+	GO111MODULE=on go run build.go build
 
 build-server:
 	@echo "build server"
-	go run build.go build-server
+	GO111MODULE=on go run build.go build-server
 
 build-cli:
 	@echo "build in CI environment"
-	go run build.go build-cli
+	GO111MODULE=on go run build.go build-cli
 
 build-js:
 	@echo "build frontend"
@@ -32,7 +32,7 @@ build: build-go build-js
 build-docker-dev:
 	@echo "build development container"
 	@echo "\033[92mInfo:\033[0m the frontend code is expected to be built already."
-	go run build.go -goos linux -pkg-arch amd64 ${OPT} build pkg-archive latest
+	GO111MODULE=on go run build.go -goos linux -pkg-arch amd64 ${OPT} build pkg-archive latest
 	cp dist/grafana-latest.linux-x64.tar.gz packaging/docker
 	cd packaging/docker && docker build --tag grafana/grafana:dev .
 
@@ -46,7 +46,7 @@ lint-go:
 
 test-go:
 	@echo "test backend"
-	go test -v ./pkg/...
+	GO111MODULE=on go test -v ./pkg/...
 
 test-js:
 	@echo "test frontend"

@@ -11,10 +11,11 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $routeParams: any, private $rootScope, private navModelSrv) {
+  constructor(private $routeParams: any, private $rootScope, private navModelSrv, private $q) {
     this.pluginId = $routeParams.pluginId;
 
-    getPluginSettings(this.pluginId)
+    this.$q
+      .when(getPluginSettings(this.pluginId))
       .then(settings => {
         this.initPage(settings);
       })

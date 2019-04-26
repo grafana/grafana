@@ -13,7 +13,15 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"unicode"
 )
+
+// ReturnStatus may be used to return the return value from a proc.
+//
+//   var rs mssql.ReturnStatus
+//   _, err := db.Exec("theproc", &rs)
+//   log.Printf("return status = %d", rs)
+type ReturnStatus int32
 
 var driverInstance = &Driver{processQueryText: true}
 var driverInstanceNoProcess = &Driver{processQueryText: false}
@@ -21,24 +29,19 @@ var driverInstanceNoProcess = &Driver{processQueryText: false}
 func init() {
 	sql.Register("mssql", driverInstance)
 	sql.Register("sqlserver", driverInstanceNoProcess)
-	createDialer = func(p *connectParams) dialer {
-		return tcpDialer{&net.Dialer{KeepAlive: p.keepAlive}}
+	createDialer = func(p *connectParams) Dialer {
+		return netDialer{&net.Dialer{KeepAlive: p.keepAlive}}
 	}
 }
 
-// Abstract the dialer for testing and for non-TCP based connections.
-type dialer interface {
-	Dial(ctx context.Context, addr string) (net.Conn, error)
-}
+var createDialer func(p *connectParams) Dialer
 
-var createDialer func(p *connectParams) dialer
-
-type tcpDialer struct {
+type netDialer struct {
 	nd *net.Dialer
 }
 
-func (d tcpDialer) Dial(ctx context.Context, addr string) (net.Conn, error) {
-	return d.nd.DialContext(ctx, "tcp", addr)
+func (d netDialer) DialContext(ctx context.Context, network string, addr string) (net.Conn, error) {
+	return d.nd.DialContext(ctx, network, addr)
 }
 
 type Driver struct {
@@ -72,6 +75,20 @@ func (d *Driver) SetLogger(logger Logger) {
 	d.log = optionalLogger{logger}
 }
 
+// NewConnector creates a new connector from a DSN.
+// The returned connector may be used with sql.OpenDB.
+func NewConnector(dsn string) (*Connector, error) {
+	params, err := parseConnectParams(dsn)
+	if err != nil {
+		return nil, err
+	}
+	c := &Connector{
+		params: params,
+		driver: driverInstanceNoProcess,
+	}
+	return c, nil
+}
+
 // Connector holds the parsed DSN and is ready to make a new connection
 // at any time.
 //
@@ -81,11 +98,12 @@ type Connector struct {
 	params connectParams
 	driver *Driver
 
-	// ResetSQL is executed after marking a given connection to be reset.
-	// When not present, the next query will be reset to the database
-	// defaults.
-	// When present the connection will immediately mark the connection to
-	// be reset, then execute the ResetSQL text to setup the session
+	// SessionInitSQL is executed after marking a given session to be reset.
+	// When not present, the next query will still reset the session to the
+	// database defaults.
+	//
+	// When present the connection will immediately mark the session to
+	// be reset, then execute the SessionInitSQL text to setup the session
 	// that may be different from the base database defaults.
 	//
 	// For Example, the application relies on the following defaults
@@ -96,9 +114,27 @@ type Connector struct {
 	//    SET ANSI_NULLS ON;
 	//    SET LOCK_TIMEOUT 10000;
 	//
-	// ResetSQL should not attempt to manually call sp_reset_connection.
+	// SessionInitSQL should not attempt to manually call sp_reset_connection.
 	// This will happen at the TDS layer.
-	ResetSQL string
+	//
+	// SessionInitSQL is optional. The session will be reset even if
+	// SessionInitSQL is empty.
+	SessionInitSQL string
+
+	// Dialer sets a custom dialer for all network operations.
+	// If Dialer is not set, normal net dialers are used.
+	Dialer Dialer
+}
+
+type Dialer interface {
+	DialContext(ctx context.Context, network string, addr string) (net.Conn, error)
+}
+
+func (c *Connector) getDialer(p *connectParams) Dialer {
+	if c != nil && c.Dialer != nil {
+		return c.Dialer
+	}
+	return createDialer(p)
 }
 
 type Conn struct {
@@ -110,7 +146,15 @@ type Conn struct {
 	processQueryText bool
 	connectionGood   bool
 
-	outs map[string]interface{}
+	outs         map[string]interface{}
+	returnStatus *ReturnStatus
+}
+
+func (c *Conn) setReturnStatus(s ReturnStatus) {
+	if c.returnStatus == nil {
+		return
+	}
+	*c.returnStatus = s
 }
 
 func (c *Conn) checkBadConn(err error) error {
@@ -257,7 +301,7 @@ func (c *Conn) sendBeginRequest(ctx context.Context, tdsIsolation isoLevel) erro
 			c.sess.log.Printf("Failed to send BeginXact with %v", err)
 		}
 		c.connectionGood = false
-		return fmt.Errorf("Failed to send BiginXant: %v", err)
+		return fmt.Errorf("Failed to send BeginXact: %v", err)
 	}
 	return nil
 }
@@ -276,12 +320,12 @@ func (d *Driver) open(ctx context.Context, dsn string) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return d.connect(ctx, params)
+	return d.connect(ctx, nil, params)
 }
 
 // connect to the server, using the provided context for dialing only.
-func (d *Driver) connect(ctx context.Context, params connectParams) (*Conn, error) {
-	sess, err := connect(ctx, d.log, params)
+func (d *Driver) connect(ctx context.Context, c *Connector, params connectParams) (*Conn, error) {
+	sess, err := connect(ctx, c, d.log, params)
 	if err != nil {
 		// main server failed, try fail-over partner
 		if params.failOverPartner == "" {
@@ -293,7 +337,7 @@ func (d *Driver) connect(ctx context.Context, params connectParams) (*Conn, erro
 			params.port = params.failOverPort
 		}
 
-		sess, err = connect(ctx, d.log, params)
+		sess, err = connect(ctx, c, d.log, params)
 		if err != nil {
 			// fail-over partner also failed, now fail
 			return nil, err
@@ -301,6 +345,7 @@ func (d *Driver) connect(ctx context.Context, params connectParams) (*Conn, erro
 	}
 
 	conn := &Conn{
+		connector:        c,
 		sess:             sess,
 		transactionCtx:   context.Background(),
 		processQueryText: d.processQueryText,
@@ -407,11 +452,14 @@ func (s *Stmt) sendQuery(args []namedValue) (err error) {
 			return fmt.Errorf("failed to send SQL Batch: %v", err)
 		}
 	} else {
-		proc := Sp_ExecuteSql
-		var params []Param
+		proc := sp_ExecuteSql
+		var params []param
 		if isProc(s.query) {
 			proc.name = s.query
 			params, _, err = s.makeRPCParams(args, 0)
+			if err != nil {
+				return
+			}
 		} else {
 			var decls []string
 			params, decls, err = s.makeRPCParams(args, 2)
@@ -438,15 +486,57 @@ func isProc(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
-	if s[0] == '[' && s[len(s)-1] == ']' && strings.ContainsAny(s, "\n\r") == false {
-		return true
+	const (
+		outside = iota
+		text
+		escaped
+	)
+	st := outside
+	var rn1, rPrev rune
+	for _, r := range s {
+		rPrev = rn1
+		rn1 = r
+		switch r {
+		// No newlines or string sequences.
+		case '\n', '\r', '\'', ';':
+			return false
+		}
+		switch st {
+		case outside:
+			switch {
+			case unicode.IsSpace(r):
+				return false
+			case r == '[':
+				st = escaped
+				continue
+			case r == ']' && rPrev == ']':
+				st = escaped
+				continue
+			case unicode.IsLetter(r):
+				st = text
+			}
+		case text:
+			switch {
+			case r == '.':
+				st = outside
+				continue
+			case unicode.IsSpace(r):
+				return false
+			}
+		case escaped:
+			switch {
+			case r == ']':
+				st = outside
+				continue
+			}
+		}
 	}
-	return !strings.ContainsAny(s, " \t\n\r;")
+	return true
 }
 
-func (s *Stmt) makeRPCParams(args []namedValue, offset int) ([]Param, []string, error) {
+func (s *Stmt) makeRPCParams(args []namedValue, offset int) ([]param, []string, error) {
 	var err error
-	params := make([]Param, len(args)+offset)
+	params := make([]param, len(args)+offset)
 	decls := make([]string, len(args))
 	for i, val := range args {
 		params[i+offset], err = s.makeParam(val.Value)
@@ -520,6 +610,8 @@ loop:
 			if token.isError() {
 				return nil, s.c.checkBadConn(token.getError())
 			}
+		case ReturnStatus:
+			s.c.setReturnStatus(token)
 		case error:
 			return nil, s.c.checkBadConn(token)
 		}
@@ -563,6 +655,8 @@ func (s *Stmt) processExec(ctx context.Context) (res driver.Result, err error) {
 			if token.isError() {
 				return nil, token.getError()
 			}
+		case ReturnStatus:
+			s.c.setReturnStatus(token)
 		case error:
 			return nil, token
 		}
@@ -688,14 +782,14 @@ func (r *Rows) ColumnTypeNullable(index int) (nullable, ok bool) {
 	return
 }
 
-func makeStrParam(val string) (res Param) {
+func makeStrParam(val string) (res param) {
 	res.ti.TypeId = typeNVarChar
 	res.buffer = str2ucs2(val)
 	res.ti.Size = len(res.buffer)
 	return
 }
 
-func (s *Stmt) makeParam(val driver.Value) (res Param, err error) {
+func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 	if val == nil {
 		res.ti.TypeId = typeNull
 		res.buffer = nil
@@ -708,17 +802,34 @@ func (s *Stmt) makeParam(val driver.Value) (res Param, err error) {
 		res.buffer = make([]byte, 8)
 		res.ti.Size = 8
 		binary.LittleEndian.PutUint64(res.buffer, uint64(val))
+	case sql.NullInt64:
+		// only null values should be getting here
+		res.ti.TypeId = typeIntN
+		res.ti.Size = 8
+		res.buffer = []byte{}
+
 	case float64:
 		res.ti.TypeId = typeFltN
 		res.ti.Size = 8
 		res.buffer = make([]byte, 8)
 		binary.LittleEndian.PutUint64(res.buffer, math.Float64bits(val))
+	case sql.NullFloat64:
+		// only null values should be getting here
+		res.ti.TypeId = typeFltN
+		res.ti.Size = 8
+		res.buffer = []byte{}
+
 	case []byte:
 		res.ti.TypeId = typeBigVarBin
 		res.ti.Size = len(val)
 		res.buffer = val
 	case string:
 		res = makeStrParam(val)
+	case sql.NullString:
+		// only null values should be getting here
+		res.ti.TypeId = typeNVarChar
+		res.buffer = nil
+		res.ti.Size = 8000
 	case bool:
 		res.ti.TypeId = typeBitN
 		res.ti.Size = 1
@@ -726,37 +837,22 @@ func (s *Stmt) makeParam(val driver.Value) (res Param, err error) {
 		if val {
 			res.buffer[0] = 1
 		}
+	case sql.NullBool:
+		// only null values should be getting here
+		res.ti.TypeId = typeBitN
+		res.ti.Size = 1
+		res.buffer = []byte{}
+
 	case time.Time:
 		if s.c.sess.loginAck.TDSVersion >= verTDS73 {
 			res.ti.TypeId = typeDateTimeOffsetN
 			res.ti.Scale = 7
-			res.ti.Size = 10
-			buf := make([]byte, 10)
-			res.buffer = buf
-			days, ns := dateTime2(val)
-			ns /= 100
-			buf[0] = byte(ns)
-			buf[1] = byte(ns >> 8)
-			buf[2] = byte(ns >> 16)
-			buf[3] = byte(ns >> 24)
-			buf[4] = byte(ns >> 32)
-			buf[5] = byte(days)
-			buf[6] = byte(days >> 8)
-			buf[7] = byte(days >> 16)
-			_, offset := val.Zone()
-			offset /= 60
-			buf[8] = byte(offset)
-			buf[9] = byte(offset >> 8)
+			res.buffer = encodeDateTimeOffset(val, int(res.ti.Scale))
+			res.ti.Size = len(res.buffer)
 		} else {
 			res.ti.TypeId = typeDateTimeN
-			res.ti.Size = 8
-			res.buffer = make([]byte, 8)
-			ref := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
-			dur := val.Sub(ref)
-			days := dur / (24 * time.Hour)
-			tm := (300 * (dur % (24 * time.Hour))) / time.Second
-			binary.LittleEndian.PutUint32(res.buffer[0:4], uint32(days))
-			binary.LittleEndian.PutUint32(res.buffer[4:8], uint32(tm))
+			res.buffer = encodeDateTime(val)
+			res.ti.Size = len(res.buffer)
 		}
 	default:
 		return s.makeParamExtra(val)
@@ -794,4 +890,84 @@ func (r *Result) LastInsertId() (int64, error) {
 	}
 	lastInsertId := dest[0].(int64)
 	return lastInsertId, nil
+}
+
+var _ driver.Pinger = &Conn{}
+
+// Ping is used to check if the remote server is available and satisfies the Pinger interface.
+func (c *Conn) Ping(ctx context.Context) error {
+	if !c.connectionGood {
+		return driver.ErrBadConn
+	}
+	stmt := &Stmt{c, `select 1;`, 0, nil}
+	_, err := stmt.ExecContext(ctx, nil)
+	return err
+}
+
+var _ driver.ConnBeginTx = &Conn{}
+
+// BeginTx satisfies ConnBeginTx.
+func (c *Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+	if !c.connectionGood {
+		return nil, driver.ErrBadConn
+	}
+	if opts.ReadOnly {
+		return nil, errors.New("Read-only transactions are not supported")
+	}
+
+	var tdsIsolation isoLevel
+	switch sql.IsolationLevel(opts.Isolation) {
+	case sql.LevelDefault:
+		tdsIsolation = isolationUseCurrent
+	case sql.LevelReadUncommitted:
+		tdsIsolation = isolationReadUncommited
+	case sql.LevelReadCommitted:
+		tdsIsolation = isolationReadCommited
+	case sql.LevelWriteCommitted:
+		return nil, errors.New("LevelWriteCommitted isolation level is not supported")
+	case sql.LevelRepeatableRead:
+		tdsIsolation = isolationRepeatableRead
+	case sql.LevelSnapshot:
+		tdsIsolation = isolationSnapshot
+	case sql.LevelSerializable:
+		tdsIsolation = isolationSerializable
+	case sql.LevelLinearizable:
+		return nil, errors.New("LevelLinearizable isolation level is not supported")
+	default:
+		return nil, errors.New("Isolation level is not supported or unknown")
+	}
+	return c.begin(ctx, tdsIsolation)
+}
+
+func (c *Conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+	if !c.connectionGood {
+		return nil, driver.ErrBadConn
+	}
+	if len(query) > 10 && strings.EqualFold(query[:10], "INSERTBULK") {
+		return c.prepareCopyIn(ctx, query)
+	}
+
+	return c.prepareContext(ctx, query)
+}
+
+func (s *Stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	if !s.c.connectionGood {
+		return nil, driver.ErrBadConn
+	}
+	list := make([]namedValue, len(args))
+	for i, nv := range args {
+		list[i] = namedValue(nv)
+	}
+	return s.queryContext(ctx, list)
+}
+
+func (s *Stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	if !s.c.connectionGood {
+		return nil, driver.ErrBadConn
+	}
+	list := make([]namedValue, len(args))
+	for i, nv := range args {
+		list[i] = namedValue(nv)
+	}
+	return s.exec(ctx, list)
 }

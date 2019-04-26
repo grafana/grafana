@@ -58,10 +58,12 @@ a time pattern for the index name or a wildcard.
 
 ### Elasticsearch version
 
-Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed.
-Currently the versions available is 2.x, 5.x, 5.6+ or 6.0+. 5.6+ means a version of 5.6 or less than 6.0. 6.0+ means a version of 6.0 or higher, 6.3.2 for example.
+Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences on how queries are composed.
+Currently the versions available are `2.x`, `5.x`, `5.6+`, `6.0+` or `7.0+`. The value `5.6+` means version 5.6 or higher, but lower than  6.0. The value `6.0+` means
+version 6.0 or higher, but lower than 7.0. Finally, `7.0+` means version 7.0 or higher, but lower than 8.0.
 
 ### Min time interval
+
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
