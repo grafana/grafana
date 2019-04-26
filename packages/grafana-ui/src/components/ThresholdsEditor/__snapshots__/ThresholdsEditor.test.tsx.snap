@@ -109,7 +109,7 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "breakpoints": Object {
                               "lg": "992px",
-                              "md": "768px",
+                              "md": "769px",
                               "sm": "544px",
                               "xl": "1200px",
                               "xs": "0",
@@ -272,7 +272,7 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "breakpoints": Object {
                                     "lg": "992px",
-                                    "md": "768px",
+                                    "md": "769px",
                                     "sm": "544px",
                                     "xl": "1200px",
                                     "xs": "0",
