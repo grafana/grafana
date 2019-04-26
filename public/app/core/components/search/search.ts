@@ -2,12 +2,32 @@ import _ from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import appEvents from 'app/core/app_events';
+import { parse, SearchParserOptions, SearchParserResult } from 'search-query-parser';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+export interface SearchQuery {
+  query: string;
+  parsedQuery: string | SearchParserResult;
+  tag: string[];
+  starred: boolean;
+}
+
+class SearchQueryParser {
+  config: SearchParserOptions;
+  constructor(config: SearchParserOptions) {
+    this.config = config;
+  }
+
+  parse(query: string) {
+    return parse(query, this.config);
+  }
+}
 
 export class SearchCtrl {
   isOpen: boolean;
-  query: any;
-  giveSearchFocus: number;
+  query: SearchQuery;
+  giveSearchFocus: boolean;
   selectedIndex: number;
   results: any;
   currentSearchId: number;
@@ -18,19 +38,47 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
   isEditor: string;
   hasEditPermissionInFolders: boolean;
+  queryParser: SearchQueryParser;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
     appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
+    appEvents.on('search-query', this.search.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
     this.isEditor = contextSrv.isEditor;
     this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
+    this.onQueryChange = this.onQueryChange.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+
+    this.query = {
+      query: '',
+      parsedQuery: '',
+      tag: [],
+      starred: false,
+    };
+
+    this.queryParser = new SearchQueryParser({
+      keywords: ['folder'],
+    });
   }
 
   closeSearch() {
     this.isOpen = this.ignoreClose;
+  }
+
+  onQueryChange(query: SearchQuery | string) {
+    if (typeof query === 'string') {
+      this.query = {
+        ...this.query,
+        parsedQuery: this.queryParser.parse(query),
+        query: query,
+      };
+    } else {
+      this.query = query;
+    }
+    appEvents.emit('search-query');
   }
 
   openSearch(evt, payload) {
@@ -40,10 +88,15 @@ export class SearchCtrl {
     }
 
     this.isOpen = true;
-    this.giveSearchFocus = 0;
+    this.giveSearchFocus = true;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false };
+    this.query = {
+      query: evt ? `${evt.query} ` : '',
+      parsedQuery: this.queryParser.parse(evt && evt.query),
+      tag: [],
+      starred: false,
+    };
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
@@ -54,12 +107,12 @@ export class SearchCtrl {
 
     this.$timeout(() => {
       this.ignoreClose = false;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
+      this.giveSearchFocus = true;
       this.search();
     }, 100);
   }
 
-  keyDown(evt) {
+  onKeyDown(evt) {
     if (evt.keyCode === 27) {
       this.closeSearch();
     }
@@ -94,7 +147,7 @@ export class SearchCtrl {
   }
 
   onFilterboxClick() {
-    this.giveSearchFocus = 0;
+    this.giveSearchFocus = false;
     this.preventClose();
   }
 
@@ -155,22 +208,36 @@ export class SearchCtrl {
     this.results[selectedItem.folderIndex].selected = true;
   }
 
-  searchDashboards() {
+  searchDashboards(folderContext?: string) {
     this.currentSearchId = this.currentSearchId + 1;
     const localSearchId = this.currentSearchId;
+    const folderIds = [];
+
+    const { parsedQuery } = this.query;
+
+    if (folderContext === 'current') {
+      folderIds.push(getDashboardSrv().getCurrent().meta.folderId);
+    }
+
     const query = {
       ...this.query,
+      query: typeof parsedQuery === 'string' ? parsedQuery : parsedQuery.text,
       tag: this.query.tag,
+      folderIds,
     };
 
-    return this.searchSrv.search(query).then(results => {
-      if (localSearchId < this.currentSearchId) {
-        return;
-      }
-      this.results = results || [];
-      this.isLoading = false;
-      this.moveSelection(1);
-    });
+    return this.searchSrv
+      .search({
+        ...query,
+      })
+      .then(results => {
+        if (localSearchId < this.currentSearchId) {
+          return;
+        }
+        this.results = results || [];
+        this.isLoading = false;
+        this.moveSelection(1);
+      });
   }
 
   queryHasNoFilters() {
@@ -188,7 +255,7 @@ export class SearchCtrl {
   removeTag(tag, evt) {
     this.query.tag = _.without(this.query.tag, tag);
     this.search();
-    this.giveSearchFocus = this.giveSearchFocus + 1;
+    this.giveSearchFocus = true;
     evt.stopPropagation();
     evt.preventDefault();
   }
@@ -209,14 +276,14 @@ export class SearchCtrl {
 
   showStarred() {
     this.query.starred = !this.query.starred;
-    this.giveSearchFocus = this.giveSearchFocus + 1;
+    this.giveSearchFocus = true;
     this.search();
   }
 
   search() {
     this.showImport = false;
     this.selectedIndex = -1;
-    this.searchDashboards();
+    this.searchDashboards(this.query.parsedQuery['folder']);
   }
 
   folderExpanding() {
