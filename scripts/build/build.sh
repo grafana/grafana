@@ -101,7 +101,7 @@ function package_setup() {
   source /etc/profile.d/rvm.sh
 }
 
-if [ $BUILD_FAST = "0"]; then
+if [ $BUILD_FAST = "0" ]; then
   build_backend
   package_setup
   package_all
