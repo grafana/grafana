@@ -8,7 +8,7 @@ set -e
 
 BUILD_FAST=0
 if [ "$1" != "" ]; then
-  if [ "$1" === "--fast"]; then
+  if [ "$1" = "--fast" ]; then
     BUILD_FAST=1
     echo "Fast build enabled"
     shift
