@@ -892,9 +892,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
-	AlertingEvaluationTimeout = time.Duration(time.Second * time.Duration(evaluationTimeoutSeconds))
+	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
-	AlertingNotificationTimeout = time.Duration(time.Second * time.Duration(notificationTimeoutSeconds))
+	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 
 	explore := iniFile.Section("explore")
