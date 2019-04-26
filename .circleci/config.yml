@@ -251,6 +251,10 @@ jobs:
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - /go/src/github.com/grafana/grafana/node_modules
       - run:
           name: package grafana
           command: './scripts/build/build.sh --fast --package-only'
