@@ -584,6 +584,8 @@ workflows:
       jobs:
         - build:
             filters: *filter-not-release-or-master
+        - build-fast:
+            filters: *filter-not-release-or-master
         - codespell:
             filters: *filter-not-release-or-master
         - backend-lint:
