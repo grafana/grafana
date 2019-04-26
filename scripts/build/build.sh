@@ -88,9 +88,16 @@ function build_backend() {
 }
 
 function build_frontend() {
+  if [ ! -d "dist" ]; then
+    mkdir dist
+  fi
   yarn install --pure-lockfile --no-progress
   echo "Building frontend"
   go run build.go ${OPT} build-frontend
+  ls -la dist
+  if [ -d "/dist" ]; then
+    ls -al /dist
+  fi
   echo "FRONTEND: finished"
 }
 
