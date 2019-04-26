@@ -4,6 +4,8 @@ import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import TimegrainConverter from '../time_grain_converter';
+import { AzureMonitorQuery } from '../types';
+import { DataQueryRequest } from '@grafana/ui/src/types';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -18,7 +20,7 @@ export default class AzureMonitorDatasource {
   supportedMetricNamespaces: any[] = [];
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv, private $q) {
+  constructor(private instanceSettings, private backendSrv, private templateSrv) {
     this.id = instanceSettings.id;
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
@@ -32,7 +34,7 @@ export default class AzureMonitorDatasource {
     return !!this.subscriptionId && this.subscriptionId.length > 0;
   }
 
-  query(options) {
+  async query(options: DataQueryRequest<AzureMonitorQuery>) {
     const queries = _.filter(options.targets, item => {
       return (
         item.hide !== true &&
@@ -94,19 +96,19 @@ export default class AzureMonitorDatasource {
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
         url: url,
-        format: options.format,
+        format: target.format,
         alias: item.alias,
         raw: false,
       };
     });
 
     if (!queries || queries.length === 0) {
-      return;
+      return [];
     }
 
     const promises = this.doQueries(queries);
 
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       return new ResponseParser(results).parseQueryResult();
     });
   }
@@ -163,6 +165,13 @@ export default class AzureMonitorDatasource {
 
   toVariable(metric: string) {
     return this.templateSrv.replace((metric || '').trim());
+  }
+
+  getSubscriptions() {
+    const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
+    return this.doRequest(url).then(result => {
+      return ResponseParser.parseSubscriptions(result);
+    });
   }
 
   getResourceGroups() {

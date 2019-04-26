@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
+import { AzureMonitorQuery } from '../types';
+import { DataQueryRequest } from '@grafana/ui/src/types';
 
 export default class AzureLogAnalyticsDatasource {
   id: number;
@@ -65,7 +67,7 @@ export default class AzureLogAnalyticsDatasource {
     });
   }
 
-  query(options) {
+  async query(options: DataQueryRequest<AzureMonitorQuery>) {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(target => {
@@ -87,7 +89,7 @@ export default class AzureLogAnalyticsDatasource {
         datasourceId: this.id,
         url: url,
         query: generated.rawQuery,
-        format: options.format,
+        format: target.format,
         resultFormat: item.resultFormat,
       };
     });

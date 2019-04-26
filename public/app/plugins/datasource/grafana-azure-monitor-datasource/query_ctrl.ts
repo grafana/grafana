@@ -122,8 +122,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.lastQuery = '';
 
     const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
-    if (anySeriesFromQuery) {
-      this.lastQuery = anySeriesFromQuery.query;
+    if (anySeriesFromQuery && anySeriesFromQuery.meta) {
+      this.lastQuery = anySeriesFromQuery.meta.query;
     }
   }
 

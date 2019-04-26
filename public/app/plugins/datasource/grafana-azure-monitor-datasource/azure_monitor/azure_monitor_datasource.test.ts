@@ -450,6 +450,48 @@ describe('AzureMonitorDatasource', () => {
     });
   });
 
+  describe('When performing getSubscriptions', () => {
+    const response = {
+      data: {
+        value: [
+          {
+            id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
+            subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
+            tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
+            displayName: 'Primary Subscription',
+            state: 'Enabled',
+            subscriptionPolicies: {
+              locationPlacementId: 'Public_2014-09-01',
+              quotaId: 'PayAsYouGo_2014-09-01',
+              spendingLimit: 'Off',
+            },
+            authorizationSource: 'RoleBased',
+          },
+        ],
+        count: {
+          type: 'Total',
+          value: 1,
+        },
+      },
+      status: 200,
+      statusText: 'OK',
+    };
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = options => {
+        return ctx.$q.when(response);
+      };
+    });
+
+    it('should return list of Resource Groups', () => {
+      return ctx.ds.getSubscriptions().then(results => {
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('Primary Subscription - 99999999-cccc-bbbb-aaaa-9106972f9572');
+        expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
+      });
+    });
+  });
+
   describe('When performing getResourceGroups', () => {
     const response = {
       data: {
