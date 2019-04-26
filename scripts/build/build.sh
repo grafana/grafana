@@ -95,13 +95,7 @@ function build_frontend() {
   echo "Building frontend"
   go run build.go ${OPT} build-frontend
   echo "current dir: $(pwd)"
-  if [ -d "dist" ]; then
-    ls -al dist
-  fi
-  if [ -d "/dist" ]; then
-    ls -al /dist
-  fi
-  find / -name 'dist' -print
+  find . -name 'app.*.js' -print
   echo "FRONTEND: finished"
 }
 
