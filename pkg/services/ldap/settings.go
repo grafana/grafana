@@ -35,7 +35,7 @@ type ServerConfig struct {
 	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
 	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
 
-	LdapGroups []*GroupToOrgRole `toml:"group_mappings"`
+	Groups []*GroupToOrgRole `toml:"group_mappings"`
 }
 
 type AttributeMap struct {
@@ -73,36 +73,39 @@ func ReadConfig() *Config {
 		return config
 	}
 
-	config := &Config{}
-	getConfig(setting.LdapConfigFile, config)
+	config = getConfig(setting.LdapConfigFile)
 
 	return config
 }
-func getConfig(configFile string, config *Config) {
+func getConfig(configFile string) *Config {
+	result := &Config{}
+
 	logger.Info("Ldap enabled, reading config file", "file", configFile)
 
-	_, err := toml.DecodeFile(configFile, config)
+	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
 		logger.Crit("Failed to load ldap config file", "error", err)
 		os.Exit(1)
 	}
 
-	if len(config.Servers) == 0 {
+	if len(result.Servers) == 0 {
 		logger.Crit("ldap enabled but no ldap servers defined in config file")
 		os.Exit(1)
 	}
 
 	// set default org id
-	for _, server := range config.Servers {
+	for _, server := range result.Servers {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
-		for _, groupMap := range server.LdapGroups {
+		for _, groupMap := range server.Groups {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
 		}
 	}
+
+	return result
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) {
