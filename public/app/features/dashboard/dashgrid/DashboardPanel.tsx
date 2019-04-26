@@ -18,7 +18,7 @@ import { PanelResizer } from './PanelResizer';
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPlugin } from 'app/types';
-import { AngularPanelPlugin, ReactPanelPlugin } from '@grafana/ui/src/types/panel';
+import { AngularPanelPlugin, VizPanelPlugin } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
@@ -101,8 +101,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
       const importedPlugin = await importPanelPlugin(plugin.module);
       if (importedPlugin instanceof AngularPanelPlugin) {
         plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
-      } else if (importedPlugin instanceof ReactPanelPlugin) {
-        plugin.reactPlugin = importedPlugin as ReactPanelPlugin;
+      } else if (importedPlugin instanceof VizPanelPlugin) {
+        plugin.vizPlugin = importedPlugin as VizPanelPlugin;
       }
     } catch (e) {
       plugin = getPanelPluginNotFound(plugin.id);
@@ -210,7 +210,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.reactPlugin && this.renderReactPanel()}
+              {plugin.vizPlugin && this.renderReactPanel()}
               {plugin.angularPlugin && this.renderAngularPanel()}
             </div>
           )}

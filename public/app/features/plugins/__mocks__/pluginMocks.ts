@@ -58,7 +58,7 @@ export const getPanelPlugin = (options: Partial<PanelPlugin>): PanelPlugin => {
     hideFromList: options.hideFromList === true,
     module: '',
     baseUrl: '',
-    reactPlugin: options.reactPlugin,
+    vizPlugin: options.vizPlugin,
     angularPlugin: options.angularPlugin,
   };
 };
