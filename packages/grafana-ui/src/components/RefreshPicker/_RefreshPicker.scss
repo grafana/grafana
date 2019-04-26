@@ -6,6 +6,10 @@
     display: flex;
   }
 
+  .navbar-button--refresh {
+    border-right: 0;
+  }
+
   .gf-form-input--form-dropdown {
     position: static;
   }
@@ -16,9 +20,13 @@
     width: 100%;
   }
 
-  &--refreshing {
+  .select-button-value {
+    color: $orange;
+  }
+
+  &--off {
     .select-button-value {
-      color: $orange;
+      display: none;
     }
   }
 
