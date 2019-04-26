@@ -254,6 +254,8 @@ export interface ExploreItemState {
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
+
+  queryFailure: QueryFailure;
 }
 
 export interface ExploreUpdateState {
@@ -319,6 +321,11 @@ export interface QueryOptions {
   instant?: boolean;
   valueWithRefId?: boolean;
   maxDataPoints?: number;
+}
+
+export interface QueryFailure {
+  error: string;
+  errorDetails: string;
 }
 
 export interface QueryTransaction {

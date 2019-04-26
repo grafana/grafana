@@ -18,6 +18,7 @@ import {
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
+  safeStringifyValue,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -406,7 +407,7 @@ export function modifyQueries(
  */
 export function queryTransactionFailure(
   exploreId: ExploreId,
-  transactionId: string,
+  transaction: QueryTransaction,
   response: any,
   datasourceId: string
 ): ThunkResult<void> {
@@ -417,48 +418,36 @@ export function queryTransactionFailure(
       return;
     }
 
-    // Transaction might have been discarded
-    // if (!queryTransactions.find(qt => qt.id === transactionId)) {
-    //   return;
-    // }
-
     console.error(response);
 
-    // let error: string;
-    // let errorDetails: string;
-    // if (response.data) {
-    //   if (typeof response.data === 'string') {
-    //     error = response.data;
-    //   } else if (response.data.error) {
-    //     error = response.data.error;
-    //     if (response.data.response) {
-    //       errorDetails = response.data.response;
-    //     }
-    //   } else {
-    //     throw new Error('Could not handle error response');
-    //   }
-    // } else if (response.message) {
-    //   error = response.message;
-    // } else if (typeof response === 'string') {
-    //   error = response;
-    // } else {
-    //   error = 'Unknown error during query transaction. Please check JS console logs.';
-    // }
+    let error: string;
+    let errorDetails = safeStringifyValue(response);
+    if (response.data) {
+      if (typeof response.data === 'string') {
+        error = response.data;
+      } else if (response.data.error) {
+        error = response.data.error;
+        if (response.data.response) {
+          errorDetails = safeStringifyValue(response.data.response);
+        }
+      } else {
+        error = 'Unknown error during query transaction. Please check JS console logs.';
+      }
+    } else if (response.message) {
+      error = response.message;
+    } else if (typeof response === 'string') {
+      error = response;
+    } else {
+      error = 'Unknown error during query transaction. Please check JS console logs.';
+    }
 
-    // Mark transactions as complete
-    // const nextQueryTransactions = queryTransactions.map(qt => {
-    //   if (qt.id === transactionId) {
-    //     return {
-    //       ...qt,
-    //       error,
-    //       errorDetails,
-    //       done: true,
-    //     };
-    //   }
-    //   return qt;
-    // });
-
-    dispatch(queryTransactionFailureAction({ exploreId, queryTransactions: [] }));
+    dispatch(
+      queryTransactionFailureAction({
+        exploreId,
+        resultType: transaction.resultType,
+        queryFailure: { error, errorDetails },
+      })
+    );
   };
 }
 
@@ -640,38 +629,12 @@ function runQueriesForType(
       const res = await datasourceInstance.query(transaction.options);
       eventBridge.emit('data-received', res.data || []);
       const latency = Date.now() - now;
-      // const { queryTransactions } = getState().explore[exploreId];
       const results = resultGetter ? resultGetter(res.data, transaction, []) : res.data;
       dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId, resultType));
     } catch (response) {
       eventBridge.emit('data-error', response);
-      dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
+      dispatch(queryTransactionFailure(exploreId, transaction, response, datasourceId));
     }
-    // Run all queries concurrently
-    // const queryPromises = queries.map(async (query, rowIndex) => {
-    //   const transaction = buildQueryTransaction(
-    //     query,
-    //     rowIndex,
-    //     resultType,
-    //     queryOptions,
-    //     range,
-    //     queryIntervals,
-    //     scanning
-    //   );
-    //   dispatch(queryTransactionStartAction({ exploreId, resultType, rowIndex, transaction }));
-    //   try {
-    //     const now = Date.now();
-    //     const res = await datasourceInstance.query(transaction.options);
-    //     eventBridge.emit('data-received', res.data || []);
-    //     const latency = Date.now() - now;
-    //     // const { queryTransactions } = getState().explore[exploreId];
-    //     const results = resultGetter ? resultGetter(res.data, transaction, []) : res.data;
-    //     dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId));
-    //   } catch (response) {
-    //     eventBridge.emit('data-error', response);
-    //     dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
-    //   }
-    // });
   };
 }
 

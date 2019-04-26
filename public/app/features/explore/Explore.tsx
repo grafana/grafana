@@ -39,6 +39,7 @@ import {
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
+  QueryFailure,
 } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -54,6 +55,7 @@ import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
+import { ErrorContainer } from './ErrorContainer';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -86,6 +88,7 @@ interface ExploreProps {
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
   initialUI: ExploreUIState;
+  queryFailure: QueryFailure;
 }
 
 /**
@@ -236,8 +239,10 @@ export class Explore extends React.PureComponent<ExploreProps> {
       supportsLogs,
       supportsTable,
       queryKeys,
+      queryFailure,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
+    const hasError = queryFailure ? true : false;
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -257,6 +262,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+            <FadeIn in={hasError} duration={100}>
+              <ErrorContainer queryFailure={queryFailure} />
+            </FadeIn>
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -314,6 +322,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     urlState,
     update,
+    queryFailure,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -340,6 +349,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialQueries,
     initialRange,
     initialUI,
+    queryFailure,
   };
 }
 

@@ -104,6 +104,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
+  queryFailure: null,
 });
 
 /**
@@ -331,12 +332,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: queryTransactionFailureAction,
     mapper: (state, action): ExploreItemState => {
+      const { resultType, queryFailure } = action.payload;
       return {
         ...state,
         showingStartPage: false,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
+        graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
+        logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
+        tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
+        queryFailure,
         update: makeInitialUpdateState(),
       };
     },
@@ -359,6 +362,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
         showingStartPage: false,
+        queryFailure: null,
         update: makeInitialUpdateState(),
       };
     },

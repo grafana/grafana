@@ -17,6 +17,7 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
+  QueryFailure,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -132,9 +133,10 @@ export interface ModifyQueriesPayload {
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 
-export interface QueryTransactionFailurePayload {
+export interface QueryFailurePayload {
   exploreId: ExploreId;
-  queryTransactions: QueryTransaction[];
+  resultType: ResultType;
+  queryFailure: QueryFailure;
 }
 
 export interface QueryTransactionStartPayload {
@@ -311,7 +313,7 @@ export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('e
  * Mark a query transaction as failed with an error extracted from the query response.
  * The transaction will be marked as `done`.
  */
-export const queryTransactionFailureAction = actionCreatorFactory<QueryTransactionFailurePayload>(
+export const queryTransactionFailureAction = actionCreatorFactory<QueryFailurePayload>(
   'explore/QUERY_TRANSACTION_FAILURE'
 ).create();
 
