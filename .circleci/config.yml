@@ -238,7 +238,7 @@ jobs:
       - persist_to_workspace:
           root: /go/src/github.com/grafana/grafana
           paths:
-            - dist/*
+            - public/build/*
 
   build-fast-package:
     docker:
@@ -264,7 +264,7 @@ jobs:
       - persist_to_workspace:
           root: /go/src/github.com/grafana/grafana
           paths:
-            - public/build/*
+            - dist/*
 
   build-fast-save:
     docker:
