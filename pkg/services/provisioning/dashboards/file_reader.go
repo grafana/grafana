@@ -24,14 +24,14 @@ var (
 	ErrFolderNameMissing = errors.New("Folder name missing")
 )
 
-type FileReader struct {
+type fileReader struct {
 	Cfg                          *DashboardsAsConfig
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 }
 
-func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReader, error) {
+func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -43,7 +43,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReade
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
-	return &FileReader{
+	return &fileReader{
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
@@ -52,7 +52,7 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*FileReade
 }
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
-func (fr *FileReader) pollChanges(ctx context.Context) {
+func (fr *fileReader) pollChanges(ctx context.Context) {
 	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
@@ -68,9 +68,9 @@ func (fr *FileReader) pollChanges(ctx context.Context) {
 
 // startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
 // to the database.
-func (fr *FileReader) startWalkingDisk() error {
+func (fr *fileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
-	resolvedPath := fr.ResolvedPath()
+	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
@@ -111,7 +111,7 @@ func (fr *FileReader) startWalkingDisk() error {
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
+func (fr *fileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[string]*models.DashboardProvisioning, filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
@@ -144,7 +144,7 @@ func (fr *FileReader) handleMissingDashboardFiles(provisionedDashboardRefs map[s
 }
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
-func (fr *FileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+func (fr *fileReader) saveDashboard(path string, folderId int64, fileInfo os.FileInfo, provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -295,7 +295,7 @@ type dashboardJsonFile struct {
 	lastModified time.Time
 }
 
-func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
+func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time, folderId int64) (*dashboardJsonFile, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}, nil
 }
 
-func (fr *FileReader) ResolvedPath() string {
+func (fr *fileReader) resolvedPath() string {
 	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}

@@ -1,20 +1,18 @@
 package provisioning
 
-import "github.com/grafana/grafana/pkg/services/provisioning/dashboards"
-
 type Calls struct {
-	ProvisionDatasources         []interface{}
-	ProvisionNotifications       []interface{}
-	ProvisionDashboards          []interface{}
-	GetDashboardFileReaderByName []interface{}
+	ProvisionDatasources                []interface{}
+	ProvisionNotifications              []interface{}
+	ProvisionDashboards                 []interface{}
+	GetDashboardProvisionerResolvedPath []interface{}
 }
 
 type ProvisioningServiceMock struct {
-	Calls                            *Calls
-	ProvisionDatasourcesFunc         func() error
-	ProvisionNotificationsFunc       func() error
-	ProvisionDashboardsFunc          func() error
-	GetDashboardFileReaderByNameFunc func(name string) *dashboards.FileReader
+	Calls                                   *Calls
+	ProvisionDatasourcesFunc                func() error
+	ProvisionNotificationsFunc              func() error
+	ProvisionDashboardsFunc                 func() error
+	GetDashboardProvisionerResolvedPathFunc func(name string) string
 }
 
 func NewProvisioningServiceMock() *ProvisioningServiceMock {
@@ -50,11 +48,11 @@ func (mock *ProvisioningServiceMock) ProvisionDashboards() error {
 	}
 }
 
-func (mock *ProvisioningServiceMock) GetDashboardFileReaderByName(name string) *dashboards.FileReader {
-	mock.Calls.GetDashboardFileReaderByName = append(mock.Calls.GetDashboardFileReaderByName, name)
-	if mock.GetDashboardFileReaderByNameFunc != nil {
-		return mock.GetDashboardFileReaderByNameFunc(name)
+func (mock *ProvisioningServiceMock) GetDashboardProvisionerResolvedPath(name string) string {
+	mock.Calls.GetDashboardProvisionerResolvedPath = append(mock.Calls.GetDashboardProvisionerResolvedPath, name)
+	if mock.GetDashboardProvisionerResolvedPathFunc != nil {
+		return mock.GetDashboardProvisionerResolvedPathFunc(name)
 	} else {
-		return nil
+		return ""
 	}
 }

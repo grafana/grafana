@@ -9,7 +9,7 @@ import (
 
 type DashboardProvisionerImpl struct {
 	log         log.Logger
-	fileReaders []*FileReader
+	fileReaders []*fileReader
 }
 
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
@@ -54,19 +54,19 @@ func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
 	}
 }
 
-// GetFileReaderByName returns FileReader for the specified name which can be useful to get data about the config if
+// GetFileReaderByName returns fileReader for the specified name which can be useful to get data about the config if
 // you have only ProvisionedDashboard data (which contains name of the provisioner).
-func (provider *DashboardProvisionerImpl) GetFileReaderByName(name string) *FileReader {
+func (provider *DashboardProvisionerImpl) GetProvisionerResolvedPath(name string) string {
 	for _, reader := range provider.fileReaders {
 		if reader.Cfg.Name == name {
-			return reader
+			return reader.resolvedPath()
 		}
 	}
-	return nil
+	return ""
 }
 
-func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*FileReader, error) {
-	var readers []*FileReader
+func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {
+	var readers []*fileReader
 
 	for _, config := range configs {
 		switch config.Type {

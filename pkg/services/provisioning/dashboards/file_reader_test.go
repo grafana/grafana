@@ -70,7 +70,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
 			So(err, ShouldBeNil)
 
-			resolvedPath := reader.ResolvedPath()
+			resolvedPath := reader.resolvedPath()
 			So(filepath.IsAbs(resolvedPath), ShouldBeTrue)
 		})
 	})

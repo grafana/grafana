@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/log"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	dashboards2 "github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -950,17 +948,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
 			mock := provisioning.NewProvisioningServiceMock()
-			mock.GetDashboardFileReaderByNameFunc = func(name string) *dashboards2.FileReader {
-				fileReader, err := dashboards2.NewDashboardFileReader(
-					&dashboards2.DashboardsAsConfig{
-						Options: map[string]interface{}{
-							"path": "/tmp/grafana/dashboards",
-						},
-					},
-					log.New("test-dashboard-file-reader"),
-				)
-				So(err, ShouldBeNil)
-				return fileReader
+			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+				return "/tmp/grafana/dashboards"
 			}
 
 			dash := GetDashboardShouldReturn200WithConfig(sc, mock)

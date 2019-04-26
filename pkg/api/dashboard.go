@@ -114,16 +114,14 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 
 	if provisioningData != nil {
 		meta.Provisioned = true
-		fileReader := hs.ProvisioningService.GetDashboardFileReaderByName(provisioningData.Name)
-		if fileReader != nil {
-			meta.ProvisioningFilePath, err = filepath.Rel(fileReader.ResolvedPath(), provisioningData.ExternalId)
-			if err != nil {
-				// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
-				// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
-				hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
-			}
-		} else {
-			hs.log.Error("Failed to get FileReader", "name", provisioningData.Name)
+		meta.ProvisioningFilePath, err = filepath.Rel(
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+			provisioningData.ExternalId,
+		)
+		if err != nil {
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
 		}
 	}
 

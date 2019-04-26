@@ -17,7 +17,7 @@ import (
 type DashboardProvisioner interface {
 	Provision() error
 	PollChanges(ctx context.Context)
-	GetFileReaderByName(name string) *dashboards.FileReader
+	GetProvisionerResolvedPath(name string) string
 }
 
 type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
@@ -129,8 +129,8 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	return nil
 }
 
-func (ps *provisioningServiceImpl) GetDashboardFileReaderByName(name string) *dashboards.FileReader {
-	return ps.dashboardProvisioner.GetFileReaderByName(name)
+func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
+	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

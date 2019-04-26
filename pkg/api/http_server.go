@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"net"
 	"net/http"
 	"os"
@@ -46,7 +45,7 @@ type ProvisioningService interface {
 	ProvisionDatasources() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
-	GetDashboardFileReaderByName(name string) *dashboards.FileReader
+	GetDashboardProvisionerResolvedPath(name string) string
 }
 
 type HTTPServer struct {
