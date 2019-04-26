@@ -28,16 +28,9 @@ func InterpolateString(text string, data templateData) (string, error) {
 
 // InterpolateURL accepts template data and return a string with substitutions
 func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, appID string) (*url.URL, error) {
-	fmt.Printf("orgID %v", orgID)
-	fmt.Printf("appID %v", appID)
-	fmt.Printf("anURL %v", anURL)
-
 	query := m.GetPluginSettingByIdQuery{OrgId: orgID, PluginId: appID}
 	result, err := url.Parse(anURL.String())
-	fmt.Printf("result %v", result)
-	//fmt.Printf("jsondata %v", query.Result.JsonData)
 	if query.Result != nil {
-		fmt.Printf("result not nil")
 		if len(query.Result.JsonData) > 0 {
 			data := templateData{
 				JsonData: query.Result.JsonData,
@@ -45,6 +38,9 @@ func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, 
 			interpolatedResult, err := InterpolateString(anURL.String(), data)
 			if err == nil {
 				result, err = url.Parse(interpolatedResult)
+				if err != nil {
+					return nil, fmt.Errorf("Error parsing plugin route url %v", err)
+				}
 			}
 		}
 	}
