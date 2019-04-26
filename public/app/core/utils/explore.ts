@@ -23,7 +23,7 @@ import {
   QueryOptions,
   ResultGetter,
 } from 'app/types/explore';
-import { LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -298,15 +298,10 @@ export function calculateResultsFromQueryTransactions(
       .filter(qt => qt.resultType === 'Table' && qt.done && qt.result && qt.result.columns && qt.result.rows)
       .map(qt => qt.result)
   );
-  const logsResult =
-    datasource && datasource.mergeStreams
-      ? datasource.mergeStreams(
-          _.flatten(
-            queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-          ),
-          graphInterval
-        )
-      : undefined;
+  const logsResult = seriesDataToLogsModel(
+    _.flatten(queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)),
+    graphInterval
+  );
 
   return {
     graphResult,
