@@ -582,8 +582,6 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build:
-            filters: *filter-not-release-or-master
         - build-fast:
             filters: *filter-not-release-or-master
         - codespell:
