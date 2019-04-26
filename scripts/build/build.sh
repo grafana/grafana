@@ -70,10 +70,17 @@ echo "Build arguments: $OPT"
 echo "current dir: $(pwd)"
 
 function build_backend_linux_amd64() {
+  if [ ! -d "dist" ]; then
+    mkdir dist
+  fi
   CC=${CCX64} go run build.go ${OPT} build
 }
 
 function build_backend() {
+  if [ ! -d "dist" ]; then
+    mkdir dist
+  fi
+
   go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
   go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
   go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
