@@ -101,6 +101,7 @@ function build_frontend() {
   if [ -d "/dist" ]; then
     ls -al /dist
   fi
+  find / -name 'dist' -print
   echo "FRONTEND: finished"
 }
 
