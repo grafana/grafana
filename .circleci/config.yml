@@ -236,10 +236,9 @@ jobs:
           paths:
             - /go/src/github.com/grafana/grafana/node_modules
       - persist_to_workspace:
-          root: /go/src/github.com/grafana/grafana
+          root: /go/src/github.com/grafana
           paths:
-            - public/build/*
-            - node_modules/*
+            - grafana/*
 
   build-fast-package:
     docker:
@@ -252,10 +251,6 @@ jobs:
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-          paths:
-            - /go/src/github.com/grafana/grafana/node_modules
       - run:
           name: package grafana
           command: './scripts/build/build.sh --fast --package-only'
