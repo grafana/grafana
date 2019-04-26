@@ -245,6 +245,7 @@ jobs:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
