@@ -114,14 +114,14 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 
 	if provisioningData != nil {
 		meta.Provisioned = true
-		meta.ProvisioningFilePath, err = filepath.Rel(
+		meta.ProvisionedExternalId, err = filepath.Rel(
 			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
 			provisioningData.ExternalId,
 		)
 		if err != nil {
-			// Not sure when this could happen so not sure how to better handle this. Right now ProvisioningFilePath
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
 			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
-			hs.log.Error("Failed to create ProvisioningFilePath", "err", err)
+			hs.log.Error("Failed to create ProvisionedExternalId", "err", err)
 		}
 	}
 

@@ -955,7 +955,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
 
 			Convey("Should return relative path to provisioning file", func() {
-				So(dash.Meta.ProvisioningFilePath, ShouldEqual, "test/dashboard1.json")
+				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
 			})
 		})
 	})

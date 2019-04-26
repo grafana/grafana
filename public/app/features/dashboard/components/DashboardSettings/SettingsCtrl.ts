@@ -193,7 +193,7 @@ export class SettingsCtrl {
           <i>See <a class="external-link" href="http://docs.grafana.org/administration/provisioning/#dashboards" target="_blank">
           documentation</a> for more information about provisioning.</i>
           </br>
-          File path: ${this.dashboard.meta.provisioningFilePath}
+          File path: ${this.dashboard.meta.provisionedExternalId}
         `,
         text2htmlBind: true,
         icon: 'fa-trash',

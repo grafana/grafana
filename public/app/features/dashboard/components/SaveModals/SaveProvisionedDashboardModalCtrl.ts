@@ -23,7 +23,7 @@ const template = `
       documentation</a> for more information about provisioning.</i>
     </small>
     <div class="p-t-1">
-      File path: {{ctrl.dashboardModel.meta.provisioningFilePath}}
+      File path: {{ctrl.dashboardModel.meta.provisionedExternalId}}
     </div>
     <div class="p-t-2">
       <div class="gf-form">
