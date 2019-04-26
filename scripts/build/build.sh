@@ -141,6 +141,6 @@ else
     package_setup
     package_linux_amd64
     # last step
-    go run build.go latest
+    #go run build.go latest
   fi
 fi
