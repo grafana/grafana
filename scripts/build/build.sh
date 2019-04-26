@@ -91,19 +91,22 @@ function build_frontend() {
   yarn install --pure-lockfile --no-progress
   echo "Building frontend"
   go run build.go ${OPT} build-frontend
+  echo "FRONTEND: finished"
 }
 
 function package_linux_amd64() {
   echo "Packaging Linux AMD64"
   go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
+  echo "PACKAGE LINUX AMD64: finished"
 }
 
 function package_all() {
-  echo "Packaging Linux ARM"
+  echo "Packaging ALL"
   go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
   go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
   go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
   package_linux_amd64
+  echo "PACKAGE ALL: finished"
 }
 
 function package_setup() {
@@ -132,8 +135,7 @@ else
   if [ $BUILD_PACKAGE = "1" ]; then
     package_setup
     package_linux_amd64
+    # last step
+    go run build.go latest
   fi
 fi
-
-# last step
-go run build.go latest
