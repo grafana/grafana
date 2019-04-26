@@ -246,6 +246,8 @@ jobs:
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
