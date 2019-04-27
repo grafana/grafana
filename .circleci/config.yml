@@ -225,16 +225,16 @@ jobs:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: build grafana frontend
           command: './scripts/build/build.sh --fast --frontend-only'
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - /go/src/github.com/grafana/grafana/node_modules
       - persist_to_workspace:
-          root: /go/src/github.com/grafana
+          root: /go/src/github.com
           paths:
             - grafana/*
 
@@ -252,7 +252,7 @@ jobs:
           name: debug workspace path
           command: 'ls -al /go/src/github.com/grafana/grafana'
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: debug cache
           command: 'ls -al /go/src/github.com/grafana/grafana/node_modules'
