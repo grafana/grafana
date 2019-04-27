@@ -246,29 +246,14 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: debug workspace
-          command: 'ls -al /go/src/github.com/grafana'
-      - run:
-          name: debug workspace path
-          command: 'ls -al /go/src/github.com/grafana/grafana'
-      - run:
-          name: debug workspace path2
-          command: 'ls -alR /go/src/github.com/grafana/grafana'
       - restore_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
-      - run:
-          name: debug cache
-          command: 'ls -al /go/src/github.com/grafana/grafana/node_modules'
       - run:
           name: prepare build tools
           command: '/tmp/bootstrap.sh'
       - run:
           name: package grafana
           command: './scripts/build/build.sh --fast --package-only'
-      - run:
-          name: sign packages
-          command: './scripts/build/sign_packages.sh'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
