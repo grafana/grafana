@@ -236,7 +236,7 @@ jobs:
       - persist_to_workspace:
           root: /go/src/github.com
           paths:
-            - grafana/*
+            - grafana
 
   build-fast-package:
     docker:
@@ -251,6 +251,9 @@ jobs:
       - run:
           name: debug workspace path
           command: 'ls -al /go/src/github.com/grafana/grafana'
+      - run:
+          name: debug workspace path2
+          command: 'ls -alR /go/src/github.com/grafana/grafana'
       - restore_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
       - run:
