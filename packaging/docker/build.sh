@@ -42,13 +42,21 @@ docker_build () {
 		--no-cache=true .
 }
 
+docker_tag_linux_amd64 () {
+	repo=$1
+	tag=$2
+	docker tag "${_docker_repo}:${_grafana_version}" "${repo}:${tag}"
+}
+
 # Tag docker images of all architectures
 docker_tag_all () {
 	repo=$1
 	tag=$2
-	docker tag "${_docker_repo}:${_grafana_version}" "${repo}:${tag}"
-	docker tag "${_docker_repo}-arm32v7-linux:${_grafana_version}" "${repo}-arm32v7-linux:${tag}"
-	docker tag "${_docker_repo}-arm64v8-linux:${_grafana_version}" "${repo}-arm64v8-linux:${tag}"
+	docker_tag_linux_amd64 $1 $2
+	if [ $BUILD_FAST = "0" ]; then
+		docker tag "${_docker_repo}-arm32v7-linux:${_grafana_version}" "${repo}-arm32v7-linux:${tag}"
+		docker tag "${_docker_repo}-arm64v8-linux:${_grafana_version}" "${repo}-arm64v8-linux:${tag}"
+	fi
 }
 
 docker_build "debian:stretch-slim" "grafana-latest.linux-x64.tar.gz" "${_docker_repo}:${_grafana_version}"
