@@ -42,7 +42,7 @@ const theme: GrafanaThemeCommons = {
   breakpoints: {
     xs: '0',
     sm: '544px',
-    md: '768px',
+    md: '769px', // 1 more than regular ipad in portrait
     lg: '992px',
     xl: '1200px',
   },
