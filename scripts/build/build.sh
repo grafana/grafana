@@ -102,6 +102,7 @@ function build_frontend() {
 function package_linux_amd64() {
   echo "Packaging Linux AMD64"
   go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
+  go run build.go latest
   echo "PACKAGE LINUX AMD64: finished"
 }
 
