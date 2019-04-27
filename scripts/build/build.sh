@@ -94,8 +94,6 @@ function build_frontend() {
   yarn install --pure-lockfile --no-progress
   echo "Building frontend"
   go run build.go ${OPT} build-frontend
-  echo "current dir: $(pwd)"
-  find . -name 'app.*.js' -print
   echo "FRONTEND: finished"
 }
 
