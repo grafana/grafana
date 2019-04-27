@@ -211,7 +211,7 @@ jobs:
           name: build grafana backend
           command: './scripts/build/build.sh --fast --backend-only'
       - persist_to_workspace:
-          root: /go/src/github.com/grafana/grafana
+          root: .
           paths:
             - bin/*
 
@@ -232,17 +232,18 @@ jobs:
       - save_cache:
           key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
           paths:
-            - /go/src/github.com/grafana/grafana/node_modules
+            - node_modules
       - persist_to_workspace:
-          root: /go/src/github.com
+          root: .
           paths:
-            - grafana
+            - public/build/*
 
   build-fast-package:
     docker:
      - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
