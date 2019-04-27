@@ -237,6 +237,7 @@ jobs:
           root: .
           paths:
             - public/build/*
+            - tools/phantomjs/*
 
   build-fast-package:
     docker:
