@@ -111,8 +111,11 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 3)
 						So(query.Result[0].Id, ShouldEqual, folder.Id)
+						So(query.Result[0].Url, ShouldBeEmpty)
 						So(query.Result[1].Id, ShouldEqual, childDash.Id)
+						So(query.Result[1].Url, ShouldContainSubstring, childDash.Uid)
 						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
+						So(query.Result[2].Url, ShouldContainSubstring, dashInRoot.Uid)
 					})
 				})
 

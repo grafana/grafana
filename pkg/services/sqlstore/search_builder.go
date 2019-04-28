@@ -109,7 +109,15 @@ func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 
-	sb.sql.WriteString(" ORDER BY dashboard.title ASC")
+	sb.sql.WriteString(`
+		LEFT OUTER JOIN `)
+	sb.buildPermissionsTable()
+	sb.sql.WriteString(` as permissions ON dashboard.id = permissions.d_id
+		WHERE (d_count + f_count + c_count + default_count > 0) OR ` + dialect.BooleanStr(sb.signedInUser.OrgRole == m.ROLE_ADMIN) + `
+	`)
+
+	sb.sql.WriteString(" ORDER BY dashboard.title ASC" + dialect.Limit(5000))
+
 	return sb.sql.String(), sb.params
 }
 
@@ -125,7 +133,8 @@ func (sb *SearchBuilder) buildSelect() {
 			dashboard.folder_id,
 			folder.uid as folder_uid,
 			folder.slug as folder_slug,
-			folder.title as folder_title
+			folder.title as folder_title,
+			(permissions.d_count > 0 OR permissions.f_count > 0 OR permissions.default_count > 0 OR ` + dialect.BooleanStr(sb.signedInUser.OrgRole == m.ROLE_ADMIN) + `) as viewable
 		FROM `)
 }
 
@@ -181,8 +190,6 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 		}
 	}
 
-	sb.writeDashboardPermissionFilter(sb.signedInUser, sb.permission)
-
 	if len(sb.whereTitle) > 0 {
 		sb.sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		sb.params = append(sb.params, "%"+sb.whereTitle+"%")
@@ -202,4 +209,46 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 			sb.params = append(sb.params, id)
 		}
 	}
+}
+
+func (sb *SearchBuilder) buildPermissionsTable() {
+	falseStr := dialect.BooleanStr(false)
+	okRoles := []interface{}{sb.signedInUser.OrgRole}
+
+	sb.sql.WriteString(`
+		(
+			SELECT d_id, SUM(CASE WHEN da_did=d_id THEN 1 ELSE 0 END) as d_count,SUM(CASE WHEN da_did=f_id THEN 1 ELSE 0 END) as f_count,
+				SUM(CASE WHEN da_did=child_id THEN 1 ELSE  0 END) as c_count, SUM(CASE WHEN da_did = -1 THEN 1 ELSE 0 END) as default_count
+			FROM (
+			  SELECT d.id as d_id, folder.id as f_id, child_dashboard.id as child_id, da.dashboard_id as da_did
+			  FROM dashboard AS d
+			  LEFT JOIN dashboard folder on folder.id = d.folder_id
+			  LEFT JOIN dashboard child_dashboard on child_dashboard.folder_id = d.id
+			  LEFT JOIN dashboard_acl AS da ON
+	 			  da.dashboard_id = d.id OR
+	 			  da.dashboard_id = d.folder_id OR
+				  da.dashboard_id = child_dashboard.id OR
+	 			  (
+	 				  -- include default permissions -->
+					  da.org_id = -1 AND (
+					    (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
+					    (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
+					  )
+	 			  )
+			  LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
+			  WHERE
+				  d.org_id = ? AND
+				  da.permission >= ? AND
+				  (
+					  da.user_id = ? OR
+					  ugm.user_id = ? OR
+					  da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
+				  )
+      		)
+      		GROUP BY d_id
+		) 
+	`)
+
+	sb.params = append(sb.params, sb.signedInUser.OrgId, sb.permission, sb.signedInUser.UserId, sb.signedInUser.UserId)
+	sb.params = append(sb.params, okRoles...)
 }

@@ -202,11 +202,20 @@ func (dash *Dashboard) GenerateUrl() string {
 
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
 func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
+
 	if isFolder {
 		return GetFolderUrl(uid, slug)
 	}
 
 	return GetDashboardUrl(uid, slug)
+}
+
+// GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
+func GetDashboardFolderUrlForPermission(isFolder bool, uid string, slug string, viewable bool, admin bool) string {
+	if !viewable && !admin {
+		return ""
+	}
+	return GetDashboardFolderUrl(isFolder, uid, slug)
 }
 
 // GetDashboardUrl return the html url for a dashboard

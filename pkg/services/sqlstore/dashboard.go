@@ -194,6 +194,7 @@ type DashboardSearchProjection struct {
 	FolderUid   string
 	FolderSlug  string
 	FolderTitle string
+	Viewable    bool
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -234,7 +235,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		return err
 	}
 
-	makeQueryResult(query, res)
+	makeQueryResult(query, res, query.SignedInUser.IsGrafanaAdmin)
 
 	return nil
 }
@@ -250,7 +251,7 @@ func getHitType(item DashboardSearchProjection) search.HitType {
 	return hitType
 }
 
-func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
+func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection, admin bool) {
 	query.Result = make([]*search.Hit, 0)
 	hits := make(map[int64]*search.Hit)
 
@@ -262,7 +263,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				Uid:         item.Uid,
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
-				Url:         m.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
+				Url:         m.GetDashboardFolderUrlForPermission(item.IsFolder, item.Uid, item.Slug, item.Viewable, admin),
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
 				FolderUid:   item.FolderUid,
