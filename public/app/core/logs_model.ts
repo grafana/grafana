@@ -332,7 +332,7 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
 
   for (const series of seriesData) {
     const logSeriesFieldProcessor = new LogsSeriesFieldProcessor(series);
-    if (logSeriesFieldProcessor.hasValidFieldsForLogs()) {
+    if (!logSeriesFieldProcessor.hasValidFieldsForLogs()) {
       metricSeries.push(series);
       continue;
     }
