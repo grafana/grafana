@@ -84,7 +84,6 @@ export class LokiDatasource {
         if (result.data) {
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
-            seriesData.name = 'logs';
             seriesData.meta = {
               search: queryTargets[i].regexp,
               limit: this.maxLines,

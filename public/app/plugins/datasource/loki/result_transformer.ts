@@ -8,7 +8,7 @@ export function logStreamToSeriesData(stream: LokiLogsStream): SeriesData {
   }
   return {
     labels,
-    fields: [{ name: 'time', type: FieldType.time }, { name: 'message', type: FieldType.string }],
+    fields: [{ name: 'ts', type: FieldType.time }, { name: 'line', type: FieldType.string }],
     rows: stream.entries.map(entry => {
       return [entry.ts || entry.timestamp, entry.line];
     }),

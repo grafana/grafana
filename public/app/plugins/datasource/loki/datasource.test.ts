@@ -52,7 +52,9 @@ describe('LokiDatasource', () => {
     });
 
     test('should return series data', async done => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
       const options = getQueryOptions<LokiQuery>({
@@ -63,6 +65,8 @@ describe('LokiDatasource', () => {
 
       const seriesData = res.data[0] as SeriesData;
       expect(seriesData.rows[0][1]).toBe('hello');
+      expect(seriesData.meta.limit).toBe(20);
+      expect(seriesData.meta.search).toBe('(?i)foo');
       done();
     });
   });
