@@ -639,8 +639,15 @@ func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error 
 	}
 
 	builder := &SqlBuilder{}
-	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
-	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_EDIT)
+
+	builder.sql.WriteString(`
+		SELECT COUNT(dashboard.id) AS count FROM dashboard
+		LEFT OUTER JOIN `)
+	builder.buildPermissionsTable(query.SignedInUser, m.PERMISSION_EDIT)
+	builder.Write(` as permissions ON dashboard.id = permissions.d_id
+		WHERE (permissions.dashboard_count + permissions.folder_count + permissions.default_count > 0 OR ?) 
+			AND dashboard.org_id = ? AND dashboard.is_folder = ?`,
+		dialect.BooleanStr(query.SignedInUser.OrgRole == m.ROLE_ADMIN), query.SignedInUser.OrgId, dialect.BooleanStr(true))
 
 	type folderCount struct {
 		Count int64

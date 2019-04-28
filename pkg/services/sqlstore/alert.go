@@ -85,7 +85,14 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		FROM alert
 		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
 
-	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
+	builder.sql.WriteString(`
+		LEFT OUTER JOIN `)
+	builder.buildPermissionsTable(query.User, m.PERMISSION_VIEW)
+	builder.Write(` as permissions ON alert.dashboard_id = permissions.d_id
+		WHERE (permissions.dashboard_count + permissions.folder_count  + permissions.default_count > 0 OR ?) AND alert.org_id= ?`,
+		dialect.BooleanStr(query.User.OrgRole == m.ROLE_ADMIN), query.OrgId)
+
+	builder.Write(` AND alert.org_id = ?`, query.OrgId)
 
 	if len(strings.TrimSpace(query.Query)) > 0 {
 		builder.Write(" AND alert.name "+dialect.LikeStr()+" ?", "%"+query.Query+"%")
@@ -118,10 +125,6 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 			builder.AddParams(v)
 		}
 		builder.Write(")")
-	}
-
-	if query.User.OrgRole != m.ROLE_ADMIN {
-		builder.writeDashboardPermissionFilter(query.User, m.PERMISSION_VIEW)
 	}
 
 	builder.Write(" ORDER BY name ASC")
