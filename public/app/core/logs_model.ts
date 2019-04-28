@@ -14,7 +14,6 @@ import {
   toLegacyResponseData,
   SeriesFieldProcessor,
   IndexedField,
-  Field,
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -362,7 +361,19 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
     return undefined;
   }
 
-  const commonLabels = findCommonLabels(logSeries.map(series => series.labels));
+  const allLabels: Labels[] = [];
+  for (let n = 0; n < logSeries.length; n++) {
+    const series = logSeries[n];
+    if (series.labels) {
+      allLabels.push(series.labels);
+    }
+  }
+
+  let commonLabels: Labels = {};
+  if (allLabels.length > 0) {
+    commonLabels = findCommonLabels(allLabels);
+  }
+
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
@@ -453,23 +464,27 @@ export function processLogSeriesRow(
 }
 
 export class LogsSeriesFieldProcessor extends SeriesFieldProcessor {
-  private logLevelFieldIndex: number;
+  private logLevelFieldIndex?: number;
 
   constructor(series: SeriesData) {
     super(series);
-    this.logLevelFieldIndex = -1;
+
+    this.findLogLevelField();
   }
 
-  protected guessFieldType(field: Field, index: number): Field {
-    if (field.name.toLowerCase() === 'loglevel') {
-      this.logLevelFieldIndex = index;
+  private findLogLevelField() {
+    const fields = [...this.getStringFields(), ...this.getOtherFields()];
+    for (let n = 0; n < fields.length; n++) {
+      const field = fields[n];
+      if (field.name.toLowerCase() === 'loglevel' || field.name.toLowerCase() === 'level') {
+        this.logLevelFieldIndex = field.index;
+        break;
+      }
     }
-
-    return super.guessFieldType(field, index);
   }
 
   hasLogLevelField(): boolean {
-    return this.logLevelFieldIndex >= 0;
+    return this.logLevelFieldIndex !== undefined;
   }
 
   getLogLevelField(): IndexedField | null {

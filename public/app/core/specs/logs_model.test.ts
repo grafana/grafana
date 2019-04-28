@@ -8,6 +8,7 @@ import {
   LogsParsers,
   seriesDataToLogsModel,
   LogsMetaKind,
+  LogsSeriesFieldProcessor,
 } from '../logs_model';
 import { SeriesData, FieldType } from '@grafana/ui';
 
@@ -444,6 +445,34 @@ describe('seriesDataToLogsModel', () => {
     });
   });
 
+  it('given one series without labels should return expected logs model', () => {
+    const series: SeriesData[] = [
+      {
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+          },
+        ],
+        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
+      },
+    ];
+    const logsModel = seriesDataToLogsModel(series, 0);
+    expect(logsModel.rows).toHaveLength(1);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo',
+        labels: undefined,
+        logLevel: 'warning',
+        uniqueLabels: {},
+      },
+    ]);
+  });
+
   it('given multiple series should return expected logs model', () => {
     const series: SeriesData[] = [
       {
@@ -515,5 +544,42 @@ describe('seriesDataToLogsModel', () => {
       },
       kind: LogsMetaKind.LabelsMap,
     });
+  });
+});
+
+describe('LogsSeriesFieldProcessor', () => {
+  it('should find log level of field not having type', () => {
+    const series = {
+      fields: [{ name: 'a', type: FieldType.time }, { name: 'b', type: FieldType.string }, { name: 'LogLevel' }],
+      rows: [],
+    };
+    const processor = new LogsSeriesFieldProcessor(series);
+    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
+    expect(processor.hasLogLevelField()).toBeTruthy();
+  });
+
+  it('should find log level of field having type', () => {
+    const series = {
+      fields: [
+        { name: 'a', type: FieldType.time },
+        { name: 'b', type: FieldType.string },
+        { name: 'LogLevel', type: FieldType.string },
+      ],
+      rows: [],
+    };
+    const processor = new LogsSeriesFieldProcessor(series);
+    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
+    expect(processor.hasLogLevelField()).toBeTruthy();
+  });
+
+  it('should find log level of field named level', () => {
+    const series = {
+      fields: [{ name: 'a', type: FieldType.time }, { name: 'b', type: FieldType.string }, { name: 'Level' }],
+      rows: [[123, '', 'warning']],
+    };
+    const processor = new LogsSeriesFieldProcessor(series);
+    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
+    expect(processor.hasLogLevelField()).toBeTruthy();
+    expect(processor.getFields()[2].type).toBe(FieldType.string);
   });
 });

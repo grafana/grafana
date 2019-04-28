@@ -267,15 +267,13 @@ export class SeriesFieldProcessor {
   }
 
   protected guessFieldType(field: Field, index: number): Field {
-    if (field.type === FieldType.other) {
-      const fieldType = guessFieldTypeFromSeries(this.series, index);
-      if (fieldType === undefined || fieldType === FieldType.other) {
-        return field;
-      }
-
-      field.type = fieldType;
+    const fieldType = guessFieldTypeFromSeries(this.series, index);
+    if (fieldType === undefined || fieldType === FieldType.other) {
+      field.type = FieldType.other;
+      return field;
     }
 
+    field.type = fieldType;
     return field;
   }
 
