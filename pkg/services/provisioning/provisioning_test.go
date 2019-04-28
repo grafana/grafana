@@ -3,11 +3,12 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
@@ -38,7 +39,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 		// Cancelling the root context and stopping the service
 		cancel()
-		time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond * 3)
 
 		assert.False(t, serviceRunning, "Service should not be running")
 		assert.Equal(t, context.Canceled, serviceError, "Service should have returned canceled error")
@@ -65,7 +66,7 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		}
 		err = service.ProvisionDashboards()
 		assert.NotNil(t, err)
-		time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond * 3)
 		// This should have been called with the old provisioner, after the last one failed.
 		assert.Equal(t, 2, len(mock.Calls.PollChanges), "PollChanges should have been called 2 times")
 		assert.True(t, serviceRunning, "Service should be still running")
