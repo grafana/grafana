@@ -8,12 +8,13 @@ import {
   Labels,
   LogLevel,
   SeriesData,
-  getFirstTimeField,
-  hasFieldNamed,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
   toLegacyResponseData,
+  SeriesFieldProcessor,
+  IndexedField,
+  Field,
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -70,7 +71,6 @@ export interface LogsMetaItem {
 
 export interface LogsModel {
   hasUniqueLabels: boolean;
-  id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: TimeSeries[];
@@ -331,16 +331,9 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
   const logSeries: SeriesData[] = [];
 
   for (const series of seriesData) {
-    if (series.name !== 'logs') {
+    const logSeriesFieldProcessor = new LogsSeriesFieldProcessor(series);
+    if (logSeriesFieldProcessor.hasValidFieldsForLogs()) {
       metricSeries.push(series);
-      continue;
-    }
-
-    if (getFirstTimeField(series) === -1) {
-      continue;
-    }
-
-    if (!hasFieldNamed(series, 'message')) {
       continue;
     }
 
@@ -369,46 +362,26 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
     return undefined;
   }
 
-  // Unique model identifier
-  const id = logSeries
-    .map(series => {
-      if (!series.labels) {
-        return '';
-      }
-
-      return Object.keys(series.labels)
-        .map(key => `key=${series.labels[key]}`)
-        .join();
-    })
-    .join();
-
-  // Find unique labels for each series
   const commonLabels = findCommonLabels(logSeries.map(series => series.labels));
-  logSeries = logSeries.map(series => ({
-    ...series,
-    uniqueLabels: findUniqueLabels(series.labels, commonLabels),
-  }));
+  const rows: LogRowModel[] = [];
+  let hasUniqueLabels = false;
 
-  const uniqueLabelsPerSeries: Labels[] = [];
-  for (let n = 0; n < logSeries.length; n++) {
-    const series = logSeries[n];
-    uniqueLabelsPerSeries.push(findUniqueLabels(series.labels, commonLabels));
+  for (let i = 0; i < logSeries.length; i++) {
+    const series = logSeries[i];
+    const logSeriesFieldProcessor = new LogsSeriesFieldProcessor(series);
+    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
+    if (Object.keys(uniqueLabels).length > 0) {
+      hasUniqueLabels = true;
+    }
+
+    for (let j = 0; j < series.rows.length; j++) {
+      rows.push(processLogSeriesRow(logSeriesFieldProcessor, j, uniqueLabels));
+    }
   }
 
-  // Merge series entries into single list of log rows
-  const sortedRows: LogRowModel[] = _.chain(logSeries)
-    .reduce(
-      (acc: LogRowModel[], series: SeriesData, index: number) => [
-        ...acc,
-        ...series.rows.map(row => processLogSeriesRow(series, row, uniqueLabelsPerSeries[index])),
-      ],
-      []
-    )
-    .sortBy('timestamp')
-    .reverse()
-    .value();
-
-  const hasUniqueLabels = sortedRows && sortedRows.some(row => Object.keys(row.uniqueLabels).length > 0);
+  const sortedRows = rows.sort((a, b) => {
+    return a.timestamp > b.timestamp ? -1 : 1;
+  });
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -431,21 +404,36 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
   }
 
   return {
-    id,
     hasUniqueLabels,
     meta,
     rows: sortedRows,
   };
 }
 
-export function processLogSeriesRow(series: SeriesData, row: any[], uniqueLabels: Labels): LogRowModel {
-  const ts = row[0];
-  const message = row[1];
+export function processLogSeriesRow(
+  logsSeriesFieldProcessor: LogsSeriesFieldProcessor,
+  rowIndex: number,
+  uniqueLabels: Labels
+): LogRowModel {
+  const series = logsSeriesFieldProcessor.series;
+  const row = series.rows[rowIndex];
+  const timeFieldIndex = logsSeriesFieldProcessor.getFirstTimeField().index;
+  const ts = row[timeFieldIndex];
+  const stringFieldIndex = logsSeriesFieldProcessor.getFirstStringField().index;
+  const message = row[stringFieldIndex];
   const time = moment(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const logLevel = getLogLevel(message);
+
+  let logLevel;
+  if (logsSeriesFieldProcessor.hasLogLevelField()) {
+    const logLevelIndex = logsSeriesFieldProcessor.getLogLevelField().index;
+    logLevel = row[logLevelIndex];
+  } else {
+    logLevel = getLogLevel(message);
+  }
+
   const hasAnsi = hasAnsiCodes(message);
   const search = series.meta && series.meta.search ? series.meta.search : '';
 
@@ -462,4 +450,33 @@ export function processLogSeriesRow(series: SeriesData, row: any[], uniqueLabels
     searchWords: search ? [search] : [],
     timestamp: ts,
   };
+}
+
+export class LogsSeriesFieldProcessor extends SeriesFieldProcessor {
+  private logLevelFieldIndex: number;
+
+  constructor(series: SeriesData) {
+    super(series);
+    this.logLevelFieldIndex = -1;
+  }
+
+  protected guessFieldType(field: Field, index: number): Field {
+    if (field.name.toLowerCase() === 'loglevel') {
+      this.logLevelFieldIndex = index;
+    }
+
+    return super.guessFieldType(field, index);
+  }
+
+  hasLogLevelField(): boolean {
+    return this.logLevelFieldIndex >= 0;
+  }
+
+  getLogLevelField(): IndexedField | null {
+    return this.hasLogLevelField() ? { ...this.fields[this.logLevelFieldIndex], index: this.logLevelFieldIndex } : null;
+  }
+
+  hasValidFieldsForLogs(): boolean {
+    return this.hasTimeField() && this.hasStringField();
+  }
 }

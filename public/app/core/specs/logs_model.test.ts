@@ -341,7 +341,6 @@ describe('seriesDataToLogsModel', () => {
   it('given series without correct series name should not be processed', () => {
     const series: SeriesData[] = [
       {
-        name: 'something',
         fields: [],
         rows: [],
       },
@@ -352,7 +351,6 @@ describe('seriesDataToLogsModel', () => {
   it('given series without a time field should not be processed', () => {
     const series: SeriesData[] = [
       {
-        name: 'logs',
         fields: [
           {
             name: 'message',
@@ -365,10 +363,9 @@ describe('seriesDataToLogsModel', () => {
     expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
   });
 
-  it('given series without a message field should not be processed', () => {
+  it('given series without a string field should not be processed', () => {
     const series: SeriesData[] = [
       {
-        name: 'logs',
         fields: [
           {
             name: 'time',
@@ -384,7 +381,6 @@ describe('seriesDataToLogsModel', () => {
   it('given one series should return expected logs model', () => {
     const series: SeriesData[] = [
       {
-        name: 'logs',
         labels: {
           filename: '/var/log/grafana/grafana.log',
           job: 'grafana',
@@ -451,18 +447,17 @@ describe('seriesDataToLogsModel', () => {
   it('given multiple series should return expected logs model', () => {
     const series: SeriesData[] = [
       {
-        name: 'logs',
         labels: {
           foo: 'bar',
           baz: '1',
         },
         fields: [
           {
-            name: 'time',
+            name: 'ts',
             type: FieldType.time,
           },
           {
-            name: 'message',
+            name: 'line',
             type: FieldType.string,
           },
         ],
