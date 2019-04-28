@@ -53,7 +53,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class ReactPanelPlugin<TOptions = any> {
+export class PanelPlugin<TOptions = any> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;

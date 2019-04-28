@@ -23,4 +23,5 @@ module.exports = {
     "./public/test/jest-setup.ts"
   ],
   "snapshotSerializers": ["enzyme-to-json/serializer"],
+  "globals": { "ts-jest": { "isolatedModules": true } },
 };

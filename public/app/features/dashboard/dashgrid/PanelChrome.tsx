@@ -16,7 +16,7 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 import { LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
@@ -30,7 +30,7 @@ const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   isFullscreen: boolean;
   width: number;
   height: number;
@@ -216,7 +216,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
-    const PanelComponent = plugin.reactPlugin.panel;
+    const PanelComponent = plugin.vizPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -237,7 +237,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
-            options={panel.getOptions(plugin.reactPlugin.defaults)}
+            options={panel.getOptions(plugin.vizPlugin.defaults)}
             width={width - 2 * config.theme.panelPadding.horizontal}
             height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
             renderCounter={renderCounter}

@@ -164,10 +164,11 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled     bool
-	LdapConfigFile  string
-	LdapSyncCron    string
-	LdapAllowSignup = true
+	LdapEnabled           bool
+	LdapConfigFile        string
+	LdapSyncCron          string
+	LdapAllowSignup       bool
+	LdapActiveSyncEnabled bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -869,14 +870,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
-	GoogleAnalyticsId, err = valueAsString(analytics, "google_analytics_ua_id", "")
-	if err != nil {
-		return err
-	}
-	GoogleTagManagerId, err = valueAsString(analytics, "google_tag_manager_id", "")
-	if err != nil {
-		return err
-	}
+	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
@@ -977,10 +972,11 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	LdapSyncCron = ldapSec.Key("sync_cron").String()
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) readSessionConfig() {

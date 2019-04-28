@@ -6,7 +6,7 @@ function ngModelOnBlur() {
     restrict: 'A',
     priority: 1,
     require: 'ngModel',
-    link: (scope, elm, attr, ngModelCtrl) => {
+    link: (scope: any, elm: any, attr: any, ngModelCtrl: any) => {
       if (attr.type === 'radio' || attr.type === 'checkbox') {
         return;
       }
@@ -25,8 +25,8 @@ function emptyToNull() {
   return {
     restrict: 'A',
     require: 'ngModel',
-    link: (scope, elm, attrs, ctrl) => {
-      ctrl.$parsers.push(viewValue => {
+    link: (scope: any, elm: any, attrs: any, ctrl: any) => {
+      ctrl.$parsers.push((viewValue: any) => {
         if (viewValue === '') {
           return null;
         }
@@ -39,8 +39,8 @@ function emptyToNull() {
 function validTimeSpan() {
   return {
     require: 'ngModel',
-    link: (scope, elm, attrs, ctrl) => {
-      ctrl.$validators.integer = (modelValue, viewValue) => {
+    link: (scope: any, elm: any, attrs: any, ctrl: any) => {
+      ctrl.$validators.integer = (modelValue: any, viewValue: any) => {
         if (ctrl.$isEmpty(modelValue)) {
           return true;
         }
