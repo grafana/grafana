@@ -16,9 +16,8 @@ import {
   PanelProps,
   getDisplayProcessor,
   NullValueMode,
-  FieldType,
   calculateStats,
-  getFirstTimeField,
+  SeriesFieldProcessor,
 } from '@grafana/ui';
 
 interface SingleStatDisplay {
@@ -51,73 +50,71 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
     const values: SingleStatDisplay[] = [];
     for (const series of data.series) {
-      const timeColumn = sparkline.show ? getFirstTimeField(series) : -1;
+      const seriesFieldsProcessor = new SeriesFieldProcessor(series);
+      const timeColumn = sparkline.show ? seriesFieldsProcessor.getFirstTimeField() : null;
+      const numberFields = seriesFieldsProcessor.getNumberFields();
 
-      for (let i = 0; i < series.fields.length; i++) {
-        const field = series.fields[i];
+      for (let i = 0; i < numberFields.length; i++) {
+        const field = numberFields[i];
+        const stats = calculateStats({
+          series,
+          fieldIndex: field.index,
+          stats: [stat], // The stats to calculate
+          nullValueMode: NullValueMode.Null,
+        });
 
-        // Show all fields that are not 'time'
-        if (field.type === FieldType.number) {
-          const stats = calculateStats({
+        const v: SingleStatDisplay = {
+          value: display(stats[stat]),
+        };
+        v.value.title = replaceVariables(field.name);
+
+        const color = v.value.color;
+        if (!colorValue) {
+          delete v.value.color;
+        }
+
+        if (colorBackground) {
+          v.backgroundColor = color;
+        }
+
+        if (options.valueFontSize) {
+          v.value.fontSize = options.valueFontSize;
+        }
+
+        if (valueOptions.prefix) {
+          v.prefix = {
+            text: replaceVariables(valueOptions.prefix),
+            numeric: NaN,
+            color: colorPrefix ? color : null,
+            fontSize: options.prefixFontSize,
+          };
+        }
+        if (valueOptions.suffix) {
+          v.suffix = {
+            text: replaceVariables(valueOptions.suffix),
+            numeric: NaN,
+            color: colorPostfix ? color : null,
+            fontSize: options.postfixFontSize,
+          };
+        }
+
+        if (sparkline.show && timeColumn) {
+          const points = getFlotPairs({
             series,
-            fieldIndex: i,
-            stats: [stat], // The stats to calculate
+            xIndex: timeColumn.index,
+            yIndex: field.index,
             nullValueMode: NullValueMode.Null,
           });
 
-          const v: SingleStatDisplay = {
-            value: display(stats[stat]),
+          v.sparkline = {
+            ...sparkline,
+            data: points,
+            minX: timeRange.from.valueOf(),
+            maxX: timeRange.to.valueOf(),
           };
-          v.value.title = replaceVariables(field.name);
-
-          const color = v.value.color;
-          if (!colorValue) {
-            delete v.value.color;
-          }
-
-          if (colorBackground) {
-            v.backgroundColor = color;
-          }
-
-          if (options.valueFontSize) {
-            v.value.fontSize = options.valueFontSize;
-          }
-
-          if (valueOptions.prefix) {
-            v.prefix = {
-              text: replaceVariables(valueOptions.prefix),
-              numeric: NaN,
-              color: colorPrefix ? color : null,
-              fontSize: options.prefixFontSize,
-            };
-          }
-          if (valueOptions.suffix) {
-            v.suffix = {
-              text: replaceVariables(valueOptions.suffix),
-              numeric: NaN,
-              color: colorPostfix ? color : null,
-              fontSize: options.postfixFontSize,
-            };
-          }
-
-          if (sparkline.show && timeColumn >= 0) {
-            const points = getFlotPairs({
-              series,
-              xIndex: timeColumn,
-              yIndex: i,
-              nullValueMode: NullValueMode.Null,
-            });
-
-            v.sparkline = {
-              ...sparkline,
-              data: points,
-              minX: timeRange.from.valueOf(),
-              maxX: timeRange.to.valueOf(),
-            };
-          }
-
-          values.push(v);
         }
+
+        values.push(v);
       }
     }
 

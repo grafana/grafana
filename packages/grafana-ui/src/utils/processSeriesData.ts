@@ -5,7 +5,7 @@ import isBoolean from 'lodash/isBoolean';
 import moment from 'moment';
 
 // Types
-import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
+import { SeriesData, Field, TimeSeries, FieldType, TableData, IndexedField } from '../types/index';
 
 function convertTableToSeriesData(table: TableData): SeriesData {
   return {
@@ -225,4 +225,198 @@ export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = f
     return copy;
   }
   return data;
+}
+
+export class SeriesFieldProcessor {
+  series: SeriesData;
+  fields: Field[];
+  fieldIndexByName: { [key: string]: number };
+  timeFieldIndices: number[];
+  stringFieldIndices: number[];
+  numberFieldIndices: number[];
+  booleanFieldIndices: number[];
+  otherFieldIndices: number[];
+
+  constructor(series: SeriesData) {
+    this.series = series;
+    this.fields = [];
+    this.fieldIndexByName = {};
+    this.timeFieldIndices = [];
+    this.stringFieldIndices = [];
+    this.numberFieldIndices = [];
+    this.booleanFieldIndices = [];
+    this.otherFieldIndices = [];
+    this.process();
+  }
+
+  private process() {
+    for (let n = 0; n < this.series.fields.length; n++) {
+      const field = this.series.fields[n];
+      this.processField(field, n);
+    }
+  }
+
+  private processField(field: Field, index: number) {
+    switch (field.type) {
+      case FieldType.time:
+        this.fields.push(field);
+        this.fieldIndexByName[field.name] = index;
+        this.timeFieldIndices.push(index);
+        return;
+      case FieldType.string:
+        this.fields.push(field);
+        this.fieldIndexByName[field.name] = index;
+        this.stringFieldIndices.push(index);
+        return;
+      case FieldType.number:
+        this.fields.push(field);
+        this.fieldIndexByName[field.name] = index;
+        this.numberFieldIndices.push(index);
+        return;
+      case FieldType.boolean:
+        this.fields.push(field);
+        this.fieldIndexByName[field.name] = index;
+        this.booleanFieldIndices.push(index);
+        return;
+    }
+
+    field = this.guessFieldType(field, index);
+    if (field.type === FieldType.other) {
+      this.fields.push(field);
+      this.fieldIndexByName[field.name] = index;
+      this.otherFieldIndices.push(index);
+    } else {
+      this.processField(field, index);
+    }
+  }
+
+  protected guessFieldType(field: Field, index: number): Field {
+    if (field.type === FieldType.other) {
+      const fieldType = guessFieldTypeFromSeries(this.series, index);
+      if (fieldType === undefined || fieldType === FieldType.other) {
+        return field;
+      }
+
+      field.type = fieldType;
+    }
+
+    return field;
+  }
+
+  hasTimeField(): boolean {
+    return this.timeFieldIndices.length > 0;
+  }
+
+  hasStringField(): boolean {
+    return this.stringFieldIndices.length > 0;
+  }
+
+  hasNumberField(): boolean {
+    return this.numberFieldIndices.length > 0;
+  }
+
+  hasBooleanField(): boolean {
+    return this.booleanFieldIndices.length > 0;
+  }
+
+  getFields(type?: FieldType): IndexedField[] {
+    switch (type) {
+      case FieldType.time:
+        return this.getTimeFields();
+      case FieldType.string:
+        return this.getStringFields();
+      case FieldType.number:
+        return this.getNumberFields();
+      case FieldType.boolean:
+        return this.getBooleanFields();
+      case FieldType.other:
+        return this.getOtherFields();
+      default:
+        return this.fields.map((field, index) => {
+          return {
+            ...field,
+            index,
+          };
+        });
+    }
+  }
+
+  getTimeFields(): IndexedField[] {
+    return this.timeFieldIndices.map(index => {
+      return {
+        ...this.fields[index],
+        index,
+      };
+    });
+  }
+
+  getStringFields(): IndexedField[] {
+    return this.stringFieldIndices.map(index => {
+      return {
+        ...this.fields[index],
+        index,
+      };
+    });
+  }
+
+  getNumberFields(): IndexedField[] {
+    return this.numberFieldIndices.map(index => {
+      return {
+        ...this.fields[index],
+        index,
+      };
+    });
+  }
+
+  getBooleanFields(): IndexedField[] {
+    return this.booleanFieldIndices.map(index => {
+      return {
+        ...this.fields[index],
+        index,
+      };
+    });
+  }
+
+  getOtherFields(): IndexedField[] {
+    return this.otherFieldIndices.map(index => {
+      return {
+        ...this.fields[index],
+        index,
+      };
+    });
+  }
+
+  getFirstTimeField(): IndexedField | null {
+    return this.timeFieldIndices.length > 0
+      ? { ...this.fields[this.timeFieldIndices[0]], index: this.timeFieldIndices[0] }
+      : null;
+  }
+
+  getFirstStringField(): IndexedField | null {
+    return this.stringFieldIndices.length > 0
+      ? { ...this.fields[this.stringFieldIndices[0]], index: this.stringFieldIndices[0] }
+      : null;
+  }
+
+  getFirstNumberField(): IndexedField | null {
+    return this.numberFieldIndices.length > 0
+      ? { ...this.fields[this.numberFieldIndices[0]], index: this.numberFieldIndices[0] }
+      : null;
+  }
+
+  getFirstBooleanField(): IndexedField | null {
+    return this.booleanFieldIndices.length > 0
+      ? { ...this.fields[this.booleanFieldIndices[0]], index: this.booleanFieldIndices[0] }
+      : null;
+  }
+
+  hasFieldNamed(name: string): boolean {
+    return this.fieldIndexByName[name] !== undefined;
+  }
+
+  getFieldNamed(name: string): IndexedField | null {
+    return this.hasFieldNamed(name)
+      ? { ...this.fields[this.fieldIndexByName[name]], index: this.fieldIndexByName[name] }
+      : null;
+  }
 }
