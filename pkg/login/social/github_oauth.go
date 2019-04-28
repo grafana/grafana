@@ -67,6 +67,7 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 	if err != nil {
 		return false
 	}
+	fmt.Sprintf("%v", organizations)
 
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
