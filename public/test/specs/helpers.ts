@@ -172,6 +172,8 @@ export class TimeSrvStub {
 }
 
 export class ContextSrvStub {
+  isGrafanaVisibile = jest.fn();
+
   hasRole() {
     return true;
   }
