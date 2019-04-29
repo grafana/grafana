@@ -38,9 +38,9 @@ const createResponsiveButton = (options: {
 
   return (
     <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
-      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName} icon-margin-right`} /> : null}
+      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName} icon-margin-left`} /> : null}
+      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
     </button>
   );
 };
@@ -172,7 +172,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             </div>
 
             <div className="explore-toolbar-content-item">
-              <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
+              <button className="btn navbar-button" onClick={this.onClearAll}>
                 Clear All
               </button>
             </div>

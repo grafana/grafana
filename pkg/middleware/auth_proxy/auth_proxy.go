@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/login"
-	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,6 +21,11 @@ const (
 	CachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
+var (
+	readLDAPConfig = ldap.ReadConfig
+	isLDAPEnabled  = ldap.IsEnabled
+)
+
 // AuthProxy struct
 type AuthProxy struct {
 	store  *remotecache.RemoteCache
@@ -28,14 +33,13 @@ type AuthProxy struct {
 	orgID  int64
 	header string
 
-	LDAP func(server *login.LdapServerConf) login.ILdapAuther
+	LDAP func(server *ldap.ServerConfig) ldap.IAuth
 
 	enabled     bool
 	whitelistIP string
 	headerType  string
 	headers     map[string]string
 	cacheTTL    int
-	ldapEnabled bool
 }
 
 // Error auth proxy specific error
@@ -74,14 +78,13 @@ func New(options *Options) *AuthProxy {
 		orgID:  options.OrgID,
 		header: header,
 
-		LDAP: login.NewLdapAuthenticator,
+		LDAP: ldap.New,
 
 		enabled:     setting.AuthProxyEnabled,
 		headerType:  setting.AuthProxyHeaderProperty,
 		headers:     setting.AuthProxyHeaders,
 		whitelistIP: setting.AuthProxyWhitelist,
 		cacheTTL:    setting.AuthProxyLdapSyncTtl,
-		ldapEnabled: setting.LdapEnabled,
 	}
 }
 
@@ -167,11 +170,14 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 		return id, nil
 	}
 
-	if auth.ldapEnabled {
+	if isLDAPEnabled() {
 		id, err := auth.GetUserIDViaLDAP()
 
-		if err == login.ErrInvalidCredentials {
-			return 0, newError("Proxy authentication required", login.ErrInvalidCredentials)
+		if err == ldap.ErrInvalidCredentials {
+			return 0, newError(
+				"Proxy authentication required",
+				ldap.ErrInvalidCredentials,
+			)
 		}
 
 		if err != nil {
@@ -183,7 +189,10 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 
 	id, err := auth.GetUserIDViaHeader()
 	if err != nil {
-		return 0, newError("Failed to login as user specified in auth proxy header", err)
+		return 0, newError(
+			"Failed to login as user specified in auth proxy header",
+			err,
+		)
 	}
 
 	return id, nil
@@ -210,12 +219,12 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 		Username:   auth.header,
 	}
 
-	ldapCfg := login.LdapCfg
-	if len(ldapCfg.Servers) < 1 {
+	config := readLDAPConfig()
+	if len(config.Servers) == 0 {
 		return 0, newError("No LDAP servers available", nil)
 	}
 
-	for _, server := range ldapCfg.Servers {
+	for _, server := range config.Servers {
 		author := auth.LDAP(server)
 		if err := author.SyncUser(query); err != nil {
 			return 0, newError(err.Error(), nil)

@@ -9,12 +9,10 @@ import (
 	"testing"
 	"time"
 
-	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
@@ -423,9 +421,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
-		// mock out gc goroutine
-		session.StartSessionGC = func() {}
-		setting.SessionOptions = msession.Options{}
 
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())

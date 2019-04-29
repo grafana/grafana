@@ -16,13 +16,13 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 import { LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';
 
-import { getProcessedSeriesData } from '../state/PanelQueryRunner';
+import { getProcessedSeriesData } from '../state/PanelQueryState';
 import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
@@ -30,7 +30,7 @@ const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   isFullscreen: boolean;
   width: number;
   height: number;
@@ -48,6 +48,7 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
+  delayedStateUpdate: Partial<State>;
 
   constructor(props: Props) {
     super(props);
@@ -118,7 +119,15 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
       }
 
-      this.setState({ isFirstLoad, errorMessage, data });
+      const stateUpdate = { isFirstLoad, errorMessage, data };
+
+      if (this.isVisible) {
+        this.setState(stateUpdate);
+      } else {
+        // if we are getting data while another panel is in fullscreen / edit mode
+        // we need to store the data but not update state yet
+        this.delayedStateUpdate = stateUpdate;
+      }
     },
   };
 
@@ -162,9 +171,19 @@ export class PanelChrome extends PureComponent<Props, State> {
   };
 
   onRender = () => {
-    this.setState({
-      renderCounter: this.state.renderCounter + 1,
-    });
+    const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
+
+    // If we have received a data update while hidden copy over that state as well
+    if (this.delayedStateUpdate) {
+      Object.assign(stateUpdate, this.delayedStateUpdate);
+      this.delayedStateUpdate = null;
+    }
+
+    this.setState(stateUpdate);
+  };
+
+  onOptionsChange = (options: any) => {
+    this.props.panel.updateOptions(options);
   };
 
   replaceVariables = (value: string, extraVars?: ScopedVars, format?: string) => {
@@ -197,7 +216,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
-    const PanelComponent = plugin.reactPlugin.panel;
+    const PanelComponent = plugin.vizPlugin.panel;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -218,11 +237,12 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
-            options={panel.getOptions(plugin.reactPlugin.defaults)}
+            options={panel.getOptions(plugin.vizPlugin.defaults)}
             width={width - 2 * config.theme.panelPadding.horizontal}
             height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
           />
         </div>
       </>

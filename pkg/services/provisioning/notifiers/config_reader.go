@@ -63,7 +63,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 		return nil, err
 	}
 
-	var cfg *notificationsAsConfig
+	var cfg *notificationsAsConfigV0
 	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		return nil, err

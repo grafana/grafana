@@ -47,7 +47,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} options={options.valueOptions} />
+          <SingleStatValueEditor onChange={this.onValueOptionsChanged} value={options.valueOptions} />
           <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />

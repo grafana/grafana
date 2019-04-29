@@ -150,7 +150,7 @@ func (w *FileLogWriter) initFd() error {
 	fd := w.mw.fd
 	finfo, err := fd.Stat()
 	if err != nil {
-		return fmt.Errorf("get stat: %s\n", err)
+		return fmt.Errorf("get stat: %s", err)
 	}
 	w.maxsize_cursize = int(finfo.Size())
 	w.daily_opendate = time.Now().Day()
@@ -180,7 +180,7 @@ func (w *FileLogWriter) DoRotate() error {
 		}
 		// return error if the last file checked still existed
 		if err == nil {
-			return fmt.Errorf("rotate: cannot find free log number to rename %s\n", w.Filename)
+			return fmt.Errorf("rotate: cannot find free log number to rename %s", w.Filename)
 		}
 
 		// block Logger's io.Writer
@@ -193,12 +193,12 @@ func (w *FileLogWriter) DoRotate() error {
 		// close fd before rename
 		// Rename the file to its newfound home
 		if err = os.Rename(w.Filename, fname); err != nil {
-			return fmt.Errorf("Rotate: %s\n", err)
+			return fmt.Errorf("Rotate: %s", err)
 		}
 
 		// re-start logger
 		if err = w.StartLogger(); err != nil {
-			return fmt.Errorf("Rotate StartLogger: %s\n", err)
+			return fmt.Errorf("Rotate StartLogger: %s", err)
 		}
 
 		go w.deleteOldLog()
