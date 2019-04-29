@@ -1,4 +1,4 @@
-import { AngularPanelPlugin, PanelPlugin, PluginMeta } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, PanelPlugin, PluginMeta } from '@grafana/ui';
 
 export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
@@ -12,16 +12,6 @@ export interface PanelPluginMeta extends PluginMeta {
 export enum PanelDataFormat {
   Table = 'table',
   TimeSeries = 'time_series',
-}
-
-/**
- * Values we don't want in the public API
- */
-export interface Plugin extends PluginMeta {
-  defaultNavUrl: string;
-  hasUpdate: boolean;
-  latestVersion: string;
-  pinned: boolean;
 }
 
 export interface PluginDashboard {
@@ -41,7 +31,7 @@ export interface PluginDashboard {
 }
 
 export interface PluginsState {
-  plugins: Plugin[];
+  plugins: PluginMeta[];
   searchQuery: string;
   layoutMode: string;
   hasFetched: boolean;

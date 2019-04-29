@@ -1,7 +1,7 @@
-import { Plugin, PanelPluginMeta, PanelDataFormat } from 'app/types';
-import { PluginType } from '@grafana/ui';
+import { PanelPluginMeta, PanelDataFormat } from 'app/types';
+import { PluginType, PluginMeta } from '@grafana/ui';
 
-export const getMockPlugins = (amount: number): Plugin[] => {
+export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins = [];
 
   for (let i = 0; i <= amount; i++) {
@@ -87,5 +87,5 @@ export const getMockPlugin = () => {
     pinned: false,
     type: PluginType.panel,
     module: 'path/to/module',
-  } as Plugin;
+  } as PluginMeta;
 };

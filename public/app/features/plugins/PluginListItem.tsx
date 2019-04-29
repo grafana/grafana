@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { Plugin } from 'app/types';
+import { PluginMeta } from '@grafana/ui';
 
 interface Props {
-  plugin: Plugin;
+  plugin: PluginMeta;
 }
 
 const PluginListItem: FC<Props> = props => {
