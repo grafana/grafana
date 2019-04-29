@@ -546,10 +546,6 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 		return in
 	})
 
-	if string(result) == "" {
-		return metricName + "_" + stat
-	}
-
 	return string(result)
 }
 
