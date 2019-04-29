@@ -571,7 +571,7 @@ basic auth password
 Path to JSON key file associated with a Google service account to authenticate and authorize.
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
 ### bucket name
 Bucket Name on Google Cloud Storage.

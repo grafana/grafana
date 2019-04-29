@@ -27,7 +27,7 @@ export const initialState: NavIndex = buildInitialState();
 export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
   switch (action.type) {
     case ActionTypes.UpdateNavIndex:
-      const newPages = {};
+      const newPages: NavIndex = {};
       const payload = action.payload;
 
       for (const node of payload.children) {

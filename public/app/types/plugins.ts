@@ -1,12 +1,10 @@
-import { AngularPanelPlugin, ReactPanelPlugin, PluginMetaInfo, PluginMeta } from '@grafana/ui/src/types';
+import { AngularPanelPlugin, PanelPlugin, PluginMeta } from '@grafana/ui/src/types';
 
-export interface PanelPlugin extends PluginMeta {
+export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
-  baseUrl: string;
-  info: PluginMetaInfo;
   sort: number;
   angularPlugin: AngularPanelPlugin | null;
-  reactPlugin: ReactPanelPlugin | null;
+  vizPlugin: PanelPlugin | null;
   hasBeenImported?: boolean;
   dataFormats: PanelDataFormat[];
 }

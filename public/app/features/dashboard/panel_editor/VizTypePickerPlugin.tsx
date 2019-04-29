@@ -1,10 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
-import { PanelPlugin } from 'app/types/plugins';
+import { PanelPluginMeta } from 'app/types/plugins';
 
 interface Props {
   isCurrent: boolean;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   onClick: () => void;
 }
 
