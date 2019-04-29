@@ -1,7 +1,7 @@
 import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
 import { SeriesData, FieldType } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
-import { StatID, getStatsCalculators, calculateStats } from '../statsCalculator';
+import { StatID, statsCalculators, calculateStats } from '../statsCalculator';
 import { SeriesDataMatcherConfig, seriesDataMatchers } from '../matchers/matchers';
 import { alwaysSeriesMatcher } from '../matchers/predicates';
 
@@ -26,7 +26,7 @@ const calcTransformer: SeriesTransformer<CalcOptions> = {
     const matcher = options.matcher ? seriesDataMatchers.get(options.matcher.id) : alwaysSeriesMatcher;
     const matcherOptions = options.matcher ? options.matcher.options : {};
 
-    const calculators = getStatsCalculators(options.stats);
+    const calculators = statsCalculators.list(options.stats);
     const stats = calculators.map(c => c.id);
     const fields = [
       {

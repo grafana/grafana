@@ -11,7 +11,7 @@ import {
   SeriesData,
   InterpolateFunction,
 } from '../../types';
-import { getStatsCalculators, calculateStats } from '../../utils/statsCalculator';
+import { statsCalculators, calculateStats, StatID } from '../../utils/statsCalculator';
 import { getDisplayProcessor } from '../../utils/displayValue';
 export { SingleStatValueEditor } from './SingleStatValueEditor';
 
@@ -124,7 +124,8 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     // avg -> mean, current -> last, total -> sum
     const { valueOptions } = options;
     if (valueOptions && valueOptions.stat) {
-      valueOptions.stat = getStatsCalculators([valueOptions.stat]).map(s => s.id)[0];
+      const calc = statsCalculators.get(valueOptions.stat);
+      valueOptions.stat = calc ? calc.id : StatID.last;
     }
   }
   return options;

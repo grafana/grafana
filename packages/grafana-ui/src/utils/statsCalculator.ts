@@ -2,6 +2,7 @@
 import isNumber from 'lodash/isNumber';
 
 import { SeriesData, NullValueMode } from '../types/index';
+import { Extension, ExtensionRegistry } from './extensions';
 
 export enum StatID {
   sum = 'sum',
@@ -31,36 +32,10 @@ export interface FieldStats {
 // Internal function
 type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldStats;
 
-export interface StatCalculatorInfo {
-  id: string;
-  name: string;
-  description: string;
-  alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
-
-  // Internal details
+export interface StatCalculatorInfo extends Extension<any> {
   emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
   calculator?: StatCalculator;
-}
-
-/**
- * @param ids list of stat names or null to get all of them
- */
-export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
-  if (ids === null || ids === undefined) {
-    if (!hasBuiltIndex) {
-      getById(StatID.mean);
-    }
-    return listOfStats;
-  }
-
-  return ids.reduce((list, id) => {
-    const stat = getById(id);
-    if (stat) {
-      list.push(stat);
-    }
-    return list;
-  }, new Array<StatCalculatorInfo>());
 }
 
 export interface CalculateStatsOptions {
@@ -80,7 +55,7 @@ export function calculateStats(options: CalculateStatsOptions): FieldStats {
     return {};
   }
 
-  const queue = getStatsCalculators(stats);
+  const queue = statsCalculators.list(stats);
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
@@ -119,108 +94,79 @@ export function calculateStats(options: CalculateStatsOptions): FieldStats {
 //
 // ------------------------------------------------------------------------------
 
-// private registry of all stats
-interface TableStatIndex {
-  [id: string]: StatCalculatorInfo;
-}
-
-const listOfStats: StatCalculatorInfo[] = [];
-const index: TableStatIndex = {};
-let hasBuiltIndex = false;
-
-function getById(id: string): StatCalculatorInfo | undefined {
-  if (!hasBuiltIndex) {
-    [
-      {
-        id: StatID.last,
-        name: 'Last',
-        description: 'Last Value (current)',
-        standard: true,
-        alias: 'current',
-        calculator: calculateLast,
-      },
-      { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
-      { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
-      { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
-      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
-      {
-        id: StatID.sum,
-        name: 'Total',
-        description: 'The sum of all values',
-        emptyInputResult: 0,
-        standard: true,
-        alias: 'total',
-      },
-      {
-        id: StatID.count,
-        name: 'Count',
-        description: 'Number of values in response',
-        emptyInputResult: 0,
-        standard: true,
-      },
-      {
-        id: StatID.range,
-        name: 'Range',
-        description: 'Difference between minimum and maximum values',
-        standard: true,
-      },
-      {
-        id: StatID.delta,
-        name: 'Delta',
-        description: 'Cumulative change in value',
-        standard: true,
-      },
-      {
-        id: StatID.step,
-        name: 'Step',
-        description: 'Minimum interval between values',
-        standard: true,
-      },
-      {
-        id: StatID.diff,
-        name: 'Difference',
-        description: 'Difference between first and last values',
-        standard: true,
-      },
-      {
-        id: StatID.logmin,
-        name: 'Min (above zero)',
-        description: 'Used for log min scale',
-        standard: true,
-      },
-      {
-        id: StatID.changeCount,
-        name: 'Change Count',
-        description: 'Number of times the value changes',
-        standard: false,
-        calculator: calculateChangeCount,
-      },
-      {
-        id: StatID.distinctCount,
-        name: 'Distinct Count',
-        description: 'Number of distinct values',
-        standard: false,
-        calculator: calculateDistinctCount,
-      },
-    ].forEach(info => {
-      const { id, alias } = info;
-      if (index.hasOwnProperty(id)) {
-        console.warn('Duplicate Stat', id, info, index);
-      }
-      index[id] = info;
-      if (alias) {
-        if (index.hasOwnProperty(alias)) {
-          console.warn('Duplicate Stat (alias)', alias, info, index);
-        }
-        index[alias] = info;
-      }
-      listOfStats.push(info);
-    });
-    hasBuiltIndex = true;
-  }
-
-  return index[id];
-}
+export const statsCalculators = new ExtensionRegistry<StatCalculatorInfo>([
+  {
+    id: StatID.last,
+    name: 'Last',
+    description: 'Last Value (current)',
+    standard: true,
+    aliasIds: ['current'],
+    calculator: calculateLast,
+  },
+  { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
+  { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
+  { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
+  { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
+  {
+    id: StatID.sum,
+    name: 'Total',
+    description: 'The sum of all values',
+    emptyInputResult: 0,
+    standard: true,
+    aliasIds: ['total'],
+  },
+  {
+    id: StatID.count,
+    name: 'Count',
+    description: 'Number of values in response',
+    emptyInputResult: 0,
+    standard: true,
+  },
+  {
+    id: StatID.range,
+    name: 'Range',
+    description: 'Difference between minimum and maximum values',
+    standard: true,
+  },
+  {
+    id: StatID.delta,
+    name: 'Delta',
+    description: 'Cumulative change in value',
+    standard: true,
+  },
+  {
+    id: StatID.step,
+    name: 'Step',
+    description: 'Minimum interval between values',
+    standard: true,
+  },
+  {
+    id: StatID.diff,
+    name: 'Difference',
+    description: 'Difference between first and last values',
+    standard: true,
+  },
+  {
+    id: StatID.logmin,
+    name: 'Min (above zero)',
+    description: 'Used for log min scale',
+    standard: true,
+  },
+  {
+    id: StatID.changeCount,
+    name: 'Change Count',
+    description: 'Number of times the value changes',
+    standard: false,
+    calculator: calculateChangeCount,
+  },
+  {
+    id: StatID.distinctCount,
+    name: 'Distinct Count',
+    description: 'Number of distinct values',
+    standard: false,
+    calculator: calculateDistinctCount,
+  },
+]);
 
 function standardStatsStat(
   data: SeriesData,

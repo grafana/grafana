@@ -1,4 +1,4 @@
-import { getStatsCalculators, StatID, calculateStats } from './statsCalculator';
+import { statsCalculators, StatID, calculateStats } from './statsCalculator';
 
 import _ from 'lodash';
 
@@ -25,13 +25,13 @@ describe('Stats Calculators', () => {
       // StatID.allIsZero,
       // StatID.allIsNull,
     ];
-    const stats = getStatsCalculators(names);
+    const stats = statsCalculators.list(names);
     expect(stats.length).toBe(names.length);
   });
 
   it('should fail to load unknown stats', () => {
     const names = ['not a stat', StatID.max, StatID.min, 'also not a stat'];
-    const stats = getStatsCalculators(names);
+    const stats = statsCalculators.list(names);
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
