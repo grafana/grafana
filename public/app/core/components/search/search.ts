@@ -120,7 +120,7 @@ export class SearchCtrl {
     }, 100);
   }
 
-  onKeyDown(evt) {
+  onKeyDown(evt: KeyboardEvent) {
     if (evt.keyCode === 27) {
       this.closeSearch();
     }
@@ -298,7 +298,10 @@ export class SearchCtrl {
     this.moveSelection(0);
   }
 
-  private getFlattenedResultForNavigation() {
+  private getFlattenedResultForNavigation(): Array<{
+    folderIndex: number;
+    dashboardIndex: number;
+  }> {
     let folderIndex = 0;
 
     return _.flatMap(this.results, s => {
