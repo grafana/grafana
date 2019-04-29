@@ -14,6 +14,7 @@ import {
   toLegacyResponseData,
   SeriesFieldProcessor,
   IndexedField,
+  FieldType,
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -386,7 +387,7 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
     }
 
     for (let j = 0; j < series.rows.length; j++) {
-      rows.push(processLogSeriesRow(logSeriesFieldProcessor, j, uniqueLabels));
+      rows.push(processLogSeriesRow(series, logSeriesFieldProcessor, j, uniqueLabels));
     }
   }
 
@@ -422,15 +423,15 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
 }
 
 export function processLogSeriesRow(
+  series: SeriesData,
   logsSeriesFieldProcessor: LogsSeriesFieldProcessor,
   rowIndex: number,
   uniqueLabels: Labels
 ): LogRowModel {
-  const series = logsSeriesFieldProcessor.series;
   const row = series.rows[rowIndex];
-  const timeFieldIndex = logsSeriesFieldProcessor.getFirstTimeField().index;
+  const timeFieldIndex = logsSeriesFieldProcessor.getFirstFieldOfType(FieldType.time).index;
   const ts = row[timeFieldIndex];
-  const stringFieldIndex = logsSeriesFieldProcessor.getFirstStringField().index;
+  const stringFieldIndex = logsSeriesFieldProcessor.getFirstFieldOfType(FieldType.string).index;
   const message = row[stringFieldIndex];
   const time = moment(ts);
   const timeEpochMs = time.valueOf();
@@ -473,7 +474,7 @@ export class LogsSeriesFieldProcessor extends SeriesFieldProcessor {
   }
 
   private findLogLevelField() {
-    const fields = [...this.getStringFields(), ...this.getOtherFields()];
+    const fields = [...this.getFields(FieldType.string), ...this.getFields(FieldType.other)];
     for (let n = 0; n < fields.length; n++) {
       const field = fields[n];
       if (field.name.toLowerCase() === 'loglevel' || field.name.toLowerCase() === 'level') {
@@ -488,10 +489,12 @@ export class LogsSeriesFieldProcessor extends SeriesFieldProcessor {
   }
 
   getLogLevelField(): IndexedField | null {
-    return this.hasLogLevelField() ? { ...this.fields[this.logLevelFieldIndex], index: this.logLevelFieldIndex } : null;
+    return this.hasLogLevelField()
+      ? { ...this.getFieldByIndex(this.logLevelFieldIndex), index: this.logLevelFieldIndex }
+      : null;
   }
 
   hasValidFieldsForLogs(): boolean {
-    return this.hasTimeField() && this.hasStringField();
+    return this.hasFieldOfType(FieldType.time) && this.hasFieldOfType(FieldType.string);
   }
 }

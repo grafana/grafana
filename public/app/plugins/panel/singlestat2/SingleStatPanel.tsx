@@ -18,6 +18,7 @@ import {
   NullValueMode,
   calculateStats,
   SeriesFieldProcessor,
+  FieldType,
 } from '@grafana/ui';
 
 interface SingleStatDisplay {
@@ -51,8 +52,8 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     const values: SingleStatDisplay[] = [];
     for (const series of data.series) {
       const seriesFieldsProcessor = new SeriesFieldProcessor(series);
-      const timeColumn = sparkline.show ? seriesFieldsProcessor.getFirstTimeField() : null;
-      const numberFields = seriesFieldsProcessor.getNumberFields();
+      const timeColumn = sparkline.show ? seriesFieldsProcessor.getFirstFieldOfType(FieldType.time) : null;
+      const numberFields = seriesFieldsProcessor.getFields(FieldType.number);
 
       for (let i = 0; i < numberFields.length; i++) {
         const field = numberFields[i];

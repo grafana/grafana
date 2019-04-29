@@ -9,6 +9,7 @@ import {
   DisplayValue,
   PanelData,
   SeriesFieldProcessor,
+  FieldType,
 } from '@grafana/ui';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
@@ -27,12 +28,12 @@ export const getGraphSeriesModel = (
 
   for (const series of data.series) {
     const seriesFieldsProcessor = new SeriesFieldProcessor(series);
-    const timeColumn = seriesFieldsProcessor.getFirstStringField();
+    const timeColumn = seriesFieldsProcessor.getFirstFieldOfType(FieldType.time);
     if (!timeColumn) {
       continue;
     }
 
-    const numberFields = seriesFieldsProcessor.getNumberFields();
+    const numberFields = seriesFieldsProcessor.getFields(FieldType.number);
     for (let i = 0; i < numberFields.length; i++) {
       const field = numberFields[i];
       // Use external calculator just to make sure it works :)

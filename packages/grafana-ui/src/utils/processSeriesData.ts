@@ -208,24 +208,21 @@ export interface IndexedField extends Field {
 }
 
 export class SeriesFieldProcessor {
-  series: SeriesData;
-  fields: Field[];
-  fieldIndexByName: { [key: string]: number };
-  timeFieldIndices: number[];
-  stringFieldIndices: number[];
-  numberFieldIndices: number[];
-  booleanFieldIndices: number[];
-  otherFieldIndices: number[];
+  private series: SeriesData;
+  private fields: Field[];
+  private fieldIndexByName: { [key: string]: number };
+  private fieldIndexByType: { [key: string]: number[] };
 
   constructor(series: SeriesData) {
     this.series = series;
     this.fields = [];
     this.fieldIndexByName = {};
-    this.timeFieldIndices = [];
-    this.stringFieldIndices = [];
-    this.numberFieldIndices = [];
-    this.booleanFieldIndices = [];
-    this.otherFieldIndices = [];
+    this.fieldIndexByType = {};
+    this.fieldIndexByType[FieldType.time] = [];
+    this.fieldIndexByType[FieldType.string] = [];
+    this.fieldIndexByType[FieldType.number] = [];
+    this.fieldIndexByType[FieldType.boolean] = [];
+    this.fieldIndexByType[FieldType.other] = [];
     this.process();
   }
 
@@ -237,34 +234,18 @@ export class SeriesFieldProcessor {
   }
 
   private processField(field: Field, index: number) {
-    switch (field.type) {
-      case FieldType.time:
-        this.fields.push(field);
-        this.fieldIndexByName[field.name] = index;
-        this.timeFieldIndices.push(index);
-        return;
-      case FieldType.string:
-        this.fields.push(field);
-        this.fieldIndexByName[field.name] = index;
-        this.stringFieldIndices.push(index);
-        return;
-      case FieldType.number:
-        this.fields.push(field);
-        this.fieldIndexByName[field.name] = index;
-        this.numberFieldIndices.push(index);
-        return;
-      case FieldType.boolean:
-        this.fields.push(field);
-        this.fieldIndexByName[field.name] = index;
-        this.booleanFieldIndices.push(index);
-        return;
+    if (field.type !== undefined && field.type !== FieldType.other) {
+      this.fields.push(field);
+      this.fieldIndexByName[field.name] = index;
+      this.fieldIndexByType[field.type].push(index);
+      return;
     }
 
     field = this.guessFieldType(field, index);
     if (field.type === FieldType.other) {
       this.fields.push(field);
       this.fieldIndexByName[field.name] = index;
-      this.otherFieldIndices.push(index);
+      this.fieldIndexByType[field.type].push(index);
     } else {
       this.processField(field, index);
     }
@@ -281,110 +262,30 @@ export class SeriesFieldProcessor {
     return field;
   }
 
-  hasTimeField(): boolean {
-    return this.timeFieldIndices.length > 0;
-  }
-
-  hasStringField(): boolean {
-    return this.stringFieldIndices.length > 0;
-  }
-
-  hasNumberField(): boolean {
-    return this.numberFieldIndices.length > 0;
-  }
-
-  hasBooleanField(): boolean {
-    return this.booleanFieldIndices.length > 0;
+  hasFieldOfType(type: FieldType): boolean {
+    return this.fieldIndexByType[type] && this.fieldIndexByType[type].length > 0;
   }
 
   getFields(type?: FieldType): IndexedField[] {
-    switch (type) {
-      case FieldType.time:
-        return this.getTimeFields();
-      case FieldType.string:
-        return this.getStringFields();
-      case FieldType.number:
-        return this.getNumberFields();
-      case FieldType.boolean:
-        return this.getBooleanFields();
-      case FieldType.other:
-        return this.getOtherFields();
-      default:
-        return this.fields.map((field, index) => {
-          return {
-            ...field,
-            index,
-          };
-        });
+    const fields: IndexedField[] = [];
+    for (let index = 0; index < this.fields.length; index++) {
+      const field = this.fields[index];
+
+      if (!type || field.type === type) {
+        fields.push({ ...field, index });
+      }
     }
+
+    return fields;
   }
 
-  getTimeFields(): IndexedField[] {
-    return this.timeFieldIndices.map(index => {
-      return {
-        ...this.fields[index],
-        index,
-      };
-    });
+  getFieldByIndex(index: number): IndexedField | null {
+    return this.fields[0] ? { ...this.fields[0], index } : null;
   }
 
-  getStringFields(): IndexedField[] {
-    return this.stringFieldIndices.map(index => {
-      return {
-        ...this.fields[index],
-        index,
-      };
-    });
-  }
-
-  getNumberFields(): IndexedField[] {
-    return this.numberFieldIndices.map(index => {
-      return {
-        ...this.fields[index],
-        index,
-      };
-    });
-  }
-
-  getBooleanFields(): IndexedField[] {
-    return this.booleanFieldIndices.map(index => {
-      return {
-        ...this.fields[index],
-        index,
-      };
-    });
-  }
-
-  getOtherFields(): IndexedField[] {
-    return this.otherFieldIndices.map(index => {
-      return {
-        ...this.fields[index],
-        index,
-      };
-    });
-  }
-
-  getFirstTimeField(): IndexedField | null {
-    return this.timeFieldIndices.length > 0
-      ? { ...this.fields[this.timeFieldIndices[0]], index: this.timeFieldIndices[0] }
-      : null;
-  }
-
-  getFirstStringField(): IndexedField | null {
-    return this.stringFieldIndices.length > 0
-      ? { ...this.fields[this.stringFieldIndices[0]], index: this.stringFieldIndices[0] }
-      : null;
-  }
-
-  getFirstNumberField(): IndexedField | null {
-    return this.numberFieldIndices.length > 0
-      ? { ...this.fields[this.numberFieldIndices[0]], index: this.numberFieldIndices[0] }
-      : null;
-  }
-
-  getFirstBooleanField(): IndexedField | null {
-    return this.booleanFieldIndices.length > 0
-      ? { ...this.fields[this.booleanFieldIndices[0]], index: this.booleanFieldIndices[0] }
+  getFirstFieldOfType(type: FieldType): IndexedField | null {
+    return this.hasFieldOfType(type)
+      ? { ...this.fields[this.fieldIndexByType[type][0]], index: this.fieldIndexByType[type][0] }
       : null;
   }
 
