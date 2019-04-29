@@ -68,6 +68,24 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
   }
 }
 
+export interface DataSourcePluginMeta extends PluginMeta {
+  builtIn?: boolean; // Is this for all
+  metrics?: boolean;
+  tables?: boolean;
+  logs?: boolean;
+  explore?: boolean;
+  annotations?: boolean;
+  mixed?: boolean;
+  hasQueryHelp?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
+}
+
+interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
+}
+
 export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
   ConfigCtrl?: any;
@@ -137,7 +155,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    * we attach the components to this instance for easy access
    */
   components?: DataSourcePluginComponents;
-  meta?: PluginMeta;
+
+  /**
+   * static information about the datasource
+   */
+  meta?: DataSourcePluginMeta;
 }
 
 export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
@@ -340,7 +362,7 @@ export interface DataSourceInstanceSettings {
   id: number;
   type: string;
   name: string;
-  meta: PluginMeta;
+  meta: DataSourcePluginMeta;
   url?: string;
   jsonData: { [str: string]: any };
   username?: string;
@@ -359,6 +381,6 @@ export interface DataSourceInstanceSettings {
 export interface DataSourceSelectItem {
   name: string;
   value: string | null;
-  meta: PluginMeta;
+  meta: DataSourcePluginMeta;
   sort: string;
 }

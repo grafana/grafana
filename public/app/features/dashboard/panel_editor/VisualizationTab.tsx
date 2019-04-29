@@ -16,9 +16,9 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 // Types
 import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
-import { PanelPluginMeta } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { PanelPluginMeta } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;

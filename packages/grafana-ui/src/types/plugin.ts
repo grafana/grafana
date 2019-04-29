@@ -24,23 +24,6 @@ export interface PluginMeta {
   // Filled in by the backend
   jsonData?: { [str: string]: any };
   enabled?: boolean;
-
-  // Datasource-specific
-  builtIn?: boolean;
-  metrics?: boolean;
-  tables?: boolean;
-  logs?: boolean;
-  explore?: boolean;
-  annotations?: boolean;
-  mixed?: boolean;
-  hasQueryHelp?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
-}
-
-interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
 }
 
 export enum PluginIncludeType {
