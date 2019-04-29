@@ -1,18 +1,4 @@
-import { AngularPanelPlugin, PanelPlugin, PluginMeta } from '@grafana/ui/src/types';
-
-export interface PanelPluginMeta extends PluginMeta {
-  hideFromList?: boolean;
-  sort: number;
-  angularPlugin: AngularPanelPlugin | null;
-  vizPlugin: PanelPlugin | null;
-  hasBeenImported?: boolean;
-  dataFormats: PanelDataFormat[];
-}
-
-export enum PanelDataFormat {
-  Table = 'table',
-  TimeSeries = 'time_series',
-}
+import { PluginMeta } from '@grafana/ui';
 
 /**
  * Values we don't want in the public API

@@ -16,8 +16,7 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelPluginMeta } from 'app/types';
-import { LoadingState, PanelData } from '@grafana/ui';
+import { PanelPluginMeta, LoadingState, PanelData } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
 
 import templateSrv from 'app/features/templating/template_srv';

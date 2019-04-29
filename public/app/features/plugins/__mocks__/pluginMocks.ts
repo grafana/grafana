@@ -1,5 +1,5 @@
-import { Plugin, PanelPluginMeta, PanelDataFormat } from 'app/types';
-import { PluginType } from '@grafana/ui';
+import { Plugin } from 'app/types';
+import { PanelPluginMeta, PluginType, PanelDataFormat } from '@grafana/ui';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
   const plugins = [];
