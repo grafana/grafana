@@ -42,7 +42,7 @@ export default class StackdriverMetricFindQuery {
 
   async handleServiceQuery() {
     const metricDescriptors = await this.datasource.getMetricTypes(this.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors);
+    const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
       text: s.serviceShortName,
       value: s.service,

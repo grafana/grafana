@@ -38,7 +38,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
     <EmptyListCTA
       model={
         Object {
-          "buttonIcon": "fa fa-plus",
+          "buttonIcon": "gicon gicon-apikeys",
           "buttonLink": "#",
           "buttonTitle": " New API Key",
           "onClick": [Function],

@@ -89,10 +89,6 @@ class PrometheusQueryCtrl extends QueryCtrl {
     }).join('&');
     this.linkToPrometheus = this.datasource.directUrl + '/graph?' + args;
   }
-
-  getCollapsedText() {
-    return this.target.expr;
-  }
 }
 
 export { PrometheusQueryCtrl };

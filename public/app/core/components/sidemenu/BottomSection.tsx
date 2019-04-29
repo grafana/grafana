@@ -6,13 +6,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
 
 export default function BottomSection() {
-  const navTree = _.cloneDeep(config.bootData.navTree);
-  const bottomNav = _.filter(navTree, item => item.hideFromMenu);
+  const navTree: any = _.cloneDeep(config.bootData.navTree);
+  const bottomNav: any = _.filter(navTree, item => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
   const user = contextSrv.user;
 
   if (user && user.orgCount > 1) {
-    const profileNode = _.find(bottomNav, { id: 'profile' });
+    const profileNode: any = _.find(bottomNav, { id: 'profile' });
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
     }

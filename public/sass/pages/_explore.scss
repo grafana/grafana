@@ -31,11 +31,15 @@
   flex-flow: row wrap;
   justify-content: flex-start;
   height: auto;
-  padding: 0 $dashboard-padding;
+  padding: 0 $dashboard-padding 0 50px;
   border-bottom: 1px solid #0000;
   transition-duration: 0.35s;
   transition-timing-function: ease-in-out;
   transition-property: box-shadow, border-bottom;
+
+  @include media-breakpoint-up(md) {
+    padding-left: $dashboard-padding;
+  }
 }
 
 .explore-toolbar-item {
@@ -65,11 +69,6 @@
   font-size: 18px;
   min-height: 55px;
   line-height: 55px;
-  justify-content: space-between;
-  margin-left: $space-xl;
-}
-
-.explore-toolbar-header {
   justify-content: space-between;
   align-items: center;
 }
@@ -126,24 +125,10 @@
   }
 }
 
-@media only screen and (max-width: 803px) {
-  .btn-title {
-    display: none;
-  }
-}
-
 @media only screen and (max-width: 702px) {
   .explore-toolbar-content-item:first-child {
     padding-left: 2px;
     margin-right: 0;
-  }
-}
-
-@media only screen and (max-width: 544px) {
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      margin-left: $dashboard-padding;
-    }
   }
 }
 

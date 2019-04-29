@@ -20,6 +20,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
         "display": "flex",
         "fontSize": "27.27px",
         "height": "300px",
+        "paddingLeft": "10px",
         "width": "60px",
       }
     }
@@ -33,7 +34,6 @@ exports[`BarGauge Render with basic options should render 1`] = `
         "borderRadius": "3px",
         "borderRight": "2px solid #73BF69",
         "height": "300px",
-        "marginRight": "10px",
         "transition": "width 1s",
         "width": "60px",
       }

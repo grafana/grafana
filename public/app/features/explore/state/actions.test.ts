@@ -35,7 +35,12 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const eventBridge = {} as Emitter;
   const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const range = { from: 'now', to: 'now' };
-  const urlState: ExploreUrlState = { datasource: 'some-datasource', queries: [], range, ui };
+  const urlState: ExploreUrlState = {
+    datasource: 'some-datasource',
+    queries: [],
+    range,
+    ui,
+  };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
   const initialState = {
@@ -50,6 +55,10 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         queries: [] as DataQuery[],
         range,
         ui,
+        refreshInterval: {
+          label: 'Off',
+          value: 0,
+        },
       },
     },
   };

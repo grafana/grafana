@@ -44,7 +44,9 @@ export default class ResponseParser {
       });
     });
 
+    // @ts-ignore problems with typings for this _.map only accepts [] but this needs to be object
     return _.map(res, value => {
+      // @ts-ignore
       return { text: value.toString() };
     });
   }

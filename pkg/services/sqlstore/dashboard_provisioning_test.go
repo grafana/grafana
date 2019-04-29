@@ -81,7 +81,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(query.Result, ShouldBeFalse)
 			})
 
-			Convey("Deleteing folder should delete provision meta data", func() {
+			Convey("Deleting folder should delete provision meta data", func() {
 				deleteCmd := &models.DeleteDashboardCommand{
 					Id:    folderCmd.Result.Id,
 					OrgId: 1,
@@ -90,6 +90,20 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(DeleteDashboard(deleteCmd), ShouldBeNil)
 
 				query := &models.IsDashboardProvisionedQuery{DashboardId: cmd.Result.Id}
+
+				err = GetProvisionedDataByDashboardId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeFalse)
+			})
+
+			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
+				unprovisionCmd := &models.UnprovisionDashboardCommand{
+					Id: dashId,
+				}
+
+				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+
+				query := &models.IsDashboardProvisionedQuery{DashboardId: dashId}
 
 				err = GetProvisionedDataByDashboardId(query)
 				So(err, ShouldBeNil)

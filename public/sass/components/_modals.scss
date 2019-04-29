@@ -144,16 +144,19 @@
   .share-modal-big-icon {
     margin-bottom: 10px;
     margin-right: $space-xl;
-    .fa,
-    .icon-gf {
+    .fa {
       font-size: 50px;
+    }
+    .gicon {
+      width: 48px;
+      height: 48px;
     }
   }
 
   .share-modal-info-text {
     margin-top: 5px;
     strong {
-      color: $headings-color;
+      color: $text-color-emphasis;
       font-weight: 500;
     }
   }

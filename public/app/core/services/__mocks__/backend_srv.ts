@@ -4,6 +4,7 @@ const backendSrv = {
   getDashboardByUid: jest.fn(),
   getFolderByUid: jest.fn(),
   post: jest.fn(),
+  resolveCancelerIfExists: jest.fn(),
 };
 
 export function getBackendSrv() {
