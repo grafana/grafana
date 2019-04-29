@@ -5,7 +5,7 @@ import isBoolean from 'lodash/isBoolean';
 import moment from 'moment';
 
 // Types
-import { SeriesData, Field, TimeSeries, FieldType, TableData, IndexedField } from '../types/index';
+import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
 
 function convertTableToSeriesData(table: TableData): SeriesData {
   return {
@@ -201,6 +201,10 @@ export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = f
     return copy;
   }
   return data;
+}
+
+export interface IndexedField extends Field {
+  index: number;
 }
 
 export class SeriesFieldProcessor {

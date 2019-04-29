@@ -47,10 +47,6 @@ export interface Field {
   dateFormat?: string; // Source data format
 }
 
-export interface IndexedField extends Field {
-  index: number;
-}
-
 export interface Labels {
   [key: string]: string;
 }
