@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -36,7 +35,7 @@ const (
 
 var (
 	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
 func (s AlertStateType) IsValid() bool {

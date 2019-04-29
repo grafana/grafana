@@ -158,6 +158,12 @@ describe('Format value', () => {
     expect(instance(value).text).toEqual('0.02');
   });
 
+  it('should use override decimals', () => {
+    const value = 100030303;
+    const instance = getDisplayProcessor({ decimals: 2, unit: 'bytes' });
+    expect(instance(value).text).toEqual('95.40 MiB');
+  });
+
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
       { id: 0, operator: '', text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
@@ -182,5 +188,6 @@ describe('getDecimalsForValue()', () => {
     expect(getDecimalsForValue(20000)).toEqual({ decimals: 0, scaledDecimals: -2 });
     expect(getDecimalsForValue(200000)).toEqual({ decimals: 0, scaledDecimals: -3 });
     expect(getDecimalsForValue(200000000)).toEqual({ decimals: 0, scaledDecimals: -6 });
+    expect(getDecimalsForValue(100, 2)).toEqual({ decimals: 2, scaledDecimals: null });
   });
 });

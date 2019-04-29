@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -149,7 +148,7 @@ export class ManageDashboardsCtrl {
     let selectedDashboards = 0;
 
     for (const section of this.sections) {
-      selectedDashboards += _.filter(section.items, { checked: true }).length;
+      selectedDashboards += _.filter(section.items, { checked: true } as any).length;
     }
 
     const selectedFolders = _.filter(this.sections, { checked: true }).length;
@@ -167,7 +166,7 @@ export class ManageDashboardsCtrl {
       if (section.checked && section.id !== 0) {
         selectedDashboards.folderUids.push(section.uid);
       } else {
-        const selected = _.filter(section.items, { checked: true });
+        const selected = _.filter(section.items, { checked: true } as any);
         selectedDashboards.dashboardUids.push(..._.map(selected, 'uid'));
       }
     }
@@ -223,7 +222,7 @@ export class ManageDashboardsCtrl {
     const selectedDashboards = [];
 
     for (const section of this.sections) {
-      const selected = _.filter(section.items, { checked: true });
+      const selected = _.filter(section.items, { checked: true } as any);
       selectedDashboards.push(..._.map(selected, 'uid'));
     }
 

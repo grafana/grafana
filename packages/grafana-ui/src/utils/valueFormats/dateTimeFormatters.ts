@@ -1,4 +1,5 @@
-import { toFixed, toFixedScaled, DecimalCount, ValueFormatter } from './valueFormats';
+import { toFixed, toFixedScaled } from './valueFormats';
+import { DecimalCount } from '../../types';
 import moment from 'moment';
 
 interface IntervalsInSeconds {

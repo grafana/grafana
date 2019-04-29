@@ -102,7 +102,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -162,7 +162,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -273,7 +273,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -331,7 +331,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -400,7 +400,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -470,7 +470,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -529,7 +529,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -596,7 +596,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
+				CallDeleteDashboardBySlug(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -650,7 +650,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		role := m.ROLE_EDITOR
 
 		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-			CallDeleteDashboard(sc)
+			CallDeleteDashboardBySlug(sc)
 
 			Convey("Should result in 412 Precondition failed", func() {
 				So(sc.resp.Code, ShouldEqual, 412)
@@ -897,6 +897,50 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			So(dto.Message, ShouldEqual, "Restored from version 1")
 		})
 	})
+
+	Convey("Given provisioned dashboard", t, func() {
+
+		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+			query.Result = []*m.Dashboard{{}}
+			return nil
+		})
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = &m.Dashboard{Id: 1}
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
+			query.Result = true
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			query.Result = []*m.DashboardAclInfoDTO{
+				{OrgId: TestOrgID, DashboardId: 1, UserId: TestUserID, Permission: m.PERMISSION_EDIT},
+			}
+			return nil
+		})
+
+		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/dash", "/api/dashboards/db/:slug", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			CallDeleteDashboardBySlug(sc)
+
+			Convey("Should result in 400", func() {
+				So(sc.resp.Code, ShouldEqual, 400)
+				result := sc.ToJSON()
+				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
+			})
+		})
+
+		loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			CallDeleteDashboardByUID(sc)
+
+			Convey("Should result in 400", func() {
+				So(sc.resp.Code, ShouldEqual, 400)
+				result := sc.ToJSON()
+				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
+			})
+		})
+	})
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
@@ -936,12 +980,12 @@ func CallGetDashboardVersions(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func CallDeleteDashboard(sc *scenarioContext) {
+func CallDeleteDashboardBySlug(sc *scenarioContext) {
 	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
-	sc.handlerFunc = DeleteDashboard
+	sc.handlerFunc = DeleteDashboardBySlug
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 }
 

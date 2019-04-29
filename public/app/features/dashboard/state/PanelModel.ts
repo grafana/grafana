@@ -7,8 +7,10 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
 import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 import config from 'app/core/config';
+
+import { PanelQueryRunner } from './PanelQueryRunner';
 
 export interface GridPos {
   x: number;
@@ -25,6 +27,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
+  queryRunner: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -114,7 +117,8 @@ export class PanelModel {
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean };
-  plugin?: PanelPlugin;
+  plugin?: PanelPluginMeta;
+  private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();
@@ -245,23 +249,23 @@ export class PanelModel {
     });
   }
 
-  private getPluginVersion(plugin: PanelPlugin): string {
+  private getPluginVersion(plugin: PanelPluginMeta): string {
     return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  pluginLoaded(plugin: PanelPluginMeta) {
     this.plugin = plugin;
 
-    if (plugin.reactPlugin && plugin.reactPlugin.onPanelMigration) {
+    if (plugin.vizPlugin && plugin.vizPlugin.onPanelMigration) {
       const version = this.getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
-        this.options = plugin.reactPlugin.onPanelMigration(this);
+        this.options = plugin.vizPlugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
   }
 
-  changePlugin(newPlugin: PanelPlugin) {
+  changePlugin(newPlugin: PanelPluginMeta) {
     const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
@@ -288,7 +292,7 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const reactPanel = newPlugin.reactPlugin;
+    const reactPanel = newPlugin.vizPlugin;
 
     if (reactPanel) {
       if (reactPanel.onPanelTypeChanged) {
@@ -322,8 +326,19 @@ export class PanelModel {
     });
   }
 
+  getQueryRunner(): PanelQueryRunner {
+    if (!this.queryRunner) {
+      this.queryRunner = new PanelQueryRunner();
+    }
+    return this.queryRunner;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
+
+    if (this.queryRunner) {
+      this.queryRunner.destroy();
+    }
   }
 }

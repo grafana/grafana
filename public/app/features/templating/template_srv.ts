@@ -309,7 +309,7 @@ export class TemplateSrv {
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, (val, index) => {
+    value = _.map(value, (val: any, index: number) => {
       if (index !== 0) {
         return variable + '=' + val;
       } else {

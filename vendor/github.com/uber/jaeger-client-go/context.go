@@ -198,7 +198,7 @@ func (c SpanContext) WithBaggageItem(key, value string) SpanContext {
 // extract method, but now it returns a dummy context with only debugID filled in.
 //
 // See JaegerDebugHeader in constants.go
-// See textMapPropagator#Extract
+// See TextMapPropagator#Extract
 func (c *SpanContext) isDebugIDContainerOnly() bool {
 	return !c.traceID.IsValid() && c.debugID != ""
 }

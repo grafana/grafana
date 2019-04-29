@@ -1,15 +1,25 @@
 import { ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries, SeriesData } from './data';
+import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
+import { PanelData } from './panel';
 
-export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
+export interface DataSourcePluginOptionsEditorProps<TOptions> {
+  options: TOptions;
+  onOptionsChange: (options: TOptions) => void;
+}
+export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   DataSourceClass: DataSourceConstructor<TQuery>;
-  components: DataSourcePluginComponents<TQuery>;
+  components: DataSourcePluginComponents<TOptions, TQuery>;
 
   constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
     this.DataSourceClass = DataSourceClass;
     this.components = {};
+  }
+
+  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+    this.components.ConfigEditor = editor;
+    return this;
   }
 
   setConfigCtrl(ConfigCtrl: any) {
@@ -54,10 +64,11 @@ export class DataSourcePlugin<TQuery extends DataQuery = DataQuery> {
     this.components.ExploreQueryField = exports.ExploreQueryField;
     this.components.ExploreStartPage = exports.ExploreStartPage;
     this.components.QueryEditor = exports.QueryEditor;
+    this.components.VariableQueryEditor = exports.VariableQueryEditor;
   }
 }
 
-export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery> {
+export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
   ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -65,9 +76,10 @@ export interface DataSourcePluginComponents<TQuery extends DataQuery = DataQuery
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
+  ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
 }
 
-interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
   new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
 }
 
@@ -93,7 +105,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -106,9 +118,19 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
 
   /**
+   * Convert a query to a simple text string
+   */
+  getQueryDisplayText?(query: TQuery): string;
+
+  /**
    *  Set after constructor is called by Grafana
    */
   name?: string;
+
+  /**
+   *  Set after constructor is called by Grafana
+   */
+  id?: number;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -129,8 +151,8 @@ export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends D
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  queryResponse?: SeriesData[];
-  queryError?: DataQueryError;
+  panelData: PanelData; // The current panel data
+  queryResponse?: PanelData; // data filtered to only this query.  Includes the error.
 }
 
 export enum DataSourceStatus {
@@ -160,6 +182,47 @@ export interface ExploreStartPageProps {
 export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
+
+export type DataStreamObserver = (event: DataStreamState) => void;
+
+export interface DataStreamState {
+  /**
+   * when Done or Error no more events will be processed
+   */
+  state: LoadingState;
+
+  /**
+   * Consistent key across events.
+   */
+  key: string;
+
+  /**
+   * The stream request.  The properties of this request will be examined
+   * to determine if the stream matches the original query.  If not, it
+   * will be unsubscribed.
+   */
+  request: DataQueryRequest;
+
+  /**
+   * Series data may not be known yet
+   */
+  series?: SeriesData[];
+
+  /**
+   * Error in stream (but may still be running)
+   */
+  error?: DataQueryError;
+
+  /**
+   * Optionally return only the rows that changed in this event
+   */
+  delta?: SeriesData[];
+
+  /**
+   * Stop listening to this stream
+   */
+  unsubscribe: () => void;
+}
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
@@ -209,10 +272,11 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
+export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
+  requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
-  rangeRaw: RawTimeRange;
+  timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
@@ -221,6 +285,10 @@ export interface DataQueryOptions<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+
+  // Request Timing
+  startTime: number;
+  endTime?: number;
 }
 
 export interface QueryFix {
@@ -269,6 +337,7 @@ export interface DataSourceSettings {
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
 export interface DataSourceInstanceSettings {
+  id: number;
   type: string;
   name: string;
   meta: PluginMeta;

@@ -23,18 +23,21 @@ describe('datasource_srv', () => {
     beforeEach(() => {
       config.datasources = {
         buildInDs: {
+          id: 1,
           type: 'b',
           name: 'buildIn',
           meta: { builtIn: true } as PluginMeta,
           jsonData: {},
         },
         nonBuildIn: {
+          id: 2,
           type: 'e',
           name: 'external1',
           meta: { builtIn: false } as PluginMeta,
           jsonData: {},
         },
         nonExplore: {
+          id: 3,
           type: 'e2',
           name: 'external2',
           meta: {} as PluginMeta,

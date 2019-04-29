@@ -129,7 +129,7 @@ export class AlertTabCtrl {
   }
 
   notificationAdded() {
-    const model = _.find(this.notifications, {
+    const model: any = _.find(this.notifications, {
       name: this.addNotificationSegment.value,
     });
     if (!model) {
@@ -157,8 +157,8 @@ export class AlertTabCtrl {
   removeNotification(an) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, n => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, n => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
   }
 
   initModel() {
@@ -195,7 +195,7 @@ export class AlertTabCtrl {
 
     for (const addedNotification of alert.notifications) {
       // lookup notifier type by uid
-      let model = _.find(this.notifications, { uid: addedNotification.uid });
+      let model: any = _.find(this.notifications, { uid: addedNotification.uid });
 
       // fallback to using id if uid is missing
       if (!model) {
