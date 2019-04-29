@@ -28,12 +28,13 @@ export interface TimeZone {
 
 export const parseTimeZone = (raw: string): TimeZone => {
   return {
-    raw: raw,
+    raw,
     isUtc: raw === 'utc',
   };
 };
 
 export const DefaultTimeZone = parseTimeZone('browser');
+
 export interface TimeOption {
   from: string;
   to: string;
