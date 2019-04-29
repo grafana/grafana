@@ -2,8 +2,21 @@ import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { PluginMeta } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
+
+export interface PanelPluginMeta extends PluginMeta {
+  hideFromList?: boolean;
+  sort: number;
+  angularPlugin: AngularPanelPlugin | null;
+  vizPlugin: PanelPlugin | null;
+  hasBeenImported?: boolean;
+
+  // if has somethign the query tab will show up
+  // Before 6.2 this could be table and/or series, 6.2+ supports both transparently
+  dataFormats?: any[];
+}
 
 export interface PanelData {
   state: LoadingState;

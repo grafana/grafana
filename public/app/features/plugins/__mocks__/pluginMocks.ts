@@ -1,5 +1,5 @@
-import { Plugin, PanelPluginMeta, PanelDataFormat } from 'app/types';
-import { PluginType } from '@grafana/ui';
+import { Plugin } from 'app/types';
+import { PanelPluginMeta, PluginType } from '@grafana/ui';
 
 export const getMockPlugins = (amount: number): Plugin[] => {
   const plugins = [];
@@ -40,7 +40,7 @@ export const getPanelPlugin = (options: Partial<PanelPluginMeta>): PanelPluginMe
     type: PluginType.panel,
     name: options.id,
     sort: options.sort || 1,
-    dataFormats: [PanelDataFormat.TimeSeries],
+    dataFormats: ['time_series'],
     info: {
       author: {
         name: options.id + 'name',
