@@ -9,7 +9,7 @@ import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from 'app/types';
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -97,19 +97,19 @@ describe('given dashboard with repeated panels', () => {
       id: 'graph',
       name: 'Graph',
       info: { version: '1.1.0' },
-    } as PanelPlugin;
+    } as PanelPluginMeta;
 
     config.panels['table'] = {
       id: 'table',
       name: 'Table',
       info: { version: '1.1.1' },
-    } as PanelPlugin;
+    } as PanelPluginMeta;
 
     config.panels['heatmap'] = {
       id: 'heatmap',
       name: 'Heatmap',
       info: { version: '1.1.2' },
-    } as PanelPlugin;
+    } as PanelPluginMeta;
 
     dash = new DashboardModel(dash, {});
     const exporter = new DashboardExporter(datasourceSrvStub);

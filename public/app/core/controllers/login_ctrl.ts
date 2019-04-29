@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import coreModule from '../core_module';
 import config from 'app/core/config';
+import { BackendSrv } from '../services/backend_srv';
 
 export class LoginCtrl {
   /** @ngInject */
-  constructor($scope, backendSrv, contextSrv, $location) {
+  constructor($scope: any, backendSrv: BackendSrv, $location: any) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -14,8 +15,6 @@ export class LoginCtrl {
     $scope.command = {};
     $scope.result = '';
     $scope.loggingIn = false;
-
-    contextSrv.sidemenu = false;
 
     $scope.oauth = config.oauth;
     $scope.oauthEnabled = _.keys(config.oauth).length > 0;
@@ -83,7 +82,7 @@ export class LoginCtrl {
       $scope.toGrafana();
     };
 
-    $scope.loginModeChanged = newValue => {
+    $scope.loginModeChanged = (newValue: boolean) => {
       $scope.submitBtnText = newValue ? 'Log in' : 'Sign up';
     };
 
@@ -92,7 +91,7 @@ export class LoginCtrl {
         return;
       }
 
-      backendSrv.post('/api/user/signup', $scope.formModel).then(result => {
+      backendSrv.post('/api/user/signup', $scope.formModel).then((result: any) => {
         if (result.status === 'SignUpCreated') {
           $location.path('/signup').search({ email: $scope.formModel.email });
         } else {
@@ -111,7 +110,7 @@ export class LoginCtrl {
 
       backendSrv
         .post('/login', $scope.formModel)
-        .then(result => {
+        .then((result: any) => {
           $scope.result = result;
 
           if ($scope.formModel.password !== 'admin' || $scope.ldapEnabled || $scope.authProxyEnabled) {
