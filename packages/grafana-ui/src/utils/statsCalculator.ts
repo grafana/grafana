@@ -166,6 +166,20 @@ export const statsCalculators = new ExtensionRegistry<StatCalculatorInfo>(() => 
     standard: false,
     calculator: calculateDistinctCount,
   },
+  {
+    id: StatID.allIsNull,
+    name: 'Everything Is Null',
+    description: 'everything is null',
+    standard: true,
+    excludeFromPicker: true,
+  },
+  {
+    id: StatID.allIsZero,
+    name: 'Everything Is Zero',
+    description: 'everything is zero',
+    standard: true,
+    excludeFromPicker: true,
+  },
 ]);
 
 function standardStatsStat(

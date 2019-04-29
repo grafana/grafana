@@ -54,6 +54,7 @@ export class ExtensionRegistry<T extends Extension> {
           this.register(ext);
         }
       }
+      this.sort();
       this.initalized = true;
     }
     return this.byId.get(id);
@@ -62,15 +63,16 @@ export class ExtensionRegistry<T extends Extension> {
   get(id: string): T {
     const v = this.getIfExists(id);
     if (!v) {
-      for (const key of this.byId.keys()) {
-        console.log('KEY: ', key);
-      }
       throw new Error('Undefined: ' + id);
     }
     return v;
   }
 
   selectOptions(current?: string[], filter?: (ext: T) => boolean): ExtensionSelectInfo {
+    if (!this.initalized) {
+      this.getIfExists('xxx'); // will trigger init
+    }
+
     const select = {
       options: [],
       current: [],
@@ -119,7 +121,10 @@ export class ExtensionRegistry<T extends Extension> {
       }
       return found;
     }
-    return this.ordered;
+    if (!this.initalized) {
+      this.getIfExists('xxx'); // will trigger init
+    }
+    return [...this.ordered]; // copy of everythign just in case
   }
 
   register(ext: T) {
@@ -136,5 +141,13 @@ export class ExtensionRegistry<T extends Extension> {
         }
       }
     }
+
+    if (this.initalized) {
+      this.sort();
+    }
+  }
+
+  private sort() {
+    // TODO sort the list
   }
 }

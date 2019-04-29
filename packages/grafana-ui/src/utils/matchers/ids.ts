@@ -8,9 +8,9 @@ export enum SeriesDataMatcherID {
   fieldType = 'fieldType',
 
   // builtin predicates
-  anyMatch = 'any',
-  allMatch = 'all',
-  invertMatch = 'not',
-  alwaysMatch = 'always',
-  neverMatch = 'never',
+  anyMatch = 'anyMatch',
+  allMatch = 'allMatch',
+  invertMatch = 'invertMatch',
+  alwaysMatch = 'alwaysMatch',
+  neverMatch = 'neverMatch',
 }

@@ -67,6 +67,7 @@ export class StatsPicker extends PureComponent<Props> {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
 
     const select = statsCalculators.selectOptions(stats);
+    console.log('GET STATs', select);
 
     return (
       <Select

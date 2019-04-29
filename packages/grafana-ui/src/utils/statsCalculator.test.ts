@@ -9,24 +9,10 @@ describe('Stats Calculators', () => {
   };
 
   it('should load all standard stats', () => {
-    const names = [
-      StatID.sum,
-      StatID.max,
-      StatID.min,
-      StatID.logmin,
-      StatID.mean,
-      StatID.last,
-      StatID.first,
-      StatID.count,
-      StatID.range,
-      StatID.diff,
-      StatID.step,
-      StatID.delta,
-      // StatID.allIsZero,
-      // StatID.allIsNull,
-    ];
-    const stats = statsCalculators.list(names);
-    expect(stats.length).toBe(names.length);
+    for (const name of Object.keys(StatID)) {
+      const calc = statsCalculators.get(name);
+      expect(calc.id).toBe(name);
+    }
   });
 
   it('should fail to load unknown stats', () => {
