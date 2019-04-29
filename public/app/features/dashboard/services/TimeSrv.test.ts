@@ -1,5 +1,6 @@
-import { TimeSrv } from './TimeSrv';
 import moment from 'moment';
+import { TimeSrv } from './TimeSrv';
+import { ContextSrvStub } from 'test/specs/helpers';
 
 describe('timeSrv', () => {
   const rootScope = {
@@ -26,7 +27,7 @@ describe('timeSrv', () => {
   };
 
   beforeEach(() => {
-    timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+    timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
     _dashboard.refresh = false;
   });
@@ -56,7 +57,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
       expect(time.raw.from).toBe('now-2d');
@@ -71,7 +72,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -87,7 +88,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
       // dashboard saved with refresh on
       _dashboard.refresh = true;
@@ -104,7 +105,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -120,7 +121,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -136,7 +137,7 @@ describe('timeSrv', () => {
         })),
       };
 
-      timeSrv = new TimeSrv(rootScope, jest.fn(), location, timer, { isGrafanaVisibile: jest.fn() });
+      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
       _dashboard.time.from = 'now-6h';
       timeSrv.init(_dashboard);
