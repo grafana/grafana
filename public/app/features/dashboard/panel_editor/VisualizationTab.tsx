@@ -54,7 +54,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   getReactPanelOptions = () => {
     const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.vizPlugin.defaults);
+    return panel.getOptions(plugin.panelPlugin.defaults);
   };
 
   renderPanelOptions() {
@@ -64,8 +64,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (plugin.vizPlugin) {
-      const PanelEditor = plugin.vizPlugin.editor;
+    if (plugin.panelPlugin) {
+      const PanelEditor = plugin.panelPlugin.editor;
 
       if (PanelEditor) {
         return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;

@@ -10,7 +10,7 @@ export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   sort: number;
   angularPlugin: AngularPanelPlugin | null;
-  vizPlugin: PanelPlugin | null;
+  panelPlugin: PanelPlugin | null;
   hasBeenImported?: boolean;
 
   // if length>0 the query tab will show up
