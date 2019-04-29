@@ -61,7 +61,7 @@ func (sb *SqlBuilder) buildPermissionsTable(user *m.SignedInUser, permission m.P
 					  ugm.user_id = ? OR
 					  da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
 				  )
-      		)
+      		) as p
       		GROUP BY d_id
 		) 
 	`)
