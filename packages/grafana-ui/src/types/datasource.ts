@@ -1,7 +1,7 @@
 import { ComponentClass } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries, SeriesData } from './data';
+import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -105,7 +105,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -182,6 +182,47 @@ export interface ExploreStartPageProps {
 export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
+
+export type DataStreamObserver = (event: DataStreamState) => void;
+
+export interface DataStreamState {
+  /**
+   * when Done or Error no more events will be processed
+   */
+  state: LoadingState;
+
+  /**
+   * Consistent key across events.
+   */
+  key: string;
+
+  /**
+   * The stream request.  The properties of this request will be examined
+   * to determine if the stream matches the original query.  If not, it
+   * will be unsubscribed.
+   */
+  request: DataQueryRequest;
+
+  /**
+   * Series data may not be known yet
+   */
+  series?: SeriesData[];
+
+  /**
+   * Error in stream (but may still be running)
+   */
+  error?: DataQueryError;
+
+  /**
+   * Optionally return only the rows that changed in this event
+   */
+  delta?: SeriesData[];
+
+  /**
+   * Stop listening to this stream
+   */
+  unsubscribe: () => void;
+}
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];

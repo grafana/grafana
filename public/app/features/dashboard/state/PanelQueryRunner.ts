@@ -1,26 +1,16 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import throttle from 'lodash/throttle';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-
-// Components & Types
-import {
-  guessFieldTypes,
-  toSeriesData,
-  PanelData,
-  LoadingState,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataQueryRequest,
-  SeriesData,
-  DataSourceApi,
-} from '@grafana/ui';
 import { PanelQueryState } from './PanelQueryState';
+
+// Types
+import { PanelData, DataQuery, TimeRange, ScopedVars, DataQueryRequest, DataSourceApi } from '@grafana/ui';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
   datasource: string | DataSourceApi<TQuery>;
@@ -54,6 +44,10 @@ export class PanelQueryRunner {
 
   private state = new PanelQueryState();
 
+  constructor() {
+    this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+  }
+
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
@@ -73,7 +67,7 @@ export class PanelQueryRunner {
     }
 
     // Send the last result
-    if (this.state.data.state !== LoadingState.NotStarted) {
+    if (this.state.isStarted()) {
       observer.next(this.state.getDataAfterCheckingFormats());
     }
 
@@ -103,6 +97,9 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
+    // filter out hidden queries & deep clone them
+    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
+
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
       timezone,
@@ -112,26 +109,20 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: cloneDeep(
-        queries.filter(q => {
-          return !q.hide; // Skip any hidden queries
-        })
-      ),
+      targets: clonedAndFilteredQueries,
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
     };
-    // Deprecated
+
+    // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
 
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds =
-        datasource && (datasource as any).query
-          ? (datasource as DataSourceApi)
-          : await getDatasourceSrv().get(datasource as string, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars);
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {
@@ -148,17 +139,19 @@ export class PanelQueryRunner {
       // and add built in variables interval and interval_ms
       request.scopedVars = Object.assign({}, request.scopedVars, {
         __interval: { text: norm.interval, value: norm.interval },
-        __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
+        __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
       });
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
       // Check if we can reuse the already issued query
-      if (state.isRunning()) {
+      const active = state.getActiveRunner();
+      if (active) {
         if (state.isSameQuery(ds, request)) {
-          // TODO? maybe cancel if it has run too long?
-          return state.getCurrentExecutor();
+          // Maybe cancel if it has run too long?
+          console.log('Trying to execute query while last one has yet to complete, returning same promise');
+          return active;
         } else {
           state.cancel('Query Changed while running');
         }
@@ -166,8 +159,8 @@ export class PanelQueryRunner {
 
       // Send a loading status event on slower queries
       loadingStateTimeoutId = window.setTimeout(() => {
-        if (this.state.isRunning()) {
-          this.subject.next(this.state.data);
+        if (state.getActiveRunner()) {
+          this.subject.next(this.state.validateStreamsAndGetPanelData());
         }
       }, delayStateNotification || 500);
 
@@ -189,6 +182,18 @@ export class PanelQueryRunner {
   }
 
   /**
+   * Called after every streaming event.  This should be throttled so we
+   * avoid accidentally overwhelming the browser
+   */
+  onStreamingDataUpdated = throttle(
+    () => {
+      this.subject.next(this.state.validateStreamsAndGetPanelData());
+    },
+    50,
+    { trailing: true, leading: true }
+  );
+
+  /**
    * Called when the panel is closed
    */
   destroy() {
@@ -202,22 +207,12 @@ export class PanelQueryRunner {
   }
 }
 
-/**
- * All panels will be passed tables that have our best guess at colum type set
- *
- * This is also used by PanelChrome for snapshot support
- */
-export function getProcessedSeriesData(results?: any[]): SeriesData[] {
-  if (!results) {
-    return [];
+async function getDataSource(
+  datasource: string | DataSourceApi | null,
+  scopedVars: ScopedVars
+): Promise<DataSourceApi> {
+  if (datasource && (datasource as any).query) {
+    return datasource as DataSourceApi;
   }
-
-  const series: SeriesData[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toSeriesData(r)));
-    }
-  }
-
-  return series;
+  return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
