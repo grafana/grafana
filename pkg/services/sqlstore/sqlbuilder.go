@@ -32,6 +32,10 @@ func (sb *SqlBuilder) buildPermissionsTable(user *m.SignedInUser, permission m.P
 	falseStr := dialect.BooleanStr(false)
 	okRoles := []interface{}{user.OrgRole}
 
+	if user.OrgRole == m.ROLE_EDITOR {
+		okRoles = append(okRoles, m.ROLE_VIEWER)
+	}
+
 	sb.sql.WriteString(`
 		(
 			SELECT d_id, SUM(CASE WHEN da_did=d_id THEN 1 ELSE 0 END) as dashboard_count,SUM(CASE WHEN da_did=f_id THEN 1 ELSE 0 END) as folder_count,
