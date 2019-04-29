@@ -81,7 +81,7 @@ type serviceTestStruct struct {
 
 func setup() *serviceTestStruct {
 	serviceTest := &serviceTestStruct{}
-	serviceTest.waitTimeout = time.Second * 5
+	serviceTest.waitTimeout = time.Second
 
 	pollChangesChannel := make(chan context.Context)
 	serviceStopped := make(chan interface{})
