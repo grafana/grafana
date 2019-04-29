@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/ui/src/types';
+import { PluginMeta } from '@grafana/ui';
 
 /**
  * Values we don't want in the public API
