@@ -33,6 +33,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { TimePicker } from './TimePicker/TimePicker';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
