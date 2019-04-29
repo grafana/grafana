@@ -1,10 +1,11 @@
 import { Action, ActionTypes } from './actions';
-import { Plugin, PluginsState } from 'app/types';
+import { PluginsState } from 'app/types';
 import { LayoutModes } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
+import { PluginMeta } from '@grafana/ui';
 
 export const initialState: PluginsState = {
-  plugins: [] as Plugin[],
+  plugins: [] as PluginMeta[],
   searchQuery: '',
   layoutMode: LayoutModes.Grid,
   hasFetched: false,
