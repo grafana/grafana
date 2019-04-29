@@ -1,15 +1,5 @@
 import { PluginMeta } from '@grafana/ui';
 
-/**
- * Values we don't want in the public API
- */
-export interface Plugin extends PluginMeta {
-  defaultNavUrl: string;
-  hasUpdate: boolean;
-  latestVersion: string;
-  pinned: boolean;
-}
-
 export interface PluginDashboard {
   dashboardId: number;
   description: string;
@@ -27,7 +17,7 @@ export interface PluginDashboard {
 }
 
 export interface PluginsState {
-  plugins: Plugin[];
+  plugins: PluginMeta[];
   searchQuery: string;
   layoutMode: string;
   hasFetched: boolean;
