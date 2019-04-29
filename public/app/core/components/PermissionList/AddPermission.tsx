@@ -61,7 +61,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
   };
 
-  onPermissionChanged = (permission: SelectOptionItem) => {
+  onPermissionChanged = (permission: SelectOptionItem<PermissionLevel>) => {
     this.setState({ permission: permission.value });
   };
 

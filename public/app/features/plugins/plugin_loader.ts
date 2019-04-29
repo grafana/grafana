@@ -18,7 +18,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, ReactPanelPlugin, AngularPanelPlugin, PluginMeta } from '@grafana/ui/src/types';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, AngularPanelPlugin, PluginMeta } from '@grafana/ui/src/types';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
@@ -160,10 +160,10 @@ export function importPluginModule(path: string): Promise<any> {
   return System.import(path);
 }
 
-export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin> {
+export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin<any>> {
   return importPluginModule(path).then(pluginExports => {
     if (pluginExports.plugin) {
-      return pluginExports.plugin as DataSourcePlugin;
+      return pluginExports.plugin as DataSourcePlugin<any>;
     }
 
     if (pluginExports.Datasource) {
@@ -182,10 +182,10 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   });
 }
 
-export function importPanelPlugin(path: string): Promise<AngularPanelPlugin | ReactPanelPlugin> {
+export function importPanelPlugin(path: string): Promise<AngularPanelPlugin | PanelPlugin> {
   return importPluginModule(path).then(pluginExports => {
-    if (pluginExports.reactPanel) {
-      return pluginExports.reactPanel as ReactPanelPlugin;
+    if (pluginExports.plugin) {
+      return pluginExports.plugin as PanelPlugin;
     } else {
       return new AngularPanelPlugin(pluginExports.PanelCtrl);
     }

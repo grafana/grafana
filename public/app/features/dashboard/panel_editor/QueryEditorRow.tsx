@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, DataQueryError, SeriesData, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -32,8 +32,7 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryError: DataQueryError | null;
-  queryResponse: SeriesData[] | null;
+  queryResponse?: PanelData;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -46,7 +45,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    queryError: null,
     queryResponse: null,
   };
 
@@ -93,9 +91,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { data, query } = this.props;
 
     if (data !== prevProps.data) {
-      const queryError = data.error && data.error.refId === query.refId ? data.error : null;
-      const queryResponse = data.series.filter(series => series.refId === query.refId);
-      this.setState({ queryResponse, queryError });
+      this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
 
       if (this.angularScope) {
         this.angularScope.range = getTimeSrv().timeRange();
@@ -144,8 +140,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor() {
-    const { query, onChange } = this.props;
-    const { datasource, queryResponse, queryError } = this.state;
+    const { query, data, onChange } = this.props;
+    const { datasource, queryResponse } = this.state;
 
     if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
@@ -161,7 +157,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onChange={onChange}
           onRunQuery={this.onRunQuery}
           queryResponse={queryResponse}
-          queryError={queryError}
+          panelData={data}
         />
       );
     }
@@ -283,4 +279,34 @@ export interface AngularQueryComponentScope {
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
   range: TimeRange;
+}
+
+/**
+ * Get a version of the PanelData limited to the query we are looking at
+ */
+export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
+  const series = data.series.filter(series => series.refId === refId);
+
+  // No matching series
+  if (!series.length) {
+    return undefined;
+  }
+
+  // Don't pass the request if all requests are the same
+  const request: DataQueryRequest = undefined;
+  // TODO: look in sub-requets to match the info
+
+  // Only say this is an error if the error links to the query
+  let state = LoadingState.Done;
+  const error = data.error && data.error.refId === refId ? data.error : undefined;
+  if (error) {
+    state = LoadingState.Error;
+  }
+
+  return {
+    state,
+    series,
+    request,
+    error,
+  };
 }

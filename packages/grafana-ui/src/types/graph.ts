@@ -8,4 +8,6 @@ export interface GraphSeriesXY {
   color: string;
   data: GraphSeriesValue[][]; // [x,y][]
   info?: DisplayValue[]; // Legend info
+  isVisible: boolean;
+  yAxis: number;
 }

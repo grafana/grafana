@@ -262,7 +262,7 @@
   background: $panel-bg;
 }
 
-@include media-breakpoint-up(sm) {
+@include media-breakpoint-up(md) {
   .search-container {
     left: $side-menu-width;
   }

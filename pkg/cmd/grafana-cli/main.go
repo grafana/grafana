@@ -66,7 +66,7 @@ func main() {
 
 func setupLogging() {
 	for _, f := range os.Args {
-		if f == "-D" || f == "--debug" || f == "-debug" {
+		if f == "-d" || f == "--debug" || f == "-debug" {
 			logger.SetDebug(true)
 		}
 	}

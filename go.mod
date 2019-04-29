@@ -53,6 +53,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/prometheus/common v0.2.0
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
+	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/smartystreets/assertions v0.0.0-20190401211740-f487f9de1cd3 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a
@@ -70,6 +71,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190319182350-c85d3e98c914
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
 	golang.org/x/sys v0.0.0-20190415081028-16da32be82c5 // indirect
+	golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/bufio.v1 v1.0.0-20140618132640-567b2bfa514e // indirect

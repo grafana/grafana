@@ -383,39 +383,6 @@ below.
 - [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
 - [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
 
-## [session]
-
-### provider
-
-Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
-
-### provider_config
-
-This option should be configured differently depending on what type of
-session provider you have configured.
-
-- **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
-- **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
-
-Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
-
-### cookie_name
-
-The name of the Grafana session cookie.
-
-### cookie_secure
-
-Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
-
-### session_life_time
-
-How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-
-<hr />
-
 ## [dataproxy]
 
 ### logging
@@ -604,7 +571,7 @@ basic auth password
 Path to JSON key file associated with a Google service account to authenticate and authorize.
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
 ### bucket name
 Bucket Name on Google Cloud Storage.
@@ -676,4 +643,41 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+<hr />
+
+# Removed options
+Please note that these options have been removed.
+
+## [session]
+**Removed starting from Grafana v6.2. Please use [remote_cache](#remote-cache) option instead.**
+
+### provider
+
+Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
+
+### provider_config
+
+This option should be configured differently depending on what type of
+session provider you have configured.
+
+- **file:** session file path, e.g. `data/sessions`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex:  `127.0.0.1:11211`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
+
+### cookie_name
+
+The name of the Grafana session cookie.
+
+### cookie_secure
+
+Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
+
+### session_life_time
+
+How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
