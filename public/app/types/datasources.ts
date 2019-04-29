@@ -1,6 +1,5 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { Plugin } from './plugins';
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui/src/types';
 
 export interface DataSourcesState {
   dataSources: DataSourceSettings[];
@@ -8,9 +7,9 @@ export interface DataSourcesState {
   dataSourceTypeSearchQuery: string;
   layoutMode: LayoutMode;
   dataSourcesCount: number;
-  dataSourceTypes: Plugin[];
+  dataSourceTypes: DataSourcePluginMeta[];
   dataSource: DataSourceSettings;
-  dataSourceMeta: Plugin;
+  dataSourceMeta: DataSourcePluginMeta;
   hasFetched: boolean;
   isLoadingDataSources: boolean;
 }

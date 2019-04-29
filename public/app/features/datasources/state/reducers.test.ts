@@ -14,8 +14,8 @@ import {
 } from './actions';
 import { getMockDataSources, getMockDataSource } from '../__mocks__/dataSourcesMocks';
 import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourcesState, Plugin } from 'app/types';
-import { PluginMetaInfo, PluginType } from '@grafana/ui';
+import { DataSourcesState } from 'app/types';
+import { PluginMetaInfo, PluginType, PluginMeta } from '@grafana/ui';
 
 const mockPlugin = () =>
   ({
@@ -29,7 +29,7 @@ const mockPlugin = () =>
     pinned: true,
     type: PluginType.datasource,
     module: 'path/to/module',
-  } as Plugin);
+  } as PluginMeta);
 
 describe('dataSourcesReducer', () => {
   describe('when dataSourcesLoaded is dispatched', () => {

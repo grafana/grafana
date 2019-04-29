@@ -21,8 +21,8 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { NavModel, Plugin, StoreState } from 'app/types/';
-import { DataSourceSettings, DataSourcePlugin } from '@grafana/ui/src/types/';
+import { NavModel, StoreState } from 'app/types/';
+import { DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui/src/types/';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
@@ -30,7 +30,7 @@ import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 export interface Props {
   navModel: NavModel;
   dataSource: DataSourceSettings;
-  dataSourceMeta: Plugin;
+  dataSourceMeta: DataSourcePluginMeta;
   pageId: number;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
