@@ -31,8 +31,15 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, TimeZone } from '@grafana/ui';
-import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreUpdateState } from 'app/types/explore';
+import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
+import {
+  ExploreItemState,
+  ExploreUrlState,
+  RangeScanner,
+  ExploreId,
+  ExploreUpdateState,
+  ExploreUIState,
+} from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   LAST_USED_DATASOURCE_KEY,
@@ -60,7 +67,6 @@ interface ExploreProps {
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  timeZone: TimeZone;
   update: ExploreUpdateState;
   reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
@@ -76,7 +82,10 @@ interface ExploreProps {
   supportsLogs: boolean | null;
   supportsTable: boolean | null;
   queryKeys: string[];
-  urlState: ExploreUrlState;
+  initialDatasource: string;
+  initialQueries: DataQuery[];
+  initialRange: RawTimeRange;
+  initialUI: ExploreUIState;
 }
 
 /**
@@ -118,11 +127,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    const { exploreId, urlState, initialized, timeZone } = this.props;
-    const { datasource, queries, range: urlRange, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
-    const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
-    const initialQueries: DataQuery[] = ensureQueries(queries);
-    const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, initialUI } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -134,7 +139,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialRange,
         width,
         this.exploreEvents,
-        ui
+        initialUI
       );
     }
   }
@@ -310,6 +315,13 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
   } = item;
+
+  const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
+  const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+  const initialQueries: DataQuery[] = ensureQueries(queries);
+  const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+  const initialUI = ui || DEFAULT_UI_STATE;
+
   return {
     StartPage,
     datasourceError,
@@ -323,9 +335,11 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supportsLogs,
     supportsTable,
     queryKeys,
-    urlState,
     update,
-    timeZone,
+    initialDatasource,
+    initialQueries,
+    initialRange,
+    initialUI,
   };
 }
 
