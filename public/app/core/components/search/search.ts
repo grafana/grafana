@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -52,14 +52,13 @@ export class SearchCtrl {
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
     appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
-    appEvents.on('search-query', this.search.bind(this), $scope);
+    appEvents.on('search-query', debounce(this.search.bind(this), 500), $scope);
 
     this.initialFolderFilterTitle = 'All';
     this.isEditor = contextSrv.isEditor;
     this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
     this.onQueryChange = this.onQueryChange.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
-
     this.query = {
       query: '',
       parsedQuery: { text: '' },

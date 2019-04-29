@@ -62,19 +62,14 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   ),
 });
 
-export const SearchField: React.FunctionComponent<SearchFieldProps> = ({
-  query,
-  onChange,
-  onKeyDown,
-  ...inputProps
-}) => {
+export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, ...inputProps }) => {
   const theme = useContext(ThemeContext);
   const styles = getSearchFieldStyles(theme);
 
   return (
     <>
       {/* search-field-wrapper class name left on purpose until we migrate entire search to React */}
-      {/* based on this class name the GrafanaCtrl (L256) decides whether or not to hide search */}
+      {/* based on it GrafanaCtrl (L256) decides whether or not hide search */}
       <div className={`${styles.wrapper} search-field-wrapper`}>
         <div className={styles.icon}>
           <i className="fa fa-search" />
