@@ -6,14 +6,14 @@ describe('grafana data source', () => {
   describe('when executing an annotations query', () => {
     let calledBackendSrvParams;
     const backendSrvStub = {
-      get: (url, options) => {
+      get: (url: string, options) => {
         calledBackendSrvParams = options;
         return q.resolve([]);
       },
     };
 
     const templateSrvStub = {
-      replace: val => {
+      replace: (val: string) => {
         return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
       },
     };
