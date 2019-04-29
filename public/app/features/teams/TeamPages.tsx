@@ -7,13 +7,14 @@ import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import { NavModel, Team, TeamMember } from 'app/types';
+import { Team, TeamMember } from 'app/types';
 import { loadTeam, loadTeamMembers } from './state/actions';
 import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
 import { contextSrv, User } from 'app/core/services/context_srv';
+import { NavModel } from '@grafana/ui';
 
 export interface Props {
   team: Team;
