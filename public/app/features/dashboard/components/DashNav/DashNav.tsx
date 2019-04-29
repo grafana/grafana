@@ -60,14 +60,17 @@ export class DashNav extends PureComponent<Props> {
     }
   }
 
-  onDahboardNameClick = () => {
-    appEvents.emit('show-dash-search');
-  };
-
-  onFolderNameClick = () => {
-    appEvents.emit('show-dash-search', {
-      query: 'folder:current',
-    });
+  onOpenSearch = () => {
+    const { dashboard } = this.props;
+    const haveFolder = dashboard.meta.folderId > 0;
+    appEvents.emit(
+      'show-dash-search',
+      haveFolder
+        ? {
+            query: 'folder:current',
+          }
+        : null
+    );
   };
 
   onClose = () => {
@@ -145,17 +148,11 @@ export class DashNav extends PureComponent<Props> {
     return (
       <>
         <div>
-          <div className="navbar-page-btn">
+          <a className="navbar-page-btn" onClick={this.onOpenSearch}>
             {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
-            {haveFolder && (
-              <span className="navbar-page-btn--folder" onClick={this.onFolderNameClick}>
-                {folderTitle} /{' '}
-              </span>
-            )}
-            <span onClick={this.onDahboardNameClick}>
-              {dashboard.title} <i className="fa fa-caret-down" />
-            </span>
-          </div>
+            {haveFolder && <span className="navbar-page-btn--folder">{folderTitle} / </span>}
+            {dashboard.title} <i className="fa fa-caret-down" />
+          </a>
         </div>
         {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />

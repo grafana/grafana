@@ -8,8 +8,8 @@ import { parse, SearchParserOptions, SearchParserResult } from 'search-query-par
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 export interface SearchQuery {
   query: string;
-  parsedQuery: string | SearchParserResult;
-  tag: string[];
+  parsedQuery: SearchParserResult;
+  tags: string[];
   starred: boolean;
 }
 
@@ -20,7 +20,15 @@ class SearchQueryParser {
   }
 
   parse(query: string) {
-    return parse(query, this.config);
+    const parsedQuery = parse(query, this.config);
+
+    if (typeof parsedQuery === 'string') {
+      return {
+        text: parsedQuery,
+      } as SearchParserResult;
+    }
+
+    return parsedQuery;
   }
 }
 
@@ -54,8 +62,8 @@ export class SearchCtrl {
 
     this.query = {
       query: '',
-      parsedQuery: '',
-      tag: [],
+      parsedQuery: { text: '' },
+      tags: [],
       starred: false,
     };
 
@@ -94,7 +102,7 @@ export class SearchCtrl {
     this.query = {
       query: evt ? `${evt.query} ` : '',
       parsedQuery: this.queryParser.parse(evt && evt.query),
-      tag: [],
+      tags: [],
       starred: false,
     };
     this.currentSearchId = 0;
@@ -221,8 +229,8 @@ export class SearchCtrl {
 
     const query = {
       ...this.query,
-      query: typeof parsedQuery === 'string' ? parsedQuery : parsedQuery.text,
-      tag: this.query.tag,
+      query: parsedQuery.text,
+      tag: this.query.tags,
       folderIds,
     };
 
@@ -242,18 +250,18 @@ export class SearchCtrl {
 
   queryHasNoFilters() {
     const query = this.query;
-    return query.query === '' && query.starred === false && query.tag.length === 0;
+    return query.query === '' && query.starred === false && query.tags.length === 0;
   }
 
   filterByTag(tag) {
-    if (_.indexOf(this.query.tag, tag) === -1) {
-      this.query.tag.push(tag);
+    if (_.indexOf(this.query.tags, tag) === -1) {
+      this.query.tags.push(tag);
       this.search();
     }
   }
 
   removeTag(tag, evt) {
-    this.query.tag = _.without(this.query.tag, tag);
+    this.query.tags = _.without(this.query.tags, tag);
     this.search();
     this.giveSearchFocus = true;
     evt.stopPropagation();
@@ -265,12 +273,13 @@ export class SearchCtrl {
   };
 
   onTagFiltersChanged = (tags: string[]) => {
-    this.query.tag = tags;
+    console.log(tags);
+    this.query.tags = tags;
     this.search();
   };
 
   clearSearchFilter() {
-    this.query.tag = [];
+    this.query.tags = [];
     this.search();
   }
 
