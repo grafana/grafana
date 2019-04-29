@@ -1,21 +1,6 @@
 import { Field, SeriesData } from '../../types/data';
 import { ExtensionRegistry, Extension } from '../extensions';
 
-// A list of some (but not all) matcher IDs
-export enum SeriesDataMatcherID {
-  // Field Type
-  numericFields = 'numericFields',
-  timeFields = 'timeFields',
-  fieldType = 'fieldType',
-
-  // builtin predicates
-  any = '_any',
-  all = '_all',
-  not = '_not',
-  always = '_allways',
-  never = '_never',
-}
-
 /**
  * A configurable way to say if somthing should apply to a field or series
  */
@@ -39,7 +24,14 @@ export function seriesDataMatches(config: SeriesDataMatcherConfig, series: Serie
   return matcher.matches(config.options, series, field);
 }
 
-export const seriesDataMatchers = new ExtensionRegistry<SeriesDataMatcher>();
+// Load the Buildtin matchers
+import { getPredicateMatchers } from './predicates';
+import { getFieldTypeMatchers } from './fieldType';
 
-import './predicates';
-import './fieldType';
+export const seriesDataMatchers = new ExtensionRegistry<SeriesDataMatcher>(() => {
+  const matchers: SeriesDataMatcher[] = [
+    ...getPredicateMatchers(), // Predicates
+    ...getFieldTypeMatchers(), // field types
+  ];
+  return matchers;
+});

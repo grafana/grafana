@@ -1,5 +1,6 @@
-import { SeriesTransformerID, transformSeriesData } from './transformers';
+import { transformSeriesData } from './transformers';
 import { StatID } from '../statsCalculator';
+import { SeriesTransformerID } from './ids';
 
 const seriesWithValues = {
   fields: [{ name: 'A' }, { name: 'B' }],

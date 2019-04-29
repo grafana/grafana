@@ -1,16 +1,17 @@
-import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
+import { SeriesTransformer } from './transformers';
 import { SeriesData, FieldType } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
 import { StatID, statsCalculators, calculateStats } from '../statsCalculator';
 import { SeriesDataMatcherConfig, seriesDataMatchers } from '../matchers/matchers';
 import { alwaysSeriesMatcher } from '../matchers/predicates';
+import { SeriesTransformerID } from './ids';
 
 interface CalcOptions {
   stats: string[];
   matcher?: SeriesDataMatcherConfig;
 }
 
-const calcTransformer: SeriesTransformer<CalcOptions> = {
+export const calcTransformer: SeriesTransformer<CalcOptions> = {
   id: SeriesTransformerID.calc,
   name: 'Calculate',
   description: 'calculate...',
@@ -70,5 +71,3 @@ const calcTransformer: SeriesTransformer<CalcOptions> = {
     return processed;
   },
 };
-
-seriesTransformers.register(calcTransformer);

@@ -1,4 +1,5 @@
-import { SeriesTransformerID, transformSeriesData, seriesTransformers } from './transformers';
+import { transformSeriesData, seriesTransformers } from './transformers';
+import { SeriesTransformerID } from './ids';
 
 const seriesAB = {
   fields: [{ name: 'A' }, { name: 'B' }],

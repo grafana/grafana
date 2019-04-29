@@ -1,14 +1,16 @@
-import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
+import { SeriesTransformer } from './transformers';
 import { SeriesData } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
-import { SeriesDataMatcherConfig, SeriesDataMatcherID, seriesDataMatches } from '../matchers/matchers';
+import { SeriesDataMatcherConfig, seriesDataMatches } from '../matchers/matchers';
+import { SeriesDataMatcherID } from '../matchers/ids';
+import { SeriesTransformerID } from './ids';
 
 interface FilterOptions {
   include?: SeriesDataMatcherConfig;
   exclude?: SeriesDataMatcherConfig;
 }
 
-const filterTransformer: SeriesTransformer<FilterOptions> = {
+export const filterTransformer: SeriesTransformer<FilterOptions> = {
   id: SeriesTransformerID.filter,
   name: 'Filter',
   description: 'select a subset of fields',
@@ -61,5 +63,3 @@ const filterTransformer: SeriesTransformer<FilterOptions> = {
     return processed;
   },
 };
-
-seriesTransformers.register(filterTransformer);

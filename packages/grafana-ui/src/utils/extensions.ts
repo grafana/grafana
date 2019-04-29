@@ -45,12 +45,14 @@ export class ExtensionRegistry<T extends Extension> {
   private byId = new Map<string, T>();
   private initalized = false;
 
-  constructor(private init: T[] = []) {}
+  constructor(private init?: () => T[]) {}
 
   getIfExists(id: string): T | undefined {
     if (!this.initalized) {
-      for (const ext of this.init) {
-        this.register(ext);
+      if (this.init) {
+        for (const ext of this.init()) {
+          this.register(ext);
+        }
       }
       this.initalized = true;
     }

@@ -1,6 +1,7 @@
 import { FieldType } from '../../types/data';
-import { SeriesDataMatcherID } from '../matchers/matchers';
-import { SeriesTransformerID, transformSeriesData } from './transformers';
+import { SeriesDataMatcherID } from '../matchers/ids';
+import { transformSeriesData } from './transformers';
+import { SeriesTransformerID } from './ids';
 
 export const simpleSeriesWithTypes = {
   fields: [

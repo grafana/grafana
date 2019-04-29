@@ -1,14 +1,9 @@
 import { Field, SeriesData } from '../../types/data';
-import {
-  SeriesDataMatcher,
-  SeriesDataMatcherConfig,
-  seriesDataMatches,
-  seriesDataMatchers,
-  SeriesDataMatcherID,
-} from './matchers';
+import { SeriesDataMatcherID } from './ids';
+import { SeriesDataMatcher, SeriesDataMatcherConfig, seriesDataMatches, seriesDataMatchers } from './matchers';
 
-const anyMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
-  id: SeriesDataMatcherID.any,
+export const anyMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
+  id: SeriesDataMatcherID.anyMatch,
   name: 'Any',
   description: 'Any child matches (OR)',
   excludeFromPicker: true,
@@ -36,8 +31,8 @@ const anyMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
   },
 };
 
-const allMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
-  id: SeriesDataMatcherID.all,
+export const allMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
+  id: SeriesDataMatcherID.allMatch,
   name: 'All',
   description: 'Everything matches (AND)',
   excludeFromPicker: true,
@@ -65,8 +60,8 @@ const allMatcher: SeriesDataMatcher<SeriesDataMatcherConfig[]> = {
   },
 };
 
-const notMatcher: SeriesDataMatcher<SeriesDataMatcherConfig> = {
-  id: SeriesDataMatcherID.not,
+export const notMatcher: SeriesDataMatcher<SeriesDataMatcherConfig> = {
+  id: SeriesDataMatcherID.invertMatch,
   name: 'NOT',
   description: 'Inverts other matchers',
   excludeFromPicker: true,
@@ -83,7 +78,7 @@ const notMatcher: SeriesDataMatcher<SeriesDataMatcherConfig> = {
 };
 
 export const alwaysSeriesMatcher = {
-  id: SeriesDataMatcherID.always,
+  id: SeriesDataMatcherID.alwaysMatch,
   name: 'All Fields',
   description: 'Always Matches',
 
@@ -96,8 +91,24 @@ export const alwaysSeriesMatcher = {
   },
 };
 
-seriesDataMatchers.register(anyMatcher);
-seriesDataMatchers.register(allMatcher);
-seriesDataMatchers.register(notMatcher);
+export const neverSeriesMatcher = {
+  id: SeriesDataMatcherID.neverMatch,
+  name: 'Never',
+  description: 'Never Match',
+  excludeFromPicker: true,
 
-seriesDataMatchers.register(alwaysSeriesMatcher);
+  matches: (options: SeriesDataMatcherConfig, series: SeriesData, field?: Field) => {
+    return true;
+  },
+
+  getOptionsDisplayText: (options: SeriesDataMatcherConfig) => {
+    return 'Never';
+  },
+};
+
+/**
+ * Registry Initalization
+ */
+export function getPredicateMatchers(): SeriesDataMatcher[] {
+  return [anyMatcher, allMatcher, notMatcher, alwaysSeriesMatcher, neverSeriesMatcher];
+}

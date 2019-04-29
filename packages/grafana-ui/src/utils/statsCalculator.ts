@@ -94,7 +94,7 @@ export function calculateStats(options: CalculateStatsOptions): FieldStats {
 //
 // ------------------------------------------------------------------------------
 
-export const statsCalculators = new ExtensionRegistry<StatCalculatorInfo>([
+export const statsCalculators = new ExtensionRegistry<StatCalculatorInfo>(() => [
   {
     id: StatID.last,
     name: 'Last',

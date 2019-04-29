@@ -1,6 +1,7 @@
-import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
+import { SeriesTransformer } from './transformers';
 import { SeriesData } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
+import { SeriesTransformerID } from './ids';
 
 interface AppendOptions {}
 
@@ -8,7 +9,7 @@ interface FieldIndex {
   [field: string]: number;
 }
 
-const appendTransformer: SeriesTransformer<AppendOptions> = {
+export const appendTransformer: SeriesTransformer<AppendOptions> = {
   id: SeriesTransformerID.append,
   name: 'Append',
   description: 'Append all series',
@@ -57,5 +58,3 @@ const appendTransformer: SeriesTransformer<AppendOptions> = {
     return [processed];
   },
 };
-
-seriesTransformers.register(appendTransformer);

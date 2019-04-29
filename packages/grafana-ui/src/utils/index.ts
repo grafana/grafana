@@ -15,5 +15,7 @@ export * from './validate';
 export { getFlotPairs } from './flotPairs';
 export * from './object';
 
-export * from './transform/transformers';
+export * from './matchers/ids';
 export * from './matchers/matchers';
+
+export * from './transform/transformers';

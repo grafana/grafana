@@ -1,9 +1,10 @@
 import { Field, SeriesData } from '../../types/data';
 import { FieldType } from '../../types/data';
-import { SeriesDataMatcher, seriesDataMatchers, SeriesDataMatcherID } from './matchers';
+import { SeriesDataMatcher } from './matchers';
+import { SeriesDataMatcherID } from './ids';
 
 // General Field matcher
-seriesDataMatchers.register({
+const fieldTypeMacher: SeriesDataMatcher<FieldType> = {
   id: SeriesDataMatcherID.fieldType,
   name: 'Field Type',
   description: 'match based on the field type',
@@ -19,11 +20,11 @@ seriesDataMatchers.register({
   getOptionsDisplayText: (type: FieldType) => {
     return `Field type: ${type}`;
   },
-} as SeriesDataMatcher<FieldType>);
+};
 
 // Numeric Field matcher
 // This gets its own entry so it shows up in the dropdown
-seriesDataMatchers.register({
+const numericMacher: SeriesDataMatcher<FieldType> = {
   id: SeriesDataMatcherID.numericFields,
   name: 'Numeric Fields',
   description: 'Fields with type number',
@@ -35,10 +36,10 @@ seriesDataMatchers.register({
   getOptionsDisplayText: (opts: any) => {
     return 'Numeric Fields';
   },
-} as SeriesDataMatcher<FieldType>);
+};
 
 // Time Field matcher
-seriesDataMatchers.register({
+const timeMacher: SeriesDataMatcher<FieldType> = {
   id: SeriesDataMatcherID.timeFields,
   name: 'Time Fields',
   description: 'Fields with type time',
@@ -50,4 +51,11 @@ seriesDataMatchers.register({
   getOptionsDisplayText: (opts: any) => {
     return 'Time Fields';
   },
-} as SeriesDataMatcher<FieldType>);
+};
+
+/**
+ * Registry Initalization
+ */
+export function getFieldTypeMatchers(): SeriesDataMatcher[] {
+  return [fieldTypeMacher, numericMacher, timeMacher];
+}
