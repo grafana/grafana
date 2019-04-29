@@ -9,9 +9,7 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 interface SearchFieldProps extends Omit<React.HTMLAttributes<HTMLInputElement>, 'onChange'> {
   query: SearchQuery;
   onChange: (query: string) => void;
-
-  // Introducing keyDown prop because passing onKeyDown causes some untraceable exception
-  keyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const getSearchFieldStyles = (theme: GrafanaTheme) => ({
@@ -64,9 +62,15 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
   ),
 });
 
-export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, onChange, keyDown, ...inputProps }) => {
+export const SearchField: React.FunctionComponent<SearchFieldProps> = ({
+  query,
+  onChange,
+  onKeyDown,
+  ...inputProps
+}) => {
   const theme = useContext(ThemeContext);
   const styles = getSearchFieldStyles(theme);
+
   return (
     <>
       {/* search-field-wrapper class name left on purpose until we migrate entire search to React */}
@@ -87,7 +91,6 @@ export const SearchField: React.FunctionComponent<SearchFieldProps> = ({ query, 
           spellCheck={false}
           {...inputProps}
           className={styles.input}
-          onKeyDown={keyDown}
         />
 
         <div className={styles.spacer} />

@@ -25,7 +25,7 @@ export function registerAngularDirectives() {
     'query',
     'autoFocus',
     ['onChange', { watchDepth: 'reference' }],
-    ['keyDown', { watchDepth: 'reference' }],
+    ['onKeyDown', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',

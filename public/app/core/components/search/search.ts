@@ -273,7 +273,6 @@ export class SearchCtrl {
   };
 
   onTagFiltersChanged = (tags: string[]) => {
-    console.log(tags);
     this.query.tags = tags;
     this.search();
   };
