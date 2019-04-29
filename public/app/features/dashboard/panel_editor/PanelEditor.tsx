@@ -13,9 +13,7 @@ import { AngularComponent } from 'app/core/services/AngularLoader';
 
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelPluginMeta } from 'app/types/plugins';
-
-import { Tooltip } from '@grafana/ui';
+import { PanelPluginMeta, Tooltip } from '@grafana/ui';
 
 interface PanelEditorProps {
   panel: PanelModel;

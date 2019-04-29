@@ -6,8 +6,8 @@ import React, { PureComponent } from 'react';
 import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 
 // Types
-import { PanelPluginMeta, AppNotificationSeverity } from 'app/types';
-import { PanelProps, PanelPlugin, PluginType } from '@grafana/ui';
+import { AppNotificationSeverity } from 'app/types';
+import { PanelPluginMeta, PanelProps, PanelPlugin, PluginType } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
@@ -63,7 +63,7 @@ export function getPanelPluginNotFound(id: string): PanelPluginMeta {
       updated: '',
       version: '',
     },
-    vizPlugin: new PanelPlugin(NotFound),
+    panelPlugin: new PanelPlugin(NotFound),
     angularPlugin: null,
   };
 }
