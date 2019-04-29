@@ -35,7 +35,7 @@ export interface Extension<TOptions = any> {
 }
 
 export class ExtensionRegistry<T extends Extension> {
-  private list: T[] = [];
+  private ordered: T[] = [];
   private byId = new Map<string, T>();
 
   getIfExists(id: string): T | undefined {
@@ -43,7 +43,7 @@ export class ExtensionRegistry<T extends Extension> {
   }
 
   get(id: string): T {
-    const v = this.byId.get(id);
+    const v = this.getIfExists(id);
     if (!v) {
       for (const key of this.byId.keys()) {
         console.log('KEY: ', key);
@@ -53,12 +53,16 @@ export class ExtensionRegistry<T extends Extension> {
     return v;
   }
 
+  list(): T[] {
+    return this.ordered;
+  }
+
   register(ext: T) {
     if (this.byId.has(ext.id)) {
       throw new Error('Duplicate Key:' + ext.id);
     }
     this.byId.set(ext.id, ext);
-    this.list.push(ext);
+    this.ordered.push(ext);
 
     if (ext.aliasIds) {
       for (const alias of ext.aliasIds) {

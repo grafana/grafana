@@ -1,10 +1,9 @@
-import { SeriesTransformer, seriesTransformers } from './transformers';
+import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
 import { SeriesData, FieldType } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
 import { StatID, getStatsCalculators, calculateStats } from '../statsCalculator';
-import { SeriesDataMatcherConfig, seriesDataMatchers, alwaysSeriesMatcher } from '../matchers/index';
-
-export const CalculateTransformerID = 'calc';
+import { SeriesDataMatcherConfig, seriesDataMatchers } from '../matchers/matchers';
+import { alwaysSeriesMatcher } from '../matchers/predicates';
 
 interface CalcOptions {
   stats: string[];
@@ -12,7 +11,7 @@ interface CalcOptions {
 }
 
 const calcTransformer: SeriesTransformer<CalcOptions> = {
-  id: CalculateTransformerID,
+  id: SeriesTransformerID.calc,
   name: 'Calculate',
   description: 'calculate...',
   defaultOptions: {
@@ -47,7 +46,7 @@ const calcTransformer: SeriesTransformer<CalcOptions> = {
         const sub = {
           ...series,
           fields,
-          rows: [], // empty rows
+          rows: [] as any[], // empty rows
         };
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
@@ -62,6 +61,7 @@ const calcTransformer: SeriesTransformer<CalcOptions> = {
             for (const s of stats) {
               row.push(results[s]);
             }
+            sub.rows.push(row);
           }
         }
         processed.push(sub);

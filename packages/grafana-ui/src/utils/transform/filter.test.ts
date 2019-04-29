@@ -1,6 +1,7 @@
 import { FieldType } from '../../types/data';
-import { SeriesDataMatcherID } from '../matchers/index';
+import { SeriesDataMatcherID } from '../matchers/matchers';
 import { SeriesTransformerID, transformSeriesData } from './transformers';
+
 export const simpleSeriesWithTypes = {
   fields: [
     { name: 'A', type: FieldType.time },

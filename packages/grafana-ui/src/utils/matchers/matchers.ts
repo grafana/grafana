@@ -40,3 +40,6 @@ export function seriesDataMatches(config: SeriesDataMatcherConfig, series: Serie
 }
 
 export const seriesDataMatchers = new ExtensionRegistry<SeriesDataMatcher>();
+
+import './predicates';
+import './fieldType';

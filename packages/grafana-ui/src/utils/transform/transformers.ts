@@ -47,7 +47,11 @@ export function transformSeriesData(
         if (!series.meta) {
           series.meta = {};
         }
-        series.meta.transformations = [...series.meta.transformations, transformer.id];
+        if (!series.meta.transformations) {
+          series.meta.transformations = [transformer.id];
+        } else {
+          series.meta.transformations = [...series.meta.transformations, transformer.id];
+        }
       }
       processed = after;
     }
@@ -56,3 +60,7 @@ export function transformSeriesData(
 }
 
 export const seriesTransformers = new ExtensionRegistry<SeriesTransformer>();
+
+import './filter';
+import './calc';
+import './append';

@@ -1,7 +1,7 @@
 import { SeriesTransformer, seriesTransformers, SeriesTransformerID } from './transformers';
 import { SeriesData } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
-import { SeriesDataMatcherConfig, SeriesDataMatcherID, seriesDataMatches } from '../matchers/index';
+import { SeriesDataMatcherConfig, SeriesDataMatcherID, seriesDataMatches } from '../matchers/matchers';
 
 interface FilterOptions {
   include?: SeriesDataMatcherConfig;
