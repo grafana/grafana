@@ -184,17 +184,18 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id          int64
-	Uid         string
-	Title       string
-	Slug        string
-	Term        string
-	IsFolder    bool
-	FolderId    int64
-	FolderUid   string
-	FolderSlug  string
-	FolderTitle string
-	Viewable    bool
+	Id             int64
+	Uid            string
+	Title          string
+	Slug           string
+	Term           string
+	IsFolder       bool
+	FolderId       int64
+	FolderUid      string
+	FolderSlug     string
+	FolderTitle    string
+	Viewable       bool
+	FolderViewable bool
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -271,7 +272,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				Tags:        []string{},
 			}
 
-			if item.FolderId > 0 {
+			if item.FolderId > 0 && item.FolderViewable {
 				hit.FolderUrl = m.GetFolderUrl(item.FolderUid, item.FolderSlug)
 			}
 

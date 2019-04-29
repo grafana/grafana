@@ -135,7 +135,8 @@ func (sb *SearchBuilder) buildSelect() {
 			folder.uid as folder_uid,
 			folder.slug as folder_slug,
 			folder.title as folder_title,
-			(permissions.dashboard_count > 0 OR permissions.folder_count > 0 OR permissions.default_count > 0 OR ` + dialect.BooleanStr(sb.signedInUser.OrgRole == m.ROLE_ADMIN) + `) as viewable
+			(permissions.dashboard_count > 0 OR permissions.folder_count > 0 OR permissions.default_count > 0 OR ` + dialect.BooleanStr(sb.signedInUser.OrgRole == m.ROLE_ADMIN) + `) as viewable,
+			(permissions.folder_count > 0 OR permissions.default_count > 0 OR ` + dialect.BooleanStr(sb.signedInUser.OrgRole == m.ROLE_ADMIN) + `) as folder_viewable
 		FROM `)
 }
 

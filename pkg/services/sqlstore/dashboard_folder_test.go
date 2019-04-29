@@ -16,7 +16,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		Convey("Given one dashboard folder with two dashboards and one dashboard in the root folder", func() {
 			folder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot := insertTestDashboard("test dash 67", 1, 0, false, "prod", "webapp")
-			childDash := insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp")
+			childDash := insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp", "detailed")
 			insertTestDashboard("test dash 45", 1, folder.Id, false, "prod")
 
 			currentUser := createUser("viewer", "Viewer", false)
@@ -116,6 +116,16 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						So(query.Result[1].Url, ShouldContainSubstring, childDash.Uid)
 						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
 						So(query.Result[2].Url, ShouldContainSubstring, dashInRoot.Uid)
+					})
+
+					Convey("should be able to search (by tags) for child dashboard and the folder", func() {
+						query := &search.FindPersistedDashboardsQuery{Tags: []string{"detailed"}, SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}, Permission: m.PERMISSION_VIEW}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 1)
+						So(query.Result[0].Id, ShouldEqual, childDash.Id)
+						So(query.Result[0].Url, ShouldContainSubstring, childDash.Uid)
+						So(query.Result[0].FolderUrl, ShouldBeEmpty)
 					})
 				})
 
