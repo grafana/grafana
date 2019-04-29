@@ -93,6 +93,7 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	}
 
 	err = syncOrgRoles(cmd.Result, extUser)
+
 	if err != nil {
 		return err
 	}
