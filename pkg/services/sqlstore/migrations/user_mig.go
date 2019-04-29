@@ -116,6 +116,10 @@ func addUserMigrations(mg *Migrator) {
 
 	// Adds salt & rands for old users who used ldap or oauth
 	mg.AddMigration("Add missing user data", &AddMissingUserSaltAndRandsMigration{})
+
+	mg.AddMigration("Add is_disabled column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_disabled", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }
 
 type AddMissingUserSaltAndRandsMigration struct {
