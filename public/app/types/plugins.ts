@@ -4,7 +4,7 @@ export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   sort: number;
   angularPlugin: AngularPanelPlugin | null;
-  vizPlugin: PanelPlugin | null;
+  panelPlugin: PanelPlugin | null;
   hasBeenImported?: boolean;
   dataFormats: PanelDataFormat[];
 }

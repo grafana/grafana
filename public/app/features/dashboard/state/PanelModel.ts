@@ -256,10 +256,10 @@ export class PanelModel {
   pluginLoaded(plugin: PanelPluginMeta) {
     this.plugin = plugin;
 
-    if (plugin.vizPlugin && plugin.vizPlugin.onPanelMigration) {
+    if (plugin.panelPlugin && plugin.panelPlugin.onPanelMigration) {
       const version = this.getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
-        this.options = plugin.vizPlugin.onPanelMigration(this);
+        this.options = plugin.panelPlugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
@@ -292,7 +292,7 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const reactPanel = newPlugin.vizPlugin;
+    const reactPanel = newPlugin.panelPlugin;
 
     if (reactPanel) {
       if (reactPanel.onPanelTypeChanged) {

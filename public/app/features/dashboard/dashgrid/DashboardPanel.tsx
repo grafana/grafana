@@ -102,7 +102,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
       if (importedPlugin instanceof AngularPanelPlugin) {
         plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
       } else if (importedPlugin instanceof PanelPlugin) {
-        plugin.vizPlugin = importedPlugin as PanelPlugin;
+        plugin.panelPlugin = importedPlugin as PanelPlugin;
       }
     } catch (e) {
       plugin = getPanelPluginNotFound(plugin.id);
@@ -210,7 +210,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.vizPlugin && this.renderReactPanel()}
+              {plugin.panelPlugin && this.renderReactPanel()}
               {plugin.angularPlugin && this.renderAngularPanel()}
             </div>
           )}

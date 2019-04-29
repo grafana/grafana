@@ -63,7 +63,7 @@ export function getPanelPluginNotFound(id: string): PanelPluginMeta {
       updated: '',
       version: '',
     },
-    vizPlugin: new PanelPlugin(NotFound),
+    panelPlugin: new PanelPlugin(NotFound),
     angularPlugin: null,
   };
 }
