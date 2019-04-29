@@ -27,6 +27,7 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
+	bus.AddHandler("sql", DisableUser)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
@@ -470,6 +471,23 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
 	}
 
+	return err
+}
+
+func DisableUser(cmd *m.DisableUserCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		return disableUserInTransaction(sess, cmd.UserId)
+	})
+}
+
+func disableUserInTransaction(sess *DBSession, userID int64) error {
+	user := m.User{}
+	sess.ID(userID).Get(&user)
+
+	user.IsDisabled = true
+	sess.UseBool("is_disabled")
+
+	_, err := sess.ID(userID).Update(&user)
 	return err
 }
 

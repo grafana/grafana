@@ -49,6 +49,7 @@ var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrLDAPUserNotFound   = errors.New("LDAP user not found")
 )
 
 var dial = func(network, addr string) (IConnection, error) {
@@ -137,8 +138,13 @@ func (auth *Auth) Login(query *models.LoginUserQuery) error {
 
 	// find user entry & attributes
 	user, err := auth.searchForUser(query.Username)
-	if err != nil {
+	if err != nil && err != ErrLDAPUserNotFound {
 		return err
+	}
+
+	if err == ErrLDAPUserNotFound {
+		auth.DisableExternalUser(query.Username)
+		return ErrInvalidCredentials
 	}
 
 	auth.log.Debug("Ldap User found", "info", spew.Sdump(user))
@@ -178,6 +184,10 @@ func (auth *Auth) SyncUser(query *models.LoginUserQuery) error {
 	user, err := auth.searchForUser(query.Username)
 	if err != nil {
 		auth.log.Error("Failed searching for user in ldap", "error", err)
+
+		if err == ErrLDAPUserNotFound {
+			auth.DisableExternalUser(query.Username)
+		}
 		return err
 	}
 
@@ -189,6 +199,33 @@ func (auth *Auth) SyncUser(query *models.LoginUserQuery) error {
 	}
 
 	query.User = grafanaUser
+	return nil
+}
+
+// DisableExternalUser marks external user as disabled in Grafana db
+func (auth *Auth) DisableExternalUser(username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := bus.Dispatch(userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if userInfo.AuthModule == "ldap" && !userInfo.IsDisabled {
+		auth.log.Debug("Disabling user", "user", userQuery.Result.Login)
+		// disable user in grafana
+		disableUserCmd := &models.DisableUserCommand{
+			UserId: userQuery.Result.UserId,
+		}
+
+		if err := bus.Dispatch(disableUserCmd); err != nil {
+			auth.log.Debug("Error disabling external user", "user", userQuery.Result.Login, "message", err.Error())
+			return err
+		}
+	}
 	return nil
 }
 
@@ -362,7 +399,7 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 	}
 
 	if len(searchResult.Entries) == 0 {
-		return nil, ErrInvalidCredentials
+		return nil, ErrLDAPUserNotFound
 	}
 
 	if len(searchResult.Entries) > 1 {

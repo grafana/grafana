@@ -30,6 +30,7 @@ type User struct {
 	EmailVerified bool
 	Theme         string
 	HelpFlags1    HelpFlags1
+	IsDisabled    bool
 
 	IsAdmin bool
 	OrgId   int64
@@ -86,6 +87,10 @@ type ChangeUserPasswordCommand struct {
 type UpdateUserPermissionsCommand struct {
 	IsGrafanaAdmin bool
 	UserId         int64 `json:"-"`
+}
+
+type DisableUserCommand struct {
+	UserId int64
 }
 
 type DeleteUserCommand struct {

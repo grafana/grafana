@@ -58,6 +58,7 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 
 	return err
 }
+
 func validatePasswordSet(password string) error {
 	if len(password) == 0 {
 		return ErrPasswordEmpty

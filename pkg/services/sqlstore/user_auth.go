@@ -14,6 +14,7 @@ var getTime = time.Now
 
 func init() {
 	bus.AddHandler("sql", GetUserByAuthInfo)
+	bus.AddHandler("sql", GetExternalUserInfoByLogin)
 	bus.AddHandler("sql", GetAuthInfo)
 	bus.AddHandler("sql", SetAuthInfo)
 	bus.AddHandler("sql", UpdateAuthInfo)
@@ -112,6 +113,30 @@ func GetUserByAuthInfo(query *m.GetUserByAuthInfoQuery) error {
 	}
 
 	query.Result = user
+	return nil
+}
+
+func GetExternalUserInfoByLogin(query *m.GetExternalUserInfoByLoginQuery) error {
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
+	err := bus.Dispatch(&userQuery)
+	if err != nil {
+		return err
+	}
+
+	authInfoQuery := &m.GetAuthInfoQuery{UserId: userQuery.Result.Id}
+	if err := bus.Dispatch(authInfoQuery); err != nil {
+		return err
+	}
+
+	query.Result = &m.ExternalUserInfo{
+		UserId:     userQuery.Result.Id,
+		Login:      userQuery.Result.Login,
+		Email:      userQuery.Result.Email,
+		Name:       userQuery.Result.Name,
+		IsDisabled: userQuery.Result.IsDisabled,
+		AuthModule: authInfoQuery.Result.AuthModule,
+		AuthId:     authInfoQuery.Result.AuthId,
+	}
 	return nil
 }
 
