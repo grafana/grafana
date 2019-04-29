@@ -5,10 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
 )
 
 var (
 	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
+	ErrNoLDAPServers         = errors.New("No LDAP servers are configured")
 	ErrInvalidCredentials    = errors.New("Invalid Username or Password")
 	ErrNoEmail               = errors.New("Login provider didn't return an email address")
 	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
@@ -21,7 +23,6 @@ var (
 
 func Init() {
 	bus.AddHandler("auth", AuthenticateUser)
-	loadLdapConfig()
 }
 
 func AuthenticateUser(query *m.LoginUserQuery) error {
@@ -40,14 +41,14 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 
 	ldapEnabled, ldapErr := loginUsingLdap(query)
 	if ldapEnabled {
-		if ldapErr == nil || ldapErr != ErrInvalidCredentials {
+		if ldapErr == nil || ldapErr != LDAP.ErrInvalidCredentials {
 			return ldapErr
 		}
 
 		err = ldapErr
 	}
 
-	if err == ErrInvalidCredentials {
+	if err == ErrInvalidCredentials || err == LDAP.ErrInvalidCredentials {
 		saveInvalidLoginAttempt(query)
 	}
 
