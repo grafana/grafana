@@ -13,9 +13,15 @@ export interface PanelPluginMeta extends PluginMeta {
   vizPlugin: PanelPlugin | null;
   hasBeenImported?: boolean;
 
-  // if has somethign the query tab will show up
-  // Before 6.2 this could be table and/or series, 6.2+ supports both transparently
-  dataFormats?: any[];
+  // if length>0 the query tab will show up
+  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
+  // so it will be deprecated soon
+  dataFormats?: PanelDataFormat[];
+}
+
+export enum PanelDataFormat {
+  Table = 'table',
+  TimeSeries = 'time_series',
 }
 
 export interface PanelData {
