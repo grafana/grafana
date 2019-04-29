@@ -55,7 +55,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const cssClasses = classNames({
       'refresh-picker': true,
-      'refresh-picker--refreshing': selectedValue.label !== offOption.label,
+      'refresh-picker--off': selectedValue.label === offOption.label,
     });
 
     return (
