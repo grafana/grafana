@@ -40,8 +40,9 @@ const testRange = {
     to: t,
   },
 };
-jest.mock('./selectors', () => ({
-  timeRangeFromUrlSelector: (range: RawTimeRange) => testRange,
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {

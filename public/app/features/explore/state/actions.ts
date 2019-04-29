@@ -18,6 +18,7 @@ import {
   serializeStateToUrlParam,
   parseUrlState,
   getTimeRange,
+  getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -86,7 +87,6 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { timeRangeFromUrlSelector } from './selectors';
 
 /**
  * Updates UI state and save it to the URL
@@ -857,7 +857,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     const { datasource, queries, range: urlRange, ui } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
     const timeZone = getTimeZone(getState().user);
-    const range = timeRangeFromUrlSelector(urlRange, timeZone);
+    const range = getTimeRangeFromUrl(urlRange, timeZone);
 
     // need to refresh datasource
     if (update.datasource) {

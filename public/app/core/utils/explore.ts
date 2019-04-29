@@ -1,17 +1,17 @@
 // Libraries
 import _ from 'lodash';
+import moment, { Moment } from 'moment';
 
 // Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import { colors, TimeRange, TimeZone } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
+import { colors, TimeRange, RawTimeRange, TimeZone, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -391,5 +391,45 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
     from: dateMath.parse(rawRange.from, false, timeZone.raw as any),
     to: dateMath.parse(rawRange.to, true, timeZone.raw as any),
     raw: rawRange,
+  };
+};
+
+const parseRawTime = (value): Moment | string => {
+  if (value === null) {
+    return null;
+  }
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return moment.utc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return moment.utc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return moment.utc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  if (!isNaN(value)) {
+    const epoch = parseInt(value, 10);
+    return moment.utc(epoch);
+  }
+
+  return null;
+};
+
+export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
+  const raw = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false, timeZone.raw as any),
+    to: dateMath.parse(raw.to, true, timeZone.raw as any),
+    raw,
   };
 };

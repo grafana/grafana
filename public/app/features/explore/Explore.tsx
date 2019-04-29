@@ -34,14 +34,19 @@ import {
 import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, TimeZone } from '@grafana/ui';
 import { ExploreItemState, ExploreUrlState, RangeScanner, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { LAST_USED_DATASOURCE_KEY, ensureQueries, DEFAULT_RANGE, DEFAULT_UI_STATE } from 'app/core/utils/explore';
+import {
+  LAST_USED_DATASOURCE_KEY,
+  ensureQueries,
+  DEFAULT_RANGE,
+  DEFAULT_UI_STATE,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
-import { timeRangeFromUrlSelector } from './state/selectors';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -117,7 +122,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
     const { datasource, queries, range: urlRange, ui = DEFAULT_UI_STATE } = (urlState || {}) as ExploreUrlState;
     const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
     const initialQueries: DataQuery[] = ensureQueries(queries);
-    const initialRange = urlRange ? timeRangeFromUrlSelector(urlRange, timeZone).raw : DEFAULT_RANGE;
+    const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
