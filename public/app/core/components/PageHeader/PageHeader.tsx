@@ -1,7 +1,7 @@
 import React, { FormEvent } from 'react';
-import { NavModel, NavModelItem } from 'app/types';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
+import { NavModel, NavModelItem } from '@grafana/ui';
 
 export interface Props {
   model: NavModel;
