@@ -35,23 +35,24 @@
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
               {{user.login}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
               {{user.email}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
               {{user.lastSeenAtAge}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
               <i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
+              <i class="fa fa-lock" ng-show="user.isDisabled" bs-tooltip="'User disabled'"></i>
             </a>
           </td>
           <td class="text-right">
