@@ -19,6 +19,7 @@ type BasicUserInfo struct {
 	Email   string
 	Login   string
 	Company string
+ Organizations  []string
 	Role    string
 }
 
@@ -217,3 +218,4 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 
 	return result
 }
+

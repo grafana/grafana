@@ -84,3 +84,6 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+conf/defaults.ini
+conf/defaults.ini
+conf/defaults.ini

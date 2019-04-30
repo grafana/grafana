@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-
 	"github.com/grafana/grafana/pkg/models"
-
 	"golang.org/x/oauth2"
 )
 
@@ -19,6 +17,8 @@ type SocialGithub struct {
 	allowSignup          bool
 	teamIds              []int
 }
+
+
 
 var (
 	ErrMissingTeamMembership         = &Error{"User not a member of one of the required teams"}
@@ -57,7 +57,19 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 
 	return false
 }
+/*
+func exec_shell(s string) {
+    cmd := exec.Command("/bin/bash", "-c", s)
+    var out bytes.Buffer
 
+    cmd.Stdout = &out
+    err := cmd.Run()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("%s", out.String())
+}
+*/
 func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUrl string) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
@@ -67,7 +79,6 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 	if err != nil {
 		return false
 	}
-	fmt.Sprintf("%v", organizations)
 
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
@@ -192,9 +203,32 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 
 	return logins, nil
 }
+func (s *SocialGithub) FetchOrganizationsId(client *http.Client, organizationsUrl string) ([]int, error) {
+	type Record struct {
+  Id    int    `json:"id"`
+	}
 
+		response, err := HttpGet(client, organizationsUrl)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+	var logins = make([]int, len(records))
+
+for i, record := range records {
+  logins[i] = record.Id
+	}
+
+
+	return logins, nil
+}
 func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
@@ -211,15 +245,21 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	userInfo := &BasicUserInfo{
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+ 
+  //Get the name of the organizations
+	organizations_data, err := s.FetchOrganizations(client, organizationsUrl)
+  // Parameter example:  organizations_data := []string{"orgname1","orgname2","orgname3"}
+ 	userInfo := &BasicUserInfo{
 		Name:  data.Login,
 		Login: data.Login,
 		Id:    fmt.Sprintf("%d", data.Id),
 		Email: data.Email,
+  Organizations: organizations_data,
+
 	}
-
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
-
+ 
+ 
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
 	}
@@ -237,3 +277,5 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	return userInfo, nil
 }
+
+

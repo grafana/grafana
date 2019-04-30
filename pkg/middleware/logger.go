@@ -18,13 +18,14 @@ package middleware
 import (
 	"net/http"
 	"time"
-
+//	"fmt"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
+//var website string
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
@@ -49,6 +50,10 @@ func Logger() macaron.Handler {
 
 		if ctx, ok := c.Data["ctx"]; ok {
 			ctxTyped := ctx.(*m.ReqContext)
+//   website = req.Referer()
+   //req.Referer()
+//   fmt.Println("website")
+//   fmt.Println(website)
 			if status == 500 {
 				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
 			} else {

@@ -29,7 +29,6 @@ func (ls *LoginService) Init() error {
 
 func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
-
 	userQuery := &m.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
@@ -77,7 +76,6 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 
 	} else {
 		cmd.Result = userQuery.Result
-
 		err = updateUser(cmd.Result, extUser)
 		if err != nil {
 			return err
@@ -243,3 +241,4 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 
 	return nil
 }
+
