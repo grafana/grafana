@@ -5,7 +5,6 @@ import {
   toSeriesData,
   guessFieldTypes,
   guessFieldTypeFromValue,
-  SeriesFieldProcessor,
 } from './processSeriesData';
 import { FieldType, TimeSeries } from '../types/data';
 import moment from 'moment';
@@ -99,28 +98,5 @@ describe('SerisData backwards compatibility', () => {
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
     expect(roundtrip).toMatchObject(table);
-  });
-});
-
-describe('SeriesFieldProcessor', () => {
-  it('should find correct field types', () => {
-    const series = {
-      fields: [{ name: 'A (number)' }, { name: 'B (strings)' }, { name: 'C (nulls)' }, { name: 'Time' }],
-      rows: [[123, null, null, '2000'], [null, 'Hello', null, 'XXX']],
-    };
-    const processor = new SeriesFieldProcessor(series);
-    const fields = processor.getFields();
-    expect(fields[0].type).toBe(FieldType.number);
-    expect(fields[1].type).toBe(FieldType.string);
-    expect(fields[2].type).toBe(FieldType.other);
-    expect(fields[3].type).toBe(FieldType.time);
-    expect(processor.hasFieldOfType(FieldType.number)).toBeTruthy();
-    expect(processor.hasFieldOfType(FieldType.string)).toBeTruthy();
-    expect(processor.hasFieldOfType(FieldType.time)).toBeTruthy();
-    expect(processor.hasFieldOfType(FieldType.boolean)).toBeFalsy();
-    expect(processor.getFields(FieldType.number)[0].index).toBe(0);
-    expect(processor.getFields(FieldType.string)[0].index).toBe(1);
-    expect(processor.getFields(FieldType.other)[0].index).toBe(2);
-    expect(processor.getFields(FieldType.time)[0].index).toBe(3);
   });
 });

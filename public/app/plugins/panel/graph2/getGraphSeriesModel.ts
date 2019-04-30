@@ -8,7 +8,7 @@ import {
   getDisplayProcessor,
   DisplayValue,
   PanelData,
-  SeriesFieldProcessor,
+  FieldCache,
   FieldType,
 } from '@grafana/ui';
 import { SeriesOptions, GraphOptions } from './types';
@@ -27,13 +27,13 @@ export const getGraphSeriesModel = (
   });
 
   for (const series of data.series) {
-    const seriesFieldsProcessor = new SeriesFieldProcessor(series);
-    const timeColumn = seriesFieldsProcessor.getFirstFieldOfType(FieldType.time);
+    const fieldCache = new FieldCache(series.fields);
+    const timeColumn = fieldCache.getFirstFieldOfType(FieldType.time);
     if (!timeColumn) {
       continue;
     }
 
-    const numberFields = seriesFieldsProcessor.getFields(FieldType.number);
+    const numberFields = fieldCache.getFields(FieldType.number);
     for (let i = 0; i < numberFields.length; i++) {
       const field = numberFields[i];
       // Use external calculator just to make sure it works :)

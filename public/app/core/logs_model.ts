@@ -12,8 +12,7 @@ import {
   findUniqueLabels,
   getLogLevel,
   toLegacyResponseData,
-  SeriesFieldProcessor,
-  IndexedField,
+  FieldCache,
   FieldType,
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
@@ -326,18 +325,21 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   });
 }
 
+function isLogsData(series: SeriesData) {
+  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+}
+
 export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
   const metricSeries: SeriesData[] = [];
   const logSeries: SeriesData[] = [];
 
   for (const series of seriesData) {
-    const logSeriesFieldProcessor = new LogsSeriesFieldProcessor(series);
-    if (!logSeriesFieldProcessor.hasValidFieldsForLogs()) {
-      metricSeries.push(series);
+    if (isLogsData(series)) {
+      logSeries.push(series);
       continue;
     }
 
-    logSeries.push(series);
+    metricSeries.push(series);
   }
 
   const logsModel = logSeriesToLogsModel(logSeries);
@@ -380,14 +382,14 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const logSeriesFieldProcessor = new LogsSeriesFieldProcessor(series);
+    const fieldCache = new FieldCache(series.fields);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
     for (let j = 0; j < series.rows.length; j++) {
-      rows.push(processLogSeriesRow(series, logSeriesFieldProcessor, j, uniqueLabels));
+      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
     }
   }
 
@@ -424,28 +426,20 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
 
 export function processLogSeriesRow(
   series: SeriesData,
-  logsSeriesFieldProcessor: LogsSeriesFieldProcessor,
+  fieldCache: FieldCache,
   rowIndex: number,
   uniqueLabels: Labels
 ): LogRowModel {
   const row = series.rows[rowIndex];
-  const timeFieldIndex = logsSeriesFieldProcessor.getFirstFieldOfType(FieldType.time).index;
+  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
   const ts = row[timeFieldIndex];
-  const stringFieldIndex = logsSeriesFieldProcessor.getFirstFieldOfType(FieldType.string).index;
+  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
   const message = row[stringFieldIndex];
   const time = moment(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-
-  let logLevel;
-  if (logsSeriesFieldProcessor.hasLogLevelField()) {
-    const logLevelIndex = logsSeriesFieldProcessor.getLogLevelField().index;
-    logLevel = row[logLevelIndex];
-  } else {
-    logLevel = getLogLevel(message);
-  }
-
+  const logLevel = getLogLevel(message);
   const hasAnsi = hasAnsiCodes(message);
   const search = series.meta && series.meta.search ? series.meta.search : '';
 
@@ -462,39 +456,4 @@ export function processLogSeriesRow(
     searchWords: search ? [search] : [],
     timestamp: ts,
   };
-}
-
-export class LogsSeriesFieldProcessor extends SeriesFieldProcessor {
-  private logLevelFieldIndex?: number;
-
-  constructor(series: SeriesData) {
-    super(series);
-
-    this.findLogLevelField();
-  }
-
-  private findLogLevelField() {
-    const fields = [...this.getFields(FieldType.string), ...this.getFields(FieldType.other)];
-    for (let n = 0; n < fields.length; n++) {
-      const field = fields[n];
-      if (field.name.toLowerCase() === 'loglevel' || field.name.toLowerCase() === 'level') {
-        this.logLevelFieldIndex = field.index;
-        break;
-      }
-    }
-  }
-
-  hasLogLevelField(): boolean {
-    return this.logLevelFieldIndex !== undefined;
-  }
-
-  getLogLevelField(): IndexedField | null {
-    return this.hasLogLevelField()
-      ? { ...this.getFieldByIndex(this.logLevelFieldIndex), index: this.logLevelFieldIndex }
-      : null;
-  }
-
-  hasValidFieldsForLogs(): boolean {
-    return this.hasFieldOfType(FieldType.time) && this.hasFieldOfType(FieldType.string);
-  }
 }

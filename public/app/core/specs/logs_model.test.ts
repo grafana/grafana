@@ -8,7 +8,6 @@ import {
   LogsParsers,
   seriesDataToLogsModel,
   LogsMetaKind,
-  LogsSeriesFieldProcessor,
 } from '../logs_model';
 import { SeriesData, FieldType } from '@grafana/ui';
 
@@ -544,42 +543,5 @@ describe('seriesDataToLogsModel', () => {
       },
       kind: LogsMetaKind.LabelsMap,
     });
-  });
-});
-
-describe('LogsSeriesFieldProcessor', () => {
-  it('should find log level of field not having type', () => {
-    const series = {
-      fields: [{ name: 'a', type: FieldType.time }, { name: 'b', type: FieldType.string }, { name: 'LogLevel' }],
-      rows: [],
-    };
-    const processor = new LogsSeriesFieldProcessor(series);
-    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
-    expect(processor.hasLogLevelField()).toBeTruthy();
-  });
-
-  it('should find log level of field having type', () => {
-    const series = {
-      fields: [
-        { name: 'a', type: FieldType.time },
-        { name: 'b', type: FieldType.string },
-        { name: 'LogLevel', type: FieldType.string },
-      ],
-      rows: [],
-    };
-    const processor = new LogsSeriesFieldProcessor(series);
-    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
-    expect(processor.hasLogLevelField()).toBeTruthy();
-  });
-
-  it('should find log level of field named level', () => {
-    const series = {
-      fields: [{ name: 'a', type: FieldType.time }, { name: 'b', type: FieldType.string }, { name: 'Level' }],
-      rows: [[123, '', 'warning']],
-    };
-    const processor = new LogsSeriesFieldProcessor(series);
-    expect(processor.hasValidFieldsForLogs()).toBeTruthy();
-    expect(processor.hasLogLevelField()).toBeTruthy();
-    expect(processor.getFields()[2].type).toBe(FieldType.string);
   });
 });
