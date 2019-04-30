@@ -19,6 +19,12 @@ export interface QueryResultMeta {
 
   // Match the result to the query
   requestId?: string;
+
+  // Used in Explore for highlighting
+  search?: string;
+
+  // Used in Explore to show limit applied to search result
+  limit?: number;
 }
 
 export interface QueryResultBase {

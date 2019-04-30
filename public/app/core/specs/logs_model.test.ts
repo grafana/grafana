@@ -6,7 +6,10 @@ import {
   LogsDedupStrategy,
   LogsModel,
   LogsParsers,
+  seriesDataToLogsModel,
+  LogsMetaKind,
 } from '../logs_model';
+import { SeriesData, FieldType } from '@grafana/ui';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -326,6 +329,219 @@ describe('LogsParsers', () => {
       const match = '{"foo":42.1}'.match(matcher);
       expect(match).toBeDefined();
       expect(match[1]).toBe('42.1');
+    });
+  });
+});
+
+describe('seriesDataToLogsModel', () => {
+  it('given empty series should return undefined', () => {
+    expect(seriesDataToLogsModel([] as SeriesData[], 0)).toBeUndefined();
+  });
+
+  it('given series without correct series name should not be processed', () => {
+    const series: SeriesData[] = [
+      {
+        fields: [],
+        rows: [],
+      },
+    ];
+    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+  });
+
+  it('given series without a time field should not be processed', () => {
+    const series: SeriesData[] = [
+      {
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+          },
+        ],
+        rows: [],
+      },
+    ];
+    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+  });
+
+  it('given series without a string field should not be processed', () => {
+    const series: SeriesData[] = [
+      {
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+          },
+        ],
+        rows: [],
+      },
+    ];
+    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+  });
+
+  it('given one series should return expected logs model', () => {
+    const series: SeriesData[] = [
+      {
+        labels: {
+          filename: '/var/log/grafana/grafana.log',
+          job: 'grafana',
+        },
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+          },
+        ],
+        rows: [
+          [
+            '2019-04-26T09:28:11.352440161Z',
+            't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+          ],
+          [
+            '2019-04-26T14:42:50.991981292Z',
+            't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+          ],
+        ],
+        meta: {
+          limit: 1000,
+        },
+      },
+    ];
+    const logsModel = seriesDataToLogsModel(series, 0);
+    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        timestamp: '2019-04-26T14:42:50.991981292Z',
+        entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+      },
+      {
+        timestamp: '2019-04-26T09:28:11.352440161Z',
+        entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta[0]).toMatchObject({
+      label: 'Common labels',
+      value: series[0].labels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta[1]).toMatchObject({
+      label: 'Limit',
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
+  it('given one series without labels should return expected logs model', () => {
+    const series: SeriesData[] = [
+      {
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+          },
+        ],
+        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
+      },
+    ];
+    const logsModel = seriesDataToLogsModel(series, 0);
+    expect(logsModel.rows).toHaveLength(1);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo',
+        labels: undefined,
+        logLevel: 'warning',
+        uniqueLabels: {},
+      },
+    ]);
+  });
+
+  it('given multiple series should return expected logs model', () => {
+    const series: SeriesData[] = [
+      {
+        labels: {
+          foo: 'bar',
+          baz: '1',
+        },
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+          },
+        ],
+        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
+      },
+      {
+        name: 'logs',
+        labels: {
+          foo: 'bar',
+          baz: '2',
+        },
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+          },
+        ],
+        rows: [['1970-01-01T00:00:00Z', 'INFO 1'], ['1970-01-01T00:00:02Z', 'INFO 2']],
+      },
+    ];
+    const logsModel = seriesDataToLogsModel(series, 0);
+    expect(logsModel.hasUniqueLabels).toBeTruthy();
+    expect(logsModel.rows).toHaveLength(3);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'INFO 2',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: 'info',
+        uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'WARN boooo',
+        labels: { foo: 'bar', baz: '1' },
+        logLevel: 'warning',
+        uniqueLabels: { baz: '1' },
+      },
+      {
+        entry: 'INFO 1',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: 'info',
+        uniqueLabels: { baz: '2' },
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.meta).toHaveLength(1);
+    expect(logsModel.meta[0]).toMatchObject({
+      label: 'Common labels',
+      value: {
+        foo: 'bar',
+      },
+      kind: LogsMetaKind.LabelsMap,
     });
   });
 });

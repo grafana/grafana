@@ -81,7 +81,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           data={logsResult}
           dedupedData={dedupedResult}
           exploreId={exploreId}
-          key={logsResult && logsResult.id}
           highlighterExpressions={logsHighlighterExpressions}
           loading={loading}
           onChangeTime={onChangeTime}
