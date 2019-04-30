@@ -9,7 +9,7 @@ import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PanelPluginMeta } from 'app/types';
+import { PanelPluginMeta } from '@grafana/ui';
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;

@@ -1,14 +1,12 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import moment from 'moment';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { RawTimeRange } from '@grafana/ui';
-import * as dateMath from 'app/core/utils/datemath';
+import { TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
 import Legend from './Legend';
@@ -78,10 +76,11 @@ interface GraphProps {
   height?: number;
   width?: number;
   id?: string;
-  range: RawTimeRange;
+  range: AbsoluteTimeRange;
+  timeZone: TimeZone;
   split?: boolean;
   userOptions?: any;
-  onChangeTime?: (range: RawTimeRange) => void;
+  onChangeTime?: (range: AbsoluteTimeRange) => void;
   onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
 }
 
@@ -133,27 +132,20 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   onPlotSelected = (event, ranges) => {
-    if (this.props.onChangeTime) {
-      const range = {
-        from: moment(ranges.xaxis.from),
-        to: moment(ranges.xaxis.to),
-      };
-      this.props.onChangeTime(range);
+    const { onChangeTime } = this.props;
+    if (onChangeTime) {
+      this.props.onChangeTime({
+        from: ranges.xaxis.from,
+        to: ranges.xaxis.to,
+      });
     }
   };
 
   getDynamicOptions() {
-    const { range, width } = this.props;
+    const { range, width, timeZone } = this.props;
     const ticks = (width || 0) / 100;
-    let { from, to } = range;
-    if (!moment.isMoment(from)) {
-      from = dateMath.parse(from, false);
-    }
-    if (!moment.isMoment(to)) {
-      to = dateMath.parse(to, true);
-    }
-    const min = from.valueOf();
-    const max = to.valueOf();
+    const min = range.from;
+    const max = range.to;
     return {
       xaxis: {
         mode: 'time',
@@ -161,7 +153,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timezone: 'browser',
+        timezone: timeZone.raw,
         timeformat: time_format(ticks, min, max),
       },
     };

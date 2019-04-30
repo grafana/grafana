@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { PanelPluginMeta } from 'app/types/plugins';
+import { PanelPluginMeta } from '@grafana/ui';
 
 interface Props {
   isCurrent: boolean;
