@@ -24,6 +24,7 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error)
 	UnprovisionDashboard(dashboardId int64) error
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
@@ -37,7 +38,9 @@ var NewService = func() DashboardService {
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
 var NewProvisioningService = func() DashboardProvisioningService {
-	return &dashboardServiceImpl{}
+	return &dashboardServiceImpl{
+		log: log.New("dashboard-provisioning-service"),
+	}
 }
 
 type SaveDashboardDTO struct {
@@ -57,6 +60,16 @@ type dashboardServiceImpl struct {
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
+	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashboardId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
 		return nil, err
@@ -123,14 +136,12 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	if validateProvisionedDashboard {
-		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-		err := bus.Dispatch(isDashboardProvisioned)
-
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dash.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if isDashboardProvisioned.Result {
+		if provisionedData != nil {
 			return nil, models.ErrDashboardCannotSaveProvisionedDashboard
 		}
 	}
@@ -258,13 +269,12 @@ func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, or
 
 func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
 	if validateProvisionedDashboard {
-		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dashboardId}
-		err := bus.Dispatch(isDashboardProvisioned)
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dashboardId)
 		if err != nil {
 			return errutil.Wrap("failed to check if dashboard is provisioned", err)
 		}
 
-		if isDashboardProvisioned.Result {
+		if provisionedData != nil {
 			return models.ErrDashboardCannotDeleteProvisionedDashboard
 		}
 	}
