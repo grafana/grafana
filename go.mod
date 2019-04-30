@@ -9,6 +9,8 @@ require (
 	github.com/aws/aws-sdk-go v1.18.5
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
+	github.com/chromedp/cdproto v0.0.0-20190420234220-b15521df8a75
+	github.com/chromedp/chromedp v0.2.0
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/codegangsta/cli v1.20.0
 	github.com/davecgh/go-spew v1.1.1

@@ -56,6 +56,53 @@ github.com/benbjohnson/clock
 github.com/beorn7/perks/quantile
 # github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
 github.com/bradfitz/gomemcache/memcache
+# github.com/chromedp/cdproto v0.0.0-20190420234220-b15521df8a75
+github.com/chromedp/cdproto/cdp
+github.com/chromedp/cdproto/network
+github.com/chromedp/cdproto/page
+github.com/chromedp/cdproto/debugger
+github.com/chromedp/cdproto/io
+github.com/chromedp/cdproto/runtime
+github.com/chromedp/cdproto/security
+github.com/chromedp/cdproto/dom
+github.com/chromedp/cdproto
+github.com/chromedp/cdproto/css
+github.com/chromedp/cdproto/input
+github.com/chromedp/cdproto/inspector
+github.com/chromedp/cdproto/log
+github.com/chromedp/cdproto/target
+github.com/chromedp/cdproto/accessibility
+github.com/chromedp/cdproto/animation
+github.com/chromedp/cdproto/applicationcache
+github.com/chromedp/cdproto/audits
+github.com/chromedp/cdproto/backgroundservice
+github.com/chromedp/cdproto/browser
+github.com/chromedp/cdproto/cachestorage
+github.com/chromedp/cdproto/cast
+github.com/chromedp/cdproto/database
+github.com/chromedp/cdproto/deviceorientation
+github.com/chromedp/cdproto/domdebugger
+github.com/chromedp/cdproto/domsnapshot
+github.com/chromedp/cdproto/domstorage
+github.com/chromedp/cdproto/emulation
+github.com/chromedp/cdproto/fetch
+github.com/chromedp/cdproto/headlessexperimental
+github.com/chromedp/cdproto/heapprofiler
+github.com/chromedp/cdproto/indexeddb
+github.com/chromedp/cdproto/layertree
+github.com/chromedp/cdproto/memory
+github.com/chromedp/cdproto/overlay
+github.com/chromedp/cdproto/performance
+github.com/chromedp/cdproto/profiler
+github.com/chromedp/cdproto/serviceworker
+github.com/chromedp/cdproto/storage
+github.com/chromedp/cdproto/systeminfo
+github.com/chromedp/cdproto/tethering
+github.com/chromedp/cdproto/tracing
+github.com/chromedp/cdproto/webaudio
+# github.com/chromedp/chromedp v0.2.0
+github.com/chromedp/chromedp
+github.com/chromedp/chromedp/kb
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
 # github.com/davecgh/go-spew v1.1.1
@@ -63,6 +110,8 @@ github.com/davecgh/go-spew/spew
 # github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
 github.com/denisenkom/go-mssqldb
 github.com/denisenkom/go-mssqldb/internal/cp
+# github.com/disintegration/imaging v1.6.0
+github.com/disintegration/imaging
 # github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 github.com/facebookgo/inject
 # github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691
@@ -131,9 +180,16 @@ github.com/klauspost/compress/gzip
 github.com/klauspost/compress/flate
 # github.com/klauspost/cpuid v1.2.0
 github.com/klauspost/cpuid
+# github.com/knq/sysutil v0.0.0-20181215143952-f05b59f0f307
+github.com/knq/sysutil
 # github.com/lib/pq v1.0.0
 github.com/lib/pq
 github.com/lib/pq/oid
+# github.com/mailru/easyjson v0.0.0-20190403194419-1ea4449da983
+github.com/mailru/easyjson
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
+github.com/mailru/easyjson/buffer
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7
@@ -222,6 +278,10 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/md4
 golang.org/x/crypto/ed25519/internal/edwards25519
+# golang.org/x/image v0.0.0-20190417020941-4e30a6eb7d9a
+golang.org/x/image/bmp
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 # golang.org/x/net v0.0.0-20190415100556-4a65cf94b679
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context

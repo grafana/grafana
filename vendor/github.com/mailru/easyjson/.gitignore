@@ -1,0 +1,5 @@
+.root
+*_easyjson.go
+*.iml
+.idea
+*.swp

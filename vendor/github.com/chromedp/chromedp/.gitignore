@@ -1,0 +1,12 @@
+out.txt
+out*.txt
+old*.txt
+cdp-*.log
+cdp-*.txt
+
+coverage.out
+massif.out
+
+# headless_shell
+/headless_shell/
+/hs/
