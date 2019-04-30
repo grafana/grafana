@@ -5,8 +5,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 
 // Types
-import { NavModel } from 'app/types';
-import { PluginMeta, DataSourceSettings } from '@grafana/ui/src/types';
+import { NavModel, PluginMeta, DataSourceSettings } from '@grafana/ui';
 
 export function buildNavModel(ds: DataSourceSettings, plugin: PluginMeta, currentPage: string): NavModel {
   let title = 'New';
