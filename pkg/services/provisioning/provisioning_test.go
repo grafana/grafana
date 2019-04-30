@@ -99,7 +99,6 @@ func setup() *serviceTestStruct {
 		nil,
 	)
 	serviceTest.service.Cfg = setting.NewCfg()
-	//return service, dashMock
 
 	ctx, cancel := context.WithCancel(context.Background())
 	serviceTest.cancel = cancel
