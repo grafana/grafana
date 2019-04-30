@@ -1,13 +1,7 @@
-export interface NavModelBreadcrumb {
-  title: string;
-  url?: string;
-}
-
 export interface NavModelItem {
   text: string;
   url?: string;
   subTitle?: string;
-  subType?: any; // ??? icon and text
   icon?: string;
   img?: string;
   id?: string;
