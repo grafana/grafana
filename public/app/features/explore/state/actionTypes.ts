@@ -2,12 +2,12 @@
 import { Emitter } from 'app/core/core';
 import {
   RawTimeRange,
-  TimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
   LogLevel,
+  TimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -89,7 +89,7 @@ export interface InitializeExplorePayload {
   containerWidth: number;
   eventBridge: Emitter;
   queries: DataQuery[];
-  range: RawTimeRange;
+  range: TimeRange;
   ui: ExploreUIState;
 }
 

@@ -886,8 +886,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	AlertingEvaluationTimeout = alerting.Key("evaluation_timeout_seconds").MustDuration(time.Second * 30)
-	AlertingNotificationTimeout = alerting.Key("notification_timeout_seconds").MustDuration(time.Second * 30)
+	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
+	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
+	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 
 	explore := iniFile.Section("explore")

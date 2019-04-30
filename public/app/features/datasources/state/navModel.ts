@@ -1,5 +1,4 @@
-import { NavModel, NavModelItem } from 'app/types';
-import { PluginMeta, DataSourceSettings, PluginType } from '@grafana/ui/src/types';
+import { PluginMeta, DataSourceSettings, PluginType, NavModel, NavModelItem } from '@grafana/ui';
 import config from 'app/core/config';
 
 export function buildNavModel(dataSource: DataSourceSettings, pluginMeta: PluginMeta): NavModelItem {
