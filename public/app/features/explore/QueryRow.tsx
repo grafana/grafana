@@ -132,7 +132,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
           ) : (
             <QueryEditor
               datasource={datasourceInstance}
-              error={queryResponse.error.message ? queryResponse.error.message : null}
+              error={queryResponse.error && queryResponse.error.message ? queryResponse.error.message : null}
               onQueryChange={this.onChange}
               onExecuteQuery={this.onRunQuery}
               initialQuery={query}
