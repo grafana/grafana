@@ -2,10 +2,11 @@ package provisioning
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/pkg/errors"
 	"path"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/pkg/errors"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -78,7 +79,9 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
-		pollingContext, cancelFun := context.WithCancel(ctx)
+		// Using background here because otherwise if root context was canceled the select later on would
+		// non-deterministically take one of the route possibly going into one polling loop before exiting.
+		pollingContext, cancelFun := context.WithCancel(context.Background())
 		ps.pollingCtxCancel = cancelFun
 		ps.dashboardProvisioner.PollChanges(pollingContext)
 		ps.mutex.Unlock()
@@ -88,7 +91,8 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 			// Polling was canceled.
 			continue
 		case <-ctx.Done():
-			// Root server context was cancelled so just leave.
+			// Root server context was cancelled so cancel polling and leave.
+			ps.cancelPolling()
 			return ctx.Err()
 		}
 	}
