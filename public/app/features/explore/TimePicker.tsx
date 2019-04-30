@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { Input, RawTimeRange, TimeRange, TIME_FORMAT, momentUtc } from '@grafana/ui';
+import { Input, RawTimeRange, TimeRange, TIME_FORMAT, momentUtc, getRawRange } from '@grafana/ui';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -22,29 +22,6 @@ interface TimePickerState {
   toRaw: string;
 }
 
-const getRaw = (isUtc: boolean, range: any) => {
-  const rawRange = {
-    from: range.raw.from,
-    to: range.raw.to,
-  };
-
-  if (moment.isMoment(rawRange.from)) {
-    if (!isUtc) {
-      rawRange.from = rawRange.from.local();
-    }
-    rawRange.from = rawRange.from.format(TIME_FORMAT);
-  }
-
-  if (moment.isMoment(rawRange.to)) {
-    if (!isUtc) {
-      rawRange.to = rawRange.to.local();
-    }
-    rawRange.to = rawRange.to.format(TIME_FORMAT);
-  }
-
-  return rawRange;
-};
-
 /**
  * TimePicker with dropdown menu for relative dates.
  *
@@ -62,7 +39,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     super(props);
 
     const { range, isUtc, isOpen } = props;
-    const rawRange = getRaw(props.isUtc, range);
+    const rawRange = getRawRange(props.isUtc, range);
 
     this.state = {
       isOpen: isOpen,
@@ -85,7 +62,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     }
 
     const { range } = props;
-    const rawRange = getRaw(props.isUtc, range);
+    const rawRange = getRawRange(props.isUtc, range);
 
     return {
       ...state,
