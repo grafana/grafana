@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
 
 import config from 'app/core/config';
-import { PanelPluginMeta } from 'app/types/plugins';
 import VizTypePickerPlugin from './VizTypePickerPlugin';
-import { EmptySearchResult } from '@grafana/ui';
+import { PanelPluginMeta, EmptySearchResult } from '@grafana/ui';
 
 export interface Props {
   current: PanelPluginMeta;

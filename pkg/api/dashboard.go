@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -47,7 +48,7 @@ func dashboardGuardianResponse(err error) Response {
 	return Error(403, "Access denied to this dashboard", nil)
 }
 
-func GetDashboard(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -106,14 +107,22 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(isDashboardProvisioned)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	if isDashboardProvisioned.Result {
+	if provisioningData != nil {
 		meta.Provisioned = true
+		meta.ProvisionedExternalId, err = filepath.Rel(
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+			provisioningData.ExternalId,
+		)
+		if err != nil {
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
+		}
 	}
 
 	// make sure db version is in sync with json model version

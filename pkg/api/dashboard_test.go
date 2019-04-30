@@ -11,6 +11,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -43,8 +44,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -198,8 +199,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.HasAcl = true
 		setting.ViewersCanEdit = false
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -235,6 +236,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		// This tests six scenarios:
 		// 1. user is an org viewer AND has no permissions for this dashboard
 		// 2. user is an org editor AND has no permissions for this dashboard
@@ -247,7 +252,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_VIEWER
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -260,7 +265,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -305,7 +310,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := m.ROLE_EDITOR
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by slug", func() {
@@ -318,7 +323,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-				sc.handlerFunc = GetDashboard
+				sc.handlerFunc = hs.GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 				Convey("Should lookup dashboard by uid", func() {
@@ -636,8 +641,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -766,8 +771,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = false
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = nil
 			return nil
 		})
 
@@ -905,12 +910,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
-			query.Result = &m.Dashboard{Id: 1}
+			query.Result = &m.Dashboard{Id: 1, Data: &simplejson.Json{}}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.IsDashboardProvisionedQuery) error {
-			query.Result = true
+		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+			query.Result = &m.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}
 			return nil
 		})
 
@@ -940,11 +945,32 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(result.Get("error").MustString(), ShouldEqual, m.ErrDashboardCannotDeleteProvisionedDashboard.Error())
 			})
 		})
+
+		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", m.ROLE_EDITOR, func(sc *scenarioContext) {
+			mock := provisioning.NewProvisioningServiceMock()
+			mock.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
+				return "/tmp/grafana/dashboards"
+			}
+
+			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
+
+			Convey("Should return relative path to provisioning file", func() {
+				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
+			})
+		})
 	})
 }
 
-func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
-	CallGetDashboard(sc)
+func GetDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningService ProvisioningService) dtos.DashboardFullWithMeta {
+	if provisioningService == nil {
+		provisioningService = provisioning.NewProvisioningServiceMock()
+	}
+
+	hs := &HTTPServer{
+		Cfg:                 setting.NewCfg(),
+		ProvisioningService: provisioningService,
+	}
+	CallGetDashboard(sc, hs)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -955,8 +981,13 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	return dash
 }
 
-func CallGetDashboard(sc *scenarioContext) {
-	sc.handlerFunc = GetDashboard
+func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
+	return GetDashboardShouldReturn200WithConfig(sc, nil)
+}
+
+func CallGetDashboard(sc *scenarioContext, hs *HTTPServer) {
+
+	sc.handlerFunc = hs.GetDashboard
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 

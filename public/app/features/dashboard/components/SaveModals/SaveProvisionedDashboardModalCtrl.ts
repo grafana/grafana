@@ -1,6 +1,7 @@
 import angular from 'angular';
 import { saveAs } from 'file-saver';
 import coreModule from 'app/core/core_module';
+import { DashboardModel } from '../../state';
 
 const template = `
 <div class="modal-body">
@@ -21,6 +22,9 @@ const template = `
       <i>See <a class="external-link" href="http://docs.grafana.org/administration/provisioning/#dashboards" target="_blank">
       documentation</a> for more information about provisioning.</i>
     </small>
+    <div class="p-t-1">
+      File path: {{ctrl.dashboardModel.meta.provisionedExternalId}}
+    </div>
     <div class="p-t-2">
       <div class="gf-form">
         <code-editor content="ctrl.dashboardJson" data-mode="json" data-max-lines=15></code-editor>
@@ -41,12 +45,14 @@ const template = `
 
 export class SaveProvisionedDashboardModalCtrl {
   dash: any;
+  dashboardModel: DashboardModel;
   dashboardJson: string;
   dismiss: () => void;
 
   /** @ngInject */
   constructor(dashboardSrv) {
-    this.dash = dashboardSrv.getCurrent().getSaveModelClone();
+    this.dashboardModel = dashboardSrv.getCurrent();
+    this.dash = this.dashboardModel.getSaveModelClone();
     delete this.dash.id;
     this.dashboardJson = angular.toJson(this.dash, true);
   }
