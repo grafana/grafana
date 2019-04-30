@@ -4,12 +4,12 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, NavModel, UrlQueryMap } from 'app/types';
+import { StoreState, UrlQueryMap } from 'app/types';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { AppPlugin } from '@grafana/ui';
+import { AppPlugin, NavModel } from '@grafana/ui';
 
 interface Props {
   pluginId: string; // From the angular router

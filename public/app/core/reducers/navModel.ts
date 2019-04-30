@@ -1,5 +1,5 @@
 import { Action, ActionTypes } from 'app/core/actions/navModel';
-import { NavIndex, NavModelItem } from 'app/types';
+import { NavIndex, NavModelItem } from '@grafana/ui';
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {

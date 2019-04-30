@@ -61,6 +61,7 @@ export class Table extends Component<Props, State> {
   renderer: ColumnRenderInfo[];
   measurer: CellMeasurerCache;
   scrollToTop = false;
+  rotateWidth = 100;
 
   static defaultProps = {
     showHeader: true,
@@ -85,7 +86,7 @@ export class Table extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { data, styles, showHeader } = this.props;
+    const { data, styles, showHeader, rotate } = this.props;
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
     const configsChanged =
@@ -105,6 +106,11 @@ export class Table extends Component<Props, State> {
       this.renderer = this.initColumns(this.props);
     }
 
+    if (dataChanged || rotate !== prevProps.rotate) {
+      const { width, minColumnWidth } = this.props;
+      this.rotateWidth = Math.max(width / data.rows.length, minColumnWidth);
+    }
+
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       this.scrollToTop = true;
@@ -115,6 +121,10 @@ export class Table extends Component<Props, State> {
   /** Given the configuration, setup how each column gets rendered */
   initColumns(props: Props): ColumnRenderInfo[] {
     const { styles, data, width, minColumnWidth } = props;
+    if (!data || !data.fields || !data.fields.length || !styles) {
+      return [];
+    }
+
     const columnWidth = Math.max(width / data.fields.length, minColumnWidth);
 
     return data.fields.map((col, index) => {
@@ -235,12 +245,18 @@ export class Table extends Component<Props, State> {
   };
 
   getColumnWidth = (col: Index): number => {
+    if (this.props.rotate) {
+      return this.rotateWidth; // fixed for now
+    }
     return this.renderer[col.index].width;
   };
 
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
+    if (!data || !data.fields || !data.fields.length) {
+      return <span>Missing Fields</span>; // nothing
+    }
 
     let columnCount = data.fields.length;
     let rowCount = data.rows.length + (showHeader ? 1 : 0);

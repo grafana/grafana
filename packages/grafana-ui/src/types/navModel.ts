@@ -23,6 +23,12 @@ export interface NavModelItem {
 export interface NavModel {
   main: NavModelItem;
   node: NavModelItem;
+  breadcrumbs?: NavModelItem[];
+}
+
+export interface NavModelBreadcrumb {
+  title: string;
+  url?: string;
 }
 
 export type NavIndex = { [s: string]: NavModelItem };

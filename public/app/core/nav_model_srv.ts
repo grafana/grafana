@@ -1,17 +1,7 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
-import { NavModelItem } from 'app/types';
-
-export class NavModel {
-  breadcrumbs: NavModelItem[];
-  main: NavModelItem;
-  node: NavModelItem;
-
-  constructor() {
-    this.breadcrumbs = [];
-  }
-}
+import { NavModel } from '@grafana/ui';
 
 export class NavModelSrv {
   navItems: any;
@@ -27,7 +17,9 @@ export class NavModelSrv {
 
   getNav(...args) {
     let children = this.navItems;
-    const nav = new NavModel();
+    const nav = {
+      breadcrumbs: [],
+    } as NavModel;
 
     for (const id of args) {
       // if its a number then it's the index to use for main
@@ -64,6 +56,7 @@ export class NavModelSrv {
     };
 
     return {
+      breadcrumbs: [node],
       node: node,
       main: node,
     };

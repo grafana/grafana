@@ -4,7 +4,8 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, NavModel, NavModelItem } from 'app/types';
+import { StoreState } from 'app/types';
+import { NavModel, NavModelItem } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 

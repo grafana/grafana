@@ -1,6 +1,6 @@
 import coreModule from '../../core_module';
-import { NavModel } from '../../nav_model_srv';
 import appEvents from 'app/core/app_events';
+import { NavModel } from '@grafana/ui';
 
 export class NavbarCtrl {
   model: NavModel;
