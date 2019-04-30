@@ -127,7 +127,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
-		Timeout:         time.Duration(setting.AlertingEvaluationTimeout.Seconds()*0.9) * time.Second,
+		Timeout:         setting.AlertingEvaluationTimeout,
 		OrgId:           context.Rule.OrgId,
 		OrgRole:         m.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
