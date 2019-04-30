@@ -57,6 +57,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: 'proxied/api/v1/labels',
         silent: true,
+        headers: {},
       });
     });
 
@@ -75,6 +76,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: 'proxied/api/v1/label/resource/values',
         silent: true,
+        headers: {},
       });
     });
 
@@ -97,6 +99,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -121,6 +124,7 @@ describe('PrometheusMetricFindQuery', () => {
           'metric{label1="foo", label2="bar", label3="baz"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -145,6 +149,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/series?match[]=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
 
@@ -163,6 +168,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: 'proxied/api/v1/label/__name__/values',
         silent: true,
+        headers: {},
       });
     });
 
@@ -190,6 +196,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
         requestId: undefined,
+        headers: {},
       });
     });
 
@@ -217,6 +224,7 @@ describe('PrometheusMetricFindQuery', () => {
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         silent: true,
+        headers: {},
       });
     });
   });

@@ -72,6 +72,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {
