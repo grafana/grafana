@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -156,7 +157,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: unhashedToken,
@@ -185,14 +186,14 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -227,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return nil, m.ErrUserTokenNotFound
 			}
 
