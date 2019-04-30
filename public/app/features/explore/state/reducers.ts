@@ -45,8 +45,6 @@ import {
   scanStartAction,
   scanStopAction,
   setQueriesAction,
-  toggleGraphAction,
-  toggleLogsAction,
   toggleTableAction,
   queriesImportedAction,
   updateUIStateAction,
@@ -54,6 +52,7 @@ import {
 } from './actionTypes';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from 'app/types';
+import TableModel from 'app/core/table_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -312,6 +311,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
+        graphResult: resultType === 'Graph' ? null : state.graphResult,
+        tableResult: resultType === 'Table' ? null : state.tableResult,
+        logsResult: resultType === 'Logs' ? null : state.logsResult,
         latency: 0,
         queryError: response,
         showingStartPage: false,
@@ -353,7 +355,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
-        ...results,
+        graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
+        tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
+        logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
         latency,
         queryError: null,
         graphIsLoading: false,
@@ -400,7 +404,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: scanStopAction,
     mapper: (state): ExploreItemState => {
-      // const nextQueryTransactions = queryTransactions.filter(qt => qt.scanning && !qt.done);
       return {
         ...state,
         scanning: false,
@@ -428,46 +431,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: toggleGraphAction,
-    mapper: (state): ExploreItemState => {
-      // const showingGraph = !state.showingGraph;
-      // let nextQueryTransactions = state.queryTransactions;
-      // if (!showingGraph) {
-      //   // Discard transactions related to Graph query
-      //   nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Graph');
-      // }
-      return { ...state };
-    },
-  })
-  .addMapper({
-    filter: toggleLogsAction,
-    mapper: (state): ExploreItemState => {
-      // const showingLogs = !state.showingLogs;
-      // let nextQueryTransactions = state.queryTransactions;
-      // if (!showingLogs) {
-      //   // Discard transactions related to Logs query
-      //   nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Logs');
-      // }
-      return { ...state };
-    },
-  })
-  .addMapper({
     filter: toggleTableAction,
     mapper: (state): ExploreItemState => {
-      // const showingTable = !state.showingTable;
-      // if (showingTable) {
-      //   return { ...state, queryTransactions: state.queryTransactions };
-      // }
+      const showingTable = !state.showingTable;
+      if (showingTable) {
+        return { ...state };
+      }
 
-      // Toggle off needs discarding of table queries and results
-      // const nextQueryTransactions = state.queryTransactions.filter(qt => qt.resultType !== 'Table');
-      // const results = calculateResultsFromQueryTransactions(
-      //   nextQueryTransactions,
-      //   state.datasourceInstance,
-      //   state.queryIntervals.intervalMs
-      // );
-
-      return { ...state };
+      return { ...state, tableResult: new TableModel() };
     },
   })
   .addMapper({

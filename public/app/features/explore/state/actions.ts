@@ -447,7 +447,7 @@ export function queryTransactionSuccess(
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance } = getState().explore[exploreId];
+    const { datasourceInstance, scanning, scanner } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
@@ -468,18 +468,15 @@ export function queryTransactionSuccess(
     );
 
     // Keep scanning for results if this was the last scanning transaction
-    // if (scanning) {
-    //   if (_.size(result) === 0) {
-    //     const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
-    //     if (!other) {
-    //       const range = scanner();
-    //       dispatch(scanRangeAction({ exploreId, range }));
-    //     }
-    //   } else {
-    //     // We can stop scanning if we have a result
-    //     dispatch(scanStopAction({ exploreId }));
-    //   }
-    // }
+    if (scanning) {
+      if (_.size(result) === 0) {
+        const range = scanner();
+        dispatch(scanRangeAction({ exploreId, range }));
+      } else {
+        // We can stop scanning if we have a result
+        dispatch(scanStopAction({ exploreId }));
+      }
+    }
   };
 }
 
