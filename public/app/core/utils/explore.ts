@@ -11,7 +11,17 @@ import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
-import { colors, TimeRange, RawTimeRange, TimeZone, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
+import {
+  colors,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  IntervalValues,
+  DataQuery,
+  DataSourceApi,
+  toSeriesData,
+  guessFieldTypes,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -294,7 +304,9 @@ export function calculateResultsFromQueryTransactions(
       .map(qt => qt.result)
   );
   const logsResult = seriesDataToLogsModel(
-    _.flatten(queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)),
+    _.flatten(
+      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
+    ).map(r => guessFieldTypes(toSeriesData(r))),
     graphInterval
   );
 
