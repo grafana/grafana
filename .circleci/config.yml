@@ -494,6 +494,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
