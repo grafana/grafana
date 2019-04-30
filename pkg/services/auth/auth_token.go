@@ -131,7 +131,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		expireBefore := getTime().Add(-urgentRotateTime).Unix()
 
 		var affectedRows int64
-		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 			affectedRows, err = dbSession.Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
 				modelCopy.Id,
 				modelCopy.PrevAuthToken,
@@ -158,7 +158,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		modelCopy.SeenAt = getTime().Unix()
 
 		var affectedRows int64
-		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 			affectedRows, err = dbSession.Where("id = ? AND auth_token = ?",
 				modelCopy.Id,
 				modelCopy.AuthToken).
