@@ -122,14 +122,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     }
   };
 
-  onClickHintFix = () => {
-    const hint = null; // TODO: fetch this;
-    const { onHint } = this.props;
-    if (onHint && hint && hint.fix) {
-      onHint(hint.fix.action);
-    }
-  };
-
   onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
     const { datasource } = this.props;
     if (!datasource.languageProvider) {
@@ -156,7 +148,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const hint = null; // TODO: fetch this;
     const {
       queryResponse,
       query,
@@ -209,16 +200,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
         <div>
           {queryResponse && queryResponse.error ? (
             <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
-          ) : null}
-          {hint ? (
-            <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
-              {hint.fix ? (
-                <a className="text-link muted" onClick={this.onClickHintFix}>
-                  {hint.fix.label}
-                </a>
-              ) : null}
-            </div>
           ) : null}
         </div>
       </>

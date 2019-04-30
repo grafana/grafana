@@ -16,7 +16,7 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
+import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -109,6 +109,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceAp
 interface PromQueryFieldState {
   metricsOptions: any[];
   syntaxLoaded: boolean;
+  hint: QueryHint;
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
@@ -135,6 +136,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.state = {
       metricsOptions: [],
       syntaxLoaded: false,
+      hint: null,
     };
   }
 
@@ -142,6 +144,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     if (this.languageProvider) {
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.start()));
     }
+    this.refreshHint();
   }
 
   componentWillUnmount() {
@@ -151,6 +154,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
+    const currentHasSeries = this.props.queryResponse.series && this.props.queryResponse.series.length > 0;
+    if (currentHasSeries && prevProps.queryResponse.series !== this.props.queryResponse.series) {
+      this.refreshHint();
+    }
+
     const reconnected =
       prevProps.datasourceStatus === DataSourceStatus.Disconnected &&
       this.props.datasourceStatus === DataSourceStatus.Connected;
@@ -166,6 +174,17 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       this.refreshMetrics(makePromiseCancelable(this.languageProvider.fetchMetrics()));
     }
   }
+
+  refreshHint = () => {
+    const { datasource, query, queryResponse } = this.props;
+    if (queryResponse.series && queryResponse.series.length === 0) {
+      return;
+    }
+
+    const hints = datasource.getQueryHints(query, queryResponse.series);
+    const hint = hints && hints.length > 0 ? hints[0] : null;
+    this.setState({ hint });
+  };
 
   refreshMetrics = (cancelablePromise: CancelablePromise<any>) => {
     this.languageProviderInitializationPromise = cancelablePromise;
@@ -216,7 +235,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   onClickHintFix = () => {
-    const hint = null; // TODO: fetch this
+    const { hint } = this.state;
     const { onHint } = this.props;
     if (onHint && hint && hint.fix) {
       onHint(hint.fix.action);
@@ -274,9 +293,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const hint = null; // TODO: fetch this;
     const { queryResponse, query, datasourceStatus } = this.props;
-    const { metricsOptions, syntaxLoaded } = this.state;
+    const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;

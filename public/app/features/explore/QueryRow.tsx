@@ -161,12 +161,13 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, datasourceError } = item;
+  const { datasourceInstance, history, queries, range, datasourceError, graphResult } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = item.queryError && item.queryError.refId === query.refId ? item.queryError : null;
+  const series = graphResult ? graphResult : []; // TODO: use SeriesData
   const queryResponse: PanelData = {
-    series: [],
+    series,
     state: error ? LoadingState.Error : LoadingState.Done,
     error,
   };
