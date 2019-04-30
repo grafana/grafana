@@ -131,7 +131,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     this.$el.unbind('plotselected', this.onPlotSelected);
   }
 
-  onPlotSelected = (event, ranges) => {
+  onPlotSelected = (event: JQueryEventObject, ranges) => {
     const { onChangeTime } = this.props;
     if (onChangeTime) {
       this.props.onChangeTime({
