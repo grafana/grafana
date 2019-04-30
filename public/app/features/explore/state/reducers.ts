@@ -301,8 +301,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
           ...modifier({ ...query }, modification),
           ...generateEmptyQuery(state.queries),
         }));
-        // Discard all ongoing transactions
-        // nextQueryTransactions = [];
       } else {
         // Modify query only at index
         nextQueries = queries.map((query, i) => {
@@ -312,16 +310,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
             ? { ...modifier({ ...query }, modification), ...generateEmptyQuery(state.queries) }
             : query;
         });
-        // nextQueryTransactions = queryTransactions
-        //   // Consume the hint corresponding to the action
-        //   .map(qt => {
-        //     if (qt.hints != null && qt.rowIndex === index) {
-        //       qt.hints = qt.hints.filter(hint => hint.fix.action !== modification);
-        //     }
-        //     return qt;
-        //   })
-        //   // Preserve previous row query transaction to keep results visible if next query is incomplete
-        //   .filter(qt => modification.preventSubmit || qt.rowIndex !== index);
       }
       return {
         ...state,
