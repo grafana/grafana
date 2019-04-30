@@ -129,7 +129,7 @@ describe('PanelModel', () => {
         model.changePlugin(
           getPanelPlugin({
             id: 'react',
-            vizPlugin: reactPlugin,
+            panelPlugin: reactPlugin,
           })
         );
       });

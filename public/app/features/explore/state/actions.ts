@@ -1,5 +1,6 @@
 // Libraries
 import _ from 'lodash';
+import moment from 'moment';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -16,6 +17,8 @@ import {
   buildQueryTransaction,
   serializeStateToUrlParam,
   parseUrlState,
+  getTimeRange,
+  getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -26,12 +29,12 @@ import { ResultGetter } from 'app/types/explore';
 import { ThunkResult } from 'app/types';
 import {
   RawTimeRange,
-  TimeRange,
   DataSourceApi,
   DataQuery,
   DataSourceSelectItem,
   QueryHint,
   QueryFixAction,
+  TimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -83,7 +86,7 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-import { parseTime } from '../TimePicker';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 
 /**
  * Updates UI state and save it to the URL
@@ -169,8 +172,10 @@ export function changeSize(
 /**
  * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
  */
-export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<void> {
-  return dispatch => {
+export function changeTime(exploreId: ExploreId, rawRange: RawTimeRange): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
     dispatch(changeTimeAction({ exploreId, range }));
     dispatch(runQueries(exploreId));
   };
@@ -235,12 +240,14 @@ export function initializeExplore(
   exploreId: ExploreId,
   datasourceName: string,
   queries: DataQuery[],
-  range: RawTimeRange,
+  rawRange: RawTimeRange,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
 ): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({
@@ -723,6 +730,23 @@ export function splitOpen(): ThunkResult<void> {
   };
 }
 
+const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+  let from = range.raw.from;
+  if (moment.isMoment(from)) {
+    from = from.valueOf().toString(10);
+  }
+
+  let to = range.raw.to;
+  if (moment.isMoment(to)) {
+    to = to.valueOf().toString(10);
+  }
+
+  return {
+    from,
+    to,
+  };
+};
+
 /**
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
@@ -734,7 +758,7 @@ export function stateSave(): ThunkResult<void> {
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
       queries: left.queries.map(clearQueryKeys),
-      range: left.range,
+      range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
@@ -747,7 +771,7 @@ export function stateSave(): ThunkResult<void> {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
-        range: right.range,
+        range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: right.showingLogs,
@@ -830,19 +854,20 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range, ui } = urlState;
+    const { datasource, queries, range: urlRange, ui } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
-    const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone);
+
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui));
       return;
     }
 
     if (update.range) {
-      dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
+      dispatch(changeTimeAction({ exploreId, range }));
     }
 
     // need to refresh ui state

@@ -2,10 +2,11 @@ package provisioning
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/pkg/errors"
 	"path"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/pkg/errors"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -14,9 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type DashboardProvisioner interface {
+	Provision() error
+	PollChanges(ctx context.Context)
+	GetProvisionerResolvedPath(name string) string
+}
+
+type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+
 func init() {
 	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+		func(path string) (DashboardProvisioner, error) {
 			return dashboards.NewDashboardProvisionerImpl(path)
 		},
 		notifiers.Provision,
@@ -24,14 +33,8 @@ func init() {
 	))
 }
 
-type ProvisioningService interface {
-	ProvisionDatasources() error
-	ProvisionNotifications() error
-	ProvisionDashboards() error
-}
-
 func NewProvisioningServiceImpl(
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
+	newDashboardProvisioner DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 ) *provisioningServiceImpl {
@@ -47,8 +50,8 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
-	newDashboardProvisioner dashboards.DashboardProvisionerFactory
-	dashboardProvisioner    dashboards.DashboardProvisioner
+	newDashboardProvisioner DashboardProvisionerFactory
+	dashboardProvisioner    DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 	mutex                   sync.Mutex
@@ -78,7 +81,9 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
-		pollingContext, cancelFun := context.WithCancel(ctx)
+		// Using background here because otherwise if root context was canceled the select later on would
+		// non-deterministically take one of the route possibly going into one polling loop before exiting.
+		pollingContext, cancelFun := context.WithCancel(context.Background())
 		ps.pollingCtxCancel = cancelFun
 		ps.dashboardProvisioner.PollChanges(pollingContext)
 		ps.mutex.Unlock()
@@ -88,7 +93,8 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 			// Polling was canceled.
 			continue
 		case <-ctx.Done():
-			// Root server context was cancelled so just leave.
+			// Root server context was cancelled so cancel polling and leave.
+			ps.cancelPolling()
 			return ctx.Err()
 		}
 	}
@@ -125,6 +131,10 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	}
 	ps.dashboardProvisioner = dashProvisioner
 	return nil
+}
+
+func (ps *provisioningServiceImpl) GetDashboardProvisionerResolvedPath(name string) string {
+	return ps.dashboardProvisioner.GetProvisionerResolvedPath(name)
 }
 
 func (ps *provisioningServiceImpl) cancelPolling() {

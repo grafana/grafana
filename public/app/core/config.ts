@@ -1,6 +1,5 @@
 import _ from 'lodash';
-import { PanelPluginMeta } from 'app/types/plugins';
-import { GrafanaTheme, getTheme, GrafanaThemeType, DataSourceInstanceSettings } from '@grafana/ui';
+import { GrafanaTheme, getTheme, GrafanaThemeType, PanelPluginMeta, DataSourceInstanceSettings } from '@grafana/ui';
 
 export interface BuildInfo {
   version: string;
