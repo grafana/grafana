@@ -1,5 +1,6 @@
 import moment from 'moment';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { momentUtc } from '@grafana/ui';
 
 export function inputDateDirective() {
   return {
@@ -18,12 +19,7 @@ export function inputDateDirective() {
           return text;
         }
 
-        let parsed;
-        if ($scope.ctrl.isUtc) {
-          parsed = moment.utc(text, format);
-        } else {
-          parsed = moment(text, format);
-        }
+        const parsed = momentUtc($scope.ctrl.isUtc, text, format);
 
         if (!parsed.isValid()) {
           ngModel.$setValidity('error', false);

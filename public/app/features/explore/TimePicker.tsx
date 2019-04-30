@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
+import { Input, RawTimeRange, TimeRange, TIME_FORMAT, momentUtc } from '@grafana/ui';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -116,8 +116,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     }
 
     const nextTimeRange = {
-      from: this.props.isUtc ? moment.utc(from) : moment(from),
-      to: this.props.isUtc ? moment.utc(to) : moment(to),
+      from: momentUtc(this.props.isUtc, from),
+      to: momentUtc(this.props.isUtc, to),
     };
     if (onChangeTime) {
       onChangeTime(nextTimeRange);
@@ -149,11 +149,11 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         };
 
         if (rawRange.from.indexOf('now') === -1) {
-          rawRange.from = isUtc ? moment.utc(rawRange.from, TIME_FORMAT) : moment(rawRange.from, TIME_FORMAT);
+          rawRange.from = momentUtc(isUtc, rawRange.from, TIME_FORMAT);
         }
 
         if (rawRange.to.indexOf('now') === -1) {
-          rawRange.to = isUtc ? moment.utc(rawRange.to, TIME_FORMAT) : moment(rawRange.to, TIME_FORMAT);
+          rawRange.to = momentUtc(isUtc, rawRange.to, TIME_FORMAT);
         }
 
         const rangeString = rangeUtil.describeTimeRange(rawRange);
