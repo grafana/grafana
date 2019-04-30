@@ -5,16 +5,17 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/login"
-	models "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
+
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type TestLDAP struct {
-	login.ILdapAuther
+	ldap.Auth
 	ID         int64
 	syncCalled bool
 }
@@ -62,13 +63,23 @@ func TestMiddlewareContext(t *testing.T) {
 
 		Convey("LDAP", func() {
 			Convey("gets data from the LDAP", func() {
-				login.LdapCfg = login.LdapConfig{
-					Servers: []*login.LdapServerConf{
-						{},
-					},
+				isLDAPEnabled = func() bool {
+					return true
 				}
 
-				setting.LdapEnabled = true
+				readLDAPConfig = func() *ldap.Config {
+					config := &ldap.Config{
+						Servers: []*ldap.ServerConfig{
+							{},
+						},
+					}
+					return config
+				}
+
+				defer func() {
+					isLDAPEnabled = ldap.IsEnabled
+					readLDAPConfig = ldap.ReadConfig
+				}()
 
 				store := remotecache.NewFakeStore(t)
 
@@ -82,7 +93,7 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *login.LdapServerConf) login.ILdapAuther {
+				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
 					return stub
 				}
 
@@ -94,7 +105,21 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			Convey("gets nice error if ldap is enabled but not configured", func() {
-				setting.LdapEnabled = false
+				isLDAPEnabled = func() bool {
+					return true
+				}
+
+				readLDAPConfig = func() *ldap.Config {
+					config := &ldap.Config{
+						Servers: []*ldap.ServerConfig{},
+					}
+					return config
+				}
+
+				defer func() {
+					isLDAPEnabled = ldap.IsEnabled
+					readLDAPConfig = ldap.ReadConfig
+				}()
 
 				store := remotecache.NewFakeStore(t)
 
@@ -108,13 +133,14 @@ func TestMiddlewareContext(t *testing.T) {
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *login.LdapServerConf) login.ILdapAuther {
+				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
 					return stub
 				}
 
 				id, err := auth.GetUserID()
 
 				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldContainSubstring, "Failed to sync user")
 				So(id, ShouldNotEqual, 42)
 				So(stub.syncCalled, ShouldEqual, false)
 			})

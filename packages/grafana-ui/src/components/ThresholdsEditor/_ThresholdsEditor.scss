@@ -31,6 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   cursor: pointer;
 
   &:hover {
@@ -40,6 +41,7 @@
 
 .thresholds-row-color-indicator {
   width: 10px;
+  flex-shrink: 0;
 }
 
 .thresholds-row-input {

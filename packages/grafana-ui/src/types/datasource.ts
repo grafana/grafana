@@ -1,7 +1,7 @@
 import { ComponentClass } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta } from './plugin';
-import { TableData, TimeSeries, SeriesData } from './data';
+import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -68,6 +68,24 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
   }
 }
 
+export interface DataSourcePluginMeta extends PluginMeta {
+  builtIn?: boolean; // Is this for all
+  metrics?: boolean;
+  tables?: boolean;
+  logs?: boolean;
+  explore?: boolean;
+  annotations?: boolean;
+  mixed?: boolean;
+  hasQueryHelp?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
+}
+
+interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
+}
+
 export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
   ConfigCtrl?: any;
@@ -105,7 +123,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>): Promise<DataQueryResponse>;
+  query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -137,7 +155,11 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    * we attach the components to this instance for easy access
    */
   components?: DataSourcePluginComponents;
-  meta?: PluginMeta;
+
+  /**
+   * static information about the datasource
+   */
+  meta?: DataSourcePluginMeta;
 }
 
 export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
@@ -182,6 +204,47 @@ export interface ExploreStartPageProps {
 export type LegacyResponseData = TimeSeries | TableData | any;
 
 export type DataQueryResponseData = SeriesData | LegacyResponseData;
+
+export type DataStreamObserver = (event: DataStreamState) => void;
+
+export interface DataStreamState {
+  /**
+   * when Done or Error no more events will be processed
+   */
+  state: LoadingState;
+
+  /**
+   * Consistent key across events.
+   */
+  key: string;
+
+  /**
+   * The stream request.  The properties of this request will be examined
+   * to determine if the stream matches the original query.  If not, it
+   * will be unsubscribed.
+   */
+  request: DataQueryRequest;
+
+  /**
+   * Series data may not be known yet
+   */
+  series?: SeriesData[];
+
+  /**
+   * Error in stream (but may still be running)
+   */
+  error?: DataQueryError;
+
+  /**
+   * Optionally return only the rows that changed in this event
+   */
+  delta?: SeriesData[];
+
+  /**
+   * Stop listening to this stream
+   */
+  unsubscribe: () => void;
+}
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
@@ -299,7 +362,7 @@ export interface DataSourceInstanceSettings {
   id: number;
   type: string;
   name: string;
-  meta: PluginMeta;
+  meta: DataSourcePluginMeta;
   url?: string;
   jsonData: { [str: string]: any };
   username?: string;
@@ -318,6 +381,6 @@ export interface DataSourceInstanceSettings {
 export interface DataSourceSelectItem {
   name: string;
   value: string | null;
-  meta: PluginMeta;
+  meta: DataSourcePluginMeta;
   sort: string;
 }

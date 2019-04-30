@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { Plugin } from 'app/types';
-import { DataSourceSettings, DataSourcePlugin } from '@grafana/ui/src/types';
+import { DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 
 export interface Props {
   plugin: DataSourcePlugin;
   dataSource: DataSourceSettings;
-  dataSourceMeta: Plugin;
+  dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
 }
 

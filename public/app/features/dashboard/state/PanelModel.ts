@@ -6,8 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta, DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -117,7 +116,7 @@ export class PanelModel {
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean };
-  plugin?: PanelPlugin;
+  plugin?: PanelPluginMeta;
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
@@ -249,23 +248,23 @@ export class PanelModel {
     });
   }
 
-  private getPluginVersion(plugin: PanelPlugin): string {
+  private getPluginVersion(plugin: PanelPluginMeta): string {
     return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  pluginLoaded(plugin: PanelPluginMeta) {
     this.plugin = plugin;
 
-    if (plugin.reactPlugin && plugin.reactPlugin.onPanelMigration) {
+    if (plugin.panelPlugin && plugin.panelPlugin.onPanelMigration) {
       const version = this.getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
-        this.options = plugin.reactPlugin.onPanelMigration(this);
+        this.options = plugin.panelPlugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
   }
 
-  changePlugin(newPlugin: PanelPlugin) {
+  changePlugin(newPlugin: PanelPluginMeta) {
     const pluginId = newPlugin.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
@@ -292,7 +291,7 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const reactPanel = newPlugin.reactPlugin;
+    const reactPanel = newPlugin.panelPlugin;
 
     if (reactPanel) {
       if (reactPanel.onPanelTypeChanged) {
