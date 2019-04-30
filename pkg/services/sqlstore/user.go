@@ -327,6 +327,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 		Login:          user.Login,
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
+		IsDisabled:     user.IsDisabled,
 		OrgId:          user.OrgId,
 	}
 
@@ -451,7 +452,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "email", "name", "login", "is_admin", "last_seen_at")
+	sess.Cols("id", "email", "name", "login", "is_admin", "is_disabled", "last_seen_at")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}

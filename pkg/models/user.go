@@ -208,6 +208,7 @@ type UserProfileDTO struct {
 	Theme          string `json:"theme"`
 	OrgId          int64  `json:"orgId"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+	IsDisabled     bool   `json:"isDisabled"`
 }
 
 type UserSearchHitDTO struct {
@@ -217,6 +218,7 @@ type UserSearchHitDTO struct {
 	Email         string    `json:"email"`
 	AvatarUrl     string    `json:"avatarUrl"`
 	IsAdmin       bool      `json:"isAdmin"`
+	IsDisabled    bool      `json:"isDisabled"`
 	LastSeenAt    time.Time `json:"lastSeenAt"`
 	LastSeenAtAge string    `json:"lastSeenAtAge"`
 }
