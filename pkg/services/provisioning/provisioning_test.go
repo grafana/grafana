@@ -3,88 +3,130 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
 	t.Run("Restart dashboard provisioning and stop service", func(t *testing.T) {
-		service, mock := setup()
-		ctx, cancel := context.WithCancel(context.Background())
-		var serviceRunning bool
-		var serviceError error
-
-		err := service.ProvisionDashboards()
+		serviceTest := setup()
+		err := serviceTest.service.ProvisionDashboards()
 		assert.Nil(t, err)
-		go func() {
-			serviceRunning = true
-			serviceError = service.Run(ctx)
-			serviceRunning = false
-		}()
-		time.Sleep(time.Millisecond)
-		assert.Equal(t, 1, len(mock.Calls.PollChanges), "PollChanges should have been called")
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
 
-		err = service.ProvisionDashboards()
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
+
+		err = serviceTest.service.ProvisionDashboards()
 		assert.Nil(t, err)
-		time.Sleep(time.Millisecond)
-		assert.Equal(t, 2, len(mock.Calls.PollChanges), "PollChanges should have been called 2 times")
 
-		pollingCtx := mock.Calls.PollChanges[0].(context.Context)
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 2, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called 2 times")
+
+		pollingCtx := serviceTest.mock.Calls.PollChanges[0].(context.Context)
 		assert.Equal(t, context.Canceled, pollingCtx.Err(), "Polling context from first call should have been cancelled")
-		assert.True(t, serviceRunning, "Service should be still running")
+		assert.True(t, serviceTest.serviceRunning, "Service should be still running")
 
 		// Cancelling the root context and stopping the service
-		cancel()
-		time.Sleep(time.Millisecond)
+		serviceTest.cancel()
+		serviceTest.waitForStop()
 
-		assert.False(t, serviceRunning, "Service should not be running")
-		assert.Equal(t, context.Canceled, serviceError, "Service should have returned canceled error")
+		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
+		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
 
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
-		service, mock := setup()
-		ctx, cancel := context.WithCancel(context.Background())
-		var serviceRunning bool
-
-		err := service.ProvisionDashboards()
+		serviceTest := setup()
+		err := serviceTest.service.ProvisionDashboards()
 		assert.Nil(t, err)
-		go func() {
-			serviceRunning = true
-			_ = service.Run(ctx)
-			serviceRunning = false
-		}()
-		time.Sleep(time.Millisecond)
-		assert.Equal(t, 1, len(mock.Calls.PollChanges), "PollChanges should have been called")
+		serviceTest.startService()
+		serviceTest.waitForPollChanges()
+		assert.Equal(t, 1, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called")
 
-		mock.ProvisionFunc = func() error {
+		serviceTest.mock.ProvisionFunc = func() error {
 			return errors.New("Test error")
 		}
-		err = service.ProvisionDashboards()
+		err = serviceTest.service.ProvisionDashboards()
 		assert.NotNil(t, err)
-		time.Sleep(time.Millisecond)
+		serviceTest.waitForPollChanges()
+
 		// This should have been called with the old provisioner, after the last one failed.
-		assert.Equal(t, 2, len(mock.Calls.PollChanges), "PollChanges should have been called 2 times")
-		assert.True(t, serviceRunning, "Service should be still running")
+		assert.Equal(t, 2, len(serviceTest.mock.Calls.PollChanges), "PollChanges should have been called 2 times")
+		assert.True(t, serviceTest.serviceRunning, "Service should be still running")
 
 		// Cancelling the root context and stopping the service
-		cancel()
-
+		serviceTest.cancel()
 	})
 }
 
-func setup() (*provisioningServiceImpl, *dashboards.DashboardProvisionerMock) {
-	dashMock := dashboards.NewDashboardProvisionerMock()
-	service := NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
-			return dashMock, nil
+type serviceTestStruct struct {
+	waitForPollChanges func()
+	waitForStop        func()
+	waitTimeout        time.Duration
+
+	serviceRunning bool
+	serviceError   error
+
+	startService func()
+	cancel       func()
+
+	mock    *dashboards.DashboardProvisionerMock
+	service *provisioningServiceImpl
+}
+
+func setup() *serviceTestStruct {
+	serviceTest := &serviceTestStruct{}
+	serviceTest.waitTimeout = time.Second
+
+	pollChangesChannel := make(chan context.Context)
+	serviceStopped := make(chan interface{})
+
+	serviceTest.mock = dashboards.NewDashboardProvisionerMock()
+	serviceTest.mock.PollChangesFunc = func(ctx context.Context) {
+		pollChangesChannel <- ctx
+	}
+
+	serviceTest.service = NewProvisioningServiceImpl(
+		func(path string) (DashboardProvisioner, error) {
+			return serviceTest.mock, nil
 		},
 		nil,
 		nil,
 	)
-	service.Cfg = setting.NewCfg()
-	return service, dashMock
+	serviceTest.service.Cfg = setting.NewCfg()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	serviceTest.cancel = cancel
+
+	serviceTest.startService = func() {
+		go func() {
+			serviceTest.serviceRunning = true
+			serviceTest.serviceError = serviceTest.service.Run(ctx)
+			serviceTest.serviceRunning = false
+			serviceStopped <- true
+		}()
+	}
+
+	serviceTest.waitForPollChanges = func() {
+		timeoutChan := time.After(serviceTest.waitTimeout)
+		select {
+		case <-pollChangesChannel:
+		case <-timeoutChan:
+		}
+	}
+
+	serviceTest.waitForStop = func() {
+		timeoutChan := time.After(serviceTest.waitTimeout)
+		select {
+		case <-serviceStopped:
+		case <-timeoutChan:
+		}
+	}
+
+	return serviceTest
 }

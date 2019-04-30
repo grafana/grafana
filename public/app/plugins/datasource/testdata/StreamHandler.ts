@@ -8,6 +8,7 @@ import {
   DataStreamObserver,
   DataStreamState,
   LoadingState,
+  LogLevel,
 } from '@grafana/ui';
 import { TestDataQuery, StreamingQuery } from './types';
 
@@ -218,21 +219,44 @@ export class LogsWorker extends StreamWorker {
     }, 10);
   }
 
+  getRandomLogLevel(): LogLevel {
+    const v = Math.random();
+    if (v > 0.9) {
+      return LogLevel.critical;
+    }
+    if (v > 0.8) {
+      return LogLevel.error;
+    }
+    if (v > 0.7) {
+      return LogLevel.warning;
+    }
+    if (v > 0.4) {
+      return LogLevel.info;
+    }
+    if (v > 0.3) {
+      return LogLevel.debug;
+    }
+    if (v > 0.1) {
+      return LogLevel.trace;
+    }
+    return LogLevel.unknown;
+  }
+
   getNextWord() {
     this.index = (this.index + Math.floor(Math.random() * 5)) % words.length;
     return words[this.index];
   }
 
-  getRandomLine() {
+  getRandomLine(length = 60) {
     let line = this.getNextWord();
-    while (line.length < 80) {
+    while (line.length < length) {
       line += ' ' + this.getNextWord();
     }
     return line;
   }
 
   nextRow = (time: number) => {
-    return [time, this.getRandomLine()];
+    return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
   initBuffer(refId: string): SeriesData {
@@ -270,9 +294,10 @@ export class LogsWorker extends StreamWorker {
     if (query.speed < 5) {
       query.speed = 5;
     }
+    const variance = query.speed * 0.2 * (Math.random() - 0.5); // +-10%
 
     this.appendRows([this.nextRow(Date.now())]);
-    this.timeoutId = window.setTimeout(this.looper, query.speed);
+    this.timeoutId = window.setTimeout(this.looper, query.speed + variance);
   };
 }
 
