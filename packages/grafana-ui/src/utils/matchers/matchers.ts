@@ -1,37 +1,40 @@
 import { Field, SeriesData } from '../../types/data';
 import { ExtensionRegistry, Extension } from '../extensions';
 
+export type SeriesMatcher = (series: SeriesData, field?: Field) => boolean;
+
 /**
  * A configurable way to say if somthing should apply to a field or series
  */
-export interface SeriesDataMatcher<TOptions = any> extends Extension<TOptions> {
+export interface SeriesMatcherInfo<TOptions = any> extends Extension<TOptions> {
   /**
    * When field is undefined, we are asking if the series matches
    */
-  matches: (options: TOptions, series: SeriesData, field?: Field) => boolean;
+  matcher: (options: TOptions) => SeriesMatcher;
 }
 
-export interface SeriesDataMatcherConfig<TOptions = any> {
+export interface SeriesMatcherConfig<TOptions = any> {
   id: string;
   options?: TOptions;
 }
 
-export function seriesDataMatches(config: SeriesDataMatcherConfig, series: SeriesData, field?: Field): boolean {
-  const matcher = seriesDataMatchers.get(config.id);
-  if (!matcher) {
+export function getSeriesMatcher(config: SeriesMatcherConfig): SeriesMatcher {
+  const info = seriesMatchers.get(config.id);
+  if (!info) {
     throw new Error('Unknown Matcher: ' + config.id);
   }
-  return matcher.matches(config.options, series, field);
+  return info.matcher(config.options);
 }
 
 // Load the Buildtin matchers
 import { getPredicateMatchers } from './predicates';
-import { getFieldTypeMatchers } from './fieldType';
+import { getFieldTypeMatchers } from './typeMatcher';
+import { getNameMatchers } from './nameMatcher';
 
-export const seriesDataMatchers = new ExtensionRegistry<SeriesDataMatcher>(() => {
-  const matchers: SeriesDataMatcher[] = [
+export const seriesMatchers = new ExtensionRegistry<SeriesMatcherInfo>(() => {
+  return [
     ...getPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // field types
+    ...getNameMatchers(), // By Name
   ];
-  return matchers;
 });

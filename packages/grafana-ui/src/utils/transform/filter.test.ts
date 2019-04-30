@@ -1,5 +1,5 @@
 import { FieldType } from '../../types/data';
-import { SeriesDataMatcherID } from '../matchers/ids';
+import { SeriesMatcherID } from '../matchers/ids';
 import { transformSeriesData } from './transformers';
 import { SeriesTransformerID } from './ids';
 
@@ -18,7 +18,7 @@ describe('Filter Transformer', () => {
     const cfg = {
       id: SeriesTransformerID.filter,
       options: {
-        include: { id: SeriesDataMatcherID.numericFields },
+        include: { id: SeriesMatcherID.numericFields },
       },
     };
 

@@ -47,7 +47,7 @@ export class ExtensionRegistry<T extends Extension> {
 
   constructor(private init?: () => T[]) {}
 
-  getIfExists(id: string): T | undefined {
+  getIfExists(id: string | undefined): T | undefined {
     if (!this.initalized) {
       if (this.init) {
         for (const ext of this.init()) {
@@ -57,7 +57,10 @@ export class ExtensionRegistry<T extends Extension> {
       this.sort();
       this.initalized = true;
     }
-    return this.byId.get(id);
+    if (id) {
+      return this.byId.get(id);
+    }
+    return undefined;
   }
 
   get(id: string): T {

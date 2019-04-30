@@ -2,20 +2,19 @@ import { SeriesData } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
 import { Extension, ExtensionRegistry } from '../extensions';
 
-// A list of some (but not all) transformers
+export type SeriesTransformer = (series: SeriesData[], request?: DataQueryRequest) => SeriesData[];
 
-export interface SeriesTransformer<TOptions = any> extends Extension<TOptions> {
-  /**
-   * Return a modified copy of the series.  If the transform is not or should not
-   * be applied, just return the input series
-   */
-  transform: (options: TOptions, series: SeriesData[], request?: DataQueryRequest) => SeriesData[];
+export interface SeriesTransformerInfo<TOptions = any> extends Extension<TOptions> {
+  transformer: (options: TOptions) => SeriesTransformer;
 }
 
 export interface SeriesTransformerConfig<TOptions = any> {
   id: string;
   options: TOptions;
 }
+
+// Transformer that does nothing
+export const NoopSeriesTransformer = (series: SeriesData[], request?: DataQueryRequest) => series;
 
 /**
  * Apply configured transformations to the input data
@@ -27,8 +26,9 @@ export function transformSeriesData(
 ): SeriesData[] {
   let processed = series;
   for (const config of options) {
-    const transformer = seriesTransformers.get(config.id);
-    const after = transformer.transform(config.options, processed);
+    const info = seriesTransformers.get(config.id);
+    const transformer = info.transformer(config.options);
+    const after = transformer(processed, request);
 
     // Add a key to the metadata if the data changed
     if (after && after !== processed) {
@@ -37,9 +37,9 @@ export function transformSeriesData(
           series.meta = {};
         }
         if (!series.meta.transformations) {
-          series.meta.transformations = [transformer.id];
+          series.meta.transformations = [info.id];
         } else {
-          series.meta.transformations = [...series.meta.transformations, transformer.id];
+          series.meta.transformations = [...series.meta.transformations, info.id];
         }
       }
       processed = after;
@@ -54,7 +54,7 @@ import { filterTransformer } from './filter';
 import { appendTransformer } from './append';
 import { calcTransformer } from './calc';
 
-export const seriesTransformers = new ExtensionRegistry<SeriesTransformer>(() => [
+export const seriesTransformers = new ExtensionRegistry<SeriesTransformerInfo>(() => [
   filterTransformer,
   appendTransformer,
   calcTransformer,
