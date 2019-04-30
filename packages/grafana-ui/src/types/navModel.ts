@@ -2,7 +2,6 @@ export interface NavModelItem {
   text: string;
   url?: string;
   subTitle?: string;
-  subType?: any;
   icon?: string;
   img?: string;
   id?: string;

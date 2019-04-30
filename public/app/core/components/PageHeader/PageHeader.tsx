@@ -126,12 +126,6 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-header__info-block">
           {this.renderTitle(main.text, main.breadcrumbs)}
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
-          {main.subType && (
-            <div className="page-header__stamps">
-              <i className={main.subType.icon} />
-              {main.subType.text}
-            </div>
-          )}
         </div>
       </div>
     );
