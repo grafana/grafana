@@ -1,18 +1,17 @@
 // Libraries
 import _ from 'lodash';
+import moment, { Moment } from 'moment';
 
 // Services & Utils
 import * as dateMath from 'app/core/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import { parse as parseDate } from 'app/core/utils/datemath';
-import { colors } from '@grafana/ui';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
-import { RawTimeRange, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
+import { colors, TimeRange, RawTimeRange, TimeZone, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -59,7 +58,7 @@ export async function getExploreUrl(
 ) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
-  let url;
+  let url: string;
 
   // Mixed datasources need to choose only one datasource
   if (panelDatasource.meta.id === 'mixed' && panelTargets) {
@@ -104,7 +103,7 @@ export function buildQueryTransaction(
   rowIndex: number,
   resultType: ResultType,
   queryOptions: QueryOptions,
-  range: RawTimeRange,
+  range: TimeRange,
   queryIntervals: QueryIntervals,
   scanning: boolean
 ): QueryTransaction {
@@ -131,16 +130,13 @@ export function buildQueryTransaction(
     intervalMs,
     panelId,
     targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
-    range: {
-      from: dateMath.parse(range.from, false),
-      to: dateMath.parse(range.to, true),
-      raw: range,
-    },
-    rangeRaw: range,
+    range,
+    rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
+    maxDataPoints: queryOptions.maxDataPoints,
   };
 
   return {
@@ -157,49 +153,77 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
-const isMetricSegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('expr');
+const metricProperties = ['expr', 'target', 'datasource'];
+const isMetricSegment = (segment: { [key: string]: string }) =>
+  metricProperties.some(prop => segment.hasOwnProperty(prop));
 const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
 
-export function parseUrlState(initial: string | undefined): ExploreUrlState {
-  let uiState = DEFAULT_UI_STATE;
+enum ParseUrlStateIndex {
+  RangeFrom = 0,
+  RangeTo = 1,
+  Datasource = 2,
+  SegmentsStart = 3,
+}
 
-  if (initial) {
-    try {
-      const parsed = JSON.parse(decodeURI(initial));
-      if (Array.isArray(parsed)) {
-        if (parsed.length <= 3) {
-          throw new Error('Error parsing compact URL state for Explore.');
-        }
-        const range = {
-          from: parsed[0],
-          to: parsed[1],
-        };
-        const datasource = parsed[2];
-        let queries = [];
+enum ParseUiStateIndex {
+  Graph = 0,
+  Logs = 1,
+  Table = 2,
+  Strategy = 3,
+}
 
-        parsed.slice(3).forEach(segment => {
-          if (isMetricSegment(segment)) {
-            queries = [...queries, segment];
-          }
-
-          if (isUISegment(segment)) {
-            uiState = {
-              showingGraph: segment.ui[0],
-              showingLogs: segment.ui[1],
-              showingTable: segment.ui[2],
-              dedupStrategy: segment.ui[3],
-            };
-          }
-        });
-
-        return { datasource, queries, range, ui: uiState };
-      }
-      return parsed;
-    } catch (e) {
-      console.error(e);
-    }
+export const safeParseJson = (text: string) => {
+  if (!text) {
+    return;
   }
-  return { datasource: null, queries: [], range: DEFAULT_RANGE, ui: uiState };
+
+  try {
+    return JSON.parse(decodeURI(text));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export function parseUrlState(initial: string | undefined): ExploreUrlState {
+  const parsed = safeParseJson(initial);
+  const errorResult = {
+    datasource: null,
+    queries: [],
+    range: DEFAULT_RANGE,
+    ui: DEFAULT_UI_STATE,
+  };
+
+  if (!parsed) {
+    return errorResult;
+  }
+
+  if (!Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
+    console.error('Error parsing compact URL state for Explore.');
+    return errorResult;
+  }
+
+  const range = {
+    from: parsed[ParseUrlStateIndex.RangeFrom],
+    to: parsed[ParseUrlStateIndex.RangeTo],
+  };
+  const datasource = parsed[ParseUrlStateIndex.Datasource];
+  const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
+  const queries = parsedSegments.filter(segment => isMetricSegment(segment));
+  const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
+  const ui = uiState
+    ? {
+        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
+        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
+        showingTable: uiState.ui[ParseUiStateIndex.Table],
+        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
+      }
+    : DEFAULT_UI_STATE;
+
+  return { datasource, queries, range, ui };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -286,17 +310,12 @@ export function calculateResultsFromQueryTransactions(
   };
 }
 
-export function getIntervals(range: RawTimeRange, lowLimit: string, resolution: number): IntervalValues {
+export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  const absoluteRange: RawTimeRange = {
-    from: parseDate(range.from, false),
-    to: parseDate(range.to, true),
-  };
-
-  return kbn.calculateInterval(absoluteRange, resolution, lowLimit);
+  return kbn.calculateInterval(range, resolution, lowLimit);
 }
 
 export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
@@ -365,4 +384,52 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
   }, []);
 
   return queryKeys;
+};
+
+export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
+  return {
+    from: dateMath.parse(rawRange.from, false, timeZone.raw as any),
+    to: dateMath.parse(rawRange.to, true, timeZone.raw as any),
+    raw: rawRange,
+  };
+};
+
+const parseRawTime = (value): Moment | string => {
+  if (value === null) {
+    return null;
+  }
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return moment.utc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return moment.utc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return moment.utc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  if (!isNaN(value)) {
+    const epoch = parseInt(value, 10);
+    return moment.utc(epoch);
+  }
+
+  return null;
+};
+
+export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
+  const raw = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false, timeZone.raw as any),
+    to: dateMath.parse(raw.to, true, timeZone.raw as any),
+    raw,
+  };
 };

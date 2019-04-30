@@ -5,8 +5,8 @@ import {
   alignRange,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
-  prometheusSpecialRegexEscape,
   prometheusRegularEscape,
+  prometheusSpecialRegexEscape,
 } from '../datasource';
 
 jest.mock('../metric_find_query');
@@ -23,7 +23,7 @@ describe('PrometheusDatasource', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {},
+    jsonData: {} as any,
   };
 
   ctx.backendSrvMock = {};
@@ -90,6 +90,25 @@ describe('PrometheusDatasource', () => {
       ];
       const result = ctx.ds.createQuery(target, { interval: '15s' });
       expect(result).toMatchObject({ expr: 'metric{job="foo",k1="v1",k2!="v2"} - metric{k1="v1",k2!="v2"}' });
+    });
+
+    it('should add escaping if needed to regex filter expressions', () => {
+      ctx.templateSrvMock.getAdhocFilters = () => [
+        {
+          key: 'k1',
+          operator: '=~',
+          value: 'v.*',
+        },
+        {
+          key: 'k2',
+          operator: '=~',
+          value: `v'.*`,
+        },
+      ];
+      const result = ctx.ds.createQuery(target, { interval: '15s' });
+      expect(result).toMatchObject({
+        expr: `metric{job="foo",k1=~"v.*",k2=~"v\\\\'.*"} - metric{k1=~"v.*",k2=~"v\\\\'.*"}`,
+      });
     });
   });
 
@@ -206,12 +225,12 @@ describe('PrometheusDatasource', () => {
     it('does align intervals that are a multiple of steps', () => {
       const range = alignRange(1, 4, 3);
       expect(range.start).toEqual(0);
-      expect(range.end).toEqual(6);
+      expect(range.end).toEqual(3);
     });
     it('does align intervals that are not a multiple of steps', () => {
       const range = alignRange(1, 5, 3);
       expect(range.start).toEqual(0);
-      expect(range.end).toEqual(6);
+      expect(range.end).toEqual(3);
     });
   });
 
@@ -351,7 +370,7 @@ const timeSrv = {
 };
 
 describe('PrometheusDatasource', () => {
-  describe('When querying prometheus with one target using query editor target spec', async () => {
+  describe('When querying prometheus with one target using query editor target spec', () => {
     let results;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
@@ -360,7 +379,7 @@ describe('PrometheusDatasource', () => {
     };
     // Interval alignment with step
     const urlExpected =
-      'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=60&end=240&step=60';
+      'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=60&end=180&step=60';
 
     beforeEach(async () => {
       const response = {
@@ -788,7 +807,7 @@ describe('PrometheusDatasource', () => {
         interval: '5s',
       };
       // times get rounded up to interval
-      const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=450&step=50';
+      const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=400&step=50';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
       await ctx.ds.query(query);
@@ -831,7 +850,7 @@ describe('PrometheusDatasource', () => {
         interval: '10s',
       };
       // times get aligned to interval
-      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=500&step=100';
+      const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
       await ctx.ds.query(query);
@@ -926,6 +945,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -965,6 +985,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -996,7 +1017,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
-        '&start=0&end=500&step=100';
+        '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
@@ -1005,6 +1026,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -1041,7 +1063,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
-        '&start=50&end=450&step=50';
+        '&start=50&end=400&step=50';
 
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
@@ -1051,6 +1073,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1091,6 +1114,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1136,6 +1160,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1166,7 +1191,7 @@ describe('PrometheusDatasource for POST', () => {
     const dataExpected = {
       query: 'test{job="testjob"}',
       start: 1 * 60,
-      end: 3 * 60,
+      end: 2 * 60,
       step: 60,
     };
     const query = {

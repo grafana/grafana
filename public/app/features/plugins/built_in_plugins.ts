@@ -11,6 +11,7 @@ import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
 import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
 import * as mssqlPlugin from 'app/plugins/datasource/mssql/module';
 import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
+import * as inputDatasourcePlugin from 'app/plugins/datasource/input/module';
 import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
 import * as azureMonitorPlugin from 'app/plugins/datasource/grafana-azure-monitor-datasource/module';
 
@@ -28,7 +29,10 @@ import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as singlestatPanel2 from 'app/plugins/panel/singlestat2/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
+
+import * as exampleApp from 'app/plugins/app/example-app/module';
 
 const builtInPlugins = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -44,6 +48,7 @@ const builtInPlugins = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
+  'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
 
@@ -61,7 +66,10 @@ const builtInPlugins = {
   'app/plugins/panel/singlestat2/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
+  'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
+
+  'app/plugins/app/example-app/module': exampleApp,
 };
 
 export default builtInPlugins;

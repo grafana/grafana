@@ -69,7 +69,7 @@ RUN apt-get update   && \
 # base image to crossbuild grafana
 FROM ubuntu:14.04
 
-ENV GOVERSION=1.11.5 \
+ENV GOVERSION=1.12.4 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=10.14.2
@@ -103,7 +103,8 @@ RUN apt-get update   && \
       | tee /etc/apt/sources.list.d/yarn.list                           && \
     apt-get update && apt-get install --no-install-recommends yarn      && \
     curl -L https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz \
-      | tar -xz -C /usr/local
+      | tar -xz -C /usr/local && \
+    git clone https://github.com/raspberrypi/tools.git /opt/rpi-tools --depth=1
 
 RUN apt-get install -y                           \
         gcc libc-dev make && \

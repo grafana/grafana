@@ -1,13 +1,13 @@
 import coreModule from 'app/core/core_module';
-import { importPluginModule } from './plugin_loader';
+import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
 
 async function loadComponent(module) {
-  const component = await importPluginModule(module);
-  if (component && component.VariableQueryEditor) {
-    return component.VariableQueryEditor;
+  const dsPlugin = await importDataSourcePlugin(module);
+  if (dsPlugin.components.VariableQueryEditor) {
+    return dsPlugin.components.VariableQueryEditor;
   } else {
     return DefaultVariableQueryEditor;
   }

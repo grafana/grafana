@@ -11,10 +11,10 @@ interface Props {
 }
 
 export class CopyToClipboard extends PureComponent<Props> {
-  clipboardjs: any;
+  clipboardjs: ClipboardJS;
   myRef: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.myRef = React.createRef();
   }

@@ -98,7 +98,7 @@ export default class AdminEditUserCtrl {
         return;
       }
 
-      const orgInfo = _.find($scope.orgsSearchCache, {
+      const orgInfo: any = _.find($scope.orgsSearchCache, {
         name: $scope.newOrg.name,
       });
       if (!orgInfo) {

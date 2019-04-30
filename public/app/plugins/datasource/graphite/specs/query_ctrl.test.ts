@@ -1,6 +1,7 @@
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
+import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('GraphiteQueryCtrl', () => {
   const ctx = {
@@ -24,14 +25,13 @@ describe('GraphiteQueryCtrl', () => {
   beforeEach(() => {
     GraphiteQueryCtrl.prototype.target = ctx.target;
     GraphiteQueryCtrl.prototype.datasource = ctx.datasource;
-
     GraphiteQueryCtrl.prototype.panelCtrl = ctx.panelCtrl;
 
     ctx.ctrl = new GraphiteQueryCtrl(
       {},
       {},
       new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
-      {},
+      new TemplateSrvStub(),
       {}
     );
   });
@@ -81,22 +81,6 @@ describe('GraphiteQueryCtrl', () => {
 
     it('should add function and remove select metric link', () => {
       expect(ctx.ctrl.segments.length).toBe(0);
-    });
-  });
-
-  describe('when initializing target without metric expression and only function', () => {
-    beforeEach(() => {
-      ctx.ctrl.target.target = 'asPercent(#A, #B)';
-      ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([]);
-      ctx.ctrl.parseTarget();
-    });
-
-    it('should not add select metric segment', () => {
-      expect(ctx.ctrl.segments.length).toBe(1);
-    });
-
-    it('should add second series ref as param', () => {
-      expect(ctx.ctrl.queryModel.functions[0].params.length).toBe(1);
     });
   });
 
@@ -308,7 +292,7 @@ describe('GraphiteQueryCtrl', () => {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
       ctx.ctrl.datasource.metricFindQuery = () => Promise.resolve([{ expandable: false }]);
       ctx.ctrl.parseTarget();
-      ctx.ctrl.removeTag(0);
+      ctx.ctrl.tagChanged({ key: ctx.ctrl.removeTagValue });
     });
 
     it('should update tags', () => {

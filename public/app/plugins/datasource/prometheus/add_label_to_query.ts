@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
 const builtInWords = [

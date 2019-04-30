@@ -1,0 +1,28 @@
+{
+  "type": "app",
+  "name": "Example App",
+  "id": "example-app",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/logo.png",
+      "large": "img/logo.png"
+    }
+  },
+
+  "includes": [
+    {
+      "type": "page",
+      "name": "Angular Page",
+      "component": "AngularExamplePageCtrl",
+      "role": "Viewer",
+      "addToNav": true,
+      "defaultNav": true
+    }
+  ]
+}

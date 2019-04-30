@@ -149,7 +149,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	return req, err

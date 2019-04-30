@@ -18,7 +18,7 @@ export class ValueSelectDropdownCtrl {
   onUpdated: any;
 
   /** @ngInject */
-  constructor(private $q) {}
+  constructor(private $q: any) {}
 
   show() {
     this.oldVariableText = this.variable.current.text;
@@ -84,7 +84,7 @@ export class ValueSelectDropdownCtrl {
     this.selectionsChanged(false);
   }
 
-  selectTag(tag) {
+  selectTag(tag: any) {
     tag.selected = !tag.selected;
     let tagValuesPromise;
     if (!tag.values) {
@@ -93,7 +93,7 @@ export class ValueSelectDropdownCtrl {
       tagValuesPromise = this.$q.when(tag.values);
     }
 
-    return tagValuesPromise.then(values => {
+    return tagValuesPromise.then((values: any) => {
       tag.values = values;
       tag.valuesText = values.join(' + ');
       _.each(this.options, option => {
@@ -106,7 +106,7 @@ export class ValueSelectDropdownCtrl {
     });
   }
 
-  keyDown(evt) {
+  keyDown(evt: any) {
     if (evt.keyCode === 27) {
       this.hide();
     }
@@ -128,11 +128,11 @@ export class ValueSelectDropdownCtrl {
     }
   }
 
-  moveHighlight(direction) {
+  moveHighlight(direction: number) {
     this.highlightIndex = (this.highlightIndex + direction) % this.search.options.length;
   }
 
-  selectValue(option, event, commitChange?, excludeOthers?) {
+  selectValue(option: any, event: any, commitChange?: boolean, excludeOthers?: boolean) {
     if (!option) {
       return;
     }
@@ -142,7 +142,7 @@ export class ValueSelectDropdownCtrl {
     commitChange = commitChange || false;
     excludeOthers = excludeOthers || false;
 
-    const setAllExceptCurrentTo = newValue => {
+    const setAllExceptCurrentTo = (newValue: any) => {
       _.each(this.options, other => {
         if (option !== other) {
           other.selected = newValue;
@@ -169,7 +169,7 @@ export class ValueSelectDropdownCtrl {
     this.selectionsChanged(commitChange);
   }
 
-  selectionsChanged(commitChange) {
+  selectionsChanged(commitChange: boolean) {
     this.selectedValues = _.filter(this.options, { selected: true });
 
     if (this.selectedValues.length > 1) {
@@ -238,14 +238,14 @@ export class ValueSelectDropdownCtrl {
 }
 
 /** @ngInject */
-export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
+export function valueSelectDropdown($compile: any, $window: any, $timeout: any, $rootScope: any) {
   return {
     scope: { dashboard: '=', variable: '=', onUpdated: '&' },
     templateUrl: 'public/app/partials/valueSelectDropdown.html',
     controller: 'ValueSelectDropdownCtrl',
     controllerAs: 'vm',
     bindToController: true,
-    link: (scope, elem) => {
+    link: (scope: any, elem: any) => {
       const bodyEl = angular.element($window.document.body);
       const linkEl = elem.find('.variable-value-link');
       const inputEl = elem.find('input');
@@ -272,7 +272,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         bodyEl.off('click', bodyOnClick);
       }
 
-      function bodyOnClick(e) {
+      function bodyOnClick(e: any) {
         if (elem.has(e.target).length === 0) {
           scope.$apply(() => {
             scope.vm.commitChanges();
@@ -280,7 +280,7 @@ export function valueSelectDropdown($compile, $window, $timeout, $rootScope) {
         }
       }
 
-      scope.$watch('vm.dropdownVisible', newValue => {
+      scope.$watch('vm.dropdownVisible', (newValue: any) => {
         if (newValue) {
           openDropdown();
         } else {

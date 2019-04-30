@@ -36,4 +36,50 @@
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'streaming_client'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Type</label>
+			<div class="gf-form-select-wrapper">
+				<select 
+				  ng-model="ctrl.target.stream.type" 
+				  class="gf-form-input"
+					ng-options="type for type in ['signal','logs']"
+				  ng-change="ctrl.streamChanged()" />
+				</select>
+			</div>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Speed (ms)</label>
+			<input type="number" 
+				class="gf-form-input width-5" 
+				placeholder="value" 
+				ng-model="ctrl.target.stream.speed" 
+				min="10"
+				step="10"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Spread</label>
+			<input type="number" 
+				class="gf-form-input width-5" 
+				placeholder="value" 
+				ng-model="ctrl.target.stream.spread" 
+				min="0.5"
+				step="0.1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Noise</label>
+			<input type="number" 
+				class="gf-form-input width-5" 
+				placeholder="value" 
+				ng-model="ctrl.target.stream.noise" 
+				min="0"
+				step="0.1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
 </query-editor-row>

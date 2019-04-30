@@ -102,14 +102,14 @@ $edit-gradient: linear-gradient(180deg, $dark-2 50%, $input-black);
 
 // Links
 // -------------------------
-$link-color: #e3e3e3;
-$link-color-disabled: #e3e3e3;
+$link-color: #d8d9da;
+$link-color-disabled: #8e8e8e;
 $link-hover-color: #ffffff;
 $external-link-color: #33b5e5;
 
 // Typography
 // -------------------------
-$headings-color: #e3e3e3;
+$headings-color: #d8d9da;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -191,6 +191,8 @@ $btn-divider-right: $dark-3;
 
 $btn-drag-image: '../img/grab_dark.svg';
 
+$navbar-btn-gicon-brightness: brightness(0.5);
+
 // Forms
 // -------------------------
 $input-bg: $input-black;
@@ -198,7 +200,7 @@ $input-bg-disabled: $dark-6;
 
 $input-color: $gray-4;
 $input-border-color: $dark-6;
-$input-box-shadow: inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.1);
+$input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-1 !default;

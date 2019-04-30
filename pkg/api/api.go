@@ -287,7 +287,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/uid/:uid", Wrap(DeleteDashboardByUID))
 
 			dashboardRoute.Get("/db/:slug", Wrap(GetDashboard))
-			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboard))
+			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
@@ -325,7 +325,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Search
-		apiRoute.Get("/search/", Search)
+		apiRoute.Get("/search/", Wrap(Search))
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))
@@ -350,6 +350,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), Wrap(UpdateAlertNotification))
 			alertNotifications.Get("/:notificationId", Wrap(GetAlertNotificationByID))
 			alertNotifications.Delete("/:notificationId", Wrap(DeleteAlertNotification))
+			alertNotifications.Get("/uid/:uid", Wrap(GetAlertNotificationByUID))
+			alertNotifications.Put("/uid/:uid", bind(m.UpdateAlertNotificationWithUidCommand{}), Wrap(UpdateAlertNotificationByUID))
+			alertNotifications.Delete("/uid/:uid", Wrap(DeleteAlertNotificationByUID))
 		}, reqEditorRole)
 
 		apiRoute.Get("/annotations", Wrap(GetAnnotations))
@@ -384,6 +387,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
 		adminRoute.Get("/users/:id/auth-tokens", Wrap(hs.AdminGetUserAuthTokens))
 		adminRoute.Post("/users/:id/revoke-auth-token", bind(m.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
+
+		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
+		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
+		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 	}, reqGrafanaAdmin)
 
 	// rendering

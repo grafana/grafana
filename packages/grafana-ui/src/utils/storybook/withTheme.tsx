@@ -5,7 +5,11 @@ import { select } from '@storybook/addon-knobs';
 import { getTheme } from '../../themes/index';
 import { GrafanaThemeType } from '../../types';
 
-const ThemableStory: React.FunctionComponent<{}> = ({ children }) => {
+type SassThemeChangeHandler = (theme: GrafanaThemeType) => void;
+const ThemableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({
+  children,
+  handleSassThemeChange,
+}) => {
   const themeKnob = select(
     'Theme',
     {
@@ -14,6 +18,8 @@ const ThemableStory: React.FunctionComponent<{}> = ({ children }) => {
     },
     GrafanaThemeType.Dark
   );
+
+  handleSassThemeChange(themeKnob);
 
   return <ThemeContext.Provider value={getTheme(themeKnob)}>{children}</ThemeContext.Provider>;
 };
@@ -33,4 +39,6 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
   );
 };
 
-export const withTheme = (story: RenderFunction) => <ThemableStory>{story()}</ThemableStory>;
+export const withTheme = (handleSassThemeChange: SassThemeChangeHandler) => (story: RenderFunction) => (
+  <ThemableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemableStory>
+);

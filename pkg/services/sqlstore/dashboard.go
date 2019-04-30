@@ -197,12 +197,7 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	limit := query.Limit
-	if limit == 0 {
-		limit = 1000
-	}
-
-	sb := NewSearchBuilder(query.SignedInUser, limit, query.Permission).
+	sb := NewSearchBuilder(query.SignedInUser, query.Limit, query.Page, query.Permission).
 		WithTags(query.Tags).
 		WithDashboardIdsIn(query.DashboardIds)
 

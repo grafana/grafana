@@ -1,4 +1,5 @@
 import React from 'react';
+import { Input } from '@grafana/ui';
 import StackdriverDatasource from '../datasource';
 
 export interface Props {
@@ -24,7 +25,7 @@ export class Project extends React.Component<Props, State> {
     return (
       <div className="gf-form">
         <span className="gf-form-label width-9 query-keyword">Project</span>
-        <input className="gf-form-input width-15" disabled type="text" value={projectName} />
+        <Input className="gf-form-input width-15" disabled type="text" value={projectName} />
       </div>
     );
   }

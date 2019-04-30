@@ -8,9 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
@@ -23,12 +23,11 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats m.UserTokenService) macaron.Handler {
+func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
 			SignedInUser:   &m.SignedInUser{},
-			Session:        session.GetSession(), // should only be used by auth_proxy
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -50,7 +49,7 @@ func GetContextHandler(ats m.UserTokenService) macaron.Handler {
 		case initContextWithRenderAuth(ctx):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(ctx, orgId):
+		case initContextWithAuthProxy(remoteCache, ctx, orgId):
 		case initContextWithToken(ats, ctx, orgId):
 		case initContextWithAnonymousUser(ctx):
 		}

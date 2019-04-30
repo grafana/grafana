@@ -8,12 +8,11 @@ import (
 	"net/url"
 	"path"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 type InfluxDBExecutor struct {
@@ -71,13 +70,13 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
+	defer resp.Body.Close()
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status)
 	}
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
-	defer resp.Body.Close()
 	dec.UseNumber()
 	err = dec.Decode(&response)
 
@@ -126,11 +125,11 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 	req.Header.Set("User-Agent", "Grafana")
 
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	if !dsInfo.BasicAuth && dsInfo.User != "" {
-		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
+		req.SetBasicAuth(dsInfo.User, dsInfo.DecryptedPassword())
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

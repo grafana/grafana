@@ -149,17 +149,17 @@ export default class MysqlQuery {
   buildValueColumn(column) {
     let query = '';
 
-    const columnName = _.find(column, (g: any) => g.type === 'column');
+    const columnName: any = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate = _.find(column, (g: any) => g.type === 'aggregate');
+    const aggregate: any = _.find(column, (g: any) => g.type === 'aggregate');
 
     if (aggregate) {
       const func = aggregate.params[0];
       query = func + '(' + query + ')';
     }
 
-    const alias = _.find(column, (g: any) => g.type === 'alias');
+    const alias: any = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }
