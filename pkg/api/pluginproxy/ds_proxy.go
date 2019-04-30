@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	logger = log.New("data-proxy-log")
-	client = newHTTPClient()
+	logger                         = log.New("data-proxy-log")
+	client                         = newHTTPClient()
+	ErrHeaderOrgIdDoesNotMatchUser = errors.New("Org-id in header not match with logged in user")
 )
 
 type DataSourceProxy struct {
@@ -260,8 +261,9 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	if strconv.FormatInt(proxy.ctx.SignedInUser.OrgId, 10) != proxy.ctx.Req.Request.Header.Get("X-Grafana-Org-Id") {
-		return errors.New("Org-id in header not match with logged in user")
+	orgID := strconv.FormatInt(proxy.ctx.SignedInUser.OrgId, 10)
+	if proxy.ctx.Req.Request.Header.Get("X-Grafana-Org-Id") != orgID {
+		return ErrHeaderOrgIdDoesNotMatchUser
 	}
 
 	// found route if there are any

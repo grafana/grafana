@@ -3,12 +3,13 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 
 	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
@@ -81,8 +82,9 @@ func TestDSRouteRule(t *testing.T) {
 				Context: &macaron.Context{
 					Req: macaron.Request{Request: req},
 				},
-				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR},
+				SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR, OrgId: 10},
 			}
+			ctx.Req.Header.Add("X-Grafana-Org-Id", "10")
 
 			Convey("When matching route path", func() {
 				proxy := NewDataSourceProxy(ds, plugin, ctx, "api/v4/some/method", &setting.Cfg{})
@@ -124,6 +126,13 @@ func TestDSRouteRule(t *testing.T) {
 					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
 					err := proxy.validateRequest()
 					So(err, ShouldBeNil)
+				})
+
+				Convey("request with unmatching x-grafana-org-id should return err", func() {
+					ctx.SignedInUser.OrgId = 1000
+					proxy := NewDataSourceProxy(ds, plugin, ctx, "api/admin", &setting.Cfg{})
+					err := proxy.validateRequest()
+					So(err, ShouldEqual, ErrHeaderOrgIdDoesNotMatchUser)
 				})
 			})
 		})
