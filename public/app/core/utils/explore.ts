@@ -11,7 +11,17 @@ import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
-import { colors, TimeRange, RawTimeRange, TimeZone, IntervalValues, DataQuery, DataSourceApi } from '@grafana/ui';
+import {
+  colors,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  IntervalValues,
+  DataQuery,
+  DataSourceApi,
+  toSeriesData,
+  guessFieldTypes,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
@@ -22,7 +32,7 @@ import {
   QueryOptions,
   ResultGetter,
 } from 'app/types/explore';
-import { LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -293,15 +303,12 @@ export function calculateResultsFromQueryTransactions(
       .filter(qt => qt.resultType === 'Table' && qt.done && qt.result && qt.result.columns && qt.result.rows)
       .map(qt => qt.result)
   );
-  const logsResult =
-    datasource && datasource.mergeStreams
-      ? datasource.mergeStreams(
-          _.flatten(
-            queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-          ),
-          graphInterval
-        )
-      : undefined;
+  const logsResult = seriesDataToLogsModel(
+    _.flatten(
+      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
+    ).map(r => guessFieldTypes(toSeriesData(r))),
+    graphInterval
+  );
 
   return {
     graphResult,

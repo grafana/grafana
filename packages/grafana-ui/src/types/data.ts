@@ -19,7 +19,15 @@ export interface QueryResultMeta {
 
   // Match the result to the query
   requestId?: string;
-  transformations?: string[]; // id of any transformations that were applied
+
+  // Used in Explore for highlighting
+  search?: string;
+
+  // Used in Explore to show limit applied to search result
+  limit?: number;
+
+  // id of any transformations that were applied
+  transformations?: string[];
 }
 
 export interface QueryResultBase {

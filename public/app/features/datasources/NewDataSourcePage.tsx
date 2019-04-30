@@ -2,12 +2,12 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { NavModel, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { DataSourcePluginMeta } from '@grafana/ui';
+import { NavModel, DataSourcePluginMeta } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;

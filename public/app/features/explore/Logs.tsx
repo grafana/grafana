@@ -248,9 +248,9 @@ export default class Logs extends PureComponent<Props, State> {
         <div className="logs-rows">
           {hasData &&
           !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
-            firstRows.map(row => (
+            firstRows.map((row, index) => (
               <LogRow
-                key={row.key + row.duplicates}
+                key={index}
                 getRows={getRows}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
@@ -264,9 +264,9 @@ export default class Logs extends PureComponent<Props, State> {
           {hasData &&
             !deferLogs &&
             renderAll &&
-            lastRows.map(row => (
+            lastRows.map((row, index) => (
               <LogRow
-                key={row.key + row.duplicates}
+                key={PREVIEW_LIMIT + index}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}

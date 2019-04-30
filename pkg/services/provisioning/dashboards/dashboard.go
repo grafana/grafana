@@ -7,17 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DashboardProvisioner interface {
-	Provision() error
-	PollChanges(ctx context.Context)
-}
-
 type DashboardProvisionerImpl struct {
 	log         log.Logger
 	fileReaders []*fileReader
 }
-
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
 
 func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerImpl, error) {
 	logger := log.New("provisioning.dashboard")
@@ -59,6 +52,17 @@ func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
 		go reader.pollChanges(ctx)
 	}
+}
+
+// GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
+// relative path to provisioning file from it's external_id.
+func (provider *DashboardProvisionerImpl) GetProvisionerResolvedPath(name string) string {
+	for _, reader := range provider.fileReaders {
+		if reader.Cfg.Name == name {
+			return reader.resolvedPath()
+		}
+	}
+	return ""
 }
 
 func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileReader, error) {

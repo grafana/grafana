@@ -43,7 +43,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 			}
 			if target == "session" {
 
-				usedSessions, err := qs.AuthTokenService.ActiveTokenCount()
+				usedSessions, err := qs.AuthTokenService.ActiveTokenCount(c.Req.Context())
 				if err != nil {
 					return false, err
 				}
