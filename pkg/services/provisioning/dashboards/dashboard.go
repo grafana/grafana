@@ -54,8 +54,8 @@ func (provider *DashboardProvisionerImpl) PollChanges(ctx context.Context) {
 	}
 }
 
-// GetFileReaderByName returns fileReader for the specified name which can be useful to get data about the config if
-// you have only ProvisionedDashboard data (which contains name of the provisioner).
+// GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
+// relative path to provisioning file from it's external_id.
 func (provider *DashboardProvisionerImpl) GetProvisionerResolvedPath(name string) string {
 	for _, reader := range provider.fileReaders {
 		if reader.Cfg.Name == name {

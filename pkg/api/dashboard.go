@@ -121,7 +121,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		if err != nil {
 			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
 			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
-			hs.log.Error("Failed to create ProvisionedExternalId", "err", err)
+			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
 		}
 	}
 
