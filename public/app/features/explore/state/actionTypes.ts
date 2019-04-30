@@ -150,6 +150,7 @@ export interface QuerySuccessPayload {
   exploreId: ExploreId;
   result: any;
   resultType: ResultType;
+  latency: number;
 }
 
 export interface HistoryUpdatedPayload {

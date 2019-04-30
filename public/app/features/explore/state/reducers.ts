@@ -106,6 +106,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   urlState: null,
   update: makeInitialUpdateState(),
   queryError: null,
+  latency: 0,
 });
 
 /**
@@ -131,17 +132,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       // Add to queries, which will cause a new row to be rendered
       const nextQueries = [...queries.slice(0, index + 1), { ...query }, ...queries.slice(index + 1)];
 
-      // // Ongoing transactions need to update their row indices
-      // const nextQueryTransactions = queryTransactions.map(qt => {
-      //   if (qt.rowIndex > index) {
-      //     return {
-      //       ...qt,
-      //       rowIndex: qt.rowIndex + 1,
-      //     };
-      //   }
-      //   return qt;
-      // });
-
       return {
         ...state,
         queries: nextQueries,
@@ -160,9 +150,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(state.queries) };
       const nextQueries = [...queries];
       nextQueries[index] = nextQuery;
-
-      // Discard ongoing transaction related to row query
-      // const nextQueryTransactions = queryTransactions.filter(qt => qt.rowIndex !== index);
 
       return {
         ...state,
@@ -325,6 +312,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
+        latency: 0,
         queryError: response,
         showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
@@ -338,17 +326,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: queryStartAction,
     mapper: (state, action): ExploreItemState => {
       const { resultType } = action.payload;
-      // Discarding existing transactions of same type
-      // const remainingTransactions = queryTransactions.filter(
-      //   qt => !(qt.resultType === resultType && qt.rowIndex === rowIndex)
-      // );
-
-      // Append new transaction
-      // const nextQueryTransactions: QueryTransaction[] = [...remainingTransactions, transaction];
 
       return {
         ...state,
         queryError: null,
+        latency: 0,
         graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
@@ -361,7 +343,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, queryIntervals } = state;
-      const { result, resultType } = action.payload;
+      const { result, resultType, latency } = action.payload;
       const results = calculateResultsFromQueryTransactions(
         result,
         resultType,
@@ -372,6 +354,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         ...results,
+        latency,
         queryError: null,
         graphIsLoading: false,
         logIsLoading: false,
@@ -393,14 +376,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       const nextQueries = [...queries.slice(0, index), ...queries.slice(index + 1)];
       const nextQueryKeys = [...queryKeys.slice(0, index), ...queryKeys.slice(index + 1)];
-
-      // Discard transactions related to row query
-      // const nextQueryTransactions = queryTransactions.filter(qt => nextQueries.some(nq => nq.key === qt.query.key));
-      // const results = calculateResultsFromQueryTransactions(
-      //   nextQueryTransactions,
-      //   datasourceInstance,
-      //   queryIntervals.intervalMs
-      // );
 
       return {
         ...state,

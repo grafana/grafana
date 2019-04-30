@@ -25,14 +25,7 @@ import {
 import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
-
-// function getFirstHintFromTransactions(transactions: QueryTransaction[]): QueryHint {
-//   const transaction = transactions.find(qt => qt.hints && qt.hints.length > 0);
-//   if (transaction) {
-//     return transaction.hints[0];
-//   }
-//   return undefined;
-// }
+import QueryStatus from './QueryStatus';
 
 interface QueryRowProps {
   addQueryRow: typeof addQueryRow;
@@ -51,6 +44,7 @@ interface QueryRowProps {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
+  latency: number;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps> {
@@ -105,12 +99,23 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }, 500);
 
   render() {
-    const { datasourceInstance, history, query, exploreEvents, range, datasourceStatus, queryResponse } = this.props;
+    const {
+      datasourceInstance,
+      history,
+      query,
+      exploreEvents,
+      range,
+      datasourceStatus,
+      queryResponse,
+      latency,
+    } = this.props;
     const QueryField = datasourceInstance.components.ExploreQueryField;
 
     return (
       <div className="query-row">
-        <div className="query-row-status">{/* <QueryTransactionStatus transactions={transactions} /> */}</div>
+        <div className="query-row-status">
+          <QueryStatus queryResponse={queryResponse} latency={latency} />
+        </div>
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
             <QueryField
@@ -161,14 +166,31 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, datasourceError, graphResult } = item;
+  const {
+    datasourceInstance,
+    history,
+    queries,
+    range,
+    datasourceError,
+    graphResult,
+    graphIsLoading,
+    tableIsLoading,
+    logIsLoading,
+    latency,
+  } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = item.queryError && item.queryError.refId === query.refId ? item.queryError : null;
   const series = graphResult ? graphResult : []; // TODO: use SeriesData
+  const queryResponseState =
+    graphIsLoading || tableIsLoading || logIsLoading
+      ? LoadingState.Loading
+      : error
+      ? LoadingState.Error
+      : LoadingState.Done;
   const queryResponse: PanelData = {
     series,
-    state: error ? LoadingState.Error : LoadingState.Done,
+    state: queryResponseState,
     error,
   };
 
@@ -179,6 +201,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     datasourceStatus,
     queryResponse,
+    latency,
   };
 }
 

@@ -463,6 +463,7 @@ export function queryTransactionSuccess(
         exploreId,
         result,
         resultType,
+        latency,
       })
     );
 
