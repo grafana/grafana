@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 WORKING_DIRECTORY=`pwd`
 # copy zip file to /tmp/dist
 mkdir -p /tmp/dist
