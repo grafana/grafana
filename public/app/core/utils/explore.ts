@@ -281,7 +281,22 @@ export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
  */
 export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
   if (queries && typeof queries === 'object' && queries.length > 0) {
-    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(queries, i) }));
+    const allQueries = [];
+    for (let index = 0; index < queries.length; index++) {
+      const query = queries[index];
+      const key = generateKey(index);
+      let refId = query.refId;
+      if (!refId) {
+        refId = getNextRefIdChar(allQueries);
+      }
+
+      allQueries.push({
+        ...query,
+        refId,
+        key,
+      });
+    }
+    return allQueries;
   }
   return [{ ...generateEmptyQuery(queries) }];
 }

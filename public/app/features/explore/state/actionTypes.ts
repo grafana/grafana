@@ -8,6 +8,7 @@ import {
   QueryFixAction,
   LogLevel,
   TimeRange,
+  DataQueryError,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -17,7 +18,6 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
-  QueryFailure,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -135,22 +135,26 @@ export interface ModifyQueriesPayload {
 
 export interface QueryFailurePayload {
   exploreId: ExploreId;
+  response: DataQueryError;
   resultType: ResultType;
-  queryFailure: QueryFailure;
 }
 
-export interface QueryTransactionStartPayload {
+export interface QueryStartPayload {
   exploreId: ExploreId;
   resultType: ResultType;
   rowIndex: number;
   transaction: QueryTransaction;
 }
 
-export interface QueryTransactionSuccessPayload {
+export interface QuerySuccessPayload {
   exploreId: ExploreId;
-  history: HistoryItem[];
   result: any;
   resultType: ResultType;
+}
+
+export interface HistoryUpdatedPayload {
+  exploreId: ExploreId;
+  history: HistoryItem[];
 }
 
 export interface RemoveQueryRowPayload {
@@ -313,9 +317,7 @@ export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('e
  * Mark a query transaction as failed with an error extracted from the query response.
  * The transaction will be marked as `done`.
  */
-export const queryTransactionFailureAction = actionCreatorFactory<QueryFailurePayload>(
-  'explore/QUERY_TRANSACTION_FAILURE'
-).create();
+export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
 
 /**
  * Start a query transaction for the given result type.
@@ -324,9 +326,7 @@ export const queryTransactionFailureAction = actionCreatorFactory<QueryFailurePa
  * @param resultType Associate the transaction with a result viewer, e.g., Graph
  * @param rowIndex Index is used to associate latency for this transaction with a query row
  */
-export const queryTransactionStartAction = actionCreatorFactory<QueryTransactionStartPayload>(
-  'explore/QUERY_TRANSACTION_START'
-).create();
+export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
 /**
  * Complete a query transaction, mark the transaction as `done` and store query state in URL.
@@ -339,9 +339,7 @@ export const queryTransactionStartAction = actionCreatorFactory<QueryTransaction
  * @param queries Queries from all query rows
  * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
  */
-export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransactionSuccessPayload>(
-  'explore/QUERY_TRANSACTION_SUCCESS'
-).create();
+export const querySuccessAction = actionCreatorFactory<QuerySuccessPayload>('explore/QUERY_SUCCESS').create();
 
 /**
  * Remove query row of the given index, as well as associated query results.
@@ -428,6 +426,8 @@ export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFa
 export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
+
+export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

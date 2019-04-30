@@ -10,6 +10,7 @@ import {
   ExploreStartPageProps,
   LogLevel,
   TimeRange,
+  DataQueryError,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
@@ -255,7 +256,7 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryFailure: QueryFailure;
+  queryError: DataQueryError;
 }
 
 export interface ExploreUpdateState {
@@ -321,11 +322,6 @@ export interface QueryOptions {
   instant?: boolean;
   valueWithRefId?: boolean;
   maxDataPoints?: number;
-}
-
-export interface QueryFailure {
-  error: string;
-  errorDetails: string;
 }
 
 export interface QueryTransaction {

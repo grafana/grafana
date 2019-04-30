@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery, PromOptions } from './types';
-import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSettings, DataQueryError } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -169,12 +169,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       let result = [];
 
       _.each(responseList, (response, index) => {
-        if (response.status === 'error') {
-          const error = {
-            index,
-            ...response.error,
-          };
-          throw error;
+        if (response.cancelled) {
+          return;
         }
 
         // Keeping original start/end for transformers
@@ -241,6 +237,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
+    query.refId = target.refId;
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
@@ -276,7 +273,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => this.handleErrors(err, query));
   }
 
   performInstantQuery(query, time) {
@@ -288,8 +285,36 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => this.handleErrors(err, query));
   }
+
+  handleErrors = (err: any, target: PromQuery) => {
+    if (err.cancelled) {
+      return err;
+    }
+
+    const error: DataQueryError = {
+      message: 'Unknown error during query transaction. Please check JS console logs.',
+      refId: target.refId,
+    };
+
+    if (err.data) {
+      if (typeof err.data === 'string') {
+        error.message = err.data;
+      } else if (err.data.error) {
+        error.message = err.data.error;
+      }
+    } else if (err.message) {
+      error.message = err.message;
+    } else if (typeof err === 'string') {
+      error.message = err;
+    }
+
+    error.status = err.status;
+    error.statusText = err.statusText;
+
+    throw error;
+  };
 
   performSuggestQuery(query, cache = false) {
     const url = '/api/v1/label/__name__/values';

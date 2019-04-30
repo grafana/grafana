@@ -20,6 +20,7 @@ import {
   SplitCloseActionPayload,
   loadExploreDatasources,
   runQueriesAction,
+  historyUpdatedAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -36,9 +37,9 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  queryTransactionFailureAction,
-  queryTransactionStartAction,
-  queryTransactionSuccessAction,
+  queryFailureAction,
+  queryStartAction,
+  querySuccessAction,
   removeQueryRowAction,
   scanRangeAction,
   scanStartAction,
@@ -104,7 +105,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
-  queryFailure: null,
+  queryError: null,
 });
 
 /**
@@ -330,22 +331,23 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: queryTransactionFailureAction,
+    filter: queryFailureAction,
     mapper: (state, action): ExploreItemState => {
-      const { resultType, queryFailure } = action.payload;
+      const { resultType, response } = action.payload;
+
       return {
         ...state,
+        queryError: response,
         showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
-        queryFailure,
         update: makeInitialUpdateState(),
       };
     },
   })
   .addMapper({
-    filter: queryTransactionStartAction,
+    filter: queryStartAction,
     mapper: (state, action): ExploreItemState => {
       const { resultType } = action.payload;
       // Discarding existing transactions of same type
@@ -358,20 +360,20 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
+        queryError: null,
         graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
         showingStartPage: false,
-        queryFailure: null,
         update: makeInitialUpdateState(),
       };
     },
   })
   .addMapper({
-    filter: queryTransactionSuccessAction,
+    filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance, queryIntervals } = state;
-      const { history, result, resultType } = action.payload;
+      const { result, resultType } = action.payload;
       const results = calculateResultsFromQueryTransactions(
         result,
         resultType,
@@ -382,7 +384,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         ...results,
-        history,
+        queryError: null,
         graphIsLoading: false,
         logIsLoading: false,
         tableIsLoading: false,
@@ -578,6 +580,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queryIntervals,
+      };
+    },
+  })
+  .addMapper({
+    filter: historyUpdatedAction,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        history: action.payload.history,
       };
     },
   })

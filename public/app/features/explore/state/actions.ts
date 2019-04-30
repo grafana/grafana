@@ -18,14 +18,12 @@ import {
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
-  safeStringifyValue,
 } from 'app/core/utils/explore';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { ResultGetter } from 'app/types/explore';
 import { ThunkResult } from 'app/types';
 import {
   RawTimeRange,
@@ -61,8 +59,8 @@ import {
   LoadDatasourceReadyPayload,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  queryTransactionFailureAction,
-  queryTransactionSuccessAction,
+  queryFailureAction,
+  querySuccessAction,
   scanRangeAction,
   scanStartAction,
   setQueriesAction,
@@ -81,7 +79,8 @@ import {
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
   loadExploreDatasources,
-  queryTransactionStartAction,
+  queryStartAction,
+  historyUpdatedAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -306,10 +305,7 @@ export function importQueries(
       importedQueries = ensureQueries();
     }
 
-    const nextQueries = importedQueries.map((q, i) => ({
-      ...q,
-      ...generateEmptyQuery(queries),
-    }));
+    const nextQueries = ensureQueries(importedQueries);
 
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
@@ -368,7 +364,11 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     if (instance.init) {
-      instance.init();
+      try {
+        instance.init();
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
@@ -407,8 +407,8 @@ export function modifyQueries(
  */
 export function queryTransactionFailure(
   exploreId: ExploreId,
-  transaction: QueryTransaction,
   response: any,
+  resultType: ResultType,
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
@@ -418,34 +418,11 @@ export function queryTransactionFailure(
       return;
     }
 
-    console.error(response);
-
-    let error: string;
-    let errorDetails = safeStringifyValue(response);
-    if (response.data) {
-      if (typeof response.data === 'string') {
-        error = response.data;
-      } else if (response.data.error) {
-        error = response.data.error;
-        if (response.data.response) {
-          errorDetails = safeStringifyValue(response.data.response);
-        }
-      } else {
-        error = 'Unknown error during query transaction. Please check JS console logs.';
-      }
-    } else if (response.message) {
-      error = response.message;
-    } else if (typeof response === 'string') {
-      error = response;
-    } else {
-      error = 'Unknown error during query transaction. Please check JS console logs.';
-    }
-
     dispatch(
-      queryTransactionFailureAction({
+      queryFailureAction({
         exploreId,
-        resultType: transaction.resultType,
-        queryFailure: { error, errorDetails },
+        response,
+        resultType,
       })
     );
   };
@@ -464,54 +441,26 @@ export function queryTransactionFailure(
  */
 export function queryTransactionSuccess(
   exploreId: ExploreId,
-  transactionId: string,
-  result: any,
+  response: any,
   latency: number,
-  queries: DataQuery[],
-  datasourceId: string,
-  resultType: ResultType
+  resultType: ResultType,
+  datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, history } = getState().explore[exploreId];
+    const { datasourceInstance } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
       return;
     }
 
-    // Transaction might have been discarded
-    // const transaction = queryTransactions.find(qt => qt.id === transactionId);
-    // if (!transaction) {
-    //   return;
-    // }
-
-    // Get query hints
-    // let hints: QueryHint[];
-    // if (datasourceInstance.getQueryHints) {
-    //   hints = datasourceInstance.getQueryHints(transaction.query, result);
-    // }
-
-    // Mark transactions as complete and attach result
-    // const nextQueryTransactions = queryTransactions.map(qt => {
-    //   if (qt.id === transactionId) {
-    //     return {
-    //       ...qt,
-    //       hints,
-    //       latency,
-    //       result,
-    //       done: true,
-    //     };
-    //   }
-    //   return qt;
-    // });
-
-    // Side-effect: Saving history in localstorage
-    const nextHistory = updateHistory(history, datasourceId, queries);
+    const resultGetter =
+      resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data[0] : null;
+    const result = resultGetter ? resultGetter(response.data, null, []) : response.data;
 
     dispatch(
-      queryTransactionSuccessAction({
+      querySuccessAction({
         exploreId,
-        history: nextHistory,
         result,
         resultType,
       })
@@ -579,7 +528,6 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
             instant: true,
             valueWithRefId: true,
           },
-          (data: any[]) => data[0]
         )
       );
     }
@@ -594,7 +542,6 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
             instant: false,
             maxDataPoints: containerWidth,
           },
-          makeTimeSeriesList
         )
       );
     }
@@ -616,24 +563,27 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 function runQueriesForType(
   exploreId: ExploreId,
   resultType: ResultType,
-  queryOptions: QueryOptions,
-  resultGetter?: ResultGetter
+  queryOptions: QueryOptions
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
+    const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning, history } = getState().explore[
+      exploreId
+    ];
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
-    dispatch(queryTransactionStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
+    dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
     try {
       const now = Date.now();
-      const res = await datasourceInstance.query(transaction.options);
-      eventBridge.emit('data-received', res.data || []);
+      const response = await datasourceInstance.query(transaction.options);
+      eventBridge.emit('data-received', response.data || []);
       const latency = Date.now() - now;
-      const results = resultGetter ? resultGetter(res.data, transaction, []) : res.data;
-      dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId, resultType));
-    } catch (response) {
-      eventBridge.emit('data-error', response);
-      dispatch(queryTransactionFailure(exploreId, transaction, response, datasourceId));
+      // Side-effect: Saving history in localstorage
+      const nextHistory = updateHistory(history, datasourceId, queries);
+      dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+      dispatch(queryTransactionSuccess(exploreId, response, latency, resultType, datasourceId));
+    } catch (err) {
+      eventBridge.emit('data-error', err);
+      dispatch(queryTransactionFailure(exploreId, err, resultType, datasourceId));
     }
   };
 }

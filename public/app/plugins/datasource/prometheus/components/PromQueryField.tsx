@@ -125,7 +125,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onExecuteQuery }),
+      RunnerPlugin({ handler: props.onRunQuery }),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',
@@ -204,21 +204,22 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { query, onQueryChange, onExecuteQuery } = this.props;
-    if (onQueryChange) {
+    const { query, onChange, onRunQuery } = this.props;
+    if (onChange) {
       const nextQuery: PromQuery = { ...query, expr: value };
-      onQueryChange(nextQuery);
+      onChange(nextQuery);
 
-      if (override && onExecuteQuery) {
-        onExecuteQuery();
+      if (override && onRunQuery) {
+        onRunQuery();
       }
     }
   };
 
   onClickHintFix = () => {
-    const { hint, onExecuteHint } = this.props;
-    if (onExecuteHint && hint && hint.fix) {
-      onExecuteHint(hint.fix.action);
+    const hint = null; // TODO: fetch this
+    const { onHint } = this.props;
+    if (onHint && hint && hint.fix) {
+      onHint(hint.fix.action);
     }
   };
 
@@ -273,7 +274,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { error, hint, query, datasourceStatus } = this.props;
+    const hint = null; // TODO: fetch this;
+    const { queryResponse, query, datasourceStatus } = this.props;
     const { metricsOptions, syntaxLoaded } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
@@ -296,15 +298,17 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               initialQuery={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
-              onQueryChange={this.onChangeQuery}
-              onExecuteQuery={this.props.onExecuteQuery}
+              onChange={this.onChangeQuery}
+              onRunQuery={this.props.onRunQuery}
               placeholder="Enter a PromQL query"
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />
           </div>
         </div>
-        {error ? <div className="prom-query-field-info text-error">{error}</div> : null}
+        {queryResponse && queryResponse.error ? (
+          <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
+        ) : null}
         {hint ? (
           <div className="prom-query-field-info text-warning">
             {hint.label}{' '}

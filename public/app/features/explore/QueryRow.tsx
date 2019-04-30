@@ -13,7 +13,15 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import { DataQuery, ExploreDataSourceApi, QueryFixAction, DataSourceStatus, TimeRange } from '@grafana/ui';
+import {
+  TimeRange,
+  DataQuery,
+  ExploreDataSourceApi,
+  QueryFixAction,
+  DataSourceStatus,
+  PanelData,
+  LoadingState,
+} from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -42,15 +50,16 @@ interface QueryRowProps {
   range: TimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
+  queryResponse: PanelData;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps> {
-  onExecuteQuery = () => {
+  onRunQuery = () => {
     const { exploreId } = this.props;
     this.props.runQueries(exploreId);
   };
 
-  onChangeQuery = (query: DataQuery, override?: boolean) => {
+  onChange = (query: DataQuery, override?: boolean) => {
     const { datasourceInstance, exploreId, index } = this.props;
     this.props.changeQuery(exploreId, query, index, override);
     if (query && !override && datasourceInstance.getHighlighterExpression && index === 0) {
@@ -69,7 +78,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   };
 
   onClickClearButton = () => {
-    this.onChangeQuery(null, true);
+    this.onChange(null, true);
   };
 
   onClickHintFix = (action: QueryFixAction) => {
@@ -96,11 +105,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
   }, 500);
 
   render() {
-    const { datasourceInstance, history, query, exploreEvents, range, datasourceStatus } = this.props;
-
-    // const transactionWithError = transactions.find(t => t.error !== undefined);
-    // const hint = getFirstHintFromTransactions(transactions);
-    // const queryError = transactionWithError ? transactionWithError.error : null;
+    const { datasourceInstance, history, query, exploreEvents, range, datasourceStatus, queryResponse } = this.props;
     const QueryField = datasourceInstance.components.ExploreQueryField;
 
     return (
@@ -112,19 +117,19 @@ export class QueryRow extends PureComponent<QueryRowProps> {
               datasource={datasourceInstance}
               datasourceStatus={datasourceStatus}
               query={query}
-              error={null}
-              hint={null}
               history={history}
-              onExecuteQuery={this.onExecuteQuery}
-              onExecuteHint={this.onClickHintFix}
-              onQueryChange={this.onChangeQuery}
+              onRunQuery={this.onRunQuery}
+              onHint={this.onClickHintFix}
+              onChange={this.onChange}
+              panelData={null}
+              queryResponse={queryResponse}
             />
           ) : (
             <QueryEditor
               datasource={datasourceInstance}
-              error={null}
-              onQueryChange={this.onChangeQuery}
-              onExecuteQuery={this.onExecuteQuery}
+              error={queryResponse.error.message ? queryResponse.error.message : null}
+              onQueryChange={this.onChange}
+              onExecuteQuery={this.onRunQuery}
               initialQuery={query}
               exploreEvents={exploreEvents}
               range={range}
@@ -158,12 +163,21 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const item: ExploreItemState = explore[exploreId];
   const { datasourceInstance, history, queries, range, datasourceError } = item;
   const query = queries[index];
+  const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
+  const error = item.queryError && item.queryError.refId === query.refId ? item.queryError : null;
+  const queryResponse: PanelData = {
+    series: [],
+    state: error ? LoadingState.Error : LoadingState.Done,
+    error,
+  };
+
   return {
     datasourceInstance,
     history,
     query,
     range,
-    datasourceStatus: datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected,
+    datasourceStatus,
+    queryResponse,
   };
 }
 
