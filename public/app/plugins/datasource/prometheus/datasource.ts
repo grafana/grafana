@@ -273,7 +273,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => this.handleErrors(err, query));
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
+      this.handleErrors(err, query)
+    );
   }
 
   performInstantQuery(query, time) {
@@ -285,7 +287,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => this.handleErrors(err, query));
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
+      this.handleErrors(err, query)
+    );
   }
 
   handleErrors = (err: any, target: PromQuery) => {
