@@ -1,4 +1,5 @@
 import { ComponentClass } from 'react';
+import { NavModel } from './navModel';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -71,10 +72,6 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface AppPagePlugin {
-  getPageNav: () => any;
-}
-
 export interface PluginConfigPage<TPlugin> {
   title: string; // Name of the table
   subTitle?: string;
@@ -85,14 +82,15 @@ export interface PluginConfigPage<TPlugin> {
 
 export interface PluginConfigPageProps<T> {
   plugin: T;
+  query: { [s: string]: any }; // The URL query parameters
 
   onConfigSave: () => void; //
   beforeConfigSaved: () => void;
   afterConfigSaved: () => void;
 }
 
-export class PluginWithConfig<TPlugin> {
-  meta?: PluginMeta;
+export class PluginWithConfig<TPlugin, TMeta extends PluginMeta = PluginMeta> {
+  meta?: TMeta;
 
   configPage?: PluginConfigPage<TPlugin>;
   configTabs?: Array<PluginConfigPage<TPlugin>>;
@@ -117,32 +115,27 @@ export class PluginWithConfig<TPlugin> {
   }
 }
 
-export interface AppPluginPageProps<T> {
-  plugin: T;
+export interface AppRootPageProps {
+  plugin: AppPlugin;
   path: string; // The URL path to this page
   query: { [s: string]: any }; // The URL query parameters
-  onNavChanged: (nav: any) => void; // Pass the Nav back to the Page
-}
 
-export interface AppPluginPage<T> {
-  path?: string;
-  Body: ComponentClass<AppPluginPageProps<T>>;
+  /**
+   * Pass the nav model to the container... is there a better way?
+   */
+  onNavChanged: (nav: NavModel) => void;
 }
 
 export class AppPlugin extends PluginWithConfig<AppPlugin> {
-  pages?: Array<AppPluginPage<AppPlugin>>;
+  // Content under: /a/${plugin-id}/*
+  root?: ComponentClass<AppRootPageProps>;
 
   /**
-   * Add a page that is rendered under:
-   *  /a/${plugin-id}/
-   *
-   * The first matching page will be used.
+   * Set the component displayed under:
+   *   /a/${plugin-id}/*
    */
-  addPage(page: AppPluginPage<AppPlugin>): AppPlugin {
-    if (!this.pages) {
-      this.pages = [];
-    }
-    this.pages.push(page);
+  setRootPage(root: ComponentClass<AppRootPageProps>): AppPlugin {
+    this.root = root;
     return this;
   }
 

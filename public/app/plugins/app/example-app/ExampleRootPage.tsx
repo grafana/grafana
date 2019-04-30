@@ -2,25 +2,23 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { AppPlugin, AppPluginPageProps } from '@grafana/ui';
+import { AppRootPageProps } from '@grafana/ui';
 
-interface Props extends AppPluginPageProps<AppPlugin> {}
-
-export class ExampleAppPage2 extends PureComponent<Props> {
-  constructor(props: Props) {
+export class ExampleRootPage extends PureComponent<AppRootPageProps> {
+  constructor(props: AppRootPageProps) {
     super(props);
 
     console.log('Constructor', this);
   }
 
   componentDidMount() {
-    const { onNavChanged } = this.props;
-    onNavChanged({ xxx: 'TODO, this would be the Nav Model' });
+    // const { onNavChanged } = this.props;
+    // onNavChanged({ xxx: 'TODO, this would be the Nav Model' });
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: AppRootPageProps) {
     if (this.props.query !== prevProps.query) {
-      console.log('Query Changed: ', this.props.query);
+      console.log('Query Changed in App Page: ', this.props.query);
     }
   }
 
