@@ -17,6 +17,31 @@ import (
 const PUSHOVER_ENDPOINT = "https://api.pushover.net/1/messages.json"
 
 func init() {
+	sounds := ` 
+          'default',
+          'pushover',
+          'bike',
+          'bugle',
+          'cashregister',
+          'classical',
+          'cosmic',
+          'falling',
+          'gamelan',
+          'incoming',
+          'intermission',
+          'magic',
+          'mechanical',
+          'pianobar',
+          'siren',
+          'spacealarm',
+          'tugboat',
+          'alien',
+          'climb',
+          'persistent',
+          'echo',
+          'updown',
+          'none'`
+
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "pushover",
 		Name:        "Pushover",
@@ -55,32 +80,16 @@ func init() {
         <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="maximum 86400 seconds" ng-model="ctrl.model.settings.expire" ng-init="ctrl.model.settings.expire=ctrl.model.settings.expire||'3600'"></input>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label width-10">Sound</span>
+        <span class="gf-form-label width-10">Alerting sound</span>
         <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.sound" ng-options="s for s in [
-          'default',
-          'pushover',
-          'bike',
-          'bugle',
-          'cashregister',
-          'classical',
-          'cosmic',
-          'falling',
-          'gamelan',
-          'incoming',
-          'intermission',
-          'magic',
-          'mechanical',
-          'pianobar',
-          'siren',
-          'spacealarm',
-          'tugboat',
-          'alien',
-          'climb',
-          'persistent',
-          'echo',
-          'updown',
-          'none'
+          ` + sounds + `
         ]" ng-init="ctrl.model.settings.sound=ctrl.model.settings.sound||'default'"></select>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">OK sound</span>
+        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.okSound" ng-options="s for s in [
+         ` + sounds + `
+        ]" ng-init="ctrl.model.settings.okSound=ctrl.model.settings.okSound||'default'"></select>
       </div>
     `,
 	})
@@ -93,7 +102,8 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	priority, _ := strconv.Atoi(model.Settings.Get("priority").MustString())
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
 	expire, _ := strconv.Atoi(model.Settings.Get("expire").MustString())
-	sound := model.Settings.Get("sound").MustString()
+	alertingSound := model.Settings.Get("sound").MustString()
+	okSound := model.Settings.Get("okSound").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if userKey == "" {
@@ -103,30 +113,32 @@ func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		return nil, alerting.ValidationError{Reason: "API token not given"}
 	}
 	return &PushoverNotifier{
-		NotifierBase: NewNotifierBase(model),
-		UserKey:      userKey,
-		ApiToken:     apiToken,
-		Priority:     priority,
-		Retry:        retry,
-		Expire:       expire,
-		Device:       device,
-		Sound:        sound,
-		Upload:       uploadImage,
-		log:          log.New("alerting.notifier.pushover"),
+		NotifierBase:  NewNotifierBase(model),
+		UserKey:       userKey,
+		ApiToken:      apiToken,
+		Priority:      priority,
+		Retry:         retry,
+		Expire:        expire,
+		Device:        device,
+		AlertingSound: alertingSound,
+		OkSound:       okSound,
+		Upload:        uploadImage,
+		log:           log.New("alerting.notifier.pushover"),
 	}, nil
 }
 
 type PushoverNotifier struct {
 	NotifierBase
-	UserKey  string
-	ApiToken string
-	Priority int
-	Retry    int
-	Expire   int
-	Device   string
-	Sound    string
-	Upload   bool
-	log      log.Logger
+	UserKey       string
+	ApiToken      string
+	Priority      int
+	Retry         int
+	Expire        int
+	Device        string
+	AlertingSound string
+	OkSound       string
+	Upload        bool
+	log           log.Logger
 }
 
 func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -235,8 +247,12 @@ func (this *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext,
 	}
 
 	// Add sound
-	if this.Sound != "default" {
-		err = w.WriteField("sound", this.Sound)
+	sound := this.AlertingSound
+	if evalContext.Rule.State == m.AlertStateOK {
+		sound = this.OkSound
+	}
+	if sound != "default" {
+		err = w.WriteField("sound", sound)
 		if err != nil {
 			return nil, b, err
 		}

@@ -115,7 +115,7 @@ func newCCBalancerWrapper(cc *ClientConn, b balancer.Builder, bopts balancer.Bui
 	return ccb
 }
 
-// watcher balancer functions sequencially, so the balancer can be implemeneted
+// watcher balancer functions sequentially, so the balancer can be implemented
 // lock-free.
 func (ccb *ccBalancerWrapper) watcher() {
 	for {

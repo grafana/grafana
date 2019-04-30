@@ -254,7 +254,7 @@ export default class ResponseParser {
   }
 
   static findOrCreateBucket(data, target): DataTarget {
-    let dataTarget = _.find(data, ['target', target]);
+    let dataTarget: any = _.find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [], refId: '', query: '' };
       data.push(dataTarget);

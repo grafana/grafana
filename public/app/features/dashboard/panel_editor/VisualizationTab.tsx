@@ -16,15 +16,16 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 // Types
 import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
-import { PanelPlugin } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
+import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { PanelPluginMeta } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  onTypeChanged: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
 }
@@ -53,7 +54,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
   getReactPanelOptions = () => {
     const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.reactPlugin.defaults);
+    return panel.getOptions(plugin.panelPlugin.defaults);
   };
 
   renderPanelOptions() {
@@ -63,8 +64,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (plugin.reactPlugin) {
-      const PanelEditor = plugin.reactPlugin.editor;
+    if (plugin.panelPlugin) {
+      const PanelEditor = plugin.panelPlugin.editor;
 
       if (PanelEditor) {
         return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
@@ -196,7 +197,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
   };
 
-  onTypeChanged = (plugin: PanelPlugin) => {
+  onTypeChanged = (plugin: PanelPluginMeta) => {
     if (plugin.id === this.props.plugin.id) {
       this.setState({ isVizPickerOpen: false });
     } else {
@@ -238,6 +239,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
               onClose={this.onCloseVizPicker}
             />
           </FadeIn>
+          <PluginStateinfo state={plugin.state} />
           {this.renderPanelOptions()}
         </>
       </EditorTabBody>

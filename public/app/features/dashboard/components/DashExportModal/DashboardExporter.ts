@@ -1,11 +1,10 @@
-// @ts-ignore
 import _ from 'lodash';
 
 import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelPlugin } from 'app/types/plugins';
+import { PanelPluginMeta } from '@grafana/ui';
 
 interface Input {
   name: string;
@@ -120,7 +119,7 @@ export class DashboardExporter {
         }
       }
 
-      const panelDef: PanelPlugin = config.panels[panel.type];
+      const panelDef: PanelPluginMeta = config.panels[panel.type];
       if (panelDef) {
         requires['panel' + panelDef.id] = {
           type: 'panel',

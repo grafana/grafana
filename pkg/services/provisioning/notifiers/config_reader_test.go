@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -43,8 +44,10 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Can read correct properties", func() {
+			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(correct_properties)
+			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}

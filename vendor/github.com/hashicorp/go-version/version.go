@@ -10,14 +10,25 @@ import (
 )
 
 // The compiled regular expression used to test the validity of a version.
-var versionRegexp *regexp.Regexp
+var (
+	versionRegexp *regexp.Regexp
+	semverRegexp  *regexp.Regexp
+)
 
 // The raw regular expression string used for testing the validity
 // of a version.
-const VersionRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
-	`(-?([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
-	`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
-	`?`
+const (
+	VersionRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
+		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-?([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
+		`?`
+
+	// SemverRegexpRaw requires a separator between version and prerelease
+	SemverRegexpRaw string = `v?([0-9]+(\.[0-9]+)*?)` +
+		`(-([0-9]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)|(-([A-Za-z\-~]+[0-9A-Za-z\-~]*(\.[0-9A-Za-z\-~]+)*)))?` +
+		`(\+([0-9A-Za-z\-~]+(\.[0-9A-Za-z\-~]+)*))?` +
+		`?`
+)
 
 // Version represents a single version.
 type Version struct {
@@ -25,16 +36,29 @@ type Version struct {
 	pre      string
 	segments []int64
 	si       int
+	original string
 }
 
 func init() {
 	versionRegexp = regexp.MustCompile("^" + VersionRegexpRaw + "$")
+	semverRegexp = regexp.MustCompile("^" + SemverRegexpRaw + "$")
 }
 
 // NewVersion parses the given version and returns a new
 // Version.
 func NewVersion(v string) (*Version, error) {
-	matches := versionRegexp.FindStringSubmatch(v)
+	return newVersion(v, versionRegexp)
+}
+
+// NewSemver parses the given version and returns a new
+// Version that adheres strictly to SemVer specs
+// https://semver.org/
+func NewSemver(v string) (*Version, error) {
+	return newVersion(v, semverRegexp)
+}
+
+func newVersion(v string, pattern *regexp.Regexp) (*Version, error) {
+	matches := pattern.FindStringSubmatch(v)
 	if matches == nil {
 		return nil, fmt.Errorf("Malformed version: %s", v)
 	}
@@ -59,11 +83,17 @@ func NewVersion(v string) (*Version, error) {
 		segments = append(segments, 0)
 	}
 
+	pre := matches[7]
+	if pre == "" {
+		pre = matches[4]
+	}
+
 	return &Version{
-		metadata: matches[7],
-		pre:      matches[4],
+		metadata: matches[10],
+		pre:      pre,
 		segments: segments,
 		si:       si,
+		original: v,
 	}, nil
 }
 
@@ -301,11 +331,19 @@ func (v *Version) Segments() []int {
 // for a version "1.2.3-beta", segments will return a slice of
 // 1, 2, 3.
 func (v *Version) Segments64() []int64 {
-	return v.segments
+	result := make([]int64, len(v.segments))
+	copy(result, v.segments)
+	return result
 }
 
 // String returns the full version string included pre-release
 // and metadata information.
+//
+// This value is rebuilt according to the parsed segments and other
+// information. Therefore, ambiguities in the version string such as
+// prefixed zeroes (1.04.0 => 1.4.0), `v` prefix (v1.0.0 => 1.0.0), and
+// missing parts (1.0 => 1.0.0) will be made into a canonicalized form
+// as shown in the parenthesized examples.
 func (v *Version) String() string {
 	var buf bytes.Buffer
 	fmtParts := make([]string, len(v.segments))
@@ -323,4 +361,10 @@ func (v *Version) String() string {
 	}
 
 	return buf.String()
+}
+
+// Original returns the original parsed version as-is, including any
+// potential whitespace, `v` prefix, etc.
+func (v *Version) Original() string {
+	return v.original
 }

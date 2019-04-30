@@ -171,7 +171,6 @@ func (uss *UsageStatsService) updateTotalStats() {
 func getEdition() string {
 	if setting.IsEnterprise {
 		return "enterprise"
-	} else {
-		return "oss"
 	}
+	return "oss"
 }

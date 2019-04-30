@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -58,7 +58,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -88,7 +88,7 @@ jobs:
 
   backend-lint:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -120,7 +120,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -130,7 +130,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -174,7 +174,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -243,7 +243,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -275,7 +275,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.4
+    - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout

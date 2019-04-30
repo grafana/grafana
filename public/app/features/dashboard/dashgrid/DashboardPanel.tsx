@@ -17,8 +17,8 @@ import { PanelResizer } from './PanelResizer';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
-import { PanelPlugin } from 'app/types';
-import { AngularPanelPlugin, ReactPanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPluginMeta, AngularPanelPlugin, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
   panel: PanelModel;
@@ -28,7 +28,7 @@ export interface Props {
 }
 
 export interface State {
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   angularPanel: AngularComponent;
 }
 
@@ -36,7 +36,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels = {};
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -60,7 +60,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
-  onPluginTypeChanged = (plugin: PanelPlugin) => {
+  onPluginTypeChanged = (plugin: PanelPluginMeta) => {
     this.loadPlugin(plugin.id);
   };
 
@@ -91,7 +91,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  async importPanelPluginModule(plugin: PanelPlugin): Promise<PanelPlugin> {
+  async importPanelPluginModule(plugin: PanelPluginMeta): Promise<PanelPluginMeta> {
     if (plugin.hasBeenImported) {
       return plugin;
     }
@@ -100,8 +100,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
       const importedPlugin = await importPanelPlugin(plugin.module);
       if (importedPlugin instanceof AngularPanelPlugin) {
         plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
-      } else if (importedPlugin instanceof ReactPanelPlugin) {
-        plugin.reactPlugin = importedPlugin as ReactPanelPlugin;
+      } else if (importedPlugin instanceof PanelPlugin) {
+        plugin.panelPlugin = importedPlugin as PanelPlugin;
       }
     } catch (e) {
       plugin = getPanelPluginNotFound(plugin.id);
@@ -149,17 +149,27 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen, isEditing } = this.props;
+    const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
 
     return (
-      <PanelChrome
-        plugin={plugin}
-        panel={panel}
-        dashboard={dashboard}
-        isFullscreen={isFullscreen}
-        isEditing={isEditing}
-      />
+      <AutoSizer>
+        {({ width, height }) => {
+          if (width === 0) {
+            return null;
+          }
+          return (
+            <PanelChrome
+              plugin={plugin}
+              panel={panel}
+              dashboard={dashboard}
+              isFullscreen={isFullscreen}
+              width={width}
+              height={height}
+            />
+          );
+        }}
+      </AutoSizer>
     );
   }
 
@@ -199,7 +209,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.reactPlugin && this.renderReactPanel()}
+              {plugin.panelPlugin && this.renderReactPanel()}
               {plugin.angularPlugin && this.renderAngularPanel()}
             </div>
           )}

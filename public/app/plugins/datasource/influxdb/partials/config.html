@@ -16,9 +16,14 @@
 			<span class="gf-form-label width-10">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder=""></input>
 		</div>
-		<div class="gf-form max-width-15">
-			<span class="gf-form-label width-10">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
+		<div class="gf-form">
+      <secret-form-field
+        isConfigured="ctrl.current.password || ctrl.current.secureJsonFields.password"
+        value="ctrl.current.secureJsonData.password || ''"
+        on-reset="ctrl.onPasswordReset"
+        on-change="ctrl.onPasswordChange"
+        inputWidth="9"
+      />
 		</div>
 	</div>
 </div>

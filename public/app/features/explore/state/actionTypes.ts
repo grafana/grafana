@@ -2,12 +2,12 @@
 import { Emitter } from 'app/core/core';
 import {
   RawTimeRange,
-  TimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
   LogLevel,
+  TimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -66,7 +66,16 @@ export interface ChangeTimePayload {
   range: TimeRange;
 }
 
+export interface ChangeRefreshIntervalPayload {
+  exploreId: ExploreId;
+  refreshInterval: string;
+}
+
 export interface ClearQueriesPayload {
+  exploreId: ExploreId;
+}
+
+export interface ClearRefreshIntervalPayload {
   exploreId: ExploreId;
 }
 
@@ -80,7 +89,7 @@ export interface InitializeExplorePayload {
   containerWidth: number;
   eventBridge: Emitter;
   queries: DataQuery[];
-  range: RawTimeRange;
+  range: TimeRange;
   ui: ExploreUIState;
 }
 
@@ -209,6 +218,10 @@ export interface LoadExploreDataSourcesPayload {
   exploreDatasources: DataSourceSelectItem[];
 }
 
+export interface RunQueriesPayload {
+  exploreId: ExploreId;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -235,6 +248,13 @@ export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
 export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
+
+/**
+ * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ */
+export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshIntervalPayload>(
+  'explore/CHANGE_REFRESH_INTERVAL'
+).create();
 
 /**
  * Clear all queries and results.
@@ -324,7 +344,8 @@ export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransacti
  * Remove query row of the given index, as well as associated query results.
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
-export const runQueriesAction = noPayloadActionCreatorFactory('explore/RUN_QUERIES').create();
+
+export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
 
 /**
  * Start a scan for more results using the given scanner.

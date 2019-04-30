@@ -1,6 +1,6 @@
 // Libraries
-// @ts-ignore
 import _ from 'lodash';
+import moment from 'moment';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -17,21 +17,24 @@ import {
   buildQueryTransaction,
   serializeStateToUrlParam,
   parseUrlState,
+  getTimeRange,
+  getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
 
 // Types
+import { ResultGetter } from 'app/types/explore';
 import { ThunkResult } from 'app/types';
 import {
   RawTimeRange,
-  TimeRange,
   DataSourceApi,
   DataQuery,
   DataSourceSelectItem,
   QueryHint,
   QueryFixAction,
+  TimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -45,6 +48,8 @@ import {
 import {
   updateDatasourceInstanceAction,
   changeQueryAction,
+  changeRefreshIntervalAction,
+  ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
   changeTimeAction,
@@ -81,7 +86,7 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
-import { parseTime } from '../TimePicker';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 
 /**
  * Updates UI state and save it to the URL
@@ -165,13 +170,25 @@ export function changeSize(
 }
 
 /**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
  */
-export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<void> {
-  return dispatch => {
+export function changeTime(exploreId: ExploreId, rawRange: RawTimeRange): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
     dispatch(changeTimeAction({ exploreId, range }));
     dispatch(runQueries(exploreId));
   };
+}
+
+/**
+ * Change the refresh interval of Explore. Called from the Refresh picker.
+ */
+export function changeRefreshInterval(
+  exploreId: ExploreId,
+  refreshInterval: string
+): ActionOf<ChangeRefreshIntervalPayload> {
+  return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
 
 /**
@@ -196,11 +213,14 @@ export function loadExploreDatasourcesAndSetDatasource(
   return dispatch => {
     const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
       .getExternal()
-      .map((ds: any) => ({
-        value: ds.name,
-        name: ds.name,
-        meta: ds.meta,
-      }));
+      .map(
+        (ds: any) =>
+          ({
+            value: ds.name,
+            name: ds.name,
+            meta: ds.meta,
+          } as DataSourceSelectItem)
+      );
 
     dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
 
@@ -220,12 +240,14 @@ export function initializeExplore(
   exploreId: ExploreId,
   datasourceName: string,
   queries: DataQuery[],
-  range: RawTimeRange,
+  rawRange: RawTimeRange,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
 ): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({
@@ -524,7 +546,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<Promise<any>> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -536,59 +558,66 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
       supportsLogs,
       supportsTable,
       datasourceError,
+      containerWidth,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
       // let's not run any queries if data source is in a faulty state
-      return;
+      return Promise.resolve();
     }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
-      return;
+      return Promise.resolve();
     }
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction());
+    dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && supportsTable) {
-      dispatch(
-        runQueriesForType(
-          exploreId,
-          'Table',
-          {
-            interval,
-            format: 'table',
-            instant: true,
-            valueWithRefId: true,
-          },
-          (data: any) => data[0]
-        )
-      );
-    }
-    if ((ignoreUIState || showingGraph) && supportsGraph) {
-      dispatch(
-        runQueriesForType(
-          exploreId,
-          'Graph',
-          {
-            interval,
-            format: 'time_series',
-            instant: false,
-          },
-          makeTimeSeriesList
-        )
-      );
-    }
-    if ((ignoreUIState || showingLogs) && supportsLogs) {
-      dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
-    }
+    const tableQueriesPromise =
+      (ignoreUIState || showingTable) && supportsTable
+        ? dispatch(
+            runQueriesForType(
+              exploreId,
+              'Table',
+              {
+                interval,
+                format: 'table',
+                instant: true,
+                valueWithRefId: true,
+              },
+              (data: any[]) => data[0]
+            )
+          )
+        : undefined;
+    const typeQueriesPromise =
+      (ignoreUIState || showingGraph) && supportsGraph
+        ? dispatch(
+            runQueriesForType(
+              exploreId,
+              'Graph',
+              {
+                interval,
+                format: 'time_series',
+                instant: false,
+                maxDataPoints: containerWidth,
+              },
+              makeTimeSeriesList
+            )
+          )
+        : undefined;
+    const logsQueriesPromise =
+      (ignoreUIState || showingLogs) && supportsLogs
+        ? dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }))
+        : undefined;
 
     dispatch(stateSave());
+
+    return Promise.all([tableQueriesPromise, typeQueriesPromise, logsQueriesPromise]);
   };
 }
 
@@ -603,14 +632,13 @@ function runQueriesForType(
   exploreId: ExploreId,
   resultType: ResultType,
   queryOptions: QueryOptions,
-  resultGetter?: any
+  resultGetter?: ResultGetter
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
-
     // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
+    const queryPromises = queries.map(async (query, rowIndex) => {
       const transaction = buildQueryTransaction(
         query,
         rowIndex,
@@ -634,6 +662,8 @@ function runQueriesForType(
         dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
       }
     });
+
+    return Promise.all(queryPromises);
   };
 }
 
@@ -700,6 +730,23 @@ export function splitOpen(): ThunkResult<void> {
   };
 }
 
+const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+  let from = range.raw.from;
+  if (moment.isMoment(from)) {
+    from = from.valueOf().toString(10);
+  }
+
+  let to = range.raw.to;
+  if (moment.isMoment(to)) {
+    to = to.valueOf().toString(10);
+  }
+
+  return {
+    from,
+    to,
+  };
+};
+
 /**
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
@@ -711,7 +758,7 @@ export function stateSave(): ThunkResult<void> {
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
       queries: left.queries.map(clearQueryKeys),
-      range: left.range,
+      range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
@@ -724,7 +771,7 @@ export function stateSave(): ThunkResult<void> {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
         queries: right.queries.map(clearQueryKeys),
-        range: right.range,
+        range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: right.showingLogs,
@@ -807,20 +854,20 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range, ui } = urlState;
+    const { datasource, queries, range: urlRange, ui } = urlState;
     const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
-    const refreshRange = { from: parseTime(range.from), to: parseTime(range.to) };
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone);
 
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      const initialRange = { from: parseTime(range.from), to: parseTime(range.to) };
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, initialRange, containerWidth, eventBridge, ui));
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui));
       return;
     }
 
     if (update.range) {
-      dispatch(changeTimeAction({ exploreId, range: refreshRange as TimeRange }));
+      dispatch(changeTimeAction({ exploreId, range }));
     }
 
     // need to refresh ui state

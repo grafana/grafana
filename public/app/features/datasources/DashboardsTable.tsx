@@ -19,7 +19,7 @@ const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
           return (
             <tr key={`${dashboard.dashboardId}-${index}`}>
               <td className="width-1">
-                <i className="icon-gf icon-gf-dashboard" />
+                <i className="gicon gicon-dashboard" />
               </td>
               <td>
                 {dashboard.imported ? (

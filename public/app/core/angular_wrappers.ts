@@ -63,6 +63,7 @@ export function registerAngularDirectives() {
     'value',
     'isConfigured',
     'inputWidth',
+    'labelWidth',
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);

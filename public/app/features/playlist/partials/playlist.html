@@ -24,7 +24,7 @@
 		<table class="filter-table playlist-available-list">
 			<tr ng-repeat="playlistItem in ctrl.playlistItems">
 				<td ng-if="playlistItem.type === 'dashboard_by_id'">
-					<i class="icon-gf icon-gf-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
+					<i class="gicon gicon-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
 				</td>
 				<td ng-if="playlistItem.type === 'dashboard_by_tag'">
 					<a class="search-result-tag label label-tag" tag-color-from-name="playlistItem.title">
@@ -59,7 +59,7 @@
 			<table class="filter-table playlist-available-list">
 				<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
 					<td>
-						<i class="icon-gf icon-gf-dashboard"></i>
+						<i class="gicon gicon-dashboard"></i>
 						&nbsp;&nbsp;{{playlistItem.title}}
 						<i class="fa fa-star" ng-show="playlistItem.isStarred"></i>
 					</td>

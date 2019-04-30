@@ -1,15 +1,46 @@
-import { ComponentClass } from 'react';
+import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
-import { ScopedVars } from './datasource';
+import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { PluginMeta } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
+export interface PanelPluginMeta extends PluginMeta {
+  hideFromList?: boolean;
+  sort: number;
+  angularPlugin: AngularPanelPlugin | null;
+  panelPlugin: PanelPlugin | null;
+  hasBeenImported?: boolean;
+
+  // if length>0 the query tab will show up
+  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
+  // so it will be deprecated soon
+  dataFormats?: PanelDataFormat[];
+}
+
+export enum PanelDataFormat {
+  Table = 'table',
+  TimeSeries = 'time_series',
+}
+
+export interface PanelData {
+  state: LoadingState;
+  series: SeriesData[];
+  request?: DataQueryRequest;
+  error?: DataQueryError;
+
+  // Data format expected by Angular panels
+  legacy?: LegacyResponseData[];
+}
+
 export interface PanelProps<T = any> {
-  data?: SeriesData[];
+  data: PanelData;
+  // TODO: annotation?: PanelData;
+
   timeRange: TimeRange;
-  loading: LoadingState;
   options: T;
+  onOptionsChange: (options: T) => void;
   renderCounter: number;
   width: number;
   height: number;
@@ -41,14 +72,14 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class ReactPanelPlugin<TOptions = any> {
-  panel: ComponentClass<PanelProps<TOptions>>;
+export class PanelPlugin<TOptions = any> {
+  panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
-  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+  constructor(panel: ComponentType<PanelProps<TOptions>>) {
     this.panel = panel;
   }
 

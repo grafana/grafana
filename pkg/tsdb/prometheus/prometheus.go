@@ -70,7 +70,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
 			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.BasicAuthPassword,
+			password:  dsInfo.DecryptedBasicAuthPassword(),
 		}
 	}
 

@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import React from 'react';
 // @ts-ignore

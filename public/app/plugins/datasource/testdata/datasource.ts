@@ -1,6 +1,15 @@
 import _ from 'lodash';
-import { DataSourceApi, DataQueryOptions, TableData, TimeSeries } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  TableData,
+  TimeSeries,
+  DataSourceInstanceSettings,
+  DataStreamObserver,
+} from '@grafana/ui';
 import { TestDataQuery, Scenario } from './types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { StreamHandler } from './StreamHandler';
 
 type TestData = TimeSeries | TableData;
 
@@ -10,16 +19,15 @@ export interface TestDataRegistry {
 
 export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   id: number;
+  streams = new StreamHandler();
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
     this.id = instanceSettings.id;
   }
 
-  query(options: DataQueryOptions<TestDataQuery>) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+  query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
+    const queries = options.targets.map(item => {
       return {
         refId: item.refId,
         scenarioId: item.scenarioId,
@@ -33,10 +41,16 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
     });
 
     if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+      return Promise.resolve({ data: [] });
     }
 
-    return this.backendSrv
+    // Currently we do not support mixed with client only streaming
+    const resp = this.streams.process(options, observer);
+    if (resp) {
+      return Promise.resolve(resp);
+    }
+
+    return getBackendSrv()
       .datasourceRequest({
         method: 'POST',
         url: '/api/tsdb/query',
@@ -45,8 +59,11 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
           to: options.range.to.valueOf().toString(),
           queries: queries,
         },
+
+        // This sets up a cancel token
+        requestId: options.requestId,
       })
-      .then(res => {
+      .then((res: any) => {
         const data: TestData[] = [];
 
         // Returns data in the order it was asked for.
@@ -58,12 +75,14 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
             continue;
           }
 
-          for (const table of results.tables || []) {
-            data.push(table as TableData);
+          for (const t of results.tables || []) {
+            const table = t as TableData;
+            table.refId = query.refId;
+            data.push(table);
           }
 
           for (const series of results.series || []) {
-            data.push({ target: series.name, datapoints: series.points });
+            data.push({ target: series.name, datapoints: series.points, refId: query.refId });
           }
         }
 
@@ -71,7 +90,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       });
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     let timeWalker = options.range.from.valueOf();
     const to = options.range.to.valueOf();
     const events = [];
@@ -87,7 +106,14 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       });
       timeWalker += step;
     }
-    return this.$q.when(events);
+    return Promise.resolve(events);
+  }
+
+  getQueryDisplayText(query: TestDataQuery) {
+    if (query.alias) {
+      return query.scenarioId + ' as ' + query.alias;
+    }
+    return query.scenarioId;
   }
 
   testDatasource() {
@@ -98,6 +124,6 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
   }
 }
