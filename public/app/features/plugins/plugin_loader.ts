@@ -178,8 +178,8 @@ export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin<a
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
-    if (pluginExports.appPlugin) {
-      const plugin = pluginExports.appPlugin as AppPlugin;
+    if (pluginExports.plugin) {
+      const plugin = pluginExports.plugin as AppPlugin;
       plugin.meta = meta;
       return plugin;
     }

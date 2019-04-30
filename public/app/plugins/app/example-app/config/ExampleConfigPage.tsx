@@ -2,9 +2,9 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { AppPlugin, PluginConfigPageProps } from '@grafana/ui';
+import { PluginConfigTabProps, AppMeta } from '@grafana/ui';
 
-interface Props extends PluginConfigPageProps<AppPlugin> {}
+interface Props extends PluginConfigTabProps<AppMeta, any> {}
 
 export class ExampleConfigPage extends PureComponent<Props> {
   constructor(props: Props) {
@@ -14,8 +14,8 @@ export class ExampleConfigPage extends PureComponent<Props> {
   }
 
   render() {
-    const { plugin } = this.props;
+    const { meta } = this.props;
 
-    return <div>Hello from the example Config Page: {plugin.meta.name}</div>;
+    return <div>Hello from the example Config Page: {meta.name}</div>;
   }
 }

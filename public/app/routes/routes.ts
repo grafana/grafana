@@ -22,8 +22,8 @@ import DataSourceSettingsPage from '../features/datasources/settings/DataSourceS
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
-import AppPageWrapper from '../features/plugins/AppPageWrapper';
-import AppConfigPage from 'app/features/plugins/AppConfigPage';
+import PluginConfigPage from '../features/plugins/PluginConfigPage';
+import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
 
 // Types
@@ -170,14 +170,14 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => AppPageWrapper,
+        component: () => AppRootPage,
       },
     })
-    .when('/a/:pluginId/:path*/', {
+    .when('/a/:pluginId/:slug*/', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => AppPageWrapper,
+        component: () => AppRootPage,
       },
     })
     .when('/org', {
@@ -317,15 +317,15 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => PluginListPage,
       },
     })
-    .when('/plugins/:pluginId/config', {
+    .when('/plugins/:pluginId/', {
       template: '<react-container />',
       resolve: {
-        component: () => AppConfigPage,
+        component: () => PluginConfigPage, // tabs from query parameters
       },
     })
     .when('/plugins/:pluginId/edit', {
       templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
-      controller: 'PluginEditCtrl', // Really just expects apps
+      controller: 'PluginEditCtrl',
       controllerAs: 'ctrl',
     })
     .when('/plugins/:pluginId/page/:slug', {

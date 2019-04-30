@@ -2,7 +2,7 @@ import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
-import { PluginMeta } from './plugin';
+import { PluginMeta, PluginWithConfig } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -72,7 +72,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> {
+export class PanelPlugin<TOptions = any> extends PluginWithConfig<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
@@ -80,6 +80,7 @@ export class PanelPlugin<TOptions = any> {
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
+    super();
     this.panel = panel;
   }
 

@@ -1,5 +1,4 @@
 import { ComponentClass } from 'react';
-import { NavModel } from './navModel';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -10,6 +9,10 @@ export enum PluginType {
   panel = 'panel',
   datasource = 'datasource',
   app = 'app',
+}
+
+export interface PluginMetaJsonData {
+  [str: string]: any;
 }
 
 export interface PluginMeta {
@@ -25,7 +28,7 @@ export interface PluginMeta {
   baseUrl: string;
 
   // Filled in by the backend
-  jsonData?: { [str: string]: any };
+  jsonData?: PluginMetaJsonData;
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
@@ -47,6 +50,7 @@ export interface PluginInclude {
   name: string;
   path?: string;
   icon?: string;
+
   // Angular app pages
   component?: string;
 }
@@ -72,28 +76,42 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigPage<TPlugin> {
-  title: string; // Name of the table
-  subTitle?: string;
-  icon?: string;
+export interface PluginConfigSaveOptions<TData extends PluginMetaJsonData = PluginMetaJsonData> {
+  jsonData?: TData;
+  enable?: boolean; // App enable/disable flag
 
-  body: ComponentClass<PluginConfigPageProps<TPlugin>>;
+  /**
+   * called after saving but before reloading the application
+   */
+  onAfterSave?: () => void;
 }
 
-export interface PluginConfigPageProps<T> {
-  plugin: T;
+export interface PluginConfigTabProps<TMeta, TData> {
+  meta: TMeta;
   query: { [s: string]: any }; // The URL query parameters
 
-  onConfigSave: () => void; //
-  beforeConfigSaved: () => void;
-  afterConfigSaved: () => void;
+  /**
+   * Save the configs
+   */
+  onConfigSave: (options: PluginConfigSaveOptions<TData>) => void;
 }
 
-export class PluginWithConfig<TPlugin, TMeta extends PluginMeta = PluginMeta> {
-  meta?: TMeta;
+export interface PluginConfigTab<TMeta, TData> {
+  title: string; // Display
+  subTitle?: string;
+  icon?: string;
+  id: string; // Unique, in URL
 
-  configPage?: PluginConfigPage<TPlugin>;
-  configTabs?: Array<PluginConfigPage<TPlugin>>;
+  body: ComponentClass<PluginConfigTabProps<TMeta, TData>>;
+}
+
+export class PluginWithConfig<
+  TMeta extends PluginMeta = PluginMeta,
+  TData extends PluginMetaJsonData = PluginMetaJsonData
+> {
+  meta?: TMeta; // Set by the system
+
+  configTabs?: Array<PluginConfigTab<TMeta, TData>>;
 
   // Legacy Angular based configs
   angular?: {
@@ -101,72 +119,11 @@ export class PluginWithConfig<TPlugin, TMeta extends PluginMeta = PluginMeta> {
     pages: { [component: string]: any };
   };
 
-  setConfigPage(page: PluginConfigPage<TPlugin>): TPlugin {
-    this.configPage = page;
-    return (this as unknown) as TPlugin;
-  }
-
-  addConfigTab(tab: PluginConfigPage<TPlugin>): TPlugin {
+  addConfigTab(tab: PluginConfigTab<TMeta, TData>) {
     if (!this.configTabs) {
       this.configTabs = [];
     }
     this.configTabs.push(tab);
-    return (this as unknown) as TPlugin;
-  }
-}
-
-export interface AppRootPageProps {
-  plugin: AppPlugin;
-  path: string; // The URL path to this page
-  query: { [s: string]: any }; // The URL query parameters
-
-  /**
-   * Pass the nav model to the container... is there a better way?
-   */
-  onNavChanged: (nav: NavModel) => void;
-}
-
-export class AppPlugin extends PluginWithConfig<AppPlugin> {
-  // Content under: /a/${plugin-id}/*
-  root?: ComponentClass<AppRootPageProps>;
-
-  /**
-   * Set the component displayed under:
-   *   /a/${plugin-id}/*
-   */
-  setRootPage(root: ComponentClass<AppRootPageProps>): AppPlugin {
-    this.root = root;
     return this;
-  }
-
-  /**
-   * Use PluginMeta to find relevant configs in include
-   */
-  initLegacyComponents(meta: PluginMeta, pluginExports: any) {
-    this.meta = meta;
-    const legacy = {
-      ConfigCtrl: undefined,
-      pages: {} as any,
-    };
-
-    if (pluginExports.ConfigCtrl) {
-      legacy.ConfigCtrl = pluginExports.ConfigCtrl;
-      this.angular = legacy;
-    }
-
-    if (meta.includes) {
-      for (const include of meta.includes) {
-        const { type, component } = include;
-        if (type === PluginIncludeType.page && component) {
-          const exp = pluginExports[component];
-          if (!exp) {
-            console.warn('Plugin references unknown component: ', component, meta);
-            continue;
-          }
-          legacy.pages[component] = exp;
-          this.angular = legacy;
-        }
-      }
-    }
   }
 }

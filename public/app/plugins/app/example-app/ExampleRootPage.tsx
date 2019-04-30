@@ -2,10 +2,12 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { AppRootPageProps } from '@grafana/ui';
+import { AppRootProps } from '@grafana/ui';
 
-export class ExampleRootPage extends PureComponent<AppRootPageProps> {
-  constructor(props: AppRootPageProps) {
+interface Props extends AppRootProps {}
+
+export class ExampleRootPage extends PureComponent<Props> {
+  constructor(props: Props) {
     super(props);
 
     console.log('Constructor', this);
@@ -16,18 +18,18 @@ export class ExampleRootPage extends PureComponent<AppRootPageProps> {
     // onNavChanged({ xxx: 'TODO, this would be the Nav Model' });
   }
 
-  componentDidUpdate(prevProps: AppRootPageProps) {
+  componentDidUpdate(prevProps: Props) {
     if (this.props.query !== prevProps.query) {
       console.log('Query Changed in App Page: ', this.props.query);
     }
   }
 
   render() {
-    const { plugin, path, query } = this.props;
+    const { meta, path, query } = this.props;
 
     return (
       <div>
-        222222: {plugin.meta.name} QUERY: <pre>{JSON.stringify(query)}</pre>
+        ROOT: {meta.name} QUERY: <pre>{JSON.stringify(query)}</pre>
         <br />
         <ul>
           <li>

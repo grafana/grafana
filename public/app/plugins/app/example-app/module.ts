@@ -13,26 +13,29 @@ export {
   AngularExamplePageCtrl, // Must match `pages.component` in plugin.json
 };
 
-export const appPlugin = new AppPlugin()
-  .setConfigPage({
+export const plugin = new AppPlugin()
+  .setRootPage(ExampleRootPage)
+  .addConfigTab({
     title: 'Config',
     icon: 'gicon gicon-cog',
     body: ExampleConfigPage,
+    id: 'config',
   })
   .addConfigTab({
     title: 'Tab 1',
     icon: 'fa fa-info',
     body: ExampleTab1,
+    id: 'tab1',
   })
   .addConfigTab({
     title: 'Tab 2',
     icon: 'fa fa-user',
     body: ExampleTab2,
-  })
-  .setRootPage(ExampleRootPage);
+    id: 'tab2',
+  });
 
 // Only for testing
-appPlugin.angular = {
+plugin.angular = {
   ConfigCtrl: ExampleConfigCtrl,
   pages: {
     AngularExamplePageCtrl: AngularExamplePageCtrl,

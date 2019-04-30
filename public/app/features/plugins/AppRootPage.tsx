@@ -13,9 +13,9 @@ import { AppPlugin, NavModel } from '@grafana/ui';
 
 interface Props {
   pluginId: string; // From the angular router
-  page?: string;
   query: UrlQueryMap;
   path: string;
+  slug?: string;
 }
 
 export interface State {
@@ -43,7 +43,7 @@ export function loadAppPluginForPage(pluginId: string): Promise<State> {
     });
 }
 
-class AppPageWrapper extends Component<Props, State> {
+class AppRootPage extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -119,23 +119,18 @@ class AppPageWrapper extends Component<Props, State> {
     // };
   }
 
-  onNavChanged = (nav: any) => {
+  onNavChanged = (nav: NavModel) => {
     console.log('TODO, update the nav from the page control', nav);
   };
 
   renderPageBody() {
-    const { path, query, page } = this.props;
+    const { path, query } = this.props;
     const { plugin } = this.state;
-    const { pages } = plugin;
-    if (pages) {
-      for (const p of pages) {
-        if (p.path === page) {
-          const { Body } = p;
-          return <Body plugin={plugin} query={query} onNavChanged={this.onNavChanged} path={path} />;
-        }
-      }
+
+    if (plugin.root) {
+      return <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />;
     }
-    return <div>Page Not Found: {page}</div>;
+    return <div>Page Not Found</div>;
   }
 
   render() {
@@ -152,9 +147,9 @@ class AppPageWrapper extends Component<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   pluginId: state.location.routeParams.pluginId,
-  page: state.location.routeParams.path,
+  slug: state.location.routeParams.slug,
   query: state.location.query,
   path: state.location.path,
 });
 
-export default hot(module)(connect(mapStateToProps)(AppPageWrapper));
+export default hot(module)(connect(mapStateToProps)(AppRootPage));

@@ -10,7 +10,7 @@ export interface DataSourcePluginOptionsEditorProps<TOptions> {
 }
 
 export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> extends PluginWithConfig<
-  DataSourcePlugin
+  DataSourcePluginMeta
 > {
   DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TOptions, TQuery>;
@@ -52,16 +52,16 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
   }
 
   setComponentsFromLegacyExports(pluginExports: any) {
-    if (exports.ConfigCtrl) {
-      this.angular = { ConfigCtrl: exports.ConfigCtrl, pages: {} };
+    if (pluginExports.ConfigCtrl) {
+      this.angular = { ConfigCtrl: pluginExports.ConfigCtrl, pages: {} };
     }
 
-    this.components.QueryCtrl = exports.QueryCtrl;
-    this.components.AnnotationsQueryCtrl = exports.AnnotationsQueryCtrl;
-    this.components.ExploreQueryField = exports.ExploreQueryField;
-    this.components.ExploreStartPage = exports.ExploreStartPage;
-    this.components.QueryEditor = exports.QueryEditor;
-    this.components.VariableQueryEditor = exports.VariableQueryEditor;
+    this.components.QueryCtrl = pluginExports.QueryCtrl;
+    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
+    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
+    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
+    this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
 
