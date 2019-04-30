@@ -50,6 +50,7 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 
 	if err == ErrInvalidCredentials || err == LDAP.ErrInvalidCredentials {
 		saveInvalidLoginAttempt(query)
+		return ErrInvalidCredentials
 	}
 
 	if err == m.ErrUserNotFound {
