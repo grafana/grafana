@@ -8,12 +8,10 @@ import { StoreState, UrlQueryMap } from 'app/types';
 import {
   NavModel,
   NavModelItem,
-  PluginWithConfig,
   PluginType,
   PluginConfigSaveOptions,
-  PanelPlugin,
-  PanelPluginMeta,
   PluginIncludeType,
+  GrafanaPlugin,
 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
@@ -33,7 +31,7 @@ function getLoadingNav(): NavModel {
   };
 }
 
-function loadPlugin(pluginId: string): Promise<PluginWithConfig> {
+function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   return getPluginSettings(pluginId).then(info => {
     if (info.type === PluginType.app) {
       return importAppPlugin(info);
@@ -42,20 +40,7 @@ function loadPlugin(pluginId: string): Promise<PluginWithConfig> {
       return importDataSourcePlugin(info);
     }
     if (info.type === PluginType.panel) {
-      // ??? Skip the initial load?
-      // Set the panel plugin meta
-      return importPanelPlugin(pluginId).then(plugin => {
-        // Add a wrapper around angular panels plugins
-        const general = plugin as any;
-        if (general.components && general.components.PanelCtrl) {
-          const p = new PanelPlugin(null);
-          p.meta = info as PanelPluginMeta;
-          return p;
-        }
-        const p = plugin as PanelPlugin;
-        p.meta = info as PanelPluginMeta;
-        return p;
-      });
+      return importPanelPlugin(pluginId);
     }
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
@@ -69,13 +54,14 @@ interface Props {
 
 interface State {
   loading: boolean;
-  plugin?: PluginWithConfig;
+  plugin?: GrafanaPlugin;
   nav: NavModel;
   defaultTab: string; // The first configured one or readme
 }
 
 const TAB_ID_README = 'readme';
 const TAB_ID_DASHBOARDS = 'dashboards';
+const TAB_ID_CONFIG_CTRL = 'config';
 
 class PluginConfigPage extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -97,14 +83,7 @@ class PluginConfigPage extends PureComponent<Props, State> {
       });
       return; // 404
     }
-
-    // When an angular version exists use that instead
-    if (plugin.angular && plugin.angular.ConfigCtrl && !plugin.configTabs) {
-      console.log('redirect to the angular version');
-      // HELP! is there a better/faster way???
-      window.location.assign(path + 'edit');
-      return;
-    }
+    const { meta } = plugin;
 
     let defaultTab: string;
     const tabs: NavModelItem[] = [];
@@ -117,43 +96,56 @@ class PluginConfigPage extends PureComponent<Props, State> {
       });
     }
 
-    if (plugin.configTabs) {
-      for (const tab of plugin.configTabs) {
+    // Only show Config/Pages for app
+    if (meta.type === PluginType.app) {
+      // Legacy App Config
+      if (plugin.angularConfigCtrl) {
         tabs.push({
-          text: tab.title,
-          subTitle: tab.subTitle,
-          icon: tab.icon,
-          url: path + '?tab=' + tab.id,
-          id: tab.id,
+          text: 'Config',
+          icon: 'gicon gicon-cog',
+          url: path + '?tab=' + TAB_ID_CONFIG_CTRL,
+          id: TAB_ID_CONFIG_CTRL,
         });
-        if (!defaultTab) {
-          defaultTab = tab.id;
+        defaultTab = TAB_ID_CONFIG_CTRL;
+      }
+
+      if (plugin.configTabs) {
+        for (const tab of plugin.configTabs) {
+          tabs.push({
+            text: tab.title,
+            icon: tab.icon,
+            url: path + '?tab=' + tab.id,
+            id: tab.id,
+          });
+          if (!defaultTab) {
+            defaultTab = tab.id;
+          }
+        }
+      }
+
+      // Check for the dashboard tabs
+      if (meta.includes) {
+        let dashboardCount = 0;
+        for (const include of meta.includes) {
+          if (include.type === PluginIncludeType.dashboard) {
+            dashboardCount++;
+          }
+        }
+        if (dashboardCount > 0) {
+          tabs.push({
+            text: `Dashboards (${dashboardCount})`,
+            icon: 'gicon gicon-dashboard',
+            url: path + '?tab=' + TAB_ID_DASHBOARDS,
+            id: TAB_ID_DASHBOARDS,
+          });
         }
       }
     }
 
-    // Check for the dashboard tabs
-    if (plugin.meta && plugin.meta.includes) {
-      let dashboardCount = 0;
-      for (const include of plugin.meta.includes) {
-        if (include.type === PluginIncludeType.dashboard) {
-          dashboardCount++;
-        }
-      }
-      if (dashboardCount > 0) {
-        tabs.push({
-          text: `Dashboards (${dashboardCount})`,
-          icon: 'gicon gicon-dashboard',
-          url: path + '?tab=' + TAB_ID_DASHBOARDS,
-          id: TAB_ID_DASHBOARDS,
-        });
-      }
-    }
     if (!defaultTab) {
       defaultTab = tabs[0].id; // the first tab
     }
 
-    const { meta } = plugin;
     const node = {
       text: meta.name,
       img: meta.info.logos.large,
@@ -243,6 +235,11 @@ class PluginConfigPage extends PureComponent<Props, State> {
       }
       if (active.id === TAB_ID_DASHBOARDS) {
         return <div>TODO Load Dashboards</div>;
+      }
+      if (active.id === TAB_ID_CONFIG_CTRL) {
+        if (plugin.angularConfigCtrl) {
+          return <div>TODO...</div>;
+        }
       }
     }
 

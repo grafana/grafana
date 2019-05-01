@@ -33,11 +33,3 @@ export const plugin = new AppPlugin()
     body: ExampleTab2,
     id: 'tab2',
   });
-
-// Only for testing
-plugin.angular = {
-  ConfigCtrl: ExampleConfigCtrl,
-  pages: {
-    AngularExamplePageCtrl: AngularExamplePageCtrl,
-  },
-};

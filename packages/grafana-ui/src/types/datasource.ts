@@ -51,9 +51,7 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
   }
 
   setComponentsFromLegacyExports(pluginExports: any) {
-    if (pluginExports.ConfigCtrl) {
-      this.angular = { ConfigCtrl: pluginExports.ConfigCtrl, pages: {} };
-    }
+    this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
