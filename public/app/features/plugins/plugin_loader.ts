@@ -181,12 +181,10 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Data
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
-    if (pluginExports.plugin) {
-      const plugin = pluginExports.plugin as AppPlugin;
-      plugin.meta = meta;
-      return plugin;
-    }
-    return new AppPlugin(meta, pluginExports);
+    const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
+    plugin.meta = meta;
+    plugin.setComponentsFromLegacyExports(pluginExports);
+    return plugin;
   });
 }
 

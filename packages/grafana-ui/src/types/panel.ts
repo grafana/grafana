@@ -2,7 +2,7 @@ import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
-import { PluginMeta } from './plugin';
+import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -69,11 +69,7 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> {
-  // Filled in by the plugin loading system
-  meta?: PanelPluginMeta;
-
-  // React Components
+export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
@@ -87,6 +83,7 @@ export class PanelPlugin<TOptions = any> {
   angularPanelCtrl?: any;
 
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
+    super();
     this.panel = panel;
   }
 
