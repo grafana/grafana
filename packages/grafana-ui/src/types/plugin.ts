@@ -23,6 +23,9 @@ export interface PluginMeta {
   module: string;
   baseUrl: string;
 
+  // Define plugin requirements
+  dependencies?: PluginDependencies;
+
   // Filled in by the backend
   jsonData?: { [str: string]: any };
   enabled?: boolean;
@@ -30,6 +33,18 @@ export interface PluginMeta {
   hasUpdate?: boolean;
   latestVersion?: string;
   pinned?: boolean;
+}
+
+interface PluginDependencyInfo {
+  id: string;
+  name: string;
+  version: string;
+  type: PluginType;
+}
+
+export interface PluginDependencies {
+  grafanaVersion: string;
+  plugins: PluginDependencyInfo[];
 }
 
 export enum PluginIncludeType {

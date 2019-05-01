@@ -12,6 +12,11 @@ import {
   PluginConfigSaveOptions,
   PluginIncludeType,
   GrafanaPlugin,
+  PluginInclude,
+  PluginDependencies,
+  PluginMeta,
+  PluginMetaInfo,
+  Tooltip,
 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
@@ -40,7 +45,16 @@ function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
       return importDataSourcePlugin(info);
     }
     if (info.type === PluginType.panel) {
-      return importPanelPlugin(pluginId);
+      return importPanelPlugin(pluginId).then(plugin => {
+        // Panel Meta does not have the *full* settings meta
+        return getPluginSettings(pluginId).then(meta => {
+          plugin.meta = {
+            ...meta, // Set any fields that do not exist
+            ...plugin.meta,
+          };
+          return plugin;
+        });
+      });
     }
     return Promise.reject('Unknown Plugin type: ' + info.type);
   });
@@ -236,6 +250,7 @@ class PluginConfigPage extends PureComponent<Props, State> {
       if (active.id === TAB_ID_DASHBOARDS) {
         return <div>TODO Load Dashboards</div>;
       }
+
       if (active.id === TAB_ID_CONFIG_CTRL) {
         if (plugin.angularConfigCtrl) {
           return <div>TODO...</div>;
@@ -247,14 +262,107 @@ class PluginConfigPage extends PureComponent<Props, State> {
     return <PluginHelp plugin={plugin.meta} type="help" />;
   }
 
-  renderSidebar() {
-    const { plugin } = this.state;
+  renderVersionInfo(meta: PluginMeta) {
+    if (!meta.info.version) {
+      return null;
+    }
 
-    return <div> TODO, sidebar... {plugin.meta.name} </div>;
+    return (
+      <section className="page-sidebar-section">
+        <h4>Version</h4>
+        <span>{meta.info.version}</span>
+        {meta.hasUpdate && (
+          <div>
+            <Tooltip content={meta.latestVersion} theme="info" placement="top">
+              <a
+                href="#"
+                onClick={() => {
+                  alert('TODO, open popup!');
+                }}
+              >
+                Update Available!
+              </a>
+            </Tooltip>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  renderSidebarIncludes(includes: PluginInclude[]) {
+    if (!includes || !includes.length) {
+      return null;
+    }
+
+    return (
+      <section className="page-sidebar-section">
+        <h4>Includes</h4>
+        <ul className="ui-list plugin-info-list">
+          {includes.map(include => {
+            return (
+              <li className="plugin-info-list-item" key={include.name}>
+                <i className={getPluginIcon(include.type)} />
+                {include.name}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    );
+  }
+
+  renderSidebarDependencies(dependencies: PluginDependencies) {
+    if (!dependencies) {
+      return null;
+    }
+
+    return (
+      <section className="page-sidebar-section">
+        <h4>Dependencies</h4>
+        <ul className="ui-list plugin-info-list">
+          <li className="plugin-info-list-item">
+            <img src="public/img/grafana_icon.svg" />
+            Grafana {dependencies.grafanaVersion}
+          </li>
+          {dependencies.plugins &&
+            dependencies.plugins.map(plug => {
+              return (
+                <li className="plugin-info-list-item" key={plug.name}>
+                  <i className={getPluginIcon(plug.type)} />
+                  {plug.name} {plug.version}
+                </li>
+              );
+            })}
+        </ul>
+      </section>
+    );
+  }
+
+  renderSidebarLinks(info: PluginMetaInfo) {
+    if (!info.links || !info.links.length) {
+      return null;
+    }
+
+    return (
+      <section className="page-sidebar-section">
+        <h4>Links</h4>
+        <ul className="ui-list">
+          {info.links.map(link => {
+            return (
+              <li key={link.url}>
+                <a href={link.url} className="external-link" target="_blank">
+                  {link.name}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    );
   }
 
   render() {
-    const { loading, nav } = this.state;
+    const { loading, nav, plugin } = this.state;
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
@@ -262,13 +370,37 @@ class PluginConfigPage extends PureComponent<Props, State> {
             <div className="sidebar-container">
               <div className="sidebar-content">{this.renderBody()}</div>
               <aside className="page-sidebar">
-                <section className="page-sidebar-section">{this.renderSidebar()}</section>
+                {plugin && (
+                  <section className="page-sidebar-section">
+                    {this.renderVersionInfo(plugin.meta)}
+                    {this.renderSidebarIncludes(plugin.meta.includes)}
+                    {this.renderSidebarDependencies(plugin.meta.dependencies)}
+                    {this.renderSidebarLinks(plugin.meta.info)}
+                  </section>
+                )}
               </aside>
             </div>
           )}
         </Page.Contents>
       </Page>
     );
+  }
+}
+
+function getPluginIcon(type: string) {
+  switch (type) {
+    case 'datasource':
+      return 'gicon gicon-datasources';
+    case 'panel':
+      return 'icon-gf icon-gf-panel';
+    case 'app':
+      return 'icon-gf icon-gf-apps';
+    case 'page':
+      return 'icon-gf icon-gf-endpoint-tiny';
+    case 'dashboard':
+      return 'gicon gicon-dashboard';
+    default:
+      return 'icon-gf icon-gf-apps';
   }
 }
 
