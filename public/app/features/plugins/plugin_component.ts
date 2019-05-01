@@ -69,7 +69,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    return importPanelPlugin(panelInfo.module).then(panelPlugin => {
+    return importPanelPlugin(panelInfo.id).then(panelPlugin => {
       const PanelCtrl = panelPlugin.angularPanelCtrl;
       componentInfo.Component = PanelCtrl;
 
