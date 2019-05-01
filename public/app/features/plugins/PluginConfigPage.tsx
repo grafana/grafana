@@ -17,6 +17,7 @@ import {
   PluginMeta,
   PluginMetaInfo,
   Tooltip,
+  AppPlugin,
 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
@@ -24,6 +25,7 @@ import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './plugin_loader';
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
+import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 
 function getLoadingNav(): NavModel {
   const node = {
@@ -252,8 +254,9 @@ class PluginConfigPage extends PureComponent<Props, State> {
       }
 
       if (active.id === TAB_ID_CONFIG_CTRL) {
-        if (plugin.angularConfigCtrl) {
-          return <div>TODO...</div>;
+        // Load the old angular ctrl
+        if (plugin.angularConfigCtrl && plugin.meta.type === PluginType.app) {
+          return <AppConfigCtrlWrapper app={plugin as AppPlugin} />;
         }
       }
     }

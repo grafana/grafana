@@ -2,7 +2,6 @@
 import { ExampleConfigCtrl } from './legacy/config';
 import { AngularExamplePageCtrl } from './legacy/angular_example_page';
 import { AppPlugin } from '@grafana/ui';
-import { ExampleConfigPage } from './config/ExampleConfigPage';
 import { ExampleTab1 } from './config/ExampleTab1';
 import { ExampleTab2 } from './config/ExampleTab2';
 import { ExampleRootPage } from './ExampleRootPage';
@@ -15,12 +14,6 @@ export {
 
 export const plugin = new AppPlugin()
   .setRootPage(ExampleRootPage)
-  .addConfigTab({
-    title: 'Config',
-    icon: 'gicon gicon-cog',
-    body: ExampleConfigPage,
-    id: 'config',
-  })
   .addConfigTab({
     title: 'Tab 1',
     icon: 'fa fa-info',

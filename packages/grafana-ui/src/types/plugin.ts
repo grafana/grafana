@@ -28,6 +28,7 @@ export interface PluginMeta {
 
   // Filled in by the backend
   jsonData?: { [str: string]: any };
+  secureJsonData?: { [str: string]: any };
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
