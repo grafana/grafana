@@ -64,8 +64,8 @@ export class Gauge extends PureComponent<Props> {
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
     const showLabel = value.title !== null && value.title !== undefined;
 
-    const labelFontSize = Math.min((height * 0.1) / 1.5, 40); // 20% of height * line-height, max 40px
-    const labelMargin = labelFontSize / 2;
+    const labelFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
+    const labelMargin = labelFontSize;
     const labelHeight = labelFontSize * 1.5 + labelMargin;
     const gaugeHeight = showLabel ? height - labelHeight : height;
 
@@ -77,10 +77,6 @@ export class Gauge extends PureComponent<Props> {
     const thresholdMarkersWidth = gaugeWidth / 5;
     const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
-    console.log('height', height);
-    console.log('width', width);
-    console.log('labelFontSize', labelFontSize);
-    console.log('labelFontSize', labelHeight);
 
     const options: any = {
       series: {
