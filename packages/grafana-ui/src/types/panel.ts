@@ -77,8 +77,7 @@ export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> 
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
   /**
-   * Legacy angular ctrl.  If this exists it will be used
-   * and evrything else ignored.
+   * Legacy angular ctrl.  If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
 

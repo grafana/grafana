@@ -18,12 +18,13 @@ import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelPluginMeta, PanelPlugin } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
+  angularPanel?: AngularComponent;
   onTypeChanged: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
@@ -40,7 +41,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -57,9 +58,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
   };
 
   renderPanelOptions() {
-    const { plugin } = this.props;
+    const { plugin, angularPanel } = this.props;
 
-    if (plugin.angularPanelCtrl) {
+    if (angularPanel) {
       return <div ref={element => (this.element = element)} />;
     }
 
@@ -87,14 +88,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   shouldLoadAngularOptions() {
-    const { plugin } = this.props;
-    return plugin.angularPanelCtrl && this.element && !this.angularOptions;
+    return this.props.angularPanel && this.element && !this.angularOptions;
   }
 
   loadAngularOptions() {
-    const { plugin } = this.props;
+    const { angularPanel } = this.props;
 
-    const scope = plugin.angularPanelCtrl.getScope();
+    const scope = angularPanel.getScope();
 
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
@@ -172,7 +172,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
   renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
-    const meta = plugin.meta;
+    const { meta } = plugin;
 
     if (isVizPickerOpen) {
       return (

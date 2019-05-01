@@ -55,7 +55,7 @@ const getPanelEditorTab = (tabId: PanelEditorTabIds): PanelEditorTab => {
 };
 
 export class PanelEditor extends PureComponent<PanelEditorProps> {
-  constructor(props) {
+  constructor(props: PanelEditorProps) {
     super(props);
   }
 
