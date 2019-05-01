@@ -86,7 +86,7 @@ export interface PluginConfigSaveOptions<TData extends PluginMetaJsonData = Plug
   onAfterSave?: () => void;
 }
 
-export interface PluginConfigTabProps<TMeta, TData> {
+export interface PluginConfigTabProps<TMeta, TData = {}> {
   meta: TMeta;
   query: { [s: string]: any }; // The URL query parameters
 
@@ -105,21 +105,17 @@ export interface PluginConfigTab<TMeta, TData> {
   body: ComponentClass<PluginConfigTabProps<TMeta, TData>>;
 }
 
-export class PluginWithConfig<
-  TMeta extends PluginMeta = PluginMeta,
-  TData extends PluginMetaJsonData = PluginMetaJsonData
-> {
-  meta?: TMeta; // Set by the system
+export class GrafanaPlugin<T extends PluginMeta, TData = {}> {
+  // Meta is filled in by the plugin loading system
+  meta?: T;
 
-  configTabs?: Array<PluginConfigTab<TMeta, TData>>;
+  // Config control (app/datasource)
+  angularConfigCtrl?: any;
 
-  // Legacy Angular based configs
-  angular?: {
-    ConfigCtrl?: any;
-    pages: { [component: string]: any };
-  };
+  // Show configuration tabs on the plugin page
+  configTabs?: Array<PluginConfigTab<T, TData>>;
 
-  addConfigTab(tab: PluginConfigTab<TMeta, TData>) {
+  addConfigTab(tab: PluginConfigTab<T, TData>) {
     if (!this.configTabs) {
       this.configTabs = [];
     }

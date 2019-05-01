@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react';
 import { NavModel } from './navModel';
-import { PluginMeta, PluginWithConfig, PluginIncludeType, PluginMetaJsonData } from './plugin';
+import { PluginMeta, PluginIncludeType, GrafanaPlugin } from './plugin';
 
 export interface AppRootProps {
   meta: AppMeta;
@@ -18,10 +18,13 @@ export interface AppMeta extends PluginMeta {
   // TODO anything specific to apps?
 }
 
-export class AppPlugin<TData extends PluginMetaJsonData = PluginMetaJsonData> extends PluginWithConfig<AppMeta, TData> {
+export class AppPlugin extends GrafanaPlugin<AppMeta> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentClass<AppRootProps>;
   rootNav?: NavModel; // Initial navigation model
+
+  // Old style pages
+  angularPages?: { [component: string]: any };
 
   /**
    * Set the component displayed under:
@@ -33,33 +36,25 @@ export class AppPlugin<TData extends PluginMetaJsonData = PluginMetaJsonData> ex
     return this;
   }
 
-  /**
-   * Use PluginMeta to find relevant configs in include
-   */
-  initLegacyComponents(meta: AppMeta, pluginExports: any) {
-    this.meta = meta;
-    const legacy = {
-      ConfigCtrl: undefined,
-      pages: {} as any,
-    };
-
+  setComponentsFromLegacyExports(pluginExports: any) {
     if (pluginExports.ConfigCtrl) {
-      legacy.ConfigCtrl = pluginExports.ConfigCtrl;
-      this.angular = legacy;
+      this.angularConfigCtrl = pluginExports.ConfigCtrl;
     }
 
-    if (meta.includes) {
-      // Find legacy config pages
+    const { meta } = this;
+    if (meta && meta.includes) {
       for (const include of meta.includes) {
         const { type, component } = include;
         if (type === PluginIncludeType.page && component) {
           const exp = pluginExports[component];
           if (!exp) {
-            console.warn('Plugin references unknown component: ', component, meta);
+            console.warn('App Page uses unknown component: ', component, meta);
             continue;
           }
-          legacy.pages[component] = exp;
-          this.angular = legacy;
+          if (!this.angularPages) {
+            this.angularPages = {};
+          }
+          this.angularPages[component] = exp;
         }
       }
     }

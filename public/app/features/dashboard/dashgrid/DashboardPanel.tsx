@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 // Utils & Services
-import { getAngularLoader } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 // Components
@@ -27,7 +27,7 @@ export interface Props {
 
 export interface State {
   plugin: PanelPlugin;
-  angularPanel?: any; // Legacy angular panel ctrl
+  angularPanel: AngularComponent;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -39,6 +39,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     this.state = {
       plugin: null,
+      angularPanel: null,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -182,7 +183,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.addConfigTab ? this.renderAngularPanel() : this.renderReactPanel()}
+              {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
             </div>
           )}
         />

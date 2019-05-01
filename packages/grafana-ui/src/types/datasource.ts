@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react';
 import { TimeRange } from './time';
-import { PluginMeta, PluginWithConfig } from './plugin';
+import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
@@ -8,8 +8,7 @@ export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
 }
-
-export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> extends PluginWithConfig<
+export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> extends GrafanaPlugin<
   DataSourcePluginMeta
 > {
   DataSourceClass: DataSourceConstructor<TQuery>;
