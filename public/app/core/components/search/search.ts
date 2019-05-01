@@ -277,6 +277,7 @@ export class SearchCtrl {
   };
 
   clearSearchFilter() {
+    this.query.query = '';
     this.query.tags = [];
     this.search();
   }
