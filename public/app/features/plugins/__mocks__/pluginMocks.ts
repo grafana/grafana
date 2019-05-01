@@ -1,4 +1,5 @@
-import { PanelPluginMeta, PluginMeta, PluginType, PanelDataFormat } from '@grafana/ui';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelDataFormat, PanelPlugin, PanelProps } from '@grafana/ui';
+import { ComponentType } from 'enzyme';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins = [];
@@ -33,8 +34,14 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
   return plugins;
 };
 
-export const getPanelPlugin = (options: Partial<PanelPluginMeta>): PanelPluginMeta => {
-  return {
+export const getPanelPlugin = (
+  options: Partial<PanelPluginMeta>,
+  reactPanel?: ComponentType<PanelProps>,
+  angularPanel?: any
+): PanelPlugin => {
+  const plugin = new PanelPlugin(reactPanel);
+  plugin.angularPanelCtrl = angularPanel;
+  plugin.meta = {
     id: options.id,
     type: PluginType.panel,
     name: options.id,
@@ -57,9 +64,8 @@ export const getPanelPlugin = (options: Partial<PanelPluginMeta>): PanelPluginMe
     hideFromList: options.hideFromList === true,
     module: '',
     baseUrl: '',
-    panelPlugin: options.panelPlugin,
-    angularPlugin: options.angularPlugin,
   };
+  return plugin;
 };
 
 export const getMockPlugin = () => {

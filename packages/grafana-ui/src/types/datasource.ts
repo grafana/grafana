@@ -12,6 +12,9 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
   DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TOptions, TQuery>;
 
+  // Filled in by the plugin loading system
+  meta?: DataSourcePluginMeta;
+
   constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
     this.DataSourceClass = DataSourceClass;
     this.components = {};

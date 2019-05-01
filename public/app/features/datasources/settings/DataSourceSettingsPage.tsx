@@ -63,7 +63,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     let importedPlugin: DataSourcePlugin;
 
     try {
-      importedPlugin = await importDataSourcePlugin(dataSourceMeta.module);
+      importedPlugin = await importDataSourcePlugin(dataSourceMeta);
     } catch (e) {
       console.log('Failed to import plugin module', e);
     }

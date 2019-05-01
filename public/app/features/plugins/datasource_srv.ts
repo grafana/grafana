@@ -53,7 +53,7 @@ export class DatasourceSrv {
 
     const deferred = this.$q.defer();
 
-    importDataSourcePlugin(dsConfig.meta.module)
+    importDataSourcePlugin(dsConfig.meta)
       .then(dsPlugin => {
         // check if its in cache now
         if (this.datasources[name]) {
