@@ -63,6 +63,9 @@ export interface PluginInclude {
   path?: string;
   icon?: string;
 
+  role?: string; // "Viewer", Admin, editor???
+  addToNav?: boolean; // Show in the sidebar... only if type=page?
+
   // Angular app pages
   component?: string;
 }

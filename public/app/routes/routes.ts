@@ -22,7 +22,7 @@ import DataSourceSettingsPage from '../features/datasources/settings/DataSourceS
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
-import PluginConfigPage from '../features/plugins/PluginConfigPage';
+import PluginPage from '../features/plugins/PluginPage';
 import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
 
@@ -320,7 +320,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/plugins/:pluginId/', {
       template: '<react-container />',
       resolve: {
-        component: () => PluginConfigPage, // tabs from query parameters
+        component: () => PluginPage, // tabs from query parameters
       },
     })
     .when('/plugins/:pluginId/edit', {

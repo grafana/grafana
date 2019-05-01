@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import find from 'lodash/find';
 
 // Types
 import { StoreState, UrlQueryMap } from 'app/types';
@@ -10,7 +11,6 @@ import {
   NavModelItem,
   PluginType,
   PluginConfigSaveOptions,
-  PluginIncludeType,
   GrafanaPlugin,
   PluginInclude,
   PluginDependencies,
@@ -26,6 +26,7 @@ import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './pl
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
+import { DashboardImporter } from './import_list/DashboardImporter';
 
 function getLoadingNav(): NavModel {
   const node = {
@@ -79,7 +80,7 @@ const TAB_ID_README = 'readme';
 const TAB_ID_DASHBOARDS = 'dashboards';
 const TAB_ID_CONFIG_CTRL = 'config';
 
-class PluginConfigPage extends PureComponent<Props, State> {
+class PluginPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -140,21 +141,13 @@ class PluginConfigPage extends PureComponent<Props, State> {
       }
 
       // Check for the dashboard tabs
-      if (meta.includes) {
-        let dashboardCount = 0;
-        for (const include of meta.includes) {
-          if (include.type === PluginIncludeType.dashboard) {
-            dashboardCount++;
-          }
-        }
-        if (dashboardCount > 0) {
-          tabs.push({
-            text: `Dashboards (${dashboardCount})`,
-            icon: 'gicon gicon-dashboard',
-            url: path + '?tab=' + TAB_ID_DASHBOARDS,
-            id: TAB_ID_DASHBOARDS,
-          });
-        }
+      if (find(meta.includes, { type: 'dashboard' })) {
+        tabs.push({
+          text: 'Dashboards',
+          icon: 'gicon gicon-dashboard',
+          url: path + '?tab=' + TAB_ID_DASHBOARDS,
+          id: TAB_ID_DASHBOARDS,
+        });
       }
     }
 
@@ -249,19 +242,19 @@ class PluginConfigPage extends PureComponent<Props, State> {
           }
         }
       }
-      if (active.id === TAB_ID_DASHBOARDS) {
-        return <div>TODO Load Dashboards</div>;
-      }
 
-      if (active.id === TAB_ID_CONFIG_CTRL) {
-        // Load the old angular ctrl
-        if (plugin.angularConfigCtrl && plugin.meta.type === PluginType.app) {
+      // Apps have some special behavior
+      if (plugin.meta.type === PluginType.app) {
+        if (active.id === TAB_ID_DASHBOARDS) {
+          return <DashboardImporter plugin={plugin.meta} />;
+        }
+
+        if (active.id === TAB_ID_CONFIG_CTRL && plugin.angularConfigCtrl) {
           return <AppConfigCtrlWrapper app={plugin as AppPlugin} />;
         }
       }
     }
 
-    // Show the readme help text
     return <PluginHelp plugin={plugin.meta} type="help" />;
   }
 
@@ -413,4 +406,4 @@ const mapStateToProps = (state: StoreState) => ({
   path: state.location.path,
 });
 
-export default hot(module)(connect(mapStateToProps)(PluginConfigPage));
+export default hot(module)(connect(mapStateToProps)(PluginPage));
