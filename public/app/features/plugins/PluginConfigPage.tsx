@@ -39,11 +39,12 @@ function loadPlugin(pluginId: string): Promise<PluginWithConfig> {
       return importAppPlugin(info);
     }
     if (info.type === PluginType.datasource) {
-      return importDataSourcePlugin(info.module);
+      return importDataSourcePlugin(info);
     }
     if (info.type === PluginType.panel) {
+      // ??? Skip the initial load?
       // Set the panel plugin meta
-      return importPanelPlugin(info.module).then(plugin => {
+      return importPanelPlugin(pluginId).then(plugin => {
         // Add a wrapper around angular panels plugins
         const general = plugin as any;
         if (general.components && general.components.PanelCtrl) {
@@ -142,7 +143,7 @@ class PluginConfigPage extends PureComponent<Props, State> {
       if (dashboardCount > 0) {
         tabs.push({
           text: `Dashboards (${dashboardCount})`,
-          icon: 'fa fa-fw fa-file-text-o',
+          icon: 'gicon gicon-dashboard',
           url: path + '?tab=' + TAB_ID_DASHBOARDS,
           id: TAB_ID_DASHBOARDS,
         });

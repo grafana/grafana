@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { AngularPanelPlugin, DataSourceApi } from '@grafana/ui/src/types';
+import { DataSourceApi } from '@grafana/ui/src/types';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 
 /** @ngInject */
@@ -70,8 +70,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
     const panelInfo = config.panels[scope.panel.type];
     return importPanelPlugin(panelInfo.module).then(panelPlugin => {
-      const angularPanelPlugin = panelPlugin as AngularPanelPlugin;
-      const PanelCtrl = angularPanelPlugin.components.PanelCtrl;
+      const PanelCtrl = panelPlugin.angularPanelCtrl;
       componentInfo.Component = PanelCtrl;
 
       if (!PanelCtrl || PanelCtrl.registered) {

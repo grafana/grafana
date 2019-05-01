@@ -9,9 +9,6 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   sort: number;
-  angularPlugin: AngularPanelPlugin | null;
-  panelPlugin: PanelPlugin | null;
-  hasBeenImported?: boolean;
 
   // if length>0 the query tab will show up
   // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
@@ -79,6 +76,12 @@ export class PanelPlugin<TOptions = any> extends PluginWithConfig<PanelPluginMet
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
+  /**
+   * Legacy angular ctrl.  If this exists it will be used
+   * and evrything else ignored.
+   */
+  angularPanelCtrl?: any;
+
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
     super();
     this.panel = panel;
@@ -112,16 +115,6 @@ export class PanelPlugin<TOptions = any> extends PluginWithConfig<PanelPluginMet
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
     return this;
-  }
-}
-
-export class AngularPanelPlugin {
-  components: {
-    PanelCtrl: any;
-  };
-
-  constructor(PanelCtrl: any) {
-    this.components = { PanelCtrl: PanelCtrl };
   }
 }
 
