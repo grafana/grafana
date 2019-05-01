@@ -27,8 +27,12 @@
     {
       "type": "dashboard",
       "name": "Streaming Example",
-      "path": "dashboards/streaming.json",
-      "addToNav": false
+      "path": "dashboards/streaming.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Lots of Stats",
+      "path": "dashboards/stats.json"
     },
     {
       "type": "panel",

@@ -36,15 +36,9 @@ export class DashboardImporter extends PureComponent<Props, State> {
       });
   }
 
-  // importAll(payload:any) {
-  //   return this.importNext(0)
-  //     .then(() => {
-  //       payload.resolve('All dashboards imported');
-  //     })
-  //     .catch(err => {
-  //       payload.reject(err);
-  //     });
-  // }
+  importAll = () => {
+    this.importNext(0);
+  };
 
   private importNext(index: number) {
     const { dashboards } = this.state;
@@ -95,7 +89,6 @@ export class DashboardImporter extends PureComponent<Props, State> {
     getBackendSrv()
       .delete('/api/dashboards/' + dash.importedUri)
       .then(() => {
-        appEvents.emit('alert-success', ['Dashboard Deleted', dash.title]);
         dash.imported = false;
         this.setState({ dashboards: [...this.state.dashboards] });
       });
@@ -155,6 +148,15 @@ export class DashboardImporter extends PureComponent<Props, State> {
                 </tr>
               );
             })}
+            {dashboards.length > 0 && (
+              <tr>
+                <td className={css({ textAlign: 'right' })} colSpan={3}>
+                  <button className="btn btn-secondary btn-small" onClick={this.importAll}>
+                    Import All
+                  </button>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
