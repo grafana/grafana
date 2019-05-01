@@ -195,18 +195,17 @@ class PluginPage extends PureComponent<Props, State> {
     const prevTab = prevProps.query.tab as string;
     const tab = this.props.query.tab as string;
     if (prevTab !== tab) {
-      // const {nav, defaultTab} = this.state;
-      // const node = {
-      //   ...nav.node,
-      //   children:this.setActiveTab(tab,nav.node.children, defaultTab),
-      // }
-      // this.setState({
-      //   nav: {
-      //     node:node,
-      //     main:node,
-      //   }
-      // });
-      console.log('TAB Changed... but for some reason the whole page reloads too!');
+      const { nav, defaultTab } = this.state;
+      const node = {
+        ...nav.node,
+        children: this.setActiveTab(tab, nav.node.children, defaultTab),
+      };
+      this.setState({
+        nav: {
+          node: node,
+          main: node,
+        },
+      });
     }
   }
 

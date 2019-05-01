@@ -319,8 +319,9 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     .when('/plugins/:pluginId/', {
       template: '<react-container />',
+      reloadOnSearch: false, // tabs from query parameters
       resolve: {
-        component: () => PluginPage, // tabs from query parameters
+        component: () => PluginPage,
       },
     })
     .when('/plugins/:pluginId/edit', {
