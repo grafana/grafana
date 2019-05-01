@@ -144,7 +144,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		}
 	}()
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) // #nosec
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func extractFiles(body []byte, pluginName string, filePath string) error {
 		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			err := os.Mkdir(newFile, 0777)
+			err := os.Mkdir(newFile, 0755)
 			if permissionsError(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}

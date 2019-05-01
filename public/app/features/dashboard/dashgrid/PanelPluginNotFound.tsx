@@ -7,14 +7,14 @@ import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 
 // Types
 import { AppNotificationSeverity } from 'app/types';
-import { PanelPluginMeta, PanelProps, PanelPlugin, PluginType } from '@grafana/ui';
+import { PanelProps, PanelPlugin, PluginType } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
 }
 
 class PanelPluginNotFound extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -34,14 +34,15 @@ class PanelPluginNotFound extends PureComponent<Props> {
   }
 }
 
-export function getPanelPluginNotFound(id: string): PanelPluginMeta {
+export function getPanelPluginNotFound(id: string): PanelPlugin {
   const NotFound = class NotFound extends PureComponent<PanelProps> {
     render() {
       return <PanelPluginNotFound pluginId={id} />;
     }
   };
 
-  return {
+  const plugin = new PanelPlugin(NotFound);
+  plugin.meta = {
     id: id,
     name: id,
     sort: 100,
@@ -63,7 +64,6 @@ export function getPanelPluginNotFound(id: string): PanelPluginMeta {
       updated: '',
       version: '',
     },
-    panelPlugin: new PanelPlugin(NotFound),
-    angularPlugin: null,
   };
+  return plugin;
 }
