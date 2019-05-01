@@ -3,7 +3,7 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
-import { DataSourceApi } from '@grafana/ui/src/types';
+import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
 // import * as moment from 'moment';
 
 export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
@@ -23,7 +23,7 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
     this.standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
   }
 
-  query(options) {
+  query(options: DataQueryRequest<CloudWatchQuery>) {
     options = angular.copy(options);
     options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, this.templateSrv);
 

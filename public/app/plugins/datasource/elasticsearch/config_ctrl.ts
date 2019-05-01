@@ -8,7 +8,9 @@ export class ElasticConfigCtrl {
   constructor($scope) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.esVersion = this.current.jsonData.esVersion || 5;
-    this.current.jsonData.maxConcurrentShardRequests = this.current.jsonData.maxConcurrentShardRequests || 256;
+    const defaultMaxConcurrentShardRequests = this.current.jsonData.esVersion >= 70 ? 5 : 256;
+    this.current.jsonData.maxConcurrentShardRequests =
+      this.current.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
   }
 
   indexPatternTypes = [
@@ -25,6 +27,7 @@ export class ElasticConfigCtrl {
     { name: '5.x', value: 5 },
     { name: '5.6+', value: 56 },
     { name: '6.0+', value: 60 },
+    { name: '7.0+', value: 70 },
   ];
 
   indexPatternTypeChanged() {

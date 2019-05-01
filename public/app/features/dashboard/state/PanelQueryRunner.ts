@@ -1,37 +1,28 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
-import {
-  guessFieldTypes,
-  toSeriesData,
-  PanelData,
-  LoadingState,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataRequestInfo,
-  SeriesData,
-  DataQueryError,
-  toLegacyResponseData,
-  isSeriesData,
-  DataSourceApi,
-} from '@grafana/ui';
-
+// Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import throttle from 'lodash/throttle';
+import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
+// Services & Utils
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
+import templateSrv from 'app/features/templating/template_srv';
+import { PanelQueryState } from './PanelQueryState';
+
+// Types
+import { PanelData, DataQuery, TimeRange, ScopedVars, DataQueryRequest, DataSourceApi } from '@grafana/ui';
 
 export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
-  ds?: DataSourceApi<TQuery>; // if they already have the datasource, don't look it up
-  datasource: string | null;
+  datasource: string | DataSourceApi<TQuery>;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
   timezone?: string;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   widthPixels: number;
-  minInterval?: string;
-  maxDataPoints?: number;
+  maxDataPoints: number | undefined | null;
+  minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
@@ -43,16 +34,19 @@ export enum PanelQueryRunnerFormat {
   both = 'both',
 }
 
+let counter = 100;
+function getNextRequestId() {
+  return 'Q' + counter++;
+}
+
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
-  private sendSeries = false;
-  private sendLegacy = false;
+  private state = new PanelQueryState();
 
-  private data = {
-    state: LoadingState.NotStarted,
-    series: [],
-  } as PanelData;
+  constructor() {
+    this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+  }
 
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
@@ -64,18 +58,17 @@ export class PanelQueryRunner {
     }
 
     if (format === PanelQueryRunnerFormat.legacy) {
-      this.sendLegacy = true;
+      this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
-      this.sendSeries = true;
-      this.sendLegacy = true;
+      this.state.sendSeries = true;
+      this.state.sendLegacy = true;
     } else {
-      this.sendSeries = true;
+      this.state.sendSeries = true;
     }
 
     // Send the last result
-    if (this.data.state !== LoadingState.NotStarted) {
-      // TODO: make sure it has legacy if necessary
-      observer.next(this.data);
+    if (this.state.isStarted()) {
+      observer.next(this.state.getDataAfterCheckingFormats());
     }
 
     return this.subject.subscribe(observer);
@@ -85,6 +78,8 @@ export class PanelQueryRunner {
     if (!this.subject) {
       this.subject = new Subject();
     }
+
+    const { state } = this;
 
     const {
       queries,
@@ -98,136 +93,126 @@ export class PanelQueryRunner {
       widthPixels,
       maxDataPoints,
       scopedVars,
+      minInterval,
       delayStateNotification,
     } = options;
 
-    const request: DataRequestInfo = {
+    // filter out hidden queries & deep clone them
+    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
+
+    const request: DataQueryRequest = {
+      requestId: getNextRequestId(),
       timezone,
       panelId,
       dashboardId,
       range: timeRange,
-      rangeRaw: timeRange.raw,
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: cloneDeep(queries),
+      targets: clonedAndFilteredQueries,
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
     };
 
-    if (!queries) {
-      this.data = {
-        state: LoadingState.Done,
-        series: [], // Clear the data
-        legacy: [],
-        request,
-      };
-      this.subject.next(this.data);
-      return this.data;
-    }
+    // Add deprecated property
+    (request as any).rangeRaw = timeRange.raw;
 
     let loadingStateTimeoutId = 0;
 
     try {
-      const ds = options.ds ? options.ds : await getDatasourceSrv().get(datasource, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars);
 
-      const minInterval = options.minInterval || ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, minInterval);
+      // Attach the datasource name to each query
+      request.targets = request.targets.map(query => {
+        if (!query.datasource) {
+          query.datasource = ds.name;
+        }
+        return query;
+      });
+
+      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
       request.scopedVars = Object.assign({}, request.scopedVars, {
         __interval: { text: norm.interval, value: norm.interval },
-        __interval_ms: { text: norm.intervalMs, value: norm.intervalMs },
+        __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
       });
+
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Send a loading status event on slower queries
-      loadingStateTimeoutId = window.setTimeout(() => {
-        this.publishUpdate({ state: LoadingState.Loading });
-      }, delayStateNotification || 500);
-
-      const resp = await ds.query(request);
-
-      request.endTime = Date.now();
-
-      // Make sure the response is in a supported format
-      const series = this.sendSeries ? getProcessedSeriesData(resp.data) : [];
-      const legacy = this.sendLegacy
-        ? resp.data.map(v => {
-            if (isSeriesData(v)) {
-              return toLegacyResponseData(v);
-            }
-            return v;
-          })
-        : undefined;
-
-      // Make sure the delayed loading state timeout is cleared
-      clearTimeout(loadingStateTimeoutId);
-
-      // Publish the result
-      return this.publishUpdate({
-        state: LoadingState.Done,
-        series,
-        legacy,
-        request,
-      });
-    } catch (err) {
-      const error = err as DataQueryError;
-      if (!error.message) {
-        let message = 'Query error';
-        if (error.message) {
-          message = error.message;
-        } else if (error.data && error.data.message) {
-          message = error.data.message;
-        } else if (error.data && error.data.error) {
-          message = error.data.error;
-        } else if (error.status) {
-          message = `Query error: ${error.status} ${error.statusText}`;
+      // Check if we can reuse the already issued query
+      const active = state.getActiveRunner();
+      if (active) {
+        if (state.isSameQuery(ds, request)) {
+          // Maybe cancel if it has run too long?
+          console.log('Trying to execute query while last one has yet to complete, returning same promise');
+          return active;
+        } else {
+          state.cancel('Query Changed while running');
         }
-        error.message = message;
       }
 
-      // Make sure the delayed loading state timeout is cleared
+      // Send a loading status event on slower queries
+      loadingStateTimeoutId = window.setTimeout(() => {
+        if (state.getActiveRunner()) {
+          this.subject.next(this.state.validateStreamsAndGetPanelData());
+        }
+      }, delayStateNotification || 500);
+
+      const data = await state.execute(ds, request);
+
+      // Clear the delayed loading state timeout
       clearTimeout(loadingStateTimeoutId);
 
-      return this.publishUpdate({
-        state: LoadingState.Error,
-        error: error,
-      });
+      // Broadcast results
+      this.subject.next(data);
+      return data;
+    } catch (err) {
+      clearTimeout(loadingStateTimeoutId);
+
+      const data = state.setError(err);
+      this.subject.next(data);
+      return data;
     }
   }
 
-  publishUpdate(update: Partial<PanelData>): PanelData {
-    this.data = {
-      ...this.data,
-      ...update,
-    };
+  /**
+   * Called after every streaming event.  This should be throttled so we
+   * avoid accidentally overwhelming the browser
+   */
+  onStreamingDataUpdated = throttle(
+    () => {
+      this.subject.next(this.state.validateStreamsAndGetPanelData());
+    },
+    50,
+    { trailing: true, leading: true }
+  );
 
-    this.subject.next(this.data);
+  /**
+   * Called when the panel is closed
+   */
+  destroy() {
+    // Tell anyone listening that we are done
+    if (this.subject) {
+      this.subject.complete();
+    }
 
-    return this.data;
+    // Will cancel and disconnect any open requets
+    this.state.cancel('destroy');
   }
 }
 
-/**
- * All panels will be passed tables that have our best guess at colum type set
- *
- * This is also used by PanelChrome for snapshot support
- */
-export function getProcessedSeriesData(results?: any[]): SeriesData[] {
-  if (!results) {
-    return [];
+async function getDataSource(
+  datasource: string | DataSourceApi | null,
+  scopedVars: ScopedVars
+): Promise<DataSourceApi> {
+  if (datasource && (datasource as any).query) {
+    return datasource as DataSourceApi;
   }
-
-  const series: SeriesData[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toSeriesData(r)));
-    }
-  }
-  return series;
+  return await getDatasourceSrv().get(datasource as string, scopedVars);
 }

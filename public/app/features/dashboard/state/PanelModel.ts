@@ -6,8 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, Threshold, ScopedVars, DataQueryResponseData } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { DataQuery, Threshold, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -118,7 +117,7 @@ export class PanelModel {
   cachedPluginOptions?: any;
   legend?: { show: boolean };
   plugin?: PanelPlugin;
-  queryRunner?: PanelQueryRunner;
+  private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
     this.events = new Emitter();
@@ -249,29 +248,25 @@ export class PanelModel {
     });
   }
 
-  private getPluginVersion(plugin: PanelPlugin): string {
-    return this.plugin && this.plugin.info.version ? this.plugin.info.version : config.buildInfo.version;
-  }
-
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
-    if (plugin.reactPlugin && plugin.reactPlugin.onPanelMigration) {
-      const version = this.getPluginVersion(plugin);
+    if (plugin.panel && plugin.onPanelMigration) {
+      const version = getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
-        this.options = plugin.reactPlugin.onPanelMigration(this);
+        this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
       }
     }
   }
 
   changePlugin(newPlugin: PanelPlugin) {
-    const pluginId = newPlugin.id;
+    const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (this.plugin.angularPlugin) {
+    if (this.plugin.angularPanelCtrl) {
       this.destroy();
     }
 
@@ -292,18 +287,14 @@ export class PanelModel {
     this.plugin = newPlugin;
 
     // Let panel plugins inspect options from previous panel and keep any that it can use
-    const reactPanel = newPlugin.reactPlugin;
+    if (newPlugin.onPanelTypeChanged) {
+      this.options = this.options || {};
+      const old = oldOptions && oldOptions.options ? oldOptions.options : {};
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+    }
 
-    if (reactPanel) {
-      if (reactPanel.onPanelTypeChanged) {
-        this.options = this.options || {};
-        const old = oldOptions && oldOptions.options ? oldOptions.options : {};
-        Object.assign(this.options, reactPanel.onPanelTypeChanged(this.options, oldPluginId, old));
-      }
-
-      if (reactPanel.onPanelMigration) {
-        this.pluginVersion = this.getPluginVersion(newPlugin);
-      }
+    if (newPlugin.onPanelMigration) {
+      this.pluginVersion = getPluginVersion(newPlugin);
     }
   }
 
@@ -326,8 +317,23 @@ export class PanelModel {
     });
   }
 
+  getQueryRunner(): PanelQueryRunner {
+    if (!this.queryRunner) {
+      this.queryRunner = new PanelQueryRunner();
+    }
+    return this.queryRunner;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
+
+    if (this.queryRunner) {
+      this.queryRunner.destroy();
+    }
   }
+}
+
+function getPluginVersion(plugin: PanelPlugin): string {
+  return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }

@@ -3,8 +3,7 @@ import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelPlugin } from 'app/types';
-import { RawTimeRange } from '@grafana/ui/src/types';
+import { PanelPluginMeta, RawTimeRange } from '@grafana/ui';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -64,7 +63,7 @@ export function ControllerTestContext(this: any) {
         $rootScope.colors.push('#' + i);
       }
 
-      config.panels['test'] = { info: {} } as PanelPlugin;
+      config.panels['test'] = { info: {} } as PanelPluginMeta;
       self.ctrl = $controller(
         Ctrl,
         { $scope: self.scope },
@@ -172,6 +171,8 @@ export class TimeSrvStub {
 }
 
 export class ContextSrvStub {
+  isGrafanaVisibile = jest.fn();
+
   hasRole() {
     return true;
   }

@@ -17,11 +17,13 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1545263815779,
+  "iteration": 1555595032099,
   "links": [
     {
+      "asDropdown": true,
       "icon": "external link",
       "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "title": "Dashboards",
       "type": "dashboards"
     }
   ],
@@ -5841,9 +5843,9 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 16,
+  "schemaVersion": 18,
   "style": "dark",
-  "tags": ["gdev", "elasticsearch"],
+  "tags": ["elasticsearch", "gdev", "datasource-test"],
   "templating": {
     "list": [
       {
@@ -5852,7 +5854,9 @@
           "value": "gdev-elasticsearch-v5-metrics"
         },
         "hide": 0,
+        "includeAll": false,
         "label": "Version One",
+        "multi": false,
         "name": "version_one",
         "options": [],
         "query": "elasticsearch",
@@ -5867,7 +5871,9 @@
           "value": "gdev-elasticsearch-v6-metrics"
         },
         "hide": 0,
+        "includeAll": false,
         "label": "Version Two",
+        "multi": false,
         "name": "version_two",
         "options": [],
         "query": "elasticsearch",
@@ -5889,5 +5895,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch comparison",
   "uid": "fuFWehBmk",
-  "version": 4
+  "version": 2
 }
