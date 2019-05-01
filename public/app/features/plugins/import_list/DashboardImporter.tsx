@@ -103,6 +103,13 @@ export class DashboardImporter extends PureComponent<Props, State> {
       return <div>No dashboards are included with this plugin</div>;
     }
 
+    const notImportedCount = dashboards.reduce((count, dash) => {
+      if (!dash.imported) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+
     return (
       <div className="gf-form-group">
         <table className="filter-table">
@@ -148,7 +155,7 @@ export class DashboardImporter extends PureComponent<Props, State> {
                 </tr>
               );
             })}
-            {dashboards.length > 0 && (
+            {notImportedCount > 0 && (
               <tr>
                 <td className={css({ textAlign: 'right' })} colSpan={3}>
                   <button className="btn btn-secondary btn-small" onClick={this.importAll}>

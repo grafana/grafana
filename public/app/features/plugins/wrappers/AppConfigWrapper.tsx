@@ -66,6 +66,8 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
     return (
       <div>
         <div ref={element => (this.element = element)} />
+        <br />
+        <br />
         {model && (
           <div className="gf-form">
             {!model.enabled && (

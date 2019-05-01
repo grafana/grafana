@@ -10,7 +10,6 @@ import {
   NavModel,
   NavModelItem,
   PluginType,
-  PluginConfigSaveOptions,
   GrafanaPlugin,
   PluginInclude,
   PluginDependencies,
@@ -18,6 +17,7 @@ import {
   PluginMetaInfo,
   Tooltip,
   AppPlugin,
+  PluginIncludeType,
 } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
@@ -28,10 +28,10 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { DashboardImporter } from './import_list/DashboardImporter';
 
-function getLoadingNav(): NavModel {
+export function getLoadingNav(): NavModel {
   const node = {
     text: 'Loading...',
-    icon: 'fa fa-fw fa-spinner fa-spin',
+    icon: 'icon-gf icon-gf-panel',
   };
   return {
     node: node,
@@ -210,20 +210,6 @@ class PluginPage extends PureComponent<Props, State> {
     }
   }
 
-  onSaveConfig = (options: PluginConfigSaveOptions) => {
-    const { plugin } = this.state;
-
-    if (options.hasOwnProperty('enable')) {
-      console.log('TODO, enable!', plugin);
-    }
-
-    console.log('TODO, save config');
-
-    if (options.onAfterSave) {
-      options.onAfterSave();
-    }
-  };
-
   renderBody() {
     const { query } = this.props;
     const { plugin, nav } = this.state;
@@ -238,7 +224,7 @@ class PluginPage extends PureComponent<Props, State> {
       if (plugin.configTabs) {
         for (const tab of plugin.configTabs) {
           if (tab.id === active.id) {
-            return <tab.body meta={plugin.meta} query={query} onConfigSave={this.onSaveConfig} />;
+            return <tab.body meta={plugin.meta} query={query} />;
           }
         }
       }
@@ -285,6 +271,25 @@ class PluginPage extends PureComponent<Props, State> {
     );
   }
 
+  renderSidebarIncludeBody(item: PluginInclude) {
+    if (item.type === PluginIncludeType.page) {
+      const pluginId = this.state.plugin.meta.id;
+      const page = item.name.toLowerCase().replace(' ', '-');
+      return (
+        <a href={`plugins/${pluginId}/page/${page}`}>
+          <i className={getPluginIcon(item.type)} />
+          {item.name}
+        </a>
+      );
+    }
+    return (
+      <>
+        <i className={getPluginIcon(item.type)} />
+        {item.name}
+      </>
+    );
+  }
+
   renderSidebarIncludes(includes: PluginInclude[]) {
     if (!includes || !includes.length) {
       return null;
@@ -297,8 +302,7 @@ class PluginPage extends PureComponent<Props, State> {
           {includes.map(include => {
             return (
               <li className="plugin-info-list-item" key={include.name}>
-                <i className={getPluginIcon(include.type)} />
-                {include.name}
+                {this.renderSidebarIncludeBody(include)}
               </li>
             );
           })}

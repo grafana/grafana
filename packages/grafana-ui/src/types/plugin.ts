@@ -91,24 +91,9 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigSaveOptions {
-  jsonData?: { [str: string]: any };
-  enable?: boolean; // App enable/disable flag
-
-  /**
-   * called after saving but before reloading the application
-   */
-  onAfterSave?: () => void;
-}
-
 export interface PluginConfigTabProps<T extends PluginMeta> {
   meta: T;
   query: { [s: string]: any }; // The URL query parameters
-
-  /**
-   * Save the configs
-   */
-  onConfigSave: (options: PluginConfigSaveOptions) => void;
 }
 
 export interface PluginConfigTab<T extends PluginMeta> {

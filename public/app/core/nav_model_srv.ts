@@ -54,12 +54,15 @@ export class NavModelSrv {
 }
 
 export function getNotFoundNav(): NavModel {
-  const node = {
-    text: 'Page not found',
-    icon: 'fa fa-fw fa-warning',
-    subTitle: '404 Error',
-  };
+  return getWarningNav('Page not found', '404 Error');
+}
 
+export function getWarningNav(text: string, subTitle?: string): NavModel {
+  const node = {
+    text,
+    subTitle,
+    icon: 'fa fa-fw fa-warning',
+  };
   return {
     breadcrumbs: [node],
     node: node,

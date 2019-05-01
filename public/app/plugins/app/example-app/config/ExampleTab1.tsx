@@ -9,13 +9,17 @@ interface Props extends PluginConfigTabProps<AppPluginMeta> {}
 export class ExampleTab1 extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-
-    console.log('ExampleTab1', this);
   }
 
   render() {
-    const { meta } = this.props;
+    const { query } = this.props;
 
-    return <div>ExampleTab111111111111111: {meta.name}</div>;
+    return (
+      <div>
+        11111111111111111111111111111111
+        <pre>{JSON.stringify(query)}</pre>
+        11111111111111111111111111111111
+      </div>
+    );
   }
 }

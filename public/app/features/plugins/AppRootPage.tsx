@@ -9,7 +9,10 @@ import { StoreState, UrlQueryMap } from 'app/types';
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { AppPlugin, NavModel } from '@grafana/ui';
+import { AppPlugin, NavModel, AppPluginMeta, PluginType } from '@grafana/ui';
+import { getLoadingNav } from './PluginPage';
+import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
+import { appEvents } from 'app/core/core';
 
 interface Props {
   pluginId: string; // From the angular router
@@ -18,29 +21,23 @@ interface Props {
   slug?: string;
 }
 
-export interface State {
+interface State {
   loading: boolean;
   plugin?: AppPlugin;
+  nav: NavModel;
 }
 
-export function loadAppPluginForPage(pluginId: string): Promise<State> {
-  return getPluginSettings(pluginId)
-    .then(info => {
-      if (!info || info.type !== 'app' || !info.enabled) {
-        return { loading: false, plugin: null };
-      }
-      return importAppPlugin(info)
-        .then(plugin => {
-          return { loading: false, plugin };
-        })
-        .catch(err => {
-          return { loading: false, plugin: null };
-        });
-    })
-    .catch(reason => {
-      // This happens if the plugin is unknown
-      return { loading: false, plugin: null };
-    });
+export function getAppPluginPageError(meta: AppPluginMeta) {
+  if (!meta) {
+    return 'Unknown Plugin';
+  }
+  if (meta.type !== PluginType.app) {
+    return 'Plugin must be an app';
+  }
+  if (!meta.enabled) {
+    return 'Applicaiton Not Enabled';
+  }
+  return null;
 }
 
 class AppRootPage extends Component<Props, State> {
@@ -48,97 +45,48 @@ class AppRootPage extends Component<Props, State> {
     super(props);
     this.state = {
       loading: true,
+      nav: getLoadingNav(),
     };
   }
 
   async componentDidMount() {
     const { pluginId } = this.props;
-    this.setState(await loadAppPluginForPage(pluginId));
-  }
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.query !== prevProps.query) {
-      console.log('QUERY changed', this.props.query);
-    }
-  }
-
-  getNavModel(): NavModel {
-    const { loading, plugin } = this.state;
-    if (plugin) {
-      const node = {
-        text: 'TODO Get the nav model from the application',
-        icon: 'fa fa-fw fa-info',
-        subTitle: 'The App subtitle',
-      };
-      return {
-        node: node,
-        main: node,
-      };
-    }
-    const item = loading
-      ? {
-          text: 'Loading',
-          icon: 'fa fa-fw fa-spinner fa-spin',
+    try {
+      const app = await getPluginSettings(pluginId).then(info => {
+        const error = getAppPluginPageError(info);
+        if (error) {
+          appEvents.emit('alert-error', [error]);
+          this.setState({ nav: getWarningNav(error) });
+          return null;
         }
-      : {
-          text: 'Unkown App Plugin',
-          icon: 'fa fa-fw fa-warning',
-          subTitle: '404 Error',
-        };
-    return {
-      node: item,
-      main: item,
-    };
-
-    // getNotFoundNav() {
-    // }
-
-    // const item:NavModelItem = {
-    //   text: 'Hello',
-    //   subTitle: 'XXXXXX',
-    //   url: '',
-    //   id: 'xxx',
-    //   icon: 'fa fa-help',
-    //   active: true,
-    //   children: [],
-    // };
-
-    // const main:NavModelItem = {
-    //   hideFromTabs: true,
-    //   icon: "gicon gicon-shield",
-    //   id: "admin",
-    //   text: "Server Admin",
-    //   subTitle: 'XXXXXX',
-    //   url: "/admin/users",
-    //   children: [item],
-    // }
-
-    // return {
-    //   main: main,
-    //   node: item,
-    // };
+        return importAppPlugin(info);
+      });
+      this.setState({ plugin: app, loading: false });
+    } catch (err) {
+      this.setState({ plugin: null, loading: false, nav: getNotFoundNav() });
+    }
   }
 
   onNavChanged = (nav: NavModel) => {
-    console.log('TODO, update the nav from the page control', nav);
+    this.setState({ nav });
   };
 
-  renderPageBody() {
-    const { path, query } = this.props;
-    const { plugin } = this.state;
-
-    if (plugin.root) {
-      return <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />;
-    }
-    return <div>Page Not Found</div>;
-  }
-
   render() {
-    const { loading, plugin } = this.state;
+    const { path, query } = this.props;
+    const { loading, plugin, nav } = this.state;
+
+    if (plugin && !plugin.root) {
+      // TODO? redirect to plugin page?
+      return <div>No Root App</div>;
+    }
+
     return (
-      <Page navModel={this.getNavModel()}>
+      <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
-          {!loading && <div>{plugin ? <div>{this.renderPageBody()}</div> : <div>not found...</div>}</div>}
+          {!loading && plugin && (
+            <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
+          )}
         </Page.Contents>
       </Page>
     );
