@@ -1,4 +1,5 @@
 import toNumber from 'lodash/toNumber';
+import toString from 'lodash/toString';
 
 import {
   ValueMapping,
@@ -34,9 +35,10 @@ export interface FieldDisplayOptions {
   mappings: ValueMapping[];
 }
 
-const VAR_SERIES_NAME = '__series_name';
-const VAR_FIELD_NAME = '__field_name';
-const VAR_STAT = '__stat';
+export const VAR_SERIES_NAME = '__series_name';
+export const VAR_FIELD_NAME = '__field_name';
+export const VAR_CALC = '__calc';
+export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
 function getTitleTemplate(title: string | undefined, stats: string[], data?: SeriesData[]): string {
   // If the title exists, use it as a template variable
@@ -56,7 +58,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Ser
 
   const parts: string[] = [];
   if (stats.length > 1) {
-    parts.push('$' + VAR_STAT);
+    parts.push('$' + VAR_CALC);
   }
   if (data.length > 1) {
     parts.push('$' + VAR_SERIES_NAME);
@@ -95,6 +97,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   if (data) {
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const title = getTitleTemplate(fieldOptions.title, stats, data);
+    const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length; s++) {
@@ -142,8 +145,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         if (fieldOptions.values) {
           for (const row of series.rows) {
             // Add all the row variables
-            for (let j = 0; j < series.fields.length; j++) {
-              scopedVars[`__cell_${j}`] = { value: row[i], text: `Cell: ${j}` };
+            if (usesCellValues) {
+              for (let j = 0; j < series.fields.length; j++) {
+                scopedVars[VAR_CELL_PREFIX + j] = {
+                  value: row[j],
+                  text: toString(row[j]),
+                };
+              }
             }
 
             const displayValue = display(row[i]);
@@ -180,7 +188,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                 });
 
           for (const stat of stats) {
-            scopedVars[VAR_STAT] = { value: stat, text: stat };
+            scopedVars[VAR_CALC] = { value: stat, text: stat };
             const displayValue = display(results[stat]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({

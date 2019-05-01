@@ -5,7 +5,14 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@grafana/ui';
 
 // Types
-import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
+import {
+  FieldDisplayOptions,
+  DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
+  VAR_SERIES_NAME,
+  VAR_FIELD_NAME,
+  VAR_CALC,
+  VAR_CELL_PREFIX,
+} from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
@@ -65,6 +72,18 @@ export class FieldDisplayEditor extends PureComponent<Props> {
     const { showPrefixSuffix, options } = this.props;
     const { title, stats, prefix, suffix, values, limit } = options;
 
+    const titleTooltip = (
+      <div>
+        Template Variables:
+        <br />
+        {'$' + VAR_SERIES_NAME}
+        <br />
+        {'$' + VAR_FIELD_NAME}
+        <br />
+        {values ? '$' + VAR_CELL_PREFIX + '{N}' : '$' + VAR_CALC}
+      </div>
+    );
+
     return (
       <PanelOptionsGroup title="Display">
         <>
@@ -73,6 +92,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
             labelWidth={labelWidth}
             onChange={this.onTitleChange}
             value={title}
+            tooltip={titleTooltip}
             placeholder="Auto"
           />
           <div className="gf-form">
