@@ -18,11 +18,18 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
 }));
 
 describe('MixedDatasource', () => {
-  const request = getQueryOptions({
+  const requestMixed = getQueryOptions({
     targets: [
       { refId: 'QA', datasource: 'A' }, // 1
       { refId: 'QB', datasource: 'B' }, // 2
       { refId: 'QC', datasource: 'C' }, // 3
+    ],
+  });
+  const requestSingle = getQueryOptions({
+    targets: [
+      { refId: 'QA', datasource: 'A' }, // 1
+      { refId: 'QB', datasource: 'A' }, // 2
+      { refId: 'QC', datasource: 'A' }, // 3
     ],
   });
 
@@ -35,13 +42,14 @@ describe('MixedDatasource', () => {
     };
 
     const ds = await getDatasourceSrv().get('A');
-    const res = await ds.query(request, dummyStream);
+    const res = await ds.query(requestMixed, dummyStream);
     expect(res.data[0]).toEqual('AAAA');
     expect(counter).toBe(0);
     expect(lastEvent).toBeUndefined();
   });
 
-  it('mixed query is async', async () => {
+  it('multiple queries to same datasource is async', async () => {
+    const request = requestSingle;
     let resolver: any;
     const waiter = new Promise((resolve, reject) => {
       resolver = resolve;

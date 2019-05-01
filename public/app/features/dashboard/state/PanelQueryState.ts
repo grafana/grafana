@@ -129,7 +129,6 @@ export class PanelQueryState {
           // Save the result state
           this.response = {
             state: LoadingState.Done,
-            request: this.request,
             series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
@@ -152,6 +151,8 @@ export class PanelQueryState {
   dataStreamObserver: DataStreamObserver = (stream: DataStreamState) => {
     // Streams only work with the 'series' format
     this.sendSeries = true;
+
+    console.log('Stream Event', stream);
 
     // Add the stream to our list
     let found = false;

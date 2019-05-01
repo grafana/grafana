@@ -1,4 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
+import groupBy from 'lodash/groupBy';
+import map from 'lodash/map';
+import flatten from 'lodash/flatten';
 
 import {
   DataSourceApi,
@@ -27,23 +30,42 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       return Promise.resolve({ data: [] }); // nothing
     }
 
-    if (!observer) {
-      throw new Error('Mixed Query requires streaming callback');
+    // When more than one source, query them all together
+    const sets = groupBy(queries, 'datasource');
+    const names = Object.keys(sets);
+    if (names.length > 1) {
+      const promises = map(sets, (targets: DataQuery[]) => {
+        const dsName = targets[0].datasource;
+        return getDatasourceSrv()
+          .get(dsName)
+          .then(ds => {
+            const opt = cloneDeep(request);
+            opt.targets = targets;
+            return ds.query(opt);
+          });
+      });
+
+      return Promise.all(promises).then(results => {
+        return { data: flatten(map(results, 'data')) };
+      });
     }
 
-    // Update the sub request list
+    // Otherwise stream results as we get them
     request.subRequests = [];
-    const streams: DataStreamState[] = [];
     for (const query of queries) {
       const sub = cloneDeep(request);
       sub.requestId = request.requestId + '_' + request.subRequests.length;
       sub.targets = [query];
       sub.startTime = Date.now();
       request.subRequests.push(sub);
-      streams.push(this.startStreamingQuery(query.datasource, query.refId, sub, observer));
+      this.startStreamingQuery(
+        query.datasource,
+        query.refId, // Replace existing data by refId
+        sub, // the request
+        observer
+      );
     }
-
-    return Promise.resolve({ data: [] });
+    return Promise.resolve({ data: [] }); // maybe wait for first result?
   }
 
   startStreamingQuery(
@@ -56,12 +78,12 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
       key,
       state: LoadingState.Loading,
       request,
-      series: [],
       unsubscribe: () => {
         console.log('Cancel async query', request);
         getBackendSrv().resolveCancelerIfExists(request.requestId);
       },
     };
+    observer(event); // Is this necessary?
 
     // Starts background process
     getDatasourceSrv()
@@ -81,8 +103,6 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
             observer(event);
           });
       });
-
-    return event;
   }
 
   testDatasource() {
