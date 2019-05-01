@@ -2,9 +2,9 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { PluginConfigTabProps, AppMeta } from '@grafana/ui';
+import { PluginConfigTabProps, AppPluginMeta } from '@grafana/ui';
 
-interface Props extends PluginConfigTabProps<AppMeta, any> {}
+interface Props extends PluginConfigTabProps<AppPluginMeta> {}
 
 export class ExampleTab1 extends PureComponent<Props> {
   constructor(props: Props) {

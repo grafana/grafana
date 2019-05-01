@@ -11,10 +11,6 @@ export enum PluginType {
   app = 'app',
 }
 
-export interface PluginMetaJsonData {
-  [str: string]: any;
-}
-
 export interface PluginMeta {
   id: string;
   name: string;
@@ -28,7 +24,7 @@ export interface PluginMeta {
   baseUrl: string;
 
   // Filled in by the backend
-  jsonData?: PluginMetaJsonData;
+  jsonData?: { [str: string]: any };
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
@@ -76,8 +72,8 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigSaveOptions<TData extends PluginMetaJsonData = PluginMetaJsonData> {
-  jsonData?: TData;
+export interface PluginConfigSaveOptions {
+  jsonData?: { [str: string]: any };
   enable?: boolean; // App enable/disable flag
 
   /**
@@ -86,25 +82,25 @@ export interface PluginConfigSaveOptions<TData extends PluginMetaJsonData = Plug
   onAfterSave?: () => void;
 }
 
-export interface PluginConfigTabProps<TMeta, TData> {
-  meta: TMeta;
+export interface PluginConfigTabProps<T extends PluginMeta> {
+  meta: T;
   query: { [s: string]: any }; // The URL query parameters
 
   /**
    * Save the configs
    */
-  onConfigSave: (options: PluginConfigSaveOptions<TData>) => void;
+  onConfigSave: (options: PluginConfigSaveOptions) => void;
 }
 
-export interface PluginConfigTab<TMeta, TData> {
+export interface PluginConfigTab<T extends PluginMeta> {
   title: string; // Display
   icon?: string;
   id: string; // Unique, in URL
 
-  body: ComponentClass<PluginConfigTabProps<TMeta, TData>>;
+  body: ComponentClass<PluginConfigTabProps<T>>;
 }
 
-export class GrafanaPlugin<T extends PluginMeta = PluginMeta, TData = {}> {
+export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
   meta?: T;
 
@@ -112,10 +108,10 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta, TData = {}> {
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page
-  configTabs?: Array<PluginConfigTab<T, TData>>;
+  configTabs?: Array<PluginConfigTab<T>>;
 
   // Tabs on the plugin page
-  addConfigTab(tab: PluginConfigTab<T, TData>) {
+  addConfigTab(tab: PluginConfigTab<T>) {
     if (!this.configTabs) {
       this.configTabs = [];
     }

@@ -3,7 +3,7 @@ import { NavModel } from './navModel';
 import { PluginMeta, PluginIncludeType, GrafanaPlugin } from './plugin';
 
 export interface AppRootProps {
-  meta: AppMeta;
+  meta: AppPluginMeta;
 
   path: string; // The URL path to this page
   query: { [s: string]: any }; // The URL query parameters
@@ -14,11 +14,11 @@ export interface AppRootProps {
   onNavChanged: (nav: NavModel) => void;
 }
 
-export interface AppMeta extends PluginMeta {
+export interface AppPluginMeta extends PluginMeta {
   // TODO anything specific to apps?
 }
 
-export class AppPlugin extends GrafanaPlugin<AppMeta> {
+export class AppPlugin extends GrafanaPlugin<AppPluginMeta> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentClass<AppRootProps>;
   rootNav?: NavModel; // Initial navigation model

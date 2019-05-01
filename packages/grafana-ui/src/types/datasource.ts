@@ -20,6 +20,11 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
     this.components = {};
   }
 
+  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+    this.components.ConfigEditor = editor;
+    return this;
+  }
+
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
