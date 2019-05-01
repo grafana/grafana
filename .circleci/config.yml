@@ -198,6 +198,117 @@ jobs:
           paths:
             - dist/*
 
+  build-fast-backend:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin/*
+
+  build-fast-frontend:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: .
+          paths:
+            - public/build/*
+            - tools/phantomjs/*
+
+  build-fast-package:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: /go/src/github.com/grafana/grafana
+          paths:
+            - dist/*
+
+  build-fast-save:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: debug cache
+          command: 'ls -al /go/src/github.com/grafana/grafana/node_modules'
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - /go/src/github.com/grafana/grafana/node_modules
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
   grafana-docker-master:
     machine:
       image: circleci/classic:201808-01
@@ -224,7 +335,7 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
+      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
 
   grafana-docker-release:
     machine:
@@ -556,8 +667,15 @@ workflows:
 
   build-branches-and-prs:
       jobs:
-        - build:
+        - build-fast-backend:
             filters: *filter-not-release-or-master
+        - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-fast-package:
+            filters: *filter-not-release-or-master
+            requires:
+              - build-fast-backend
+              - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
         - backend-lint:
@@ -574,7 +692,7 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
@@ -585,7 +703,7 @@ workflows:
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
