@@ -69,16 +69,20 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export class AppPlugin {
-  meta: PluginMeta;
+export class GrafanaPlugin<T extends PluginMeta> {
+  // Meta is filled in by the plugin loading system
+  meta?: T;
 
+  // Soon this will also include common config options
+}
+
+export class AppPlugin extends GrafanaPlugin<PluginMeta> {
   angular?: {
     ConfigCtrl?: any;
     pages: { [component: string]: any };
   };
 
-  constructor(meta: PluginMeta, pluginExports: any) {
-    this.meta = meta;
+  setComponentsFromLegacyExports(pluginExports: any) {
     const legacy = {
       ConfigCtrl: undefined,
       pages: {} as any,
@@ -89,7 +93,8 @@ export class AppPlugin {
       this.angular = legacy;
     }
 
-    if (meta.includes) {
+    const { meta } = this;
+    if (meta && meta.includes) {
       for (const include of meta.includes) {
         const { type, component } = include;
         if (type === PluginIncludeType.page && component) {
