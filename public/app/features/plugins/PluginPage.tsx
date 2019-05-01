@@ -27,6 +27,7 @@ import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { DashboardImporter } from './import_list/DashboardImporter';
+import { appEvents } from 'app/core/core';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -243,6 +244,18 @@ class PluginPage extends PureComponent<Props, State> {
     return <PluginHelp plugin={plugin.meta} type="help" />;
   }
 
+  showUpdateInfo = () => {
+    alert('TODO, open modal');
+
+    const modalScope: any = {}; // this.$scope.$new(true);
+    modalScope.plugin = this.state.plugin.meta;
+
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/plugins/partials/update_instructions.html',
+      scope: modalScope,
+    });
+  };
+
   renderVersionInfo(meta: PluginMeta) {
     if (!meta.info.version) {
       return null;
@@ -255,12 +268,7 @@ class PluginPage extends PureComponent<Props, State> {
         {meta.hasUpdate && (
           <div>
             <Tooltip content={meta.latestVersion} theme="info" placement="top">
-              <a
-                href="#"
-                onClick={() => {
-                  alert('TODO, open popup!');
-                }}
-              >
+              <a href="#" onClick={this.showUpdateInfo}>
                 Update Available!
               </a>
             </Tooltip>
