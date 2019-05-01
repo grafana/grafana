@@ -167,13 +167,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/a/:pluginId/', {
-      template: '<react-container />',
-      reloadOnSearch: false,
-      resolve: {
-        component: () => AppRootPage,
-      },
-    })
-    .when('/a/:pluginId/:slug*/', {
+      // Someday * and will get a ReactRouter under that path!
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
