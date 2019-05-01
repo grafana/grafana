@@ -1,74 +1,238 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import sinon from 'sinon';
+import moment from 'moment';
 
+import * as dateMath from 'app/core/utils/datemath';
 import * as rangeUtil from 'app/core/utils/rangeutil';
-import TimePicker, { DEFAULT_RANGE, parseTime } from './TimePicker';
+import TimePicker from './TimePicker';
+import { RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
+
+const DEFAULT_RANGE = {
+  from: 'now-6h',
+  to: 'now',
+};
+
+const fromRaw = (rawRange: RawTimeRange): TimeRange => {
+  const raw = {
+    from: moment.isMoment(rawRange.from) ? moment(rawRange.from) : rawRange.from,
+    to: moment.isMoment(rawRange.to) ? moment(rawRange.to) : rawRange.to,
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false),
+    to: dateMath.parse(raw.to, true),
+    raw: rawRange,
+  };
+};
 
 describe('<TimePicker />', () => {
-  it('renders closed with default values', () => {
-    const rangeString = rangeUtil.describeTimeRange(DEFAULT_RANGE);
-    const wrapper = shallow(<TimePicker />);
-    expect(wrapper.find('.timepicker-rangestring').text()).toBe(rangeString);
-    expect(wrapper.find('.gf-timepicker-dropdown').exists()).toBe(false);
+  it('render default values when closed and relative time range', () => {
+    const range = fromRaw(DEFAULT_RANGE);
+    const wrapper = shallow(<TimePicker range={range} />);
+    expect(wrapper.state('fromRaw')).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.state('toRaw')).toBe(DEFAULT_RANGE.to);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Last 6 hours');
+    expect(wrapper.find('.gf-timepicker-dropdown').exists()).toBeFalsy();
+    expect(wrapper.find('.gf-timepicker-utc').exists()).toBeFalsy();
   });
 
-  it('renders with relative range', () => {
-    const range = {
-      from: 'now-7h',
-      to: 'now',
-    };
-    const rangeString = rangeUtil.describeTimeRange(range);
+  it('render default values when closed, utc and relative time range', () => {
+    const range = fromRaw(DEFAULT_RANGE);
+    const wrapper = shallow(<TimePicker range={range} isUtc />);
+    expect(wrapper.state('fromRaw')).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.state('toRaw')).toBe(DEFAULT_RANGE.to);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Last 6 hours');
+    expect(wrapper.find('.gf-timepicker-dropdown').exists()).toBeFalsy();
+    expect(wrapper.find('.gf-timepicker-utc').exists()).toBeTruthy();
+  });
+
+  it('renders default values when open and relative range', () => {
+    const range = fromRaw(DEFAULT_RANGE);
     const wrapper = shallow(<TimePicker range={range} isOpen />);
-    expect(wrapper.find('.timepicker-rangestring').text()).toBe(rangeString);
-    expect(wrapper.state('fromRaw')).toBe(range.from);
-    expect(wrapper.state('toRaw')).toBe(range.to);
-    expect(wrapper.find('.timepicker-from').props().value).toBe(range.from);
-    expect(wrapper.find('.timepicker-to').props().value).toBe(range.to);
+    expect(wrapper.state('fromRaw')).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.state('toRaw')).toBe(DEFAULT_RANGE.to);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Last 6 hours');
+    expect(wrapper.find('.gf-timepicker-dropdown').exists()).toBeTruthy();
+    expect(wrapper.find('.gf-timepicker-utc').exists()).toBeFalsy();
+    expect(wrapper.find('.timepicker-from').props().value).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.find('.timepicker-to').props().value).toBe(DEFAULT_RANGE.to);
   });
 
-  it('renders with epoch (millies) range converted to ISO-ish', () => {
+  it('renders default values when open, utc and relative range', () => {
+    const range = fromRaw(DEFAULT_RANGE);
+    const wrapper = shallow(<TimePicker range={range} isOpen isUtc />);
+    expect(wrapper.state('fromRaw')).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.state('toRaw')).toBe(DEFAULT_RANGE.to);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Last 6 hours');
+    expect(wrapper.find('.gf-timepicker-dropdown').exists()).toBeTruthy();
+    expect(wrapper.find('.gf-timepicker-utc').exists()).toBeTruthy();
+    expect(wrapper.find('.timepicker-from').props().value).toBe(DEFAULT_RANGE.from);
+    expect(wrapper.find('.timepicker-to').props().value).toBe(DEFAULT_RANGE.to);
+  });
+
+  it('apply with absolute range and non-utc', () => {
     const range = {
-      from: '1',
-      to: '1000',
+      from: moment.utc(1),
+      to: moment.utc(1000),
+      raw: {
+        from: moment.utc(1),
+        to: moment.utc(1000),
+      },
     };
-    const rangeString = rangeUtil.describeTimeRange({
-      from: parseTime(range.from, true),
-      to: parseTime(range.to, true),
-    });
-    const wrapper = shallow(<TimePicker range={range} isUtc isOpen />);
+    const localRange = {
+      from: moment(1),
+      to: moment(1000),
+      raw: {
+        from: moment(1),
+        to: moment(1000),
+      },
+    };
+    const expectedRangeString = rangeUtil.describeTimeRange(localRange);
+
+    const onChangeTime = sinon.spy();
+    const wrapper = shallow(<TimePicker range={range} isOpen onChangeTime={onChangeTime} />);
+    expect(wrapper.state('fromRaw')).toBe(localRange.from.format(TIME_FORMAT));
+    expect(wrapper.state('toRaw')).toBe(localRange.to.format(TIME_FORMAT));
+    expect(wrapper.state('initialRange')).toBe(range.raw);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe(expectedRangeString);
+    expect(wrapper.find('.timepicker-from').props().value).toBe(localRange.from.format(TIME_FORMAT));
+    expect(wrapper.find('.timepicker-to').props().value).toBe(localRange.to.format(TIME_FORMAT));
+
+    wrapper.find('button.gf-form-btn').simulate('click');
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(0);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(1000);
+
+    expect(wrapper.state('isOpen')).toBeFalsy();
+    expect(wrapper.state('rangeString')).toBe(expectedRangeString);
+  });
+
+  it('apply with absolute range and utc', () => {
+    const range = {
+      from: moment.utc(1),
+      to: moment.utc(1000),
+      raw: {
+        from: moment.utc(1),
+        to: moment.utc(1000),
+      },
+    };
+    const onChangeTime = sinon.spy();
+    const wrapper = shallow(<TimePicker range={range} isUtc isOpen onChangeTime={onChangeTime} />);
     expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:00');
     expect(wrapper.state('toRaw')).toBe('1970-01-01 00:00:01');
-    expect(wrapper.find('.timepicker-rangestring').text()).toBe(rangeString);
+    expect(wrapper.state('initialRange')).toBe(range.raw);
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Jan 1, 1970 00:00:00 to Jan 1, 1970 00:00:01');
     expect(wrapper.find('.timepicker-from').props().value).toBe('1970-01-01 00:00:00');
     expect(wrapper.find('.timepicker-to').props().value).toBe('1970-01-01 00:00:01');
+
+    wrapper.find('button.gf-form-btn').simulate('click');
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(0);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(1000);
+
+    expect(wrapper.state('isOpen')).toBeFalsy();
+    expect(wrapper.state('rangeString')).toBe('Jan 1, 1970 00:00:00 to Jan 1, 1970 00:00:01');
   });
 
-  it('moves ranges forward and backward by half the range on arrow click', () => {
-    const range = {
-      from: '2000',
-      to: '4000',
+  it('moves ranges backward by half the range on left arrow click when utc', () => {
+    const rawRange = {
+      from: moment.utc(2000),
+      to: moment.utc(4000),
+      raw: {
+        from: moment.utc(2000),
+        to: moment.utc(4000),
+      },
     };
-    const rangeString = rangeUtil.describeTimeRange({
-      from: parseTime(range.from, true),
-      to: parseTime(range.to, true),
-    });
+    const range = fromRaw(rawRange);
 
     const onChangeTime = sinon.spy();
     const wrapper = shallow(<TimePicker range={range} isUtc isOpen onChangeTime={onChangeTime} />);
     expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:02');
     expect(wrapper.state('toRaw')).toBe('1970-01-01 00:00:04');
-    expect(wrapper.find('.timepicker-rangestring').text()).toBe(rangeString);
-    expect(wrapper.find('.timepicker-from').props().value).toBe('1970-01-01 00:00:02');
-    expect(wrapper.find('.timepicker-to').props().value).toBe('1970-01-01 00:00:04');
 
     wrapper.find('.timepicker-left').simulate('click');
-    expect(onChangeTime.calledOnce).toBe(true);
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(1000);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(3000);
+  });
+
+  it('moves ranges backward by half the range on left arrow click when not utc', () => {
+    const range = {
+      from: moment.utc(2000),
+      to: moment.utc(4000),
+      raw: {
+        from: moment.utc(2000),
+        to: moment.utc(4000),
+      },
+    };
+    const localRange = {
+      from: moment(2000),
+      to: moment(4000),
+      raw: {
+        from: moment(2000),
+        to: moment(4000),
+      },
+    };
+
+    const onChangeTime = sinon.spy();
+    const wrapper = shallow(<TimePicker range={range} isUtc={false} isOpen onChangeTime={onChangeTime} />);
+    expect(wrapper.state('fromRaw')).toBe(localRange.from.format(TIME_FORMAT));
+    expect(wrapper.state('toRaw')).toBe(localRange.to.format(TIME_FORMAT));
+
+    wrapper.find('.timepicker-left').simulate('click');
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(1000);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(3000);
+  });
+
+  it('moves ranges forward by half the range on right arrow click when utc', () => {
+    const range = {
+      from: moment.utc(1000),
+      to: moment.utc(3000),
+      raw: {
+        from: moment.utc(1000),
+        to: moment.utc(3000),
+      },
+    };
+
+    const onChangeTime = sinon.spy();
+    const wrapper = shallow(<TimePicker range={range} isUtc isOpen onChangeTime={onChangeTime} />);
     expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:01');
     expect(wrapper.state('toRaw')).toBe('1970-01-01 00:00:03');
 
     wrapper.find('.timepicker-right').simulate('click');
-    expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:02');
-    expect(wrapper.state('toRaw')).toBe('1970-01-01 00:00:04');
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(2000);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(4000);
+  });
+
+  it('moves ranges forward by half the range on right arrow click when not utc', () => {
+    const range = {
+      from: moment.utc(1000),
+      to: moment.utc(3000),
+      raw: {
+        from: moment.utc(1000),
+        to: moment.utc(3000),
+      },
+    };
+    const localRange = {
+      from: moment(1000),
+      to: moment(3000),
+      raw: {
+        from: moment(1000),
+        to: moment(3000),
+      },
+    };
+
+    const onChangeTime = sinon.spy();
+    const wrapper = shallow(<TimePicker range={range} isOpen onChangeTime={onChangeTime} />);
+    expect(wrapper.state('fromRaw')).toBe(localRange.from.format(TIME_FORMAT));
+    expect(wrapper.state('toRaw')).toBe(localRange.to.format(TIME_FORMAT));
+
+    wrapper.find('.timepicker-right').simulate('click');
+    expect(onChangeTime.calledOnce).toBeTruthy();
+    expect(onChangeTime.getCall(0).args[0].from.valueOf()).toBe(2000);
+    expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(4000);
   });
 });

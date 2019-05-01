@@ -9,12 +9,11 @@ import {
   TypeaheadOutput,
 } from 'app/types/explore';
 
-import { parseSelector, processLabels } from './language_utils';
+import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
-const HISTOGRAM_SELECTOR = '{le!=""}'; // Returns all timeseries for histograms
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 
@@ -66,8 +65,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = (url: string) => {
-    return this.datasource.metadataRequest(url);
+  request = async (url: string) => {
+    try {
+      const res = await this.datasource.metadataRequest(url);
+      const body = await (res.data || res.json());
+
+      return body.data;
+    } catch (error) {
+      console.error(error);
+    }
+
+    return [];
   };
 
   start = () => {
@@ -78,7 +86,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   fetchMetrics = async () => {
-    return this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
+    this.metrics = await this.fetchMetricNames();
+    this.processHistogramMetrics(this.metrics);
+
+    return Promise.resolve([]);
+  };
+
+  fetchMetricNames = async (): Promise<string[]> => {
+    return this.request('/api/v1/label/__name__/values');
+  };
+
+  processHistogramMetrics = (data: string[]) => {
+    const { values } = processHistogramLabels(data);
+
+    if (values && values['__name__']) {
+      this.histogramMetrics = values['__name__'].slice().sort();
+    }
   };
 
   // Keep this DOM-free for testing
@@ -293,60 +316,28 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return { context, refresher, suggestions };
   }
 
-  async fetchMetricNames() {
-    const url = '/api/v1/label/__name__/values';
+  fetchLabelValues = async (key: string) => {
     try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      this.metrics = body.data;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  async fetchHistogramMetrics() {
-    await this.fetchSeriesLabels(HISTOGRAM_SELECTOR, true);
-    const histogramSeries = this.labelValues[HISTOGRAM_SELECTOR];
-    if (histogramSeries && histogramSeries['__name__']) {
-      this.histogramMetrics = histogramSeries['__name__'].slice().sort();
-    }
-  }
-
-  async fetchLabelValues(key: string) {
-    const url = `/api/v1/label/${key}/values`;
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const exisingValues = this.labelValues[EMPTY_SELECTOR];
+      const data = await this.request(`/api/v1/label/${key}/values`);
+      const existingValues = this.labelValues[EMPTY_SELECTOR];
       const values = {
-        ...exisingValues,
-        [key]: body.data,
+        ...existingValues,
+        [key]: data,
       };
-      this.labelValues = {
-        ...this.labelValues,
-        [EMPTY_SELECTOR]: values,
-      };
+      this.labelValues[EMPTY_SELECTOR] = values;
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 
-  async fetchSeriesLabels(name: string, withName?: boolean) {
-    const url = `/api/v1/series?match[]=${name}`;
+  fetchSeriesLabels = async (name: string, withName?: boolean) => {
     try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const { keys, values } = processLabels(body.data, withName);
-      this.labelKeys = {
-        ...this.labelKeys,
-        [name]: keys,
-      };
-      this.labelValues = {
-        ...this.labelValues,
-        [name]: values,
-      };
+      const data = await this.request(`/api/v1/series?match[]=${name}`);
+      const { keys, values } = processLabels(data, withName);
+      this.labelKeys[name] = keys;
+      this.labelValues[name] = values;
     } catch (e) {
       console.error(e);
     }
-  }
+  };
 }

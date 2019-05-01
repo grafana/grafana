@@ -1,9 +1,10 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TeamPages, Props } from './TeamPages';
-import { NavModel, Team, TeamMember, OrgRole } from '../../types';
+import { Team, TeamMember, OrgRole } from '../../types';
 import { getMockTeam } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
+import { NavModel } from '@grafana/ui';
 
 jest.mock('app/core/config', () => ({
   buildInfo: { isEnterprise: true },
