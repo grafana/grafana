@@ -313,6 +313,7 @@ export function shouldDisconnect(source: DataQueryRequest, state: DataStreamStat
   }
 
   // Check if the refID exists within our current query
+  // This may be too generous!
   for (const query of source.targets) {
     if (query.refId === state.key) {
       return false;
