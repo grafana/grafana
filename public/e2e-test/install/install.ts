@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer-core';
+import { config } from 'e2e-test/core/config';
 
 export const downloadBrowserIfNeeded = async (): Promise<void> => {
   const browserFetcher = puppeteer.createBrowserFetcher();
@@ -9,7 +10,7 @@ export const downloadBrowserIfNeeded = async (): Promise<void> => {
   }
 
   console.log('Did not find any local revisions for browser, downloading latest this might take a while.');
-  await browserFetcher.download('650629', (downloaded, total) => {
+  await browserFetcher.download(config.chromiumRevision, (downloaded, total) => {
     console.log(`Downloaded ${downloaded}bytes of ${total}bytes.`);
   });
 };

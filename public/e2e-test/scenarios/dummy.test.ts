@@ -1,5 +1,6 @@
 import { launchBrowser } from '../core/launcher';
 import { Browser } from 'puppeteer-core';
+import { config } from 'e2e-test/core/config';
 
 describe('E2E dummy test', () => {
   let browser: Browser = null;
@@ -15,9 +16,9 @@ describe('E2E dummy test', () => {
 
   it('Page title should be Grafana', async () => {
     const page = await browser.newPage();
-    const response = await page.goto('http://localhost:3333');
+    const response = await page.goto(config.baseUrl);
     const title = await page.title();
-    await expect(response.ok()).toBe(true);
-    await expect(title).toBe('Grafana');
+    expect(response.ok()).toBe(true);
+    expect(title).toBe('Grafana');
   });
 });
