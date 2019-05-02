@@ -1,13 +1,41 @@
-import _ from 'lodash';
+import _, { debounce } from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import appEvents from 'app/core/app_events';
+import { parse, SearchParserOptions, SearchParserResult } from 'search-query-parser';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+export interface SearchQuery {
+  query: string;
+  parsedQuery: SearchParserResult;
+  tags: string[];
+  starred: boolean;
+}
+
+class SearchQueryParser {
+  config: SearchParserOptions;
+  constructor(config: SearchParserOptions) {
+    this.config = config;
+  }
+
+  parse(query: string) {
+    const parsedQuery = parse(query, this.config);
+
+    if (typeof parsedQuery === 'string') {
+      return {
+        text: parsedQuery,
+      } as SearchParserResult;
+    }
+
+    return parsedQuery;
+  }
+}
 
 export class SearchCtrl {
   isOpen: boolean;
-  query: any;
-  giveSearchFocus: number;
+  query: SearchQuery;
+  giveSearchFocus: boolean;
   selectedIndex: number;
   results: any;
   currentSearchId: number;
@@ -18,19 +46,46 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
   isEditor: string;
   hasEditPermissionInFolders: boolean;
+  queryParser: SearchQueryParser;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
     appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
+    appEvents.on('search-query', debounce(this.search.bind(this), 500), $scope);
 
     this.initialFolderFilterTitle = 'All';
     this.isEditor = contextSrv.isEditor;
     this.hasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
+    this.onQueryChange = this.onQueryChange.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.query = {
+      query: '',
+      parsedQuery: { text: '' },
+      tags: [],
+      starred: false,
+    };
+
+    this.queryParser = new SearchQueryParser({
+      keywords: ['folder'],
+    });
   }
 
   closeSearch() {
     this.isOpen = this.ignoreClose;
+  }
+
+  onQueryChange(query: SearchQuery | string) {
+    if (typeof query === 'string') {
+      this.query = {
+        ...this.query,
+        parsedQuery: this.queryParser.parse(query),
+        query: query,
+      };
+    } else {
+      this.query = query;
+    }
+    appEvents.emit('search-query');
   }
 
   openSearch(evt, payload) {
@@ -40,10 +95,15 @@ export class SearchCtrl {
     }
 
     this.isOpen = true;
-    this.giveSearchFocus = 0;
+    this.giveSearchFocus = true;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false };
+    this.query = {
+      query: evt ? `${evt.query} ` : '',
+      parsedQuery: this.queryParser.parse(evt && evt.query),
+      tags: [],
+      starred: false,
+    };
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
@@ -54,12 +114,12 @@ export class SearchCtrl {
 
     this.$timeout(() => {
       this.ignoreClose = false;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
+      this.giveSearchFocus = true;
       this.search();
     }, 100);
   }
 
-  keyDown(evt) {
+  onKeyDown(evt: KeyboardEvent) {
     if (evt.keyCode === 27) {
       this.closeSearch();
     }
@@ -94,7 +154,7 @@ export class SearchCtrl {
   }
 
   onFilterboxClick() {
-    this.giveSearchFocus = 0;
+    this.giveSearchFocus = false;
     this.preventClose();
   }
 
@@ -155,40 +215,54 @@ export class SearchCtrl {
     this.results[selectedItem.folderIndex].selected = true;
   }
 
-  searchDashboards() {
+  searchDashboards(folderContext?: string) {
     this.currentSearchId = this.currentSearchId + 1;
     const localSearchId = this.currentSearchId;
+    const folderIds = [];
+
+    const { parsedQuery } = this.query;
+
+    if (folderContext === 'current') {
+      folderIds.push(getDashboardSrv().getCurrent().meta.folderId);
+    }
+
     const query = {
       ...this.query,
-      tag: this.query.tag,
+      query: parsedQuery.text,
+      tag: this.query.tags,
+      folderIds,
     };
 
-    return this.searchSrv.search(query).then(results => {
-      if (localSearchId < this.currentSearchId) {
-        return;
-      }
-      this.results = results || [];
-      this.isLoading = false;
-      this.moveSelection(1);
-    });
+    return this.searchSrv
+      .search({
+        ...query,
+      })
+      .then(results => {
+        if (localSearchId < this.currentSearchId) {
+          return;
+        }
+        this.results = results || [];
+        this.isLoading = false;
+        this.moveSelection(1);
+      });
   }
 
   queryHasNoFilters() {
     const query = this.query;
-    return query.query === '' && query.starred === false && query.tag.length === 0;
+    return query.query === '' && query.starred === false && query.tags.length === 0;
   }
 
   filterByTag(tag) {
-    if (_.indexOf(this.query.tag, tag) === -1) {
-      this.query.tag.push(tag);
+    if (_.indexOf(this.query.tags, tag) === -1) {
+      this.query.tags.push(tag);
       this.search();
     }
   }
 
   removeTag(tag, evt) {
-    this.query.tag = _.without(this.query.tag, tag);
+    this.query.tags = _.without(this.query.tags, tag);
     this.search();
-    this.giveSearchFocus = this.giveSearchFocus + 1;
+    this.giveSearchFocus = true;
     evt.stopPropagation();
     evt.preventDefault();
   }
@@ -198,32 +272,36 @@ export class SearchCtrl {
   };
 
   onTagFiltersChanged = (tags: string[]) => {
-    this.query.tag = tags;
+    this.query.tags = tags;
     this.search();
   };
 
   clearSearchFilter() {
-    this.query.tag = [];
+    this.query.query = '';
+    this.query.tags = [];
     this.search();
   }
 
   showStarred() {
     this.query.starred = !this.query.starred;
-    this.giveSearchFocus = this.giveSearchFocus + 1;
+    this.giveSearchFocus = true;
     this.search();
   }
 
   search() {
     this.showImport = false;
     this.selectedIndex = -1;
-    this.searchDashboards();
+    this.searchDashboards(this.query.parsedQuery['folder']);
   }
 
   folderExpanding() {
     this.moveSelection(0);
   }
 
-  private getFlattenedResultForNavigation() {
+  private getFlattenedResultForNavigation(): Array<{
+    folderIndex: number;
+    dashboardIndex: number;
+  }> {
     let folderIndex = 0;
 
     return _.flatMap(this.results, s => {

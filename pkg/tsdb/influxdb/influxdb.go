@@ -3,10 +3,12 @@ package influxdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -32,6 +34,8 @@ func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint,
 var (
 	glog log.Logger
 )
+
+var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
 func init() {
 	glog = log.New("tsdb.influxdb")
@@ -108,21 +112,42 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
+
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "query")
+	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := func() (*http.Request, error) {
+		switch httpMode {
+		case "GET":
+			return http.NewRequest(http.MethodGet, u.String(), nil)
+		case "POST":
+			bodyValues := url.Values{}
+			bodyValues.Add("q", query)
+			body := bodyValues.Encode()
+			return http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
+		default:
+			return nil, ErrInvalidHttpMode
+		}
+	}()
+
 	if err != nil {
 		return nil, err
 	}
 
+	req.Header.Set("User-Agent", "Grafana")
+
 	params := req.URL.Query()
-	params.Set("q", query)
 	params.Set("db", dsInfo.Database)
 	params.Set("epoch", "s")
-	req.URL.RawQuery = params.Encode()
 
-	req.Header.Set("User-Agent", "Grafana")
+	if httpMode == "GET" {
+		params.Set("q", query)
+	} else if httpMode == "POST" {
+		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	}
+
+	req.URL.RawQuery = params.Encode()
 
 	if dsInfo.BasicAuth {
 		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
