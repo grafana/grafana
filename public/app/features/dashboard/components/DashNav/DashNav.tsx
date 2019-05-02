@@ -61,7 +61,16 @@ export class DashNav extends PureComponent<Props> {
   }
 
   onOpenSearch = () => {
-    appEvents.emit('show-dash-search');
+    const { dashboard } = this.props;
+    const haveFolder = dashboard.meta.folderId > 0;
+    appEvents.emit(
+      'show-dash-search',
+      haveFolder
+        ? {
+            query: 'folder:current',
+          }
+        : null
+    );
   };
 
   onClose = () => {
@@ -142,8 +151,7 @@ export class DashNav extends PureComponent<Props> {
           <a className="navbar-page-btn" onClick={this.onOpenSearch}>
             {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
             {haveFolder && <span className="navbar-page-btn--folder">{folderTitle} / </span>}
-            {dashboard.title}
-            <i className="fa fa-caret-down" />
+            {dashboard.title} <i className="fa fa-caret-down" />
           </a>
         </div>
         {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
@@ -267,8 +275,8 @@ export class DashNav extends PureComponent<Props> {
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
             <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
+            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
           </div>
         )}
       </div>

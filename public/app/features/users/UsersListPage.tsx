@@ -6,11 +6,12 @@ import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, NavModel, OrgUser } from 'app/types';
+import { Invitee, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
+import { NavModel } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;

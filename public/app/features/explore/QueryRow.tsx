@@ -14,14 +14,7 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import {
-  RawTimeRange,
-  DataQuery,
-  ExploreDataSourceApi,
-  QueryHint,
-  QueryFixAction,
-  DataSourceStatus,
-} from '@grafana/ui';
+import { DataQuery, ExploreDataSourceApi, QueryHint, QueryFixAction, DataSourceStatus, TimeRange } from '@grafana/ui';
 import { QueryTransaction, HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -48,7 +41,7 @@ interface QueryRowProps {
   modifyQueries: typeof modifyQueries;
   queryTransactions: QueryTransaction[];
   exploreEvents: Emitter;
-  range: RawTimeRange;
+  range: TimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
 }

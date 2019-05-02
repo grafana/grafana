@@ -2,7 +2,6 @@ import { ComponentClass } from 'react';
 import { Value } from 'slate';
 import {
   RawTimeRange,
-  TimeRange,
   DataQuery,
   DataQueryResponseData,
   DataSourceSelectItem,
@@ -10,6 +9,7 @@ import {
   QueryHint,
   ExploreStartPageProps,
   LogLevel,
+  TimeRange,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
@@ -189,7 +189,7 @@ export interface ExploreItemState {
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
-  range: TimeRange | RawTimeRange;
+  range: TimeRange;
   /**
    * Scanner function that calculates a new range, triggers a query run, and returns the new range.
    */
