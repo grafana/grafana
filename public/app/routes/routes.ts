@@ -318,11 +318,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => PluginPage,
       },
     })
-    .when('/plugins/:pluginId/edit', {
-      templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
-      controller: 'PluginEditCtrl',
-      controllerAs: 'ctrl',
-    })
     .when('/plugins/:pluginId/page/:slug', {
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
