@@ -17,7 +17,7 @@ import {
 import { GaugeOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
-  labelWidth = 8;
+  labelWidth = 6;
 
   onToggleThresholdLabels = () =>
     this.props.onOptionsChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
@@ -60,15 +60,20 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false}>
+          <FieldDisplayEditor
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
+            showPrefixSuffix={false}
+            labelWidth={this.labelWidth}
+          >
             <Switch
-              label="Show Labels"
+              label="Labels"
               labelClass={`width-${this.labelWidth}`}
               checked={showThresholdLabels}
               onChange={this.onToggleThresholdLabels}
             />
             <Switch
-              label="Show Markers"
+              label="Markers"
               labelClass={`width-${this.labelWidth}`}
               checked={showThresholdMarkers}
               onChange={this.onToggleThresholdMarkers}
