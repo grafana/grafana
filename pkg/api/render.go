@@ -40,6 +40,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
+	usePdf := true
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
 		Width:           width,
 		Height:          height,
@@ -51,6 +52,7 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		Timezone:        queryReader.Get("tz", ""),
 		Encoding:        queryReader.Get("encoding", ""),
 		ConcurrentLimit: 30,
+		UsePDF:          usePdf,
 	})
 
 	if err != nil && err == rendering.ErrTimeout {
@@ -72,6 +74,10 @@ func (hs *HTTPServer) RenderToPng(c *m.ReqContext) {
 		return
 	}
 
-	c.Resp.Header().Set("Content-Type", "image/png")
+	if usePdf {
+		c.Resp.Header().Set("Content-Type", "application/pdf")
+	} else {
+		c.Resp.Header().Set("Content-Type", "image/png")
+	}
 	http.ServeFile(c.Resp, c.Req.Request, result.FilePath)
 }
