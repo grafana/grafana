@@ -455,7 +455,7 @@ export function queryTransactionSuccess(
     }
 
     const resultGetter =
-      resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data[0] : null;
+      resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data : null;
     const result = resultGetter ? resultGetter(response.data, null, []) : response.data;
 
     dispatch(

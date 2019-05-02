@@ -317,14 +317,18 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 }
 
 export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
+  const flattenedResult: any[] = _.flatten(result);
   const graphResult = resultType === 'Graph' && result ? result : null;
   const tableResult =
-    resultType === 'Table' && result && result.columns && result.rows
-      ? mergeTablesIntoModel(new TableModel(), result)
+    resultType === 'Table' && result
+      ? mergeTablesIntoModel(
+          new TableModel(),
+          ...flattenedResult.filter((r: any) => r.columns && r.rows).map((r: any) => r as TableModel)
+        )
       : mergeTablesIntoModel(new TableModel());
   const logsResult =
     resultType === 'Logs' && result
-      ? seriesDataToLogsModel(_.flatten(result).map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
+      ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
       : null;
 
   return {
