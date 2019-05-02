@@ -9,6 +9,11 @@
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
   transition-property: box-shadow, border-bottom;
+
+  @include media-breakpoint-up(md) {
+    padding-left: $dashboard-padding;
+    margin-left: 0;
+  }
 }
 
 @mixin navbar-alt-look() {
@@ -75,13 +80,18 @@
     opacity: 0.75;
     margin-right: 10px;
     display: none;
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+    }
   }
 
   &--folder {
     color: $text-color-weak;
+    display: none;
 
-    @include media-breakpoint-down(md) {
-      display: none;
+    @include media-breakpoint-up(lg) {
+      display: inline-block;
     }
   }
 }
@@ -170,17 +180,11 @@
   &--secondary {
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
-}
 
-@include media-breakpoint-up(sm) {
-  .navbar {
-    padding-left: 20px;
-    margin-left: 0;
-  }
-
-  .navbar-page-btn {
-    .gicon {
-      display: inline-block;
+  @include media-breakpoint-down(lg) {
+    .btn-title {
+      margin-left: $space-xs;
+      display: none;
     }
   }
 }

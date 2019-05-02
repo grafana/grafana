@@ -1,42 +1,15 @@
-import { getProcessedSeriesData, PanelQueryRunner } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest } from '@grafana/ui/src/types';
+import { PanelQueryRunner } from './PanelQueryRunner';
+import {
+  PanelData,
+  DataQueryRequest,
+  DataStreamObserver,
+  DataStreamState,
+  LoadingState,
+  ScopedVars,
+} from '@grafana/ui/src/types';
 import moment from 'moment';
 
-describe('PanelQueryRunner', () => {
-  it('converts timeseries to table skipping nulls', () => {
-    const input1 = {
-      target: 'Field Name',
-      datapoints: [[100, 1], [200, 2]],
-    };
-    const input2 = {
-      // without target
-      target: '',
-      datapoints: [[100, 1], [200, 2]],
-    };
-    const data = getProcessedSeriesData([null, input1, input2, null, null]);
-    expect(data.length).toBe(2);
-    expect(data[0].fields[0].name).toBe(input1.target);
-    expect(data[0].rows).toBe(input1.datapoints);
-
-    // Default name
-    expect(data[1].fields[0].name).toEqual('Value');
-
-    // Every colun should have a name and a type
-    for (const table of data) {
-      for (const column of table.fields) {
-        expect(column.name).toBeDefined();
-        expect(column.type).toBeDefined();
-      }
-    }
-  });
-
-  it('supports null values from query OK', () => {
-    expect(getProcessedSeriesData([null, null, null, null])).toEqual([]);
-    expect(getProcessedSeriesData(undefined)).toEqual([]);
-    expect(getProcessedSeriesData((null as unknown) as any[])).toEqual([]);
-    expect(getProcessedSeriesData([])).toEqual([]);
-  });
-});
+jest.mock('app/core/services/backend_srv');
 
 interface ScenarioContext {
   setup: (fn: () => void) => void;
@@ -47,6 +20,9 @@ interface ScenarioContext {
   events?: PanelData[];
   res?: PanelData;
   queryCalledWith?: DataQueryRequest;
+  observer: DataStreamObserver;
+  runner: PanelQueryRunner;
+  scopedVars: ScopedVars;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
@@ -57,12 +33,16 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 
     const ctx: ScenarioContext = {
       widthPixels: 200,
+      scopedVars: {
+        server: { text: 'Server1', value: 'server-1' },
+      },
+      runner: new PanelQueryRunner(),
+      observer: (args: any) => {},
       setup: (fn: () => void) => {
         setupFn = fn;
       },
     };
 
-    let runner: PanelQueryRunner;
     const response: any = {
       data: [{ target: 'hello', datapoints: [] }],
     };
@@ -71,9 +51,11 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       setupFn();
 
       const datasource: any = {
+        name: 'TestDB',
         interval: ctx.dsInterval,
-        query: (options: DataQueryRequest) => {
+        query: (options: DataQueryRequest, observer: DataStreamObserver) => {
           ctx.queryCalledWith = options;
+          ctx.observer = observer;
           return Promise.resolve(response);
         },
         testDatasource: jest.fn(),
@@ -81,6 +63,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 
       const args: any = {
         datasource,
+        scopedVars: ctx.scopedVars,
         minInterval: ctx.minInterval,
         widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
@@ -93,15 +76,15 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      runner = new PanelQueryRunner();
-      runner.subscribe({
+      ctx.runner = new PanelQueryRunner();
+      ctx.runner.subscribe({
         next: (data: PanelData) => {
           ctx.events.push(data);
         },
       });
 
       ctx.events = [];
-      ctx.res = await runner.run(args);
+      ctx.res = await ctx.runner.run(args);
     });
 
     scenarioFn(ctx);
@@ -109,6 +92,22 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 }
 
 describe('PanelQueryRunner', () => {
+  describeQueryRunnerScenario('simple scenario', ctx => {
+    it('should set requestId on request', async () => {
+      expect(ctx.queryCalledWith.requestId).toBe('Q100');
+    });
+
+    it('should set datasource name on request', async () => {
+      expect(ctx.queryCalledWith.targets[0].datasource).toBe('TestDB');
+    });
+
+    it('should pass scopedVars to datasource with interval props', async () => {
+      expect(ctx.queryCalledWith.scopedVars.server.text).toBe('Server1');
+      expect(ctx.queryCalledWith.scopedVars.__interval.text).toBe('5m');
+      expect(ctx.queryCalledWith.scopedVars.__interval_ms.text).toBe('300000');
+    });
+  });
+
   describeQueryRunnerScenario('with no maxDataPoints or minInterval', ctx => {
     ctx.setup(() => {
       ctx.maxDataPoints = null;
@@ -163,6 +162,49 @@ describe('PanelQueryRunner', () => {
 
     it('should pass maxDataPoints if specified', async () => {
       expect(ctx.queryCalledWith.maxDataPoints).toBe(10);
+    });
+  });
+
+  describeQueryRunnerScenario('when datasource is streaming data', ctx => {
+    let streamState: DataStreamState;
+    let isUnsubbed = false;
+
+    beforeEach(() => {
+      streamState = {
+        state: LoadingState.Streaming,
+        key: 'test-stream-1',
+        series: [
+          {
+            rows: [],
+            fields: [],
+            name: 'I am a magic stream',
+          },
+        ],
+        request: {
+          requestId: ctx.queryCalledWith.requestId,
+        } as any,
+        unsubscribe: () => {
+          isUnsubbed = true;
+        },
+      };
+      ctx.observer(streamState);
+    });
+
+    it('should push another update to subscriber', async () => {
+      expect(ctx.events.length).toBe(2);
+    });
+
+    it('should set state to streaming', async () => {
+      expect(ctx.events[1].state).toBe(LoadingState.Streaming);
+    });
+
+    it('should not unsubscribe', async () => {
+      expect(isUnsubbed).toBe(false);
+    });
+
+    it('destroy should unsubscribe streams', async () => {
+      ctx.runner.destroy();
+      expect(isUnsubbed).toBe(true);
     });
   });
 });

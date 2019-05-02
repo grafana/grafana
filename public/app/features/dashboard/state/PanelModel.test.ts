@@ -1,6 +1,5 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { ReactPanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
 
 class TablePanelCtrl {}
 
@@ -31,10 +30,13 @@ describe('PanelModel', () => {
       };
       model = new PanelModel(modelJson);
       model.pluginLoaded(
-        getPanelPlugin({
-          id: 'table',
-          angularPlugin: new AngularPanelPlugin(TablePanelCtrl),
-        })
+        getPanelPlugin(
+          {
+            id: 'table',
+          },
+          null, // react
+          TablePanelCtrl // angular
+        )
       );
     });
 
@@ -123,15 +125,10 @@ describe('PanelModel', () => {
 
     describe('when changing to react panel', () => {
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = new ReactPanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
-        model.changePlugin(
-          getPanelPlugin({
-            id: 'react',
-            reactPlugin: reactPlugin,
-          })
-        );
+        model.changePlugin(reactPlugin);
       });
 
       it('should call react onPanelTypeChanged', () => {

@@ -218,6 +218,7 @@
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "6.4.0",
+    "search-query-parser": "1.5.2",
     "slate": "0.33.8",
     "slate-plain-serializer": "0.5.41",
     "slate-prism": "0.5.0",

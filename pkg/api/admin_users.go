@@ -119,7 +119,7 @@ func (server *HTTPServer) AdminLogoutUser(c *m.ReqContext) Response {
 		return Error(400, "You cannot logout yourself", nil)
 	}
 
-	return server.logoutUserFromAllDevicesInternal(userID)
+	return server.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
 }
 
 // GET /api/admin/users/:id/auth-tokens
