@@ -20,6 +20,7 @@ const setup = (propOverrides?: object) => {
     updateDataSource: jest.fn(),
     setIsDefault,
     plugin: pluginMock,
+    query: {},
     ...propOverrides,
   };
 

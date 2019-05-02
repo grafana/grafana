@@ -21,7 +21,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { StoreState } from 'app/types/';
+import { StoreState, UrlQueryMap } from 'app/types/';
 import { NavModel, DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
@@ -38,6 +38,7 @@ export interface Props {
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
   plugin?: DataSourcePlugin;
+  query: UrlQueryMap;
 }
 
 interface State {
@@ -46,6 +47,8 @@ interface State {
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
+  navModelWithTabs?: NavModel; // If modified with tabs
+  tab?: string;
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
@@ -64,6 +67,32 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     try {
       importedPlugin = await importDataSourcePlugin(dataSourceMeta);
+
+      // Add Tabs to the navModel
+      if (importedPlugin.configTabs && importedPlugin.configTabs.length) {
+        const { navModel } = this.props;
+        const path = navModel.node.url;
+        const tabs = importedPlugin.configTabs.map(tab => {
+          return {
+            text: tab.title,
+            icon: tab.icon,
+            url: path + '?tab=' + tab.id,
+            id: tab.id,
+          };
+        });
+        const children = [...navModel.main.children]; // copy it first
+        children.splice(1, 0, ...tabs); // add the tabs
+        const main = {
+          ...navModel.main,
+          children,
+        };
+        this.setState({
+          navModelWithTabs: {
+            ...navModel,
+            main,
+          },
+        });
+      }
     } catch (e) {
       console.log('Failed to import plugin module', e);
     }
@@ -80,10 +109,37 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dataSource } = this.props;
+    const { dataSource, query } = this.props;
+    const { navModelWithTabs } = this.state;
 
     if (prevProps.dataSource !== dataSource) {
       this.setState({ dataSource });
+    }
+
+    if (navModelWithTabs) {
+      if (this.state.tab !== query.tab) {
+        let found = false;
+        let tab = query.tab as string;
+        const children = navModelWithTabs.main.children.map(item => {
+          if (item.id === tab) {
+            found = true;
+            return {
+              ...item,
+              active: true,
+            };
+          }
+          return {
+            ...item,
+            active: false,
+          };
+        });
+        if (!found) {
+          children[0].active = true;
+          tab = null;
+        }
+        navModelWithTabs.main.children = children; // TODO - immutable?
+        this.setState({ navModelWithTabs, tab });
+      }
     }
   }
 
@@ -174,61 +230,88 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return Object.keys(this.props.dataSource).length > 0;
   }
 
-  render() {
-    const { dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
+  renderDashboards() {
+    return <div>TODO, render the dashboard import...</div>;
+  }
+
+  renderTabBody(tab: string) {
+    if (tab === 'dashboards') {
+      return this.renderDashboards();
+    }
+
+    const { plugin } = this.state;
+    if (!plugin || !plugin.addConfigTab) {
+      return null; // still loading
+    }
+
+    for (const t of plugin.configTabs) {
+      if (t.id === tab) {
+        return <t.body plugin={plugin} query={this.props.query} />;
+      }
+    }
+
+    return <div>Tab Not Found: {tab}</div>;
+  }
+
+  renderSettings() {
+    const { dataSourceMeta, setDataSourceName, setIsDefault } = this.props;
     const { testingMessage, testingStatus, plugin, dataSource } = this.state;
 
     return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && (
-            <div>
-              <form onSubmit={this.onSubmit}>
-                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                <PluginStateinfo state={dataSourceMeta.state} />
+      <form onSubmit={this.onSubmit}>
+        {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+        <PluginStateinfo state={dataSourceMeta.state} />
 
-                <BasicSettings
-                  dataSourceName={dataSource.name}
-                  isDefault={dataSource.isDefault}
-                  onDefaultChange={state => setIsDefault(state)}
-                  onNameChange={name => setDataSourceName(name)}
-                />
+        <BasicSettings
+          dataSourceName={dataSource.name}
+          isDefault={dataSource.isDefault}
+          onDefaultChange={state => setIsDefault(state)}
+          onNameChange={name => setDataSourceName(name)}
+        />
 
-                {dataSourceMeta.module && plugin && (
-                  <PluginSettings
-                    plugin={plugin}
-                    dataSource={this.state.dataSource}
-                    dataSourceMeta={dataSourceMeta}
-                    onModelChange={this.onModelChange}
-                  />
+        {dataSourceMeta.module && plugin && (
+          <PluginSettings
+            plugin={plugin}
+            dataSource={this.state.dataSource}
+            dataSourceMeta={dataSourceMeta}
+            onModelChange={this.onModelChange}
+          />
+        )}
+
+        <div className="gf-form-group">
+          {testingMessage && (
+            <div className={`alert-${testingStatus} alert`}>
+              <div className="alert-icon">
+                {testingStatus === 'error' ? (
+                  <i className="fa fa-exclamation-triangle" />
+                ) : (
+                  <i className="fa fa-check" />
                 )}
-
-                <div className="gf-form-group">
-                  {testingMessage && (
-                    <div className={`alert-${testingStatus} alert`}>
-                      <div className="alert-icon">
-                        {testingStatus === 'error' ? (
-                          <i className="fa fa-exclamation-triangle" />
-                        ) : (
-                          <i className="fa fa-check" />
-                        )}
-                      </div>
-                      <div className="alert-body">
-                        <div className="alert-title">{testingMessage}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <ButtonRow
-                  onSubmit={event => this.onSubmit(event)}
-                  isReadOnly={this.isReadOnly()}
-                  onDelete={this.onDelete}
-                  onTest={event => this.onTest(event)}
-                />
-              </form>
+              </div>
+              <div className="alert-body">
+                <div className="alert-title">{testingMessage}</div>
+              </div>
             </div>
           )}
+        </div>
+
+        <ButtonRow
+          onSubmit={event => this.onSubmit(event)}
+          isReadOnly={this.isReadOnly()}
+          onDelete={this.onDelete}
+          onTest={event => this.onTest(event)}
+        />
+      </form>
+    );
+  }
+
+  render() {
+    const { navModel } = this.props;
+    const { tab, navModelWithTabs } = this.state;
+    return (
+      <Page navModel={navModelWithTabs ? navModelWithTabs : navModel}>
+        <Page.Contents isLoading={!this.hasDataSource}>
+          {this.hasDataSource && <div>{tab ? this.renderTabBody(tab) : this.renderSettings()}</div>}
         </Page.Contents>
       </Page>
     );
@@ -243,6 +326,7 @@ function mapStateToProps(state: StoreState) {
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
+    query: state.location.query,
   };
 }
 

@@ -12,13 +12,14 @@ export class TestInfoTab extends PureComponent<Props> {
   }
 
   render() {
-    const { query } = this.props;
-
     return (
       <div>
-        11111111111111111111111111111111
-        <pre>{JSON.stringify(query)}</pre>
-        11111111111111111111111111111111
+        TODO... make this a useful help page...
+        <br />
+        <br />
+        Describe installing the docker test environment too...
+        <br />
+        <br />
       </div>
     );
   }

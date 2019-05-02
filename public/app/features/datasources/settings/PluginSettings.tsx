@@ -14,11 +14,11 @@ export class PluginSettings extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
   scopeProps: {
-    ctrl: { datasourceMeta: Plugin; current: DataSourceSettings };
+    ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
     onModelChanged: (dataSource: DataSourceSettings) => void;
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.scopeProps = {
@@ -45,7 +45,7 @@ export class PluginSettings extends PureComponent<Props> {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     const { plugin } = this.props;
     if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
       this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
