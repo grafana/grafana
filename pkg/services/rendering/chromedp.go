@@ -79,7 +79,12 @@ func screenshot(urlstr, domain, renderKey string, buf *[]byte, usePdf bool, netw
 		page.Enable(),
 		setRenderKeyCookie(renderKey, domain),
 		chromedp.Navigate(urlstr),
+		// Waiting till there is no in flight network request and the last one finished 500ms ago.
 		waitOnNetwork(networkStatus),
+		// This seems to also work but was some trial end error to find out this particular selector will mean
+		// the whole panel is visible. This seems to be too tight to the structure of the page and can be different
+		// for different panels/pages so even though the network wait is more complex (and still could be flaky) it
+		// should handle more scenarios without coupling the code here.
 		//chromedp.WaitVisible(".flot-base", chromedp.ByQuery),
 	}
 	if usePdf {
