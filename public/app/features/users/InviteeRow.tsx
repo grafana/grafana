@@ -34,7 +34,7 @@ class InviteeRow extends PureComponent<Props> {
               style={{ position: 'absolute', right: -1000 }}
               ref={this.copyUrlRef}
             />
-            <i className="fa fa-clipboard" /> Copy Invite
+            Copy Invite
           </button>
           &nbsp;
         </td>

@@ -27,7 +27,7 @@ export class FolderPageLoader {
           },
           {
             active: activeChildId === 'manage-folder-settings',
-            icon: 'fa fa-fw fa-cog',
+            icon: 'gicon gicon-cog',
             id: 'manage-folder-settings',
             text: 'Settings',
             url: 'dashboards/settings',

@@ -1,67 +1,57 @@
-// Libraries
-import _ from 'lodash';
-import React, { PureComponent } from 'react';
-
-import { Graph, PanelProps, NullValueMode, colors, GraphSeriesXY, FieldType, getFirstTimeField } from '@grafana/ui';
+import React from 'react';
+import { PanelProps, GraphWithLegend /*, GraphSeriesXY*/ } from '@grafana/ui';
 import { Options } from './types';
-import { getFlotPairs } from '@grafana/ui/src/utils/flotPairs';
+import { GraphPanelController } from './GraphPanelController';
+import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
 
-interface Props extends PanelProps<Options> {}
+interface GraphPanelProps extends PanelProps<Options> {}
 
-export class GraphPanel extends PureComponent<Props> {
-  render() {
-    const { data, timeRange, width, height } = this.props;
-    const { showLines, showBars, showPoints } = this.props.options;
-
-    const graphs: GraphSeriesXY[] = [];
-    for (const series of data.series) {
-      const timeColumn = getFirstTimeField(series);
-      if (timeColumn < 0) {
-        continue;
-      }
-
-      for (let i = 0; i < series.fields.length; i++) {
-        const field = series.fields[i];
-
-        // Show all numeric columns
-        if (field.type === FieldType.number) {
-          // Use external calculator just to make sure it works :)
-          const points = getFlotPairs({
-            series,
-            xIndex: timeColumn,
-            yIndex: i,
-            nullValueMode: NullValueMode.Null,
-          });
-
-          if (points.length > 0) {
-            graphs.push({
-              label: field.name,
-              data: points,
-              color: colors[graphs.length % colors.length],
-            });
-          }
-        }
-      }
-    }
-
-    if (graphs.length < 1) {
-      return (
-        <div className="panel-empty">
-          <p>No data found in response</p>
-        </div>
-      );
-    }
-
+export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
+  data,
+  timeRange,
+  width,
+  height,
+  options,
+  onOptionsChange,
+}) => {
+  if (!data) {
     return (
-      <Graph
-        series={graphs}
-        timeRange={timeRange}
-        showLines={showLines}
-        showPoints={showPoints}
-        showBars={showBars}
-        width={width}
-        height={height}
-      />
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
     );
   }
-}
+
+  const {
+    graph: { showLines, showBars, showPoints },
+    legend: legendOptions,
+  } = options;
+
+  const graphProps = {
+    showBars,
+    showLines,
+    showPoints,
+  };
+  const { asTable, isVisible, ...legendProps } = legendOptions;
+  return (
+    <GraphPanelController data={data} options={options} onOptionsChange={onOptionsChange}>
+      {({ onSeriesToggle, ...controllerApi }) => {
+        return (
+          <GraphWithLegend
+            timeRange={timeRange}
+            width={width}
+            height={height}
+            displayMode={asTable ? LegendDisplayMode.Table : LegendDisplayMode.List}
+            isLegendVisible={isVisible}
+            sortLegendBy={legendOptions.sortBy}
+            sortLegendDesc={legendOptions.sortDesc}
+            onSeriesToggle={onSeriesToggle}
+            {...graphProps}
+            {...legendProps}
+            {...controllerApi}
+          />
+        );
+      }}
+    </GraphPanelController>
+  );
+};

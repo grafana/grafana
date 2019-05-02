@@ -25,7 +25,7 @@ export interface Props {
 }
 
 interface State extends StackdriverQuery {
-  alignOptions: SelectOptionItem[];
+  alignOptions: Array<SelectOptionItem<string>>;
   lastQuery: string;
   lastQueryError: string;
   [key: string]: any;

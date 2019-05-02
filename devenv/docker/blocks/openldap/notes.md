@@ -39,7 +39,5 @@ frontend
   ldap-daniel
 editors
   ldap-editors
-
-
 no groups
   ldap-viewer

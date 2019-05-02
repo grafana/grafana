@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, TimeRange, ClickOutsideWrapper } from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, ClickOutsideWrapper, TimeZone, TimeRange } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -15,6 +15,7 @@ import {
   changeRefreshInterval,
 } from './state/actions';
 import TimePicker from './TimePicker';
+import { getTimeZone } from '../profile/state/selectors';
 import { RefreshPicker, SetInterval } from '@grafana/ui';
 
 enum IconSide {
@@ -38,9 +39,9 @@ const createResponsiveButton = (options: {
 
   return (
     <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
-      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName} icon-margin-right`} /> : null}
+      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName} icon-margin-left`} /> : null}
+      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
     </button>
   );
 };
@@ -48,14 +49,15 @@ const createResponsiveButton = (options: {
 interface OwnProps {
   exploreId: ExploreId;
   timepickerRef: React.RefObject<TimePicker>;
-  onChangeTime: (range: TimeRange, changedByScanner?: boolean) => void;
+  onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
 interface StateProps {
   datasourceMissing: boolean;
   exploreDatasources: DataSourceSelectItem[];
   loading: boolean;
-  range: RawTimeRange;
+  range: TimeRange;
+  timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
@@ -106,6 +108,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       exploreId,
       loading,
       range,
+      timeZone,
       selectedDatasource,
       splitted,
       timepickerRef,
@@ -159,7 +162,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
               <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker ref={timepickerRef} range={range} onChangeTime={onChangeTime} />
+                <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
               </ClickOutsideWrapper>
 
               <RefreshPicker
@@ -172,7 +175,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             </div>
 
             <div className="explore-toolbar-content-item">
-              <button className="btn navbar-button navbar-button--no-icon" onClick={this.onClearAll}>
+              <button className="btn navbar-button" onClick={this.onClearAll}>
                 Clear All
               </button>
             </div>
@@ -214,6 +217,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     loading,
     range,
+    timeZone: getTimeZone(state.user),
     selectedDatasource,
     splitted,
     refreshInterval,

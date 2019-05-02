@@ -1,6 +1,7 @@
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
+  Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
 }
@@ -13,15 +14,29 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
+export interface QueryResultMeta {
+  [key: string]: any;
+
+  // Match the result to the query
+  requestId?: string;
+
+  // Used in Explore for highlighting
+  search?: string;
+
+  // Used in Explore to show limit applied to search result
+  limit?: number;
+}
+
 export interface QueryResultBase {
   /**
    * Matches the query target refId
    */
   refId?: string;
+
   /**
    * Used by some backend datasources to communicate back info about the execution (generated sql, timing)
    */
-  meta?: any;
+  meta?: QueryResultMeta;
 }
 
 export interface Field {

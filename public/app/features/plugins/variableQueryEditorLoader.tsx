@@ -3,9 +3,11 @@ import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
+import { DataSourcePluginMeta } from '@grafana/ui';
+import { TemplateSrv } from '../templating/template_srv';
 
-async function loadComponent(module) {
-  const dsPlugin = await importDataSourcePlugin(module);
+async function loadComponent(meta: DataSourcePluginMeta) {
+  const dsPlugin = await importDataSourcePlugin(meta);
   if (dsPlugin.components.VariableQueryEditor) {
     return dsPlugin.components.VariableQueryEditor;
   } else {
@@ -14,11 +16,11 @@ async function loadComponent(module) {
 }
 
 /** @ngInject */
-function variableQueryEditorLoader(templateSrv) {
+function variableQueryEditorLoader(templateSrv: TemplateSrv) {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
-      const Component = await loadComponent(scope.currentDatasource.meta.module);
+      const Component = await loadComponent(scope.currentDatasource.meta);
       const props = {
         datasource: scope.currentDatasource,
         query: scope.current.query,
