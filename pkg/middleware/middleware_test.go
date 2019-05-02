@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	m "github.com/grafana/grafana/pkg/models"
@@ -34,16 +35,34 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Code, ShouldEqual, 200)
 		})
 
-		middlewareScenario(t, "middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/api/search").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
-		middlewareScenario(t, "middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
+		middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Pragma"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Expires"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "middleware should add Cache-Control header for GET requests with html response", func(sc *scenarioContext) {
+			sc.handler(func(c *m.ReqContext) {
+				data := &dtos.IndexViewData{
+					User:     &dtos.CurrentUser{},
+					Settings: map[string]interface{}{},
+					NavTree:  []*dtos.NavLink{},
+				}
+				c.HTML(200, "index-template", data)
+			})
+			sc.fakeReq("GET", "/").exec()
+			So(sc.resp.Code, ShouldEqual, 200)
+			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
 		middlewareScenario(t, "Invalid api key", func(sc *scenarioContext) {
@@ -413,6 +432,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		viewsPath, _ := filepath.Abs("../../public/views")
 
 		sc.m = macaron.New()
+		sc.m.Use(AddDefaultResponseHeaders())
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -424,7 +444,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
 
 		sc.m.Use(OrgRedirect())
-		sc.m.Use(AddDefaultResponseHeaders())
 
 		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c
