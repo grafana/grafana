@@ -20,6 +20,7 @@ import {
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -105,7 +106,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           if (typeof err.data === 'string') {
             error.message = err.data;
           } else if (err.data.error) {
-            error.message = err.data.error;
+            error.message = safeStringifyValue(err.data.error);
           }
         } else if (err.message) {
           error.message = err.message;

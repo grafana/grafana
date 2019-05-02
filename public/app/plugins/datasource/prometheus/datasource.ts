@@ -19,6 +19,7 @@ import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSet
 import { ExploreUrlState } from 'app/types/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -306,7 +307,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       if (typeof err.data === 'string') {
         error.message = err.data;
       } else if (err.data.error) {
-        error.message = err.data.error;
+        error.message = safeStringifyValue(err.data.error);
       }
     } else if (err.message) {
       error.message = err.message;
