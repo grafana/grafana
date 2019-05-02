@@ -11,7 +11,5 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: [],
   globals: { 'ts-jest': { isolatedModules: true } },
-  preset: 'jest-puppeteer',
-  testEnvironment: 'jest-environment-puppeteer',
-  setupFilesAfterEnv: ['expect-puppeteer'],
+  setupFilesAfterEnv: ['expect-puppeteer', '<rootDir>/public/e2e-test/install/install.ts'],
 };
