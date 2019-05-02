@@ -11,6 +11,7 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
+import { SearchField } from './components/search/SearchField';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -20,6 +21,12 @@ export function registerAngularDirectives() {
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
   react2AngularDirective('searchResult', SearchResult, []);
+  react2AngularDirective('searchField', SearchField, [
+    'query',
+    'autoFocus',
+    ['onChange', { watchDepth: 'reference' }],
+    ['onKeyDown', { watchDepth: 'reference' }],
+  ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],
