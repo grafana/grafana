@@ -552,6 +552,21 @@ jobs:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
+  build-oss-msi:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build OSS MSI
+          command: './scripts/build/ci-msi-build/ci-msi-build-oss.sh'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana-*.msi
+
   store-build-artifacts:
     docker:
       - image: circleci/node:8
@@ -590,6 +605,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
@@ -612,6 +628,16 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
+          filters: *filter-only-master
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
           filters: *filter-only-master
 
   release:
@@ -641,6 +667,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-release
       - deploy-enterprise-release:
           requires:
@@ -664,6 +691,16 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
 
   build-branches-and-prs:
       jobs:
