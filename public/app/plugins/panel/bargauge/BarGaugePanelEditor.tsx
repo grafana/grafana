@@ -6,7 +6,6 @@ import {
   ThresholdsEditor,
   ValueMappingsEditor,
   PanelOptionsGrid,
-  PanelOptionsGroup,
   FieldDisplayEditor,
   FieldDisplayOptions,
   Field,
@@ -50,23 +49,19 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     const { options } = this.props;
     const { fieldOptions } = options;
 
+    const labelWidth = 6;
+
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false}>
-            <>HELLO!!!!!!</>
-          </FieldDisplayEditor>
-
-          <FieldPropertiesEditor
-            title="Field (default)"
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
-          />
-
-          <PanelOptionsGroup title="Gauge">
+          <FieldDisplayEditor
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
+            showPrefixSuffix={false}
+            labelWidth={labelWidth}
+          >
             <div className="form-field">
-              <FormLabel width={8}>Orientation</FormLabel>
+              <FormLabel width={labelWidth}>Orientation</FormLabel>
               <Select
                 width={12}
                 options={orientationOptions}
@@ -76,7 +71,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
               />
             </div>
             <div className="form-field">
-              <FormLabel width={8}>Display Mode</FormLabel>
+              <FormLabel width={labelWidth}>Mode</FormLabel>
               <Select
                 width={12}
                 options={displayModes}
@@ -85,7 +80,15 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                 value={displayModes.find(item => item.value === options.displayMode)}
               />
             </div>
-          </PanelOptionsGroup>
+          </FieldDisplayEditor>
+
+          <FieldPropertiesEditor
+            title="Field"
+            showMinMax={true}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
+          />
+
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
 

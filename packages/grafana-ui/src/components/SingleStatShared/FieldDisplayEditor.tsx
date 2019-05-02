@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ChangeEvent, Children } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
 import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@grafana/ui';
@@ -16,8 +16,6 @@ import {
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
-
-const labelWidth = 5;
 
 const showOptions: Array<SelectOptionItem<boolean>> = [
   {
@@ -36,7 +34,8 @@ export interface Props {
   options: FieldDisplayOptions;
   onChange: (valueOptions: FieldDisplayOptions) => void;
   showPrefixSuffix: boolean;
-  children?: JSX.Element;
+  labelWidth?: number;
+  children?: JSX.Element[];
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
@@ -85,6 +84,8 @@ export class FieldDisplayEditor extends PureComponent<Props> {
       </div>
     );
 
+    const labelWidth = this.props.labelWidth || 5;
+
     return (
       <PanelOptionsGroup title="Display">
         <>
@@ -132,7 +133,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
               <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
             </>
           )}
-          {children && children}
+          {children}
         </>
       </PanelOptionsGroup>
     );
