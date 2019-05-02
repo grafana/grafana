@@ -25,11 +25,6 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
     return this;
   }
 
-  setConfigCtrl(ConfigCtrl: any) {
-    this.components.ConfigCtrl = ConfigCtrl;
-    return this;
-  }
-
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
@@ -60,14 +55,15 @@ export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuer
     return this;
   }
 
-  setComponentsFromLegacyExports(exports: any) {
-    this.components.ConfigCtrl = exports.ConfigCtrl;
-    this.components.QueryCtrl = exports.QueryCtrl;
-    this.components.AnnotationsQueryCtrl = exports.AnnotationsQueryCtrl;
-    this.components.ExploreQueryField = exports.ExploreQueryField;
-    this.components.ExploreStartPage = exports.ExploreStartPage;
-    this.components.QueryEditor = exports.QueryEditor;
-    this.components.VariableQueryEditor = exports.VariableQueryEditor;
+  setComponentsFromLegacyExports(pluginExports: any) {
+    this.angularConfigCtrl = pluginExports.ConfigCtrl;
+
+    this.components.QueryCtrl = pluginExports.QueryCtrl;
+    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
+    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
+    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
+    this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
 
@@ -91,7 +87,6 @@ interface PluginMetaQueryOptions {
 
 export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
   QueryCtrl?: any;
-  ConfigCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;

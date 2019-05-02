@@ -3,8 +3,8 @@ import { PluginDashboard } from '../../types';
 
 export interface Props {
   dashboards: PluginDashboard[];
-  onImport: (dashboard, overwrite) => void;
-  onRemove: (dashboard) => void;
+  onImport: (dashboard: PluginDashboard, overwrite: boolean) => void;
+  onRemove: (dashboard: PluginDashboard) => void;
 }
 
 const DashboardsTable: FC<Props> = ({ dashboards, onImport, onRemove }) => {
