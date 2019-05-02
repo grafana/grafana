@@ -15,6 +15,7 @@ import {
   SeriesData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataQueryError,
 } from '@grafana/ui/src/types';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -125,8 +126,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
         if (result.data) {
+          const refId = queryTargets[i].refId;
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
+            seriesData.refId = refId;
             seriesData.meta = {
               search: queryTargets[i].regexp,
               limit: this.maxLines,

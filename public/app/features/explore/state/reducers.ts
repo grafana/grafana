@@ -344,14 +344,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { datasourceInstance, queryIntervals } = state;
+      const { queryIntervals } = state;
       const { result, resultType, latency } = action.payload;
-      const results = calculateResultsFromQueryTransactions(
-        result,
-        resultType,
-        datasourceInstance,
-        queryIntervals.intervalMs
-      );
+      const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
 
       return {
         ...state,

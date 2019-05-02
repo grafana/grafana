@@ -316,21 +316,16 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryTransactions(
-  result: any,
-  resultType: ResultType,
-  datasource: any,
-  graphInterval: number
-) {
-  const graphResult = resultType === 'Graph' && result ? result : undefined;
+export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
+  const graphResult = resultType === 'Graph' && result ? result : null;
   const tableResult =
     resultType === 'Table' && result && result.columns && result.rows
       ? mergeTablesIntoModel(new TableModel(), result)
       : mergeTablesIntoModel(new TableModel());
-  const logsResult = seriesDataToLogsModel(
-    _.flatten(toSeriesData(result)),
-    graphInterval
-  );
+  const logsResult =
+    resultType === 'Logs' && result
+      ? seriesDataToLogsModel(_.flatten(result).map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
+      : null;
 
   return {
     graphResult,
