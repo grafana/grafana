@@ -156,7 +156,7 @@ func waitOnNetwork(networkStatus *NetworkStatus) chromedp.Action {
 
 func makeMessageListener(messageChan chan string) func(string, ...interface{}) {
 	return func(s string, m ...interface{}) {
-		//log.Printf(s)
+		// Taken from https://github.com/chromedp/chromedp/issues/252
 		for _, elem := range m {
 			var msg cdproto.Message
 			var msgIn struct {
@@ -174,8 +174,10 @@ func makeMessageListener(messageChan chan string) func(string, ...interface{}) {
 				continue
 			}
 			err = json.Unmarshal([]byte(msgIn.Message), &msgLast)
+			if err != nil {
+				continue
+			}
 			messageChan <- string(msgLast.Method)
-
 		}
 	}
 }
