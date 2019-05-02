@@ -73,15 +73,18 @@
   overflow: hidden;
 }
 
-.card-item-header {
-  margin-bottom: $space-md;
-}
-
 .card-item-type {
+  align-items: center;
   color: $text-color-weak;
+  display: flex;
   text-transform: uppercase;
   font-size: $font-size-sm;
   font-weight: $font-weight-semi-bold;
+
+  .gicon {
+    margin: 0 2px 1px 0;
+    opacity: 0.5;
+  }
 }
 
 .card-item-notice {
@@ -115,14 +118,14 @@
 }
 
 .card-list-layout-grid {
-  .card-item-type {
-    display: inline-block;
-  }
-
   .card-item-notice {
     font-size: $font-size-sm;
     display: inline-block;
     margin-left: $space-md;
+  }
+
+  .card-item-header {
+    margin-bottom: $space-md;
   }
 
   .card-item-header-action {
