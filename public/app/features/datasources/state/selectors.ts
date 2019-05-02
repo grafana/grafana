@@ -1,4 +1,4 @@
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui/src/types';
 
 export const getDataSources = state => {
   const regex = new RegExp(state.searchQuery, 'i');
@@ -23,12 +23,12 @@ export const getDataSource = (state, dataSourceId): DataSourceSettings | null =>
   return {} as DataSourceSettings;
 };
 
-export const getDataSourceMeta = (state, type): Plugin => {
+export const getDataSourceMeta = (state, type): DataSourcePluginMeta => {
   if (state.dataSourceMeta.id === type) {
     return state.dataSourceMeta;
   }
 
-  return {} as Plugin;
+  return {} as DataSourcePluginMeta;
 };
 
 export const getDataSourcesSearchQuery = state => state.searchQuery;

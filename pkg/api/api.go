@@ -283,10 +283,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/:uid", Wrap(GetDashboard))
+			dashboardRoute.Get("/uid/:uid", Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", Wrap(DeleteDashboardByUID))
 
-			dashboardRoute.Get("/db/:slug", Wrap(GetDashboard))
+			dashboardRoute.Get("/db/:slug", Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
