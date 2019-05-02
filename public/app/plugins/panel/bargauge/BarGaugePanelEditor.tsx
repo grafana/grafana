@@ -53,7 +53,9 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false}>
+            <>HELLO!!!!!!</>
+          </FieldDisplayEditor>
 
           <FieldPropertiesEditor
             title="Field (default)"

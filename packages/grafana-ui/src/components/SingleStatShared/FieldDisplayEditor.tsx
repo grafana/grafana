@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent, ChangeEvent, Children } from 'react';
 
 // Components
 import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@grafana/ui';
@@ -36,6 +36,7 @@ export interface Props {
   options: FieldDisplayOptions;
   onChange: (valueOptions: FieldDisplayOptions) => void;
   showPrefixSuffix: boolean;
+  children?: JSX.Element;
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
@@ -69,18 +70,18 @@ export class FieldDisplayEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { showPrefixSuffix, options } = this.props;
+    const { showPrefixSuffix, options, children } = this.props;
     const { title, stats, prefix, suffix, values, limit } = options;
 
     const titleTooltip = (
       <div>
         Template Variables:
         <br />
+        {values ? '$' + VAR_CELL_PREFIX + '{N}' : '$' + VAR_CALC}
+        <br />
         {'$' + VAR_SERIES_NAME}
         <br />
         {'$' + VAR_FIELD_NAME}
-        <br />
-        {values ? '$' + VAR_CELL_PREFIX + '{N}' : '$' + VAR_CALC}
       </div>
     );
 
@@ -131,6 +132,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
               <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
             </>
           )}
+          {children && children}
         </>
       </PanelOptionsGroup>
     );
