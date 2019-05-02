@@ -91,12 +91,12 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigTabProps<T extends PluginMeta> {
-  meta: T;
+export interface PluginConfigTabProps<T extends GrafanaPlugin> {
+  plugin: T;
   query: { [s: string]: any }; // The URL query parameters
 }
 
-export interface PluginConfigTab<T extends PluginMeta> {
+export interface PluginConfigTab<T extends GrafanaPlugin> {
   title: string; // Display
   icon?: string;
   id: string; // Unique, in URL
@@ -112,10 +112,10 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page
-  configTabs?: Array<PluginConfigTab<T>>;
+  configTabs?: Array<PluginConfigTab<GrafanaPlugin>>;
 
   // Tabs on the plugin page
-  addConfigTab(tab: PluginConfigTab<T>) {
+  addConfigTab(tab: PluginConfigTab<GrafanaPlugin>) {
     if (!this.configTabs) {
       this.configTabs = [];
     }

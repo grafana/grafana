@@ -224,7 +224,7 @@ class PluginPage extends PureComponent<Props, State> {
       if (plugin.configTabs) {
         for (const tab of plugin.configTabs) {
           if (tab.id === active.id) {
-            return <tab.body meta={plugin.meta} query={query} />;
+            return <tab.body plugin={plugin} query={query} />;
           }
         }
       }
