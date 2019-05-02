@@ -8,9 +8,10 @@ export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
 }
-export class DataSourcePlugin<TOptions = {}, TQuery extends DataQuery = DataQuery> extends GrafanaPlugin<
-  DataSourcePluginMeta
-> {
+export class DataSourcePlugin<
+  TOptions extends DataSourceSettings = DataSourceSettings,
+  TQuery extends DataQuery = DataQuery
+> extends GrafanaPlugin<DataSourcePluginMeta> {
   DataSourceClass: DataSourceConstructor<TQuery>;
   components: DataSourcePluginComponents<TOptions, TQuery>;
 
@@ -85,7 +86,10 @@ interface PluginMetaQueryOptions {
   minInterval?: boolean;
 }
 
-export interface DataSourcePluginComponents<TOptions = {}, TQuery extends DataQuery = DataQuery> {
+export interface DataSourcePluginComponents<
+  TOptions extends DataSourceSettings = DataSourceSettings,
+  TQuery extends DataQuery = DataQuery
+> {
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
@@ -329,10 +333,15 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface DataSourceJsonData {
+  authType: string;
+  defaultRegion: string;
+}
+
 /**
  * Data Source instance edit model
  */
-export interface DataSourceSettings {
+export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJsonData, S = {}> {
   id: number;
   orgId: number;
   name: string;
@@ -347,7 +356,8 @@ export interface DataSourceSettings {
   basicAuthPassword: string;
   basicAuthUser: string;
   isDefault: boolean;
-  jsonData: { authType: string; defaultRegion: string };
+  jsonData: T;
+  secureJsonData?: S;
   readOnly: boolean;
   withCredentials: boolean;
 }

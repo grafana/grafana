@@ -4,7 +4,8 @@ import { InputDatasource } from './InputDatasource';
 
 import { InputQueryEditor } from './InputQueryEditor';
 import { InputConfigEditor } from './InputConfigEditor';
+import { InputSettings, InputQuery } from './types';
 
-export const plugin = new DataSourcePlugin(InputDatasource)
+export const plugin = new DataSourcePlugin<InputSettings, InputQuery>(InputDatasource)
   .setConfigEditor(InputConfigEditor)
   .setQueryEditor(InputQueryEditor);

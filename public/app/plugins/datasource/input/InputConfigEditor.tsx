@@ -2,11 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputDatasourceOptions } from './types';
+import { InputSettings } from './types';
 
 import { DataSourcePluginOptionsEditorProps, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
 
-interface Props extends DataSourcePluginOptionsEditorProps<InputDatasourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<InputSettings> {}
 
 interface State {
   text: string;
@@ -17,15 +17,16 @@ export class InputConfigEditor extends PureComponent<Props, State> {
     text: '',
   };
 
-  onComponentDidMount() {
+  componentDidMount() {
     const { options } = this.props;
-    const text = options.data ? toCSV(options.data) : '';
-    this.setState({ text });
+    if (options.jsonData.data) {
+      const text = toCSV(options.jsonData.data);
+      this.setState({ text });
+    }
   }
 
   onSeriesParsed = (data: SeriesData[], text: string) => {
     const { options, onOptionsChange } = this.props;
-    this.setState({ text });
     if (!data) {
       data = [
         {
@@ -34,7 +35,17 @@ export class InputConfigEditor extends PureComponent<Props, State> {
         },
       ];
     }
-    onOptionsChange({ ...options, data });
+    // data is a property on 'jsonData'
+    const jsonData = {
+      ...options.jsonData,
+      data,
+    };
+
+    onOptionsChange({
+      ...options,
+      jsonData,
+    });
+    this.setState({ text });
   };
 
   render() {
