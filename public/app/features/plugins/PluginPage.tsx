@@ -245,14 +245,9 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    alert('TODO, open modal');
-
-    const modalScope: any = {}; // this.$scope.$new(true);
-    modalScope.plugin = this.state.plugin.meta;
-
     appEvents.emit('show-modal', {
       src: 'public/app/features/plugins/partials/update_instructions.html',
-      scope: modalScope,
+      model: this.state.plugin.meta,
     });
   };
 
