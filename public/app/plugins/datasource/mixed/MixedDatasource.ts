@@ -93,7 +93,13 @@ export class MixedDatasource implements DataSourceApi<DataQuery> {
           .then(res => {
             request.endTime = Date.now();
             event.state = LoadingState.Done;
-            event.series = getProcessedSeriesData(res.data);
+            event.series = getProcessedSeriesData(res.data).map(series => {
+              if (!series.meta) {
+                series.meta = {};
+              }
+              series.meta.requestId = request.requestId;
+              return series;
+            });
             observer(event);
           })
           .catch(err => {

@@ -152,13 +152,18 @@ export class PanelQueryState {
     // Streams only work with the 'series' format
     this.sendSeries = true;
 
-    console.log('Stream Event', stream);
-
     // Add the stream to our list
     let found = false;
     const active = this.streams.map(s => {
       if (s.key === stream.key) {
         found = true;
+        // Keep any existing series
+        if (!stream.series) {
+          return {
+            ...s,
+            ...stream,
+          };
+        }
         return stream;
       }
       return s;
@@ -303,8 +308,12 @@ export function shouldDisconnect(source: DataQueryRequest, state: DataStreamStat
     return false;
   }
 
-  // We should be able to check that it is the same query regardless of
-  // if it came from the same request. This will be important for #16676
+  // Check if the refID exists within our current query
+  for (const query of source.targets) {
+    if (query.refId === state.key) {
+      return false;
+    }
+  }
 
   return true;
 }

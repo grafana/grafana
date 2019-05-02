@@ -209,11 +209,10 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { request, state, series, error } = response;
 
     if (state === LoadingState.Loading || state === LoadingState.Streaming) {
-      things.push(<i className="fa fa-spinner fa-spin" />);
-    }
-    if (state === LoadingState.Error) {
+      things.push(<i key="loading" className="fa fa-spinner fa-spin" />);
+    } else if (state === LoadingState.Error) {
       things.push(
-        <span>
+        <span key="error">
           <i className="fa fa-error" /> {error && error.message}
         </span>
       );
@@ -224,7 +223,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         return count + series.rows.length;
       }, 0);
       things.push(
-        <span>
+        <span key="seriesInfo">
           {response.series.length} Series, {rows} Rows
         </span>
       );
@@ -233,7 +232,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (request) {
       if (request.endTime) {
         const elapsed = (request.endTime - request.startTime) / 1000;
-        things.push(<span>&nbsp;&nbsp; {elapsed} seconds</span>);
+        things.push(<span key="time">&nbsp;&nbsp; {elapsed} seconds</span>);
       } else {
         // running time?
       }
@@ -324,14 +323,34 @@ export interface AngularQueryComponentScope {
   range: TimeRange;
 }
 
+function hasQueryForTarget(req: DataQueryRequest, refId: string) {
+  for (const t of req.targets) {
+    if (t.refId === refId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Get a version of the PanelData limited to the query we are looking at
  */
 export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
   const series = data.series.filter(series => series.refId === refId);
 
-  // No matching series
   if (!series.length) {
+    // Check if a sub request is still loading
+    if (data.request && data.request.subRequests) {
+      for (const sub of data.request.subRequests) {
+        if (hasQueryForTarget(sub, refId)) {
+          return {
+            state: LoadingState.Loading,
+            request: sub,
+            series: [],
+          };
+        }
+      }
+    }
     return undefined;
   }
 
