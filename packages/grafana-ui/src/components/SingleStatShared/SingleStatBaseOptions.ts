@@ -1,8 +1,10 @@
 import cloneDeep from 'lodash/cloneDeep';
+import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
 import { getStatsCalculators } from '../../utils/index';
+import { Field } from '../../types';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -25,32 +27,40 @@ export const sharedSingleStatOptionsCheck = (
 };
 
 export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseOptions>) => {
-  const options = panel.options;
-
-  if (!options) {
+  if (!panel.options) {
     // This happens on the first load or when migrating from angular
     return {};
   }
 
-  const old = options as any;
+  // This migration aims to keep the most recent changes up-to-date
+  // Plugins should explicitly migrate for known version changes and only use this
+  // as a backup
+  const old = panel.options as any;
   if (old.valueOptions) {
     const { valueOptions } = old;
+
+    const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
+    fieldOptions.mappings = old.valueMappings;
+    fieldOptions.thresholds = old.thresholds;
+
+    const field = (fieldOptions.defaults = {} as Field);
     if (valueOptions) {
-      const opts = valueOptions as any;
-      if (opts.stat) {
-        // 6.2 moved 'stat' to 'stats[]'
-        valueOptions.stats = [opts.stat];
-        delete opts.stat;
-      }
-      // 6.1 renamed some stats, This makes sure they are up to date
-      // avg -> mean, current -> last, total -> sum
-      if (valueOptions.stats) {
-        valueOptions.stats = getStatsCalculators(valueOptions.stats).map(s => s.id);
+      field.unit = valueOptions.unit;
+      field.decimals = valueOptions.decimals;
+
+      // Not used in display, but we can save anyway
+      fieldOptions.prefix = valueOptions.prefix;
+      fieldOptions.suffix = valueOptions.suffix;
+
+      // Make sure the stats have a valid name
+      if (valueOptions.stat) {
+        fieldOptions.stats = getStatsCalculators([valueOptions.stat]).map(s => s.id);
       }
     }
+    field.min = old.minValue;
+    field.max = old.maxValue;
 
-    // TODO: make this real!
-    options.fieldOptions = valueOptions;
+    return omit(old, 'valueMappings', 'thresholds', 'valueOptions');
   }
-  return options;
+  return panel.options;
 };
