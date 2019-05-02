@@ -1,116 +1,51 @@
-import { ComponentClass } from 'react';
-import { ReactPanelPlugin } from './panel';
-import { DataQueryOptions, DataQuery, DataQueryResponse, QueryHint, QueryFixAction } from './datasource';
-
-export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
-  /**
-   *  min interval range
-   */
-  interval?: string;
-
-  /**
-   * Imports queries from a different datasource
-   */
-  importQueries?(queries: TQuery[], originMeta: PluginMeta): Promise<TQuery[]>;
-
-  /**
-   * Initializes a datasource after instantiation
-   */
-  init?: () => void;
-
-  /**
-   * Main metrics / data query action
-   */
-  query(options: DataQueryOptions<TQuery>): Promise<DataQueryResponse>;
-
-  /**
-   * Test & verify datasource settings & connection details
-   */
-  testDatasource(): Promise<any>;
-
-  /**
-   *  Get hints for query improvements
-   */
-  getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
-
-  /**
-   *  Set after constructor is called by Grafana
-   */
-  name?: string;
-  meta?: PluginMeta;
-  pluginExports?: PluginExports;
+export enum PluginState {
+  alpha = 'alpha', // Only included it `enable_alpha` is true
+  beta = 'beta', // Will show a warning banner
 }
 
-export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> extends DataSourceApi {
-  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-  getHighlighterExpression?(query: TQuery): string;
-  languageProvider?: any;
-}
-
-export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
-  datasource: DSType;
-  query: TQuery;
-  onRunQuery: () => void;
-  onChange: (value: TQuery) => void;
-}
-
-export interface ExploreQueryFieldProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
-  datasource: DSType;
-  query: TQuery;
-  error?: string | JSX.Element;
-  hint?: QueryHint;
-  history: any[];
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: TQuery) => void;
-  onExecuteHint?: (action: QueryFixAction) => void;
-}
-
-export interface ExploreStartPageProps {
-  onClickExample: (query: DataQuery) => void;
-}
-
-export interface PluginExports {
-  Datasource?: DataSourceApi;
-  QueryCtrl?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, DataQuery>>;
-  ConfigCtrl?: any;
-  AnnotationsQueryCtrl?: any;
-  VariableQueryEditor?: any;
-  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, DataQuery>>;
-  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-
-  // Panel plugin
-  PanelCtrl?: any;
-  reactPanel: ReactPanelPlugin;
+export enum PluginType {
+  panel = 'panel',
+  datasource = 'datasource',
+  app = 'app',
 }
 
 export interface PluginMeta {
   id: string;
   name: string;
+  type: PluginType;
   info: PluginMetaInfo;
-  includes: PluginInclude[];
+  includes?: PluginInclude[];
+  state?: PluginState;
 
-  // Datasource-specific
-  metrics?: boolean;
-  tables?: boolean;
-  logs?: boolean;
-  explore?: boolean;
-  annotations?: boolean;
-  mixed?: boolean;
-  hasQueryHelp?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
+  // System.load & relative URLS
+  module: string;
+  baseUrl: string;
+
+  // Filled in by the backend
+  jsonData?: { [str: string]: any };
+  enabled?: boolean;
+  defaultNavUrl?: string;
+  hasUpdate?: boolean;
+  latestVersion?: string;
+  pinned?: boolean;
 }
 
-interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
+export enum PluginIncludeType {
+  dashboard = 'dashboard',
+  page = 'page',
+
+  // Only valid for apps
+  panel = 'panel',
+  datasource = 'datasource',
 }
 
 export interface PluginInclude {
-  type: string;
+  type: PluginIncludeType;
   name: string;
-  path: string;
+  path?: string;
+  icon?: string;
+  // Angular app pages
+  component?: string;
 }
 
 interface PluginMetaInfoLink {
@@ -132,4 +67,46 @@ export interface PluginMetaInfo {
   screenshots: any[];
   updated: string;
   version: string;
+}
+
+export class GrafanaPlugin<T extends PluginMeta> {
+  // Meta is filled in by the plugin loading system
+  meta?: T;
+
+  // Soon this will also include common config options
+}
+
+export class AppPlugin extends GrafanaPlugin<PluginMeta> {
+  angular?: {
+    ConfigCtrl?: any;
+    pages: { [component: string]: any };
+  };
+
+  setComponentsFromLegacyExports(pluginExports: any) {
+    const legacy = {
+      ConfigCtrl: undefined,
+      pages: {} as any,
+    };
+
+    if (pluginExports.ConfigCtrl) {
+      legacy.ConfigCtrl = pluginExports.ConfigCtrl;
+      this.angular = legacy;
+    }
+
+    const { meta } = this;
+    if (meta && meta.includes) {
+      for (const include of meta.includes) {
+        const { type, component } = include;
+        if (type === PluginIncludeType.page && component) {
+          const exp = pluginExports[component];
+          if (!exp) {
+            console.warn('App Page uses unknown component: ', component, meta);
+            continue;
+          }
+          legacy.pages[component] = exp;
+          this.angular = legacy;
+        }
+      }
+    }
+  }
 }

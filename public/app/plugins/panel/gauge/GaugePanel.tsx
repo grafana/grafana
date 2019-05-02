@@ -2,37 +2,25 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processSingleStatPanelData } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, VizRepeater } from '@grafana/ui';
+import { Gauge } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, VizOrientation } from '@grafana/ui/src/types';
+import { DisplayValue, PanelProps, getSingleStatDisplayValues, VizRepeater } from '@grafana/ui';
 
-interface Props extends PanelProps<GaugeOptions> {}
-
-export class GaugePanel extends PureComponent<Props> {
-  renderGauge(value, width, height) {
-    const { replaceVariables, options } = this.props;
-    const { valueOptions } = options;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
+export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
 
     return (
       <Gauge
         value={value}
         width={width}
         height={height}
-        prefix={prefix}
-        suffix={suffix}
-        unit={valueOptions.unit}
-        decimals={valueOptions.decimals}
         thresholds={options.thresholds}
-        valueMappings={options.valueMappings}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         minValue={options.minValue}
@@ -40,20 +28,30 @@ export class GaugePanel extends PureComponent<Props> {
         theme={config.theme}
       />
     );
-  }
+  };
+
+  getValues = (): DisplayValue[] => {
+    const { data, options, replaceVariables } = this.props;
+    return getSingleStatDisplayValues({
+      ...options,
+      replaceVariables,
+      theme: config.theme,
+      data: data.series,
+    });
+  };
 
   render() {
-    const { panelData, options, height, width } = this.props;
-
-    const values = processSingleStatPanelData({
-      panelData: panelData,
-      stat: options.valueOptions.stat,
-    });
-
+    const { height, width, options, data, renderCounter } = this.props;
     return (
-      <VizRepeater height={height} width={width} values={values} orientation={VizOrientation.Auto}>
-        {({ vizHeight, vizWidth, valueInfo }) => this.renderGauge(valueInfo.value, vizWidth, vizHeight)}
-      </VizRepeater>
+      <VizRepeater
+        getValues={this.getValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={data}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
+      />
     );
   }
 }

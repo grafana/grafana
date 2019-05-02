@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+<defs>
+<style>.cls-1{fill:url(#linear-gradient);}</style>
+<linearGradient id="linear-gradient" x1="50" y1="101.02" x2="50" y2="4.05" gradientTransform="matrix(1, 0, 0, -1, 0, 102)" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#70b0df"/>
+<stop offset="0.5" stop-color="#1b81c5"/>
+<stop offset="1" stop-color="#4a98ce"/>
+</linearGradient>
+</defs>
+<g><path class="cls-1" d="M889.5,814.1h-201v50.2H701c20.8,0,37.7,16.9,37.7,37.7c0,20.8-16.9,37.7-37.7,37.7H600.5c-20.8,0-37.7-16.9-37.7-37.7c0-20.8,16.9-37.7,37.7-37.7h12.6v-50.2H110.5C55,814.1,10,769.1,10,713.6V286.5c0-55.5,45-100.5,100.5-100.5h502.6v-50.3h-12.6c-20.8,0-37.7-16.9-37.7-37.7c0-20.8,16.9-37.7,37.7-37.7H701c20.8,0,37.7,16.9,37.7,37.7c0,20.8-16.9,37.7-37.7,37.7h-12.6v50.3h201c55.5,0,100.5,45,100.5,100.5v427.2C990,769.1,945,814.1,889.5,814.1z M562.8,738.8h50.3V261.3h-50.3 M688.5,261.3v477.5h50.3V261.3H688.5z"/></g>
+</svg>

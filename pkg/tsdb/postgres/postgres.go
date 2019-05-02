@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
 	"strconv"
 
@@ -19,7 +20,9 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	logger := log.New("tsdb.postgres")
 
 	cnnstr := generateConnectionString(datasource)
-	logger.Debug("getEngine", "connection", cnnstr)
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",
@@ -38,18 +41,10 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 	u := &url.URL{
 		Scheme: "postgres",
-		User:   url.UserPassword(datasource.User, password),
+		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
 		Host:   datasource.Url, Path: datasource.Database,
 		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
 	}

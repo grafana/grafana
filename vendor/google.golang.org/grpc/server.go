@@ -37,18 +37,20 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/trace"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal"
+	"google.golang.org/grpc/internal/channelz"
+	"google.golang.org/grpc/internal/transport"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/tap"
-	"google.golang.org/grpc/transport"
 )
 
 const (
@@ -97,11 +99,19 @@ type Server struct {
 	m      map[string]*service // service name -> service info
 	events trace.EventLog
 
-	quit     chan struct{}
-	done     chan struct{}
-	quitOnce sync.Once
-	doneOnce sync.Once
-	serveWG  sync.WaitGroup // counts active Serve goroutines for GracefulStop
+	quit               chan struct{}
+	done               chan struct{}
+	quitOnce           sync.Once
+	doneOnce           sync.Once
+	channelzRemoveOnce sync.Once
+	serveWG            sync.WaitGroup // counts active Serve goroutines for GracefulStop
+
+	channelzID          int64 // channelz unique identification number
+	czmu                sync.RWMutex
+	callsStarted        int64
+	callsFailed         int64
+	callsSucceeded      int64
+	lastCallStartedTime time.Time
 }
 
 type options struct {
@@ -125,19 +135,25 @@ type options struct {
 	writeBufferSize       int
 	readBufferSize        int
 	connectionTimeout     time.Duration
+	maxHeaderListSize     *uint32
 }
 
 var defaultServerOptions = options{
 	maxReceiveMessageSize: defaultServerMaxReceiveMessageSize,
 	maxSendMessageSize:    defaultServerMaxSendMessageSize,
 	connectionTimeout:     120 * time.Second,
+	writeBufferSize:       defaultWriteBufSize,
+	readBufferSize:        defaultReadBufSize,
 }
 
 // A ServerOption sets options such as credentials, codec and keepalive parameters, etc.
 type ServerOption func(*options)
 
-// WriteBufferSize lets you set the size of write buffer, this determines how much data can be batched
-// before doing a write on the wire.
+// WriteBufferSize determines how much data can be batched before doing a write on the wire.
+// The corresponding memory allocation for this buffer will be twice the size to keep syscalls low.
+// The default value for this buffer is 32KB.
+// Zero will disable the write buffer such that each write will be on underlying connection.
+// Note: A Send call may not directly translate to a write.
 func WriteBufferSize(s int) ServerOption {
 	return func(o *options) {
 		o.writeBufferSize = s
@@ -146,6 +162,9 @@ func WriteBufferSize(s int) ServerOption {
 
 // ReadBufferSize lets you set the size of read buffer, this determines how much data can be read at most
 // for one read syscall.
+// The default value for this buffer is 32KB.
+// Zero will disable read buffer for a connection so data framer can access the underlying
+// conn directly.
 func ReadBufferSize(s int) ServerOption {
 	return func(o *options) {
 		o.readBufferSize = s
@@ -216,7 +235,9 @@ func RPCDecompressor(dc Decompressor) ServerOption {
 }
 
 // MaxMsgSize returns a ServerOption to set the max message size in bytes the server can receive.
-// If this is not set, gRPC uses the default limit. Deprecated: use MaxRecvMsgSize instead.
+// If this is not set, gRPC uses the default limit.
+//
+// Deprecated: use MaxRecvMsgSize instead.
 func MaxMsgSize(m int) ServerOption {
 	return MaxRecvMsgSize(m)
 }
@@ -323,6 +344,14 @@ func ConnectionTimeout(d time.Duration) ServerOption {
 	}
 }
 
+// MaxHeaderListSize returns a ServerOption that sets the max (uncompressed) size
+// of header list that the server is prepared to accept.
+func MaxHeaderListSize(s uint32) ServerOption {
+	return func(o *options) {
+		o.maxHeaderListSize = &s
+	}
+}
+
 // NewServer creates a gRPC server which has no service registered and has not
 // started to accept requests yet.
 func NewServer(opt ...ServerOption) *Server {
@@ -342,6 +371,10 @@ func NewServer(opt ...ServerOption) *Server {
 	if EnableTracing {
 		_, file, line, _ := runtime.Caller(1)
 		s.events = trace.NewEventLog("grpc.Server", fmt.Sprintf("%s:%d", file, line))
+	}
+
+	if channelz.IsOn() {
+		s.channelzID = channelz.RegisterServer(s, "")
 	}
 	return s
 }
@@ -458,6 +491,26 @@ func (s *Server) useTransportAuthenticator(rawConn net.Conn) (net.Conn, credenti
 	return s.opts.creds.ServerHandshake(rawConn)
 }
 
+type listenSocket struct {
+	net.Listener
+	channelzID int64
+}
+
+func (l *listenSocket) ChannelzMetric() *channelz.SocketInternalMetric {
+	return &channelz.SocketInternalMetric{
+		SocketOptions: channelz.GetSocketOption(l.Listener),
+		LocalAddr:     l.Listener.Addr(),
+	}
+}
+
+func (l *listenSocket) Close() error {
+	err := l.Listener.Close()
+	if channelz.IsOn() {
+		channelz.RemoveEntry(l.channelzID)
+	}
+	return err
+}
+
 // Serve accepts incoming connections on the listener lis, creating a new
 // ServerTransport and service goroutine for each. The service goroutines
 // read gRPC requests and then call the registered handlers to reply to them.
@@ -486,13 +539,19 @@ func (s *Server) Serve(lis net.Listener) error {
 		}
 	}()
 
-	s.lis[lis] = true
+	ls := &listenSocket{Listener: lis}
+	s.lis[ls] = true
+
+	if channelz.IsOn() {
+		ls.channelzID = channelz.RegisterListenSocket(ls, s.channelzID, "")
+	}
 	s.mu.Unlock()
+
 	defer func() {
 		s.mu.Lock()
-		if s.lis != nil && s.lis[lis] {
-			lis.Close()
-			delete(s.lis, lis)
+		if s.lis != nil && s.lis[ls] {
+			ls.Close()
+			delete(s.lis, ls)
 		}
 		s.mu.Unlock()
 	}()
@@ -614,6 +673,8 @@ func (s *Server) newHTTP2Transport(c net.Conn, authInfo credentials.AuthInfo) tr
 		InitialConnWindowSize: s.opts.initialConnWindowSize,
 		WriteBufferSize:       s.opts.writeBufferSize,
 		ReadBufferSize:        s.opts.readBufferSize,
+		ChannelzParentID:      s.channelzID,
+		MaxHeaderListSize:     s.opts.maxHeaderListSize,
 	}
 	st, err := transport.NewServerTransport("http2", c, config)
 	if err != nil {
@@ -624,6 +685,7 @@ func (s *Server) newHTTP2Transport(c net.Conn, authInfo credentials.AuthInfo) tr
 		grpclog.Warningln("grpc: Server.Serve failed to create ServerTransport: ", err)
 		return nil
 	}
+
 	return st
 }
 
@@ -751,30 +813,72 @@ func (s *Server) removeConn(c io.Closer) {
 	}
 }
 
-func (s *Server) sendResponse(t transport.ServerTransport, stream *transport.Stream, msg interface{}, cp Compressor, opts *transport.Options, comp encoding.Compressor) error {
-	var (
-		outPayload *stats.OutPayload
-	)
-	if s.opts.statsHandler != nil {
-		outPayload = &stats.OutPayload{}
+// ChannelzMetric returns ServerInternalMetric of current server.
+// This is an EXPERIMENTAL API.
+func (s *Server) ChannelzMetric() *channelz.ServerInternalMetric {
+	s.czmu.RLock()
+	defer s.czmu.RUnlock()
+	return &channelz.ServerInternalMetric{
+		CallsStarted:             s.callsStarted,
+		CallsSucceeded:           s.callsSucceeded,
+		CallsFailed:              s.callsFailed,
+		LastCallStartedTimestamp: s.lastCallStartedTime,
 	}
-	hdr, data, err := encode(s.getCodec(stream.ContentSubtype()), msg, cp, outPayload, comp)
+}
+
+func (s *Server) incrCallsStarted() {
+	s.czmu.Lock()
+	s.callsStarted++
+	s.lastCallStartedTime = time.Now()
+	s.czmu.Unlock()
+}
+
+func (s *Server) incrCallsSucceeded() {
+	s.czmu.Lock()
+	s.callsSucceeded++
+	s.czmu.Unlock()
+}
+
+func (s *Server) incrCallsFailed() {
+	s.czmu.Lock()
+	s.callsFailed++
+	s.czmu.Unlock()
+}
+
+func (s *Server) sendResponse(t transport.ServerTransport, stream *transport.Stream, msg interface{}, cp Compressor, opts *transport.Options, comp encoding.Compressor) error {
+	data, err := encode(s.getCodec(stream.ContentSubtype()), msg)
 	if err != nil {
 		grpclog.Errorln("grpc: server failed to encode response: ", err)
 		return err
 	}
-	if len(data) > s.opts.maxSendMessageSize {
-		return status.Errorf(codes.ResourceExhausted, "grpc: trying to send message larger than max (%d vs. %d)", len(data), s.opts.maxSendMessageSize)
+	compData, err := compress(data, cp, comp)
+	if err != nil {
+		grpclog.Errorln("grpc: server failed to compress response: ", err)
+		return err
 	}
-	err = t.Write(stream, hdr, data, opts)
-	if err == nil && outPayload != nil {
-		outPayload.SentTime = time.Now()
-		s.opts.statsHandler.HandleRPC(stream.Context(), outPayload)
+	hdr, payload := msgHeader(data, compData)
+	// TODO(dfawley): should we be checking len(data) instead?
+	if len(payload) > s.opts.maxSendMessageSize {
+		return status.Errorf(codes.ResourceExhausted, "grpc: trying to send message larger than max (%d vs. %d)", len(payload), s.opts.maxSendMessageSize)
+	}
+	err = t.Write(stream, hdr, payload, opts)
+	if err == nil && s.opts.statsHandler != nil {
+		s.opts.statsHandler.HandleRPC(stream.Context(), outPayload(false, msg, data, payload, time.Now()))
 	}
 	return err
 }
 
 func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.Stream, srv *service, md *MethodDesc, trInfo *traceInfo) (err error) {
+	if channelz.IsOn() {
+		s.incrCallsStarted()
+		defer func() {
+			if err != nil && err != io.EOF {
+				s.incrCallsFailed()
+			} else {
+				s.incrCallsSucceeded()
+			}
+		}()
+	}
 	sh := s.opts.statsHandler
 	if sh != nil {
 		beginTime := time.Now()
@@ -859,15 +963,14 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 			switch st := err.(type) {
 			case transport.ConnectionError:
 				// Nothing to do here.
-			case transport.StreamError:
-				if e := t.WriteStatus(stream, status.New(st.Code, st.Desc)); e != nil {
-					grpclog.Warningf("grpc: Server.processUnaryRPC failed to write status %v", e)
-				}
 			default:
 				panic(fmt.Sprintf("grpc: Unexpected error (%T) from recvMsg: %v", st, st))
 			}
 		}
 		return err
+	}
+	if channelz.IsOn() {
+		t.IncrMsgRecv()
 	}
 	if st := checkRecvPayload(pf, stream.RecvCompress(), dc != nil || decomp != nil); st != nil {
 		if e := t.WriteStatus(stream, st); e != nil {
@@ -940,10 +1043,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 	if trInfo != nil {
 		trInfo.tr.LazyLog(stringer("OK"), false)
 	}
-	opts := &transport.Options{
-		Last:  true,
-		Delay: false,
-	}
+	opts := &transport.Options{Last: true}
 
 	if err := s.sendResponse(t, stream, reply, cp, opts, comp); err != nil {
 		if err == io.EOF {
@@ -958,15 +1058,14 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 			switch st := err.(type) {
 			case transport.ConnectionError:
 				// Nothing to do here.
-			case transport.StreamError:
-				if e := t.WriteStatus(stream, status.New(st.Code, st.Desc)); e != nil {
-					grpclog.Warningf("grpc: Server.processUnaryRPC failed to write status %v", e)
-				}
 			default:
 				panic(fmt.Sprintf("grpc: Unexpected error (%T) from sendResponse: %v", st, st))
 			}
 		}
 		return err
+	}
+	if channelz.IsOn() {
+		t.IncrMsgSent()
 	}
 	if trInfo != nil {
 		trInfo.tr.LazyLog(&payload{sent: true, msg: reply}, true)
@@ -978,6 +1077,16 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 }
 
 func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transport.Stream, srv *service, sd *StreamDesc, trInfo *traceInfo) (err error) {
+	if channelz.IsOn() {
+		s.incrCallsStarted()
+		defer func() {
+			if err != nil && err != io.EOF {
+				s.incrCallsFailed()
+			} else {
+				s.incrCallsSucceeded()
+			}
+		}()
+	}
 	sh := s.opts.statsHandler
 	if sh != nil {
 		beginTime := time.Now()
@@ -1068,12 +1177,7 @@ func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transp
 	if appErr != nil {
 		appStatus, ok := status.FromError(appErr)
 		if !ok {
-			switch err := appErr.(type) {
-			case transport.StreamError:
-				appStatus = status.New(err.Code, err.Desc)
-			default:
-				appStatus = status.New(codes.Unknown, appErr.Error())
-			}
+			appStatus = status.New(codes.Unknown, appErr.Error())
 			appErr = appStatus.Err()
 		}
 		if trInfo != nil {
@@ -1199,10 +1303,12 @@ type ServerTransportStream interface {
 	SetTrailer(md metadata.MD) error
 }
 
-// serverStreamFromContext returns the server stream saved in ctx. Returns
-// nil if the given context has no stream associated with it (which implies
-// it is not an RPC invocation context).
-func serverTransportStreamFromContext(ctx context.Context) ServerTransportStream {
+// ServerTransportStreamFromContext returns the ServerTransportStream saved in
+// ctx. Returns nil if the given context has no stream associated with it
+// (which implies it is not an RPC invocation context).
+//
+// This API is EXPERIMENTAL.
+func ServerTransportStreamFromContext(ctx context.Context) ServerTransportStream {
 	s, _ := ctx.Value(streamKey{}).(ServerTransportStream)
 	return s
 }
@@ -1223,6 +1329,12 @@ func (s *Server) Stop() {
 			close(s.done)
 		})
 	}()
+
+	s.channelzRemoveOnce.Do(func() {
+		if channelz.IsOn() {
+			channelz.RemoveEntry(s.channelzID)
+		}
+	})
 
 	s.mu.Lock()
 	listeners := s.lis
@@ -1262,11 +1374,17 @@ func (s *Server) GracefulStop() {
 		})
 	}()
 
+	s.channelzRemoveOnce.Do(func() {
+		if channelz.IsOn() {
+			channelz.RemoveEntry(s.channelzID)
+		}
+	})
 	s.mu.Lock()
 	if s.conns == nil {
 		s.mu.Unlock()
 		return
 	}
+
 	for lis := range s.lis {
 		lis.Close()
 	}
@@ -1327,7 +1445,7 @@ func SetHeader(ctx context.Context, md metadata.MD) error {
 	if md.Len() == 0 {
 		return nil
 	}
-	stream := serverTransportStreamFromContext(ctx)
+	stream := ServerTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
@@ -1337,7 +1455,7 @@ func SetHeader(ctx context.Context, md metadata.MD) error {
 // SendHeader sends header metadata. It may be called at most once.
 // The provided md and headers set by SetHeader() will be sent.
 func SendHeader(ctx context.Context, md metadata.MD) error {
-	stream := serverTransportStreamFromContext(ctx)
+	stream := ServerTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
@@ -1353,9 +1471,19 @@ func SetTrailer(ctx context.Context, md metadata.MD) error {
 	if md.Len() == 0 {
 		return nil
 	}
-	stream := serverTransportStreamFromContext(ctx)
+	stream := ServerTransportStreamFromContext(ctx)
 	if stream == nil {
 		return status.Errorf(codes.Internal, "grpc: failed to fetch the stream from the context %v", ctx)
 	}
 	return stream.SetTrailer(md)
+}
+
+// Method returns the method string for the server context.  The returned
+// string is in the format of "/service/method".
+func Method(ctx context.Context) (string, bool) {
+	s := ServerTransportStreamFromContext(ctx)
+	if s == nil {
+		return "", false
+	}
+	return s.Method(), true
 }

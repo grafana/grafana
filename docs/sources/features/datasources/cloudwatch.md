@@ -29,9 +29,10 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
+*Auth Provider* | Specify the provider to get credentials.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Assume Role Arn* | Specify the ARN of the role to assume
 
 ## Authentication
@@ -85,6 +86,16 @@ Here is a minimal policy example:
 }
 ```
 
+### AWS credentials
+If Auth Provider is `Credentials file`, Grafana try to get credentials by following order.
+
+- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
+- Hard-code credentials.
+- Shared credentials file.
+- IAM role for Amazon EC2.
+
+Checkout AWS docs on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
@@ -104,6 +115,14 @@ region = us-west-2
 ![](/img/docs/v43/cloudwatch_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
+
+## Metric Math
+
+You can now create new time series metrics by operating on top of Cloudwatch metrics using mathematical functions. Arithmetic operators, unary subtraction and other functions are supported to be applied on cloudwatch metrics. More details on the available functions can be found on [AWS Metric Math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+
+As an example, if you want to apply arithmetic operator on a metric, you can do it by giving an alias(a unique string) to the raw metric as shown below. Then you can use this alias and apply arithmetic operator to it in the Expression field of created metric.
+
+![](/img/docs/v60/cloudwatch_metric_math.png)
 
 ## Templated queries
 

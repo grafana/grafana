@@ -13,5 +13,5 @@ function exit_if_fail {
 export GRAFANA_TEST_DB=postgres
 
 time for d in $(go list ./pkg/...); do
-  exit_if_fail go test -tags=integration $d
+ exit_if_fail go test -tags=integration $d
 done

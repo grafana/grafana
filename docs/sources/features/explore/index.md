@@ -67,7 +67,7 @@ The autocomplete menu can be trigger by pressing Ctrl + Space. The Autocomplete 
 
 Suggestions can appear under the query field - click on them to update your query with the suggested change.
 
-* For counters (monotonously increasing metrics), a rate function will be suggested.
+* For counters (monotonically increasing metrics), a rate function will be suggested.
 * For buckets, a histogram function will be suggested.
 * For recording rules, possible to expand the rules.
 

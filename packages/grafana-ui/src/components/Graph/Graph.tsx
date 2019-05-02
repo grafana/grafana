@@ -1,13 +1,14 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
+import uniqBy from 'lodash/uniqBy';
 
 // Types
-import { TimeRange, TimeSeriesVMs } from '../../types';
+import { TimeRange, GraphSeriesXY } from '../../types';
 
-interface GraphProps {
-  timeSeries: TimeSeriesVMs;
-  timeRange: TimeRange;
+export interface GraphProps {
+  series: GraphSeriesXY[];
+  timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
@@ -37,7 +38,7 @@ export class Graph extends PureComponent<GraphProps> {
       return;
     }
 
-    const { width, timeSeries, timeRange, showLines, showBars, showPoints } = this.props;
+    const { width, series, timeRange, showLines, showBars, showPoints } = this.props;
 
     if (!width) {
       return;
@@ -46,7 +47,16 @@ export class Graph extends PureComponent<GraphProps> {
     const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
-
+    const yaxes = uniqBy(
+      series.map(s => {
+        return {
+          show: true,
+          index: s.yAxis,
+          position: s.yAxis === 1 ? 'left' : 'right',
+        };
+      }),
+      yAxisConfig => yAxisConfig.index
+    );
     const flotOptions = {
       legend: {
         show: false,
@@ -80,6 +90,7 @@ export class Graph extends PureComponent<GraphProps> {
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
       },
+      yaxes,
       grid: {
         minBorderMargin: 0,
         markings: [],
@@ -94,10 +105,9 @@ export class Graph extends PureComponent<GraphProps> {
     };
 
     try {
-      console.log('Graph render');
-      $.plot(this.element, timeSeries, flotOptions);
+      $.plot(this.element, series, flotOptions);
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, timeSeries);
+      console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
     }
   }

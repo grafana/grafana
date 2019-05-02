@@ -1,22 +1,25 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import SlideDown from 'app/core/components/Animations/SlideDown';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { DeleteButton } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { TeamMember, User } from 'app/types';
-import { loadTeamMembers, addTeamMember, removeTeamMember, setSearchMemberQuery } from './state/actions';
-import { getSearchMemberQuery, getTeamMembers } from './state/selectors';
+import { addTeamMember, setSearchMemberQuery } from './state/actions';
+import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
+import { config } from 'app/core/config';
+import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
+import TeamMemberRow from './TeamMemberRow';
 
 export interface Props {
   members: TeamMember[];
   searchMemberQuery: string;
-  loadTeamMembers: typeof loadTeamMembers;
   addTeamMember: typeof addTeamMember;
-  removeTeamMember: typeof removeTeamMember;
   setSearchMemberQuery: typeof setSearchMemberQuery;
   syncEnabled: boolean;
+  editorsCanAdmin?: boolean;
+  signedInUser?: SignedInUser;
 }
 
 export interface State {
@@ -30,17 +33,9 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.state = { isAdding: false, newTeamMember: null };
   }
 
-  componentDidMount() {
-    this.props.loadTeamMembers();
-  }
-
   onSearchQueryChange = (value: string) => {
     this.props.setSearchMemberQuery(value);
   };
-
-  onRemoveMember(member: TeamMember) {
-    this.props.removeTeamMember(member.userId);
-  }
 
   onToggleAdding = () => {
     this.setState({ isAdding: !this.state.isAdding });
@@ -69,25 +64,11 @@ export class TeamMembers extends PureComponent<Props, State> {
     );
   }
 
-  renderMember(member: TeamMember, syncEnabled: boolean) {
-    return (
-      <tr key={member.userId}>
-        <td className="width-4 text-center">
-          <img className="filter-table__avatar" src={member.avatarUrl} />
-        </td>
-        <td>{member.login}</td>
-        <td>{member.email}</td>
-        {syncEnabled && this.renderLabels(member.labels)}
-        <td className="text-right">
-          <DeleteButton onConfirm={() => this.onRemoveMember(member)} />
-        </td>
-      </tr>
-    );
-  }
-
   render() {
     const { isAdding } = this.state;
-    const { searchMemberQuery, members, syncEnabled } = this.props;
+    const { searchMemberQuery, members, syncEnabled, editorsCanAdmin, signedInUser } = this.props;
+    const isTeamAdmin = isSignedInUserTeamAdmin({ members, editorsCanAdmin, signedInUser });
+
     return (
       <div>
         <div className="page-action-bar">
@@ -103,7 +84,11 @@ export class TeamMembers extends PureComponent<Props, State> {
 
           <div className="page-action-bar__spacer" />
 
-          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
+          <button
+            className="btn btn-primary pull-right"
+            onClick={this.onToggleAdding}
+            disabled={isAdding || !isTeamAdmin}
+          >
             Add member
           </button>
         </div>
@@ -132,11 +117,25 @@ export class TeamMembers extends PureComponent<Props, State> {
                 <th />
                 <th>Name</th>
                 <th>Email</th>
+                <WithFeatureToggle featureToggle={editorsCanAdmin}>
+                  <th>Permission</th>
+                </WithFeatureToggle>
                 {syncEnabled && <th />}
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{members && members.map(member => this.renderMember(member, syncEnabled))}</tbody>
+            <tbody>
+              {members &&
+                members.map(member => (
+                  <TeamMemberRow
+                    key={member.userId}
+                    member={member}
+                    syncEnabled={syncEnabled}
+                    editorsCanAdmin={editorsCanAdmin}
+                    signedInUserIsTeamAdmin={isTeamAdmin}
+                  />
+                ))}
+            </tbody>
           </table>
         </div>
       </div>
@@ -146,15 +145,14 @@ export class TeamMembers extends PureComponent<Props, State> {
 
 function mapStateToProps(state) {
   return {
-    members: getTeamMembers(state.team),
     searchMemberQuery: getSearchMemberQuery(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 
 const mapDispatchToProps = {
-  loadTeamMembers,
   addTeamMember,
-  removeTeamMember,
   setSearchMemberQuery,
 };
 

@@ -2,55 +2,65 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processSingleStatPanelData } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 // Components
-import { BarGauge, VizRepeater } from '@grafana/ui';
+import { BarGauge, VizRepeater, getSingleStatDisplayValues } from '@grafana/ui/src/components';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps, DisplayValue } from '@grafana/ui/src/types';
 
-interface Props extends PanelProps<BarGaugeOptions> {}
-
-export class BarGaugePanel extends PureComponent<Props> {
-  renderBarGauge(value, width, height) {
-    const { replaceVariables, options } = this.props;
-    const { valueOptions } = options;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
+export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
+  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
 
     return (
       <BarGauge
         value={value}
         width={width}
         height={height}
-        prefix={prefix}
-        suffix={suffix}
         orientation={options.orientation}
-        unit={valueOptions.unit}
-        decimals={valueOptions.decimals}
         thresholds={options.thresholds}
-        valueMappings={options.valueMappings}
         theme={config.theme}
+        itemSpacing={this.getItemSpacing()}
+        displayMode={options.displayMode}
       />
     );
+  };
+
+  getValues = (): DisplayValue[] => {
+    const { data, options, replaceVariables } = this.props;
+    return getSingleStatDisplayValues({
+      ...options,
+      replaceVariables,
+      theme: config.theme,
+      data: data.series,
+    });
+  };
+
+  getItemSpacing(): number {
+    if (this.props.options.displayMode === 'lcd') {
+      return 2;
+    }
+
+    return 10;
   }
 
   render() {
-    const { panelData, options, width, height } = this.props;
-
-    const values = processSingleStatPanelData({
-      panelData: panelData,
-      stat: options.valueOptions.stat,
-    });
+    const { height, width, options, data, renderCounter } = this.props;
 
     return (
-      <VizRepeater height={height} width={width} values={values} orientation={options.orientation}>
-        {({ vizHeight, vizWidth, valueInfo }) => this.renderBarGauge(valueInfo.value, vizWidth, vizHeight)}
-      </VizRepeater>
+      <VizRepeater
+        source={data}
+        getValues={this.getValues}
+        renderValue={this.renderValue}
+        renderCounter={renderCounter}
+        width={width}
+        height={height}
+        itemSpacing={this.getItemSpacing()}
+        orientation={options.orientation}
+      />
     );
   }
 }

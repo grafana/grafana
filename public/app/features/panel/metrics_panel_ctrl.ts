@@ -6,6 +6,8 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { toLegacyResponseData, isSeriesData, LegacyResponseData, TimeRange } from '@grafana/ui';
+import { Unsubscribable } from 'rxjs';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -16,15 +18,15 @@ class MetricsPanelCtrl extends PanelCtrl {
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  range: any;
+  range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
-  timeInfo: any;
+  timeInfo?: string;
   skipDataOnInit: boolean;
   dataStream: any;
-  dataSubscription: any;
-  dataList: any;
+  dataSubscription?: Unsubscribable;
+  dataList: LegacyResponseData[];
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -188,7 +190,14 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
-    this.events.emit('data-received', result.data);
+    // Make sure the data is TableData | TimeSeries
+    const data = result.data.map(v => {
+      if (isSeriesData(v)) {
+        return toLegacyResponseData(v);
+      }
+      return v;
+    });
+    this.events.emit('data-received', data);
   }
 
   handleDataStream(stream) {

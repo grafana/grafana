@@ -8,12 +8,13 @@ import {
   CellMeasurerCache,
   CellMeasurer,
   GridCellProps,
+  Index,
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortTableData } from '../../utils/processTableData';
+import { sortSeriesData } from '../../utils/processSeriesData';
 
-import { TableData, InterpolateFunction } from '@grafana/ui';
+import { SeriesData, InterpolateFunction } from '@grafana/ui';
 import {
   TableCellBuilder,
   ColumnStyle,
@@ -24,8 +25,9 @@ import {
 import { stringToJsRegex } from '../../utils/index';
 
 export interface Props extends Themeable {
-  data: TableData;
+  data: SeriesData;
 
+  minColumnWidth: number;
   showHeader: boolean;
   fixedHeader: boolean;
   fixedColumns: number;
@@ -41,11 +43,12 @@ export interface Props extends Themeable {
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data: TableData;
+  data: SeriesData;
 }
 
 interface ColumnRenderInfo {
   header: string;
+  width: number;
   builder: TableCellBuilder;
 }
 
@@ -58,12 +61,14 @@ export class Table extends Component<Props, State> {
   renderer: ColumnRenderInfo[];
   measurer: CellMeasurerCache;
   scrollToTop = false;
+  rotateWidth = 100;
 
   static defaultProps = {
     showHeader: true,
     fixedHeader: true,
     fixedColumns: 0,
     rotate: false,
+    minColumnWidth: 150,
   };
 
   constructor(props: Props) {
@@ -76,12 +81,12 @@ export class Table extends Component<Props, State> {
     this.renderer = this.initColumns(props);
     this.measurer = new CellMeasurerCache({
       defaultHeight: 30,
-      defaultWidth: 150,
+      fixedWidth: true,
     });
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { data, styles, showHeader } = this.props;
+    const { data, styles, showHeader, rotate } = this.props;
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
     const configsChanged =
@@ -101,19 +106,29 @@ export class Table extends Component<Props, State> {
       this.renderer = this.initColumns(this.props);
     }
 
+    if (dataChanged || rotate !== prevProps.rotate) {
+      const { width, minColumnWidth } = this.props;
+      this.rotateWidth = Math.max(width / data.rows.length, minColumnWidth);
+    }
+
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       this.scrollToTop = true;
-      this.setState({ data: sortTableData(data, sortBy, sortDirection === 'DESC') });
+      this.setState({ data: sortSeriesData(data, sortBy, sortDirection === 'DESC') });
     }
   }
 
   /** Given the configuration, setup how each column gets rendered */
   initColumns(props: Props): ColumnRenderInfo[] {
-    const { styles, data } = props;
+    const { styles, data, width, minColumnWidth } = props;
+    if (!data || !data.fields || !data.fields.length || !styles) {
+      return [];
+    }
 
-    return data.columns.map((col, index) => {
-      let title = col.text;
+    const columnWidth = Math.max(width / data.fields.length, minColumnWidth);
+
+    return data.fields.map((col, index) => {
+      let title = col.name;
       let style: ColumnStyle | null = null; // ColumnStyle
 
       // Find the style based on the text
@@ -131,6 +146,7 @@ export class Table extends Component<Props, State> {
 
       return {
         header: title,
+        width: columnWidth,
         builder: getCellBuilder(col, style, this.props),
       };
     });
@@ -153,7 +169,7 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  /** Converts the grid coordinates to TableData coordinates */
+  /** Converts the grid coordinates to SeriesData coordinates */
   getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
     const { showHeader, rotate } = this.props;
     const rowOffset = showHeader ? -1 : 0;
@@ -181,17 +197,17 @@ export class Table extends Component<Props, State> {
     const { columnIndex, rowIndex, style } = cell.props;
     const { column } = this.getCellRef(rowIndex, columnIndex);
 
-    let col = data.columns[column];
+    let col = data.fields[column];
     const sorting = sortBy === column;
     if (!col) {
       col = {
-        text: '??' + columnIndex + '???',
+        name: '??' + columnIndex + '???',
       };
     }
 
     return (
       <div className="gf-table-header" style={style} onClick={() => this.onCellClick(rowIndex, columnIndex)}>
-        {col.text}
+        {col.name}
         {sorting && <SortIndicator sortDirection={sortDirection} />}
       </div>
     );
@@ -211,7 +227,7 @@ export class Table extends Component<Props, State> {
     const { data } = this.state;
 
     const isHeader = row < 0;
-    const rowData = isHeader ? data.columns : data.rows[row];
+    const rowData = isHeader ? data.fields : data.rows[row];
     const value = rowData ? rowData[column] : '';
     const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
 
@@ -220,7 +236,7 @@ export class Table extends Component<Props, State> {
         {builder({
           value,
           row: rowData,
-          column: data.columns[column],
+          column: data.fields[column],
           table: this,
           props,
         })}
@@ -228,11 +244,21 @@ export class Table extends Component<Props, State> {
     );
   };
 
+  getColumnWidth = (col: Index): number => {
+    if (this.props.rotate) {
+      return this.rotateWidth; // fixed for now
+    }
+    return this.renderer[col.index].width;
+  };
+
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
+    if (!data || !data.fields || !data.fields.length) {
+      return <span>Missing Fields</span>; // nothing
+    }
 
-    let columnCount = data.columns.length;
+    let columnCount = data.fields.length;
     let rowCount = data.rows.length + (showHeader ? 1 : 0);
 
     let fixedColumnCount = Math.min(fixedColumns, columnCount);
@@ -269,7 +295,7 @@ export class Table extends Component<Props, State> {
         rowCount={rowCount}
         overscanColumnCount={8}
         overscanRowCount={8}
-        columnWidth={this.measurer.columnWidth}
+        columnWidth={this.getColumnWidth}
         deferredMeasurementCache={this.measurer}
         cellRenderer={this.cellRenderer}
         rowHeight={this.measurer.rowHeight}

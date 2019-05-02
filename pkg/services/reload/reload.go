@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 )
@@ -46,11 +45,11 @@ func (r *ReloadService) ReloadLdapConf(cmd *m.ReloadLdapCfgCmd) error {
 
 	r.ldapReloading = true
 
-	if err := login.LoadLdapConfig(false); err != nil {
-		r.ldapReloading = false
-		r.log.Warn("Cannot reload Ldap config due to %s", err.Error())
-		return err
-	}
+	//if err := login.LoadLdapConfig(false); err != nil {
+	//	r.ldapReloading = false
+	//	r.log.Warn("Cannot reload Ldap config due to %s", err.Error())
+	//	return err
+	//}
 
 	r.ldapReloading = false
 	r.log.Info("Ldap config reloaded.")

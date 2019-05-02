@@ -1,24 +1,47 @@
-import { ComponentClass } from 'react';
-import { TimeSeries, LoadingState, TableData } from './data';
+import { ComponentClass, ComponentType } from 'react';
+import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
-import { ScopedVars } from './datasource';
+import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
+export interface PanelPluginMeta extends PluginMeta {
+  hideFromList?: boolean;
+  sort: number;
+
+  // if length>0 the query tab will show up
+  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
+  // so it will be deprecated soon
+  dataFormats?: PanelDataFormat[];
+}
+
+export enum PanelDataFormat {
+  Table = 'table',
+  TimeSeries = 'time_series',
+}
+
+export interface PanelData {
+  state: LoadingState;
+  series: SeriesData[];
+  request?: DataQueryRequest;
+  error?: DataQueryError;
+
+  // Data format expected by Angular panels
+  legacy?: LegacyResponseData[];
+}
+
 export interface PanelProps<T = any> {
-  panelData: PanelData;
+  data: PanelData;
+  // TODO: annotation?: PanelData;
+
   timeRange: TimeRange;
-  loading: LoadingState;
   options: T;
+  onOptionsChange: (options: T) => void;
   renderCounter: number;
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
-}
-
-export interface PanelData {
-  timeSeries?: TimeSeries[];
-  tableData?: TableData;
 }
 
 export interface PanelEditorProps<T = any> {
@@ -26,28 +49,71 @@ export interface PanelEditorProps<T = any> {
   onOptionsChange: (options: T) => void;
 }
 
-export type PreservePanelOptionsHandler<TOptions = any> = (pluginId: string, prevOptions: any) => Partial<TOptions>;
+export interface PanelModel<TOptions = any> {
+  id: number;
+  options: TOptions;
+  pluginVersion?: string;
+}
 
-export class ReactPanelPlugin<TOptions = any> {
-  panel: ComponentClass<PanelProps<TOptions>>;
+/**
+ * Called when a panel is first loaded with current panel model
+ */
+export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
+
+/**
+ * Called before a panel is initalized
+ */
+export type PanelTypeChangedHandler<TOptions = any> = (
+  options: Partial<TOptions>,
+  prevPluginId: string,
+  prevOptions: any
+) => Partial<TOptions>;
+
+export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
+  panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
-  preserveOptions?: PreservePanelOptionsHandler<TOptions>;
+  onPanelMigration?: PanelMigrationHandler<TOptions>;
+  onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
-  constructor(panel: ComponentClass<PanelProps<TOptions>>) {
+  /**
+   * Legacy angular ctrl.  If this exists it will be used instead of the panel
+   */
+  angularPanelCtrl?: any;
+
+  constructor(panel: ComponentType<PanelProps<TOptions>>) {
+    super();
     this.panel = panel;
   }
 
   setEditor(editor: ComponentClass<PanelEditorProps<TOptions>>) {
     this.editor = editor;
+    return this;
   }
 
   setDefaults(defaults: TOptions) {
     this.defaults = defaults;
+    return this;
   }
 
-  setPreserveOptionsHandler(handler: PreservePanelOptionsHandler<TOptions>) {
-    this.preserveOptions = handler;
+  /**
+   * This function is called before the panel first loads if
+   * the current version is different than the version that was saved.
+   *
+   * This is a good place to support any changes to the options model
+   */
+  setMigrationHandler(handler: PanelMigrationHandler) {
+    this.onPanelMigration = handler;
+    return this;
+  }
+
+  /**
+   * This function is called when the visualization was changed.  This
+   * passes in the options that were used in the previous visualization
+   */
+  setPanelChangeHandler(handler: PanelTypeChangedHandler) {
+    this.onPanelTypeChanged = handler;
+    return this;
   }
 }
 

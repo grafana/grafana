@@ -1,10 +1,9 @@
 .grafana-info-box {
   position: relative;
-  padding: 1.5rem;
+  padding: $space-lg;
   background-color: $empty-list-cta-bg;
-  margin-bottom: 2rem;
   border-top: 3px solid $info-box-border-color;
-  margin-bottom: $spacer;
+  margin-bottom: $space-md;
   margin-right: $space-xs;
   box-shadow: $card-shadow;
   flex-grow: 1;
