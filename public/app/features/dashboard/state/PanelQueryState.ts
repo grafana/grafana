@@ -232,6 +232,7 @@ export class PanelQueryState {
       };
     }
 
+    let loading = true;
     let done = this.isFinished(response.state);
     const series = [...response.series];
     const active: DataStreamState[] = [];
@@ -248,6 +249,9 @@ export class PanelQueryState {
 
       if (!this.isFinished(stream.state)) {
         done = false;
+        if (stream.state !== LoadingState.Loading) {
+          loading = false;
+        }
       }
     }
 
@@ -264,7 +268,7 @@ export class PanelQueryState {
     }
 
     return {
-      state: done ? LoadingState.Done : LoadingState.Streaming,
+      state: done ? LoadingState.Done : loading ? LoadingState.Loading : LoadingState.Streaming,
       series, // Union of series from response and all streams
       legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
