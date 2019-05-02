@@ -26,7 +26,7 @@ import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './pl
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
-import { DashboardImporter } from './import_list/DashboardImporter';
+import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 
 export function getLoadingNav(): NavModel {
@@ -232,7 +232,7 @@ class PluginPage extends PureComponent<Props, State> {
       // Apps have some special behavior
       if (plugin.meta.type === PluginType.app) {
         if (active.id === TAB_ID_DASHBOARDS) {
-          return <DashboardImporter plugin={plugin.meta} />;
+          return <PluginDashboards plugin={plugin.meta} />;
         }
 
         if (active.id === TAB_ID_CONFIG_CTRL && plugin.angularConfigCtrl) {
