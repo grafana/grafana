@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import moment from 'moment';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { Input, RawTimeRange, TimeRange, TIME_FORMAT, momentUtc, getRawRange } from '@grafana/ui';
+import { Input, RawTimeRange, TimeRange, TIME_FORMAT, momentUtc, getFormattedRangeToShow } from '@grafana/ui';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -39,7 +39,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     super(props);
 
     const { range, isUtc, isOpen } = props;
-    const rawRange = getRawRange(props.isUtc, range);
+    const rawRange = getFormattedRangeToShow(props.isUtc, range);
 
     this.state = {
       isOpen: isOpen,
@@ -62,7 +62,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     }
 
     const { range } = props;
-    const rawRange = getRawRange(props.isUtc, range);
+    const rawRange = getFormattedRangeToShow(props.isUtc, range);
 
     return {
       ...state,
@@ -102,15 +102,15 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     return nextTimeRange;
   }
 
-  handleChangeFrom = e => {
+  handleChangeFrom = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      fromRaw: e.target.value,
+      fromRaw: event.target.value,
     });
   };
 
-  handleChangeTo = e => {
+  handleChangeTo = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      toRaw: e.target.value,
+      toRaw: event.target.value,
     });
   };
 

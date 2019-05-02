@@ -1,5 +1,5 @@
 import moment, { Moment } from 'moment';
-import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
+import { TimeOption, TimeRange, TIME_FORMAT, RawTimeRange } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
 
@@ -36,8 +36,8 @@ export const stringToMoment = (
   return moment(value, TIME_FORMAT);
 };
 
-export const mapTimeRangeToRangeString = (timeRange: TimeRange): string => {
-  return describeTimeRange(timeRange.raw);
+export const mapTimeRangeToRangeString = (timeRange: RawTimeRange): string => {
+  return describeTimeRange(timeRange);
 };
 
 export const isValidTimeString = (text: string) => dateMath.isValid(text);
