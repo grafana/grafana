@@ -1,4 +1,4 @@
-import InputDatasource from './datasource';
+import InputDatasource from './InputDatasource';
 import { InputQuery } from './types';
 import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
