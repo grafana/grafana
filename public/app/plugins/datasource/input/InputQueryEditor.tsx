@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputDatasource } from './datasource';
+import { InputDatasource } from './InputDatasource';
 import { InputQuery } from './types';
 
 import { FormLabel, Select, QueryEditorProps, SelectOptionItem, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
@@ -94,5 +94,3 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     );
   }
 }
-
-export default InputQueryEditor;
