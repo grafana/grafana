@@ -1,4 +1,4 @@
-import { PluginInclude, DataSourceSettings, PluginType, NavModel, NavModelItem, DataSourcePlugin } from '@grafana/ui';
+import { DataSourceSettings, PluginType, NavModel, NavModelItem, PluginInclude, DataSourcePlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: DataSourcePlugin): NavModelItem {
