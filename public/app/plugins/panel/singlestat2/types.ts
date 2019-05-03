@@ -1,4 +1,4 @@
-import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
+import { VizOrientation, ReducerID, SingleStatBaseOptions } from '@grafana/ui';
 
 export interface SparklineOptions {
   show: boolean;
@@ -33,7 +33,7 @@ export const defaults: SingleStatOptions = {
     prefix: '',
     suffix: '',
     decimals: null,
-    stat: StatID.mean,
+    stat: ReducerID.mean,
     unit: 'none',
   },
   valueMappings: [],

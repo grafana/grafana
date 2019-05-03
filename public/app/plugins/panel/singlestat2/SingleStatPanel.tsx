@@ -16,7 +16,7 @@ import {
   PanelProps,
   getDisplayProcessor,
   NullValueMode,
-  calculateStats,
+  reduceField,
   FieldCache,
   FieldType,
 } from '@grafana/ui';
@@ -57,10 +57,10 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
       for (let i = 0; i < numberFields.length; i++) {
         const field = numberFields[i];
-        const stats = calculateStats({
+        const stats = reduceField({
           series,
           fieldIndex: field.index,
-          stats: [stat], // The stats to calculate
+          reducers: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
         });
 
