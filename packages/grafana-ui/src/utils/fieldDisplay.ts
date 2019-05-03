@@ -117,7 +117,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
       }
 
-      for (let i = 0; i < series.fields.length; i++) {
+      for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = getFieldProperties(defaults, series.fields[i], override);
 
         // Show all number fields
