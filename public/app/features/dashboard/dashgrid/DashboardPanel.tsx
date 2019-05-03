@@ -23,11 +23,13 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  isInView: boolean;
 }
 
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
+  isLazy: boolean;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -40,6 +42,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
+      isLazy: !props.isInView,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -90,7 +93,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin(this.props.panel.type);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (this.state.isLazy && this.props.isInView) {
+      this.setState({ isLazy: false });
+    }
+
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -123,7 +130,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen } = this.props;
+    const { dashboard, panel, isFullscreen, isInView } = this.props;
     const { plugin } = this.state;
 
     return (
@@ -138,6 +145,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               panel={panel}
               dashboard={dashboard}
               isFullscreen={isFullscreen}
+              isInView={isInView}
               width={width}
               height={height}
             />
@@ -153,7 +161,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel } = this.state;
+    const { plugin, angularPanel, isLazy } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -161,6 +169,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     // if we have not loaded plugin exports yet, wait
     if (!plugin) {
+      return null;
+    }
+
+    // If we are lazy state don't render anything
+    if (isLazy) {
       return null;
     }
 
