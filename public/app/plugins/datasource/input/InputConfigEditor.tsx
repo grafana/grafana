@@ -2,9 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputSettings } from './types';
+import { InputOptions } from './types';
 
-import { DataSourcePluginOptionsEditorProps, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
+
+type InputSettings = DataSourceSettings<InputOptions>;
 
 interface Props extends DataSourcePluginOptionsEditorProps<InputSettings> {}
 

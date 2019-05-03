@@ -4,12 +4,14 @@ import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
+// NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
 }
+
 export class DataSourcePlugin<
-  TOptions extends DataSourceSettings = DataSourceSettings,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
   TQuery extends DataQuery = DataQuery
 > extends GrafanaPlugin<DataSourcePluginMeta> {
   DataSourceClass: DataSourceConstructor<TQuery>;
@@ -21,7 +23,7 @@ export class DataSourcePlugin<
     this.components = {};
   }
 
-  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>) {
+  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -87,7 +89,7 @@ interface PluginMetaQueryOptions {
 }
 
 export interface DataSourcePluginComponents<
-  TOptions extends DataSourceSettings = DataSourceSettings,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
   TQuery extends DataQuery = DataQuery
 > {
   QueryCtrl?: any;
@@ -96,7 +98,7 @@ export interface DataSourcePluginComponents<
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-  ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<TOptions>>;
+  ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
 
 export interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
@@ -334,8 +336,8 @@ export interface QueryHint {
 }
 
 export interface DataSourceJsonData {
-  authType: string;
-  defaultRegion: string;
+  authType?: string;
+  defaultRegion?: string;
 }
 
 /**
@@ -366,13 +368,13 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
  * as this data model is available to every user who has access to a data source (Viewers+).
  */
-export interface DataSourceInstanceSettings {
+export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
   id: number;
   type: string;
   name: string;
   meta: DataSourcePluginMeta;
   url?: string;
-  jsonData: { [str: string]: any };
+  jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
 
