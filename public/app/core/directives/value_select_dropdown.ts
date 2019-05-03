@@ -84,6 +84,14 @@ export class ValueSelectDropdownCtrl {
     this.selectionsChanged(false);
   }
 
+  selectAllFiltered() {
+    _.each(this.search.options, option => {
+        option.selected = true;
+    });
+
+    this.selectionsChanged(false);
+  }
+
   selectTag(tag: any) {
     tag.selected = !tag.selected;
     let tagValuesPromise;
