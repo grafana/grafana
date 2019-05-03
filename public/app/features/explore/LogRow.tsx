@@ -23,7 +23,7 @@ interface Props {
 interface State {
   fieldCount: number;
   fieldLabel: string;
-  FieldCalcs: LogLabelStatsModel[];
+  fieldStats: LogLabelStatsModel[];
   fieldValue: string;
   parsed: boolean;
   parser?: LogsParser;
@@ -57,7 +57,7 @@ export class LogRow extends PureComponent<Props, State> {
   state = {
     fieldCount: 0,
     fieldLabel: null,
-    FieldCalcs: null,
+    fieldStats: null,
     fieldValue: null,
     parsed: false,
     parser: undefined,
@@ -82,10 +82,10 @@ export class LogRow extends PureComponent<Props, State> {
     const fieldLabel = parser.getLabelFromField(fieldText);
     const fieldValue = parser.getValueFromField(fieldText);
     const matcher = parser.buildMatcher(fieldLabel);
-    const FieldCalcs = calculateFieldStats(allRows, matcher);
-    const fieldCount = FieldCalcs.reduce((sum, stat) => sum + stat.count, 0);
+    const fieldStats = calculateFieldStats(allRows, matcher);
+    const fieldCount = fieldStats.reduce((sum, stat) => sum + stat.count, 0);
 
-    this.setState({ fieldCount, fieldLabel, FieldCalcs, fieldValue, showFieldStats: true });
+    this.setState({ fieldCount, fieldLabel, fieldStats, fieldValue, showFieldStats: true });
   };
 
   onMouseOverMessage = () => {
@@ -124,7 +124,7 @@ export class LogRow extends PureComponent<Props, State> {
     const {
       fieldCount,
       fieldLabel,
-      FieldCalcs,
+      fieldStats,
       fieldValue,
       parsed,
       parsedFieldHighlights,
@@ -182,7 +182,7 @@ export class LogRow extends PureComponent<Props, State> {
           {showFieldStats && (
             <div className="logs-row__stats">
               <LogLabelStats
-                stats={FieldCalcs}
+                stats={fieldStats}
                 label={fieldLabel}
                 value={fieldValue}
                 onClickClose={this.onClickClose}
