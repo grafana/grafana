@@ -3,8 +3,8 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { getStatsCalculators } from '../../utils/index';
 import { Field } from '../../types';
+import { getFieldReducers } from '../../utils/index';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -50,7 +50,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
       // Make sure the stats have a valid name
       if (valueOptions.stat) {
-        fieldOptions.calcs = getStatsCalculators([valueOptions.stat]).map(s => s.id);
+        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
       }
     }
     field.min = old.minValue;

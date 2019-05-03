@@ -14,9 +14,9 @@ import {
   ScopedVars,
   GraphSeriesValue,
 } from '../types/index';
-import { calculateStats, StatID } from './statsCalculator';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
+import { ReducerID, reduceField } from './fieldReducer';
 
 export interface FieldDisplayOptions {
   title?: string; // empty is 'auto', otherwise template
@@ -86,7 +86,7 @@ export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions, sparkline } = options;
   const { defaults, override } = fieldOptions;
-  const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [StatID.last];
+  const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
 
@@ -164,10 +164,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             }
           }
         } else {
-          const results = calculateStats({
+          const results = reduceField({
             series,
             fieldIndex: i,
-            stats: calcs, // The stats to calculate
+            reducers: calcs, // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
 

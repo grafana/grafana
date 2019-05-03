@@ -1,4 +1,4 @@
-import { PanelModel, getStatsCalculators, Field } from '@grafana/ui';
+import { PanelModel, Field, getFieldReducers } from '@grafana/ui';
 import { GaugeOptions } from './types';
 import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { FieldDisplayOptions } from '@grafana/ui/src/utils/fieldDisplay';
@@ -29,7 +29,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
 
       // Make sure the stats have a valid name
       if (valueOptions.stat) {
-        fieldOptions.calcs = getStatsCalculators([valueOptions.stat]).map(s => s.id);
+        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
       }
     }
     field.min = old.minValue;

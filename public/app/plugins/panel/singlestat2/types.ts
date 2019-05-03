@@ -1,4 +1,4 @@
-import { VizOrientation, StatID, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
+import { VizOrientation, ReducerID, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
 
 export interface SparklineOptions {
   show: boolean;
@@ -24,7 +24,7 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
   title: '', // auto title
   values: false,
-  calcs: [StatID.mean],
+  calcs: [ReducerID.mean],
   defaults: {},
   override: {},
   mappings: [],

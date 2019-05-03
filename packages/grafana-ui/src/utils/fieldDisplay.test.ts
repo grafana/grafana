@@ -1,6 +1,6 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { FieldType } from '../types/data';
-import { StatID } from './statsCalculator';
+import { ReducerID } from './fieldReducer';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -69,7 +69,7 @@ describe('FieldDisplay', () => {
       ...options,
       fieldOptions: {
         title: '$__cell_0 * $__field_name * $__series_name',
-        calcs: [StatID.first],
+        calcs: [ReducerID.first],
         mappings: [],
         thresholds: [],
         override: {},
@@ -87,7 +87,7 @@ describe('FieldDisplay', () => {
     const display = getFieldDisplayValues({
       ...options,
       fieldOptions: {
-        calcs: [StatID.last],
+        calcs: [ReducerID.last],
         mappings: [],
         thresholds: [],
         override: {},

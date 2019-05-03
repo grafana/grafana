@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, StatID } from '@grafana/ui';
+import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, ReducerID } from '@grafana/ui';
 
 // Types
 import {
@@ -113,7 +113,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
               <StatsPicker
                 width={12}
                 placeholder="Choose Stat"
-                defaultStat={StatID.mean}
+                defaultStat={ReducerID.mean}
                 allowMultiple={false}
                 stats={calcs}
                 onChange={this.onCalcsChange}
