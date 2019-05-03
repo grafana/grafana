@@ -1,11 +1,11 @@
-import InputDatasource from './datasource';
-import { InputQuery } from './types';
+import InputDatasource from './InputDatasource';
+import { InputQuery, InputOptions } from './types';
 import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
   const data = readCSV('a,b,c\n1,2,3\n4,5,6');
-  const instanceSettings: DataSourceInstanceSettings = {
+  const instanceSettings: DataSourceInstanceSettings<InputOptions> = {
     id: 1,
     type: 'x',
     name: 'xxx',
