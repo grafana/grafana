@@ -14,11 +14,11 @@ export class PluginSettings extends PureComponent<Props> {
   element: any;
   component: AngularComponent;
   scopeProps: {
-    ctrl: { datasourceMeta: Plugin; current: DataSourceSettings };
+    ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
     onModelChanged: (dataSource: DataSourceSettings) => void;
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.scopeProps = {
