@@ -33,7 +33,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
 // To make sure the change happens without strange bugs happening when panels use same
 // named property with different type / value expectations
 // This is not required for react panels
-
 const mustKeepProps: { [str: string]: boolean } = {
   id: true,
   gridPos: true,
@@ -63,6 +62,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
+  queryRunner: true,
 };
 
 const defaults: any = {
