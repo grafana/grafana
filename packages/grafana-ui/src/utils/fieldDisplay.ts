@@ -212,7 +212,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         text: 'No data',
       },
     });
-  } else if (values.length === 1) {
+  } else if (values.length === 1 && !fieldOptions.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
   }

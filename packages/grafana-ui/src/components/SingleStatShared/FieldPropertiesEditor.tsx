@@ -38,7 +38,7 @@ export class FieldPropertiesEditor extends PureComponent<Props> {
   onMaxChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
       ...this.props.options,
-      min: toIntegerOrUndefined(event.target.value),
+      max: toIntegerOrUndefined(event.target.value),
     });
   };
 
