@@ -20,8 +20,6 @@ import { getFlotPairs } from './flotPairs';
 
 export interface FieldDisplayOptions {
   title?: string; // empty is 'auto', otherwise template
-  prefix?: string;
-  suffix?: string;
 
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
@@ -73,8 +71,6 @@ export interface FieldDisplay {
   field: Field;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
-  prefix?: string;
-  suffix?: string;
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -158,8 +154,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               field,
-              prefix: fieldOptions.prefix ? replaceVariables(fieldOptions.prefix, scopedVars) : undefined,
-              suffix: fieldOptions.suffix ? replaceVariables(fieldOptions.suffix, scopedVars) : undefined,
               display: displayValue,
             });
 
@@ -194,8 +188,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             values.push({
               field,
               display: displayValue,
-              prefix: fieldOptions.prefix ? replaceVariables(fieldOptions.prefix, scopedVars) : undefined,
-              suffix: fieldOptions.suffix ? replaceVariables(fieldOptions.suffix, scopedVars) : undefined,
               sparkline: points,
             });
           }

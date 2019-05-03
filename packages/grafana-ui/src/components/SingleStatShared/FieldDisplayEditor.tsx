@@ -33,7 +33,6 @@ const showOptions: Array<SelectOptionItem<boolean>> = [
 export interface Props {
   options: FieldDisplayOptions;
   onChange: (valueOptions: FieldDisplayOptions) => void;
-  showPrefixSuffix: boolean;
   labelWidth?: number;
   children?: JSX.Element[];
 }
@@ -55,12 +54,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
     this.props.onChange({ ...this.props.options, defaults: value });
   };
 
-  onPrefixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, prefix: event.target.value });
-
-  onSuffixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, suffix: event.target.value });
-
   onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
       ...this.props.options,
@@ -69,8 +62,8 @@ export class FieldDisplayEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { showPrefixSuffix, options, children } = this.props;
-    const { title, calcs, prefix, suffix, values, limit } = options;
+    const { options, children } = this.props;
+    const { title, calcs, values, limit } = options;
 
     const titleTooltip = (
       <div>
@@ -126,12 +119,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
                 onChange={this.onCalcsChange}
               />
             </div>
-          )}
-          {showPrefixSuffix && (
-            <>
-              <FormField label="Prefix" labelWidth={labelWidth} onChange={this.onPrefixChange} value={prefix || ''} />
-              <FormField label="Suffix" labelWidth={labelWidth} onChange={this.onSuffixChange} value={suffix || ''} />
-            </>
           )}
           {children}
         </>

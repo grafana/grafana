@@ -23,8 +23,6 @@ Object {
         "value": "",
       },
     ],
-    "prefix": "XX",
-    "suffix": "YY",
     "thresholds": Array [
       Object {
         "color": "green",

@@ -63,7 +63,6 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
           <FieldDisplayEditor
             onChange={this.onDisplayOptionsChanged}
             options={fieldOptions}
-            showPrefixSuffix={false}
             labelWidth={this.labelWidth}
           >
             <Switch

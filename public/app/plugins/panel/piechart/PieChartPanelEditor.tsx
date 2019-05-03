@@ -40,7 +40,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} showPrefixSuffix={false} />
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} />
 
           <FieldPropertiesEditor
             title="Field (default)"

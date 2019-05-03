@@ -54,12 +54,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
-            showPrefixSuffix={false}
-            labelWidth={labelWidth}
-          >
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} labelWidth={labelWidth}>
             <div className="form-field">
               <FormLabel width={labelWidth}>Orientation</FormLabel>
               <Select

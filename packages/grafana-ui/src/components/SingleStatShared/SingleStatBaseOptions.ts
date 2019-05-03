@@ -48,10 +48,6 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
       field.unit = valueOptions.unit;
       field.decimals = valueOptions.decimals;
 
-      // Not used in display, but we can save anyway
-      fieldOptions.prefix = valueOptions.prefix;
-      fieldOptions.suffix = valueOptions.suffix;
-
       // Make sure the stats have a valid name
       if (valueOptions.stat) {
         fieldOptions.calcs = getStatsCalculators([valueOptions.stat]).map(s => s.id);
