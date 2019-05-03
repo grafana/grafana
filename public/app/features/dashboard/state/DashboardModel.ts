@@ -1,5 +1,4 @@
 // Libaries
-import moment, { MomentInput } from 'moment';
 import _ from 'lodash';
 
 // Constants
@@ -16,6 +15,7 @@ import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
 import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { toUtc, DateTimeInput, momentWrapper, isDateTimeType } from 'app/core/moment_wrapper';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -698,12 +698,12 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date: MomentInput, format?: string) {
-    date = moment.isMoment(date) ? date : moment(date);
+  formatDate(date: DateTimeInput, format?: string) {
+    date = isDateTimeType(date) ? date : momentWrapper(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
-    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
+    return timezone === 'browser' ? momentWrapper(date).format(format) : toUtc(date).format(format);
   }
 
   destroy() {
@@ -817,10 +817,10 @@ export class DashboardModel {
     return this.graphTooltip === 1;
   }
 
-  getRelativeTime(date: MomentInput) {
-    date = moment.isMoment(date) ? date : moment(date);
+  getRelativeTime(date: DateTimeInput) {
+    date = isDateTimeType(date) ? date : momentWrapper(date);
 
-    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? momentWrapper(date).fromNow() : toUtc(date).fromNow();
   }
 
   isTimezoneUtc() {

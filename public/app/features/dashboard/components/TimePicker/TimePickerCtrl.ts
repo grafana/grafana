@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import angular from 'angular';
-import moment from 'moment';
 
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 
@@ -38,7 +37,7 @@ export class TimePickerCtrl {
     // init options
     this.panel = this.dashboard.timepicker;
     _.defaults(this.panel, TimePickerCtrl.defaults);
-    this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
+    this.firstDayOfWeek = getLocaleData().firstDayOfWeek();
 
     // init time stuff
     this.onRefresh();
@@ -51,10 +50,10 @@ export class TimePickerCtrl {
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
       time.to.local();
-      if (moment.isMoment(timeRaw.from)) {
+      if (isDateTimeType(timeRaw.from)) {
         timeRaw.from.local();
       }
-      if (moment.isMoment(timeRaw.to)) {
+      if (isDateTimeType(timeRaw.to)) {
         timeRaw.to.local();
       }
       this.isUtc = false;
@@ -67,7 +66,7 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
-    this.isAbsolute = moment.isMoment(this.timeRaw.to);
+    this.isAbsolute = isDateTimeType(this.timeRaw.to);
   }
 
   zoom(factor) {
@@ -94,7 +93,7 @@ export class TimePickerCtrl {
       from = range.from.valueOf();
     }
 
-    this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
+    this.timeSrv.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 
   openDropdown() {
@@ -141,7 +140,7 @@ export class TimePickerCtrl {
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
-    return this.dashboard.isTimezoneUtc() ? moment(jsDate).utc() : moment(jsDate);
+    return this.dashboard.isTimezoneUtc() ? momentWrapper(jsDate).utc() : momentWrapper(jsDate);
   }
 
   setRelativeFilter(timespan) {
@@ -186,4 +185,5 @@ angular.module('grafana.directives').directive('gfTimePickerSettings', settingsD
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
 import { inputDateDirective } from './validation';
+import { toUtc, getLocaleData, isDateTimeType, momentWrapper } from 'app/core/moment_wrapper';
 angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

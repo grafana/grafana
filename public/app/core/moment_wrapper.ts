@@ -1,4 +1,4 @@
-import moment, { MomentInput } from 'moment';
+import moment, { MomentInput, DurationInputArg1 } from 'moment';
 
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
@@ -6,25 +6,74 @@ export interface DateTimeBuiltinFormat {
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTimeType; // null | undefined
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
+export type DurationInput = string | number | DateTimeDuration;
+export type DurationUnit =
+  | 'year'
+  | 'years'
+  | 'y'
+  | 'month'
+  | 'months'
+  | 'M'
+  | 'week'
+  | 'weeks'
+  | 'w'
+  | 'day'
+  | 'days'
+  | 'd'
+  | 'hour'
+  | 'hours'
+  | 'h'
+  | 'minute'
+  | 'minutes'
+  | 'm'
+  | 'second'
+  | 'seconds'
+  | 's'
+  | 'millisecond'
+  | 'milliseconds'
+  | 'ms'
+  | 'quarter'
+  | 'quarters'
+  | 'Q';
 
-export interface DateTimeType {
+export interface DateTimeLocale {
+  firstDayOfWeek: () => number;
+}
+
+export interface DateTimeDuration {
+  asHours: () => number;
+}
+
+export interface DateTimeType extends Object {
+  add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
   format: (formaInput: FormatInput) => string;
   fromNow: () => string;
+  from: (formaInput: DateTimeInput) => string;
+  isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
   isValid: () => boolean;
   local: () => DateTimeType;
+  startOf: (unitOfTime: DurationUnit) => DateTimeType;
   toDate: () => Date;
   toISOString: () => string;
   valueOf: () => number;
   unix: () => number;
-  utc: (keepLocalTime?: boolean) => DateTimeType;
+  utc: () => DateTimeType;
 }
+
+export const getLocaleData = (): DateTimeLocale => {
+  return moment.localeData();
+};
+
+export const isDateTimeType = (value: any): value is DateTimeType => {
+  return moment.isMoment(value);
+};
 
 export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTimeType => {
   return moment.utc(input as MomentInput, formatInput) as DateTimeType;
 };
 
-export const isDateTimeType = (value: any): value is DateTimeType => {
-  return moment.isMoment(value);
+export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
+  return moment.duration(input as DurationInputArg1, unit) as DateTimeDuration;
 };
 
 export const momentWrapper = (input?: DateTimeInput, formatInput?: FormatInput): DateTimeType => {
