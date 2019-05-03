@@ -23,6 +23,20 @@
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": true
+    },
+    {
+      "type": "dashboard",
+      "name": "Streaming Example",
+      "path": "dashboards/streaming.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Lots of Stats",
+      "path": "dashboards/stats.json"
+    },
+    {
+      "type": "panel",
+      "name": "Anything -- just display?"
     }
   ]
 }

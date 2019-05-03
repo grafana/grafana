@@ -173,7 +173,7 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 		return false
 	}
 
-	token, err := authTokenService.LookupToken(rawToken)
+	token, err := authTokenService.LookupToken(ctx.Req.Context(), rawToken)
 	if err != nil {
 		ctx.Logger.Error("failed to look up user based on cookie", "error", err)
 		WriteSessionCookie(ctx, "", -1)
@@ -190,7 +190,7 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 	ctx.IsSignedIn = true
 	ctx.UserToken = token
 
-	rotated, err := authTokenService.TryRotateToken(token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+	rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
 	if err != nil {
 		ctx.Logger.Error("failed to rotate token", "error", err)
 		return true

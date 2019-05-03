@@ -270,6 +270,9 @@ export class DashboardPage extends PureComponent<Props, State> {
       'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
     });
 
+    // Only trigger render when the scroll has moved by 25
+    const approximateScrollTop = Math.round(scrollTop / 25) * 25;
+
     return (
       <div className={classes}>
         <DashNav
@@ -294,7 +297,12 @@ export class DashboardPage extends PureComponent<Props, State> {
 
             <div className={gridWrapperClasses}>
               {dashboard.meta.submenuEnabled && <SubMenu dashboard={dashboard} />}
-              <DashboardGrid dashboard={dashboard} isEditing={isEditing} isFullscreen={isFullscreen} />
+              <DashboardGrid
+                dashboard={dashboard}
+                isEditing={isEditing}
+                isFullscreen={isFullscreen}
+                scrollTop={approximateScrollTop}
+              />
             </div>
           </CustomScrollbar>
         </div>

@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { refreshExplore, testDatasource, loadDatasource } from './actions';
 import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
@@ -18,6 +19,7 @@ import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { DefaultTimeZone, RawTimeRange } from '@grafana/ui';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -29,21 +31,39 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   }),
 }));
 
+const t = moment.utc();
+const testRange = {
+  from: t,
+  to: t,
+  raw: {
+    from: t,
+    to: t,
+  },
+};
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+}));
+
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
   const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
-  const range = { from: 'now', to: 'now' };
+  const timeZone = DefaultTimeZone;
+  const range = testRange;
   const urlState: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],
-    range,
+    range: range.raw,
     ui,
   };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
   const initialState = {
+    user: {
+      timeZone,
+    },
     explore: {
       [exploreId]: {
         initialized: true,
@@ -77,7 +97,7 @@ describe('refreshExplore', () => {
   describe('when explore is initialized', () => {
     describe('and update datasource is set', () => {
       it('then it should dispatch initializeExplore', async () => {
-        const { exploreId, ui, range, initialState, containerWidth, eventBridge } = setup({ datasource: true });
+        const { exploreId, ui, initialState, containerWidth, eventBridge } = setup({ datasource: true });
 
         const dispatchedActions = await thunkTester(initialState)
           .givenThunk(refreshExplore)
@@ -90,7 +110,10 @@ describe('refreshExplore', () => {
         expect(payload.containerWidth).toEqual(containerWidth);
         expect(payload.eventBridge).toEqual(eventBridge);
         expect(payload.queries.length).toBe(1); // Queries have generated keys hard to expect on
-        expect(payload.range).toEqual(range);
+        expect(payload.range.from).toEqual(testRange.from);
+        expect(payload.range.to).toEqual(testRange.to);
+        expect(payload.range.raw.from).toEqual(testRange.raw.from);
+        expect(payload.range.raw.to).toEqual(testRange.raw.to);
         expect(payload.ui).toEqual(ui);
       });
     });

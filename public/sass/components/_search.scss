@@ -19,34 +19,6 @@
 }
 
 // Search
-.search-field-wrapper {
-  width: 100%;
-  height: $navbarHeight;
-  display: flex;
-  background-color: $navbarBackground;
-  position: relative;
-
-  & > input {
-    max-width: 653px;
-    padding: $space-md $space-md $space-sm $space-md;
-    height: 51px;
-    box-sizing: border-box;
-    outline: none;
-    background: $side-menu-bg;
-    background-color: $navbarButtonBackground;
-    flex-grow: 10;
-  }
-}
-
-.search-field-spacer {
-  flex-grow: 1;
-}
-
-.search-field-icon {
-  font-size: $font-size-lg;
-  padding: $space-md $space-md $space-sm $space-md;
-}
-
 .search-dropdown {
   display: flex;
   flex-direction: column;

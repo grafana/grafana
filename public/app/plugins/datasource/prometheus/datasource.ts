@@ -59,10 +59,20 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     return query.expr;
   }
 
+  _addTracingHeaders(httpOptions: any, options: any) {
+    httpOptions.headers = options.headers || {};
+    const proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
+  }
+
   _request(url, data?, options?: any) {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {
@@ -75,9 +85,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           }).join('&');
       }
     } else {
-      options.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+      options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       options.transformRequest = data => {
         return $.param(data);
       };
@@ -89,9 +97,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     }
 
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      options.headers.Authorization = this.basicAuth;
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -233,6 +239,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
+    this._addTracingHeaders(query, options);
 
     return query;
   }
@@ -261,7 +268,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
   }
 
   performInstantQuery(query, time) {
@@ -273,7 +280,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
   }
 
   performSuggestQuery(query, cache = false) {

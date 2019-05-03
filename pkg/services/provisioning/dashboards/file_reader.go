@@ -70,7 +70,7 @@ func (fr *fileReader) pollChanges(ctx context.Context) {
 // to the database.
 func (fr *fileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
-	resolvedPath := fr.resolvePath(fr.Path)
+	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
@@ -329,24 +329,23 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}, nil
 }
 
-func (fr *fileReader) resolvePath(path string) string {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func (fr *fileReader) resolvedPath() string {
+	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}
 
-	copy := path
-	path, err := filepath.Abs(path)
+	path, err := filepath.Abs(fr.Path)
 	if err != nil {
-		fr.log.Error("Could not create absolute path", "path", copy, "error", err)
+		fr.log.Error("Could not create absolute path", "path", fr.Path, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path", "path", copy, "error", err)
+		fr.log.Error("Failed to read content of symlinked path", "path", fr.Path, "error", err)
 	}
 
 	if path == "" {
-		path = copy
+		path = fr.Path
 		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
 	}
 	return path

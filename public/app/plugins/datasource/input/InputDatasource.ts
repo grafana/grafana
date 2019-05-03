@@ -6,7 +6,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
 } from '@grafana/ui/src/types';
-import { InputQuery } from './types';
+import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource implements DataSourceApi<InputQuery> {
   data: SeriesData[];
@@ -17,8 +17,7 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
   // Filled in by grafana plugin system
   id?: number;
 
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
     if (instanceSettings.jsonData) {
       this.data = instanceSettings.jsonData.data;
     }

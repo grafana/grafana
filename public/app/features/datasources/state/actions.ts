@@ -5,8 +5,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings } from '@grafana/ui/src/types';
-import { Plugin, StoreState, LocationUpdate } from 'app/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { StoreState, LocationUpdate } from 'app/types';
 import { actionCreatorFactory } from 'app/core/redux';
 import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
@@ -15,11 +15,11 @@ export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_D
 
 export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
 
-export const dataSourceMetaLoaded = actionCreatorFactory<Plugin>('LOAD_DATA_SOURCE_META').create();
+export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
 
 export const dataSourceTypesLoad = noPayloadActionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
 
-export const dataSourceTypesLoaded = actionCreatorFactory<Plugin[]>('LOADED_DATA_SOURCE_TYPES').create();
+export const dataSourceTypesLoaded = actionCreatorFactory<DataSourcePluginMeta[]>('LOADED_DATA_SOURCE_TYPES').create();
 
 export const setDataSourcesSearchQuery = actionCreatorFactory<string>('SET_DATA_SOURCES_SEARCH_QUERY').create();
 
@@ -35,8 +35,8 @@ export type Action =
   | UpdateNavIndexAction
   | ActionOf<DataSourceSettings>
   | ActionOf<DataSourceSettings[]>
-  | ActionOf<Plugin>
-  | ActionOf<Plugin[]>
+  | ActionOf<DataSourcePluginMeta>
+  | ActionOf<DataSourcePluginMeta[]>
   | ActionOf<LocationUpdate>;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
@@ -51,14 +51,14 @@ export function loadDataSources(): ThunkResult<void> {
 export function loadDataSource(id: number): ThunkResult<void> {
   return async dispatch => {
     const dataSource = await getBackendSrv().get(`/api/datasources/${id}`);
-    const pluginInfo = await getPluginSettings(dataSource.type);
+    const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     dispatch(dataSourceLoaded(dataSource));
     dispatch(dataSourceMetaLoaded(pluginInfo));
     dispatch(updateNavIndex(buildNavModel(dataSource, pluginInfo)));
   };
 }
 
-export function addDataSource(plugin: Plugin): ThunkResult<void> {
+export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
   return async (dispatch, getStore) => {
     await dispatch(loadDataSources());
 
@@ -84,7 +84,7 @@ export function loadDataSourceTypes(): ThunkResult<void> {
   return async dispatch => {
     dispatch(dataSourceTypesLoad());
     const result = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
-    dispatch(dataSourceTypesLoaded(result));
+    dispatch(dataSourceTypesLoaded(result as DataSourcePluginMeta[]));
   };
 }
 
@@ -105,7 +105,11 @@ export function deleteDataSource(): ThunkResult<void> {
   };
 }
 
-export function nameExits(dataSources, name) {
+interface ItemWithName {
+  name: string;
+}
+
+export function nameExits(dataSources: ItemWithName[], name: string) {
   return (
     dataSources.filter(dataSource => {
       return dataSource.name.toLowerCase() === name.toLowerCase();
@@ -113,7 +117,7 @@ export function nameExits(dataSources, name) {
   );
 }
 
-export function findNewName(dataSources, name) {
+export function findNewName(dataSources: ItemWithName[], name: string) {
   // Need to loop through current data sources to make sure
   // the name doesn't exist
   while (nameExits(dataSources, name)) {
@@ -143,18 +147,18 @@ function updateFrontendSettings() {
     });
 }
 
-function nameHasSuffix(name) {
+function nameHasSuffix(name: string) {
   return name.endsWith('-', name.length - 1);
 }
 
-function getLastDigit(name) {
+function getLastDigit(name: string) {
   return parseInt(name.slice(-1), 10);
 }
 
-function incrementLastDigit(digit) {
+function incrementLastDigit(digit: number) {
   return isNaN(digit) ? 1 : digit + 1;
 }
 
-function getNewName(name) {
+function getNewName(name: string) {
   return name.slice(0, name.length - 1);
 }
