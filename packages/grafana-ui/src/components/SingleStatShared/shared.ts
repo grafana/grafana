@@ -69,7 +69,7 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
           const stats = reduceField({
             series,
             fieldIndex: i,
-            ids: [stat], // The stats to calculate
+            reducers: [stat], // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
 

@@ -45,7 +45,7 @@ describe('Stats Calculators', () => {
     const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      ids: ['first', 'last', 'mean'],
+      reducers: ['first', 'last', 'mean'],
     });
 
     // First
@@ -62,7 +62,7 @@ describe('Stats Calculators', () => {
     const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      ids: ['first'],
+      reducers: ['first'],
     });
 
     // Should do the simple version that just looks up value
@@ -74,7 +74,7 @@ describe('Stats Calculators', () => {
     const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      ids: [ReducerID.distinctCount, ReducerID.changeCount],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
     expect(stats.distinctCount).toEqual(2);
@@ -85,7 +85,7 @@ describe('Stats Calculators', () => {
     const stats = reduceField({
       series: { fields: [{ name: 'A' }], rows: [[100], [200], [300], [400]] },
       fieldIndex: 0,
-      ids: [ReducerID.step, ReducerID.delta],
+      reducers: [ReducerID.step, ReducerID.delta],
     });
 
     expect(stats.step).toEqual(100);

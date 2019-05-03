@@ -60,7 +60,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         const stats = reduceField({
           series,
           fieldIndex: field.index,
-          ids: [stat], // The stats to calculate
+          reducers: [stat], // The stats to calculate
           nullValueMode: NullValueMode.Null,
         });
 

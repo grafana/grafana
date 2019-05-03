@@ -66,7 +66,7 @@ export function getFieldReducers(ids?: string[]): FieldReducerInfo[] {
 interface ReduceFieldOptions {
   series: SeriesData;
   fieldIndex: number;
-  ids: string[]; // The stats to calculate
+  reducers: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
 }
 
@@ -74,13 +74,13 @@ interface ReduceFieldOptions {
  * @returns an object with a key for each selected stat
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
-  const { series, fieldIndex, ids, nullValueMode } = options;
+  const { series, fieldIndex, reducers, nullValueMode } = options;
 
-  if (!ids || ids.length < 1) {
+  if (!reducers || reducers.length < 1) {
     return {};
   }
 
-  const queue = getFieldReducers(ids);
+  const queue = getFieldReducers(reducers);
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
