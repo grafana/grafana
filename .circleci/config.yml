@@ -74,9 +74,9 @@ jobs:
       docker:
         - image: circleci/node:8
         - image: grafana/grafana:master
-      working_directory: /go/src/github.com/grafana/grafana
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
           - restore_cache:
               key: dependency-cache-{{ checksum "yarn.lock" }}
           - run:
