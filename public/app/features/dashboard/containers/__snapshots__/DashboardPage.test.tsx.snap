@@ -211,6 +211,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           }
           isEditing={false}
           isFullscreen={false}
+          scrollTop={0}
         />
       </div>
     </CustomScrollbar>
@@ -540,6 +541,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           }
           isEditing={false}
           isFullscreen={false}
+          scrollTop={0}
         />
       </div>
     </CustomScrollbar>
