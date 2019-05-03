@@ -171,7 +171,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   get hasDataSource() {
-    return Object.keys(this.props.dataSource).length > 0;
+    return this.state.dataSource.id > 0;
   }
 
   render() {
