@@ -91,12 +91,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const values: FieldDisplay[] = [];
 
   if (data) {
+    let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
     const title = getTitleTemplate(fieldOptions.title, calcs, data);
     const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
     const scopedVars: ScopedVars = {};
 
-    for (let s = 0; s < data.length; s++) {
+    for (let s = 0; s < data.length && !hitLimit; s++) {
       let series = data[s];
       if (!series.name) {
         series = {
@@ -157,8 +158,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               display: displayValue,
             });
 
-            // This will allow one for each series
-            if (values.length > limit) {
+            if (values.length >= limit) {
+              hitLimit = true;
               break;
             }
           }
