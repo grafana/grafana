@@ -1,7 +1,22 @@
 import _ from 'lodash';
+import moment from 'moment';
+import ansicolor from 'vendor/ansicolor/ansicolor';
 
-import { colors, TimeSeries, Labels, LogLevel } from '@grafana/ui';
+import {
+  colors,
+  TimeSeries,
+  Labels,
+  LogLevel,
+  SeriesData,
+  findCommonLabels,
+  findUniqueLabels,
+  getLogLevel,
+  toLegacyResponseData,
+  FieldCache,
+  FieldType,
+} from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
+import { hasAnsiCodes } from 'app/core/utils/text';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -23,7 +38,6 @@ export interface LogRowModel {
   duplicates?: number;
   entry: string;
   hasAnsi: boolean;
-  key: string; // timestamp + labels
   labels: Labels;
   logLevel: LogLevel;
   raw: string;
@@ -56,25 +70,9 @@ export interface LogsMetaItem {
 
 export interface LogsModel {
   hasUniqueLabels: boolean;
-  id: string; // Identify one logs result from another
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: TimeSeries[];
-}
-
-export interface LogsStream {
-  labels: string;
-  entries: LogsStreamEntry[];
-  search?: string;
-  parsedLabels?: Labels;
-  uniqueLabels?: Labels;
-}
-
-export interface LogsStreamEntry {
-  line: string;
-  ts: string;
-  // Legacy, was renamed to ts
-  timestamp?: string;
 }
 
 export enum LogsDedupDescription {
@@ -325,4 +323,137 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       color: series.color,
     };
   });
+}
+
+function isLogsData(series: SeriesData) {
+  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+}
+
+export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
+  const metricSeries: SeriesData[] = [];
+  const logSeries: SeriesData[] = [];
+
+  for (const series of seriesData) {
+    if (isLogsData(series)) {
+      logSeries.push(series);
+      continue;
+    }
+
+    metricSeries.push(series);
+  }
+
+  const logsModel = logSeriesToLogsModel(logSeries);
+  if (logsModel) {
+    if (metricSeries.length === 0) {
+      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
+    } else {
+      logsModel.series = [];
+      for (const series of metricSeries) {
+        logsModel.series.push(toLegacyResponseData(series) as TimeSeries);
+      }
+    }
+
+    return logsModel;
+  }
+
+  return undefined;
+}
+
+export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
+  if (logSeries.length === 0) {
+    return undefined;
+  }
+
+  const allLabels: Labels[] = [];
+  for (let n = 0; n < logSeries.length; n++) {
+    const series = logSeries[n];
+    if (series.labels) {
+      allLabels.push(series.labels);
+    }
+  }
+
+  let commonLabels: Labels = {};
+  if (allLabels.length > 0) {
+    commonLabels = findCommonLabels(allLabels);
+  }
+
+  const rows: LogRowModel[] = [];
+  let hasUniqueLabels = false;
+
+  for (let i = 0; i < logSeries.length; i++) {
+    const series = logSeries[i];
+    const fieldCache = new FieldCache(series.fields);
+    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
+    if (Object.keys(uniqueLabels).length > 0) {
+      hasUniqueLabels = true;
+    }
+
+    for (let j = 0; j < series.rows.length; j++) {
+      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
+    }
+  }
+
+  const sortedRows = rows.sort((a, b) => {
+    return a.timestamp > b.timestamp ? -1 : 1;
+  });
+
+  // Meta data to display in status
+  const meta: LogsMetaItem[] = [];
+  if (_.size(commonLabels) > 0) {
+    meta.push({
+      label: 'Common labels',
+      value: commonLabels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+  }
+
+  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+
+  if (limits.length > 0) {
+    meta.push({
+      label: 'Limit',
+      value: `${limits[0].meta.limit} (${sortedRows.length} returned)`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
+  return {
+    hasUniqueLabels,
+    meta,
+    rows: sortedRows,
+  };
+}
+
+export function processLogSeriesRow(
+  series: SeriesData,
+  fieldCache: FieldCache,
+  rowIndex: number,
+  uniqueLabels: Labels
+): LogRowModel {
+  const row = series.rows[rowIndex];
+  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
+  const ts = row[timeFieldIndex];
+  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
+  const message = row[stringFieldIndex];
+  const time = moment(ts);
+  const timeEpochMs = time.valueOf();
+  const timeFromNow = time.fromNow();
+  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+  const logLevel = getLogLevel(message);
+  const hasAnsi = hasAnsiCodes(message);
+  const search = series.meta && series.meta.search ? series.meta.search : '';
+
+  return {
+    logLevel,
+    timeFromNow,
+    timeEpochMs,
+    timeLocal,
+    uniqueLabels,
+    hasAnsi,
+    entry: hasAnsi ? ansicolor.strip(message) : message,
+    raw: message,
+    labels: series.labels,
+    searchWords: search ? [search] : [],
+    timestamp: ts,
+  };
 }

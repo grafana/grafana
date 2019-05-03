@@ -43,7 +43,7 @@ export function makeDummyTable(columnCount: number, rowCount: number): SeriesDat
   };
 }
 
-storiesOf('Alpha/Table', module)
+storiesOf('UI/Table', module)
   .add('Basic Table', () => {
     // NOTE: This example does not seem to survice rotate &
     // Changing fixed headers... but the next one does?
@@ -56,7 +56,7 @@ storiesOf('Alpha/Table', module)
 
     return withFullSizeStory(Table, {
       styles: [],
-      data: simpleTable,
+      data: { ...simpleTable },
       replaceVariables,
       showHeader,
       fixedHeader,

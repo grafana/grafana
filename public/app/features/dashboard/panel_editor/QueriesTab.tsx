@@ -20,7 +20,7 @@ import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafana/ui/src/types';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { PanelQueryRunner, PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
+import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 
 interface Props {
@@ -58,12 +58,9 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel } = this.props;
+    const queryRunner = panel.getQueryRunner();
 
-    if (!panel.queryRunner) {
-      panel.queryRunner = new PanelQueryRunner();
-    }
-
-    this.querySubscription = panel.queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
+    this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
   }
 
   componentWillUnmount() {

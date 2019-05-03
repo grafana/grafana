@@ -101,8 +101,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
 
+	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
+
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
+
+	if originalSetCookie != "" {
+		proxy.ctx.Resp.Header().Set("Set-Cookie", originalSetCookie)
+	}
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {

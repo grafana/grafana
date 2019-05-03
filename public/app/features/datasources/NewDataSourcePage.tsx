@@ -2,15 +2,16 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { NavModel, Plugin, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { NavModel, DataSourcePluginMeta } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
-  dataSourceTypes: Plugin[];
+  dataSourceTypes: DataSourcePluginMeta[];
   isLoading: boolean;
   addDataSource: typeof addDataSource;
   loadDataSourceTypes: typeof loadDataSourceTypes;
@@ -23,7 +24,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.loadDataSourceTypes();
   }
 
-  onDataSourceTypeClicked = (plugin: Plugin) => {
+  onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
     this.props.addDataSource(plugin);
   };
 

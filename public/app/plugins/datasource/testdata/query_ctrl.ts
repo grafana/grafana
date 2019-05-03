@@ -2,6 +2,8 @@ import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
 import moment from 'moment';
+import { defaultQuery } from './StreamHandler';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -13,7 +15,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   selectedPoint: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope: any, $injector: any) {
     super($scope, $injector);
 
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
@@ -49,10 +51,12 @@ export class TestDataQueryCtrl extends QueryCtrl {
   }
 
   $onInit() {
-    return this.backendSrv.get('/api/tsdb/testdata/scenarios').then(res => {
-      this.scenarioList = res;
-      this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
-    });
+    return getBackendSrv()
+      .get('/api/tsdb/testdata/scenarios')
+      .then(res => {
+        this.scenarioList = res;
+        this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
+      });
   }
 
   scenarioChanged() {
@@ -65,6 +69,16 @@ export class TestDataQueryCtrl extends QueryCtrl {
       delete this.target.points;
     }
 
+    if (this.target.scenarioId === 'streaming_client') {
+      this.target.stream = _.defaults(this.target.stream || {}, defaultQuery);
+    } else {
+      delete this.target.stream;
+    }
+
+    this.refresh();
+  }
+
+  streamChanged() {
     this.refresh();
   }
 }

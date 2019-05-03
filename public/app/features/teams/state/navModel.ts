@@ -1,5 +1,6 @@
-import { Team, NavModelItem, NavModel, TeamPermissionLevel } from 'app/types';
+import { Team, TeamPermissionLevel } from 'app/types';
 import config from 'app/core/config';
+import { NavModelItem, NavModel } from '@grafana/ui';
 
 export function buildNavModel(team: Team): NavModelItem {
   const navModel = {

@@ -1,5 +1,5 @@
 import {
-  ReactPanelPlugin,
+  PanelPlugin,
   sharedSingleStatMigrationCheck,
   sharedSingleStatOptionsCheck,
   OptionType,
@@ -124,7 +124,7 @@ const optionsSchema: OptionsDataSchema<GaugeOptions> = {
   },
 };
 
-export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel)
+export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(optionsModel)
   .setOptionsSchema(optionsSchema)
