@@ -86,7 +86,7 @@ export class ValueSelectDropdownCtrl {
 
   selectAllFiltered() {
     _.each(this.search.options, option => {
-        option.selected = true;
+      option.selected = true;
     });
 
     this.selectionsChanged(false);
