@@ -68,6 +68,7 @@ describe('FieldDisplay', () => {
     const display = getFieldDisplayValues({
       ...options,
       fieldOptions: {
+        title: '$__cell_0 * $__field_name * $__series_name',
         calcs: [StatID.first],
         mappings: [],
         thresholds: [],
@@ -76,6 +77,10 @@ describe('FieldDisplay', () => {
       },
     });
     expect(display.map(v => v.display.text)).toEqual(['1', '2']);
+    // expect(display.map(v => v.display.title)).toEqual([
+    //   'a * Field 1 * Series Name', // 0
+    //   'b * Field 2 * Series Name', // 1
+    // ]);
   });
 
   it('show last numeric values', () => {
