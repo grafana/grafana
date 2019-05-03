@@ -330,7 +330,8 @@ export interface QueryHint {
 }
 
 /**
- * Data Source instance edit model
+ * Data Source instance edit model.  This is returned from:
+ *  /api/datasources
  */
 export interface DataSourceSettings {
   id: number;
@@ -354,7 +355,8 @@ export interface DataSourceSettings {
 
 /**
  * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
- * as this data model is available to every user who has access to a data source (Viewers+).
+ * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
+ * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings {
   id: number;

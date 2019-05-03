@@ -4,8 +4,8 @@ import config from 'app/core/config';
 export interface Props {
   isReadOnly: boolean;
   onDelete: () => void;
-  onSubmit: (event) => void;
-  onTest: (event) => void;
+  onSubmit: (event: any) => void;
+  onTest: (event: any) => void;
 }
 
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
