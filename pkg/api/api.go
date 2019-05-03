@@ -254,11 +254,6 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
 
-		// Reload Grafana components
-		apiRoute.Group("/reload", func(reloadRoute routing.RouteRegister) {
-			reloadRoute.Post("/ldapcfg", Wrap(ReloadLdapCfg))
-		}, reqGrafanaAdmin)
-
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
@@ -396,6 +391,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
+		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLdapCfg))
 	}, reqGrafanaAdmin)
 
 	// rendering
