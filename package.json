@@ -185,6 +185,7 @@
     "calculate-size": "1.1.1",
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
+    "css-element-queries": "^1.1.1",
     "d3": "4.13.0",
     "d3-scale-chromatic": "1.3.3",
     "eventemitter3": "2.0.3",
