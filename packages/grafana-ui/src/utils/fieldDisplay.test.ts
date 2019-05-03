@@ -68,12 +68,13 @@ describe('FieldDisplay', () => {
     const display = getFieldDisplayValues({
       ...options,
       fieldOptions: {
-        title: '$__cell_0 * $__field_name * $__series_name',
         calcs: [ReducerID.first],
         mappings: [],
         thresholds: [],
         override: {},
-        defaults: {},
+        defaults: {
+          title: '$__cell_0 * $__field_name * $__series_name',
+        },
       },
     });
     expect(display.map(v => v.display.text)).toEqual(['1', '2']);

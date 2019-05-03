@@ -19,8 +19,6 @@ import { getFlotPairs } from './flotPairs';
 import { ReducerID, reduceField } from './fieldReducer';
 
 export interface FieldDisplayOptions {
-  title?: string; // empty is 'auto', otherwise template
-
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
@@ -93,8 +91,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   if (data) {
     let hitLimit = false;
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const title = getTitleTemplate(fieldOptions.title, calcs, data);
-    const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
+    const defaultTitle = getTitleTemplate(fieldOptions.defaults.title, calcs, data);
     const scopedVars: ScopedVars = {};
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
@@ -138,8 +135,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           theme: options.theme,
         });
 
+        const title = field.title ? field.title : defaultTitle;
+
         // Show all number fields
         if (fieldOptions.values) {
+          const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
+
           for (const row of series.rows) {
             // Add all the row variables
             if (usesCellValues) {
@@ -205,7 +206,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         text: 'No data',
       },
     });
-  } else if (values.length === 1 && !fieldOptions.title) {
+  } else if (values.length === 1 && !fieldOptions.defaults.title) {
     // Don't show title for single item
     values[0].display.title = undefined;
   }

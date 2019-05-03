@@ -8,6 +8,8 @@ import { FormField, FormLabel, PanelOptionsGroup, UnitPicker, SelectOptionItem }
 import { Field } from '../../types/data';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
 
+import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+
 const labelWidth = 6;
 
 export interface Props {
@@ -18,6 +20,9 @@ export interface Props {
 }
 
 export class FieldPropertiesEditor extends PureComponent<Props> {
+  onTitleChange = (event: ChangeEvent<HTMLInputElement>) =>
+    this.props.onChange({ ...this.props.options, title: event.target.value });
+
   // @ts-ignore
   onUnitChange = (unit: SelectOptionItem<string>) => this.props.onChange({ ...this.props.value, unit: unit.value });
 
@@ -46,9 +51,30 @@ export class FieldPropertiesEditor extends PureComponent<Props> {
     const { showMinMax, title } = this.props;
     const { unit, decimals, min, max } = this.props.options;
 
+    const titleTooltip = (
+      <div>
+        Template Variables:
+        <br />
+        {'$' + VAR_SERIES_NAME}
+        <br />
+        {'$' + VAR_FIELD_NAME}
+        <br />
+        {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
+      </div>
+    );
+
     return (
       <PanelOptionsGroup title={title}>
         <>
+          <FormField
+            label="Title"
+            labelWidth={labelWidth}
+            onChange={this.onTitleChange}
+            value={this.props.options.title}
+            tooltip={titleTooltip}
+            placeholder="Auto"
+          />
+
           <div className="gf-form">
             <FormLabel width={labelWidth}>Unit</FormLabel>
             <UnitPicker defaultValue={unit} onChange={this.onUnitChange} />

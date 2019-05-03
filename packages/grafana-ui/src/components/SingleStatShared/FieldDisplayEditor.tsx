@@ -5,14 +5,7 @@ import React, { PureComponent, ChangeEvent } from 'react';
 import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, ReducerID } from '@grafana/ui';
 
 // Types
-import {
-  FieldDisplayOptions,
-  DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
-  VAR_SERIES_NAME,
-  VAR_FIELD_NAME,
-  VAR_CALC,
-  VAR_CELL_PREFIX,
-} from '../../utils/fieldDisplay';
+import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
@@ -47,9 +40,6 @@ export class FieldDisplayEditor extends PureComponent<Props> {
     this.props.onChange({ ...this.props.options, calcs });
   };
 
-  onTitleChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, title: event.target.value });
-
   onDefaultsChange = (value: Partial<Field>) => {
     this.props.onChange({ ...this.props.options, defaults: value });
   };
@@ -63,33 +53,13 @@ export class FieldDisplayEditor extends PureComponent<Props> {
 
   render() {
     const { options, children } = this.props;
-    const { title, calcs, values, limit } = options;
-
-    const titleTooltip = (
-      <div>
-        Template Variables:
-        <br />
-        {values ? '$' + VAR_CELL_PREFIX + '{N}' : '$' + VAR_CALC}
-        <br />
-        {'$' + VAR_SERIES_NAME}
-        <br />
-        {'$' + VAR_FIELD_NAME}
-      </div>
-    );
+    const { calcs, values, limit } = options;
 
     const labelWidth = this.props.labelWidth || 5;
 
     return (
       <PanelOptionsGroup title="Display">
         <>
-          <FormField
-            label="Title"
-            labelWidth={labelWidth}
-            onChange={this.onTitleChange}
-            value={title}
-            tooltip={titleTooltip}
-            placeholder="Auto"
-          />
           <div className="gf-form">
             <FormLabel width={labelWidth}>Show</FormLabel>
             <Select
