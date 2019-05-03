@@ -3,16 +3,16 @@ import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 
 export interface AngularComponent {
-  destroy();
-  digest();
-  getScope();
+  destroy(): void;
+  digest(): void;
+  getScope(): any;
 }
 
 export class AngularLoader {
   /** @ngInject */
-  constructor(private $compile, private $rootScope) {}
+  constructor(private $compile: any, private $rootScope: any) {}
 
-  load(elem, scopeProps, template): AngularComponent {
+  load(elem: any, scopeProps: any, template: string): AngularComponent {
     const scope = this.$rootScope.$new();
 
     _.assign(scope, scopeProps);

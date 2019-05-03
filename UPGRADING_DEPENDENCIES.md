@@ -18,10 +18,21 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 
 ## Go Dependencies
 
-Updated using `dep`.
+The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
 
-- `Gopkg.toml`
-- `Gopkg.lock`
+All dependencies are vendored in the `vendor/` directory.
+
+To add or update a new dependency, use the `go get` command:
+
+```bash
+# Pick the latest tagged release.
+go get example.com/some/module/pkg
+
+# Pick a specific version.
+go get example.com/some/module/pkg@vX.Y.Z
+```
+
+Tidy up the `go.mod` and `go.sum` files and copy the new/updated dependency to the `vendor/` directory:
 
 ## Node.js Dependencies
 

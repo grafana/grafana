@@ -126,7 +126,7 @@ export class SettingsCtrl {
       this.viewId = 'make_editable';
     }
 
-    const currentSection = _.find(this.sections, { id: this.viewId });
+    const currentSection: any = _.find(this.sections, { id: this.viewId } as any);
     if (!currentSection) {
       this.sections.unshift({
         title: 'Not found',
@@ -174,7 +174,7 @@ export class SettingsCtrl {
     this.viewId = 'settings';
     this.buildSectionList();
 
-    const currentSection = _.find(this.sections, { id: this.viewId });
+    const currentSection: any = _.find(this.sections, { id: this.viewId } as any);
     this.$location.url(currentSection.url);
   }
 
@@ -192,6 +192,8 @@ export class SettingsCtrl {
         text2: `
           <i>See <a class="external-link" href="http://docs.grafana.org/administration/provisioning/#dashboards" target="_blank">
           documentation</a> for more information about provisioning.</i>
+          </br>
+          File path: ${this.dashboard.meta.provisionedExternalId}
         `,
         text2htmlBind: true,
         icon: 'fa-trash',

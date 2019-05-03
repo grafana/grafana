@@ -1,8 +1,24 @@
 import InfluxDatasource from './datasource';
 import { InfluxQueryCtrl } from './query_ctrl';
+import {
+  createChangeHandler,
+  createResetHandler,
+  PasswordFieldEnum,
+} from '../../../features/datasources/utils/passwordHandlers';
 
 class InfluxConfigCtrl {
   static templateUrl = 'partials/config.html';
+  current: any;
+  onPasswordReset: ReturnType<typeof createResetHandler>;
+  onPasswordChange: ReturnType<typeof createChangeHandler>;
+
+  constructor() {
+    this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
+    this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
+    this.current.jsonData.httpMode = this.current.jsonData.httpMode || 'GET';
+  }
+
+  httpMode = [{ name: 'GET', value: 'GET' }, { name: 'POST', value: 'POST' }];
 }
 
 class InfluxAnnotationsQueryCtrl {

@@ -31,13 +31,12 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   getValues = (): DisplayValue[] => {
+    const { data, options, replaceVariables } = this.props;
     return getSingleStatDisplayValues({
-      valueMappings: this.props.options.valueMappings,
-      thresholds: this.props.options.thresholds,
-      valueOptions: this.props.options.valueOptions,
-      data: this.props.data,
+      ...options,
+      replaceVariables,
       theme: config.theme,
-      replaceVariables: this.props.replaceVariables,
+      data: data.series,
     });
   };
 

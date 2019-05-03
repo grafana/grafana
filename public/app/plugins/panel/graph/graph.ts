@@ -574,6 +574,7 @@ class GraphElement {
         return [tickIndex + 1, point[1]];
       });
     });
+    // @ts-ignore, potential bug? is this _.flattenDeep?
     ticks = _.flatten(ticks, true);
 
     options.xaxis = {

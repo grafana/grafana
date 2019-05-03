@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,12 +10,10 @@ import (
 	"testing"
 	"time"
 
-	msession "github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
@@ -158,7 +157,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: unhashedToken,
@@ -187,14 +186,14 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -229,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return nil, m.ErrUserTokenNotFound
 			}
 
@@ -276,52 +275,9 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderProperty = "username"
 			name := "markelog"
 
-			middlewareScenario(t, "should sync the user if it's not in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
-					return nil
-				})
-
-				sc.fakeReq("GET", "/")
-
-				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
-				sc.exec()
-
-				Convey("Should init user via ldap", func() {
-					So(called, ShouldBeTrue)
-					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
-					So(sc.context.OrgId, ShouldEqual, 4)
-				})
-			})
-
 			middlewareScenario(t, "should not sync the user if it's in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
+					query.Result = &m.SignedInUser{OrgId: 4, UserId: query.UserId}
 					return nil
 				})
 
@@ -332,17 +288,10 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
-				cacheValue, cacheErr := sc.remoteCacheService.Get(key)
-
 				Convey("Should init user via cache", func() {
-					So(called, ShouldBeFalse)
-
 					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
+					So(sc.context.UserId, ShouldEqual, 33)
 					So(sc.context.OrgId, ShouldEqual, 4)
-
-					So(cacheValue, ShouldEqual, 33)
-					So(cacheErr, ShouldBeNil)
 				})
 			})
 
@@ -473,9 +422,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
-		// mock out gc goroutine
-		session.StartSessionGC = func() {}
-		setting.SessionOptions = msession.Options{}
 
 		sc.m.Use(OrgRedirect())
 		sc.m.Use(AddDefaultResponseHeaders())

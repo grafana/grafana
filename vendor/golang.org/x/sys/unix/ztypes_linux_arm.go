@@ -6,11 +6,11 @@
 package unix
 
 const (
-	sizeofPtr      = 0x4
-	sizeofShort    = 0x2
-	sizeofInt      = 0x4
-	sizeofLong     = 0x4
-	sizeofLongLong = 0x8
+	SizeofPtr      = 0x4
+	SizeofShort    = 0x2
+	SizeofInt      = 0x4
+	SizeofLong     = 0x4
+	SizeofLongLong = 0x8
 	PathMax        = 0x1000
 )
 
@@ -98,7 +98,6 @@ type _Gid_t uint32
 type Stat_t struct {
 	Dev     uint64
 	_       uint16
-	_       [2]byte
 	_       uint32
 	Mode    uint32
 	Nlink   uint32
@@ -106,7 +105,7 @@ type Stat_t struct {
 	Gid     uint32
 	Rdev    uint64
 	_       uint16
-	_       [6]byte
+	_       [4]byte
 	Size    int64
 	Blksize int32
 	_       [4]byte
@@ -251,9 +250,15 @@ type RawSockaddrL2 struct {
 	_           [1]byte
 }
 
+type RawSockaddrRFCOMM struct {
+	Family  uint16
+	Bdaddr  [6]uint8
+	Channel uint8
+	_       [1]byte
+}
+
 type RawSockaddrCAN struct {
 	Family  uint16
-	_       [2]byte
 	Ifindex int32
 	Addr    [8]byte
 }
@@ -273,6 +278,16 @@ type RawSockaddrVM struct {
 	Cid       uint32
 	Zero      [4]uint8
 }
+
+type RawSockaddrXDP struct {
+	Family         uint16
+	Flags          uint16
+	Ifindex        uint32
+	Queue_id       uint32
+	Shared_umem_fd uint32
+}
+
+type RawSockaddrPPPoX [0x1e]byte
 
 type RawSockaddr struct {
 	Family uint16
@@ -368,7 +383,6 @@ type TCPInfo struct {
 	Probes         uint8
 	Backoff        uint8
 	Options        uint8
-	_              [2]byte
 	Rto            uint32
 	Ato            uint32
 	Snd_mss        uint32
@@ -395,6 +409,11 @@ type TCPInfo struct {
 	Total_retrans  uint32
 }
 
+type CanFilter struct {
+	Id   uint32
+	Mask uint32
+}
+
 const (
 	SizeofSockaddrInet4     = 0x10
 	SizeofSockaddrInet6     = 0x1c
@@ -404,9 +423,12 @@ const (
 	SizeofSockaddrNetlink   = 0xc
 	SizeofSockaddrHCI       = 0x6
 	SizeofSockaddrL2        = 0xe
+	SizeofSockaddrRFCOMM    = 0xa
 	SizeofSockaddrCAN       = 0x10
 	SizeofSockaddrALG       = 0x58
 	SizeofSockaddrVM        = 0x10
+	SizeofSockaddrXDP       = 0x10
+	SizeofSockaddrPPPoX     = 0x1e
 	SizeofLinger            = 0x8
 	SizeofIovec             = 0x8
 	SizeofIPMreq            = 0x8
@@ -421,126 +443,185 @@ const (
 	SizeofICMPv6Filter      = 0x20
 	SizeofUcred             = 0xc
 	SizeofTCPInfo           = 0x68
+	SizeofCanFilter         = 0x8
 )
 
 const (
-	IFA_UNSPEC           = 0x0
-	IFA_ADDRESS          = 0x1
-	IFA_LOCAL            = 0x2
-	IFA_LABEL            = 0x3
-	IFA_BROADCAST        = 0x4
-	IFA_ANYCAST          = 0x5
-	IFA_CACHEINFO        = 0x6
-	IFA_MULTICAST        = 0x7
-	IFLA_UNSPEC          = 0x0
-	IFLA_ADDRESS         = 0x1
-	IFLA_BROADCAST       = 0x2
-	IFLA_IFNAME          = 0x3
-	IFLA_MTU             = 0x4
-	IFLA_LINK            = 0x5
-	IFLA_QDISC           = 0x6
-	IFLA_STATS           = 0x7
-	IFLA_COST            = 0x8
-	IFLA_PRIORITY        = 0x9
-	IFLA_MASTER          = 0xa
-	IFLA_WIRELESS        = 0xb
-	IFLA_PROTINFO        = 0xc
-	IFLA_TXQLEN          = 0xd
-	IFLA_MAP             = 0xe
-	IFLA_WEIGHT          = 0xf
-	IFLA_OPERSTATE       = 0x10
-	IFLA_LINKMODE        = 0x11
-	IFLA_LINKINFO        = 0x12
-	IFLA_NET_NS_PID      = 0x13
-	IFLA_IFALIAS         = 0x14
-	IFLA_NUM_VF          = 0x15
-	IFLA_VFINFO_LIST     = 0x16
-	IFLA_STATS64         = 0x17
-	IFLA_VF_PORTS        = 0x18
-	IFLA_PORT_SELF       = 0x19
-	IFLA_AF_SPEC         = 0x1a
-	IFLA_GROUP           = 0x1b
-	IFLA_NET_NS_FD       = 0x1c
-	IFLA_EXT_MASK        = 0x1d
-	IFLA_PROMISCUITY     = 0x1e
-	IFLA_NUM_TX_QUEUES   = 0x1f
-	IFLA_NUM_RX_QUEUES   = 0x20
-	IFLA_CARRIER         = 0x21
-	IFLA_PHYS_PORT_ID    = 0x22
-	IFLA_CARRIER_CHANGES = 0x23
-	IFLA_PHYS_SWITCH_ID  = 0x24
-	IFLA_LINK_NETNSID    = 0x25
-	IFLA_PHYS_PORT_NAME  = 0x26
-	IFLA_PROTO_DOWN      = 0x27
-	IFLA_GSO_MAX_SEGS    = 0x28
-	IFLA_GSO_MAX_SIZE    = 0x29
-	IFLA_PAD             = 0x2a
-	IFLA_XDP             = 0x2b
-	IFLA_EVENT           = 0x2c
-	IFLA_NEW_NETNSID     = 0x2d
-	IFLA_IF_NETNSID      = 0x2e
-	IFLA_MAX             = 0x31
-	RT_SCOPE_UNIVERSE    = 0x0
-	RT_SCOPE_SITE        = 0xc8
-	RT_SCOPE_LINK        = 0xfd
-	RT_SCOPE_HOST        = 0xfe
-	RT_SCOPE_NOWHERE     = 0xff
-	RT_TABLE_UNSPEC      = 0x0
-	RT_TABLE_COMPAT      = 0xfc
-	RT_TABLE_DEFAULT     = 0xfd
-	RT_TABLE_MAIN        = 0xfe
-	RT_TABLE_LOCAL       = 0xff
-	RT_TABLE_MAX         = 0xffffffff
-	RTA_UNSPEC           = 0x0
-	RTA_DST              = 0x1
-	RTA_SRC              = 0x2
-	RTA_IIF              = 0x3
-	RTA_OIF              = 0x4
-	RTA_GATEWAY          = 0x5
-	RTA_PRIORITY         = 0x6
-	RTA_PREFSRC          = 0x7
-	RTA_METRICS          = 0x8
-	RTA_MULTIPATH        = 0x9
-	RTA_FLOW             = 0xb
-	RTA_CACHEINFO        = 0xc
-	RTA_TABLE            = 0xf
-	RTN_UNSPEC           = 0x0
-	RTN_UNICAST          = 0x1
-	RTN_LOCAL            = 0x2
-	RTN_BROADCAST        = 0x3
-	RTN_ANYCAST          = 0x4
-	RTN_MULTICAST        = 0x5
-	RTN_BLACKHOLE        = 0x6
-	RTN_UNREACHABLE      = 0x7
-	RTN_PROHIBIT         = 0x8
-	RTN_THROW            = 0x9
-	RTN_NAT              = 0xa
-	RTN_XRESOLVE         = 0xb
-	RTNLGRP_NONE         = 0x0
-	RTNLGRP_LINK         = 0x1
-	RTNLGRP_NOTIFY       = 0x2
-	RTNLGRP_NEIGH        = 0x3
-	RTNLGRP_TC           = 0x4
-	RTNLGRP_IPV4_IFADDR  = 0x5
-	RTNLGRP_IPV4_MROUTE  = 0x6
-	RTNLGRP_IPV4_ROUTE   = 0x7
-	RTNLGRP_IPV4_RULE    = 0x8
-	RTNLGRP_IPV6_IFADDR  = 0x9
-	RTNLGRP_IPV6_MROUTE  = 0xa
-	RTNLGRP_IPV6_ROUTE   = 0xb
-	RTNLGRP_IPV6_IFINFO  = 0xc
-	RTNLGRP_IPV6_PREFIX  = 0x12
-	RTNLGRP_IPV6_RULE    = 0x13
-	RTNLGRP_ND_USEROPT   = 0x14
-	SizeofNlMsghdr       = 0x10
-	SizeofNlMsgerr       = 0x14
-	SizeofRtGenmsg       = 0x1
-	SizeofNlAttr         = 0x4
-	SizeofRtAttr         = 0x4
-	SizeofIfInfomsg      = 0x10
-	SizeofIfAddrmsg      = 0x8
-	SizeofRtMsg          = 0xc
-	SizeofRtNexthop      = 0x8
+	NDA_UNSPEC              = 0x0
+	NDA_DST                 = 0x1
+	NDA_LLADDR              = 0x2
+	NDA_CACHEINFO           = 0x3
+	NDA_PROBES              = 0x4
+	NDA_VLAN                = 0x5
+	NDA_PORT                = 0x6
+	NDA_VNI                 = 0x7
+	NDA_IFINDEX             = 0x8
+	NDA_MASTER              = 0x9
+	NDA_LINK_NETNSID        = 0xa
+	NDA_SRC_VNI             = 0xb
+	NTF_USE                 = 0x1
+	NTF_SELF                = 0x2
+	NTF_MASTER              = 0x4
+	NTF_PROXY               = 0x8
+	NTF_EXT_LEARNED         = 0x10
+	NTF_OFFLOADED           = 0x20
+	NTF_ROUTER              = 0x80
+	NUD_INCOMPLETE          = 0x1
+	NUD_REACHABLE           = 0x2
+	NUD_STALE               = 0x4
+	NUD_DELAY               = 0x8
+	NUD_PROBE               = 0x10
+	NUD_FAILED              = 0x20
+	NUD_NOARP               = 0x40
+	NUD_PERMANENT           = 0x80
+	NUD_NONE                = 0x0
+	IFA_UNSPEC              = 0x0
+	IFA_ADDRESS             = 0x1
+	IFA_LOCAL               = 0x2
+	IFA_LABEL               = 0x3
+	IFA_BROADCAST           = 0x4
+	IFA_ANYCAST             = 0x5
+	IFA_CACHEINFO           = 0x6
+	IFA_MULTICAST           = 0x7
+	IFA_FLAGS               = 0x8
+	IFA_RT_PRIORITY         = 0x9
+	IFA_TARGET_NETNSID      = 0xa
+	IFLA_UNSPEC             = 0x0
+	IFLA_ADDRESS            = 0x1
+	IFLA_BROADCAST          = 0x2
+	IFLA_IFNAME             = 0x3
+	IFLA_MTU                = 0x4
+	IFLA_LINK               = 0x5
+	IFLA_QDISC              = 0x6
+	IFLA_STATS              = 0x7
+	IFLA_COST               = 0x8
+	IFLA_PRIORITY           = 0x9
+	IFLA_MASTER             = 0xa
+	IFLA_WIRELESS           = 0xb
+	IFLA_PROTINFO           = 0xc
+	IFLA_TXQLEN             = 0xd
+	IFLA_MAP                = 0xe
+	IFLA_WEIGHT             = 0xf
+	IFLA_OPERSTATE          = 0x10
+	IFLA_LINKMODE           = 0x11
+	IFLA_LINKINFO           = 0x12
+	IFLA_NET_NS_PID         = 0x13
+	IFLA_IFALIAS            = 0x14
+	IFLA_NUM_VF             = 0x15
+	IFLA_VFINFO_LIST        = 0x16
+	IFLA_STATS64            = 0x17
+	IFLA_VF_PORTS           = 0x18
+	IFLA_PORT_SELF          = 0x19
+	IFLA_AF_SPEC            = 0x1a
+	IFLA_GROUP              = 0x1b
+	IFLA_NET_NS_FD          = 0x1c
+	IFLA_EXT_MASK           = 0x1d
+	IFLA_PROMISCUITY        = 0x1e
+	IFLA_NUM_TX_QUEUES      = 0x1f
+	IFLA_NUM_RX_QUEUES      = 0x20
+	IFLA_CARRIER            = 0x21
+	IFLA_PHYS_PORT_ID       = 0x22
+	IFLA_CARRIER_CHANGES    = 0x23
+	IFLA_PHYS_SWITCH_ID     = 0x24
+	IFLA_LINK_NETNSID       = 0x25
+	IFLA_PHYS_PORT_NAME     = 0x26
+	IFLA_PROTO_DOWN         = 0x27
+	IFLA_GSO_MAX_SEGS       = 0x28
+	IFLA_GSO_MAX_SIZE       = 0x29
+	IFLA_PAD                = 0x2a
+	IFLA_XDP                = 0x2b
+	IFLA_EVENT              = 0x2c
+	IFLA_NEW_NETNSID        = 0x2d
+	IFLA_IF_NETNSID         = 0x2e
+	IFLA_TARGET_NETNSID     = 0x2e
+	IFLA_CARRIER_UP_COUNT   = 0x2f
+	IFLA_CARRIER_DOWN_COUNT = 0x30
+	IFLA_NEW_IFINDEX        = 0x31
+	IFLA_MIN_MTU            = 0x32
+	IFLA_MAX_MTU            = 0x33
+	IFLA_MAX                = 0x33
+	IFLA_INFO_KIND          = 0x1
+	IFLA_INFO_DATA          = 0x2
+	IFLA_INFO_XSTATS        = 0x3
+	IFLA_INFO_SLAVE_KIND    = 0x4
+	IFLA_INFO_SLAVE_DATA    = 0x5
+	RT_SCOPE_UNIVERSE       = 0x0
+	RT_SCOPE_SITE           = 0xc8
+	RT_SCOPE_LINK           = 0xfd
+	RT_SCOPE_HOST           = 0xfe
+	RT_SCOPE_NOWHERE        = 0xff
+	RT_TABLE_UNSPEC         = 0x0
+	RT_TABLE_COMPAT         = 0xfc
+	RT_TABLE_DEFAULT        = 0xfd
+	RT_TABLE_MAIN           = 0xfe
+	RT_TABLE_LOCAL          = 0xff
+	RT_TABLE_MAX            = 0xffffffff
+	RTA_UNSPEC              = 0x0
+	RTA_DST                 = 0x1
+	RTA_SRC                 = 0x2
+	RTA_IIF                 = 0x3
+	RTA_OIF                 = 0x4
+	RTA_GATEWAY             = 0x5
+	RTA_PRIORITY            = 0x6
+	RTA_PREFSRC             = 0x7
+	RTA_METRICS             = 0x8
+	RTA_MULTIPATH           = 0x9
+	RTA_FLOW                = 0xb
+	RTA_CACHEINFO           = 0xc
+	RTA_TABLE               = 0xf
+	RTA_MARK                = 0x10
+	RTA_MFC_STATS           = 0x11
+	RTA_VIA                 = 0x12
+	RTA_NEWDST              = 0x13
+	RTA_PREF                = 0x14
+	RTA_ENCAP_TYPE          = 0x15
+	RTA_ENCAP               = 0x16
+	RTA_EXPIRES             = 0x17
+	RTA_PAD                 = 0x18
+	RTA_UID                 = 0x19
+	RTA_TTL_PROPAGATE       = 0x1a
+	RTA_IP_PROTO            = 0x1b
+	RTA_SPORT               = 0x1c
+	RTA_DPORT               = 0x1d
+	RTN_UNSPEC              = 0x0
+	RTN_UNICAST             = 0x1
+	RTN_LOCAL               = 0x2
+	RTN_BROADCAST           = 0x3
+	RTN_ANYCAST             = 0x4
+	RTN_MULTICAST           = 0x5
+	RTN_BLACKHOLE           = 0x6
+	RTN_UNREACHABLE         = 0x7
+	RTN_PROHIBIT            = 0x8
+	RTN_THROW               = 0x9
+	RTN_NAT                 = 0xa
+	RTN_XRESOLVE            = 0xb
+	RTNLGRP_NONE            = 0x0
+	RTNLGRP_LINK            = 0x1
+	RTNLGRP_NOTIFY          = 0x2
+	RTNLGRP_NEIGH           = 0x3
+	RTNLGRP_TC              = 0x4
+	RTNLGRP_IPV4_IFADDR     = 0x5
+	RTNLGRP_IPV4_MROUTE     = 0x6
+	RTNLGRP_IPV4_ROUTE      = 0x7
+	RTNLGRP_IPV4_RULE       = 0x8
+	RTNLGRP_IPV6_IFADDR     = 0x9
+	RTNLGRP_IPV6_MROUTE     = 0xa
+	RTNLGRP_IPV6_ROUTE      = 0xb
+	RTNLGRP_IPV6_IFINFO     = 0xc
+	RTNLGRP_IPV6_PREFIX     = 0x12
+	RTNLGRP_IPV6_RULE       = 0x13
+	RTNLGRP_ND_USEROPT      = 0x14
+	SizeofNlMsghdr          = 0x10
+	SizeofNlMsgerr          = 0x14
+	SizeofRtGenmsg          = 0x1
+	SizeofNlAttr            = 0x4
+	SizeofRtAttr            = 0x4
+	SizeofIfInfomsg         = 0x10
+	SizeofIfAddrmsg         = 0x8
+	SizeofRtMsg             = 0xc
+	SizeofRtNexthop         = 0x8
+	SizeofNdUseroptmsg      = 0x10
+	SizeofNdMsg             = 0xc
 )
 
 type NlMsghdr struct {
@@ -606,6 +687,27 @@ type RtNexthop struct {
 	Ifindex int32
 }
 
+type NdUseroptmsg struct {
+	Family    uint8
+	Pad1      uint8
+	Opts_len  uint16
+	Ifindex   int32
+	Icmp_type uint8
+	Icmp_code uint8
+	Pad2      uint16
+	Pad3      uint32
+}
+
+type NdMsg struct {
+	Family  uint8
+	Pad1    uint8
+	Pad2    uint16
+	Ifindex int32
+	State   uint16
+	Flags   uint8
+	Type    uint8
+}
+
 const (
 	SizeofSockFilter = 0x8
 	SizeofSockFprog  = 0x8
@@ -620,7 +722,6 @@ type SockFilter struct {
 
 type SockFprog struct {
 	Len    uint16
-	_      [2]byte
 	Filter *SockFilter
 }
 
@@ -693,6 +794,8 @@ const (
 
 	AT_SYMLINK_FOLLOW   = 0x400
 	AT_SYMLINK_NOFOLLOW = 0x100
+
+	AT_EACCESS = 0x200
 )
 
 type PollFd struct {
@@ -715,7 +818,30 @@ type Sigset_t struct {
 	Val [32]uint32
 }
 
-const RNDGETENTCNT = 0x80045200
+type SignalfdSiginfo struct {
+	Signo     uint32
+	Errno     int32
+	Code      int32
+	Pid       uint32
+	Uid       uint32
+	Fd        int32
+	Tid       uint32
+	Band      uint32
+	Overrun   uint32
+	Trapno    uint32
+	Status    int32
+	Int       int32
+	Ptr       uint64
+	Utime     uint64
+	Stime     uint64
+	Addr      uint64
+	Addr_lsb  uint16
+	_         uint16
+	Syscall   int32
+	Call_addr uint64
+	Arch      uint32
+	_         [28]uint8
+}
 
 const PERF_IOC_FLAG_GROUP = 0x1
 
@@ -739,11 +865,10 @@ type Winsize struct {
 
 type Taskstats struct {
 	Version                   uint16
-	_                         [2]byte
 	Ac_exitcode               uint32
 	Ac_flag                   uint8
 	Ac_nice                   uint8
-	_                         [6]byte
+	_                         [4]byte
 	Cpu_count                 uint64
 	Cpu_delay_total           uint64
 	Blkio_count               uint64
@@ -785,6 +910,8 @@ type Taskstats struct {
 	Cpu_scaled_run_real_total uint64
 	Freepages_count           uint64
 	Freepages_delay_total     uint64
+	Thrashing_count           uint64
+	Thrashing_delay_total     uint64
 }
 
 const (
@@ -887,7 +1014,8 @@ type PerfEventAttr struct {
 	Clockid            int32
 	Sample_regs_intr   uint64
 	Aux_watermark      uint32
-	_                  uint32
+	Sample_max_stack   uint16
+	_                  uint16
 }
 
 type PerfEventMmapPage struct {
@@ -990,6 +1118,7 @@ const (
 	PERF_COUNT_SW_ALIGNMENT_FAULTS = 0x7
 	PERF_COUNT_SW_EMULATION_FAULTS = 0x8
 	PERF_COUNT_SW_DUMMY            = 0x9
+	PERF_COUNT_SW_BPF_OUTPUT       = 0xa
 
 	PERF_SAMPLE_IP           = 0x1
 	PERF_SAMPLE_TID          = 0x2
@@ -1011,21 +1140,38 @@ const (
 	PERF_SAMPLE_BRANCH_ANY_CALL   = 0x10
 	PERF_SAMPLE_BRANCH_ANY_RETURN = 0x20
 	PERF_SAMPLE_BRANCH_IND_CALL   = 0x40
+	PERF_SAMPLE_BRANCH_ABORT_TX   = 0x80
+	PERF_SAMPLE_BRANCH_IN_TX      = 0x100
+	PERF_SAMPLE_BRANCH_NO_TX      = 0x200
+	PERF_SAMPLE_BRANCH_COND       = 0x400
+	PERF_SAMPLE_BRANCH_CALL_STACK = 0x800
+	PERF_SAMPLE_BRANCH_IND_JUMP   = 0x1000
+	PERF_SAMPLE_BRANCH_CALL       = 0x2000
+	PERF_SAMPLE_BRANCH_NO_FLAGS   = 0x4000
+	PERF_SAMPLE_BRANCH_NO_CYCLES  = 0x8000
+	PERF_SAMPLE_BRANCH_TYPE_SAVE  = 0x10000
 
 	PERF_FORMAT_TOTAL_TIME_ENABLED = 0x1
 	PERF_FORMAT_TOTAL_TIME_RUNNING = 0x2
 	PERF_FORMAT_ID                 = 0x4
 	PERF_FORMAT_GROUP              = 0x8
 
-	PERF_RECORD_MMAP       = 0x1
-	PERF_RECORD_LOST       = 0x2
-	PERF_RECORD_COMM       = 0x3
-	PERF_RECORD_EXIT       = 0x4
-	PERF_RECORD_THROTTLE   = 0x5
-	PERF_RECORD_UNTHROTTLE = 0x6
-	PERF_RECORD_FORK       = 0x7
-	PERF_RECORD_READ       = 0x8
-	PERF_RECORD_SAMPLE     = 0x9
+	PERF_RECORD_MMAP            = 0x1
+	PERF_RECORD_LOST            = 0x2
+	PERF_RECORD_COMM            = 0x3
+	PERF_RECORD_EXIT            = 0x4
+	PERF_RECORD_THROTTLE        = 0x5
+	PERF_RECORD_UNTHROTTLE      = 0x6
+	PERF_RECORD_FORK            = 0x7
+	PERF_RECORD_READ            = 0x8
+	PERF_RECORD_SAMPLE          = 0x9
+	PERF_RECORD_MMAP2           = 0xa
+	PERF_RECORD_AUX             = 0xb
+	PERF_RECORD_ITRACE_START    = 0xc
+	PERF_RECORD_LOST_SAMPLES    = 0xd
+	PERF_RECORD_SWITCH          = 0xe
+	PERF_RECORD_SWITCH_CPU_WIDE = 0xf
+	PERF_RECORD_NAMESPACES      = 0x10
 
 	PERF_CONTEXT_HV     = -0x20
 	PERF_CONTEXT_KERNEL = -0x80
@@ -1038,6 +1184,7 @@ const (
 	PERF_FLAG_FD_NO_GROUP = 0x1
 	PERF_FLAG_FD_OUTPUT   = 0x2
 	PERF_FLAG_PID_CGROUP  = 0x4
+	PERF_FLAG_FD_CLOEXEC  = 0x8
 )
 
 const (
@@ -1343,4 +1490,637 @@ const (
 	SizeofTpacketHdr  = 0x18
 	SizeofTpacket2Hdr = 0x20
 	SizeofTpacket3Hdr = 0x30
+
+	SizeofTpacketStats   = 0x8
+	SizeofTpacketStatsV3 = 0xc
 )
+
+const (
+	NF_INET_PRE_ROUTING  = 0x0
+	NF_INET_LOCAL_IN     = 0x1
+	NF_INET_FORWARD      = 0x2
+	NF_INET_LOCAL_OUT    = 0x3
+	NF_INET_POST_ROUTING = 0x4
+	NF_INET_NUMHOOKS     = 0x5
+)
+
+const (
+	NF_NETDEV_INGRESS  = 0x0
+	NF_NETDEV_NUMHOOKS = 0x1
+)
+
+const (
+	NFPROTO_UNSPEC   = 0x0
+	NFPROTO_INET     = 0x1
+	NFPROTO_IPV4     = 0x2
+	NFPROTO_ARP      = 0x3
+	NFPROTO_NETDEV   = 0x5
+	NFPROTO_BRIDGE   = 0x7
+	NFPROTO_IPV6     = 0xa
+	NFPROTO_DECNET   = 0xc
+	NFPROTO_NUMPROTO = 0xd
+)
+
+type Nfgenmsg struct {
+	Nfgen_family uint8
+	Version      uint8
+	Res_id       uint16
+}
+
+const (
+	NFNL_BATCH_UNSPEC = 0x0
+	NFNL_BATCH_GENID  = 0x1
+)
+
+const (
+	NFT_REG_VERDICT                   = 0x0
+	NFT_REG_1                         = 0x1
+	NFT_REG_2                         = 0x2
+	NFT_REG_3                         = 0x3
+	NFT_REG_4                         = 0x4
+	NFT_REG32_00                      = 0x8
+	NFT_REG32_01                      = 0x9
+	NFT_REG32_02                      = 0xa
+	NFT_REG32_03                      = 0xb
+	NFT_REG32_04                      = 0xc
+	NFT_REG32_05                      = 0xd
+	NFT_REG32_06                      = 0xe
+	NFT_REG32_07                      = 0xf
+	NFT_REG32_08                      = 0x10
+	NFT_REG32_09                      = 0x11
+	NFT_REG32_10                      = 0x12
+	NFT_REG32_11                      = 0x13
+	NFT_REG32_12                      = 0x14
+	NFT_REG32_13                      = 0x15
+	NFT_REG32_14                      = 0x16
+	NFT_REG32_15                      = 0x17
+	NFT_CONTINUE                      = -0x1
+	NFT_BREAK                         = -0x2
+	NFT_JUMP                          = -0x3
+	NFT_GOTO                          = -0x4
+	NFT_RETURN                        = -0x5
+	NFT_MSG_NEWTABLE                  = 0x0
+	NFT_MSG_GETTABLE                  = 0x1
+	NFT_MSG_DELTABLE                  = 0x2
+	NFT_MSG_NEWCHAIN                  = 0x3
+	NFT_MSG_GETCHAIN                  = 0x4
+	NFT_MSG_DELCHAIN                  = 0x5
+	NFT_MSG_NEWRULE                   = 0x6
+	NFT_MSG_GETRULE                   = 0x7
+	NFT_MSG_DELRULE                   = 0x8
+	NFT_MSG_NEWSET                    = 0x9
+	NFT_MSG_GETSET                    = 0xa
+	NFT_MSG_DELSET                    = 0xb
+	NFT_MSG_NEWSETELEM                = 0xc
+	NFT_MSG_GETSETELEM                = 0xd
+	NFT_MSG_DELSETELEM                = 0xe
+	NFT_MSG_NEWGEN                    = 0xf
+	NFT_MSG_GETGEN                    = 0x10
+	NFT_MSG_TRACE                     = 0x11
+	NFT_MSG_NEWOBJ                    = 0x12
+	NFT_MSG_GETOBJ                    = 0x13
+	NFT_MSG_DELOBJ                    = 0x14
+	NFT_MSG_GETOBJ_RESET              = 0x15
+	NFT_MSG_MAX                       = 0x19
+	NFTA_LIST_UNPEC                   = 0x0
+	NFTA_LIST_ELEM                    = 0x1
+	NFTA_HOOK_UNSPEC                  = 0x0
+	NFTA_HOOK_HOOKNUM                 = 0x1
+	NFTA_HOOK_PRIORITY                = 0x2
+	NFTA_HOOK_DEV                     = 0x3
+	NFT_TABLE_F_DORMANT               = 0x1
+	NFTA_TABLE_UNSPEC                 = 0x0
+	NFTA_TABLE_NAME                   = 0x1
+	NFTA_TABLE_FLAGS                  = 0x2
+	NFTA_TABLE_USE                    = 0x3
+	NFTA_CHAIN_UNSPEC                 = 0x0
+	NFTA_CHAIN_TABLE                  = 0x1
+	NFTA_CHAIN_HANDLE                 = 0x2
+	NFTA_CHAIN_NAME                   = 0x3
+	NFTA_CHAIN_HOOK                   = 0x4
+	NFTA_CHAIN_POLICY                 = 0x5
+	NFTA_CHAIN_USE                    = 0x6
+	NFTA_CHAIN_TYPE                   = 0x7
+	NFTA_CHAIN_COUNTERS               = 0x8
+	NFTA_CHAIN_PAD                    = 0x9
+	NFTA_RULE_UNSPEC                  = 0x0
+	NFTA_RULE_TABLE                   = 0x1
+	NFTA_RULE_CHAIN                   = 0x2
+	NFTA_RULE_HANDLE                  = 0x3
+	NFTA_RULE_EXPRESSIONS             = 0x4
+	NFTA_RULE_COMPAT                  = 0x5
+	NFTA_RULE_POSITION                = 0x6
+	NFTA_RULE_USERDATA                = 0x7
+	NFTA_RULE_PAD                     = 0x8
+	NFTA_RULE_ID                      = 0x9
+	NFT_RULE_COMPAT_F_INV             = 0x2
+	NFT_RULE_COMPAT_F_MASK            = 0x2
+	NFTA_RULE_COMPAT_UNSPEC           = 0x0
+	NFTA_RULE_COMPAT_PROTO            = 0x1
+	NFTA_RULE_COMPAT_FLAGS            = 0x2
+	NFT_SET_ANONYMOUS                 = 0x1
+	NFT_SET_CONSTANT                  = 0x2
+	NFT_SET_INTERVAL                  = 0x4
+	NFT_SET_MAP                       = 0x8
+	NFT_SET_TIMEOUT                   = 0x10
+	NFT_SET_EVAL                      = 0x20
+	NFT_SET_OBJECT                    = 0x40
+	NFT_SET_POL_PERFORMANCE           = 0x0
+	NFT_SET_POL_MEMORY                = 0x1
+	NFTA_SET_DESC_UNSPEC              = 0x0
+	NFTA_SET_DESC_SIZE                = 0x1
+	NFTA_SET_UNSPEC                   = 0x0
+	NFTA_SET_TABLE                    = 0x1
+	NFTA_SET_NAME                     = 0x2
+	NFTA_SET_FLAGS                    = 0x3
+	NFTA_SET_KEY_TYPE                 = 0x4
+	NFTA_SET_KEY_LEN                  = 0x5
+	NFTA_SET_DATA_TYPE                = 0x6
+	NFTA_SET_DATA_LEN                 = 0x7
+	NFTA_SET_POLICY                   = 0x8
+	NFTA_SET_DESC                     = 0x9
+	NFTA_SET_ID                       = 0xa
+	NFTA_SET_TIMEOUT                  = 0xb
+	NFTA_SET_GC_INTERVAL              = 0xc
+	NFTA_SET_USERDATA                 = 0xd
+	NFTA_SET_PAD                      = 0xe
+	NFTA_SET_OBJ_TYPE                 = 0xf
+	NFT_SET_ELEM_INTERVAL_END         = 0x1
+	NFTA_SET_ELEM_UNSPEC              = 0x0
+	NFTA_SET_ELEM_KEY                 = 0x1
+	NFTA_SET_ELEM_DATA                = 0x2
+	NFTA_SET_ELEM_FLAGS               = 0x3
+	NFTA_SET_ELEM_TIMEOUT             = 0x4
+	NFTA_SET_ELEM_EXPIRATION          = 0x5
+	NFTA_SET_ELEM_USERDATA            = 0x6
+	NFTA_SET_ELEM_EXPR                = 0x7
+	NFTA_SET_ELEM_PAD                 = 0x8
+	NFTA_SET_ELEM_OBJREF              = 0x9
+	NFTA_SET_ELEM_LIST_UNSPEC         = 0x0
+	NFTA_SET_ELEM_LIST_TABLE          = 0x1
+	NFTA_SET_ELEM_LIST_SET            = 0x2
+	NFTA_SET_ELEM_LIST_ELEMENTS       = 0x3
+	NFTA_SET_ELEM_LIST_SET_ID         = 0x4
+	NFT_DATA_VALUE                    = 0x0
+	NFT_DATA_VERDICT                  = 0xffffff00
+	NFTA_DATA_UNSPEC                  = 0x0
+	NFTA_DATA_VALUE                   = 0x1
+	NFTA_DATA_VERDICT                 = 0x2
+	NFTA_VERDICT_UNSPEC               = 0x0
+	NFTA_VERDICT_CODE                 = 0x1
+	NFTA_VERDICT_CHAIN                = 0x2
+	NFTA_EXPR_UNSPEC                  = 0x0
+	NFTA_EXPR_NAME                    = 0x1
+	NFTA_EXPR_DATA                    = 0x2
+	NFTA_IMMEDIATE_UNSPEC             = 0x0
+	NFTA_IMMEDIATE_DREG               = 0x1
+	NFTA_IMMEDIATE_DATA               = 0x2
+	NFTA_BITWISE_UNSPEC               = 0x0
+	NFTA_BITWISE_SREG                 = 0x1
+	NFTA_BITWISE_DREG                 = 0x2
+	NFTA_BITWISE_LEN                  = 0x3
+	NFTA_BITWISE_MASK                 = 0x4
+	NFTA_BITWISE_XOR                  = 0x5
+	NFT_BYTEORDER_NTOH                = 0x0
+	NFT_BYTEORDER_HTON                = 0x1
+	NFTA_BYTEORDER_UNSPEC             = 0x0
+	NFTA_BYTEORDER_SREG               = 0x1
+	NFTA_BYTEORDER_DREG               = 0x2
+	NFTA_BYTEORDER_OP                 = 0x3
+	NFTA_BYTEORDER_LEN                = 0x4
+	NFTA_BYTEORDER_SIZE               = 0x5
+	NFT_CMP_EQ                        = 0x0
+	NFT_CMP_NEQ                       = 0x1
+	NFT_CMP_LT                        = 0x2
+	NFT_CMP_LTE                       = 0x3
+	NFT_CMP_GT                        = 0x4
+	NFT_CMP_GTE                       = 0x5
+	NFTA_CMP_UNSPEC                   = 0x0
+	NFTA_CMP_SREG                     = 0x1
+	NFTA_CMP_OP                       = 0x2
+	NFTA_CMP_DATA                     = 0x3
+	NFT_RANGE_EQ                      = 0x0
+	NFT_RANGE_NEQ                     = 0x1
+	NFTA_RANGE_UNSPEC                 = 0x0
+	NFTA_RANGE_SREG                   = 0x1
+	NFTA_RANGE_OP                     = 0x2
+	NFTA_RANGE_FROM_DATA              = 0x3
+	NFTA_RANGE_TO_DATA                = 0x4
+	NFT_LOOKUP_F_INV                  = 0x1
+	NFTA_LOOKUP_UNSPEC                = 0x0
+	NFTA_LOOKUP_SET                   = 0x1
+	NFTA_LOOKUP_SREG                  = 0x2
+	NFTA_LOOKUP_DREG                  = 0x3
+	NFTA_LOOKUP_SET_ID                = 0x4
+	NFTA_LOOKUP_FLAGS                 = 0x5
+	NFT_DYNSET_OP_ADD                 = 0x0
+	NFT_DYNSET_OP_UPDATE              = 0x1
+	NFT_DYNSET_F_INV                  = 0x1
+	NFTA_DYNSET_UNSPEC                = 0x0
+	NFTA_DYNSET_SET_NAME              = 0x1
+	NFTA_DYNSET_SET_ID                = 0x2
+	NFTA_DYNSET_OP                    = 0x3
+	NFTA_DYNSET_SREG_KEY              = 0x4
+	NFTA_DYNSET_SREG_DATA             = 0x5
+	NFTA_DYNSET_TIMEOUT               = 0x6
+	NFTA_DYNSET_EXPR                  = 0x7
+	NFTA_DYNSET_PAD                   = 0x8
+	NFTA_DYNSET_FLAGS                 = 0x9
+	NFT_PAYLOAD_LL_HEADER             = 0x0
+	NFT_PAYLOAD_NETWORK_HEADER        = 0x1
+	NFT_PAYLOAD_TRANSPORT_HEADER      = 0x2
+	NFT_PAYLOAD_CSUM_NONE             = 0x0
+	NFT_PAYLOAD_CSUM_INET             = 0x1
+	NFT_PAYLOAD_L4CSUM_PSEUDOHDR      = 0x1
+	NFTA_PAYLOAD_UNSPEC               = 0x0
+	NFTA_PAYLOAD_DREG                 = 0x1
+	NFTA_PAYLOAD_BASE                 = 0x2
+	NFTA_PAYLOAD_OFFSET               = 0x3
+	NFTA_PAYLOAD_LEN                  = 0x4
+	NFTA_PAYLOAD_SREG                 = 0x5
+	NFTA_PAYLOAD_CSUM_TYPE            = 0x6
+	NFTA_PAYLOAD_CSUM_OFFSET          = 0x7
+	NFTA_PAYLOAD_CSUM_FLAGS           = 0x8
+	NFT_EXTHDR_F_PRESENT              = 0x1
+	NFT_EXTHDR_OP_IPV6                = 0x0
+	NFT_EXTHDR_OP_TCPOPT              = 0x1
+	NFTA_EXTHDR_UNSPEC                = 0x0
+	NFTA_EXTHDR_DREG                  = 0x1
+	NFTA_EXTHDR_TYPE                  = 0x2
+	NFTA_EXTHDR_OFFSET                = 0x3
+	NFTA_EXTHDR_LEN                   = 0x4
+	NFTA_EXTHDR_FLAGS                 = 0x5
+	NFTA_EXTHDR_OP                    = 0x6
+	NFTA_EXTHDR_SREG                  = 0x7
+	NFT_META_LEN                      = 0x0
+	NFT_META_PROTOCOL                 = 0x1
+	NFT_META_PRIORITY                 = 0x2
+	NFT_META_MARK                     = 0x3
+	NFT_META_IIF                      = 0x4
+	NFT_META_OIF                      = 0x5
+	NFT_META_IIFNAME                  = 0x6
+	NFT_META_OIFNAME                  = 0x7
+	NFT_META_IIFTYPE                  = 0x8
+	NFT_META_OIFTYPE                  = 0x9
+	NFT_META_SKUID                    = 0xa
+	NFT_META_SKGID                    = 0xb
+	NFT_META_NFTRACE                  = 0xc
+	NFT_META_RTCLASSID                = 0xd
+	NFT_META_SECMARK                  = 0xe
+	NFT_META_NFPROTO                  = 0xf
+	NFT_META_L4PROTO                  = 0x10
+	NFT_META_BRI_IIFNAME              = 0x11
+	NFT_META_BRI_OIFNAME              = 0x12
+	NFT_META_PKTTYPE                  = 0x13
+	NFT_META_CPU                      = 0x14
+	NFT_META_IIFGROUP                 = 0x15
+	NFT_META_OIFGROUP                 = 0x16
+	NFT_META_CGROUP                   = 0x17
+	NFT_META_PRANDOM                  = 0x18
+	NFT_RT_CLASSID                    = 0x0
+	NFT_RT_NEXTHOP4                   = 0x1
+	NFT_RT_NEXTHOP6                   = 0x2
+	NFT_RT_TCPMSS                     = 0x3
+	NFT_HASH_JENKINS                  = 0x0
+	NFT_HASH_SYM                      = 0x1
+	NFTA_HASH_UNSPEC                  = 0x0
+	NFTA_HASH_SREG                    = 0x1
+	NFTA_HASH_DREG                    = 0x2
+	NFTA_HASH_LEN                     = 0x3
+	NFTA_HASH_MODULUS                 = 0x4
+	NFTA_HASH_SEED                    = 0x5
+	NFTA_HASH_OFFSET                  = 0x6
+	NFTA_HASH_TYPE                    = 0x7
+	NFTA_META_UNSPEC                  = 0x0
+	NFTA_META_DREG                    = 0x1
+	NFTA_META_KEY                     = 0x2
+	NFTA_META_SREG                    = 0x3
+	NFTA_RT_UNSPEC                    = 0x0
+	NFTA_RT_DREG                      = 0x1
+	NFTA_RT_KEY                       = 0x2
+	NFT_CT_STATE                      = 0x0
+	NFT_CT_DIRECTION                  = 0x1
+	NFT_CT_STATUS                     = 0x2
+	NFT_CT_MARK                       = 0x3
+	NFT_CT_SECMARK                    = 0x4
+	NFT_CT_EXPIRATION                 = 0x5
+	NFT_CT_HELPER                     = 0x6
+	NFT_CT_L3PROTOCOL                 = 0x7
+	NFT_CT_SRC                        = 0x8
+	NFT_CT_DST                        = 0x9
+	NFT_CT_PROTOCOL                   = 0xa
+	NFT_CT_PROTO_SRC                  = 0xb
+	NFT_CT_PROTO_DST                  = 0xc
+	NFT_CT_LABELS                     = 0xd
+	NFT_CT_PKTS                       = 0xe
+	NFT_CT_BYTES                      = 0xf
+	NFT_CT_AVGPKT                     = 0x10
+	NFT_CT_ZONE                       = 0x11
+	NFT_CT_EVENTMASK                  = 0x12
+	NFTA_CT_UNSPEC                    = 0x0
+	NFTA_CT_DREG                      = 0x1
+	NFTA_CT_KEY                       = 0x2
+	NFTA_CT_DIRECTION                 = 0x3
+	NFTA_CT_SREG                      = 0x4
+	NFT_LIMIT_PKTS                    = 0x0
+	NFT_LIMIT_PKT_BYTES               = 0x1
+	NFT_LIMIT_F_INV                   = 0x1
+	NFTA_LIMIT_UNSPEC                 = 0x0
+	NFTA_LIMIT_RATE                   = 0x1
+	NFTA_LIMIT_UNIT                   = 0x2
+	NFTA_LIMIT_BURST                  = 0x3
+	NFTA_LIMIT_TYPE                   = 0x4
+	NFTA_LIMIT_FLAGS                  = 0x5
+	NFTA_LIMIT_PAD                    = 0x6
+	NFTA_COUNTER_UNSPEC               = 0x0
+	NFTA_COUNTER_BYTES                = 0x1
+	NFTA_COUNTER_PACKETS              = 0x2
+	NFTA_COUNTER_PAD                  = 0x3
+	NFTA_LOG_UNSPEC                   = 0x0
+	NFTA_LOG_GROUP                    = 0x1
+	NFTA_LOG_PREFIX                   = 0x2
+	NFTA_LOG_SNAPLEN                  = 0x3
+	NFTA_LOG_QTHRESHOLD               = 0x4
+	NFTA_LOG_LEVEL                    = 0x5
+	NFTA_LOG_FLAGS                    = 0x6
+	NFTA_QUEUE_UNSPEC                 = 0x0
+	NFTA_QUEUE_NUM                    = 0x1
+	NFTA_QUEUE_TOTAL                  = 0x2
+	NFTA_QUEUE_FLAGS                  = 0x3
+	NFTA_QUEUE_SREG_QNUM              = 0x4
+	NFT_QUOTA_F_INV                   = 0x1
+	NFT_QUOTA_F_DEPLETED              = 0x2
+	NFTA_QUOTA_UNSPEC                 = 0x0
+	NFTA_QUOTA_BYTES                  = 0x1
+	NFTA_QUOTA_FLAGS                  = 0x2
+	NFTA_QUOTA_PAD                    = 0x3
+	NFTA_QUOTA_CONSUMED               = 0x4
+	NFT_REJECT_ICMP_UNREACH           = 0x0
+	NFT_REJECT_TCP_RST                = 0x1
+	NFT_REJECT_ICMPX_UNREACH          = 0x2
+	NFT_REJECT_ICMPX_NO_ROUTE         = 0x0
+	NFT_REJECT_ICMPX_PORT_UNREACH     = 0x1
+	NFT_REJECT_ICMPX_HOST_UNREACH     = 0x2
+	NFT_REJECT_ICMPX_ADMIN_PROHIBITED = 0x3
+	NFTA_REJECT_UNSPEC                = 0x0
+	NFTA_REJECT_TYPE                  = 0x1
+	NFTA_REJECT_ICMP_CODE             = 0x2
+	NFT_NAT_SNAT                      = 0x0
+	NFT_NAT_DNAT                      = 0x1
+	NFTA_NAT_UNSPEC                   = 0x0
+	NFTA_NAT_TYPE                     = 0x1
+	NFTA_NAT_FAMILY                   = 0x2
+	NFTA_NAT_REG_ADDR_MIN             = 0x3
+	NFTA_NAT_REG_ADDR_MAX             = 0x4
+	NFTA_NAT_REG_PROTO_MIN            = 0x5
+	NFTA_NAT_REG_PROTO_MAX            = 0x6
+	NFTA_NAT_FLAGS                    = 0x7
+	NFTA_MASQ_UNSPEC                  = 0x0
+	NFTA_MASQ_FLAGS                   = 0x1
+	NFTA_MASQ_REG_PROTO_MIN           = 0x2
+	NFTA_MASQ_REG_PROTO_MAX           = 0x3
+	NFTA_REDIR_UNSPEC                 = 0x0
+	NFTA_REDIR_REG_PROTO_MIN          = 0x1
+	NFTA_REDIR_REG_PROTO_MAX          = 0x2
+	NFTA_REDIR_FLAGS                  = 0x3
+	NFTA_DUP_UNSPEC                   = 0x0
+	NFTA_DUP_SREG_ADDR                = 0x1
+	NFTA_DUP_SREG_DEV                 = 0x2
+	NFTA_FWD_UNSPEC                   = 0x0
+	NFTA_FWD_SREG_DEV                 = 0x1
+	NFTA_OBJREF_UNSPEC                = 0x0
+	NFTA_OBJREF_IMM_TYPE              = 0x1
+	NFTA_OBJREF_IMM_NAME              = 0x2
+	NFTA_OBJREF_SET_SREG              = 0x3
+	NFTA_OBJREF_SET_NAME              = 0x4
+	NFTA_OBJREF_SET_ID                = 0x5
+	NFTA_GEN_UNSPEC                   = 0x0
+	NFTA_GEN_ID                       = 0x1
+	NFTA_GEN_PROC_PID                 = 0x2
+	NFTA_GEN_PROC_NAME                = 0x3
+	NFTA_FIB_UNSPEC                   = 0x0
+	NFTA_FIB_DREG                     = 0x1
+	NFTA_FIB_RESULT                   = 0x2
+	NFTA_FIB_FLAGS                    = 0x3
+	NFT_FIB_RESULT_UNSPEC             = 0x0
+	NFT_FIB_RESULT_OIF                = 0x1
+	NFT_FIB_RESULT_OIFNAME            = 0x2
+	NFT_FIB_RESULT_ADDRTYPE           = 0x3
+	NFTA_FIB_F_SADDR                  = 0x1
+	NFTA_FIB_F_DADDR                  = 0x2
+	NFTA_FIB_F_MARK                   = 0x4
+	NFTA_FIB_F_IIF                    = 0x8
+	NFTA_FIB_F_OIF                    = 0x10
+	NFTA_FIB_F_PRESENT                = 0x20
+	NFTA_CT_HELPER_UNSPEC             = 0x0
+	NFTA_CT_HELPER_NAME               = 0x1
+	NFTA_CT_HELPER_L3PROTO            = 0x2
+	NFTA_CT_HELPER_L4PROTO            = 0x3
+	NFTA_OBJ_UNSPEC                   = 0x0
+	NFTA_OBJ_TABLE                    = 0x1
+	NFTA_OBJ_NAME                     = 0x2
+	NFTA_OBJ_TYPE                     = 0x3
+	NFTA_OBJ_DATA                     = 0x4
+	NFTA_OBJ_USE                      = 0x5
+	NFTA_TRACE_UNSPEC                 = 0x0
+	NFTA_TRACE_TABLE                  = 0x1
+	NFTA_TRACE_CHAIN                  = 0x2
+	NFTA_TRACE_RULE_HANDLE            = 0x3
+	NFTA_TRACE_TYPE                   = 0x4
+	NFTA_TRACE_VERDICT                = 0x5
+	NFTA_TRACE_ID                     = 0x6
+	NFTA_TRACE_LL_HEADER              = 0x7
+	NFTA_TRACE_NETWORK_HEADER         = 0x8
+	NFTA_TRACE_TRANSPORT_HEADER       = 0x9
+	NFTA_TRACE_IIF                    = 0xa
+	NFTA_TRACE_IIFTYPE                = 0xb
+	NFTA_TRACE_OIF                    = 0xc
+	NFTA_TRACE_OIFTYPE                = 0xd
+	NFTA_TRACE_MARK                   = 0xe
+	NFTA_TRACE_NFPROTO                = 0xf
+	NFTA_TRACE_POLICY                 = 0x10
+	NFTA_TRACE_PAD                    = 0x11
+	NFT_TRACETYPE_UNSPEC              = 0x0
+	NFT_TRACETYPE_POLICY              = 0x1
+	NFT_TRACETYPE_RETURN              = 0x2
+	NFT_TRACETYPE_RULE                = 0x3
+	NFTA_NG_UNSPEC                    = 0x0
+	NFTA_NG_DREG                      = 0x1
+	NFTA_NG_MODULUS                   = 0x2
+	NFTA_NG_TYPE                      = 0x3
+	NFTA_NG_OFFSET                    = 0x4
+	NFT_NG_INCREMENTAL                = 0x0
+	NFT_NG_RANDOM                     = 0x1
+)
+
+type RTCTime struct {
+	Sec   int32
+	Min   int32
+	Hour  int32
+	Mday  int32
+	Mon   int32
+	Year  int32
+	Wday  int32
+	Yday  int32
+	Isdst int32
+}
+
+type RTCWkAlrm struct {
+	Enabled uint8
+	Pending uint8
+	Time    RTCTime
+}
+
+type RTCPLLInfo struct {
+	Ctrl    int32
+	Value   int32
+	Max     int32
+	Min     int32
+	Posmult int32
+	Negmult int32
+	Clock   int32
+}
+
+type BlkpgIoctlArg struct {
+	Op      int32
+	Flags   int32
+	Datalen int32
+	Data    *byte
+}
+
+type BlkpgPartition struct {
+	Start   int64
+	Length  int64
+	Pno     int32
+	Devname [64]uint8
+	Volname [64]uint8
+	_       [4]byte
+}
+
+const (
+	BLKPG                  = 0x1269
+	BLKPG_ADD_PARTITION    = 0x1
+	BLKPG_DEL_PARTITION    = 0x2
+	BLKPG_RESIZE_PARTITION = 0x3
+)
+
+const (
+	NETNSA_NONE = 0x0
+	NETNSA_NSID = 0x1
+	NETNSA_PID  = 0x2
+	NETNSA_FD   = 0x3
+)
+
+type XDPRingOffset struct {
+	Producer uint64
+	Consumer uint64
+	Desc     uint64
+}
+
+type XDPMmapOffsets struct {
+	Rx XDPRingOffset
+	Tx XDPRingOffset
+	Fr XDPRingOffset
+	Cr XDPRingOffset
+}
+
+type XDPUmemReg struct {
+	Addr     uint64
+	Len      uint64
+	Size     uint32
+	Headroom uint32
+}
+
+type XDPStatistics struct {
+	Rx_dropped       uint64
+	Rx_invalid_descs uint64
+	Tx_invalid_descs uint64
+}
+
+type XDPDesc struct {
+	Addr    uint64
+	Len     uint32
+	Options uint32
+}
+
+const (
+	NCSI_CMD_UNSPEC                 = 0x0
+	NCSI_CMD_PKG_INFO               = 0x1
+	NCSI_CMD_SET_INTERFACE          = 0x2
+	NCSI_CMD_CLEAR_INTERFACE        = 0x3
+	NCSI_ATTR_UNSPEC                = 0x0
+	NCSI_ATTR_IFINDEX               = 0x1
+	NCSI_ATTR_PACKAGE_LIST          = 0x2
+	NCSI_ATTR_PACKAGE_ID            = 0x3
+	NCSI_ATTR_CHANNEL_ID            = 0x4
+	NCSI_PKG_ATTR_UNSPEC            = 0x0
+	NCSI_PKG_ATTR                   = 0x1
+	NCSI_PKG_ATTR_ID                = 0x2
+	NCSI_PKG_ATTR_FORCED            = 0x3
+	NCSI_PKG_ATTR_CHANNEL_LIST      = 0x4
+	NCSI_CHANNEL_ATTR_UNSPEC        = 0x0
+	NCSI_CHANNEL_ATTR               = 0x1
+	NCSI_CHANNEL_ATTR_ID            = 0x2
+	NCSI_CHANNEL_ATTR_VERSION_MAJOR = 0x3
+	NCSI_CHANNEL_ATTR_VERSION_MINOR = 0x4
+	NCSI_CHANNEL_ATTR_VERSION_STR   = 0x5
+	NCSI_CHANNEL_ATTR_LINK_STATE    = 0x6
+	NCSI_CHANNEL_ATTR_ACTIVE        = 0x7
+	NCSI_CHANNEL_ATTR_FORCED        = 0x8
+	NCSI_CHANNEL_ATTR_VLAN_LIST     = 0x9
+	NCSI_CHANNEL_ATTR_VLAN_ID       = 0xa
+)
+
+type ScmTimestamping struct {
+	Ts [3]Timespec
+}
+
+const (
+	SOF_TIMESTAMPING_TX_HARDWARE  = 0x1
+	SOF_TIMESTAMPING_TX_SOFTWARE  = 0x2
+	SOF_TIMESTAMPING_RX_HARDWARE  = 0x4
+	SOF_TIMESTAMPING_RX_SOFTWARE  = 0x8
+	SOF_TIMESTAMPING_SOFTWARE     = 0x10
+	SOF_TIMESTAMPING_SYS_HARDWARE = 0x20
+	SOF_TIMESTAMPING_RAW_HARDWARE = 0x40
+	SOF_TIMESTAMPING_OPT_ID       = 0x80
+	SOF_TIMESTAMPING_TX_SCHED     = 0x100
+	SOF_TIMESTAMPING_TX_ACK       = 0x200
+	SOF_TIMESTAMPING_OPT_CMSG     = 0x400
+	SOF_TIMESTAMPING_OPT_TSONLY   = 0x800
+	SOF_TIMESTAMPING_OPT_STATS    = 0x1000
+	SOF_TIMESTAMPING_OPT_PKTINFO  = 0x2000
+	SOF_TIMESTAMPING_OPT_TX_SWHW  = 0x4000
+
+	SOF_TIMESTAMPING_LAST = 0x4000
+	SOF_TIMESTAMPING_MASK = 0x7fff
+
+	SCM_TSTAMP_SND   = 0x0
+	SCM_TSTAMP_SCHED = 0x1
+	SCM_TSTAMP_ACK   = 0x2
+)
+
+type SockExtendedErr struct {
+	Errno  uint32
+	Origin uint8
+	Type   uint8
+	Code   uint8
+	Pad    uint8
+	Info   uint32
+	Data   uint32
+}
+
+type FanotifyEventMetadata struct {
+	Event_len    uint32
+	Vers         uint8
+	Reserved     uint8
+	Metadata_len uint16
+	Mask         uint64
+	Fd           int32
+	Pid          int32
+}
+
+type FanotifyResponse struct {
+	Fd       int32
+	Response uint32
+}

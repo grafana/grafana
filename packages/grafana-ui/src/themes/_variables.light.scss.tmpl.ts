@@ -175,6 +175,8 @@ $btn-divider-right: $gray-7;
 
 $btn-drag-image: '../img/grab_light.svg';
 
+$navbar-btn-gicon-brightness: brightness(1.5);
+
 // Forms
 // -------------------------
 $input-bg: $white;
@@ -194,7 +196,7 @@ $input-color-select-arrow: $gray-1;
 $placeholderText: $gray-2;
 
 // search
-$search-shadow: 0 5px 30px 0 $gray-4;
+$search-shadow: 0 1px 5px 0 $gray-5;
 $search-filter-box-bg: $gray-7;
 
 // Typeahead

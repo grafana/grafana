@@ -44,14 +44,6 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
 	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
 
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
@@ -60,7 +52,7 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 		port,
 		datasource.Database,
 		datasource.User,
-		password,
+		datasource.DecryptedPassword(),
 	)
 	if encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", encrypt)

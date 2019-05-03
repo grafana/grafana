@@ -8,7 +8,7 @@ import {
   PanelOptionsGroup,
   StatsPicker,
   UnitPicker,
-  StatID,
+  ReducerID,
   SelectOptionItem,
 } from '@grafana/ui';
 
@@ -18,39 +18,40 @@ import { SingleStatValueOptions } from './shared';
 const labelWidth = 6;
 
 export interface Props {
-  options: SingleStatValueOptions;
+  value: SingleStatValueOptions;
   onChange: (valueOptions: SingleStatValueOptions) => void;
 }
 
 export class SingleStatValueEditor extends PureComponent<Props> {
-  onUnitChange = (unit: SelectOptionItem) => this.props.onChange({ ...this.props.options, unit: unit.value });
+  // @ts-ignore
+  onUnitChange = (unit: SelectOptionItem<string>) => this.props.onChange({ ...this.props.value, unit: unit.value });
 
   onStatsChange = (stats: string[]) => {
-    const stat = stats[0] || StatID.mean;
-    this.props.onChange({ ...this.props.options, stat });
+    const stat = stats[0] || ReducerID.mean;
+    this.props.onChange({ ...this.props.value, stat });
   };
 
   onDecimalChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isNaN(parseInt(event.target.value, 10))) {
       this.props.onChange({
-        ...this.props.options,
+        ...this.props.value,
         decimals: parseInt(event.target.value, 10),
       });
     } else {
       this.props.onChange({
-        ...this.props.options,
+        ...this.props.value,
         decimals: null,
       });
     }
   };
 
   onPrefixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, prefix: event.target.value });
+    this.props.onChange({ ...this.props.value, prefix: event.target.value });
   onSuffixChange = (event: ChangeEvent<HTMLInputElement>) =>
-    this.props.onChange({ ...this.props.options, suffix: event.target.value });
+    this.props.onChange({ ...this.props.value, suffix: event.target.value });
 
   render() {
-    const { stat, unit, decimals, prefix, suffix } = this.props.options;
+    const { stat, unit, decimals, prefix, suffix } = this.props.value;
 
     let decimalsString = '';
     if (decimals !== null && decimals !== undefined && Number.isFinite(decimals as number)) {
@@ -64,7 +65,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
           <StatsPicker
             width={12}
             placeholder="Choose Stat"
-            defaultStat={StatID.mean}
+            defaultStat={ReducerID.mean}
             allowMultiple={false}
             stats={[stat]}
             onChange={this.onStatsChange}

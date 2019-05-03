@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -41,6 +41,13 @@ func init() {
 	})
 }
 
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardProvisionerResolvedPath(name string) string
+}
+
 type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
@@ -48,16 +55,17 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister      routing.RouteRegister    `inject:""`
-	Bus                bus.Bus                  `inject:""`
-	RenderService      rendering.Service        `inject:""`
-	Cfg                *setting.Cfg             `inject:""`
-	HooksService       *hooks.HooksService      `inject:""`
-	CacheService       *cache.CacheService      `inject:""`
-	DatasourceCache    datasources.CacheService `inject:""`
-	AuthTokenService   models.UserTokenService  `inject:""`
-	QuotaService       *quota.QuotaService      `inject:""`
-	RemoteCacheService *remotecache.RemoteCache `inject:""`
+	RouteRegister       routing.RouteRegister    `inject:""`
+	Bus                 bus.Bus                  `inject:""`
+	RenderService       rendering.Service        `inject:""`
+	Cfg                 *setting.Cfg             `inject:""`
+	HooksService        *hooks.HooksService      `inject:""`
+	CacheService        *cache.CacheService      `inject:""`
+	DatasourceCache     datasources.CacheService `inject:""`
+	AuthTokenService    models.UserTokenService  `inject:""`
+	QuotaService        *quota.QuotaService      `inject:""`
+	RemoteCacheService  *remotecache.RemoteCache `inject:""`
+	ProvisioningService ProvisioningService      `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
