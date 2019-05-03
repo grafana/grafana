@@ -1,39 +1,39 @@
-import moment, { Moment } from 'moment';
 import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
+import { momentWrapper, DateTimeType, toUtc } from 'app/core/moment_wrapper';
 
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,
   isTimezoneUtc: boolean,
   timezone?: dateMath.Timezone
 ): TimeRange => {
-  const fromMoment = stringToMoment(timeOption.from, isTimezoneUtc, false, timezone);
-  const toMoment = stringToMoment(timeOption.to, isTimezoneUtc, true, timezone);
+  const fromMoment = stringToDateTimeType(timeOption.from, isTimezoneUtc, false, timezone);
+  const toMoment = stringToDateTimeType(timeOption.to, isTimezoneUtc, true, timezone);
 
   return { from: fromMoment, to: toMoment, raw: { from: timeOption.from, to: timeOption.to } };
 };
 
-export const stringToMoment = (
+export const stringToDateTimeType = (
   value: string,
   isTimezoneUtc: boolean,
   roundUp?: boolean,
   timezone?: dateMath.Timezone
-): Moment => {
+): DateTimeType => {
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
-      return moment();
+      return momentWrapper();
     }
 
     const parsed = dateMath.parse(value, roundUp, timezone);
-    return parsed || moment();
+    return parsed || momentWrapper();
   }
 
   if (isTimezoneUtc) {
-    return moment.utc(value, TIME_FORMAT);
+    return toUtc(value, TIME_FORMAT);
   }
 
-  return moment(value, TIME_FORMAT);
+  return momentWrapper(value, TIME_FORMAT);
 };
 
 export const mapTimeRangeToRangeString = (timeRange: TimeRange): string => {
