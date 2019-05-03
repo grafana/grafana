@@ -112,7 +112,11 @@ export function deleteDataSource(): ThunkResult<void> {
   };
 }
 
-export function nameExits(dataSources, name) {
+interface ItemWithName {
+  name: string;
+}
+
+export function nameExits(dataSources: ItemWithName[], name: string) {
   return (
     dataSources.filter(dataSource => {
       return dataSource.name.toLowerCase() === name.toLowerCase();
@@ -120,7 +124,7 @@ export function nameExits(dataSources, name) {
   );
 }
 
-export function findNewName(dataSources, name) {
+export function findNewName(dataSources: ItemWithName[], name: string) {
   // Need to loop through current data sources to make sure
   // the name doesn't exist
   while (nameExits(dataSources, name)) {
@@ -150,18 +154,18 @@ function updateFrontendSettings() {
     });
 }
 
-function nameHasSuffix(name) {
+function nameHasSuffix(name: string) {
   return name.endsWith('-', name.length - 1);
 }
 
-function getLastDigit(name) {
+function getLastDigit(name: string) {
   return parseInt(name.slice(-1), 10);
 }
 
-function incrementLastDigit(digit) {
+function incrementLastDigit(digit: number) {
   return isNaN(digit) ? 1 : digit + 1;
 }
 
-function getNewName(name) {
+function getNewName(name: string) {
   return name.slice(0, name.length - 1);
 }

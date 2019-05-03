@@ -1,4 +1,4 @@
-import { DataSourceSettings, PluginType, NavModel, NavModelItem, DataSourcePlugin } from '@grafana/ui';
+import { PluginInclude, DataSourceSettings, PluginType, NavModel, NavModelItem, DataSourcePlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: DataSourcePlugin): NavModelItem {
@@ -122,10 +122,10 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
   };
 }
 
-function hasDashboards(includes) {
+function hasDashboards(includes: PluginInclude[]): boolean {
   return (
-    includes.filter(include => {
+    includes.find(include => {
       return include.type === 'dashboard';
-    }).length > 0
+    }) !== undefined
   );
 }
