@@ -1,24 +1,10 @@
-import { launchBrowser } from '../core/launcher';
-import { Browser } from 'puppeteer-core';
 import { config } from 'e2e-test/core/config';
+import { e2eScenario } from 'e2e-test/core/scenario';
 
-describe('E2E dummy test', () => {
-  let browser: Browser = null;
-  beforeAll(async () => {
-    browser = await launchBrowser();
-  });
-
-  afterAll(async () => {
-    if (browser) {
-      await browser.close();
-    }
-  });
-
-  it('Page title should be Grafana', async () => {
-    const page = await browser.newPage();
-    const response = await page.goto(config.baseUrl);
-    const title = await page.title();
-    expect(response.ok()).toBe(true);
-    expect(title).toBe('Grafana');
-  });
+e2eScenario('E2E dummy test', 'should have title Grafana', async browser => {
+  const page = await browser.newPage();
+  const response = await page.goto(config.baseUrl);
+  const title = await page.title();
+  expect(response.ok()).toBe(true);
+  expect(title).toBe('Grafana');
 });
