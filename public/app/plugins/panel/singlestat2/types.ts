@@ -24,7 +24,7 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
   title: '', // auto title
   values: false,
-  stats: [StatID.mean],
+  calcs: [StatID.mean],
   defaults: {},
   override: {},
   mappings: [],

@@ -44,8 +44,8 @@ export class FieldDisplayEditor extends PureComponent<Props> {
     this.props.onChange({ ...this.props.options, values: val });
   };
 
-  onStatsChange = (stats: string[]) => {
-    this.props.onChange({ ...this.props.options, stats });
+  onCalcsChange = (calcs: string[]) => {
+    this.props.onChange({ ...this.props.options, calcs });
   };
 
   onTitleChange = (event: ChangeEvent<HTMLInputElement>) =>
@@ -70,7 +70,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
 
   render() {
     const { showPrefixSuffix, options, children } = this.props;
-    const { title, stats, prefix, suffix, values, limit } = options;
+    const { title, calcs, prefix, suffix, values, limit } = options;
 
     const titleTooltip = (
       <div>
@@ -122,8 +122,8 @@ export class FieldDisplayEditor extends PureComponent<Props> {
                 placeholder="Choose Stat"
                 defaultStat={StatID.mean}
                 allowMultiple={false}
-                stats={stats}
-                onChange={this.onStatsChange}
+                stats={calcs}
+                onChange={this.onCalcsChange}
               />
             </div>
           )}

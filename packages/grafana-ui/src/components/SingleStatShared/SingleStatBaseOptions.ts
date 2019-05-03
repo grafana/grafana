@@ -54,7 +54,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
       // Make sure the stats have a valid name
       if (valueOptions.stat) {
-        fieldOptions.stats = getStatsCalculators([valueOptions.stat]).map(s => s.id);
+        fieldOptions.calcs = getStatsCalculators([valueOptions.stat]).map(s => s.id);
       }
     }
     field.min = old.minValue;

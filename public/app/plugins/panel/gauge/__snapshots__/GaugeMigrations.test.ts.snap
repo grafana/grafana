@@ -3,6 +3,9 @@
 exports[`Gauge Panel Migrations from 6.1.1 1`] = `
 Object {
   "fieldOptions": Object {
+    "calcs": Array [
+      "last",
+    ],
     "defaults": Object {
       "decimals": 3,
       "max": "50",
@@ -21,9 +24,6 @@ Object {
       },
     ],
     "prefix": "XX",
-    "stats": Array [
-      "last",
-    ],
     "suffix": "YY",
     "thresholds": Array [
       Object {

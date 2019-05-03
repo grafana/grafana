@@ -33,7 +33,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
 
       // Make sure the stats have a valid name
       if (valueOptions.stat) {
-        fieldOptions.stats = getStatsCalculators([valueOptions.stat]).map(s => s.id);
+        fieldOptions.calcs = getStatsCalculators([valueOptions.stat]).map(s => s.id);
       }
     }
     field.min = old.minValue;

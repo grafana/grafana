@@ -12,7 +12,7 @@ export const defaults: PieChartOptions = {
   orientation: VizOrientation.Auto,
   fieldOptions: {
     ...standardFieldDisplayOptions,
-    stats: [StatID.last],
+    calcs: [StatID.last],
     defaults: {
       unit: 'short',
     },

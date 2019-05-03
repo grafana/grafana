@@ -23,9 +23,9 @@ export interface FieldDisplayOptions {
   prefix?: string;
   suffix?: string;
 
-  values: boolean; // If true show each row value
+  values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
-  stats: string[]; // when !values, pick one value for the whole field
+  calcs: string[]; // when !values, pick one value for the whole field
 
   defaults: Partial<Field>; // Use these values unless otherwise stated
   override: Partial<Field>; // Set these values regardless of the source
@@ -90,13 +90,13 @@ export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions, sparkline } = options;
   const { defaults, override } = fieldOptions;
-  const stats = fieldOptions.stats.length ? fieldOptions.stats : [StatID.last];
+  const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [StatID.last];
 
   const values: FieldDisplay[] = [];
 
   if (data) {
     const limit = fieldOptions.limit ? fieldOptions.limit : DEFAULT_FIELD_DISPLAY_VALUES_LIMIT;
-    const title = getTitleTemplate(fieldOptions.title, stats, data);
+    const title = getTitleTemplate(fieldOptions.title, calcs, data);
     const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
     const scopedVars: ScopedVars = {};
 
@@ -172,7 +172,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           const results = calculateStats({
             series,
             fieldIndex: i,
-            stats, // The stats to calculate
+            stats: calcs, // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
 
@@ -187,9 +187,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                   nullValueMode: NullValueMode.Null,
                 });
 
-          for (const stat of stats) {
-            scopedVars[VAR_CALC] = { value: stat, text: stat };
-            const displayValue = display(results[stat]);
+          for (const calc of calcs) {
+            scopedVars[VAR_CALC] = { value: calc, text: calc };
+            const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               field,
