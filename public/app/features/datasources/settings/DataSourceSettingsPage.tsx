@@ -37,18 +37,16 @@ export interface Props {
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
-  plugin?: DataSourcePlugin;
   query: UrlQueryMap;
+  tab?: string;
 }
 
 interface State {
   dataSource: DataSourceSettings;
-  plugin: DataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
-  navModelWithTabs?: NavModel; // If modified with tabs
-  tab?: string;
+  plugin?: DataSourcePlugin;
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
@@ -57,7 +55,6 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     this.state = {
       dataSource: props.dataSource,
-      plugin: props.plugin,
     };
   }
 
@@ -67,32 +64,6 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     try {
       importedPlugin = await importDataSourcePlugin(dataSourceMeta);
-
-      // Add Tabs to the navModel
-      if (importedPlugin.configTabs && importedPlugin.configTabs.length) {
-        const { navModel } = this.props;
-        const path = navModel.node.url;
-        const tabs = importedPlugin.configTabs.map(tab => {
-          return {
-            text: tab.title,
-            icon: tab.icon,
-            url: path + '?tab=' + tab.id,
-            id: tab.id,
-          };
-        });
-        const children = [...navModel.main.children]; // copy it first
-        children.splice(1, 0, ...tabs); // add the tabs
-        const main = {
-          ...navModel.main,
-          children,
-        };
-        this.setState({
-          navModelWithTabs: {
-            ...navModel,
-            main,
-          },
-        });
-      }
     } catch (e) {
       console.log('Failed to import plugin module', e);
     }
@@ -109,37 +80,10 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { dataSource, query } = this.props;
-    const { navModelWithTabs } = this.state;
+    const { dataSource } = this.props;
 
     if (prevProps.dataSource !== dataSource) {
       this.setState({ dataSource });
-    }
-
-    if (navModelWithTabs) {
-      if (this.state.tab !== query.tab) {
-        let found = false;
-        let tab = query.tab as string;
-        const children = navModelWithTabs.main.children.map(item => {
-          if (item.id === tab) {
-            found = true;
-            return {
-              ...item,
-              active: true,
-            };
-          }
-          return {
-            ...item,
-            active: false,
-          };
-        });
-        if (!found) {
-          children[0].active = true;
-          tab = null;
-        }
-        navModelWithTabs.main.children = children; // TODO - immutable?
-        this.setState({ navModelWithTabs, tab });
-      }
     }
   }
 
@@ -255,7 +199,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   renderSettings() {
     const { dataSourceMeta, setDataSourceName, setIsDefault } = this.props;
-    const { testingMessage, testingStatus, plugin, dataSource } = this.state;
+    const { testingMessage, testingStatus, dataSource, plugin } = this.state;
 
     return (
       <form onSubmit={this.onSubmit}>
@@ -269,7 +213,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
           onNameChange={name => setDataSourceName(name)}
         />
 
-        {dataSourceMeta.module && plugin && (
+        {plugin && (
           <PluginSettings
             plugin={plugin}
             dataSource={this.state.dataSource}
@@ -306,10 +250,9 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { navModel } = this.props;
-    const { tab, navModelWithTabs } = this.state;
+    const { navModel, tab } = this.props;
     return (
-      <Page navModel={navModelWithTabs ? navModelWithTabs : navModel}>
+      <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
           {this.hasDataSource && <div>{tab ? this.renderTabBody(tab) : this.renderSettings()}</div>}
         </Page.Contents>
@@ -321,12 +264,19 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
+  const tab = state.location.query.tab as string;
+
   return {
-    navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`, getDataSourceLoadingNav('settings')),
+    navModel: getNavModel(
+      state.navIndex,
+      tab ? `datasource-tab-${tab}` : `datasource-settings-${pageId}`,
+      getDataSourceLoadingNav('settings')
+    ),
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
     query: state.location.query,
+    tab,
   };
 }
 

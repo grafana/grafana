@@ -5,17 +5,20 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
+import { DataSourceSettings, DataSourcePluginMeta, DataSourcePlugin } from '@grafana/ui';
 import { StoreState, LocationUpdate } from 'app/types';
 import { actionCreatorFactory } from 'app/core/redux';
 import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
+import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 
 export const dataSourceLoaded = actionCreatorFactory<DataSourceSettings>('LOAD_DATA_SOURCE').create();
 
 export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOAD_DATA_SOURCES').create();
 
 export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
+
+export const dataSourcePluginLoaded = actionCreatorFactory<DataSourcePlugin>('LOAD_DATA_SOURCE_PLUGIN').create();
 
 export const dataSourceTypesLoad = noPayloadActionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
 
@@ -37,6 +40,7 @@ export type Action =
   | ActionOf<DataSourceSettings[]>
   | ActionOf<DataSourcePluginMeta>
   | ActionOf<DataSourcePluginMeta[]>
+  | ActionOf<DataSourcePlugin>
   | ActionOf<LocationUpdate>;
 
 type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
@@ -52,9 +56,12 @@ export function loadDataSource(id: number): ThunkResult<void> {
   return async dispatch => {
     const dataSource = await getBackendSrv().get(`/api/datasources/${id}`);
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
+    const plugin = await importDataSourcePlugin(pluginInfo);
+
     dispatch(dataSourceLoaded(dataSource));
     dispatch(dataSourceMetaLoaded(pluginInfo));
-    dispatch(updateNavIndex(buildNavModel(dataSource, pluginInfo)));
+    dispatch(dataSourcePluginLoaded(plugin));
+    dispatch(updateNavIndex(buildNavModel(dataSource, plugin)));
   };
 }
 

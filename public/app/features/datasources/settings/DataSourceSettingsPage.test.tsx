@@ -19,7 +19,6 @@ const setup = (propOverrides?: object) => {
     setDataSourceName,
     updateDataSource: jest.fn(),
     setIsDefault,
-    plugin: pluginMock,
     query: {},
     ...propOverrides,
   };
@@ -46,7 +45,6 @@ describe('Render', () => {
   it('should render beta info text', () => {
     const wrapper = setup({
       dataSourceMeta: { ...getMockPlugin(), state: 'beta' },
-      plugin: pluginMock,
     });
 
     expect(wrapper).toMatchSnapshot();

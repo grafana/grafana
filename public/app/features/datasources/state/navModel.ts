@@ -1,7 +1,9 @@
-import { PluginMeta, DataSourceSettings, PluginType, NavModel, NavModelItem } from '@grafana/ui';
+import { DataSourceSettings, PluginType, NavModel, NavModelItem, DataSourcePlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
-export function buildNavModel(dataSource: DataSourceSettings, pluginMeta: PluginMeta): NavModelItem {
+export function buildNavModel(dataSource: DataSourceSettings, plugin: DataSourcePlugin): NavModelItem {
+  const pluginMeta = plugin.meta;
+
   const navModel = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.id,
@@ -19,6 +21,18 @@ export function buildNavModel(dataSource: DataSourceSettings, pluginMeta: Plugin
       },
     ],
   };
+
+  if (plugin.configTabs) {
+    for (const tab of plugin.configTabs) {
+      navModel.children.push({
+        active: false,
+        text: tab.title,
+        icon: tab.icon,
+        url: `datasources/edit/${dataSource.id}/?tab=${tab.id}`,
+        id: `datasource-tab-${tab.id}`,
+      });
+    }
+  }
 
   if (pluginMeta.includes && hasDashboards(pluginMeta.includes)) {
     navModel.children.push({
@@ -65,28 +79,30 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       user: '',
     },
     {
-      id: '1',
-      type: PluginType.datasource,
-      name: '',
-      info: {
-        author: {
-          name: '',
-          url: '',
+      meta: {
+        id: '1',
+        type: PluginType.datasource,
+        name: '',
+        info: {
+          author: {
+            name: '',
+            url: '',
+          },
+          description: '',
+          links: [{ name: '', url: '' }],
+          logos: {
+            large: '',
+            small: '',
+          },
+          screenshots: [],
+          updated: '',
+          version: '',
         },
-        description: '',
-        links: [{ name: '', url: '' }],
-        logos: {
-          large: '',
-          small: '',
-        },
-        screenshots: [],
-        updated: '',
-        version: '',
+        includes: [],
+        module: '',
+        baseUrl: '',
       },
-      includes: [],
-      module: '',
-      baseUrl: '',
-    }
+    } as DataSourcePlugin
   );
 
   let node: NavModelItem;
