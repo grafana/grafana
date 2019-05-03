@@ -5,8 +5,8 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { statsCalculators } from '../../utils/statsCalculator';
 import { SelectOptionItem } from '../Select/Select';
+import { fieldReducers } from '../../utils';
 
 interface Props {
   placeholder?: string;
@@ -34,7 +34,7 @@ export class StatsPicker extends PureComponent<Props> {
   checkInput = () => {
     const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
-    const current = statsCalculators.list(stats);
+    const current = fieldReducers.list(stats);
     if (current.length !== stats.length) {
       const found = current.map(v => v.id);
       const notFound = difference(stats, found);
@@ -66,9 +66,7 @@ export class StatsPicker extends PureComponent<Props> {
   render() {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
 
-    const select = statsCalculators.selectOptions(stats);
-    console.log('GET STATs', select);
-
+    const select = fieldReducers.selectOptions(stats);
     return (
       <Select
         width={width}

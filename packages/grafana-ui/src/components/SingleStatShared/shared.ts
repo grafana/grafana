@@ -11,7 +11,7 @@ import {
   SeriesData,
   InterpolateFunction,
 } from '../../types';
-import { statsCalculators, calculateStats, StatID } from '../../utils/statsCalculator';
+import { reduceField, fieldReducers } from '../../utils/fieldReducer';
 import { getDisplayProcessor } from '../../utils/displayValue';
 export { SingleStatValueEditor } from './SingleStatValueEditor';
 
@@ -66,10 +66,10 @@ export const getSingleStatDisplayValues = (options: GetSingleStatDisplayValueOpt
 
         // Show all fields that are not 'time'
         if (column.type === FieldType.number) {
-          const stats = calculateStats({
+          const stats = reduceField({
             series,
             fieldIndex: i,
-            stats: [stat], // The stats to calculate
+            reducers: [stat], // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
 
@@ -124,8 +124,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     // avg -> mean, current -> last, total -> sum
     const { valueOptions } = options;
     if (valueOptions && valueOptions.stat) {
-      const calc = statsCalculators.get(valueOptions.stat);
-      valueOptions.stat = calc ? calc.id : StatID.last;
+      valueOptions.stat = fieldReducers.list([valueOptions.stat]).map(s => s.id)[0];
     }
   }
   return options;

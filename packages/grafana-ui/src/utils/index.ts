@@ -5,7 +5,7 @@ export * from './namedColorsPalette';
 export * from './thresholds';
 export * from './string';
 export * from './csv';
-export * from './statsCalculator';
+export * from './fieldReducer';
 export * from './displayValue';
 export * from './deprecationWarning';
 export * from './logs';

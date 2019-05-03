@@ -1,13 +1,13 @@
 import { SeriesTransformerInfo } from './transformers';
 import { SeriesData, FieldType } from '../../types/data';
 import { DataQueryRequest } from '../../types/index';
-import { StatID, statsCalculators, calculateStats } from '../statsCalculator';
 import { SeriesMatcherConfig, getSeriesMatcher } from '../matchers/matchers';
 import { alwaysSeriesMatcher } from '../matchers/predicates';
 import { SeriesTransformerID } from './ids';
+import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
 
 interface CalcOptions {
-  stats: string[];
+  calcs: string[];
   matcher?: SeriesMatcherConfig; // Assume all fields
 }
 
@@ -16,7 +16,7 @@ export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
   name: 'Calculate',
   description: 'calculate...',
   defaultOptions: {
-    stats: [StatID.min, StatID.max, StatID.mean, StatID.last],
+    calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.last],
   },
 
   /**
@@ -25,8 +25,8 @@ export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
    */
   transformer: (options: CalcOptions) => {
     const matcher = options.matcher ? getSeriesMatcher(options.matcher) : alwaysSeriesMatcher;
-    const calculators = statsCalculators.list(options.stats);
-    const stats = calculators.map(c => c.id);
+    const calculators = fieldReducers.list(options.calcs);
+    const reducers = calculators.map(c => c.id);
     const fields = [
       {
         name: 'Field',
@@ -51,14 +51,14 @@ export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
           for (let i = 0; i < series.fields.length; i++) {
             const field = series.fields[i];
             if (matcher(series, field)) {
-              const results = calculateStats({
+              const results = reduceField({
                 series,
                 fieldIndex: i,
-                stats,
+                reducers,
               });
               const row: any[] = [];
               row.push(field.name);
-              for (const s of stats) {
+              for (const s of reducers) {
                 row.push(results[s]);
               }
               sub.rows.push(row);

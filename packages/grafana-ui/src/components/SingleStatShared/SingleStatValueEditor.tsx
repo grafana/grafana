@@ -8,7 +8,7 @@ import {
   PanelOptionsGroup,
   StatsPicker,
   UnitPicker,
-  StatID,
+  ReducerID,
   SelectOptionItem,
 } from '@grafana/ui';
 
@@ -27,7 +27,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
   onUnitChange = (unit: SelectOptionItem<string>) => this.props.onChange({ ...this.props.value, unit: unit.value });
 
   onStatsChange = (stats: string[]) => {
-    const stat = stats[0] || StatID.mean;
+    const stat = stats[0] || ReducerID.mean;
     this.props.onChange({ ...this.props.value, stat });
   };
 
@@ -65,7 +65,7 @@ export class SingleStatValueEditor extends PureComponent<Props> {
           <StatsPicker
             width={12}
             placeholder="Choose Stat"
-            defaultStat={StatID.mean}
+            defaultStat={ReducerID.mean}
             allowMultiple={false}
             stats={[stat]}
             onChange={this.onStatsChange}

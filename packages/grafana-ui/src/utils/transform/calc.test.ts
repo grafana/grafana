@@ -1,5 +1,5 @@
 import { transformSeriesData } from './transformers';
-import { StatID } from '../statsCalculator';
+import { ReducerID } from '../fieldReducer';
 import { SeriesTransformerID } from './ids';
 
 const seriesWithValues = {
@@ -20,7 +20,7 @@ describe('Calc Transformer', () => {
     const cfg = {
       id: SeriesTransformerID.calc,
       options: {
-        stats: [StatID.min, StatID.max, StatID.mean, StatID.delta],
+        calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.delta],
       },
     };
     const filtered = transformSeriesData([cfg], [seriesWithValues])[0];

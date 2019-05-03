@@ -1,4 +1,4 @@
-import { statsCalculators, StatID, calculateStats } from './statsCalculator';
+import { ReducerID, reduceField, fieldReducers } from './fieldReducer';
 
 import _ from 'lodash';
 
@@ -9,15 +9,29 @@ describe('Stats Calculators', () => {
   };
 
   it('should load all standard stats', () => {
-    for (const name of Object.keys(StatID)) {
-      const calc = statsCalculators.get(name);
-      expect(calc.id).toBe(name);
-    }
+    const names = [
+      ReducerID.sum,
+      ReducerID.max,
+      ReducerID.min,
+      ReducerID.logmin,
+      ReducerID.mean,
+      ReducerID.last,
+      ReducerID.first,
+      ReducerID.count,
+      ReducerID.range,
+      ReducerID.diff,
+      ReducerID.step,
+      ReducerID.delta,
+      // ReducerID.allIsZero,
+      // ReducerID.allIsNull,
+    ];
+    const stats = fieldReducers.list(names);
+    expect(stats.length).toBe(names.length);
   });
 
   it('should fail to load unknown stats', () => {
-    const names = ['not a stat', StatID.max, StatID.min, 'also not a stat'];
-    const stats = statsCalculators.list(names);
+    const names = ['not a stat', ReducerID.max, ReducerID.min, 'also not a stat'];
+    const stats = fieldReducers.list(names);
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
@@ -28,10 +42,10 @@ describe('Stats Calculators', () => {
   });
 
   it('should calculate basic stats', () => {
-    const stats = calculateStats({
+    const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      stats: ['first', 'last', 'mean'],
+      reducers: ['first', 'last', 'mean'],
     });
 
     // First
@@ -45,10 +59,10 @@ describe('Stats Calculators', () => {
   });
 
   it('should support a single stat also', () => {
-    const stats = calculateStats({
+    const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      stats: ['first'],
+      reducers: ['first'],
     });
 
     // Should do the simple version that just looks up value
@@ -57,10 +71,10 @@ describe('Stats Calculators', () => {
   });
 
   it('should get non standard stats', () => {
-    const stats = calculateStats({
+    const stats = reduceField({
       series: basicTable,
       fieldIndex: 0,
-      stats: [StatID.distinctCount, StatID.changeCount],
+      reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
     expect(stats.distinctCount).toEqual(2);
@@ -68,10 +82,10 @@ describe('Stats Calculators', () => {
   });
 
   it('should calculate step', () => {
-    const stats = calculateStats({
+    const stats = reduceField({
       series: { fields: [{ name: 'A' }], rows: [[100], [200], [300], [400]] },
       fieldIndex: 0,
-      stats: [StatID.step, StatID.delta],
+      reducers: [ReducerID.step, ReducerID.delta],
     });
 
     expect(stats.step).toEqual(100);
