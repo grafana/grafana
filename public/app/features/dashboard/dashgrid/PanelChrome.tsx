@@ -31,6 +31,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isFullscreen: boolean;
+  isInView: boolean;
   width: number;
   height: number;
 }
@@ -39,6 +40,7 @@ export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
   errorMessage: string | null;
+  refreshWhenInView: boolean;
 
   // Current state of all events
   data: PanelData;
@@ -47,7 +49,6 @@ export interface State {
 export class PanelChrome extends PureComponent<Props, State> {
   timeSrv: TimeSrv = getTimeSrv();
   querySubscription: Unsubscribable;
-  delayedStateUpdate: Partial<State>;
 
   constructor(props: Props) {
     super(props);
@@ -55,6 +56,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       isFirstLoad: true,
       renderCounter: 0,
       errorMessage: null,
+      refreshWhenInView: false,
       data: {
         state: LoadingState.NotStarted,
         series: [],
@@ -90,17 +92,46 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
   }
 
+  componentDidUpdate(prevProps: Props) {
+    const { isInView } = this.props;
+
+    // View state has changed
+    if (isInView !== prevProps.isInView) {
+      if (isInView) {
+        // Subscribe will kick of a notice of the last known state
+        if (!this.querySubscription && this.wantsQueryExecution) {
+          const runner = this.props.panel.getQueryRunner();
+          this.querySubscription = runner.subscribe(this.panelDataObserver);
+        }
+
+        // Check if we need a delayed refresh
+        if (this.state.refreshWhenInView) {
+          this.onRefresh();
+        }
+      } else if (this.querySubscription) {
+        this.querySubscription.unsubscribe();
+        this.querySubscription = null;
+      }
+    }
+  }
+
   // Updates the response with information from the stream
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   panelDataObserver = {
     next: (data: PanelData) => {
+      if (!this.props.isInView) {
+        // Ignore events when not visible.
+        // The call will be repeated when the panel comes into view
+        return;
+      }
+
       let { errorMessage, isFirstLoad } = this.state;
 
       if (data.state === LoadingState.Error) {
         const { error } = data;
         if (error) {
-          if (this.state.errorMessage !== error.message) {
+          if (errorMessage !== error.message) {
             errorMessage = error.message;
           }
         }
@@ -113,30 +144,26 @@ export class PanelChrome extends PureComponent<Props, State> {
         if (this.props.dashboard.snapshot) {
           this.props.panel.snapshotData = data.series;
         }
-        if (this.state.isFirstLoad) {
+        if (isFirstLoad) {
           isFirstLoad = false;
         }
       }
 
-      const stateUpdate = { isFirstLoad, errorMessage, data };
-
-      if (this.isVisible) {
-        this.setState(stateUpdate);
-      } else {
-        // if we are getting data while another panel is in fullscreen / edit mode
-        // we need to store the data but not update state yet
-        this.delayedStateUpdate = stateUpdate;
-      }
+      this.setState({ isFirstLoad, errorMessage, data });
     },
   };
 
   onRefresh = () => {
-    console.log('onRefresh');
-    if (!this.isVisible) {
+    const { panel, isInView, width } = this.props;
+
+    console.log('onRefresh', panel.id);
+
+    if (!isInView) {
+      console.log('Refresh when panel is visible', panel.id);
+      this.setState({ refreshWhenInView: true });
       return;
     }
 
-    const { panel, width } = this.props;
     const timeData = applyPanelTimeOverrides(panel, this.timeSrv.timeRange());
 
     // Issue Query
@@ -172,12 +199,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRender = () => {
     const stateUpdate = { renderCounter: this.state.renderCounter + 1 };
 
-    // If we have received a data update while hidden copy over that state as well
-    if (this.delayedStateUpdate) {
-      Object.assign(stateUpdate, this.delayedStateUpdate);
-      this.delayedStateUpdate = null;
-    }
-
     this.setState(stateUpdate);
   };
 
@@ -198,10 +219,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({ errorMessage: message });
     }
   };
-
-  get isVisible() {
-    return !this.props.dashboard.otherPanelInFullscreen(this.props.panel);
-  }
 
   get hasPanelSnapshot() {
     const { panel } = this.props;
