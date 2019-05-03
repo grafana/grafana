@@ -59,8 +59,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/plugins", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
+	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 
 	r.Get("/d/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, hs.Index)
