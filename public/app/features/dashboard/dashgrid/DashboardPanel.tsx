@@ -29,7 +29,7 @@ export interface Props {
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
-  show: boolean; // For lazy loading
+  isLazy: boolean;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -42,7 +42,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
-      show: props.isInView, // Lazy loading
+      isLazy: !props.isInView,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -94,8 +94,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    if (!this.state.show && this.props.isInView) {
-      this.setState({ show: true });
+    if (this.state.isLazy && this.props.isInView) {
+      this.setState({ isLazy: false });
     }
 
     if (!this.element || this.state.angularPanel) {
@@ -161,7 +161,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel, show } = this.state;
+    const { plugin, angularPanel, isLazy } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -169,6 +169,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
     // if we have not loaded plugin exports yet, wait
     if (!plugin) {
+      return null;
+    }
+
+    // If we are lazy state don't render anything
+    if (isLazy) {
       return null;
     }
 
@@ -191,7 +196,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {show && (plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel())}
+              {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
             </div>
           )}
         />
