@@ -1,7 +1,7 @@
 import {
   GraphSeriesXY,
   NullValueMode,
-  calculateStats,
+  reduceField,
   colors,
   getFlotPairs,
   getColorFromHexRgbOrName,
@@ -45,7 +45,7 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = calculateStats({ series, stats: legendOptions.stats, fieldIndex: field.index });
+        const seriesStats = reduceField({ series, ids: legendOptions.stats, fieldIndex: field.index });
         let statsDisplayValues;
 
         if (legendOptions.stats) {
