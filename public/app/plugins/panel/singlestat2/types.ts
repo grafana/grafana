@@ -22,7 +22,6 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
 }
 
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
-  title: '', // auto title
   values: false,
   calcs: [ReducerID.mean],
   defaults: {},
