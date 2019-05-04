@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import classNames from 'classnames';
 
 // Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -262,16 +261,9 @@ export class PanelChrome extends PureComponent<Props, State> {
   render() {
     const { dashboard, panel, isFullscreen, width, height } = this.props;
     const { errorMessage, data } = this.state;
-    const { transparent } = panel;
-
-    const containerClassNames = classNames({
-      'panel-container': true,
-      'panel-container--absolute': true,
-      'panel-transparent': transparent,
-    });
 
     return (
-      <div className={containerClassNames}>
+      <>
         <PanelHeader
           panel={panel}
           dashboard={dashboard}
@@ -292,7 +284,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             return this.renderPanel(width, height);
           }}
         </ErrorBoundary>
-      </div>
+      </>
     );
   }
 }

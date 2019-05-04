@@ -6,25 +6,22 @@ import baron from 'baron';
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <div class="panel-container">
-      <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
-        <span class="panel-info-corner">
-          <i class="fa"></i>
-          <span class="panel-info-corner-inner"></span>
-        </span>
+<div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
+  <span class="panel-info-corner">
+    <i class="fa"></i>
+    <span class="panel-info-corner-inner"></span>
+  </span>
 
-        <span class="panel-loading" ng-show="ctrl.loading">
-          <i class="fa fa-spinner fa-spin"></i>
-        </span>
+  <span class="panel-loading" ng-show="ctrl.loading">
+    <i class="fa fa-spinner fa-spin"></i>
+  </span>
 
-        <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
-      </div>
+  <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
+</div>
 
-      <div class="panel-content">
-        <ng-transclude class="panel-height-helper"></ng-transclude>
-      </div>
-    </div>
-  </div>
+<div class="panel-content">
+  <ng-transclude class="panel-height-helper"></ng-transclude>
+</div>
 `;
 
 module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
@@ -34,29 +31,16 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     transclude: true,
     scope: { ctrl: '=' },
     link: (scope: any, elem) => {
-      const panelContainer = elem.find('.panel-container');
+      let panelContainer;
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
       const ctrl = scope.ctrl;
       let infoDrop;
       let panelScrollbar;
 
-      // the reason for handling these classes this way is for performance
-      // limit the watchers on panels etc
-      let transparentLastState = false;
       let lastHasAlertRule = false;
       let lastAlertState;
       let hasAlertRule;
-
-      function mouseEnter() {
-        panelContainer.toggleClass('panel-hover-highlight', true);
-        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
-      }
-
-      function mouseLeave() {
-        panelContainer.toggleClass('panel-hover-highlight', false);
-        ctrl.dashboard.setPanelFocus(0);
-      }
 
       function resizeScrollableContent() {
         if (panelScrollbar) {
@@ -64,14 +48,10 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       }
 
-      // set initial transparency
-      if (ctrl.panel.transparent) {
-        transparentLastState = true;
-        panelContainer.addClass('panel-transparent');
-      }
-
       // update scrollbar after mounting
       ctrl.events.on('component-did-mount', () => {
+        panelContainer = elem.parents('.panel-container');
+
         if (ctrl.__proto__.constructor.scrollable) {
           const scrollRootClass = 'baron baron__root baron__clipper panel-content--scrollable';
           const scrollerClass = 'baron__scroller';
@@ -101,7 +81,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       });
 
       ctrl.events.on('panel-size-changed', () => {
-        ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
+        ctrl.calculatePanelHeight(panelContent[0].offsetHeight);
         $timeout(() => {
           resizeScrollableContent();
           ctrl.render();
@@ -112,7 +92,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style
-          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
+          ctrl.calculatePanelHeight(panelContent[0].offsetHeight);
           // then wait another cycle (this might not be needed)
           $timeout(() => {
             ctrl.render();
@@ -124,12 +104,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       ctrl.events.on('render', () => {
         // set initial height
         if (!ctrl.height) {
-          ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
-        }
-
-        if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
-          transparentLastState = ctrl.panel.transparent;
+          ctrl.calculatePanelHeight(panelContent[0].offsetHeight);
         }
 
         hasAlertRule = ctrl.panel.alert !== undefined;
@@ -193,9 +168,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
 
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
-
-      elem.on('mouseenter', mouseEnter);
-      elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', () => {
         elem.off();

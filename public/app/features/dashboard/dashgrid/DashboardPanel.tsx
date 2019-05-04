@@ -164,16 +164,26 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return null;
     }
 
-    const containerClass = classNames({ 'panel-editor-container': isEditing, 'panel-height-helper': !isEditing });
+    const { transparent } = panel;
+
+    const editorContainerClasses = classNames({
+      'panel-editor-container': isEditing,
+      'panel-height-helper': !isEditing,
+    });
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
       'panel-wrapper--edit': isEditing,
-      'panel-wrapper--no-title': !panel.hasTitle(),
       'panel-wrapper--view': isFullscreen && !isEditing,
     });
 
+    const panelContainerClasses = classNames({
+      'panel-container': true,
+      'panel-container--absolute': true,
+      'panel-transparent': transparent,
+    });
+
     return (
-      <div className={containerClass}>
+      <div className={editorContainerClasses}>
         <PanelResizer
           isEditing={isEditing}
           panel={panel}
@@ -184,7 +194,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
+              <div className={panelContainerClasses}>
+                {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
+              </div>
             </div>
           )}
         />
