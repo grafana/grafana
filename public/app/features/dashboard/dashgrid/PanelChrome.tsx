@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import classNames from 'classnames';
 
 // Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -229,6 +230,8 @@ export class PanelChrome extends PureComponent<Props, State> {
       return this.renderLoadingState();
     }
 
+    const panelHeaderHeight = panel.hasTitle() ? PANEL_HEADER_HEIGHT : config.theme.panelPadding.vertical;
+
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}
@@ -238,7 +241,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.defaults)}
             width={width - 2 * config.theme.panelPadding.horizontal}
-            height={height - PANEL_HEADER_HEIGHT - config.theme.panelPadding.vertical}
+            height={height - panelHeaderHeight - config.theme.panelPadding.vertical}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
@@ -261,7 +264,12 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    const containerClassNames = `panel-container panel-container--absolute ${transparent ? 'panel-transparent' : ''}`;
+    const containerClassNames = classNames({
+      'panel-container': true,
+      'panel-container--absolute': true,
+      'panel-transparent': transparent,
+    });
+
     return (
       <div className={containerClassNames}>
         <PanelHeader

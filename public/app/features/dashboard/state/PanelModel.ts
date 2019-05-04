@@ -324,6 +324,10 @@ export class PanelModel {
     return this.queryRunner;
   }
 
+  hasTitle(): boolean {
+    return this.title && this.title.length > 0;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();

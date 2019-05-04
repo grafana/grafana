@@ -168,6 +168,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
       'panel-wrapper--edit': isEditing,
+      'panel-wrapper--no-title': !panel.hasTitle(),
       'panel-wrapper--view': isFullscreen && !isEditing,
     });
 
