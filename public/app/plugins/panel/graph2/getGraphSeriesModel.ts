@@ -23,7 +23,9 @@ export const getGraphSeriesModel = (
   const graphs: GraphSeriesXY[] = [];
 
   const displayProcessor = getDisplayProcessor({
-    decimals: legendOptions.decimals,
+    field: {
+      decimals: legendOptions.decimals,
+    },
   });
 
   for (const series of data.series) {

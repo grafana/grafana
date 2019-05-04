@@ -7,6 +7,7 @@ export * from './string';
 export * from './csv';
 export * from './fieldReducer';
 export * from './displayValue';
+export * from './fieldDisplay';
 export * from './deprecationWarning';
 export * from './logs';
 export * from './labels';
