@@ -128,7 +128,6 @@ export class Gauge extends PureComponent<Props> {
           height: `${Math.min(height, width * 1.3)}px`,
           width: `${Math.min(width, height * 1.3)}px`,
           margin: 'auto',
-          marginTop: '-8px',
         }}
         ref={element => (this.canvasElement = element)}
       >
