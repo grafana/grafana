@@ -79,9 +79,9 @@ div.flot-text {
 
 .panel-content {
   padding: $panel-padding;
-  height: 100%;
+  height: calc(100% - 28px);
+  width: 100%;
   position: relative;
-
   // Fixes scrolling on mobile devices
   overflow: auto;
 }

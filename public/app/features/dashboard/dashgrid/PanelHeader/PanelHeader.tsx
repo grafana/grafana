@@ -76,7 +76,6 @@ export class PanelHeader extends Component<Props, State> {
 
     const panelHeaderClass = classNames({
       'panel-header': true,
-      'panel-header--no-title': title.length === 0,
       'grid-drag-handle': !isFullscreen,
     });
 

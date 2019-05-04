@@ -122,9 +122,25 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.props.dashboard.setPanelFocus(0);
   };
 
-  renderReactPanel() {
+  renderPanel() {
     const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
+    const { transparent } = panel;
+
+    const panelContainerClasses = classNames({
+      'panel-container': true,
+      'panel-container--absolute': true,
+      'panel-container--no-title': !panel.hasTitle(),
+      'panel-transparent': transparent,
+    });
+
+    if (plugin.angularPanelCtrl) {
+      return (
+        <div className={panelContainerClasses}>
+          <div ref={element => (this.element = element)} className="panel-height-helper" />
+        </div>
+      );
+    }
 
     return (
       <AutoSizer>
@@ -132,23 +148,22 @@ export class DashboardPanel extends PureComponent<Props, State> {
           if (width === 0) {
             return null;
           }
+
           return (
-            <PanelChrome
-              plugin={plugin}
-              panel={panel}
-              dashboard={dashboard}
-              isFullscreen={isFullscreen}
-              width={width}
-              height={height}
-            />
+            <div className={panelContainerClasses}>
+              <PanelChrome
+                plugin={plugin}
+                panel={panel}
+                dashboard={dashboard}
+                isFullscreen={isFullscreen}
+                width={width}
+                height={height}
+              />
+            </div>
           );
         }}
       </AutoSizer>
     );
-  }
-
-  renderAngularPanel() {
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
   }
 
   render() {
@@ -164,22 +179,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return null;
     }
 
-    const { transparent } = panel;
-
     const editorContainerClasses = classNames({
       'panel-editor-container': isEditing,
       'panel-height-helper': !isEditing,
     });
+
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
       'panel-wrapper--edit': isEditing,
       'panel-wrapper--view': isFullscreen && !isEditing,
-    });
-
-    const panelContainerClasses = classNames({
-      'panel-container': true,
-      'panel-container--absolute': true,
-      'panel-transparent': transparent,
     });
 
     return (
@@ -194,9 +202,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              <div className={panelContainerClasses}>
-                {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
-              </div>
+              {this.renderPanel()}
             </div>
           )}
         />

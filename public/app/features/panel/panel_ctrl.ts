@@ -13,7 +13,7 @@ import {
   sharePanel as sharePanelUtil,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -202,7 +202,8 @@ export class PanelCtrl {
 
   calculatePanelHeight(containerHeight) {
     this.containerHeight = containerHeight;
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
+    this.height = this.containerHeight;
+    console.log('angular panel height', this.containerHeight);
   }
 
   render(payload?) {

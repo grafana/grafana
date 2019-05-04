@@ -6,15 +6,17 @@ $panel-header-no-title-zindex: 1;
     transition: background-color 0.1s ease-in-out;
     background-color: $panel-header-hover-bg;
   }
+}
 
-  &--no-title {
-    margin-bottom: 8px;
-
-    .panel-title-container {
-      position: absolute;
-      width: 100%;
-      z-index: $panel-header-no-title-zindex;
-    }
+.panel-container--no-title {
+  .panel-header {
+    position: absolute;
+    width: 100%;
+    z-index: $panel-header-no-title-zindex;
+  }
+  .panel-content {
+    padding-top: 8px;
+    height: 100%;
   }
 }
 
