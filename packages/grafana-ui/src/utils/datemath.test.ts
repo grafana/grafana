@@ -1,15 +1,15 @@
-import sinon from 'sinon';
+import sinon, { SinonFakeTimers } from 'sinon';
 
-import * as dateMath from 'app/core/utils/datemath';
-import moment from 'moment';
-import _ from 'lodash';
+import * as dateMath from './datemath';
+import moment, { Moment, unitOfTime } from 'moment';
+import each from 'lodash/each';
 
 describe('DateMath', () => {
-  const spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
+  const spans: unitOfTime.Base[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
   const anchor = '2014-01-01T06:06:06.666Z';
   const unix = moment(anchor).valueOf();
   const format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
-  let clock;
+  let clock: SinonFakeTimers;
 
   describe('errors', () => {
     it('should return undefined if passed empty string', () => {
@@ -42,7 +42,7 @@ describe('DateMath', () => {
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    const startOfDay = dateMath.parse('now/d', false).valueOf();
+    const startOfDay = dateMath.parse('now/d', false)!.valueOf();
     expect(startOfDay).toBe(expected.getTime());
   });
 
@@ -50,13 +50,13 @@ describe('DateMath', () => {
     const today = new Date();
     const expected = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
 
-    const startOfDay = dateMath.parse('now/d', false, 'utc').valueOf();
+    const startOfDay = dateMath.parse('now/d', false, 'utc')!.valueOf();
     expect(startOfDay).toBe(expected.getTime());
   });
 
   describe('subtraction', () => {
-    let now;
-    let anchored;
+    let now: Moment;
+    let anchored: Moment;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
@@ -64,16 +64,16 @@ describe('DateMath', () => {
       anchored = moment(anchor);
     });
 
-    _.each(spans, span => {
+    each(spans, span => {
       const nowEx = 'now-5' + span;
       const thenEx = anchor + '||-5' + span;
 
       it('should return 5' + span + ' ago', () => {
-        expect(dateMath.parse(nowEx).format(format)).toEqual(now.subtract(5, span).format(format));
+        expect(dateMath.parse(nowEx)!.format(format)).toEqual(now.subtract(5, span).format(format));
       });
 
       it('should return 5' + span + ' before ' + anchor, () => {
-        expect(dateMath.parse(thenEx).format(format)).toEqual(anchored.subtract(5, span).format(format));
+        expect(dateMath.parse(thenEx)!.format(format)).toEqual(anchored.subtract(5, span).format(format));
       });
     });
 
@@ -83,20 +83,20 @@ describe('DateMath', () => {
   });
 
   describe('rounding', () => {
-    let now;
+    let now: Moment;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
       now = moment();
     });
 
-    _.each(spans, span => {
+    each(spans, span => {
       it('should round now to the beginning of the ' + span, () => {
-        expect(dateMath.parse('now/' + span).format(format)).toEqual(now.startOf(span).format(format));
+        expect(dateMath.parse('now/' + span)!.format(format)).toEqual(now.startOf(span).format(format));
       });
 
       it('should round now to the end of the ' + span, () => {
-        expect(dateMath.parse('now/' + span, true).format(format)).toEqual(now.endOf(span).format(format));
+        expect(dateMath.parse('now/' + span, true)!.format(format)).toEqual(now.endOf(span).format(format));
       });
     });
 
@@ -117,12 +117,12 @@ describe('DateMath', () => {
   describe('relative time to date parsing', () => {
     it('should handle negative time', () => {
       const date = dateMath.parseDateMath('-2d', moment([2014, 1, 5]));
-      expect(date.valueOf()).toEqual(moment([2014, 1, 3]).valueOf());
+      expect(date!.valueOf()).toEqual(moment([2014, 1, 3]).valueOf());
     });
 
     it('should handle multiple math expressions', () => {
       const date = dateMath.parseDateMath('-2d-6h', moment([2014, 1, 5]));
-      expect(date.valueOf()).toEqual(moment([2014, 1, 2, 18]).valueOf());
+      expect(date!.valueOf()).toEqual(moment([2014, 1, 2, 18]).valueOf());
     });
 
     it('should return false when invalid expression', () => {

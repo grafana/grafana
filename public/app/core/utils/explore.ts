@@ -3,7 +3,7 @@ import _ from 'lodash';
 import moment, { Moment } from 'moment';
 
 // Services & Utils
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';

@@ -5,7 +5,7 @@ import { Moment } from 'moment';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from './time';
-import { Timezone } from '../../../../../public/app/core/utils/datemath';
+import { Timezone } from '@grafana/ui/src/utils/datemath';
 
 export interface Props {
   value: TimeRange;

@@ -6,7 +6,7 @@ import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
-import { Timezone } from '../../../../../public/app/core/utils/datemath';
+import { Timezone } from '@grafana/ui/src/utils/datemath';
 
 export interface Props {
   value: TimeRange;
