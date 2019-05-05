@@ -125,21 +125,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
   renderPanel() {
     const { dashboard, panel, isFullscreen } = this.props;
     const { plugin } = this.state;
-    const { transparent } = panel;
-
-    const panelContainerClasses = classNames({
-      'panel-container': true,
-      'panel-container--absolute': true,
-      'panel-container--no-title': !panel.hasTitle(),
-      'panel-transparent': transparent,
-    });
 
     if (plugin.angularPanelCtrl) {
-      return (
-        <div className={panelContainerClasses}>
-          <div ref={element => (this.element = element)} className="panel-height-helper" />
-        </div>
-      );
+      return <div ref={element => (this.element = element)} className="panel-height-helper" />;
     }
 
     return (
@@ -150,16 +138,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
           }
 
           return (
-            <div className={panelContainerClasses}>
-              <PanelChrome
-                plugin={plugin}
-                panel={panel}
-                dashboard={dashboard}
-                isFullscreen={isFullscreen}
-                width={width}
-                height={height}
-              />
-            </div>
+            <PanelChrome
+              plugin={plugin}
+              panel={panel}
+              dashboard={dashboard}
+              isFullscreen={isFullscreen}
+              width={width}
+              height={height}
+            />
           );
         }}
       </AutoSizer>

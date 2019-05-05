@@ -73,7 +73,7 @@ const theme: GrafanaThemeCommons = {
     lg: '48px',
   },
   panelPadding: {
-    horizontal: 16,
+    horizontal: 8,
     vertical: 8,
   },
   zIndex: {
