@@ -142,24 +142,36 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
   }
 
   /* Azure Monitor REST API methods */
-  getResourceGroups() {
-    return this.azureMonitorDatasource.getResourceGroups();
+  getResourceGroups(subscriptionId: string) {
+    return this.azureMonitorDatasource.getResourceGroups(subscriptionId);
   }
 
-  getMetricDefinitions(resourceGroup: string) {
-    return this.azureMonitorDatasource.getMetricDefinitions(resourceGroup);
+  getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
+    return this.azureMonitorDatasource.getMetricDefinitions(subscriptionId, resourceGroup);
   }
 
-  getResourceNames(resourceGroup: string, metricDefinition: string) {
-    return this.azureMonitorDatasource.getResourceNames(resourceGroup, metricDefinition);
+  getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
+    return this.azureMonitorDatasource.getResourceNames(subscriptionId, resourceGroup, metricDefinition);
   }
 
-  getMetricNames(resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNames(resourceGroup, metricDefinition, resourceName);
+  getMetricNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+    return this.azureMonitorDatasource.getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName);
   }
 
-  getMetricMetadata(resourceGroup: string, metricDefinition: string, resourceName: string, metricName: string) {
-    return this.azureMonitorDatasource.getMetricMetadata(resourceGroup, metricDefinition, resourceName, metricName);
+  getMetricMetadata(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricDefinition: string,
+    resourceName: string,
+    metricName: string
+  ) {
+    return this.azureMonitorDatasource.getMetricMetadata(
+      subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+      metricName
+    );
   }
 
   /* Application Insights API method */

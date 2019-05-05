@@ -7,6 +7,12 @@
           ng-change="ctrl.onQueryTypeChange()"></select>
       </div>
     </div>
+    <div class="gf-form" ng-if="ctrl.target.queryType === 'Azure Monitor' || ctrl.target.queryType === 'Azure Log Analytics'">
+      <label class="gf-form-label query-keyword width-9">Subscription</label>
+      <gf-form-dropdown model="ctrl.target.subscription" allow-custom="true" lookup-text="true"
+        get-options="ctrl.subscriptions" on-change="ctrl.onSubscriptionChange()" css-class="min-width-12">
+      </gf-form-dropdown>
+    </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>

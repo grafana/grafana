@@ -2,6 +2,7 @@ import { DataQuery } from '@grafana/ui/src/types';
 
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
+  subscription: string;
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   //   appInsights: any;
