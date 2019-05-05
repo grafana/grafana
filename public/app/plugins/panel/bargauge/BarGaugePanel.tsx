@@ -49,7 +49,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
   render() {
     const { height, width, options, data, renderCounter } = this.props;
-    console.log('height', height);
 
     return (
       <VizRepeater

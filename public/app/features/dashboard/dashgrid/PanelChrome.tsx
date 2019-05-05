@@ -1,28 +1,24 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-
-// Services
-import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { Unsubscribable } from 'rxjs';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
-// Utils
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+// Utils & Services
+import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
+import { getProcessedSeriesData } from '../state/PanelQueryState';
+import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, PanelData, PanelPlugin } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
-
-import templateSrv from 'app/features/templating/template_srv';
-
-import { getProcessedSeriesData } from '../state/PanelQueryState';
-import { Unsubscribable } from 'rxjs';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -230,7 +226,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     }
 
     const PanelComponent = plugin.panel;
-    const panelHeaderHeight = panel.hasTitle() ? theme.panelHeaderHeight : 0;
+    const innerPanelHeight = calculateInnerPanelHeight(panel, height);
 
     return (
       <>
@@ -241,7 +237,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.defaults)}
             width={width - theme.panelPadding * 2}
-            height={height - panelHeaderHeight - theme.panelPadding * 2}
+            height={innerPanelHeight}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}

@@ -11,6 +11,7 @@ import {
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
+  calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
 
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
@@ -202,13 +203,7 @@ export class PanelCtrl {
 
   calculatePanelHeight(containerHeight) {
     this.containerHeight = containerHeight;
-    this.height = this.containerHeight - config.theme.panelPadding * 2;
-
-    if (this.panel.hasTitle()) {
-      this.height -= config.theme.panelHeaderHeight;
-    }
-
-    console.log('angular panel height', this.height);
+    this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
   render(payload?) {
