@@ -67,18 +67,18 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
-				readLDAPConfig = func() *ldap.Config {
+				getLDAPConfig = func() (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{
 							{},
 						},
 					}
-					return config
+					return config, nil
 				}
 
 				defer func() {
 					isLDAPEnabled = ldap.IsEnabled
-					readLDAPConfig = ldap.ReadConfig
+					getLDAPConfig = ldap.GetConfig
 				}()
 
 				store := remotecache.NewFakeStore(t)
@@ -109,16 +109,16 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
-				readLDAPConfig = func() *ldap.Config {
+				getLDAPConfig = func() (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{},
 					}
-					return config
+					return config, nil
 				}
 
 				defer func() {
 					isLDAPEnabled = ldap.IsEnabled
-					readLDAPConfig = ldap.ReadConfig
+					getLDAPConfig = ldap.GetConfig
 				}()
 
 				store := remotecache.NewFakeStore(t)

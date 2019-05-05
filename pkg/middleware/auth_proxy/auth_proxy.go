@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	readLDAPConfig = ldap.ReadConfig
-	isLDAPEnabled  = ldap.IsEnabled
+	getLDAPConfig = ldap.GetConfig
+	isLDAPEnabled = ldap.IsEnabled
 )
 
 // AuthProxy struct
@@ -219,7 +219,10 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 		Username:   auth.header,
 	}
 
-	config := readLDAPConfig()
+	config, err := getLDAPConfig()
+	if err != nil {
+		return 0, newError("Failed to get LDAP config", nil)
+	}
 	if len(config.Servers) == 0 {
 		return 0, newError("No LDAP servers available", nil)
 	}

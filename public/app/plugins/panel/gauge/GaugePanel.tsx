@@ -5,35 +5,37 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { DisplayValue, PanelProps, getSingleStatDisplayValues, VizRepeater } from '@grafana/ui';
+import { PanelProps, VizRepeater } from '@grafana/ui';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
-  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
+    const { fieldOptions } = options;
+    const { field, display } = value;
 
     return (
       <Gauge
-        value={value}
+        value={display}
         width={width}
         height={height}
-        thresholds={options.thresholds}
+        thresholds={fieldOptions.thresholds}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
-        minValue={options.minValue}
-        maxValue={options.maxValue}
+        minValue={field.min}
+        maxValue={field.max}
         theme={config.theme}
       />
     );
   };
 
-  getValues = (): DisplayValue[] => {
+  getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables } = this.props;
-    return getSingleStatDisplayValues({
-      ...options,
+    return getFieldDisplayValues({
+      fieldOptions: options.fieldOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
