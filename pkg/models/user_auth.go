@@ -17,21 +17,7 @@ type UserAuth struct {
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
 }
-/*
-type ExternalUserInfo struct {
-	OAuthToken     *oauth2.Token
-	AuthModule     string
-	AuthId         string
-	UserId         int64
-	Email          string
-	Login          string
-	Name           string
- Organizations  []string
-	Groups         []string
-	OrgRoles       map[int64]RoleType
-	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
-}
-*/
+
 type ExternalUserInfo struct {
 	OAuthToken     *oauth2.Token
 	AuthModule     string
