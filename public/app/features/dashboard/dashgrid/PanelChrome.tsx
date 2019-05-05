@@ -230,7 +230,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       return this.renderLoadingState();
     }
 
-    const panelHeaderHeight = panel.hasTitle() ? PANEL_HEADER_HEIGHT : config.theme.panelPadding.vertical;
+    const panelHeaderHeight = panel.hasTitle() ? PANEL_HEADER_HEIGHT : 0;
 
     return (
       <>
@@ -240,8 +240,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.defaults)}
-            width={width - 2 * config.theme.panelPadding.horizontal}
-            height={height - panelHeaderHeight - config.theme.panelPadding.vertical}
+            width={width - 2 * config.theme.panelPadding}
+            height={height - panelHeaderHeight - config.theme.panelPadding * 2}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}

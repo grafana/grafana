@@ -430,7 +430,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const plotCanvas = $('<div></div>');
       const plotCss = {
-        top: '10px',
+        top: '5px',
         margin: 'auto',
         position: 'relative',
         height: height * 0.9 + 'px',

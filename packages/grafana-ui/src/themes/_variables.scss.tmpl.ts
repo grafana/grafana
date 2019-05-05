@@ -197,9 +197,7 @@ $side-menu-width: 60px;
 
 // dashboard
 $dashboard-padding: $space-md;
-$panel-padding: 0 ${theme.panelPadding.horizontal}px ${theme.panelPadding.vertical}px ${
-    theme.panelPadding.horizontal
-  }px;
+$panel-padding: ${theme.panelPadding}px;
 
 // tabs
 $tabs-padding: 10px 15px 9px;
