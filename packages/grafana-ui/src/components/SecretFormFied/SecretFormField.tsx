@@ -1,5 +1,5 @@
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes, FC } from 'react';
 import { FormField } from '..';
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
@@ -27,7 +27,7 @@ const defaultProps = {
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
  */
-export const SecretFormField: FunctionComponent<Props> = ({
+export const SecretFormField: FC<Props> = ({
   label,
   labelWidth,
   inputWidth,
@@ -36,35 +36,31 @@ export const SecretFormField: FunctionComponent<Props> = ({
   placeholder,
   ...inputProps
 }: Props) => {
-  return (
-    <FormField
-      label={label!}
-      labelWidth={labelWidth}
-      inputEl={
-        isConfigured ? (
-          <>
-            <input
-              type="text"
-              className={`gf-form-input width-${inputWidth! - 2}`}
-              disabled={true}
-              value="configured"
-              {...omit(inputProps, 'value')}
-            />
-            <button className="btn btn-secondary gf-form-btn" onClick={onReset}>
-              reset
-            </button>
-          </>
-        ) : (
-          <input
-            type="password"
-            className={`gf-form-input width-${inputWidth}`}
-            placeholder={placeholder}
-            {...inputProps}
-          />
-        )
-      }
-    />
-  );
+  const inputRender = () => {
+    return isConfigured ? (
+      <>
+        <input
+          type="text"
+          className={`gf-form-input width-${inputWidth! - 2}`}
+          disabled={true}
+          value="configured"
+          {...omit(inputProps, 'value')}
+        />
+        <button className="btn btn-secondary gf-form-btn" onClick={onReset}>
+          reset
+        </button>
+      </>
+    ) : (
+      <input
+        type="password"
+        className={`gf-form-input width-${inputWidth}`}
+        placeholder={placeholder}
+        {...inputProps}
+      />
+    );
+  };
+
+  return <FormField label={label!} labelWidth={labelWidth} inputRender={inputRender} />;
 };
 
 SecretFormField.defaultProps = defaultProps;

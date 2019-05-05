@@ -7,7 +7,7 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   tooltip?: PopperContent<any>;
   labelWidth?: number;
   inputWidth?: number;
-  inputEl?: React.ReactNode;
+  inputRender?: () => React.ReactNode;
 }
 
 const defaultProps = {
@@ -24,7 +24,7 @@ export const FormField: FunctionComponent<Props> = ({
   tooltip,
   labelWidth,
   inputWidth,
-  inputEl,
+  inputRender,
   ...inputProps
 }) => {
   return (
@@ -32,7 +32,8 @@ export const FormField: FunctionComponent<Props> = ({
       <FormLabel width={labelWidth} tooltip={tooltip}>
         {label}
       </FormLabel>
-      {inputEl || <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />}
+      {inputRender && inputRender()}
+      {!inputRender && <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />}
     </div>
   );
 };
