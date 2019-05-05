@@ -37,16 +37,19 @@ export default class AzureLogAnalyticsDatasource {
     if (!!this.instanceSettings.jsonData.subscriptionId || !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
       this.subscriptionId = this.instanceSettings.jsonData.subscriptionId;
       const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
-      this.azureMonitorUrl = `/${azureCloud}/subscriptions/${this.subscriptionId}`;
+      this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
       this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId;
-      this.azureMonitorUrl = `/workspacesloganalytics/subscriptions/${this.subscriptionId}`;
+      this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
     }
   }
 
-  getWorkspaces() {
+  getWorkspaces(subscription: string) {
+    const subscriptionId = this.templateSrv.replace(subscription || this.subscriptionId);
+
     const workspaceListUrl =
-      this.azureMonitorUrl + '/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview';
+      this.azureMonitorUrl +
+      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
     return this.doRequest(workspaceListUrl).then(response => {
       return (
         _.map(response.data.value, val => {
@@ -56,7 +59,7 @@ export default class AzureLogAnalyticsDatasource {
     });
   }
 
-  getSchema(workspace) {
+  getSchema(workspace: string) {
     if (!workspace) {
       return Promise.resolve();
     }
@@ -80,7 +83,9 @@ export default class AzureLogAnalyticsDatasource {
       );
       const generated = querystringBuilder.generate();
 
-      const url = `${this.baseUrl}/${item.workspace}/query?${generated.uriString}`;
+      const workspace = this.templateSrv.replace(item.workspace, options.scopedVars);
+
+      const url = `${this.baseUrl}/${workspace}/query?${generated.uriString}`;
 
       return {
         refId: target.refId,
@@ -177,7 +182,7 @@ export default class AzureLogAnalyticsDatasource {
       return Promise.resolve(this.defaultOrFirstWorkspace);
     }
 
-    return this.getWorkspaces().then(workspaces => {
+    return this.getWorkspaces(this.subscriptionId).then(workspaces => {
       this.defaultOrFirstWorkspace = workspaces[0].value;
       return this.defaultOrFirstWorkspace;
     });

@@ -194,6 +194,7 @@ export default class ResponseParser {
         });
       }
     }
+
     return list;
   }
 }

@@ -200,6 +200,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     });
   }
 
+  onSubscriptionChange() {
+    if (this.target.queryType === 'Azure Log Analytics') {
+      return this.getWorkspaces();
+    }
+  }
+
   /* Azure Monitor Section */
   getResourceGroups(query) {
     if (this.target.queryType !== 'Azure Monitor' || !this.datasource.azureMonitorDatasource.isConfigured()) {
@@ -272,8 +278,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  onSubscriptionChange() {}
-
   onResourceGroupChange() {
     this.target.azureMonitor.metricDefinition = this.defaultDropdownValue;
     this.target.azureMonitor.resourceName = this.defaultDropdownValue;
@@ -338,7 +342,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   getWorkspaces = () => {
     return this.datasource.azureLogAnalyticsDatasource
-      .getWorkspaces()
+      .getWorkspaces(this.target.subscription)
       .then(list => {
         this.workspaces = list;
         if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {

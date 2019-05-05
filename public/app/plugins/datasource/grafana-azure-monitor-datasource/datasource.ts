@@ -188,8 +188,8 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
   }
 
   /*Azure Log Analytics */
-  getAzureLogAnalyticsWorkspaces() {
-    return this.azureLogAnalyticsDatasource.getWorkspaces();
+  getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
+    return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
   }
 
   getSubscriptions() {
