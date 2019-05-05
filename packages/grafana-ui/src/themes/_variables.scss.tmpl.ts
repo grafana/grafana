@@ -198,6 +198,8 @@ $side-menu-width: 60px;
 // dashboard
 $dashboard-padding: $space-md;
 $panel-padding: ${theme.panelPadding}px;
+$panel-header-height: ${theme.panelHeaderHeight}px;
+$panel-header-z-index: 10;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

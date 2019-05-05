@@ -1,4 +1,3 @@
-$panel-header-height: 28px;
 $panel-header-no-title-zindex: 1;
 
 .panel-header {
@@ -12,7 +11,7 @@ $panel-header-no-title-zindex: 1;
   .panel-header {
     position: absolute;
     width: 100%;
-    z-index: $panel-header-no-title-zindex;
+    z-index: $panel-header-z-index;
   }
   .panel-content {
     height: 100%;
@@ -79,7 +78,7 @@ $panel-header-no-title-zindex: 1;
   position: absolute;
   top: 4px;
   right: 4px;
-  z-index: $panel-header-no-title-zindex + 1;
+  z-index: $panel-header-z-index + 1;
   font-size: $font-size-sm;
   color: $text-color-weak;
 }
@@ -107,7 +106,6 @@ $panel-header-no-title-zindex: 1;
   width: 0;
   height: 0;
   position: absolute;
-  z-index: 1;
   left: 0;
   bottom: 0;
 }
@@ -129,7 +127,6 @@ $panel-header-no-title-zindex: 1;
   width: $panel-header-height;
   height: $panel-header-height;
   top: 0;
-  z-index: $panel-header-no-title-zindex + 1;
 
   .fa {
     position: relative;

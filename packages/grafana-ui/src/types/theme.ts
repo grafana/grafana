@@ -78,6 +78,7 @@ export interface GrafanaThemeCommons {
     lg: string;
   };
   panelPadding: number;
+  panelHeaderHeight: number;
   zIndex: {
     dropdown: string;
     navbarFixed: string;

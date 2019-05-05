@@ -11,7 +11,6 @@ import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Utils
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { PANEL_HEADER_HEIGHT } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import config from 'app/core/config';
 
@@ -216,7 +215,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
-    const PanelComponent = plugin.panel;
+    const { theme } = config;
 
     // This is only done to increase a counter that is used by backend
     // image rendering (phantomjs/headless chrome) to know when to capture image
@@ -230,7 +229,8 @@ export class PanelChrome extends PureComponent<Props, State> {
       return this.renderLoadingState();
     }
 
-    const panelHeaderHeight = panel.hasTitle() ? PANEL_HEADER_HEIGHT : 0;
+    const PanelComponent = plugin.panel;
+    const panelHeaderHeight = panel.hasTitle() ? theme.panelHeaderHeight : 0;
 
     return (
       <>
@@ -240,8 +240,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.defaults)}
-            width={width - 2 * config.theme.panelPadding}
-            height={height - panelHeaderHeight - config.theme.panelPadding * 2}
+            width={width - theme.panelPadding * 2}
+            height={height - panelHeaderHeight - theme.panelPadding * 2}
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}

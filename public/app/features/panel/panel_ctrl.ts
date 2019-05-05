@@ -202,8 +202,13 @@ export class PanelCtrl {
 
   calculatePanelHeight(containerHeight) {
     this.containerHeight = containerHeight;
-    this.height = this.containerHeight;
-    console.log('angular panel height', this.containerHeight);
+    this.height = this.containerHeight - config.theme.panelPadding * 2;
+
+    if (this.panel.hasTitle()) {
+      this.height -= config.theme.panelHeaderHeight;
+    }
+
+    console.log('angular panel height', this.height);
   }
 
   render(payload?) {

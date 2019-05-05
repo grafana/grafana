@@ -512,7 +512,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function addSparkline() {
-      const width = elem.width() + 20;
+      const width = elem.width();
       if (width < 30) {
         // element has not gotten it's width yet
         // delay sparkline render
@@ -524,17 +524,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       const plotCanvas = $('<div></div>');
       const plotCss: any = {};
       plotCss.position = 'absolute';
+      plotCss.bottom = '0px';
 
       if (panel.sparkline.full) {
-        plotCss.bottom = '5px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
+        plotCss.left = '0px';
+        plotCss.width = width + 'px';
         const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
         plotCss.height = height - dynamicHeightMargin + 'px';
       } else {
-        plotCss.bottom = '0px';
-        plotCss.left = '-5px';
-        plotCss.width = width - 10 + 'px';
+        plotCss.left = '0px';
+        plotCss.width = width + 'px';
         plotCss.height = Math.floor(height * 0.25) + 'px';
       }
 
