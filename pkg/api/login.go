@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -116,9 +115,11 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 		"message": "Logged in",
 	}
 
+
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		result["redirectUrl"] = redirectTo
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+
 	}
 
 	metrics.M_Api_Login_Post.Inc()

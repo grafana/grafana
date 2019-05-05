@@ -10,6 +10,7 @@ type UserInfo struct {
 	LastName  string
 	Username  string
 	Email     string
+ Orgid     int64
 	MemberOf  []string
 }
 
@@ -25,3 +26,4 @@ func (u *UserInfo) isMemberOf(group string) bool {
 	}
 	return false
 }
+

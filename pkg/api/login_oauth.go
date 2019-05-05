@@ -9,12 +9,11 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+ "strconv"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
 	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/log"
@@ -35,6 +34,22 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
+var OrgIdMap map[int64]m.RoleType
+
+func GetOrgByNameQuery(orgName string)(){
+ OrgIdMap = make(map[int64]m.RoleType)
+ listOrgs := &m.GetOrgByNameQuery {Name: orgName}
+ if err := bus.Dispatch(listOrgs); err != nil {
+ log.Debug("This organization does not exist in grafana "+orgName)
+ }else{
+   //Set default permissions,The organization is created by the administrator of grafana, others can only join
+   OrgIdMap[listOrgs.Result.Id] = "Viewer"
+//   for key, value := range OrgIdMap { fmt.Println("Key:", key, "Value:", value) }
+   log.Debug("The name of the organization is "+orgName)
+   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
+ }
+
+}
 func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
@@ -137,8 +152,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
-
-	// get user info
+	// Get user information
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		if sErr, ok := err.(*social.Error); ok {
@@ -148,9 +162,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 		return
 	}
-
+ 
 	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
-
+ 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
 		hs.redirectWithError(ctx, login.ErrNoEmail)
@@ -170,20 +184,33 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
-		OrgRoles:   map[int64]m.RoleType{},
+  Organizations:      userInfo.Organizations,
+		OrgRoles:   OrgIdMap ,
+
 	}
+
+
+
 
 	if userInfo.Role != "" {
 		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
 	}
+ 
 
+ for _, value := range extUser.Organizations{
+   log.Debug("Loop printing user's Organizations is "+value)
+   GetOrgByNameQuery(value)
+ }
+  
+  
 	// add/update user in grafana
 	cmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-
+ 
+ 
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
