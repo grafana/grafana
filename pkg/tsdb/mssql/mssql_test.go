@@ -162,7 +162,7 @@ func TestMSSQL(t *testing.T) {
 				So(column[19].(time.Time), ShouldEqual, dt.Truncate(time.Minute))
 				So(column[20].(time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
 				So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
-				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC", int(-7*time.Hour))))
+				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))))
 			})
 		})
 
