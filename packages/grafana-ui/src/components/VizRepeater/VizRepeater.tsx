@@ -74,12 +74,12 @@ export class VizRepeater<T> extends PureComponent<Props<T>, State<T>> {
 
     if (orientation === VizOrientation.Horizontal) {
       repeaterStyle.flexDirection = 'column';
-      itemStyles.margin = `${itemSpacing / 2}px 0`;
+      itemStyles.marginBottom = `${itemSpacing}px`;
       vizWidth = width;
       vizHeight = height / values.length - itemSpacing;
     } else {
       repeaterStyle.flexDirection = 'row';
-      itemStyles.margin = `0 ${itemSpacing / 2}px`;
+      itemStyles.marginRight = `${itemSpacing}px`;
       vizHeight = height;
       vizWidth = width / values.length - itemSpacing;
     }
