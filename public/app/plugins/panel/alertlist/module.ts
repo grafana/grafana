@@ -21,6 +21,7 @@ class AlertListPanel extends PanelCtrl {
   currentAlerts: any = [];
   alertHistory: any = [];
   noAlertsMessage: string;
+  templateSrv: string;
 
   // Set and populate defaults
   panelDefaults = {
@@ -41,6 +42,7 @@ class AlertListPanel extends PanelCtrl {
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
+    this.templateSrv = this.$injector.get('templateSrv');
 
     for (const key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
@@ -132,7 +134,7 @@ class AlertListPanel extends PanelCtrl {
     };
 
     if (this.panel.nameFilter) {
-      params.query = this.panel.nameFilter;
+      params.query = this.templateSrv.replace(this.panel.nameFilter, this.panel.scopedVars);
     }
 
     if (this.panel.folderId >= 0) {
