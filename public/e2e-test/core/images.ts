@@ -7,11 +7,7 @@ import { constants } from './constants';
 
 export const takeScreenShot = async (page: Page, fileName: string) => {
   const path = `${constants.screenShotsOutputDir}/${fileName}.png`;
-  const exists = fs.existsSync(path);
-  if (exists) {
-    fs.unlinkSync(path);
-  }
-  await page.screenshot({ path, type: 'png', fullPage: true });
+  await page.screenshot({ path, type: 'png', fullPage: false });
 };
 
 export const compareScreenShots = async (fileName: string) =>
