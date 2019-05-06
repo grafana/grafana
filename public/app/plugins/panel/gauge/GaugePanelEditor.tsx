@@ -7,44 +7,89 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
-  SingleStatValueOptions,
-  SingleStatValueEditor,
+  FieldDisplayOptions,
+  FieldDisplayEditor,
+  Field,
+  FieldPropertiesEditor,
+  Switch,
 } from '@grafana/ui';
 
-import { GaugeOptionsBox } from './GaugeOptionsBox';
 import { GaugeOptions } from './types';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
+  labelWidth = 6;
+
+  onToggleThresholdLabels = () =>
+    this.props.onOptionsChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
+
+  onToggleThresholdMarkers = () =>
     this.props.onOptionsChange({
       ...this.props.options,
+      showThresholdMarkers: !this.props.options.showThresholdMarkers,
+    });
+
+  onThresholdsChanged = (thresholds: Threshold[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
       thresholds,
     });
 
-  onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
+  onValueMappingsChanged = (mappings: ValueMapping[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      mappings,
     });
 
-  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions,
+      fieldOptions,
     });
+
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      defaults: field,
+    });
+  };
 
   render() {
-    const { onOptionsChange, options } = this.props;
+    const { options } = this.props;
+    const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
 
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} value={options.valueOptions} />
-          <GaugeOptionsBox onOptionsChange={onOptionsChange} options={options} />
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={options.thresholds} />
+          <FieldDisplayEditor
+            onChange={this.onDisplayOptionsChanged}
+            options={fieldOptions}
+            labelWidth={this.labelWidth}
+          >
+            <Switch
+              label="Labels"
+              labelClass={`width-${this.labelWidth}`}
+              checked={showThresholdLabels}
+              onChange={this.onToggleThresholdLabels}
+            />
+            <Switch
+              label="Markers"
+              labelClass={`width-${this.labelWidth}`}
+              checked={showThresholdMarkers}
+              onChange={this.onToggleThresholdMarkers}
+            />
+          </FieldDisplayEditor>
+
+          <FieldPropertiesEditor
+            title="Field"
+            showMinMax={true}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
+          />
+
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
       </>
     );
   }

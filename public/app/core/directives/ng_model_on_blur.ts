@@ -1,5 +1,5 @@
 import coreModule from '../core_module';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 
 function ngModelOnBlur() {
   return {

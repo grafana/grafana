@@ -326,12 +326,17 @@ export class PanelModel {
     return this.queryRunner;
   }
 
+  hasTitle() {
+    return !!this.title.length;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
+      this.queryRunner = null;
     }
   }
 }

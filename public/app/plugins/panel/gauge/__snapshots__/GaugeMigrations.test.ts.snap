@@ -1,0 +1,53 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Gauge Panel Migrations from 6.1.1 1`] = `
+Object {
+  "fieldOptions": Object {
+    "calcs": Array [
+      "last",
+    ],
+    "defaults": Object {
+      "decimals": 3,
+      "max": "50",
+      "min": "-50",
+      "unit": "accMS2",
+    },
+    "mappings": Array [
+      Object {
+        "from": "50",
+        "id": 1,
+        "operator": "",
+        "text": "BIG",
+        "to": "1000",
+        "type": 2,
+        "value": "",
+      },
+    ],
+    "thresholds": Array [
+      Object {
+        "color": "green",
+        "index": 0,
+        "value": null,
+      },
+      Object {
+        "color": "#EAB839",
+        "index": 1,
+        "value": -25,
+      },
+      Object {
+        "color": "#6ED0E0",
+        "index": 2,
+        "value": 0,
+      },
+      Object {
+        "color": "red",
+        "index": 3,
+        "value": 25,
+      },
+    ],
+  },
+  "orientation": "auto",
+  "showThresholdLabels": true,
+  "showThresholdMarkers": true,
+}
+`;

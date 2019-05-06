@@ -7,7 +7,7 @@ import ResizeSensor from 'css-element-queries/src/ResizeSensor.js';
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <div class="panel-container">
+  <div class="panel-container" ng-class="{'panel-container--no-title': !ctrl.panel.title.length}">
       <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
         <span class="panel-info-corner">
           <i class="fa"></i>

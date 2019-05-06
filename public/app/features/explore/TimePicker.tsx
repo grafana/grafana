@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
 
 interface TimePickerProps {
