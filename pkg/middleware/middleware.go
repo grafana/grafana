@@ -237,6 +237,10 @@ func AddDefaultResponseHeaders() macaron.Handler {
 			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
 				AddNoCacheHeaders(ctx.Resp)
 			}
+
+			if !setting.AllowEmbedding {
+				AddXFrameOptionsDenyHeader(w)
+			}
 		})
 	}
 }
@@ -245,4 +249,8 @@ func AddNoCacheHeaders(w macaron.ResponseWriter) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Pragma", "no-cache")
 	w.Header().Add("Expires", "-1")
+}
+
+func AddXFrameOptionsDenyHeader(w macaron.ResponseWriter) {
+	w.Header().Add("X-Frame-Options", "deny")
 }

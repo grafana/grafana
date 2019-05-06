@@ -49,7 +49,7 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Header().Get("Expires"), ShouldBeEmpty)
 		})
 
-		middlewareScenario(t, "middleware should add Cache-Control header for GET requests with html response", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(sc *scenarioContext) {
 			sc.handler(func(c *m.ReqContext) {
 				data := &dtos.IndexViewData{
 					User:     &dtos.CurrentUser{},
@@ -63,6 +63,17 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
+		})
+
+		middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldEqual, "deny")
+		})
+
+		middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(sc *scenarioContext) {
+			setting.AllowEmbedding = true
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldBeEmpty)
 		})
 
 		middlewareScenario(t, "Invalid api key", func(sc *scenarioContext) {
