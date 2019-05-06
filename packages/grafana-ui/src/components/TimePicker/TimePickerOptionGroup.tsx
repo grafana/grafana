@@ -1,8 +1,8 @@
 import React, { PureComponent, createRef } from 'react';
 import { GroupProps } from 'react-select/lib/components/Group';
-import { Popper } from '@grafana/ui/src/components/Tooltip/Popper';
 import { Props as TimePickerProps, TimePickerPopover } from './TimePickerPopover';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange } from '../../types/time';
+import { Popper } from '../Tooltip/Popper';
 
 export interface DataProps {
   onPopoverOpen: () => void;

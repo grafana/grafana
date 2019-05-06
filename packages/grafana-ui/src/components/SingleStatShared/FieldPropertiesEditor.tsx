@@ -2,11 +2,15 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, UnitPicker, SelectOptionItem } from '@grafana/ui';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { FormField } from '../FormField/FormField';
+import { FormLabel } from '../FormLabel/FormLabel';
+import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
 import { Field } from '../../types/data';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
+import { SelectOptionItem } from '../Select/Select';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
 

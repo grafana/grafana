@@ -2,13 +2,17 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, ReducerID } from '@grafana/ui';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
+import { FormLabel } from '../FormLabel/FormLabel';
+import { FormField } from '../FormField/FormField';
+import { StatsPicker } from '../StatsPicker/StatsPicker';
 
 // Types
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
+import { ReducerID } from '../../utils/fieldReducer';
 
 const showOptions: Array<SelectOptionItem<boolean>> = [
   {
