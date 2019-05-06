@@ -169,8 +169,8 @@ export default class AzureMonitorDatasource {
     return this.templateSrv.replace((metric || '').trim());
   }
 
-  getSubscriptions() {
-    const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
+  getSubscriptions(route?: string) {
+    const url = `/${route || this.cloudName}/subscriptions?api-version=2019-03-01`;
     return this.doRequest(url).then(result => {
       return ResponseParser.parseSubscriptions(result);
     });
