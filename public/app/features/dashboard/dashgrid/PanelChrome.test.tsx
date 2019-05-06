@@ -1,10 +1,5 @@
 import { PanelChrome } from './PanelChrome';
 
-jest.mock('sass/_variables.generated.scss', () => ({
-  panelhorizontalpadding: 10,
-  panelVerticalPadding: 10,
-}));
-
 describe('PanelChrome', () => {
   let chrome: PanelChrome;
 
@@ -16,10 +11,8 @@ describe('PanelChrome', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         },
       },
-      dashboard: {},
-      plugin: {},
       isFullscreen: false,
-    });
+    } as any);
   });
 
   it('Should replace a panel variable', () => {

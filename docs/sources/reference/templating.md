@@ -57,7 +57,7 @@ Formats multi-value variable into a regex string.
 ```bash
 servers = ['test1.', 'test2']
 String to interpolate: '${servers:regex}'
-Interpolation result: '(test\.|test2)'
+Interpolation result: '(test1\.|test2)'
 ```
 
 ### Pipe
@@ -66,7 +66,7 @@ Formats multi-value variable into a pipe-separated string.
 ```bash
 servers = ['test1.', 'test2']
 String to interpolate: '${servers:pipe}'
-Interpolation result: 'test.|test2'
+Interpolation result: 'test1.|test2'
 ```
 
 ### Csv
@@ -75,7 +75,7 @@ Formats multi-value variable as a comma-separated string.
 ```bash
 servers = ['test1', 'test2']
 String to interpolate: '${servers:csv}'
-Interpolation result: 'test,test2'
+Interpolation result: 'test1,test2'
 ```
 
 ### Json
@@ -110,7 +110,7 @@ Formats single & multi valued variables for use in URL parameters.
 
 ```bash
 servers = ['foo()bar BAZ', 'test2']
-String to interpolate: '${servers:lucene}'
+String to interpolate: '${servers:percentencode}'
 Interpolation result: 'foo%28%29bar%20BAZ%2Ctest2'
 ```
 

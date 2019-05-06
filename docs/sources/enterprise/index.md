@@ -38,6 +38,8 @@ With a Grafana Enterprise license you will get access to premium plugins, includ
 * [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 * [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 * [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
+* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
+* [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
 
 ## Try Grafana Enterprise
 

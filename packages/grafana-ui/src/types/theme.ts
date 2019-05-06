@@ -6,36 +6,36 @@ export enum GrafanaThemeType {
 export interface GrafanaThemeCommons {
   name: string;
   // TODO: not sure if should be a part of theme
-  brakpoints: {
+  breakpoints: {
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
     xl: string;
   };
   typography: {
     fontFamily: {
       sansSerif: string;
-      serif: string;
       monospace: string;
     };
     size: {
+      root: string;
       base: string;
       xs: string;
-      s: string;
-      m: string;
-      l: string;
+      sm: string;
+      md: string;
+      lg: string;
     };
     weight: {
       light: number;
-      normal: number;
+      regular: number;
       semibold: number;
     };
     lineHeight: {
       xs: number; //1
-      s: number; //1.1
-      m: number; // 4/3
-      l: number; // 1.5
+      sm: number; //1.1
+      md: number; // 4/3
+      lg: number; // 1.5
     };
     // TODO: Refactor to use size instead of custom defs
     heading: {
@@ -46,20 +46,47 @@ export interface GrafanaThemeCommons {
       h5: string;
       h6: string;
     };
+    link: {
+      decoration: string;
+      hoverDecoration: string;
+    };
   };
   spacing: {
+    insetSquishMd: string;
+    d: string;
+    xxs: string;
     xs: string;
-    s: string;
-    m: string;
-    l: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
     gutter: string;
   };
   border: {
     radius: {
-      xs: string;
-      s: string;
-      m: string;
+      sm: string;
+      md: string;
+      lg: string;
     };
+    width: {
+      sm: string;
+    };
+  };
+  height: {
+    sm: string;
+    md: string;
+    lg: string;
+  };
+  panelPadding: number;
+  panelHeaderHeight: number;
+  zIndex: {
+    dropdown: string;
+    navbarFixed: string;
+    sidemenu: string;
+    tooltip: string;
+    modalBackdrop: string;
+    modal: string;
+    typeahead: string;
   };
 }
 

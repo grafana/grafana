@@ -81,7 +81,7 @@ export class ElasticMetricAggCtrl {
             $scope.agg.meta,
             (memo, val, key) => {
               if (val) {
-                const def = _.find($scope.extendedStats, { value: key });
+                const def: any = _.find($scope.extendedStats, { value: key });
                 memo.push(def.text);
               }
               return memo;

@@ -83,11 +83,12 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  scrollTop: number;
 }
 
 export class DashboardGrid extends PureComponent<Props> {
-  gridToPanelMap: any;
   panelMap: { [id: string]: PanelModel };
+  panelRef: { [id: string]: HTMLElement } = {};
 
   componentDidMount() {
     const { dashboard } = this.props;
@@ -149,6 +150,9 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
+
+    // Call render() after any changes.  This is called when the layour loads
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {
@@ -174,7 +178,6 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
-    console.log();
     this.panelMap[newItem.i].updateGridPos(newItem);
   };
 
@@ -187,18 +190,65 @@ export class DashboardGrid extends PureComponent<Props> {
     this.updateGridPos(newItem, layout);
   };
 
+  isInView = (panel: PanelModel): boolean => {
+    if (panel.fullscreen || panel.isEditing) {
+      return true;
+    }
+
+    // elem is set *after* the first render
+    const elem = this.panelRef[panel.id.toString()];
+    if (!elem) {
+      // NOTE the gridPos is also not valid until after the first render
+      // since it is passed to the layout engine and made to be valid
+      // for example, you can have Y=0 for everything and it will stack them
+      // down vertically in the second call
+      return false;
+    }
+
+    const top = parseInt(elem.style.top.replace('px', ''), 10);
+    const height = panel.gridPos.h * GRID_CELL_HEIGHT + 40;
+    const bottom = top + height;
+
+    // Show things that are almost in the view
+    const buffer = 250;
+
+    const viewTop = this.props.scrollTop;
+    if (viewTop > bottom + buffer) {
+      return false; // The panel is above the viewport
+    }
+
+    // Use the whole browser height (larger than real value)
+    // TODO? is there a better way
+    const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
+    const viewBot = viewTop + viewHeight;
+    if (top > viewBot + buffer) {
+      return false;
+    }
+
+    return !this.props.dashboard.otherPanelInFullscreen(panel);
+  };
+
   renderPanels() {
     const panelElements = [];
-
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
+      const id = panel.id.toString();
+      panel.isInView = this.isInView(panel);
       panelElements.push(
-        <div key={panel.id.toString()} className={panelClasses} id={`panel-${panel.id}`}>
+        <div
+          key={id}
+          className={panelClasses}
+          id={'panel-' + id}
+          ref={elem => {
+            this.panelRef[id] = elem;
+          }}
+        >
           <DashboardPanel
             panel={panel}
             dashboard={this.props.dashboard}
             isEditing={panel.isEditing}
             isFullscreen={panel.fullscreen}
+            isInView={panel.isInView}
           />
         </div>
       );

@@ -39,14 +39,20 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel } = this.props;
-    panel.events.on('refresh', this.onPanelRefresh);
+
     appEvents.on('ds-request-response', this.onDataSourceResponse);
+    appEvents.on('ds-request-error', this.onRequestError);
+
+    panel.events.on('refresh', this.onPanelRefresh);
     panel.refresh();
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
+
     appEvents.off('ds-request-response', this.onDataSourceResponse);
+    appEvents.on('ds-request-error', this.onRequestError);
+
     panel.events.off('refresh', this.onPanelRefresh);
   }
 
@@ -71,6 +77,10 @@ export class QueryInspector extends PureComponent<Props, State> {
         response: {},
       },
     }));
+  };
+
+  onRequestError = (err: any) => {
+    this.onDataSourceResponse(err);
   };
 
   onDataSourceResponse = (response: any = {}) => {

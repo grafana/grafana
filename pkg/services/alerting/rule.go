@@ -73,6 +73,7 @@ var unitMultiplier = map[string]int{
 	"s": 1,
 	"m": 60,
 	"h": 3600,
+	"d": 86400,
 }
 
 func getTimeDurationStringToSeconds(str string) (int64, error) {
@@ -129,11 +130,11 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			model.Notifications = append(model.Notifications, fmt.Sprintf("%09d", id))
 		} else {
-			if uid, err := jsonModel.Get("uid").String(); err != nil {
+			uid, err := jsonModel.Get("uid").String()
+			if err != nil {
 				return nil, ValidationError{Reason: "Neither id nor uid is specified, " + err.Error(), DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-			} else {
-				model.Notifications = append(model.Notifications, uid)
 			}
+			model.Notifications = append(model.Notifications, uid)
 		}
 	}
 

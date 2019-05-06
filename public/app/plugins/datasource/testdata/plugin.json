@@ -7,6 +7,10 @@
   "alerting": true,
   "annotations": true,
 
+  "queryOptions": {
+    "minInterval": true
+  },
+
   "info": {
     "author": {
       "name": "Grafana Project",
@@ -16,5 +20,13 @@
       "small": "../../../../img/grafana_icon.svg",
       "large": "../../../../img/grafana_icon.svg"
     }
-  }
+  },
+
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Streaming Example",
+      "path": "dashboards/streaming.json"
+    }
+  ]
 }

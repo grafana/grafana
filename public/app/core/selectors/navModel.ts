@@ -1,4 +1,4 @@
-import { NavModel, NavModelItem, NavIndex } from 'app/types';
+import { NavModel, NavModelItem, NavIndex } from '@grafana/ui';
 
 function getNotFoundModel(): NavModel {
   const node: NavModelItem = {

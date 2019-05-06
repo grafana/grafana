@@ -11,9 +11,10 @@ import {
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
+  calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 export class PanelCtrl {
   panel: any;
@@ -119,7 +120,7 @@ export class PanelCtrl {
     menu.push({
       text: 'View',
       click: 'ctrl.viewPanel();',
-      icon: 'fa fa-fw fa-eye',
+      icon: 'gicon gicon-viewer',
       shortcut: 'v',
     });
 
@@ -128,7 +129,7 @@ export class PanelCtrl {
         text: 'Edit',
         click: 'ctrl.editPanel();',
         role: 'Editor',
-        icon: 'fa fa-fw fa-edit',
+        icon: 'gicon gicon-editor',
         shortcut: 'e',
       });
     }
@@ -202,7 +203,7 @@ export class PanelCtrl {
 
   calculatePanelHeight(containerHeight) {
     this.containerHeight = containerHeight;
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
+    this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
   render(payload?) {

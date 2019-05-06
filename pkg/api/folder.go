@@ -12,7 +12,7 @@ import (
 
 func GetFolders(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folders, err := s.GetFolders(c.QueryInt("limit"))
+	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
 	if err != nil {
 		return toFolderError(err)
@@ -54,11 +54,18 @@ func GetFolderByID(c *m.ReqContext) Response {
 	return JSON(200, toFolderDto(g, folder))
 }
 
-func CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
+func (hs *HTTPServer) CreateFolder(c *m.ReqContext, cmd m.CreateFolderCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	err := s.CreateFolder(&cmd)
 	if err != nil {
 		return toFolderError(err)
+	}
+
+	if hs.Cfg.EditorsCanAdmin {
+		if err := dashboards.MakeUserAdmin(hs.Bus, c.OrgId, c.SignedInUser.UserId, cmd.Result.Id, true); err != nil {
+			hs.log.Error("Could not make user admin", "folder", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
+			return Error(500, "Failed to make user admin of folder", err)
+		}
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)

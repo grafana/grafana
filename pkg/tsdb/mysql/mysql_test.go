@@ -593,7 +593,7 @@ func TestMySQL(t *testing.T) {
 				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
 			})
 
-			FocusConvey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
 				query := &tsdb.TsdbQuery{
 					Queries: []*tsdb.Query{
 						{

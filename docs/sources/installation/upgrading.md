@@ -148,3 +148,23 @@ login_maximum_lifetime_days = 1
 ```
 
 The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
+
+
+## Upgrading to v6.2
+
+### Ensure encryption of datasource secrets
+
+Datasources store passwords and basic auth passwords in secureJsonData encrypted by default. Existing datasource
+will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing datasources
+you can do that by:
+- For datasources created through UI, you need to go to datasource config, re enter the password or basic auth
+password and save the datasource.
+- For datasources created by provisioning, you need to update your config file and use secureJsonData.password or
+secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
+configuration.
+
+### Embedding Grafana
+
+If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
+this new setting.

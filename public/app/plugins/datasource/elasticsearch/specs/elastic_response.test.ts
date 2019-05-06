@@ -582,6 +582,59 @@ describe('ElasticResponse', () => {
     });
   });
 
+  describe('No group by time with percentiles ', () => {
+    let result;
+
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [{ type: 'percentiles', field: 'value', settings: { percents: [75, 90] }, id: '1' }],
+          bucketAggs: [{ type: 'term', field: 'id', id: '3' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '3': {
+                buckets: [
+                  {
+                    '1': { values: { '75': 3.3, '90': 5.5 } },
+                    doc_count: 10,
+                    key: 'id1',
+                  },
+                  {
+                    '1': { values: { '75': 2.3, '90': 4.5 } },
+                    doc_count: 15,
+                    key: 'id2',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return table', () => {
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].type).toBe('table');
+      expect(result.data[0].columns[0].text).toBe('id');
+      expect(result.data[0].columns[1].text).toBe('p75 value');
+      expect(result.data[0].columns[2].text).toBe('p90 value');
+      expect(result.data[0].rows.length).toBe(2);
+      expect(result.data[0].rows[0][0]).toBe('id1');
+      expect(result.data[0].rows[0][1]).toBe(3.3);
+      expect(result.data[0].rows[0][2]).toBe(5.5);
+      expect(result.data[0].rows[1][0]).toBe('id2');
+      expect(result.data[0].rows[1][1]).toBe(2.3);
+      expect(result.data[0].rows[1][2]).toBe(4.5);
+    });
+  });
+
   describe('Multiple metrics of same type', () => {
     beforeEach(() => {
       targets = [

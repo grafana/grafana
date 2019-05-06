@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"testing"
-
+	"context"
 	"fmt"
+	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -13,7 +13,7 @@ import (
 func TestOrgRedirectMiddleware(t *testing.T) {
 
 	Convey("Can redirect to correct org", t, func() {
-		middlewareScenario("when setting a correct org for the user", func(sc *scenarioContext) {
+		middlewareScenario(t, "when setting a correct org for the user", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 			bus.AddHandler("test", func(query *m.SetUsingOrgCommand) error {
 				return nil
@@ -24,7 +24,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        0,
 					UnhashedToken: "",
@@ -39,7 +39,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("when setting an invalid org for user", func(sc *scenarioContext) {
+		middlewareScenario(t, "when setting an invalid org for user", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 			bus.AddHandler("test", func(query *m.SetUsingOrgCommand) error {
 				return fmt.Errorf("")
@@ -50,7 +50,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.lookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",

@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
+import { TimeSeries, FieldType } from '@grafana/ui';
 
 export class ResultTransformer {
   constructor(private templateSrv) {}
@@ -18,10 +19,10 @@ export class ResultTransformer {
       ];
     } else if (prometheusResult && options.format === 'heatmap') {
       let seriesList = [];
-      prometheusResult.sort(sortSeriesByLabel);
       for (const metricData of prometheusResult) {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
+      seriesList.sort(sortSeriesByLabel);
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
     } else if (prometheusResult) {
@@ -97,7 +98,7 @@ export class ResultTransformer {
 
     // Sort metric labels, create columns for them and record their index
     const sortedLabels = _.keys(metricLabels).sort();
-    table.columns.push({ text: 'Time', type: 'time' });
+    table.columns.push({ text: 'Time', type: FieldType.time });
     _.each(sortedLabels, (label, labelIndex) => {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({ text: label, filterable: true });
@@ -197,13 +198,13 @@ export class ResultTransformer {
   }
 }
 
-function sortSeriesByLabel(s1, s2): number {
+function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
   let le1, le2;
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseHistogramLabel(s1.metric.le);
-    le2 = parseHistogramLabel(s2.metric.le);
+    le1 = parseHistogramLabel(s1.target);
+    le2 = parseHistogramLabel(s2.target);
   } catch (err) {
     console.log(err);
     return 0;

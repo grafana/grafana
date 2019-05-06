@@ -1,7 +1,12 @@
 package opentracing
 
+type registeredTracer struct {
+	tracer       Tracer
+	isRegistered bool
+}
+
 var (
-	globalTracer Tracer = NoopTracer{}
+	globalTracer = registeredTracer{NoopTracer{}, false}
 )
 
 // SetGlobalTracer sets the [singleton] opentracing.Tracer returned by
@@ -11,22 +16,27 @@ var (
 // Prior to calling `SetGlobalTracer`, any Spans started via the `StartSpan`
 // (etc) globals are noops.
 func SetGlobalTracer(tracer Tracer) {
-	globalTracer = tracer
+	globalTracer = registeredTracer{tracer, true}
 }
 
 // GlobalTracer returns the global singleton `Tracer` implementation.
 // Before `SetGlobalTracer()` is called, the `GlobalTracer()` is a noop
 // implementation that drops all data handed to it.
 func GlobalTracer() Tracer {
-	return globalTracer
+	return globalTracer.tracer
 }
 
 // StartSpan defers to `Tracer.StartSpan`. See `GlobalTracer()`.
 func StartSpan(operationName string, opts ...StartSpanOption) Span {
-	return globalTracer.StartSpan(operationName, opts...)
+	return globalTracer.tracer.StartSpan(operationName, opts...)
 }
 
 // InitGlobalTracer is deprecated. Please use SetGlobalTracer.
 func InitGlobalTracer(tracer Tracer) {
 	SetGlobalTracer(tracer)
+}
+
+// IsGlobalTracerRegistered returns a `bool` to indicate if a tracer has been globally registered
+func IsGlobalTracerRegistered() bool {
+	return globalTracer.isRegistered
 }

@@ -1,82 +1,59 @@
 // Libraries
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { processTimeSeries, ThemeContext } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 // Components
-import { Gauge } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
-import { PanelProps, NullValueMode, TimeSeriesValue } from '@grafana/ui/src/types';
+import { PanelProps, VizRepeater } from '@grafana/ui';
 
-interface Props extends PanelProps<GaugeOptions> {}
-interface State {
-  value: TimeSeriesValue;
-}
+export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
+    const { options } = this.props;
+    const { fieldOptions } = options;
+    const { field, display } = value;
 
-export class GaugePanel extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      value: this.findValue(props),
-    };
-  }
+    return (
+      <Gauge
+        value={display}
+        width={width}
+        height={height}
+        thresholds={fieldOptions.thresholds}
+        showThresholdLabels={options.showThresholdLabels}
+        showThresholdMarkers={options.showThresholdMarkers}
+        minValue={field.min}
+        maxValue={field.max}
+        theme={config.theme}
+      />
+    );
+  };
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.props.panelData !== prevProps.panelData) {
-      this.setState({ value: this.findValue(this.props) });
-    }
-  }
-
-  findValue(props: Props): number | null {
-    const { panelData, options } = props;
-    const { valueOptions } = options;
-
-    if (panelData.timeSeries) {
-      const vmSeries = processTimeSeries({
-        timeSeries: panelData.timeSeries,
-        nullValueMode: NullValueMode.Null,
-      });
-
-      if (vmSeries[0]) {
-        return vmSeries[0].stats[valueOptions.stat];
-      }
-    } else if (panelData.tableData) {
-      return panelData.tableData.rows[0].find(prop => prop > 0);
-    }
-    return null;
-  }
+  getValues = (): FieldDisplay[] => {
+    const { data, options, replaceVariables } = this.props;
+    return getFieldDisplayValues({
+      fieldOptions: options.fieldOptions,
+      replaceVariables,
+      theme: config.theme,
+      data: data.series,
+    });
+  };
 
   render() {
-    const { width, height, replaceVariables, options } = this.props;
-    const { valueOptions } = options;
-    const { value } = this.state;
-
-    const prefix = replaceVariables(valueOptions.prefix);
-    const suffix = replaceVariables(valueOptions.suffix);
+    const { height, width, options, data, renderCounter } = this.props;
     return (
-      <ThemeContext.Consumer>
-        {theme => (
-          <Gauge
-            value={value}
-            width={width}
-            height={height}
-            prefix={prefix}
-            suffix={suffix}
-            unit={valueOptions.unit}
-            decimals={valueOptions.decimals}
-            thresholds={options.thresholds}
-            valueMappings={options.valueMappings}
-            showThresholdLabels={options.showThresholdLabels}
-            showThresholdMarkers={options.showThresholdMarkers}
-            minValue={options.minValue}
-            maxValue={options.maxValue}
-            theme={theme}
-          />
-        )}
-      </ThemeContext.Consumer>
+      <VizRepeater
+        getValues={this.getValues}
+        renderValue={this.renderValue}
+        width={width}
+        height={height}
+        source={data}
+        renderCounter={renderCounter}
+        orientation={options.orientation}
+      />
     );
   }
 }

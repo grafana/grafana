@@ -13,7 +13,7 @@ interface Props {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
-  showLabels: boolean | null; // Tristate: null means auto
+  showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
   getRows: () => LogRowModel[];
@@ -150,7 +150,7 @@ export class LogRow extends PureComponent<Props, State> {
           </div>
         )}
         {showLocalTime && (
-          <div className="logs-row__time" title={`${row.timestamp} (${row.timeFromNow})`}>
+          <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
             {row.timeLocal}
           </div>
         )}

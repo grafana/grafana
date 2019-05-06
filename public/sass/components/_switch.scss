@@ -25,8 +25,8 @@ gf-form-switch[disabled] {
 .gf-form-switch {
   display: flex;
   position: relative;
-  width: 60px;
-  height: $gf-form-input-height;
+  width: 56px;
+  height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
@@ -52,7 +52,7 @@ gf-form-switch[disabled] {
   background: $switch-slider-off-bg;
   border-radius: 8px;
   height: 16px;
-  width: 29px;
+  width: 32px;
   display: block;
   position: relative;
 
@@ -61,7 +61,7 @@ gf-form-switch[disabled] {
     content: '';
     height: 12px;
     width: 12px;
-    left: 1px;
+    left: 2px;
     top: 2px;
     background: $switch-slider-color;
     transition: 0.4s;
@@ -75,14 +75,14 @@ input:checked + .gf-form-switch__slider {
 }
 
 input:checked + .gf-form-switch__slider::before {
-  transform: translateX(14px);
+  transform: translateX(16px);
 }
 
 .gf-form-checkbox {
   position: relative;
   display: flex;
   width: 50px;
-  height: $gf-form-input-height;
+  height: $input-height;
   background: $switch-bg;
   border: 1px solid $input-border-color;
   border-left: none;
@@ -94,6 +94,7 @@ input:checked + .gf-form-switch__slider::before {
     opacity: 0;
     width: 0;
     height: 0;
+    appearance: none;
   }
 
   &--transparent {

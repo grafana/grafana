@@ -379,6 +379,12 @@ export class HeatmapRenderer {
     const posX = this.getYAxisWidth(this.heatmap) + Y_AXIS_TICK_PADDING;
     this.heatmap.select('.axis-y').attr('transform', 'translate(' + posX + ',' + posY + ')');
 
+    if (this.panel.yBucketBound === 'middle' && tickValues && tickValues.length) {
+      // Shift Y axis labels to the middle of bucket
+      const tickShift = 0 - this.chartHeight / (tickValues.length - 1) / 2;
+      this.heatmap.selectAll('.axis-y text').attr('transform', 'translate(' + 0 + ',' + tickShift + ')');
+    }
+
     // Remove vertical line in the right of axis labels (called domain in d3)
     this.heatmap
       .select('.axis-y')
@@ -518,14 +524,16 @@ export class HeatmapRenderer {
     }
 
     const cardsData = this.data.cards;
-    const maxValueAuto = this.data.cardStats.max;
-    const maxValue = this.panel.color.max || maxValueAuto;
-    const minValue = this.panel.color.min || 0;
-    const colorScheme = _.find(this.ctrl.colorSchemes, {
+    const cardStats = this.data.cardStats;
+    const maxValueAuto = cardStats.max;
+    const minValueAuto = Math.min(cardStats.min, 0);
+    const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
+    const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
+    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
-    this.opacityScale = getOpacityScale(this.panel.color, maxValue);
+    this.opacityScale = getOpacityScale(this.panel.color, maxValue, minValue);
     this.setCardSize();
 
     let cards = this.heatmap.selectAll('.heatmap-card').data(cardsData);
@@ -586,7 +594,8 @@ export class HeatmapRenderer {
       yGridSize = Math.floor((this.yScale(1) - this.yScale(base)) / splitFactor);
     }
 
-    this.cardWidth = xGridSize - this.cardPadding * 2;
+    const cardWidth = xGridSize - this.cardPadding * 2;
+    this.cardWidth = Math.max(cardWidth, MIN_CARD_SIZE);
     this.cardHeight = yGridSize ? yGridSize - this.cardPadding * 2 : 0;
   }
 
@@ -603,20 +612,17 @@ export class HeatmapRenderer {
   }
 
   getCardWidth(d) {
-    let w;
+    let w = this.cardWidth;
     if (this.xScale(d.x) < 0) {
       // Cut card left to prevent overlay
-      const cuttedWidth = this.xScale(d.x) + this.cardWidth;
-      w = cuttedWidth > 0 ? cuttedWidth : 0;
+      w = this.xScale(d.x) + this.cardWidth;
     } else if (this.xScale(d.x) + this.cardWidth > this.chartWidth) {
       // Cut card right to prevent overlay
       w = this.chartWidth - this.xScale(d.x) - this.cardPadding;
-    } else {
-      w = this.cardWidth;
     }
 
-    // Card width should be MIN_CARD_SIZE at least
-    w = Math.max(w, MIN_CARD_SIZE);
+    // Card width should be MIN_CARD_SIZE at least, but cut cards shouldn't be displayed
+    w = w > 0 ? Math.max(w, MIN_CARD_SIZE) : 0;
     return w;
   }
 

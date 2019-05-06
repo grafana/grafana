@@ -1,0 +1,270 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render should render team members when sync enabled 1`] = `
+<tr
+  key="1"
+>
+  <td
+    className="width-4 text-center"
+  >
+    <img
+      className="filter-table__avatar"
+      src="some/url/"
+    />
+  </td>
+  <td>
+    testUser
+  </td>
+  <td>
+    test@test.com
+  </td>
+  <Component
+    featureToggle={false}
+  >
+    <td
+      className="width-5 team-permissions"
+    >
+      <div
+        className="gf-form"
+      >
+        <span>
+          Member
+        </span>
+      </div>
+    </td>
+  </Component>
+  <td>
+    <TagBadge
+      count={0}
+      key="LDAP"
+      label="LDAP"
+      onClick={[Function]}
+      removeIcon={false}
+    />
+  </td>
+  <td
+    className="text-right"
+  >
+    <DeleteButton
+      disabled={true}
+      onConfirm={[Function]}
+    />
+  </td>
+</tr>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned off should not render permissions 1`] = `
+<tr
+  key="1"
+>
+  <td
+    className="width-4 text-center"
+  >
+    <img
+      className="filter-table__avatar"
+      src="some/url/"
+    />
+  </td>
+  <td>
+    testUser
+  </td>
+  <td>
+    test@test.com
+  </td>
+  <Component
+    featureToggle={false}
+  >
+    <td
+      className="width-5 team-permissions"
+    >
+      <div
+        className="gf-form"
+      >
+        <Select
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="gf-form-select-box__control--menu-right"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={false}
+          maxMenuHeight={300}
+          menuIsOpen={false}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "description": "Is team member",
+                "label": "Member",
+                "value": 0,
+              },
+              Object {
+                "description": "Can add/remove permissions, members and delete team.",
+                "label": "Admin",
+                "value": 4,
+              },
+            ]
+          }
+          value={
+            Object {
+              "description": "Is team member",
+              "label": "Member",
+              "value": 0,
+            }
+          }
+          width={null}
+        />
+      </div>
+    </td>
+  </Component>
+  <td
+    className="text-right"
+  >
+    <DeleteButton
+      disabled={false}
+      onConfirm={[Function]}
+    />
+  </td>
+</tr>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render permissions select if user is team admin 1`] = `
+<tr
+  key="1"
+>
+  <td
+    className="width-4 text-center"
+  >
+    <img
+      className="filter-table__avatar"
+      src="some/url/"
+    />
+  </td>
+  <td>
+    testUser
+  </td>
+  <td>
+    test@test.com
+  </td>
+  <Component
+    featureToggle={true}
+  >
+    <td
+      className="width-5 team-permissions"
+    >
+      <div
+        className="gf-form"
+      >
+        <Select
+          autoFocus={false}
+          backspaceRemovesValue={true}
+          className="gf-form-select-box__control--menu-right"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
+          isClearable={false}
+          isDisabled={false}
+          isLoading={false}
+          isMulti={false}
+          isSearchable={false}
+          maxMenuHeight={300}
+          menuIsOpen={false}
+          onChange={[Function]}
+          openMenuOnFocus={false}
+          options={
+            Array [
+              Object {
+                "description": "Is team member",
+                "label": "Member",
+                "value": 0,
+              },
+              Object {
+                "description": "Can add/remove permissions, members and delete team.",
+                "label": "Admin",
+                "value": 4,
+              },
+            ]
+          }
+          value={
+            Object {
+              "description": "Is team member",
+              "label": "Member",
+              "value": 0,
+            }
+          }
+          width={null}
+        />
+      </div>
+    </td>
+  </Component>
+  <td
+    className="text-right"
+  >
+    <DeleteButton
+      disabled={false}
+      onConfirm={[Function]}
+    />
+  </td>
+</tr>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render span and disable buttons if user is team member 1`] = `
+<tr
+  key="1"
+>
+  <td
+    className="width-4 text-center"
+  >
+    <img
+      className="filter-table__avatar"
+      src="some/url/"
+    />
+  </td>
+  <td>
+    testUser
+  </td>
+  <td>
+    test@test.com
+  </td>
+  <Component
+    featureToggle={true}
+  >
+    <td
+      className="width-5 team-permissions"
+    >
+      <div
+        className="gf-form"
+      >
+        <span>
+          Member
+        </span>
+      </div>
+    </td>
+  </Component>
+  <td
+    className="text-right"
+  >
+    <DeleteButton
+      disabled={true}
+      onConfirm={[Function]}
+    />
+  </td>
+</tr>
+`;

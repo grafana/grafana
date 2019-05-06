@@ -3,6 +3,7 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"strconv"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -24,7 +25,9 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("getEngine", "connection", cnnstr)
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",
@@ -41,14 +44,6 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
 	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
 
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
@@ -57,7 +52,7 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 		port,
 		datasource.Database,
 		datasource.User,
-		password,
+		datasource.DecryptedPassword(),
 	)
 	if encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", encrypt)

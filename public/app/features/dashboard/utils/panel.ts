@@ -4,20 +4,20 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelData, TimeRange, TimeSeries } from '@grafana/ui';
-import { TableData } from '@grafana/ui/src';
+import { TimeRange } from '@grafana/ui';
 
 // Utils
 import { isString as _isString } from 'lodash';
-import * as rangeUtil from 'app/core/utils/rangeutil';
-import * as dateMath from 'app/core/utils/datemath';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
 
 // Constants
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -171,18 +171,11 @@ export function getResolution(panel: PanelModel): number {
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
 }
 
-const isTimeSeries = (data: any): data is TimeSeries => data && data.hasOwnProperty('datapoints');
-const isTableData = (data: any): data is TableData => data && data.hasOwnProperty('columns');
-export const snapshotDataToPanelData = (panel: PanelModel): PanelData => {
-  const snapshotData = panel.snapshotData;
-  if (isTimeSeries(snapshotData[0])) {
-    return {
-      timeSeries: snapshotData,
-    } as PanelData;
-  } else if (isTableData(snapshotData[0])) {
-    return {
-      tableData: snapshotData[0],
-    } as PanelData;
-  }
-  throw new Error('snapshotData is invalid:' + snapshotData.toString());
-};
+export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {
+  return (
+    containerHeight -
+    (panel.hasTitle() ? config.theme.panelHeaderHeight : 0) -
+    config.theme.panelPadding * 2 -
+    PANEL_BORDER
+  );
+}

@@ -1,35 +1,23 @@
-import { Threshold, ValueMapping } from '@grafana/ui';
+import { VizOrientation, FieldDisplayOptions } from '@grafana/ui';
+import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import { standardFieldDisplayOptions } from '../singlestat2/types';
 
-export interface GaugeOptions {
-  valueMappings: ValueMapping[];
-  maxValue: number;
-  minValue: number;
+export interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
 }
 
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
-}
+export const standardGaugeFieldOptions: FieldDisplayOptions = {
+  ...standardFieldDisplayOptions,
+  defaults: {
+    min: 0,
+    max: 100,
+  },
+};
 
 export const defaults: GaugeOptions = {
-  minValue: 0,
-  maxValue: 100,
   showThresholdMarkers: true,
   showThresholdLabels: false,
-  valueOptions: {
-    prefix: '',
-    suffix: '',
-    decimals: null,
-    stat: 'avg',
-    unit: 'none',
-  },
-  valueMappings: [],
-  thresholds: [],
+  fieldOptions: standardGaugeFieldOptions,
+  orientation: VizOrientation.Auto,
 };

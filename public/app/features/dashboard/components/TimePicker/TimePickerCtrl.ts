@@ -2,7 +2,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 
 export class TimePickerCtrl {
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
@@ -108,7 +108,7 @@ export class TimePickerCtrl {
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {
       value: this.dashboard.refresh,
-      options: _.map(this.panel.refresh_intervals, (interval: any) => {
+      options: this.panel.refresh_intervals.map((interval: any) => {
         return { text: interval, value: interval };
       }),
     };

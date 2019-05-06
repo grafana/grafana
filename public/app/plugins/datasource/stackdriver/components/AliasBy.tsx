@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { debounce } from 'lodash';
+import { Input } from '@grafana/ui';
 
 export interface Props {
   onChange: (alignmentPeriod) => void;
@@ -40,7 +41,7 @@ export class AliasBy extends Component<Props, State> {
         <div className="gf-form-inline">
           <div className="gf-form">
             <label className="gf-form-label query-keyword width-9">Alias By</label>
-            <input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
+            <Input type="text" className="gf-form-input width-24" value={this.state.value} onChange={this.onChange} />
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
