@@ -494,7 +494,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               },
               font: {
                 size: fontSize,
-                family: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                family: config.theme.typography.fontFamily.sansSerif,
               },
             },
             show: true,

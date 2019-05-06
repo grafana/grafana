@@ -103,7 +103,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return value.text;
             },
-            font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },
           show: true,
         },
