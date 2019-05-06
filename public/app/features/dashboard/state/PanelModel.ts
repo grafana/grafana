@@ -336,6 +336,7 @@ export class PanelModel {
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
+      this.queryRunner = null;
     }
   }
 }
