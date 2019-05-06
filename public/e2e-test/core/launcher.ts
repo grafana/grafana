@@ -12,6 +12,7 @@ export const launchBrowser = async (): Promise<Browser> => {
 
   const browser = await puppeteer.launch({
     headless: process.env.BROWSER ? false : true,
+    slowMo: process.env.SLOWMO ? 100 : 0,
     defaultViewport: {
       width: 1920,
       height: 1080,

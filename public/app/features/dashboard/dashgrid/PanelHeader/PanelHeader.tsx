@@ -90,7 +90,12 @@ export class PanelHeader extends Component<Props, State> {
           error={error}
         />
         <div className={panelHeaderClass}>
-          <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
+          <div
+            className="panel-title-container"
+            onClick={this.onMenuToggle}
+            onMouseDown={this.onMouseDown}
+            aria-label="Panel Title"
+          >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
