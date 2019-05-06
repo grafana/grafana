@@ -3,7 +3,7 @@ import moment from 'moment';
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
