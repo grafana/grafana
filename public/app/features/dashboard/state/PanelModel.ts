@@ -327,7 +327,7 @@ export class PanelModel {
   }
 
   hasTitle() {
-    return !!this.title;
+    return !!this.title.length;
   }
 
   destroy() {
