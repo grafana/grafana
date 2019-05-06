@@ -53,6 +53,7 @@ export interface CommonProps<T> {
   tooltipContent?: PopperContent<any>;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
+  tabSelectsValue?: boolean;
 }
 
 export interface SelectProps<T> {
@@ -109,6 +110,7 @@ export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
     menuIsOpen: false,
+    tabSelectsValue: true,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -157,6 +159,7 @@ export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
       isOpen,
       components,
       tooltipContent,
+      tabSelectsValue,
     } = this.props;
 
     let widthClass = '';
@@ -194,6 +197,7 @@ export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
         menuIsOpen={isOpen}
         onMenuOpen={this.onOpenMenu}
         onMenuClose={this.onCloseMenu}
+        tabSelectsValue={tabSelectsValue}
       />,
       tooltipContent,
       isOpen

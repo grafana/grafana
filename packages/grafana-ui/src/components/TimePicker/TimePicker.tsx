@@ -290,6 +290,7 @@ export class TimePicker extends PureComponent<Props, State> {
             isMenuOpen={this.state.isMenuOpen}
             onOpenMenu={this.onOpenMenu}
             onCloseMenu={this.onCloseMenu}
+            tabSelectsValue={false}
           />
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>

@@ -40,6 +40,7 @@ export interface Props<T> {
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
+  tabSelectsValue?: boolean;
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
@@ -61,6 +62,7 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
       isMenuOpen,
       onOpenMenu,
       onCloseMenu,
+      tabSelectsValue,
     } = this.props;
     const combinedComponents = {
       ...components,
@@ -82,6 +84,7 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
         isOpen={isMenuOpen}
         onOpenMenu={onOpenMenu}
         onCloseMenu={onCloseMenu}
+        tabSelectsValue={tabSelectsValue}
       />
     );
   }
