@@ -137,6 +137,10 @@
   }
 }
 
+.time-picker-popover-custom-range-label {
+  padding-right: $space-xs;
+}
+
 @media only screen and (max-width: 1116px) {
   .time-picker-popover {
     margin-left: $spacer;

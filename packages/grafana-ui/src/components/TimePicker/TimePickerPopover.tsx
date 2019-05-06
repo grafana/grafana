@@ -111,7 +111,7 @@ export class TimePickerPopover extends Component<Props, State> {
           <div className="time-picker-popover-box-body">
             <div className="time-picker-popover-box-body-custom-ranges">
               <div className="time-picker-popover-box-body-custom-ranges-input">
-                <span>From:</span>
+                <span className="time-picker-popover-custom-range-label">From:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
                   roundup={false}
@@ -133,7 +133,7 @@ export class TimePickerPopover extends Component<Props, State> {
             </div>
             <div className="time-picker-popover-box-body-custom-ranges">
               <div className="time-picker-popover-box-body-custom-ranges-input">
-                <span>To:</span>
+                <span className="time-picker-popover-custom-range-label">To:</span>
                 <TimePickerInput
                   isTimezoneUtc={isTimezoneUtc}
                   roundup={true}
