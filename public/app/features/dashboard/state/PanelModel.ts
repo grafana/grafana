@@ -324,8 +324,8 @@ export class PanelModel {
     return this.queryRunner;
   }
 
-  hasTitle(): boolean {
-    return this.title && this.title.length > 0;
+  hasTitle() {
+    return !!this.title.trim();
   }
 
   destroy() {
