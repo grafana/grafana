@@ -1,3 +1,5 @@
+import { Scale } from './scale';
+
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
@@ -50,6 +52,7 @@ export interface Field {
   color?: string;
   min?: number | null;
   max?: number | null;
+  scale?: Scale | null;
 }
 
 export interface Labels {
