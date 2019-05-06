@@ -21,19 +21,7 @@ import (
 )
 
 type PrometheusExecutor struct {
-	Transport *http.Transport
-}
-
-type basicAuthTransport struct {
-	*http.Transport
-
-	username string
-	password string
-}
-
-func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.SetBasicAuth(bat.username, bat.password)
-	return bat.Transport.RoundTrip(req)
+	Transport http.RoundTripper
 }
 
 func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
@@ -64,14 +52,6 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	cfg := api.Config{
 		Address:      dsInfo.Url,
 		RoundTripper: e.Transport,
-	}
-
-	if dsInfo.BasicAuth {
-		cfg.RoundTripper = basicAuthTransport{
-			Transport: e.Transport,
-			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.BasicAuthPassword,
-		}
 	}
 
 	client, err := api.NewClient(cfg)

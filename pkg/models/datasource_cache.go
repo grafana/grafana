@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type proxyTransportCache struct {
@@ -21,7 +22,12 @@ type proxyTransportCache struct {
 type cachedTransport struct {
 	updated time.Time
 
-	*http.Transport
+	transport *transportWrapper
+}
+
+type transportWrapper struct {
+	base                 *http.Transport
+	enrichedRoundTripper http.RoundTripper
 }
 
 var ptc = proxyTransportCache{
@@ -41,12 +47,12 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
-func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
+func (ds *DataSource) GetHttpTransport() (*transportWrapper, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
 	if t, present := ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
-		return t.Transport, nil
+		return t.transport, nil
 	}
 
 	tlsConfig, err := ds.GetTLSConfig()
@@ -56,7 +62,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
 
-	transport := &http.Transport{
+	baseTransport := &http.Transport{
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
@@ -70,12 +76,33 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
+	var rt http.RoundTripper = baseTransport
+	if ds.BasicAuth {
+		rt = util.NewBasicAuthRoundTripper(
+			ds.BasicAuthUser,
+			ds.BasicAuthPassword,
+			ds.JsonData.MustString("basicAuthPasswordFile"),
+			rt,
+		)
+	}
+	if ds.JsonData != nil {
+		bearerTokenFile := ds.JsonData.MustString("bearerTokenFile")
+		if bearerTokenFile != "" {
+			rt = util.NewBearerAuthRoundTripper(bearerTokenFile, rt)
+		}
+	}
+
+	wrappedTransport := &transportWrapper{
+		base:                 baseTransport,
+		enrichedRoundTripper: rt,
+	}
+
 	ptc.cache[ds.Id] = cachedTransport{
-		Transport: transport,
+		transport: wrappedTransport,
 		updated:   ds.Updated,
 	}
 
-	return transport, nil
+	return wrappedTransport, nil
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
@@ -142,4 +169,9 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+// RoundTrip implements http.RoundTripper.
+func (tw *transportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return tw.enrichedRoundTripper.RoundTrip(req)
 }
