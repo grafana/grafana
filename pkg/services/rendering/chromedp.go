@@ -62,7 +62,6 @@ func newChromeContext(ctx context.Context, opts Opts) (context.Context, context.
 		chromedp.Headless,
 		chromedp.DisableGPU,
 		chromedp.WindowSize(opts.Width, opts.Height),
-		chromedp.ExecPath("/Applications/Chromium.app/Contents/MacOS/Chromium"),
 	)
 	messageChan := make(chan string)
 	listener := makeMessageListener(messageChan)
