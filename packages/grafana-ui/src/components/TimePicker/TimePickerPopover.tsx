@@ -1,11 +1,11 @@
 import React, { Component, SyntheticEvent } from 'react';
-import { TimeRange, TimeOptions, TimeOption } from '@grafana/ui';
+import { TimeRange, TimeOptions, TimeOption } from '../../types/time';
 import { Moment } from 'moment';
 
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from './time';
-import { Timezone } from '@grafana/ui/src/utils/datemath';
+import { Timezone } from '../../utils/datemath';
 
 export interface Props {
   value: TimeRange;
