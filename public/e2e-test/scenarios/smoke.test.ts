@@ -11,6 +11,7 @@ import { panel } from 'e2e-test/pages/panels/panel';
 import { editPanelPage } from 'e2e-test/pages/panels/editPanel';
 import { constants } from 'e2e-test/core/constants';
 import { sharePanelModal } from 'e2e-test/pages/panels/sharePanelModal';
+import { takeScreenShot, compareScreenShots } from 'e2e-test/core/images';
 
 e2eScenario(
   'Login scenario, create test data source, dashboard, panel, and export scenario',
@@ -44,7 +45,10 @@ e2eScenario(
 
     await editPanelPage.init(page);
     await editPanelPage.waitForNavigation();
+    await editPanelPage.pageObjects.queriesTab.click();
     await editPanelPage.pageObjects.scenarioSelect.select('string:csv_metric_values');
+    await editPanelPage.pageObjects.visualizationTab.click();
+    await editPanelPage.pageObjects.showXAxis.click();
     await editPanelPage.pageObjects.saveDashboard.click();
 
     // Confirm save modal
@@ -72,8 +76,10 @@ e2eScenario(
     const newTarget: Target = (await targetPromise) as Target;
     expect(newTarget.url()).toContain(`${constants.baseUrl}/render/d-solo`);
 
-    // // Take snapshot of page
+    // Take snapshot of page
     const newPage = await newTarget.page();
-    await newPage.screenshot({ path: 'verify-release-screenshot.png', type: 'png', fullPage: true });
+    const fileName = 'smoke-test-scenario';
+    await takeScreenShot(newPage, fileName);
+    await compareScreenShots(fileName);
   }
 );
