@@ -4,37 +4,55 @@ import {
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
-  SingleStatValueOptions,
-  SingleStatValueEditor,
+  FieldDisplayEditor,
+  FieldDisplayOptions,
+  FieldPropertiesEditor,
+  Field,
 } from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
 
 export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChartOptions>> {
-  onValueMappingsChanged = (valueMappings: ValueMapping[]) =>
-    this.props.onOptionsChange({
-      ...this.props.options,
-      valueMappings,
+  onValueMappingsChanged = (mappings: ValueMapping[]) =>
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      mappings,
     });
 
-  onValueOptionsChanged = (valueOptions: SingleStatValueOptions) =>
+  onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
       ...this.props.options,
-      valueOptions,
+      fieldOptions,
     });
+
+  onDefaultsChange = (field: Partial<Field>) => {
+    this.onDisplayOptionsChanged({
+      ...this.props.options.fieldOptions,
+      defaults: field,
+    });
+  };
 
   render() {
     const { onOptionsChange, options } = this.props;
+    const { fieldOptions } = options;
 
     return (
       <>
         <PanelOptionsGrid>
-          <SingleStatValueEditor onChange={this.onValueOptionsChanged} value={options.valueOptions} />
+          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} />
+
+          <FieldPropertiesEditor
+            title="Field (default)"
+            showMinMax={true}
+            onChange={this.onDefaultsChange}
+            options={fieldOptions.defaults}
+          />
+
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={options.valueMappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
       </>
     );
   }

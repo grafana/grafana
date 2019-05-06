@@ -87,7 +87,10 @@ describe('PanelModel', () => {
     });
 
     describe('when changing panel type', () => {
+      let panelQueryRunner: any;
+
       beforeEach(() => {
+        panelQueryRunner = model.getQueryRunner();
         model.changePlugin(getPanelPlugin({ id: 'graph' }));
         model.alert = { id: 2 };
       });
@@ -104,6 +107,11 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
+      });
+
+      it('getQueryRunner() should return same instance after plugin change', () => {
+        const sameQueryRunner = model.getQueryRunner();
+        expect(panelQueryRunner).toBe(sameQueryRunner);
       });
     });
 

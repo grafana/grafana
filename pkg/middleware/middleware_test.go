@@ -58,7 +58,6 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 				c.HTML(200, "index-template", data)
 			})
-
 			sc.fakeReq("GET", "/").exec()
 			So(sc.resp.Code, ShouldEqual, 200)
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")

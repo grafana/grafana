@@ -23,6 +23,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  isInView: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -33,7 +34,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
 // To make sure the change happens without strange bugs happening when panels use same
 // named property with different type / value expectations
 // This is not required for react panels
-
 const mustKeepProps: { [str: string]: boolean } = {
   id: true,
   gridPos: true,
@@ -63,6 +63,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
+  queryRunner: true,
 };
 
 const defaults: any = {
@@ -111,6 +112,7 @@ export class PanelModel {
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
+  isInView: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
