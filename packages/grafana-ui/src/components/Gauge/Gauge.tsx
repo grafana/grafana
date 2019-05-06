@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
+import { DisplayValue, Threshold, Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
