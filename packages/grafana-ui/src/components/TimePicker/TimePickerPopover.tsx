@@ -118,6 +118,7 @@ export class TimePickerPopover extends Component<Props, State> {
                   timezone={timezone}
                   value={value.raw.from}
                   onChange={this.onFromInputChanged}
+                  tabIndex={1}
                 />
               </div>
               <div className="time-picker-popover-box-body-custom-ranges-calendar">
@@ -139,6 +140,7 @@ export class TimePickerPopover extends Component<Props, State> {
                   timezone={timezone}
                   value={value.raw.to}
                   onChange={this.onToInputChanged}
+                  tabIndex={2}
                 />
               </div>
               <div className="time-picker-popover-box-body-custom-ranges-calendar">
