@@ -14,18 +14,20 @@ describe('PanelModel', () => {
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: {
-          thresholds: [
-            {
-              color: '#F2495C',
-              index: 1,
-              value: 50,
-            },
-            {
-              color: '#73BF69',
-              index: 0,
-              value: null,
-            },
-          ],
+          fieldOptions: {
+            thresholds: [
+              {
+                color: '#F2495C',
+                index: 1,
+                value: 50,
+              },
+              {
+                color: '#73BF69',
+                index: 0,
+                value: null,
+              },
+            ],
+          },
         },
       };
       model = new PanelModel(modelJson);
@@ -72,7 +74,7 @@ describe('PanelModel', () => {
     });
 
     it('should restore -Infinity value for base threshold', () => {
-      expect(model.options.thresholds).toEqual([
+      expect(model.options.fieldOptions.thresholds).toEqual([
         {
           color: '#F2495C',
           index: 1,
@@ -142,7 +144,7 @@ describe('PanelModel', () => {
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].thresholds).toBeDefined();
+        expect(onPanelTypeChanged.mock.calls[0][2].fieldOptions.thresholds).toBeDefined();
       });
 
       it('getQueryRunner() should return same instance after changing to another react panel', () => {
