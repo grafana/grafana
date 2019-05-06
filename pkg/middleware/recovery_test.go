@@ -59,6 +59,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.m = macaron.New()
 		sc.m.Use(Recovery())
 
+		sc.m.Use(AddDefaultResponseHeaders())
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -70,7 +71,6 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
 		// mock out gc goroutine
 		sc.m.Use(OrgRedirect())
-		sc.m.Use(AddDefaultResponseHeaders())
 
 		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c

@@ -1,7 +1,7 @@
 #name#a,b,c
 #type#number,string,boolean
 #unit#ms,,s
-10,AA,true
+10,"this ""has quotes"" inside",true
 20,XX,false
 30,YY,false
 40,ZZ,true

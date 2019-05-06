@@ -147,7 +147,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             name: 'ds-config-' + dsMeta.id,
             bindings: { meta: '=', current: '=' },
             attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsPlugin.components.ConfigCtrl,
+            Component: dsPlugin.angularConfigCtrl,
           };
         });
       }
@@ -160,7 +160,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             name: 'app-config-' + model.id,
             bindings: { appModel: '=', appEditCtrl: '=' },
             attrs: { 'app-model': 'ctrl.model', 'app-edit-ctrl': 'ctrl' },
-            Component: appPlugin.angular.ConfigCtrl,
+            Component: appPlugin.angularConfigCtrl,
           };
         });
       }
@@ -173,7 +173,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: { appModel: '=' },
             attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appPlugin.angular.pages[scope.ctrl.page.component],
+            Component: appPlugin.angularPages[scope.ctrl.page.component],
           };
         });
       }
