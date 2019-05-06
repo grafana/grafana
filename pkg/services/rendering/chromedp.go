@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"time"
 
 	"github.com/chromedp/cdproto"
@@ -61,6 +62,7 @@ func newChromeContext(ctx context.Context, opts Opts) (context.Context, context.
 		chromedp.Headless,
 		chromedp.DisableGPU,
 		chromedp.WindowSize(opts.Width, opts.Height),
+		chromedp.ExecPath("/Applications/Chromium.app/Contents/MacOS/Chromium"),
 	)
 	messageChan := make(chan string)
 	listener := makeMessageListener(messageChan)
@@ -80,12 +82,13 @@ func screenshot(urlstr, domain, renderKey string, buf *[]byte, usePdf bool, netw
 		setRenderKeyCookie(renderKey, domain),
 		chromedp.Navigate(urlstr),
 		// Waiting till there is no in flight network request and the last one finished 500ms ago.
-		waitOnNetwork(networkStatus),
+		//waitOnNetwork(networkStatus),
 		// This seems to also work but was some trial end error to find out this particular selector will mean
 		// the whole panel is visible. This seems to be too tight to the structure of the page and can be different
 		// for different panels/pages so even though the network wait is more complex (and still could be flaky) it
 		// should handle more scenarios without coupling the code here.
 		//chromedp.WaitVisible(".flot-base", chromedp.ByQuery),
+		checkPanelsRendered(),
 	}
 	if usePdf {
 		tasks = append(tasks, takeFullPagePDF(buf))
@@ -206,4 +209,42 @@ func getNetworkStatus(messageChan chan string, ctx context.Context) *NetworkStat
 		}
 	}()
 	return networkStatus
+}
+
+func checkPanelsRendered() chromedp.Action {
+	return chromedp.ActionFunc(func(ctx context.Context, h cdp.Executor) error {
+		var res []byte
+		evalFunc := chromedp.Evaluate("window.panelsRendered", &res)
+
+		c := make(chan interface{})
+		go func() {
+			t := time.NewTicker(500 * time.Millisecond)
+			for {
+				select {
+				case <-ctx.Done():
+					t.Stop()
+					c <- true
+					return
+				case <-t.C:
+					err := evalFunc.Do(ctx, h)
+					if err != nil {
+						fmt.Println(err)
+					}
+					if len(string(res)) > 0 {
+						val, err := strconv.Atoi(string(res))
+						if err != nil {
+							fmt.Println(err)
+						}
+						if val > 0 {
+							c <- true
+							t.Stop()
+							return
+						}
+					}
+				}
+			}
+		}()
+		<-c
+		return nil
+	})
 }
