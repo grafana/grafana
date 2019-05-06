@@ -95,6 +95,7 @@ export class PanelQueryState {
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
     this.request = req;
+    this.datasource = ds;
 
     // Return early if there are no queries to run
     if (!req.targets.length) {
