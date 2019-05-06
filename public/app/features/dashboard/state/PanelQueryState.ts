@@ -41,7 +41,7 @@ export class PanelQueryState {
   sendLegacy = false;
 
   // A promise for the running query
-  private executor?: Promise<PanelData>;
+  private executor?: Promise<PanelData> = null;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
 
