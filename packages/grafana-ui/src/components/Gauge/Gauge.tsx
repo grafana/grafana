@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils';
 import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
+import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
   height: number;
@@ -66,7 +67,14 @@ export class Gauge extends PureComponent<Props> {
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
 
-    const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
+    const backgroundColor = selectThemeVariant(
+      {
+        dark: theme.colors.dark3,
+        light: '#e6e6e6',
+      },
+      theme.type
+    );
+
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 6, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
