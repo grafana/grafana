@@ -2,8 +2,24 @@ import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, SeriesData } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
+
+export interface PanelPluginMeta extends PluginMeta {
+  hideFromList?: boolean;
+  sort: number;
+
+  // if length>0 the query tab will show up
+  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
+  // so it will be deprecated soon
+  dataFormats?: PanelDataFormat[];
+}
+
+export enum PanelDataFormat {
+  Table = 'table',
+  TimeSeries = 'time_series',
+}
 
 export interface PanelData {
   state: LoadingState;
@@ -53,14 +69,20 @@ export type PanelTypeChangedHandler<TOptions = any> = (
   prevOptions: any
 ) => Partial<TOptions>;
 
-export class PanelPlugin<TOptions = any> {
+export class PanelPlugin<TOptions = any> extends GrafanaPlugin<PanelPluginMeta> {
   panel: ComponentType<PanelProps<TOptions>>;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   defaults?: TOptions;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 
+  /**
+   * Legacy angular ctrl.  If this exists it will be used instead of the panel
+   */
+  angularPanelCtrl?: any;
+
   constructor(panel: ComponentType<PanelProps<TOptions>>) {
+    super();
     this.panel = panel;
   }
 
@@ -92,16 +114,6 @@ export class PanelPlugin<TOptions = any> {
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
     return this;
-  }
-}
-
-export class AngularPanelPlugin {
-  components: {
-    PanelCtrl: any;
-  };
-
-  constructor(PanelCtrl: any) {
-    this.components = { PanelCtrl: PanelCtrl };
   }
 }
 

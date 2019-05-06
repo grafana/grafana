@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import config from 'app/core/config';
 import classNames from 'classnames';
 
 // Utils & Services
@@ -9,7 +8,6 @@ import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
-import { getPanelPluginNotFound } from './PanelPluginNotFound';
 import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
@@ -17,8 +15,7 @@ import { PanelResizer } from './PanelResizer';
 
 // Types
 import { PanelModel, DashboardModel } from '../state';
-import { PanelPluginMeta } from 'app/types';
-import { AngularPanelPlugin, PanelPlugin } from '@grafana/ui/src/types/panel';
+import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
 
 export interface Props {
@@ -26,11 +23,13 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  isInView: boolean;
 }
 
 export interface State {
-  plugin: PanelPluginMeta;
+  plugin: PanelPlugin;
   angularPanel: AngularComponent;
+  isLazy: boolean;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -43,6 +42,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
+      isLazy: !props.isInView,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -73,14 +73,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     // handle plugin loading & changing of plugin type
-    if (!this.state.plugin || this.state.plugin.id !== pluginId) {
-      let plugin = config.panels[pluginId] || getPanelPluginNotFound(pluginId);
+    if (!this.state.plugin || this.state.plugin.meta.id !== pluginId) {
+      const plugin = await importPanelPlugin(pluginId);
 
       // unmount angular panel
       this.cleanUpAngularPanel();
-
-      // load the actual plugin code
-      plugin = await this.importPanelPluginModule(plugin);
 
       if (panel.type !== pluginId) {
         panel.changePlugin(plugin);
@@ -92,32 +89,15 @@ export class DashboardPanel extends PureComponent<Props, State> {
     }
   }
 
-  async importPanelPluginModule(plugin: PanelPluginMeta): Promise<PanelPluginMeta> {
-    if (plugin.hasBeenImported) {
-      return plugin;
-    }
-
-    try {
-      const importedPlugin = await importPanelPlugin(plugin.module);
-      if (importedPlugin instanceof AngularPanelPlugin) {
-        plugin.angularPlugin = importedPlugin as AngularPanelPlugin;
-      } else if (importedPlugin instanceof PanelPlugin) {
-        plugin.vizPlugin = importedPlugin as PanelPlugin;
-      }
-    } catch (e) {
-      plugin = getPanelPluginNotFound(plugin.id);
-      console.log('Failed to import plugin module', e);
-    }
-
-    plugin.hasBeenImported = true;
-    return plugin;
-  }
-
   componentDidMount() {
     this.loadPlugin(this.props.panel.type);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (this.state.isLazy && this.props.isInView) {
+      this.setState({ isLazy: false });
+    }
+
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -150,7 +130,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
   };
 
   renderReactPanel() {
-    const { dashboard, panel, isFullscreen } = this.props;
+    const { dashboard, panel, isFullscreen, isInView } = this.props;
     const { plugin } = this.state;
 
     return (
@@ -165,6 +145,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               panel={panel}
               dashboard={dashboard}
               isFullscreen={isFullscreen}
+              isInView={isInView}
               width={width}
               height={height}
             />
@@ -180,14 +161,19 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel } = this.state;
+    const { plugin, angularPanel, isLazy } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
     }
 
     // if we have not loaded plugin exports yet, wait
-    if (!plugin || !plugin.hasBeenImported) {
+    if (!plugin) {
+      return null;
+    }
+
+    // If we are lazy state don't render anything
+    if (isLazy) {
       return null;
     }
 
@@ -210,8 +196,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.vizPlugin && this.renderReactPanel()}
-              {plugin.angularPlugin && this.renderAngularPanel()}
+              {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
             </div>
           )}
         />

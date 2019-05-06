@@ -48,11 +48,13 @@ function norm(csv: string): string {
 
 describe('write csv', () => {
   it('should write the same CSV that we read', () => {
+    const firstRow = [10, 'this "has quotes" inside', true];
     const path = __dirname + '/testdata/roundtrip.csv';
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
     expect(data.length).toBe(1);
+    expect(data[0].rows[0]).toEqual(firstRow);
     expect(data[0].fields.length).toBe(3);
     expect(norm(out)).toBe(norm(csv));
 
@@ -63,6 +65,7 @@ describe('write csv', () => {
     const f = readCSV(shorter);
     const fields = f[0].fields;
     expect(fields.length).toBe(3);
+    expect(f[0].rows[0]).toEqual(firstRow);
     expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 });

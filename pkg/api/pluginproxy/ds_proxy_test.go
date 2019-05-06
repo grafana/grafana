@@ -3,12 +3,14 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 
 	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
@@ -496,7 +498,71 @@ func TestDSRouteRule(t *testing.T) {
 				runDatasourceAuthTest(test)
 			}
 		})
+
+		Convey("HandleRequest()", func() {
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
+				w.WriteHeader(200)
+				w.Write([]byte("I am the backend"))
+			}))
+			defer backend.Close()
+
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{Url: backend.URL, Type: m.DS_GRAPHITE}
+
+			responseRecorder := &CloseNotifierResponseRecorder{
+				ResponseRecorder: httptest.NewRecorder(),
+			}
+			defer responseRecorder.Close()
+
+			setupCtx := func(fn func(http.ResponseWriter)) *m.ReqContext {
+				responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
+				if fn != nil {
+					fn(responseWriter)
+				}
+
+				return &m.ReqContext{
+					SignedInUser: &m.SignedInUser{},
+					Context: &macaron.Context{
+						Req: macaron.Request{
+							Request: httptest.NewRequest("GET", "/render", nil),
+						},
+						Resp: responseWriter,
+					},
+				}
+			}
+
+			Convey("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func() {
+				ctx := setupCtx(nil)
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy.HandleRequest()
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldBeEmpty)
+			})
+
+			Convey("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func() {
+				ctx := setupCtx(func(w http.ResponseWriter) {
+					w.Header().Set("Set-Cookie", "important_cookie=important_value")
+				})
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy.HandleRequest()
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, "important_cookie=important_value")
+			})
+		})
 	})
+}
+
+type CloseNotifierResponseRecorder struct {
+	*httptest.ResponseRecorder
+	closeChan chan bool
+}
+
+func (r *CloseNotifierResponseRecorder) CloseNotify() <-chan bool {
+	r.closeChan = make(chan bool)
+	return r.closeChan
+}
+
+func (r *CloseNotifierResponseRecorder) Close() {
+	close(r.closeChan)
 }
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.

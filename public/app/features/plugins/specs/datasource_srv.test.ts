@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PluginMeta } from '@grafana/ui/src/types';
+import { PluginMeta, DataSourcePluginMeta } from '@grafana/ui/src/types';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv = {
@@ -26,14 +26,14 @@ describe('datasource_srv', () => {
           id: 1,
           type: 'b',
           name: 'buildIn',
-          meta: { builtIn: true } as PluginMeta,
+          meta: { builtIn: true } as DataSourcePluginMeta,
           jsonData: {},
         },
         nonBuildIn: {
           id: 2,
           type: 'e',
           name: 'external1',
-          meta: { builtIn: false } as PluginMeta,
+          meta: { builtIn: false } as DataSourcePluginMeta,
           jsonData: {},
         },
         nonExplore: {

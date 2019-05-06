@@ -1,6 +1,5 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
 
 class TablePanelCtrl {}
 
@@ -31,10 +30,13 @@ describe('PanelModel', () => {
       };
       model = new PanelModel(modelJson);
       model.pluginLoaded(
-        getPanelPlugin({
-          id: 'table',
-          angularPlugin: new AngularPanelPlugin(TablePanelCtrl),
-        })
+        getPanelPlugin(
+          {
+            id: 'table',
+          },
+          null, // react
+          TablePanelCtrl // angular
+        )
       );
     });
 
@@ -85,7 +87,10 @@ describe('PanelModel', () => {
     });
 
     describe('when changing panel type', () => {
+      let panelQueryRunner: any;
+
       beforeEach(() => {
+        panelQueryRunner = model.getQueryRunner();
         model.changePlugin(getPanelPlugin({ id: 'graph' }));
         model.alert = { id: 2 };
       });
@@ -102,6 +107,11 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
+      });
+
+      it('getQueryRunner() should return same instance after plugin change', () => {
+        const sameQueryRunner = model.getQueryRunner();
+        expect(panelQueryRunner).toBe(sameQueryRunner);
       });
     });
 
@@ -123,15 +133,10 @@ describe('PanelModel', () => {
 
     describe('when changing to react panel', () => {
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = new PanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
-        model.changePlugin(
-          getPanelPlugin({
-            id: 'react',
-            vizPlugin: reactPlugin,
-          })
-        );
+        model.changePlugin(reactPlugin);
       });
 
       it('should call react onPanelTypeChanged', () => {

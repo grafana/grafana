@@ -17,6 +17,7 @@ export default class InfluxDatasource {
   withCredentials: any;
   interval: any;
   responseParser: any;
+  httpMode: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
@@ -33,6 +34,7 @@ export default class InfluxDatasource {
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.responseParser = new ResponseParser();
+    this.httpMode = instanceSettings.jsonData.httpMode;
   }
 
   query(options) {
@@ -190,7 +192,7 @@ export default class InfluxDatasource {
       query = query.replace('$timeFilter', timeFilter);
     }
 
-    return this._influxRequest('GET', '/query', { q: query, epoch: 'ms' }, options);
+    return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
   serializeParams(params) {
@@ -245,7 +247,12 @@ export default class InfluxDatasource {
       params.db = this.database;
     }
 
-    if (method === 'GET') {
+    if (method === 'POST' && _.has(data, 'q')) {
+      // verb is POST and 'q' param is defined
+      _.extend(params, _.omit(data, ['q']));
+      data = this.serializeParams(_.pick(data, ['q']));
+    } else if (method === 'GET' || method === 'POST') {
+      // verb is GET, or POST without 'q' param
       _.extend(params, data);
       data = null;
     }
@@ -266,6 +273,10 @@ export default class InfluxDatasource {
     }
     if (this.basicAuth) {
       req.headers.Authorization = this.basicAuth;
+    }
+
+    if (method === 'POST') {
+      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
 
     return this.backendSrv.datasourceRequest(req).then(

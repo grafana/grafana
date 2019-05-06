@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -75,7 +76,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		token := &m.UserToken{Id: 1}
 
 		revokeUserAuthTokenInternalScenario("Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(userId, userTokenId int64) (*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*m.UserToken, error) {
 				return &m.UserToken{Id: 2}, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -93,7 +94,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		token := &m.UserToken{Id: 2}
 
 		revokeUserAuthTokenInternalScenario("Should not be successful", cmd, TestUserID, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(userId, userTokenId int64) (*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*m.UserToken, error) {
 				return token, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -126,7 +127,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 					SeenAt:    time.Now().Unix(),
 				},
 			}
-			sc.userAuthTokenService.GetUserTokensProvider = func(userId int64) ([]*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*m.UserToken, error) {
 				return tokens, nil
 			}
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -226,7 +227,7 @@ func logoutUserFromAllDevicesInternalScenario(desc string, userId int64, fn scen
 			sc.context.OrgId = TestOrgID
 			sc.context.OrgRole = m.ROLE_ADMIN
 
-			return hs.logoutUserFromAllDevicesInternal(userId)
+			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
 		})
 
 		sc.m.Post("/", sc.defaultHandler)

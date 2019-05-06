@@ -86,7 +86,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
   initialized: false,
   queryTransactions: [],
   queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
-  range: DEFAULT_RANGE,
+  range: {
+    from: null,
+    to: null,
+    raw: DEFAULT_RANGE,
+  },
   scanning: false,
   scanRange: null,
   showingGraph: true,
