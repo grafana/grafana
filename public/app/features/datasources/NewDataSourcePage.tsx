@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, FC } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
@@ -48,24 +48,33 @@ class NewDataSourcePage extends PureComponent<Props> {
             />
           </div>
           <div className="add-data-source-grid">
-            {dataSourceTypes.map((plugin, index) => {
-              return (
-                <div
-                  onClick={() => this.onDataSourceTypeClicked(plugin)}
-                  className="add-data-source-grid-item"
-                  key={`${plugin.id}-${index}`}
-                >
-                  <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
-                  <span className="add-data-source-grid-item-text">{plugin.name}</span>
-                </div>
-              );
-            })}
+            {dataSourceTypes.map((plugin, index) => (
+              <DataSourceTypeCard
+                key={`${plugin.id}-${index}`}
+                plugin={plugin}
+                onClick={() => this.onDataSourceTypeClicked(plugin)}
+              />
+            ))}
           </div>
         </Page.Contents>
       </Page>
     );
   }
 }
+
+interface DataSourceTypeCardProps {
+  plugin: DataSourcePluginMeta;
+  onClick: () => void;
+}
+
+const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
+  return (
+    <div className="add-data-source-grid-item" onClick={props.onClick}>
+      <img className="add-data-source-grid-item-logo" src={props.plugin.info.logos.small} />
+      <span className="add-data-source-grid-item-text">{props.plugin.name}</span>
+    </div>
+  );
+};
 
 function mapStateToProps(state: StoreState) {
   return {
