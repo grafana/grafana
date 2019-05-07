@@ -1,9 +1,8 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
-import { unitOfTime } from 'moment';
-import { DateTimeType, dateTimeType, toUtc, ISO_8601, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { DateTimeType, dateTimeType, toUtc, ISO_8601, isDateTimeType, DurationUnit } from '../utils/moment_wrapper';
 
-const units: unitOfTime.Base[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export type Timezone = 'utc';
 

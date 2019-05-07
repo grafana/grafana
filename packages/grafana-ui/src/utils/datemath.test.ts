@@ -1,12 +1,11 @@
 import sinon, { SinonFakeTimers } from 'sinon';
+import each from 'lodash/each';
 
 import * as dateMath from './datemath';
-import { unitOfTime } from 'moment';
-import each from 'lodash/each';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType, DurationUnit, DateTimeType } from '../utils/moment_wrapper';
 
 describe('DateMath', () => {
-  const spans: unitOfTime.Base[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
+  const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
   const anchor = '2014-01-01T06:06:06.666Z';
   const unix = dateTimeType(anchor).valueOf();
   const format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';

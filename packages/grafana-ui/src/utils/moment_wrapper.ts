@@ -46,6 +46,7 @@ export interface DateTimeDuration {
 
 export interface DateTimeType extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
+  endOf: (unitOfTime: DurationUnit) => DateTimeType;
   format: (formatInput?: FormatInput) => string;
   fromNow: (withoutSuffix?: boolean) => string;
   from: (formaInput: DateTimeInput) => string;
