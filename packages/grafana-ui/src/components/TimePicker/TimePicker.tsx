@@ -23,7 +23,7 @@ export interface Props {
   tooltipContent?: PopperContent<any>;
 }
 
-const defaultSelectOptions = [
+const defaultSelectOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
   { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },
   { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3, active: false },
@@ -42,7 +42,7 @@ const defaultSelectOptions = [
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 3, active: false },
 ];
 
-const defaultPopoverOptions = {
+const defaultPopoverOptions: TimeOptions = {
   '0': [
     {
       from: 'now-1d/d',
@@ -93,7 +93,7 @@ const defaultPopoverOptions = {
       to: 'now/d',
       display: 'Today',
       section: 1,
-      active: true,
+      active: false,
     },
     {
       from: 'now/d',
