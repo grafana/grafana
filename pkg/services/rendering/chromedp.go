@@ -213,7 +213,7 @@ func getNetworkStatus(messageChan chan string, ctx context.Context) *NetworkStat
 func checkPanelsRendered() chromedp.Action {
 	return chromedp.ActionFunc(func(ctx context.Context, h cdp.Executor) error {
 		var res []byte
-		evalFunc := chromedp.Evaluate("window.panelsRendered", &res)
+		evalFunc := chromedp.Evaluate("window.panelsRendered >= document.querySelectorAll('.panel').length", &res)
 
 		c := make(chan interface{})
 		go func() {
@@ -230,11 +230,11 @@ func checkPanelsRendered() chromedp.Action {
 						fmt.Println(err)
 					}
 					if len(string(res)) > 0 {
-						val, err := strconv.Atoi(string(res))
+						val, err := strconv.ParseBool(string(res))
 						if err != nil {
 							fmt.Println(err)
 						}
-						if val > 0 {
+						if val {
 							c <- true
 							t.Stop()
 							return
