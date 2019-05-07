@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
 
 export interface Props {
   password: string;
 }
 
-export class PasswordStrength extends React.Component<Props, any> {
+export class PasswordStrength extends PureComponent<Props, any> {
   constructor(props: Props) {
     super(props);
 
@@ -33,8 +33,8 @@ export class PasswordStrength extends React.Component<Props, any> {
 
   render() {
     const { password } = this.props;
-    let strengthText = 'strength: strong like a bull.';
-    let strengthClass = 'password-strength-good';
+    let strengthText = 'strong like a bull.';
+    let strengthClassModifier = 'good';
 
     if (!password) {
       return null;
@@ -43,18 +43,18 @@ export class PasswordStrength extends React.Component<Props, any> {
     const passwordScore = this.state.getScore(password);
 
     if (passwordScore <= 2) {
-      strengthText = 'strength: you can do better.';
-      strengthClass = 'password-strength-ok';
+      strengthText = 'you can do better.';
+      strengthClassModifier = 'ok';
     }
 
     if (passwordScore <= 1) {
-      strengthText = 'strength: weak sauce.';
-      strengthClass = 'password-strength-bad';
+      strengthText = 'weak sauce.';
+      strengthClassModifier = 'bad';
     }
 
     return (
-      <div className={`password-strength small ${strengthClass}`}>
-        <em>{strengthText}</em>
+      <div className={`password-strength small password-strength-${strengthClassModifier}`}>
+        <em>strength: {strengthText}</em>
       </div>
     );
   }
