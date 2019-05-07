@@ -7,6 +7,7 @@ import {
   OptionEditor as OptionEditorUI,
   OptionsUI,
   OptionInputAPI,
+  isGroupUIModel,
 } from '../../types/panelOptions';
 import { css } from 'emotion';
 import * as yup from 'yup';
@@ -95,18 +96,33 @@ const OptionsGroup = ({
     return null;
   }
 
-  return React.createElement(component, {
+  return React.createElement(component || 'div', {
     ...config,
-    children: content.map(c => (
-      <OptionEditor
-        editor={c.editor}
-        value={options[c.editor.property]}
-        onChange={(value: any) => {
-          onOptionsChange(c.editor.property, value);
-        }}
-        optionsSchema={optionsSchema}
-      />
-    )),
+    children: content.map(c => {
+      if (isGroupUIModel(c)) {
+        console.log('group');
+        return (
+          <OptionsGroup
+            component={c.component}
+            config={c.config}
+            content={c.content}
+            onOptionsChange={onOptionsChange}
+            options={options}
+            optionsSchema={optionsSchema}
+          />
+        );
+      }
+      return (
+        <OptionEditor
+          editor={c.editor}
+          value={options[c.editor.property]}
+          onChange={(value: any) => {
+            onOptionsChange(c.editor.property, value);
+          }}
+          optionsSchema={optionsSchema}
+        />
+      );
+    }),
   });
 };
 

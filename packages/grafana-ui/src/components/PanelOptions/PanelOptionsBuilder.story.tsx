@@ -9,7 +9,7 @@ import { StatID } from '../../utils/statsCalculator';
 import {
   OptionType,
   OptionsUIModel,
-  OptionsGrid,
+  // OptionsGrid,
   OptionsUIType,
   OptionsPanelGroup,
   OptionEditor,
@@ -85,14 +85,16 @@ story.add('default', () => {
 
 export const GaugeOptionsModel: OptionsUIModel<GaugeOptions> = {
   model: {
-    type: OptionsUIType.Layout,
+    type: OptionsUIType.Group,
     config: {
-      columns: 1,
+      title: 'OuterGroup',
     },
+    component: PanelOptionsGroup,
     content: [
       {
-        type: OptionsUIType.Layout,
-        config: { columns: 3 },
+        type: OptionsUIType.Group,
+        config: { title: 'Inner  group' },
+        component: PanelOptionsGroup,
         content: [
           {
             type: OptionsUIType.Group,
@@ -150,9 +152,9 @@ export const GaugeOptionsModel: OptionsUIModel<GaugeOptions> = {
             ],
           } as OptionsPanelGroup,
         ],
-      } as OptionsGrid,
+      } as OptionsPanelGroup,
     ],
-  } as OptionsGrid,
+  } as OptionsPanelGroup,
 };
 
 const valueMappingSchema: yup.ObjectSchema<ValueMapping> = yup.object({

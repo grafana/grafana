@@ -1,5 +1,4 @@
 import { SelectOptionItem } from '../components/Select/Select';
-import { JSONSchema7 } from 'json-schema';
 
 /**
  * Option editors, i.e. BooleanOption have to comply to OptionInputAPI.
@@ -44,7 +43,7 @@ export interface OptionsFieldsetGroup extends OptionsGroup<{ legend: string }> {
 export interface OptionsGroup<TConfig> extends OptionsUI<OptionsUIType.Group> {
   config: TConfig;
   component?: React.ComponentType<TConfig>;
-  content: Array<OptionEditor<any, any>>; // For matter of simpliocity I'm not allowing nesting layuts, groups
+  content: Array<OptionEditor<any, any> | OptionsGroup<any>>; // For matter of simpliocity I'm not allowing nesting layuts, groups
 }
 
 export interface OptionEditor<TOptions, TKey extends keyof TOptions> extends OptionsUI<OptionsUIType.Editor> {
@@ -171,6 +170,11 @@ export interface FieldsetUIModel
 export function isOptionsUIModel(model: any): model is OptionsUIModel<any> {
   return (model as OptionsUIModel<any>).model !== undefined;
 }
+
+export function isGroupUIModel(model: any): model is OptionsGroup<any> {
+  return (model as OptionsGroup<any>).type === OptionsUIType.Group;
+}
+
 export function isOptionModel(
   option: OptionUIModel<any, any> | GroupLayoutUIModel<any>
 ): option is OptionUIModel<any, any> {
@@ -185,10 +189,4 @@ export function isSelectOption(
   option: OptionUIModel<any, any> | SelectOptionUIModel<any, any>
 ): option is SelectOptionUIModel<any, any> {
   return (option as SelectOptionUIModel<any, any>).options !== undefined;
-}
-export interface OptionsDataSchema<TOptions> extends JSONSchema7 {
-  properties?: { [K in keyof TOptions]: OptionsDataSchema<any> };
-}
-export interface ObjectOptionDataSchema<TOptions> extends JSONSchema7 {
-  properties: { [K in keyof TOptions]: OptionsDataSchema<any> };
 }
