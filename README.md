@@ -92,7 +92,11 @@ yarn jest
 
 ### Building a Docker image
 
-There are two different ways to build a Grafana docker image. If your machine is setup for Grafana development and you run linux/amd64 you can build just the image. Otherwise, there is the option to build Grafana completely within Docker.
+There are two different ways to build a Grafana docker image. If your machine is setup for Grafana development and you
+run linux/amd64 you can build just the image. Otherwise, there is the option to build Grafana completely within Docker.
+
+If you had setup your environment for Grafana enterprise the docker build won't work due to symlinks. You need to remove
+the enterprise symlinks before building the container.
 
 Run the image you have built using: `docker run --rm -p 3000:3000 grafana/grafana:dev`
 
