@@ -17,7 +17,7 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
           className="btn btn-primary"
           disabled={isReadOnly}
           onClick={event => onSubmit(event)}
-          aria-label="Save and test button"
+          aria-label="Save and Test button"
         >
           Save &amp; Test
         </button>
