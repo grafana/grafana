@@ -368,6 +368,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
   const isBasic = displayMode === 'basic';
 
+  console.log('XX', valueInfo.percent, value.numeric, scale.maxValue, scale.maxValue);
+
   const wrapperStyles: CSSProperties = {
     display: 'flex',
   };

@@ -35,24 +35,23 @@ export class Gauge extends PureComponent<Props> {
   getFormattedThresholds() {
     const { scale, theme } = this.props;
 
-    const formatted: any[] = [];
-    if (scale.thresholds && scale.thresholds.length) {
-      for (const threshold of scale.thresholds) {
-        formatted.push({
-          value: threshold.value,
-          color: getColorFromHexRgbOrName(threshold.color!, theme.type),
-        });
-      }
-
-      formatted[0].value = scale.minValue;
-      if (formatted.length === 1) {
-        formatted.push({ ...formatted[0] });
-      }
-      formatted[formatted.length - 1].value = scale.maxValue;
-    } else {
-      // TODO the d3 variation
+    const { minValue, maxValue, thresholds } = scale;
+    if (!thresholds) {
+      return []; // TODO d3 scheme
     }
-    return formatted;
+
+    const lastThreshold = thresholds[thresholds.length - 1];
+    return [
+      ...thresholds.map((threshold, index) => {
+        if (index === 0) {
+          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
+        }
+
+        const previousThreshold = thresholds[index - 1];
+        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
+      }),
+      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
+    ];
   }
 
   getFontScale(length: number): number {

@@ -25,6 +25,7 @@ export function getFieldScaleInterpolator(
     return null;
   }
 
+  // Validate Thresholds
   const { thresholds } = scale;
   if (thresholds && thresholds.length) {
     // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
@@ -34,8 +35,30 @@ export function getFieldScaleInterpolator(
     sortThresholds(thresholds);
   }
 
+  // Get a valid
+  let min = isNaN(field.min!) ? 0 : field.min!;
+  let max = isNaN(field.max!) ? 0 : field.max!;
+  if (min > max) {
+    const temp = max;
+    max = min;
+    min = temp;
+  }
+
+  const size = max - min;
+  const getPercent = (value: number) => {
+    if (value >= max) {
+      return 1;
+    } else if (value <= min) {
+      return 0;
+    }
+    if (min === max) {
+      return 1; // Avoid divide by zero
+    }
+    return (value - min) / size;
+  };
+
   // Check if we should calculate percentage
-  if (scale.scheme && !isNaN(field.min!) && !isNaN(field.max!) && field.min !== field.max) {
+  if (scale.scheme) {
     let interpolator = d3.interpolateCool;
     if (scale.discrete) {
       const colors = (d3 as any)[`scheme${scale.scheme}`][scale.discrete];
@@ -51,18 +74,8 @@ export function getFieldScaleInterpolator(
       throw new Error('Unknown scheme:' + scale.scheme);
     }
 
-    const min = Math.min(field.min!, field.max!);
-    const max = Math.max(field.min!, field.max!);
-    const size = max - min;
-
     return (value: number) => {
-      if (value > max) {
-        value = max;
-      } else if (value < min) {
-        value = min;
-      }
-
-      const percent = (value - min) / size;
+      const percent = getPercent(value);
       const info = {
         percent,
         color: interpolator(percent),
@@ -86,6 +99,7 @@ export function getFieldScaleInterpolator(
     return (value: number) => {
       const t = getActiveThreshold(value, thresholds);
       return {
+        percent: getPercent(value),
         color: getColorFromHexRgbOrName(t.color!, theme),
         state: t.state,
       } as ScaledValueInfo;
@@ -136,6 +150,9 @@ export function getScaledFieldHelper(field: Field, theme = GrafanaThemeType.Dark
   const minValue = Math.min(field.min!, field.max!);
   const maxValue = Math.max(field.min!, field.max!);
   const thresholds = field.scale!.thresholds!; // HACK assume thresholds now
+
+  console.log('MIN?MAX', field.min, field.max, ' >>> ', minValue, maxValue);
+
   return {
     minValue,
     maxValue,
