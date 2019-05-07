@@ -10,7 +10,6 @@ Object {
       "decimals": 3,
       "max": "50",
       "min": "-50",
-      "unit": "accMS2",
       "scale": {
         "thresholds": Array [
           Object {
@@ -31,6 +30,7 @@ Object {
           },
         ],
       }
+      "unit": "accMS2"
     },
     "mappings": Array [
       Object {
