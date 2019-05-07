@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "CloudWatch",
   "id": "cloudwatch",
+  "category": "cloud",
 
   "metrics": true,
   "alerting": true,

@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "OpenTSDB",
   "id": "opentsdb",
+  "category": "tsdb",
 
   "metrics": true,
   "defaultMatchFormat": "pipe",

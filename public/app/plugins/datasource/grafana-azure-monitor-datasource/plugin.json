@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Azure Monitor",
   "id": "grafana-azure-monitor-datasource",
+  "category": "cloud",
 
   "info": {
     "description": "Grafana data source for Azure Monitor/Application Insights",

@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "PostgreSQL",
   "id": "postgres",
+  "category": "sql",
 
   "info": {
     "description": "PostgreSQL Data Source for Grafana",

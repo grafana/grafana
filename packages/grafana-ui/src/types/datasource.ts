@@ -79,6 +79,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   annotations?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
+  category?: string;
   queryOptions?: PluginMetaQueryOptions;
 }
 

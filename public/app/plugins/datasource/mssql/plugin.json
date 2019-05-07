@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Microsoft SQL Server",
   "id": "mssql",
+  "category": "sql",
 
   "info": {
     "description": "Microsoft SQL Server Data Source for Grafana",

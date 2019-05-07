@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "MySQL",
   "id": "mysql",
+  "category": "sql",
 
   "info": {
     "description": "MySQL Data Source for Grafana",

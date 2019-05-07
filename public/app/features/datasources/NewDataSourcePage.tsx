@@ -19,6 +19,10 @@ export interface Props {
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
 
+interface DataSourceCategories {
+  [key: string]: DataSourcePluginMeta[];
+}
+
 class NewDataSourcePage extends PureComponent<Props> {
   componentDidMount() {
     this.props.loadDataSourceTypes();
@@ -32,8 +36,49 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.setDataSourceTypeSearchQuery(value);
   };
 
+  renderTypes(types: DataSourcePluginMeta[]) {
+    return (
+      <div className="add-data-source-grid">
+        {types.map((plugin, index) => (
+          <DataSourceTypeCard
+            key={`${plugin.id}-${index}`}
+            plugin={plugin}
+            onClick={() => this.onDataSourceTypeClicked(plugin)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  renderList() {
+    const { dataSourceTypes, dataSourceTypeSearchQuery } = this.props;
+
+    if (!dataSourceTypeSearchQuery) {
+      const categories = dataSourceTypes.reduce(
+        (accumulator, item) => {
+          const category = item.category || 'na';
+          const list = (accumulator[category] = accumulator[category] || []);
+          list.push(item);
+          return accumulator;
+        },
+        {} as DataSourceCategories
+      );
+
+      return Object.keys(categories).map(category => {
+        return (
+          <div className="add-data-source-category" key={category}>
+            <div className="add-data-source-category-header">{category}</div>
+            {this.renderTypes(categories[category])}
+          </div>
+        );
+      });
+    }
+
+    return this.renderTypes(dataSourceTypes);
+  }
+
   render() {
-    const { navModel, dataSourceTypes, dataSourceTypeSearchQuery, isLoading } = this.props;
+    const { navModel, isLoading, dataSourceTypeSearchQuery } = this.props;
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
@@ -47,15 +92,7 @@ class NewDataSourcePage extends PureComponent<Props> {
               placeholder="Filter by name or type"
             />
           </div>
-          <div className="add-data-source-grid">
-            {dataSourceTypes.map((plugin, index) => (
-              <DataSourceTypeCard
-                key={`${plugin.id}-${index}`}
-                plugin={plugin}
-                onClick={() => this.onDataSourceTypeClicked(plugin)}
-              />
-            ))}
-          </div>
+          <div>{this.renderList()}</div>
         </Page.Contents>
       </Page>
     );

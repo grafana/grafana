@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "InfluxDB",
   "id": "influxdb",
+  "category": "tsdb",
 
   "defaultMatchFormat": "regex values",
   "metrics": true,
