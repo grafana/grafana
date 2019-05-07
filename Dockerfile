@@ -35,6 +35,8 @@ RUN ./node_modules/.bin/grunt build
 # Final container
 FROM debian:stretch-slim
 
+LABEL maintainer="Grafana team <hello@grafana.com>"
+
 ARG GF_UID="472"
 ARG GF_GID="472"
 
