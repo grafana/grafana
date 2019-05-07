@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
 import moment from 'moment';
-import { TimeRange, TimeOptions, TimeOption, SelectOptionItem } from '@grafana/ui';
 import { ButtonSelect } from '../Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Timezone } from '../../utils/datemath';
+import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
+import { SelectOptionItem } from '../Select/Select';
 
 export interface Props {
   value: TimeRange;

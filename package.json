@@ -31,7 +31,7 @@
     "@types/lodash": "4.14.123",
     "@types/node": "11.13.4",
     "@types/papaparse": "4.5.9",
-    "@types/react": "16.8.13",
+    "@types/react": "16.8.16",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
     "@types/react-select": "2.0.15",
