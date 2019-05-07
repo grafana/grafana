@@ -10,6 +10,16 @@
   z-index: $zindex-timepicker-popover;
 }
 
+.time-picker-utc {
+  color: $orange;
+  font-size: 75%;
+  padding: 3px;
+  font-weight: 500;
+  margin-left: 4px;
+  position: relative;
+  top: -1px;
+}
+
 .time-picker-popover {
   display: flex;
   flex-flow: row nowrap;

@@ -1,9 +1,9 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactElement } from 'react';
 import Select, { SelectOptionItem } from './Select';
 import { PopperContent } from '../Tooltip/PopperController';
 
 interface ButtonComponentProps {
-  label: string | undefined;
+  label: ReactElement | string | undefined;
   className: string | undefined;
   iconClass?: string;
 }
@@ -31,7 +31,7 @@ export interface Props<T> {
   className: string | undefined;
   options: Array<SelectOptionItem<T>>;
   value: SelectOptionItem<T>;
-  label?: string;
+  label?: ReactElement | string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;
