@@ -39,6 +39,7 @@
     "@types/react-transition-group": "2.0.16",
     "@types/react-virtualized": "9.18.12",
     "@types/react-window": "1.7.0",
+    "@types/yup": "0.26.13",
     "angular-mocks": "1.6.6",
     "autoprefixer": "9.5.0",
     "axios": "0.18.0",
@@ -227,7 +228,8 @@
     "tether": "1.4.5",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
-    "xss": "1.0.3"
+    "xss": "1.0.3",
+    "yup": "0.27.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

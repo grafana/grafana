@@ -12,13 +12,16 @@ import {
   OptionEditor,
   OptionsPanelGroup,
   OptionsGrid,
-  ObjectOptionDataSchema,
-  SingleStatBaseOptions,
-  OptionsDataSchema,
+  VizOrientation,
+  ValueMapping,
+  MappingType,
+  Threshold,
+  SingleStatValueOptions,
 } from '@grafana/ui';
 
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
+import * as yup from 'yup';
 
 const optionsModel: OptionsUIModel<GaugeOptions> = {
   model: {
@@ -92,41 +95,42 @@ const optionsModel: OptionsUIModel<GaugeOptions> = {
   } as OptionsGrid,
 };
 
-const valueOptionsSchema: ObjectOptionDataSchema<SingleStatBaseOptions> = {
-  properties: {
-    orientation: {},
-    thresholds: {},
-    valueMappings: {},
-    valueOptions: {},
-  },
-};
+const valueMappingSchema: yup.ObjectSchema<ValueMapping> = yup.object({
+  from: yup.string(),
+  to: yup.string(),
+  id: yup.number(),
+  operator: yup.string(),
+  text: yup.string(),
+  type: yup.number().oneOf([MappingType.ValueToText, MappingType.RangeToText]),
+});
+const thresholdSchema: yup.ObjectSchema<Threshold> = yup.object({
+  index: yup.number(),
+  value: yup.number(),
+  color: yup.string(),
+});
 
-const optionsSchema: OptionsDataSchema<GaugeOptions> = {
-  title: 'GaugeOptions',
-  type: 'object',
-  required: ['minValue', 'maxValue'],
-  properties: {
-    minValue: {
-      type: 'number',
-      description: 'Hint for min value...',
-    },
-    maxValue: {
-      type: 'number',
-      description: 'Hint for min value...',
-    },
-    showThresholdMarkers: {
-      type: 'boolean',
-    },
-    showThresholdLabels: {
-      type: 'boolean',
-    },
-    ...valueOptionsSchema.properties,
-  },
-};
+const valueOptionsYupSchema: yup.ObjectSchema<SingleStatValueOptions> = yup.object({
+  unit: yup.string(),
+  suffix: yup.string(),
+  stat: yup.string(),
+  prefix: yup.string(),
+  decimals: yup.number().nullable(),
+});
+
+const GaugeOptionsSchema: yup.ObjectSchema<GaugeOptions> = yup.object({
+  minValue: yup.number().required(),
+  maxValue: yup.number().required(),
+  showThresholdMarkers: yup.boolean(),
+  showThresholdLabels: yup.boolean(),
+  orientation: yup.mixed().oneOf([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical]),
+  thresholds: yup.array().of(thresholdSchema),
+  valueMappings: yup.array().of(valueMappingSchema),
+  valueOptions: valueOptionsYupSchema,
+});
 
 export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(optionsModel)
-  .setOptionsSchema(optionsSchema)
+  .setOptionsSchema(GaugeOptionsSchema)
   .setPanelChangeHandler(sharedSingleStatOptionsCheck)
   .setMigrationHandler(sharedSingleStatMigrationCheck);

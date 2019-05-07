@@ -39,7 +39,8 @@
     "react-virtualized": "9.21.0",
     "tether": "1.4.5",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
-    "tinycolor2": "1.4.1"
+    "tinycolor2": "1.4.1",
+    "yup": "0.27.0"
   },
   "devDependencies": {
     "@storybook/addon-actions": "5.0.6",
@@ -65,6 +66,7 @@
     "@types/storybook__react": "4.0.1",
     "@types/tether-drop": "1.4.8",
     "@types/tinycolor2": "1.4.1",
+    "@types/yup": "0.26.13",
     "awesome-typescript-loader": "5.2.1",
     "pretty-format": "24.5.0",
     "react-docgen-typescript-loader": "3.0.1",

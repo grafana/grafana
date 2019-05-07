@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  OptionsDataSchema,
   OptionsUIType,
   OptionsUIModel,
   OptionsGrid as OptionsGridUI,
@@ -10,11 +9,12 @@ import {
   OptionInputAPI,
 } from '../../types/panelOptions';
 import { css } from 'emotion';
+import * as yup from 'yup';
 
 type OptionChangeHandler<TOptions> = <K extends keyof TOptions>(key: K, value: TOptions[K]) => void;
 
-interface PanelOptionsBilderProps<TOptions> {
-  optionsSchema: OptionsDataSchema<TOptions>;
+interface PanelOptionsBilderProps<TOptions extends {}> {
+  optionsSchema: yup.ObjectSchema<TOptions>;
   uiModel: OptionsUIModel<TOptions>;
   options: TOptions;
   onOptionsChange: OptionChangeHandler<TOptions>;
@@ -24,8 +24,13 @@ type Diff<T extends string, U extends string> = ({ [P in T]: P } & { [P in U]: n
 // @ts-ignore
 type Omit<T, K extends keyof T> = Pick<T, Diff<keyof T, K>>;
 
-function isOptionRequired<TOptions>(property: string, schema: OptionsDataSchema<TOptions>) {
-  return !!schema.required && schema.required.indexOf(property) > -1;
+function isOptionRequired<TOptions extends {}>(property: string, schema: yup.ObjectSchema<TOptions>) {
+  return (
+    yup
+      .reach(schema, property)
+      .describe()
+      .tests.filter(t => t.name === 'required').length > 0
+  );
 }
 
 type OptionsGridItemRenderer = (
@@ -50,10 +55,10 @@ const OptionsGrid = ({ config, content, renderGridItem }: OptionsGridProps) => {
   );
 };
 
-interface OptionEditorProps<TOptions, TKey extends keyof TOptions>
+interface OptionEditorProps<TOptions extends {}, TKey extends keyof TOptions>
   extends Omit<OptionEditorUI<TOptions, TKey>, keyof OptionsUI<any>>,
     OptionInputAPI<TOptions[TKey]> {
-  optionsSchema: OptionsDataSchema<TOptions>;
+  optionsSchema: yup.ObjectSchema<TOptions>;
   onChange: (value: TOptions[TKey]) => void;
 }
 
@@ -72,10 +77,10 @@ const OptionEditor = ({ editor, value, onChange, optionsSchema }: OptionEditorPr
   });
 };
 
-interface OptionsGroupProps<TOptions> extends Omit<OptionsGroupUI<any>, keyof OptionsUI<any>> {
+interface OptionsGroupProps<TOptions extends {}> extends Omit<OptionsGroupUI<any>, keyof OptionsUI<any>> {
   onOptionsChange: OptionChangeHandler<TOptions>;
   options: TOptions;
-  optionsSchema: OptionsDataSchema<TOptions>;
+  optionsSchema: yup.ObjectSchema<TOptions>;
 }
 
 const OptionsGroup = ({
@@ -105,9 +110,9 @@ const OptionsGroup = ({
   });
 };
 
-interface OptionsUIElementProps<TOptions> {
+interface OptionsUIElementProps<TOptions extends {}> {
   options: TOptions;
-  optionsSchema: OptionsDataSchema<TOptions>;
+  optionsSchema: yup.ObjectSchema<TOptions>;
   onOptionsChange: OptionChangeHandler<TOptions>;
   uiElement: OptionEditorUI<TOptions, keyof TOptions> | OptionsGroupUI<TOptions>;
 }
