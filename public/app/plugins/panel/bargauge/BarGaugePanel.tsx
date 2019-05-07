@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, getScaledFieldHelper } from '@grafana/ui';
+import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, getFieldDisplayProcessor } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
@@ -15,15 +15,14 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
-    const scale = getScaledFieldHelper(field);
 
     return (
       <BarGauge
         value={display}
+        field={getFieldDisplayProcessor(field, config.theme)}
         width={width}
         height={height}
         orientation={options.orientation}
-        scale={scale}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}

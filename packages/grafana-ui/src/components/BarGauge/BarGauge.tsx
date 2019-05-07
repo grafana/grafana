@@ -7,7 +7,7 @@ import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
 import { DisplayValue, Themeable, TimeSeriesValue, VizOrientation } from '../../types';
-import { ScaledFieldHelper } from '../../utils/scale';
+import { FieldDisplayProcessor } from '../../utils/scale';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
@@ -19,7 +19,7 @@ export interface Props extends Themeable {
   height: number;
   width: number;
   value: DisplayValue;
-  scale: ScaledFieldHelper;
+  field: FieldDisplayProcessor;
   orientation: VizOrientation;
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
@@ -80,7 +80,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   getCellColor(positionValue: TimeSeriesValue): CellColors {
-    const { theme, value, scale } = this.props;
+    const { theme, value, field } = this.props;
     if (positionValue === null) {
       return {
         background: 'gray',
@@ -88,7 +88,7 @@ export class BarGauge extends PureComponent<Props> {
       };
     }
 
-    const info = scale.interpolate(positionValue);
+    const info = field.interpolate(positionValue);
     const color = getColorFromHexRgbOrName(info.color, theme.type);
 
     // if we are past real value the cell is not "on"
@@ -117,7 +117,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { scale, value, itemSpacing } = this.props;
+    const { field, value, itemSpacing } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -128,13 +128,13 @@ export class BarGauge extends PureComponent<Props> {
     } = calculateBarAndValueDimensions(this.props);
 
     const isVert = isVertical(this.props);
-    const valueRange = scale.maxValue - scale.minValue;
+    const valueRange = field.maxValue - field.minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
     const cellWidth = 12;
     const cellCount = Math.floor(maxSize / cellWidth);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
-    const valueColor = scale.interpolate(value.numeric).color;
+    const valueColor = field.interpolate(value.numeric).color;
     const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
 
     const containerStyles: CSSProperties = {
@@ -359,10 +359,10 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, scale, value } = props;
+  const { displayMode, field, value } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valueInfo = scale.interpolate(value.numeric);
+  const valueInfo = field.interpolate(value.numeric);
   const valuePercent = valueInfo.percent!;
   const valueColor = valueInfo.color;
   const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
@@ -437,12 +437,33 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { scale, value } = props;
-  return scale.gradient({
-    vertical: isVertical(props),
-    value: value.numeric,
-    maxSize,
-  });
+  const { field, value } = props;
+  const { minValue, maxValue, scale } = field;
+  const thresholds = scale.thresholds!;
+
+  const cssDirection = isVertical(props) ? '0deg' : '90deg';
+
+  let gradient = '';
+  let lastpos = 0;
+
+  for (let i = 0; i < thresholds.length; i++) {
+    const threshold = thresholds[i];
+    const color = getColorFromHexRgbOrName(threshold.color!);
+    const valuePercent = Math.min(threshold.value / (maxValue - minValue), 1);
+    const pos = valuePercent * maxSize;
+    const offset = Math.round(pos - (pos - lastpos) / 2);
+
+    if (gradient === '') {
+      gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
+    } else if (value.numeric < threshold.value) {
+      break;
+    } else {
+      lastpos = pos;
+      gradient += ` ${offset}px, ${color}`;
+    }
+  }
+
+  return gradient + ')';
 }
 
 /**

@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { getTheme } from '../../themes';
-import { getScaledFieldHelper } from '../../utils/scale';
+import { getFieldDisplayProcessor } from '../../utils/scale';
 import { Threshold } from '../../types/scale';
 
 jest.mock('jquery', () => ({
@@ -29,7 +29,7 @@ const setup = (thresholds?: Threshold[]) => {
       text: '25',
       numeric: 25,
     },
-    scale: getScaledFieldHelper(field, getTheme().type),
+    field: getFieldDisplayProcessor(field, getTheme()),
     theme: getTheme(),
   };
 

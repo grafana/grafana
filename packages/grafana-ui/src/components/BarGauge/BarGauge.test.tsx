@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { BarGauge, Props, getBasicAndGradientStyles, getBarGradient, getTitleStyles } from './BarGauge';
 import { VizOrientation, DisplayValue } from '../../types';
 import { getTheme } from '../../themes';
-import { getScaledFieldHelper } from '../../utils/scale';
+import { getFieldDisplayProcessor } from '../../utils/scale';
 
 // jest.mock('jquery', () => ({
 //   plot: jest.fn(),
@@ -36,7 +36,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       numeric: 25,
     },
     theme: getTheme(),
-    scale: getScaledFieldHelper(field, getTheme().type),
+    field: getFieldDisplayProcessor(field, getTheme()),
     orientation: VizOrientation.Horizontal,
   };
 
@@ -63,11 +63,11 @@ describe('BarGauge', () => {
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
       const props = getProps({ value: getValue(70) });
-      expect(props.scale.interpolate(props.value.numeric).color).toEqual(orange);
+      expect(props.field.interpolate(props.value.numeric).color).toEqual(orange);
     });
     it('should get the base threshold', () => {
       const props = getProps({ value: getValue(-10) });
-      expect(props.scale.interpolate(props.value.numeric).color).toEqual(green);
+      expect(props.field.interpolate(props.value.numeric).color).toEqual(green);
     });
   });
 

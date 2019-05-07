@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, FieldDisplay, getFieldDisplayValues, getScaledFieldHelper } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues, getFieldDisplayProcessor } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
@@ -15,14 +15,13 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
-    const scale = getScaledFieldHelper(field, config.theme.type);
 
     return (
       <Gauge
         value={display}
+        field={getFieldDisplayProcessor(field, config.theme)}
         width={width}
         height={height}
-        scale={scale}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         theme={config.theme}

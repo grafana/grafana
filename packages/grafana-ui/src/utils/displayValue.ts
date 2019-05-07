@@ -18,7 +18,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
-import { getFieldScaleInterpolator } from './scale';
+import { getFieldDisplayProcessor } from './scale';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -39,8 +39,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   if (options && !_.isEmpty(options)) {
     const field = options.field ? options.field : {};
     const formatFunc = getValueFormat(field.unit || 'none');
-    const theme = options.theme ? options.theme.type : GrafanaThemeType.Dark;
-    const scale = field.scale ? getFieldScaleInterpolator(field, theme) : null;
+    const scale = getFieldDisplayProcessor(field, options.theme);
 
     return (value: any) => {
       const { mappings } = options;
@@ -79,7 +78,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
         if (scale) {
-          color = scale(numeric).color;
+          color = scale.interpolate(numeric).color;
         }
       }
 

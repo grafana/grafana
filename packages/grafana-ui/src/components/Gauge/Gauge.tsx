@@ -3,15 +3,15 @@ import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils';
 import { DisplayValue, Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
-import { ScaledFieldHelper } from '../../utils/scale';
+import { FieldDisplayProcessor } from '../../utils/scale';
 
 export interface Props extends Themeable {
   height: number;
-  scale: ScaledFieldHelper;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
+  field: FieldDisplayProcessor;
 }
 
 const FONT_SCALE = 1;
@@ -33,9 +33,10 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds() {
-    const { scale, theme } = this.props;
+    const { field, theme } = this.props;
 
-    const { minValue, maxValue, thresholds } = scale;
+    const { minValue, maxValue, scale } = field;
+    const { thresholds } = scale;
     if (!thresholds) {
       return []; // TODO d3 scheme
     }
@@ -62,7 +63,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { scale, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -85,8 +86,8 @@ export class Gauge extends PureComponent<Props> {
       series: {
         gauges: {
           gauge: {
-            min: scale.minValue,
-            max: scale.maxValue,
+            min: field.minValue,
+            max: field.maxValue,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

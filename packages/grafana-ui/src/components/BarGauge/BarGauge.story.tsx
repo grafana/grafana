@@ -4,7 +4,8 @@ import { BarGauge, Props } from './BarGauge';
 import { VizOrientation } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import { getScaledFieldHelper } from '../../utils/scale';
+import { getFieldDisplayProcessor } from '../../utils/scale';
+import { getTheme } from '../../themes/index';
 
 const getKnobs = () => {
   return {
@@ -60,7 +61,7 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       },
       orientation: VizOrientation.Vertical,
       displayMode: 'basic',
-      scale: getScaledFieldHelper(field), // getTheme().type),
+      field: getFieldDisplayProcessor(field, getTheme()),
     };
 
     Object.assign(props, overrides);
