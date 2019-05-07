@@ -144,6 +144,7 @@
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
+    "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
     "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
     "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
