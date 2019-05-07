@@ -57,6 +57,7 @@ export class TimePickerOptionGroup extends PureComponent<Props, State> {
               referenceElement={this.pickerTriggerRef.current}
               placement={'left-start'}
               wrapperClassName="time-picker-popover-popper"
+              eventsEnabled={false}
             />
           )}
         </div>
