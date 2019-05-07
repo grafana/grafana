@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import moment from 'moment';
+import { momentWrapper } from 'app/core/moment_wrapper';
 import {
   AzureLogsVariable,
   AzureLogsTableData,
@@ -217,6 +217,6 @@ export default class ResponseParser {
   }
 
   static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+    return momentWrapper(dateTime).valueOf();
   }
 }

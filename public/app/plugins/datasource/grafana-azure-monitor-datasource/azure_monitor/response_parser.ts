@@ -1,6 +1,6 @@
-import moment from 'moment';
 import _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -96,7 +96,7 @@ export default class ResponseParser {
   }
 
   static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+    return momentWrapper(dateTime).valueOf();
   }
 
   static getKeyForAggregationField(dataObj): string {

@@ -46,19 +46,25 @@ export interface DateTimeDuration {
 
 export interface DateTimeType extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
-  format: (formaInput: FormatInput) => string;
-  fromNow: () => string;
+  format: (formatInput?: FormatInput) => string;
+  fromNow: (withoutSuffix?: boolean) => string;
   from: (formaInput: DateTimeInput) => string;
   isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
   isValid: () => boolean;
   local: () => DateTimeType;
+  locale: (locale: string) => DateTimeType;
   startOf: (unitOfTime: DurationUnit) => DateTimeType;
+  subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
   toDate: () => Date;
   toISOString: () => string;
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTimeType;
 }
+
+export const setLocale = (language: string) => {
+  moment.locale(language);
+};
 
 export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();

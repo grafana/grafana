@@ -1,5 +1,5 @@
-import moment from 'moment';
 import { GraphCtrl } from '../module';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 jest.mock('../graph', () => ({}));
 
@@ -50,7 +50,7 @@ describe('GraphCtrl', () => {
         },
       ];
 
-      ctx.ctrl.range = { from: moment().valueOf(), to: moment().valueOf() };
+      ctx.ctrl.range = { from: momentWrapper().valueOf(), to: momentWrapper().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -62,10 +62,10 @@ describe('GraphCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: moment()
+        from: momentWrapper()
           .subtract(1, 'days')
           .valueOf(),
-        to: moment().valueOf(),
+        to: momentWrapper().valueOf(),
       };
 
       const data = [

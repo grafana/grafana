@@ -1,5 +1,5 @@
 import { SingleStatCtrl } from '../module';
-import moment from 'moment';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 describe('SingleStatCtrl', () => {
   const ctx = {} as any;
@@ -89,7 +89,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(moment(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
+      expect(momentWrapper(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
     });
   });
 
@@ -120,7 +120,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.valueFormatted).toBe(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.valueFormatted).toBe(momentWrapper(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 

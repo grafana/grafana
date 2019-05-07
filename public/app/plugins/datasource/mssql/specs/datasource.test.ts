@@ -1,8 +1,8 @@
-import moment from 'moment';
 import { MssqlDatasource } from '../datasource';
 import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import q from 'q';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {
@@ -29,8 +29,8 @@ describe('MSSQLDatasource', () => {
         rawQuery: 'select time, text, tags from table;',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: momentWrapper(1432288354),
+        to: momentWrapper(1432288401),
       },
     };
 
@@ -209,8 +209,8 @@ describe('MSSQLDatasource', () => {
       },
     };
     const time = {
-      from: moment(1521545610656),
-      to: moment(1521546251185),
+      from: momentWrapper(1521545610656),
+      to: momentWrapper(1521546251185),
     };
 
     beforeEach(() => {

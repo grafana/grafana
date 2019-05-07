@@ -1,5 +1,5 @@
-import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 describe('HeatmapCtrl', () => {
   const ctx = {} as any;
@@ -32,7 +32,7 @@ describe('HeatmapCtrl', () => {
         },
       ];
 
-      ctx.ctrl.range = { from: moment().valueOf(), to: moment().valueOf() };
+      ctx.ctrl.range = { from: momentWrapper().valueOf(), to: momentWrapper().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -44,10 +44,10 @@ describe('HeatmapCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: moment()
+        from: momentWrapper()
           .subtract(1, 'days')
           .valueOf(),
-        to: moment().valueOf(),
+        to: momentWrapper().valueOf(),
       };
 
       const data = [

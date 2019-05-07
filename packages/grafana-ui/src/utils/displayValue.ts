@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
@@ -18,6 +17,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
+import { DateTimeType, momentWrapper } from 'app/core/moment_wrapper';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -91,18 +91,18 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   return toStringProcessor;
 }
 
-function toMoment(value: any, numeric: number, format: string): moment.Moment {
+function toMoment(value: any, numeric: number, format: string): DateTimeType {
   if (!isNaN(numeric)) {
-    const v = moment(numeric);
+    const v = momentWrapper(numeric);
     if (v.isValid()) {
       return v;
     }
   }
-  const v = moment(value, format);
+  const v = momentWrapper(value, format);
   if (v.isValid) {
     return v;
   }
-  return moment(value); // moment will try to parse the format
+  return momentWrapper(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

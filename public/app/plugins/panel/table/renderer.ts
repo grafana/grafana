@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import moment from 'moment';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 export class TableRenderer {
   formatters: any[];
@@ -105,7 +105,7 @@ export class TableRenderer {
           v = parseInt(v, 10);
         }
 
-        let date = moment(v);
+        let date = momentWrapper(v);
 
         if (this.isUtc) {
           date = date.utc();

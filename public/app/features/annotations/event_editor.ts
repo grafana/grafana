@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import moment from 'moment';
 import { coreModule } from 'app/core/core';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/ui';
+import { momentWrapper } from 'app/core/moment_wrapper';
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
@@ -86,7 +86,7 @@ export class EventEditorCtrl {
 function tryEpochToMoment(timestamp) {
   if (timestamp && _.isNumber(timestamp)) {
     const epoch = Number(timestamp);
-    return moment(epoch);
+    return momentWrapper(epoch);
   } else {
     return timestamp;
   }
