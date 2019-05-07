@@ -1,5 +1,5 @@
 import { SingleStatCtrl } from '../module';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('SingleStatCtrl', () => {
   const ctx = {} as any;
@@ -89,7 +89,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(momentWrapper(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
+      expect(dateTimeType(ctx.data.valueFormatted).valueOf()).toBe(1505634997000);
     });
   });
 
@@ -120,7 +120,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('should set formatted value', () => {
-      expect(ctx.data.valueFormatted).toBe(momentWrapper(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
+      expect(ctx.data.valueFormatted).toBe(dateTimeType(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 

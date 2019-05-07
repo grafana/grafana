@@ -1,11 +1,11 @@
 import { DataQueryRequest, DataQuery } from '@grafana/ui';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function getQueryOptions<TQuery extends DataQuery>(
   options: Partial<DataQueryRequest<TQuery>>
 ): DataQueryRequest<TQuery> {
   const raw = { from: 'now', to: 'now-1h' };
-  const range = { from: momentWrapper(), to: momentWrapper(), raw: raw };
+  const range = { from: dateTimeType(), to: dateTimeType(), raw: raw };
 
   const defaults: DataQueryRequest<TQuery> = {
     requestId: 'TEST',

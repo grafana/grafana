@@ -6,7 +6,7 @@ import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 import { popoverOptions } from './TimePicker.story';
-import { momentWrapper } from '../../utils/moment_wrapper';
+import { dateTimeType } from '../../utils/moment_wrapper';
 
 const TimePickerOptionGroupStories = storiesOf('UI/TimePicker/TimePickerOptionGroup', module);
 
@@ -21,7 +21,7 @@ const data = {
     action('onPopoverClose fired')(timeRange);
   },
   popoverProps: {
-    value: { from: momentWrapper(), to: momentWrapper(), raw: { from: 'now/d', to: 'now/d' } },
+    value: { from: dateTimeType(), to: dateTimeType(), raw: { from: 'now/d', to: 'now/d' } },
     options: popoverOptions,
     isTimezoneUtc: false,
     onChange: (timeRange: TimeRange) => {

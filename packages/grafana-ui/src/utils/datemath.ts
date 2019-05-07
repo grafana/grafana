@@ -1,7 +1,7 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
 import { unitOfTime } from 'moment';
-import { DateTimeType, momentWrapper, toUtc, ISO_8601, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { DateTimeType, dateTimeType, toUtc, ISO_8601, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const units: unitOfTime.Base[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
@@ -28,7 +28,7 @@ export function parse(
       return text;
     }
     if (isDate(text)) {
-      return momentWrapper(text);
+      return dateTimeType(text);
     }
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
     return undefined;
@@ -42,7 +42,7 @@ export function parse(
       if (timezone === 'utc') {
         time = toUtc();
       } else {
-        time = momentWrapper();
+        time = dateTimeType();
       }
       mathString = text.substring('now'.length);
     } else {
@@ -55,7 +55,7 @@ export function parse(
         mathString = text.substring(index + 2);
       }
       // We're going to just require ISO8601 timestamps, k?
-      time = momentWrapper(parseString, ISO_8601);
+      time = dateTimeType(parseString, ISO_8601);
     }
 
     if (!mathString.length) {

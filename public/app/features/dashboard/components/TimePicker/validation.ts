@@ -1,5 +1,5 @@
 import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { toUtc, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function inputDateDirective() {
   return {
@@ -22,7 +22,7 @@ export function inputDateDirective() {
         if ($scope.ctrl.isUtc) {
           parsed = toUtc(text, format);
         } else {
-          parsed = momentWrapper(text, format);
+          parsed = dateTimeType(text, format);
         }
 
         if (!parsed.isValid()) {

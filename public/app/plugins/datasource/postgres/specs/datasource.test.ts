@@ -1,6 +1,6 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('PostgreSQLDatasource', () => {
   const instanceSettings = { name: 'postgresql' };
@@ -39,8 +39,8 @@ describe('PostgreSQLDatasource', () => {
         rawQuery: 'select time, title, text, tags from table;',
       },
       range: {
-        from: momentWrapper(1432288354),
-        to: momentWrapper(1432288401),
+        from: dateTimeType(1432288354),
+        to: dateTimeType(1432288401),
       },
     };
 

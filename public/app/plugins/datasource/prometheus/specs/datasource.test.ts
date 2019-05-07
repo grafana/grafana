@@ -7,7 +7,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('../metric_find_query');
 
@@ -33,8 +33,8 @@ describe('PrometheusDatasource', () => {
   ctx.timeSrvMock = {
     timeRange: () => {
       return {
-        from: momentWrapper(1531468681),
-        to: momentWrapper(1531489712),
+        from: dateTimeType(1531468681),
+        to: dateTimeType(1531489712),
       };
     },
   };
@@ -135,7 +135,7 @@ describe('PrometheusDatasource', () => {
   describe('When converting prometheus histogram to heatmap format', () => {
     beforeEach(() => {
       ctx.query = {
-        range: { from: momentWrapper(1443454528000), to: momentWrapper(1443454528000) },
+        range: { from: dateTimeType(1443454528000), to: dateTimeType(1443454528000) },
         targets: [{ expr: 'test{job="testjob"}', format: 'heatmap', legendFormat: '{{le}}' }],
         interval: '1s',
       };
@@ -310,8 +310,8 @@ describe('PrometheusDatasource', () => {
       ctx.templateSrvMock.replace = jest.fn();
       ctx.timeSrvMock.timeRange = () => {
         return {
-          from: momentWrapper(1531468681),
-          to: momentWrapper(1531489712),
+          from: dateTimeType(1531468681),
+          to: dateTimeType(1531489712),
         };
       };
       ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
@@ -345,7 +345,7 @@ const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) =>
-  momentWrapper(hours * HOUR + minutes * MINUTE + seconds * SECOND);
+  dateTimeType(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 const ctx = {} as any;
 const instanceSettings = {

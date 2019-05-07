@@ -8,12 +8,12 @@ import {
   toDurationInMilliseconds,
   toDurationInSeconds,
 } from './dateTimeFormatters';
-import { toUtc, momentWrapper } from '../moment_wrapper';
+import { toUtc, dateTimeType } from '../moment_wrapper';
 
 describe('date time formats', () => {
   const epoch = 1505634997920;
   const utcTime = toUtc(epoch);
-  const browserTime = momentWrapper(epoch);
+  const browserTime = dateTimeType(epoch);
 
   it('should format as iso date', () => {
     const expected = browserTime.format('YYYY-MM-DD HH:mm:ss');
@@ -28,7 +28,7 @@ describe('date time formats', () => {
   });
 
   it('should format as iso date and skip date when today', () => {
-    const now = momentWrapper();
+    const now = dateTimeType();
     const expected = now.format('HH:mm:ss');
     const actual = dateTimeAsIso(now.valueOf(), 0, 0, false);
     expect(actual).toBe(expected);
@@ -54,7 +54,7 @@ describe('date time formats', () => {
   });
 
   it('should format as US date and skip date when today', () => {
-    const now = momentWrapper();
+    const now = dateTimeType();
     const expected = now.format('h:mm:ss a');
     const actual = dateTimeAsUS(now.valueOf(), 0, 0, false);
     expect(actual).toBe(expected);
@@ -68,7 +68,7 @@ describe('date time formats', () => {
   });
 
   it('should format as from now with days', () => {
-    const daysAgo = momentWrapper().add(-7, 'd');
+    const daysAgo = dateTimeType().add(-7, 'd');
     const expected = '7 days ago';
     const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
     expect(actual).toBe(expected);
@@ -82,7 +82,7 @@ describe('date time formats', () => {
   });
 
   it('should format as from now with minutes', () => {
-    const daysAgo = momentWrapper().add(-2, 'm');
+    const daysAgo = dateTimeType().add(-2, 'm');
     const expected = '2 minutes ago';
     const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
     expect(actual).toBe(expected);

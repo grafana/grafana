@@ -1,4 +1,4 @@
-import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const intervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
@@ -25,10 +25,10 @@ export class IndexPattern {
     }
 
     const intervalInfo = intervalMap[this.interval];
-    const start = momentWrapper(from)
+    const start = dateTimeType(from)
       .utc()
       .startOf(intervalInfo.startOf);
-    const endEpoch = momentWrapper(to)
+    const endEpoch = dateTimeType(to)
       .utc()
       .startOf(intervalInfo.startOf)
       .valueOf();

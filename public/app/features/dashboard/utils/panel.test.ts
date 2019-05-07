@@ -1,11 +1,11 @@
 import { TimeRange } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { advanceTo, clear } from 'jest-date-mock';
-import { momentWrapper, DateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType, DateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const dashboardTimeRange: TimeRange = {
-  from: momentWrapper([2019, 1, 11, 12, 0]),
-  to: momentWrapper([2019, 1, 11, 18, 0]),
+  from: dateTimeType([2019, 1, 11, 12, 0]),
+  to: dateTimeType([2019, 1, 11, 18, 0]),
   raw: {
     from: 'now-6h',
     to: 'now',
@@ -13,7 +13,7 @@ const dashboardTimeRange: TimeRange = {
 };
 
 describe('applyPanelTimeOverrides', () => {
-  const fakeCurrentDate = momentWrapper([2019, 1, 11, 14, 0, 0]).toDate();
+  const fakeCurrentDate = dateTimeType([2019, 1, 11, 14, 0, 0]).toDate();
 
   beforeAll(() => {
     advanceTo(fakeCurrentDate);
@@ -31,7 +31,7 @@ describe('applyPanelTimeOverrides', () => {
     // @ts-ignore: PanelModel type incositency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
 
-    expect(overrides.timeRange.from.toISOString()).toBe(momentWrapper([2019, 1, 11, 12]).toISOString());
+    expect(overrides.timeRange.from.toISOString()).toBe(dateTimeType([2019, 1, 11, 12]).toISOString());
     expect(overrides.timeRange.to.toISOString()).toBe(fakeCurrentDate.toISOString());
     expect(overrides.timeRange.raw.from).toBe('now-2h');
     expect(overrides.timeRange.raw.to).toBe('now');
@@ -42,8 +42,8 @@ describe('applyPanelTimeOverrides', () => {
       timeShift: '2h',
     };
 
-    const expectedFromDate = momentWrapper([2019, 1, 11, 10, 0, 0]).toDate();
-    const expectedToDate = momentWrapper([2019, 1, 11, 16, 0, 0]).toDate();
+    const expectedFromDate = dateTimeType([2019, 1, 11, 10, 0, 0]).toDate();
+    const expectedToDate = dateTimeType([2019, 1, 11, 16, 0, 0]).toDate();
 
     // @ts-ignore: PanelModel type incositency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
@@ -60,8 +60,8 @@ describe('applyPanelTimeOverrides', () => {
       timeShift: '2h',
     };
 
-    const expectedFromDate = momentWrapper([2019, 1, 11, 10, 0, 0]).toDate();
-    const expectedToDate = momentWrapper([2019, 1, 11, 12, 0, 0]).toDate();
+    const expectedFromDate = dateTimeType([2019, 1, 11, 10, 0, 0]).toDate();
+    const expectedToDate = dateTimeType([2019, 1, 11, 12, 0, 0]).toDate();
 
     // @ts-ignore: PanelModel type incositency
     const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);

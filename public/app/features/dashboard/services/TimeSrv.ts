@@ -11,7 +11,7 @@ import { TimeRange, RawTimeRange } from '@grafana/ui';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TimeSrv {
   time: any;
@@ -65,10 +65,10 @@ export class TimeSrv {
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
     if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-      this.time.from = momentWrapper(this.time.from).utc();
+      this.time.from = dateTimeType(this.time.from).utc();
     }
     if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-      this.time.to = momentWrapper(this.time.to).utc();
+      this.time.to = dateTimeType(this.time.to).utc();
     }
   }
 
@@ -220,8 +220,8 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     const raw = {
-      from: isDateTimeType(this.time.from) ? momentWrapper(this.time.from) : this.time.from,
-      to: isDateTimeType(this.time.to) ? momentWrapper(this.time.to) : this.time.to,
+      from: isDateTimeType(this.time.from) ? dateTimeType(this.time.from) : this.time.from,
+      to: isDateTimeType(this.time.to) ? dateTimeType(this.time.to) : this.time.to,
     };
 
     const timezone = this.dashboard && this.dashboard.getTimezone();

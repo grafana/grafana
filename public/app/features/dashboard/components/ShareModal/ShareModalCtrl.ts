@@ -1,6 +1,6 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 /** @ngInject */
 export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
@@ -93,7 +93,7 @@ export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv,
   // This function will try to return the proper full name of the local timezone
   // Chrome does not handle the timezone offset (but phantomjs does)
   $scope.getLocalTimeZone = () => {
-    const utcOffset = '&tz=UTC' + encodeURIComponent(momentWrapper().format('Z'));
+    const utcOffset = '&tz=UTC' + encodeURIComponent(dateTimeType().format('Z'));
 
     // Older browser does not the internationalization API
     if (!(window as any).Intl) {

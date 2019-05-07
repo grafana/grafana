@@ -10,7 +10,7 @@ import { toggleGraph, changeTime } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
-import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
@@ -34,8 +34,8 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: timeZone.isUtc ? toUtc(absRange.from) : momentWrapper(absRange.from),
-      to: timeZone.isUtc ? toUtc(absRange.to) : momentWrapper(absRange.to),
+      from: timeZone.isUtc ? toUtc(absRange.from) : dateTimeType(absRange.from),
+      to: timeZone.isUtc ? toUtc(absRange.to) : dateTimeType(absRange.to),
     };
 
     changeTime(exploreId, range);

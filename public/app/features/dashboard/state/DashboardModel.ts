@@ -15,7 +15,7 @@ import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
 import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
-import { toUtc, DateTimeInput, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, DateTimeInput, dateTimeType, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -699,11 +699,11 @@ export class DashboardModel {
   }
 
   formatDate(date: DateTimeInput, format?: string) {
-    date = isDateTimeType(date) ? date : momentWrapper(date);
+    date = isDateTimeType(date) ? date : dateTimeType(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
-    return timezone === 'browser' ? momentWrapper(date).format(format) : toUtc(date).format(format);
+    return timezone === 'browser' ? dateTimeType(date).format(format) : toUtc(date).format(format);
   }
 
   destroy() {
@@ -818,9 +818,9 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    date = isDateTimeType(date) ? date : momentWrapper(date);
+    date = isDateTimeType(date) ? date : dateTimeType(date);
 
-    return this.timezone === 'browser' ? momentWrapper(date).fromNow() : toUtc(date).fromNow();
+    return this.timezone === 'browser' ? dateTimeType(date).fromNow() : toUtc(date).fromNow();
   }
 
   isTimezoneUtc() {

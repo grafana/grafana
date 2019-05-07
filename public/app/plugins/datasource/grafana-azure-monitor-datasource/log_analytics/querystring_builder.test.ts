@@ -1,5 +1,5 @@
 import LogAnalyticsQuerystringBuilder from './querystring_builder';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('LogAnalyticsDatasource', () => {
   let builder: LogAnalyticsQuerystringBuilder;
@@ -10,8 +10,8 @@ describe('LogAnalyticsDatasource', () => {
       {
         interval: '5m',
         range: {
-          from: momentWrapper().subtract(24, 'hours'),
-          to: momentWrapper(),
+          from: dateTimeType().subtract(24, 'hours'),
+          to: dateTimeType(),
         },
         rangeRaw: {
           from: 'now-24h',
@@ -106,7 +106,7 @@ describe('LogAnalyticsDatasource', () => {
   describe('when using $__from and $__to is in the query and range is a specific interval', () => {
     beforeEach(() => {
       builder.rawQueryString = 'query=Tablename | where myTime >= $__from and myTime <= $__to';
-      builder.options.range.to = momentWrapper().subtract(1, 'hour');
+      builder.options.range.to = dateTimeType().subtract(1, 'hour');
       builder.options.rangeRaw.to = 'now-1h';
     });
 

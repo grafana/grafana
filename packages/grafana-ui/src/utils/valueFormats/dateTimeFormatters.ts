@@ -1,6 +1,6 @@
 import { toFixed, toFixedScaled } from './valueFormats';
 import { DecimalCount } from '../../types';
-import { toUtc, toDuration as duration, momentWrapper } from '../moment_wrapper';
+import { toUtc, toDuration as duration, dateTimeType } from '../moment_wrapper';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -307,24 +307,24 @@ export function toClockSeconds(size: number, decimals: DecimalCount) {
 }
 
 export function dateTimeAsIso(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? toUtc(value) : momentWrapper(value);
+  const time = isUtc ? toUtc(value) : dateTimeType(value);
 
-  if (momentWrapper().isSame(value, 'day')) {
+  if (dateTimeType().isSame(value, 'day')) {
     return time.format('HH:mm:ss');
   }
   return time.format('YYYY-MM-DD HH:mm:ss');
 }
 
 export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? toUtc(value) : momentWrapper(value);
+  const time = isUtc ? toUtc(value) : dateTimeType(value);
 
-  if (momentWrapper().isSame(value, 'day')) {
+  if (dateTimeType().isSame(value, 'day')) {
     return time.format('h:mm:ss a');
   }
   return time.format('MM/DD/YYYY h:mm:ss a');
 }
 
 export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? toUtc(value) : momentWrapper(value);
+  const time = isUtc ? toUtc(value) : dateTimeType(value);
   return time.fromNow();
 }

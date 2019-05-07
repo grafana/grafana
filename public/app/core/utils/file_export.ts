@@ -1,7 +1,7 @@
 import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
@@ -61,7 +61,7 @@ export function convertSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATE
       text += formatRow(
         [
           seriesList[seriesIndex].alias,
-          momentWrapper(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
+          dateTimeType(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX]).format(dateTimeFormat),
           seriesList[seriesIndex].datapoints[i][POINT_VALUE_INDEX],
         ],
         i < seriesList[seriesIndex].datapoints.length - 1 || seriesIndex < seriesList.length - 1
@@ -92,7 +92,7 @@ export function convertSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAU
 
   // make text
   for (let i = 0; i < extendedDatapointsList[0].length; i += 1) {
-    const timestamp = momentWrapper(extendedDatapointsList[0][i][POINT_TIME_INDEX]).format(dateTimeFormat);
+    const timestamp = dateTimeType(extendedDatapointsList[0][i][POINT_TIME_INDEX]).format(dateTimeFormat);
     text += formatRow(
       [timestamp].concat(
         extendedDatapointsList.map(datapoints => {

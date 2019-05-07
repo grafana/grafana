@@ -10,7 +10,7 @@ import {
 
 import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -31,7 +31,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
   if (recent) {
-    const lastQueried = momentWrapper(recent.ts).fromNow();
+    const lastQueried = dateTimeType(recent.ts).fromNow();
     hint = `${hint} Last queried ${lastQueried}.`;
   }
   return {

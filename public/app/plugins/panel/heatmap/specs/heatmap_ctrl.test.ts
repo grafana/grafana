@@ -1,5 +1,5 @@
 import { HeatmapCtrl } from '../heatmap_ctrl';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('HeatmapCtrl', () => {
   const ctx = {} as any;
@@ -32,7 +32,7 @@ describe('HeatmapCtrl', () => {
         },
       ];
 
-      ctx.ctrl.range = { from: momentWrapper().valueOf(), to: momentWrapper().valueOf() };
+      ctx.ctrl.range = { from: dateTimeType().valueOf(), to: dateTimeType().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -44,10 +44,10 @@ describe('HeatmapCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: momentWrapper()
+        from: dateTimeType()
           .subtract(1, 'days')
           .valueOf(),
-        to: momentWrapper().valueOf(),
+        to: dateTimeType().valueOf(),
       };
 
       const data = [

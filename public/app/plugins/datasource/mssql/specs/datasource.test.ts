@@ -2,7 +2,7 @@ import { MssqlDatasource } from '../datasource';
 import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import q from 'q';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {
@@ -29,8 +29,8 @@ describe('MSSQLDatasource', () => {
         rawQuery: 'select time, text, tags from table;',
       },
       range: {
-        from: momentWrapper(1432288354),
-        to: momentWrapper(1432288401),
+        from: dateTimeType(1432288354),
+        to: dateTimeType(1432288401),
       },
     };
 
@@ -209,8 +209,8 @@ describe('MSSQLDatasource', () => {
       },
     };
     const time = {
-      from: momentWrapper(1521545610656),
-      to: momentWrapper(1521546251185),
+      from: dateTimeType(1521545610656),
+      to: dateTimeType(1521546251185),
     };
 
     beforeEach(() => {

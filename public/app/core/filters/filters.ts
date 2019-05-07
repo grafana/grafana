@@ -2,7 +2,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 coreModule.filter('stringSort', () => {
   return (input: any) => {
@@ -33,9 +33,9 @@ coreModule.filter('moment', () => {
   return (date: string, mode: string) => {
     switch (mode) {
       case 'ago':
-        return momentWrapper(date).fromNow();
+        return dateTimeType(date).fromNow();
     }
-    return momentWrapper(date).fromNow();
+    return dateTimeType(date).fromNow();
   };
 });
 

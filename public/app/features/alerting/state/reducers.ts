@@ -1,7 +1,7 @@
 import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 
@@ -10,7 +10,7 @@ function convertToAlertRule(rule, state): AlertRule {
   rule.stateText = stateModel.text;
   rule.stateIcon = stateModel.iconClass;
   rule.stateClass = stateModel.stateClass;
-  rule.stateAge = momentWrapper(rule.newStateDate)
+  rule.stateAge = dateTimeType(rule.newStateDate)
     .fromNow()
     .replace(' ago', '');
 

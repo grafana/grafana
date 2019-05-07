@@ -140,7 +140,7 @@ export class TimePickerCtrl {
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
-    return this.dashboard.isTimezoneUtc() ? momentWrapper(jsDate).utc() : momentWrapper(jsDate);
+    return this.dashboard.isTimezoneUtc() ? dateTimeType(jsDate).utc() : dateTimeType(jsDate);
   }
 
   setRelativeFilter(timespan) {
@@ -185,5 +185,5 @@ angular.module('grafana.directives').directive('gfTimePickerSettings', settingsD
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
 import { inputDateDirective } from './validation';
-import { toUtc, getLocaleData, isDateTimeType, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, getLocaleData, isDateTimeType, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

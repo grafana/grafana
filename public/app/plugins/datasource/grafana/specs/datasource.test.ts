@@ -1,6 +1,6 @@
 import { GrafanaDatasource } from '../datasource';
 import q from 'q';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('grafana data source', () => {
   describe('when executing an annotations query', () => {
@@ -70,8 +70,8 @@ function setupAnnotationQueryOptions(annotation, dashboard?) {
     annotation: annotation,
     dashboard: dashboard,
     range: {
-      from: momentWrapper(1432288354),
-      to: momentWrapper(1432288401),
+      from: dateTimeType(1432288354),
+      to: dateTimeType(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
   };

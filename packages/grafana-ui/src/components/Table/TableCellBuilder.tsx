@@ -7,7 +7,7 @@ import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../
 import { GrafanaTheme } from '../../types/theme';
 import { InterpolateFunction } from '../../types/panel';
 import { Field } from '../../types/data';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { dateTimeType } from '../../utils/moment_wrapper';
 
 export interface TableCellBuilderOptions {
   value: any;
@@ -96,7 +96,7 @@ export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: 
         if (_.isArray(v)) {
           v = v[0];
         }
-        let date = momentWrapper(v);
+        let date = dateTimeType(v);
         if (false) {
           // TODO?????? this.props.isUTC) {
           date = date.utc();

@@ -7,7 +7,7 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/ui/src/types';
-import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -68,8 +68,8 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
-          from: momentWrapper().subtract(1, 'days'),
-          to: momentWrapper(),
+          from: dateTimeType().subtract(1, 'days'),
+          to: dateTimeType(),
           raw: { from: '1h', to: 'now' },
         },
         panelId: 0,
