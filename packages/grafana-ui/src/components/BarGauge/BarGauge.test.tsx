@@ -40,8 +40,6 @@ function getProps(propOverrides?: Partial<Props>): Props {
     orientation: VizOrientation.Horizontal,
   };
 
-  console.log('IN TEST SETUP', props.scale.minValue, props.scale.maxValue);
-
   Object.assign(props, propOverrides);
   return props;
 }

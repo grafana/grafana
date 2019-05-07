@@ -92,10 +92,17 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   };
 
   onRemoveThreshold = (threshold: ThresholdWithKey) => {
-    const filtered = this.state.thresholds.filter(t => t.key !== threshold.key);
+    const { thresholds } = this.state;
+    if (!thresholds.length) {
+      return;
+    }
+    // Don't remove index 0
+    if (threshold.key === thresholds[0].key) {
+      return;
+    }
     this.setState(
       {
-        thresholds: filtered,
+        thresholds: thresholds.filter(t => t.key !== threshold.key),
       },
       () => this.onChange()
     );

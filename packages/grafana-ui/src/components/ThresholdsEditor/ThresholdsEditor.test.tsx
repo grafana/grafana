@@ -51,7 +51,6 @@ describe('Add threshold', () => {
     expect(getCurrentThresholds(instance)).toEqual([
       { value: -Infinity, color: colors[0] }, // 0
       { value: 50, color: colors[2] }, // 1
-      ,
     ]);
   });
 
