@@ -1,5 +1,6 @@
-import React, { FC } from 'react';
-import { PluginState } from '@grafana/ui';
+import React, { FC, useContext } from 'react';
+import { css } from 'emotion';
+import { PluginState, Tooltip, ThemeContext } from '@grafana/ui';
 
 interface Props {
   state?: PluginState;
@@ -8,16 +9,10 @@ interface Props {
 function getPluginStateInfoText(state?: PluginState): string | null {
   switch (state) {
     case PluginState.alpha:
-      return (
-        'This plugin is marked as being in alpha state, which means it is in early development phase and updates' +
-        ' will include breaking changes.'
-      );
+      return 'Plugin in alpha state. Means work in progress and updates may include breaking changes.';
 
     case PluginState.beta:
-      return (
-        'This plugin is marked as being in a beta development state. This means it is in currently in active' +
-        ' development and could be missing important features.'
-      );
+      return 'Plugin in beta state. Means there could be bugs and minor breaking changes.';
   }
   return null;
 }
@@ -28,7 +23,26 @@ const PluginStateinfo: FC<Props> = props => {
     return null;
   }
 
-  return <div className="grafana-info-box">{text}</div>;
+  const theme = useContext(ThemeContext);
+
+  const styles = css`
+    background: linear-gradient(to bottom, ${theme.colors.blueBase}, ${theme.colors.blueShade});
+    color: ${theme.colors.gray7};
+    white-space: nowrap;
+    border-radius: 3px;
+    text-shadow: none;
+    font-size: 13px;
+    padding: 4px 8px;
+    margin-left: 16px;
+  `;
+
+  return (
+    <Tooltip content={text}>
+      <div className={styles}>
+        <i className="fa fa-warning" /> {props.state}
+      </div>
+    </Tooltip>
+  );
 };
 
 export default PluginStateinfo;

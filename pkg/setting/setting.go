@@ -93,6 +93,7 @@ var (
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
+	AllowEmbedding                   bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -164,10 +165,11 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled     bool
-	LdapConfigFile  string
-	LdapSyncCron    string
-	LdapAllowSignup = true
+	LdapEnabled           bool
+	LdapConfigFile        string
+	LdapSyncCron          string
+	LdapAllowSignup       bool
+	LdapActiveSyncEnabled bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -689,6 +691,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.CookieSameSite = CookieSameSite
 	}
 
+	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
 	ExternalSnapshotUrl, err = valueAsString(snapshots, "external_snapshot_url", "")
@@ -869,14 +873,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
-	GoogleAnalyticsId, err = valueAsString(analytics, "google_analytics_ua_id", "")
-	if err != nil {
-		return err
-	}
-	GoogleTagManagerId, err = valueAsString(analytics, "google_tag_manager_id", "")
-	if err != nil {
-		return err
-	}
+	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
+	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
@@ -891,8 +889,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	AlertingEvaluationTimeout = alerting.Key("evaluation_timeout_seconds").MustDuration(time.Second * 30)
-	AlertingNotificationTimeout = alerting.Key("notification_timeout_seconds").MustDuration(time.Second * 30)
+	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
+	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
+	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 
 	explore := iniFile.Section("explore")
@@ -977,10 +977,11 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	LdapSyncCron = ldapSec.Key("sync_cron").String()
+	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
+	LdapActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) readSessionConfig() {

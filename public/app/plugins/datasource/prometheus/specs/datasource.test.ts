@@ -1232,4 +1232,27 @@ describe('PrometheusDatasource for POST', () => {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
+
+  describe('When querying prometheus via check headers X-Dashboard-Id and X-Panel-Id', () => {
+    const options = { dashboardId: 1, panelId: 2 };
+
+    const httpOptions = {
+      headers: {},
+    };
+
+    it('with proxy access tracing headers should be added', () => {
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds._addTracingHeaders(httpOptions, options);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(2);
+    });
+
+    it('with direct access tracing headers should not be added', () => {
+      instanceSettings.url = 'http://127.0.0.1:8000';
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds._addTracingHeaders(httpOptions, options);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+    });
+  });
 });

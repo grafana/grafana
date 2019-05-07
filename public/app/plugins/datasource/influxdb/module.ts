@@ -15,7 +15,10 @@ class InfluxConfigCtrl {
   constructor() {
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
+    this.current.jsonData.httpMode = this.current.jsonData.httpMode || 'GET';
   }
+
+  httpMode = [{ name: 'GET', value: 'GET' }, { name: 'POST', value: 'POST' }];
 }
 
 class InfluxAnnotationsQueryCtrl {

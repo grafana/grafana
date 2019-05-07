@@ -1,8 +1,9 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, ApiKeysPage } from './ApiKeysPage';
-import { NavModel, ApiKey } from 'app/types';
+import { ApiKey } from 'app/types';
 import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
+import { NavModel } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

@@ -17,8 +17,8 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
-import { Tooltip } from '@grafana/ui';
+import { PopperContent } from '../Tooltip/PopperController';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface SelectOptionItem<T> {
   label?: string;

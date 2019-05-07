@@ -58,7 +58,7 @@
 				step="10"
 				ng-change="ctrl.streamChanged()" />
 		</div>
-		<div class="gf-form">
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
 			<label class="gf-form-label query-keyword">Spread</label>
 			<input type="number" 
 				class="gf-form-input width-5" 
@@ -68,7 +68,7 @@
 				step="0.1"
 				ng-change="ctrl.streamChanged()" />
 		</div>
-		<div class="gf-form">
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
 			<label class="gf-form-label query-keyword">Noise</label>
 			<input type="number" 
 				class="gf-form-input width-5" 

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import moment, { Moment } from 'moment';
-import { TimeFragment } from '@grafana/ui';
-import { Timezone } from '../../../../../public/app/core/utils/datemath';
+import { TimeFragment } from '../../types/time';
+import { Timezone } from '../../utils/datemath';
 
 import { stringToMoment } from './time';
 

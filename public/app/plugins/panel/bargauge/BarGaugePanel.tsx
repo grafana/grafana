@@ -5,33 +5,37 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { BarGauge, VizRepeater, getSingleStatDisplayValues } from '@grafana/ui/src/components';
+import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps, DisplayValue } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui/src/types';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
+    const { fieldOptions } = options;
+    const { field, display } = value;
 
     return (
       <BarGauge
-        value={value}
+        value={display}
         width={width}
         height={height}
         orientation={options.orientation}
-        thresholds={options.thresholds}
+        thresholds={fieldOptions.thresholds}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
         displayMode={options.displayMode}
+        minValue={field.min}
+        maxValue={field.max}
       />
     );
   };
 
-  getValues = (): DisplayValue[] => {
+  getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables } = this.props;
-    return getSingleStatDisplayValues({
+    return getFieldDisplayValues({
       ...options,
       replaceVariables,
       theme: config.theme,

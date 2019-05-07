@@ -3,14 +3,10 @@ FROM golang:1.12.4
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
-COPY Gopkg.toml Gopkg.lock ./
+COPY go.mod go.sum ./
 COPY vendor vendor
 
-ARG DEP_ENSURE=""
-RUN if [ ! -z "${DEP_ENSURE}" ]; then \
-      go get -u github.com/golang/dep/cmd/dep && \
-      dep ensure --vendor-only; \
-    fi
+RUN go mod verify
 
 COPY pkg pkg
 COPY build.go build.go

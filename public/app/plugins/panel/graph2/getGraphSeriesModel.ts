@@ -1,15 +1,15 @@
 import {
   GraphSeriesXY,
-  getFirstTimeField,
-  FieldType,
   NullValueMode,
-  calculateStats,
+  reduceField,
   colors,
   getFlotPairs,
   getColorFromHexRgbOrName,
   getDisplayProcessor,
   DisplayValue,
   PanelData,
+  FieldCache,
+  FieldType,
 } from '@grafana/ui';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
@@ -23,58 +23,62 @@ export const getGraphSeriesModel = (
   const graphs: GraphSeriesXY[] = [];
 
   const displayProcessor = getDisplayProcessor({
-    decimals: legendOptions.decimals,
+    field: {
+      decimals: legendOptions.decimals,
+    },
   });
 
   for (const series of data.series) {
-    const timeColumn = getFirstTimeField(series);
-    if (timeColumn < 0) {
+    const fieldCache = new FieldCache(series.fields);
+    const timeColumn = fieldCache.getFirstFieldOfType(FieldType.time);
+    if (!timeColumn) {
       continue;
     }
 
-    for (let i = 0; i < series.fields.length; i++) {
-      const field = series.fields[i];
+    const numberFields = fieldCache.getFields(FieldType.number);
+    for (let i = 0; i < numberFields.length; i++) {
+      const field = numberFields[i];
+      // Use external calculator just to make sure it works :)
+      const points = getFlotPairs({
+        series,
+        xIndex: timeColumn.index,
+        yIndex: field.index,
+        nullValueMode: NullValueMode.Null,
+      });
 
-      // Show all numeric columns
-      if (field.type === FieldType.number) {
-        // Use external calculator just to make sure it works :)
-        const points = getFlotPairs({
+      if (points.length > 0) {
+        const seriesStats = reduceField({
           series,
-          xIndex: timeColumn,
-          yIndex: i,
-          nullValueMode: NullValueMode.Null,
+          reducers: legendOptions.stats,
+          fieldIndex: field.index,
         });
+        let statsDisplayValues: DisplayValue[];
 
-        if (points.length > 0) {
-          const seriesStats = calculateStats({ series, stats: legendOptions.stats, fieldIndex: i });
-          let statsDisplayValues;
+        if (legendOptions.stats) {
+          statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
+            const statDisplayValue = displayProcessor(seriesStats[stat]);
 
-          if (legendOptions.stats) {
-            statsDisplayValues = legendOptions.stats.map<DisplayValue>(stat => {
-              const statDisplayValue = displayProcessor(seriesStats[stat]);
-
-              return {
-                ...statDisplayValue,
-                text: statDisplayValue.text,
-                title: stat,
-              };
-            });
-          }
-
-          const seriesColor =
-            seriesOptions[field.name] && seriesOptions[field.name].color
-              ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
-              : colors[graphs.length % colors.length];
-
-          graphs.push({
-            label: field.name,
-            data: points,
-            color: seriesColor,
-            info: statsDisplayValues,
-            isVisible: true,
-            yAxis: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
+            return {
+              ...statDisplayValue,
+              text: statDisplayValue.text,
+              title: stat,
+            };
           });
         }
+
+        const seriesColor =
+          seriesOptions[field.name] && seriesOptions[field.name].color
+            ? getColorFromHexRgbOrName(seriesOptions[field.name].color)
+            : colors[graphs.length % colors.length];
+
+        graphs.push({
+          label: field.name,
+          data: points,
+          color: seriesColor,
+          info: statsDisplayValues,
+          isVisible: true,
+          yAxis: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
+        });
       }
     }
   }
