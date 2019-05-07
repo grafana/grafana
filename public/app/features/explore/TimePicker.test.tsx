@@ -3,8 +3,8 @@ import { shallow } from 'enzyme';
 import sinon from 'sinon';
 import moment from 'moment';
 
-import * as dateMath from 'app/core/utils/datemath';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import TimePicker from './TimePicker';
 import { RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
 

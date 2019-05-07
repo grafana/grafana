@@ -1,8 +1,8 @@
-// @ts-ignore
-import _ from 'lodash';
-import moment from 'moment';
+import includes from 'lodash/includes';
+import isDate from 'lodash/isDate';
+import moment, { unitOfTime } from 'moment';
 
-const units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units: unitOfTime.Base[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export type Timezone = 'utc';
 
@@ -26,7 +26,7 @@ export function parse(
     if (moment.isMoment(text)) {
       return text;
     }
-    if (_.isDate(text)) {
+    if (isDate(text)) {
       return moment(text);
     }
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
@@ -134,7 +134,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     }
     unit = mathString.charAt(i++);
 
-    if (!_.includes(units, unit)) {
+    if (!includes(units, unit)) {
       return undefined;
     } else {
       if (type === 0) {

@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 export default class OpenTsDatasource {
   type: any;
