@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
+import { cx, css } from 'emotion';
 
 interface Props {
   className?: string;
@@ -10,8 +11,8 @@ interface Props {
   autoHideDuration?: number;
   autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
-  renderTrackHorizontal?: React.FunctionComponent<any>;
-  renderTrackVertical?: React.FunctionComponent<any>;
+  hideHorizontalTrack?: boolean;
+  hideVerticalTrack?: boolean;
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
@@ -79,8 +80,8 @@ export class CustomScrollbar extends Component<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
-      renderTrackHorizontal,
-      renderTrackVertical,
+      hideHorizontalTrack,
+      hideVerticalTrack,
     } = this.props;
 
     return (
@@ -96,8 +97,28 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
-        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
+        renderTrackHorizontal={props => (
+          <div
+            {...props}
+            className={cx(
+              css`
+                visibility: ${hideHorizontalTrack ? 'none' : 'visible'};
+              `,
+              'track-horizontal'
+            )}
+          />
+        )}
+        renderTrackVertical={props => (
+          <div
+            {...props}
+            className={cx(
+              css`
+                visibility: ${hideVerticalTrack ? 'none' : 'visible'};
+              `,
+              'track-vertical'
+            )}
+          />
+        )}
         renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
         renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
         renderView={props => <div {...props} className="view" />}

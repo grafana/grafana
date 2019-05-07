@@ -31,10 +31,10 @@
   "iteration": 1554310560048,
   "links": [
     {
-      "asDropdown": false,
+      "asDropdown": true,
       "icon": "external link",
-      "tags": ["gdev", "elasticsearch"],
-      "title": "Dashboard",
+      "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "title": "Dashboards",
       "type": "dashboards"
     }
   ],

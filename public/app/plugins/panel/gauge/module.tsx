@@ -1,5 +1,5 @@
 import {
-  ReactPanelPlugin,
+  PanelPlugin,
   sharedSingleStatMigrationCheck,
   sharedSingleStatOptionsCheck,
   OptionType,
@@ -128,7 +128,7 @@ const GaugeOptionsSchema: yup.ObjectSchema<GaugeOptions> = yup.object({
   valueOptions: valueOptionsYupSchema,
 });
 
-export const reactPanel = new ReactPanelPlugin<GaugeOptions>(GaugePanel)
+export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(optionsModel)
   .setOptionsSchema(GaugeOptionsSchema)

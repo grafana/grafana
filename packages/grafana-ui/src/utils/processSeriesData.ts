@@ -43,16 +43,6 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
   };
 }
 
-export const getFirstTimeField = (series: SeriesData): number => {
-  const { fields } = series;
-  for (let i = 0; i < fields.length; i++) {
-    if (fields[i].type === FieldType.time) {
-      return i;
-    }
-  }
-  return -1;
-};
-
 // PapaParse Dynamic Typing regex:
 // https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
 const NUMBER = /^\s*-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?\s*$/i;

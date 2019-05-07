@@ -60,7 +60,7 @@ func (hs *HTTPServer) GetPluginList(c *m.ReqContext) Response {
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/edit"
+			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/"
 		}
 
 		// filter out disabled

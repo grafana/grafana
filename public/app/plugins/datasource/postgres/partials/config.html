@@ -96,7 +96,14 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-9">Min time interval</span>
-			<input type="text" class="gf-form-input width-6 gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="1m"></input>
+			<input
+        type="text"
+        class="gf-form-input width-6 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.timeInterval"
+        spellcheck='false'
+        placeholder="1m"
+        ng-pattern="/^\d+[Mwdhmsy]$/"
+      ></input>
 			<info-popover mode="right-absolute">
 				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example <code>1m</code> if your data is written every minute.

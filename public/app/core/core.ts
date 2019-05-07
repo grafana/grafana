@@ -40,7 +40,7 @@ import { contextSrv } from './services/context_srv';
 import { KeybindingSrv } from './services/keybindingSrv';
 import { helpModal } from './components/help/help';
 import { JsonExplorer } from './components/json_explorer/json_explorer';
-import { NavModelSrv, NavModel } from './nav_model_srv';
+import { NavModelSrv } from './nav_model_srv';
 import { geminiScrollbar } from './components/scroll/scroll';
 import { orgSwitcher } from './components/org_switcher';
 import { profiler } from './profiler';
@@ -49,6 +49,7 @@ import { updateLegendValues } from './time_series2';
 import TimeSeries from './time_series2';
 import { searchResultsDirective } from './components/search/search_results';
 import { manageDashboardsDirective } from './components/manage_dashboards/manage_dashboards';
+import { NavModel } from '@grafana/ui';
 
 export {
   profiler,
