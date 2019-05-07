@@ -23,7 +23,25 @@ interface DataSourceCategories {
   [key: string]: DataSourcePluginMeta[];
 }
 
+interface DataSourceCategoryInfo {
+  id: string;
+  title: string;
+}
+
 class NewDataSourcePage extends PureComponent<Props> {
+  categoryInfoList: DataSourceCategoryInfo[];
+
+  constructor() {
+    super();
+
+    this.categoryInfoList = [
+      { id: 'tsdb', title: 'Time series databases' },
+      { id: 'sql', title: 'SQL databases' },
+      { id: 'cloud', title: 'Cloud vendor services' },
+      { id: 'other', title: 'Logging & Document DBs & Others' },
+    ];
+  }
+
   componentDidMount() {
     this.props.loadDataSourceTypes();
   }
@@ -53,22 +71,24 @@ class NewDataSourcePage extends PureComponent<Props> {
   renderList() {
     const { dataSourceTypes, dataSourceTypeSearchQuery } = this.props;
 
-    if (!dataSourceTypeSearchQuery) {
+    if (!dataSourceTypeSearchQuery && dataSourceTypes.length > 0) {
       const categories = dataSourceTypes.reduce(
         (accumulator, item) => {
-          const category = item.category || 'na';
-          const list = (accumulator[category] = accumulator[category] || []);
+          const category = item.category || 'other';
+          const list = accumulator[category] || [];
+          console.log(category);
           list.push(item);
+          accumulator[category] = list;
           return accumulator;
         },
         {} as DataSourceCategories
       );
 
-      return Object.keys(categories).map(category => {
+      return this.categoryInfoList.map(category => {
         return (
-          <div className="add-data-source-category" key={category}>
-            <div className="add-data-source-category-header">{category}</div>
-            {this.renderTypes(categories[category])}
+          <div className="add-data-source-category" key={category.id}>
+            <div className="add-data-source-category__header">{category.title}</div>
+            {this.renderTypes(categories[category.id])}
           </div>
         );
       });

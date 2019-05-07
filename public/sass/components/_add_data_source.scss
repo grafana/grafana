@@ -10,6 +10,15 @@
   margin-bottom: $space-lg;
 }
 
+.add-data-source-category {
+  margin-bottom: $space-lg;
+}
+
+.add-data-source-category__header {
+  font-size: $font-size-lg;
+  margin-bottom: $space-md;
+}
+
 .add-data-source-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
