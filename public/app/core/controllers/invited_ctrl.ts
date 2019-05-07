@@ -3,7 +3,7 @@ import config from 'app/core/config';
 
 export class InvitedCtrl {
   /** @ngInject */
-  constructor($scope, $routeParams, contextSrv, backendSrv) {
+  constructor($scope: any, $routeParams: any, contextSrv: any, backendSrv: any) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
 
@@ -17,7 +17,7 @@ export class InvitedCtrl {
     };
 
     $scope.init = () => {
-      backendSrv.get('/api/user/invite/' + $routeParams.code).then(invite => {
+      backendSrv.get('/api/user/invite/' + $routeParams.code).then((invite: any) => {
         $scope.formModel.name = invite.name;
         $scope.formModel.email = invite.email;
         $scope.formModel.username = invite.email;

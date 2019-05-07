@@ -1,3 +1,5 @@
+// +build go1.6
+
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -32,7 +34,7 @@ const (
 
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-	_VERSION      = "1.36.0"
+	_VERSION      = "1.42.0"
 )
 
 // Version returns current package version literal.
@@ -45,6 +47,10 @@ var (
 	// This variable will be changed to "\r\n" automatically on Windows
 	// at package init time.
 	LineBreak = "\n"
+
+	// Place custom spaces when PrettyFormat and PrettyEqual are both disabled
+	DefaultFormatLeft  = ""
+	DefaultFormatRight = ""
 
 	// Variable regexp pattern: %(variable)s
 	varPattern = regexp.MustCompile(`%\(([^\)]+)\)s`)
@@ -132,6 +138,8 @@ type LoadOptions struct {
 	IgnoreContinuation bool
 	// IgnoreInlineComment indicates whether to ignore comments at the end of value and treat it as part of value.
 	IgnoreInlineComment bool
+	// SkipUnrecognizableLines indicates whether to skip unrecognizable lines that do not conform to key/value pairs.
+	SkipUnrecognizableLines bool
 	// AllowBooleanKeys indicates whether to allow boolean type keys or treat as value is missing.
 	// This type of keys are mostly used in my.cnf.
 	AllowBooleanKeys bool
@@ -145,6 +153,11 @@ type LoadOptions struct {
 	// Relevant quote:  Values can also span multiple lines, as long as they are indented deeper
 	// than the first line of the value.
 	AllowPythonMultilineValues bool
+	// SpaceBeforeInlineComment indicates whether to allow comment symbols (\# and \;) inside value.
+	// Docs: https://docs.python.org/2/library/configparser.html
+	// Quote: Comments may appear on their own in an otherwise empty line, or may be entered in lines holding values or section names.
+	// In the latter case, they need to be preceded by a whitespace character to be recognized as a comment.
+	SpaceBeforeInlineComment bool
 	// UnescapeValueDoubleQuotes indicates whether to unescape double quotes inside value to regular format
 	// when value is surrounded by double quotes, e.g. key="a \"value\"" => key=a "value"
 	UnescapeValueDoubleQuotes bool
@@ -152,9 +165,13 @@ type LoadOptions struct {
 	// when value is NOT surrounded by any quotes.
 	// Note: UNSTABLE, behavior might change to only unescape inside double quotes but may noy necessary at all.
 	UnescapeValueCommentSymbols bool
-	// Some INI formats allow group blocks that store a block of raw content that doesn't otherwise
+	// UnparseableSections stores a list of blocks that are allowed with raw content which do not otherwise
 	// conform to key/value pairs. Specify the names of those blocks here.
 	UnparseableSections []string
+	// KeyValueDelimiters is the sequence of delimiters that are used to separate key and value. By default, it is "=:".
+	KeyValueDelimiters string
+	// PreserveSurroundedQuote indicates whether to preserve surrounded quote (single and double quotes).
+	PreserveSurroundedQuote bool
 }
 
 func LoadSources(opts LoadOptions, source interface{}, others ...interface{}) (_ *File, err error) {
@@ -195,7 +212,7 @@ func InsensitiveLoad(source interface{}, others ...interface{}) (*File, error) {
 	return LoadSources(LoadOptions{Insensitive: true}, source, others...)
 }
 
-// InsensitiveLoad has exactly same functionality as Load function
+// ShadowLoad has exactly same functionality as Load function
 // except it allows have shadow keys.
 func ShadowLoad(source interface{}, others ...interface{}) (*File, error) {
 	return LoadSources(LoadOptions{AllowShadows: true}, source, others...)

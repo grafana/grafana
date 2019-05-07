@@ -20,26 +20,29 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { NavModel, Plugin, StoreState } from 'app/types/';
-import { DataSourceSettings } from '@grafana/ui/src/types/';
+import { StoreState } from 'app/types/';
+import { NavModel, DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 
 export interface Props {
   navModel: NavModel;
   dataSource: DataSourceSettings;
-  dataSourceMeta: Plugin;
+  dataSourceMeta: DataSourcePluginMeta;
   pageId: number;
   deleteDataSource: typeof deleteDataSource;
   loadDataSource: typeof loadDataSource;
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
+  plugin?: DataSourcePlugin;
 }
 
 interface State {
   dataSource: DataSourceSettings;
+  plugin: DataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
@@ -50,14 +53,30 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      dataSource: {} as DataSourceSettings,
+      dataSource: props.dataSource,
+      plugin: props.plugin,
     };
+  }
+
+  async loadPlugin(pluginId?: string) {
+    const { dataSourceMeta } = this.props;
+    let importedPlugin: DataSourcePlugin;
+
+    try {
+      importedPlugin = await importDataSourcePlugin(dataSourceMeta);
+    } catch (e) {
+      console.log('Failed to import plugin module', e);
+    }
+
+    this.setState({ plugin: importedPlugin });
   }
 
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
-
     await loadDataSource(pageId);
+    if (!this.state.plugin) {
+      await this.loadPlugin();
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -71,7 +90,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   onSubmit = async (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
 
-    await this.props.updateDataSource({ ...this.state.dataSource, name: this.props.dataSource.name });
+    await this.props.updateDataSource({ ...this.state.dataSource });
 
     this.testDataSource();
   };
@@ -152,12 +171,12 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   get hasDataSource() {
-    return Object.keys(this.props.dataSource).length > 0;
+    return this.state.dataSource.id > 0;
   }
 
   render() {
-    const { dataSource, dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
-    const { testingMessage, testingStatus } = this.state;
+    const { dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
+    const { testingMessage, testingStatus, plugin, dataSource } = this.state;
 
     return (
       <Page navModel={navModel}>
@@ -166,7 +185,14 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                <PluginStateinfo state={dataSourceMeta.state} />
+                {dataSourceMeta.state && (
+                  <div className="gf-form">
+                    <label className="gf-form-label width-10">Plugin state</label>
+                    <label className="gf-form-label gf-form-label--transparent">
+                      <PluginStateinfo state={dataSourceMeta.state} />
+                    </label>
+                  </div>
+                )}
 
                 <BasicSettings
                   dataSourceName={dataSource.name}
@@ -175,9 +201,10 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                   onNameChange={name => setDataSourceName(name)}
                 />
 
-                {dataSourceMeta.module && (
+                {dataSourceMeta.module && plugin && (
                   <PluginSettings
-                    dataSource={dataSource}
+                    plugin={plugin}
+                    dataSource={this.state.dataSource}
                     dataSourceMeta={dataSourceMeta}
                     onModelChange={this.onModelChange}
                   />
@@ -218,7 +245,6 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
-
   return {
     navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`, getDataSourceLoadingNav('settings')),
     dataSource: getDataSource(state.dataSources, pageId),

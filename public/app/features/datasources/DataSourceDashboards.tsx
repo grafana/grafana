@@ -16,8 +16,8 @@ import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
 // Types
-import { NavModel, PluginDashboard, StoreState } from 'app/types';
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { PluginDashboard, StoreState } from 'app/types';
+import { NavModel, DataSourceSettings } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;

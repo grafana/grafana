@@ -1,3 +1,5 @@
+import { ComponentClass } from 'react';
+
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
   beta = 'beta', // Will show a warning banner
@@ -12,31 +14,38 @@ export enum PluginType {
 export interface PluginMeta {
   id: string;
   name: string;
-  info: PluginMetaInfo;
-  module: string;
-  includes?: PluginInclude[];
-  baseUrl?: string;
-
   type: PluginType;
-  enabled?: boolean;
+  info: PluginMetaInfo;
+  includes?: PluginInclude[];
   state?: PluginState;
 
-  // Datasource-specific
-  builtIn?: boolean;
-  metrics?: boolean;
-  tables?: boolean;
-  logs?: boolean;
-  explore?: boolean;
-  annotations?: boolean;
-  mixed?: boolean;
-  hasQueryHelp?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
+  // System.load & relative URLS
+  module: string;
+  baseUrl: string;
+
+  // Define plugin requirements
+  dependencies?: PluginDependencies;
+
+  // Filled in by the backend
+  jsonData?: { [str: string]: any };
+  secureJsonData?: { [str: string]: any };
+  enabled?: boolean;
+  defaultNavUrl?: string;
+  hasUpdate?: boolean;
+  latestVersion?: string;
+  pinned?: boolean;
 }
 
-interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
+interface PluginDependencyInfo {
+  id: string;
+  name: string;
+  version: string;
+  type: PluginType;
+}
+
+export interface PluginDependencies {
+  grafanaVersion: string;
+  plugins: PluginDependencyInfo[];
 }
 
 export enum PluginIncludeType {
@@ -51,7 +60,14 @@ export enum PluginIncludeType {
 export interface PluginInclude {
   type: PluginIncludeType;
   name: string;
-  path: string;
+  path?: string;
+  icon?: string;
+
+  role?: string; // "Viewer", Admin, editor???
+  addToNav?: boolean; // Show in the sidebar... only if type=page?
+
+  // Angular app pages
+  component?: string;
 }
 
 interface PluginMetaInfoLink {
@@ -75,17 +91,35 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export class AppPlugin {
-  components: {
-    ConfigCtrl?: any;
-  };
+export interface PluginConfigTabProps<T extends PluginMeta> {
+  meta: T;
+  query: { [s: string]: any }; // The URL query parameters
+}
 
-  pages: { [str: string]: any };
+export interface PluginConfigTab<T extends PluginMeta> {
+  title: string; // Display
+  icon?: string;
+  id: string; // Unique, in URL
 
-  constructor(ConfigCtrl: any) {
-    this.components = {
-      ConfigCtrl: ConfigCtrl,
-    };
-    this.pages = {};
+  body: ComponentClass<PluginConfigTabProps<T>>;
+}
+
+export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
+  // Meta is filled in by the plugin loading system
+  meta?: T;
+
+  // Config control (app/datasource)
+  angularConfigCtrl?: any;
+
+  // Show configuration tabs on the plugin page
+  configTabs?: Array<PluginConfigTab<T>>;
+
+  // Tabs on the plugin page
+  addConfigTab(tab: PluginConfigTab<T>) {
+    if (!this.configTabs) {
+      this.configTabs = [];
+    }
+    this.configTabs.push(tab);
+    return this;
   }
 }

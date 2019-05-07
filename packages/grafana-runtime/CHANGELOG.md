@@ -1,2 +1,0 @@
-# XXX
-First public release

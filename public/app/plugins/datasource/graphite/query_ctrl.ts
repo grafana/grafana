@@ -182,7 +182,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
   }
 
-  removeTaggedEntry(altSegments) {
+  removeTaggedEntry(altSegments: any[]) {
     altSegments = _.remove(altSegments, s => s.value === '_tagged');
   }
 

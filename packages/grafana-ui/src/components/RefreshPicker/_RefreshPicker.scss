@@ -1,0 +1,36 @@
+.refresh-picker {
+  position: relative;
+  display: none;
+
+  .refresh-picker-buttons {
+    display: flex;
+  }
+
+  .navbar-button--refresh {
+    border-right: 0;
+  }
+
+  .gf-form-input--form-dropdown {
+    position: static;
+  }
+
+  .gf-form-select-box__menu {
+    position: absolute;
+    left: 0;
+    width: 100%;
+  }
+
+  .select-button-value {
+    color: $orange;
+  }
+
+  &--off {
+    .select-button-value {
+      display: none;
+    }
+  }
+
+  @include media-breakpoint-up(sm) {
+    display: block;
+  }
+}

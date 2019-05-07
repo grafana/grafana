@@ -5,22 +5,31 @@ import _ from 'lodash';
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 // Types
-import { TimeRange } from '@grafana/ui';
+import { TimeRange, RawTimeRange } from '@grafana/ui';
+import { ITimeoutService, ILocationService } from 'angular';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { DashboardModel } from '../state/DashboardModel';
 
 export class TimeSrv {
   time: any;
   refreshTimer: any;
-  refresh: boolean;
+  refresh: any;
   oldRefresh: boolean;
-  dashboard: any;
+  dashboard: Partial<DashboardModel>;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor($rootScope, private $timeout, private $location, private timer, private contextSrv) {
+  constructor(
+    $rootScope: any,
+    private $timeout: ITimeoutService,
+    private $location: ILocationService,
+    private timer: any,
+    private contextSrv: ContextSrv
+  ) {
     // default time
     this.time = { from: '6h', to: 'now' };
 
@@ -35,7 +44,7 @@ export class TimeSrv {
     });
   }
 
-  init(dashboard) {
+  init(dashboard: Partial<DashboardModel>) {
     this.timer.cancelAll();
 
     this.dashboard = dashboard;
@@ -63,7 +72,7 @@ export class TimeSrv {
     }
   }
 
-  private parseUrlParam(value) {
+  private parseUrlParam(value: any) {
     if (value.indexOf('now') !== -1) {
       return value;
     }
@@ -121,9 +130,10 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  setAutoRefresh(interval) {
+  setAutoRefresh(interval: any) {
     this.dashboard.refresh = interval;
     this.cancelNextRefresh();
+
     if (interval) {
       const intervalMs = kbn.interval_to_ms(interval);
 
@@ -135,22 +145,24 @@ export class TimeSrv {
       );
     }
 
-    // update url
-    const params = this.$location.search();
-    if (interval) {
-      params.refresh = interval;
-      this.$location.search(params);
-    } else if (params.refresh) {
-      delete params.refresh;
-      this.$location.search(params);
-    }
+    // update url inside timeout to so that a digest happens after (called from react)
+    this.$timeout(() => {
+      const params = this.$location.search();
+      if (interval) {
+        params.refresh = interval;
+        this.$location.search(params);
+      } else if (params.refresh) {
+        delete params.refresh;
+        this.$location.search(params);
+      }
+    });
   }
 
   refreshDashboard() {
     this.dashboard.timeRangeUpdated(this.timeRange());
   }
 
-  private startNextRefreshTimer(afterMs) {
+  private startNextRefreshTimer(afterMs: number) {
     this.cancelNextRefresh();
     this.refreshTimer = this.timer.register(
       this.$timeout(() => {
@@ -168,7 +180,7 @@ export class TimeSrv {
     this.timer.cancel(this.refreshTimer);
   }
 
-  setTime(time, fromRouteUpdate?) {
+  setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
     _.extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
@@ -221,7 +233,7 @@ export class TimeSrv {
     };
   }
 
-  zoomOut(e, factor) {
+  zoomOut(e: any, factor: number) {
     const range = this.timeRange();
 
     const timespan = range.to.valueOf() - range.from.valueOf();
@@ -234,7 +246,7 @@ export class TimeSrv {
   }
 }
 
-let singleton;
+let singleton: TimeSrv;
 
 export function setTimeSrv(srv: TimeSrv) {
   singleton = srv;

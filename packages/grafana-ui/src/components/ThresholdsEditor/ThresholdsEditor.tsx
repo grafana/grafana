@@ -1,10 +1,11 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 import { Threshold } from '../../types';
-import { ColorPicker } from '..';
-import { Input, PanelOptionsGroup } from '..';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes';
 import { getColorFromHexRgbOrName } from '../../utils';
+import { Input } from '../Input/Input';
+import { ColorPicker } from '../ColorPicker/ColorPicker';
+import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
   thresholds: Threshold[];

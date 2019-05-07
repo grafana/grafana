@@ -70,7 +70,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
 			So(err, ShouldBeNil)
 
-			resolvedPath := reader.resolvePath(reader.Path)
+			resolvedPath := reader.resolvedPath()
 			So(filepath.IsAbs(resolvedPath), ShouldBeTrue)
 		})
 	})
@@ -433,6 +433,10 @@ func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardI
 		}
 	}
 	return nil
+}
+
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
+	return nil, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
