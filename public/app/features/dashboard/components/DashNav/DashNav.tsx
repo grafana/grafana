@@ -181,7 +181,7 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel, location } = this.props;
+    const { dashboard, onAddPanel, location, $injector } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -276,7 +276,12 @@ export class DashNav extends PureComponent<Props> {
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
             <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              $injector={$injector}
+              dashboard={dashboard}
+              location={location}
+              updateLocation={updateLocation}
+            />
           </div>
         )}
       </div>

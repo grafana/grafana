@@ -18,6 +18,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getRawTimeRangeToShow } from '@grafana/ui';
 
 export interface Props {
+  $injector: any;
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
   location: LocationState;
@@ -41,6 +42,7 @@ const TimePickerTooltipContent = ({
 
 export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
+  $rootScope = this.props.$injector.get('$rootScope');
 
   get refreshParamInUrl(): string {
     return this.props.location.query.refresh as string;
@@ -98,6 +100,10 @@ export class DashNavTimeControls extends Component<Props> {
     this.timeSrv.setTime(nextRange);
   };
 
+  onZoom = () => {
+    this.$rootScope.appEvent('zoom-out', 2);
+  };
+
   render() {
     const { dashboard } = this.props;
     const intervals = dashboard.timepicker.refresh_intervals;
@@ -117,9 +123,7 @@ export class DashNavTimeControls extends Component<Props> {
           }
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
-          onZoom={() => {
-            console.log('onZoom');
-          }}
+          onZoom={this.onZoom}
           selectOptions={TimePicker.defaultSelectOptions}
           popoverOptions={TimePicker.defaultPopoverOptions}
         />
