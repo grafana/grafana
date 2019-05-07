@@ -9,6 +9,7 @@ import { Timezone } from '../../utils/datemath';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { getRawTimeRangeToShow } from '../../utils/date';
+import { Tooltip } from '../Tooltip/Tooltip'
 
 export interface Props {
   value: TimeRange;
@@ -147,6 +148,14 @@ const defaultPopoverOptions: TimeOptions = {
   ],
 };
 
+const defaultZoomOutTooltip = () => {
+  return (
+    <>
+      Time range zoom out <br /> CTRL+Z
+    </>
+  );
+};
+
 export interface State {
   isMenuOpen: boolean;
 }
@@ -252,9 +261,12 @@ export class TimePicker extends PureComponent<Props, State> {
               <i className="fa fa-chevron-right" />
             </button>
           )}
-          <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
-            <i className="fa fa-search-minus" />
-          </button>
+
+          <Tooltip content={defaultZoomOutTooltip} placement="bottom">
+            <button className="btn navbar-button navbar-button--zoom" onClick={onZoom}>
+              <i className="fa fa-search-minus" />
+            </button>
+          </Tooltip>
         </div>
       </div>
     );

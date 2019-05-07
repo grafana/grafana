@@ -127,7 +127,6 @@ export class DashNavTimeControls extends Component<Props> {
       };
     }, {});
 
-    console.log('newRange', newRange);
     return newRange;
   };
 
