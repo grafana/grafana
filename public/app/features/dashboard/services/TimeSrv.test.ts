@@ -1,6 +1,6 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
-import { isDateTimeType, momentWrapper } from 'app/core/moment_wrapper';
+import { isDateTimeType, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('timeSrv', () => {
   const rootScope = {

@@ -10,7 +10,7 @@ import {
 
 import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';

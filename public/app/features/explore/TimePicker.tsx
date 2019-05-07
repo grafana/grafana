@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
-import { toUtc, isDateTimeType, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, isDateTimeType, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface TimePickerProps {
   isOpen?: boolean;

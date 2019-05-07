@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}

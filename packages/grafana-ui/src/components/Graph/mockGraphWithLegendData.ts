@@ -1,6 +1,6 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
 import { LegendDisplayMode } from '../Legend/Legend';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '../../utils/moment_wrapper';
 // import { LegendList } from '../Legend/LegendList';
 
 export const mockGraphWithLegendData = ({

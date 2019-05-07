@@ -26,7 +26,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 const ctx = {} as any;
 let ctrl;

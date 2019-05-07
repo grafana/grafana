@@ -8,7 +8,7 @@ import {
   toDurationInMilliseconds,
   toDurationInSeconds,
 } from './dateTimeFormatters';
-import { toUtc, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper } from '../moment_wrapper';
 
 describe('date time formats', () => {
   const epoch = 1505634997920;

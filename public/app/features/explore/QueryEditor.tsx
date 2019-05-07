@@ -9,7 +9,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
   datasource: any;

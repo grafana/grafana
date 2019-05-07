@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { coreModule } from 'app/core/core';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/ui';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;

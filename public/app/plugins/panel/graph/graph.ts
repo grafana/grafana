@@ -26,7 +26,7 @@ import { Legend, GraphLegendProps } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 

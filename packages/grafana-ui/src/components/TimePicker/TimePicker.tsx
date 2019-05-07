@@ -7,7 +7,7 @@ import { PopperContent } from '../Tooltip/PopperController';
 import { Timezone } from '../../utils/datemath';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
-import { isDateTimeType } from 'app/core/moment_wrapper';
+import { isDateTimeType } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;

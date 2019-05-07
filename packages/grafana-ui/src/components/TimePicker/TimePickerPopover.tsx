@@ -5,7 +5,7 @@ import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from './time';
 import { Timezone } from '../../utils/datemath';
-import { DateTimeType } from 'app/core/moment_wrapper';
+import { DateTimeType } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;

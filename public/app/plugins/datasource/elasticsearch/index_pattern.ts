@@ -1,4 +1,4 @@
-import { toUtc, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 const intervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },

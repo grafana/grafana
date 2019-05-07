@@ -19,7 +19,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
 import { DefaultTimeZone, RawTimeRange } from '@grafana/ui';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({

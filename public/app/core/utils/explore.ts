@@ -33,7 +33,7 @@ import {
   ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
-import { toUtc } from '../moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

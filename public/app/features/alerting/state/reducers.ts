@@ -1,7 +1,7 @@
 import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 

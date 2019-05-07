@@ -1,7 +1,7 @@
 import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
 import q from 'q';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('PrometheusMetricFindQuery', () => {
   const instanceSettings = {

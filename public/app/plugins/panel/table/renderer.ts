@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TableRenderer {
   formatters: any[];

@@ -7,7 +7,7 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/ui/src/types';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('app/core/services/backend_srv');
 

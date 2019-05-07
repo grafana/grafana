@@ -3,7 +3,7 @@ import FakeSchemaData from './__mocks__/schema';
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema } from '../types';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('AzureLogAnalyticsDatasource', () => {
   const ctx: any = {

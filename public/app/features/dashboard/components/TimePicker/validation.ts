@@ -1,5 +1,5 @@
 import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { toUtc, momentWrapper, isDateTimeType } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function inputDateDirective() {
   return {

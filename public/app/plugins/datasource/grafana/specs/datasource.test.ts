@@ -1,6 +1,6 @@
 import { GrafanaDatasource } from '../datasource';
 import q from 'q';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('grafana data source', () => {
   describe('when executing an annotations query', () => {

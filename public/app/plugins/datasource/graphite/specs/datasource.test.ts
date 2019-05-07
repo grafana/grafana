@@ -2,7 +2,7 @@ import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
 import $q from 'q';
 import { TemplateSrvStub } from 'test/specs/helpers';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {

@@ -5,8 +5,8 @@ import { action } from '@storybook/addon-actions';
 import { TimePicker } from './TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
-import { momentWrapper } from 'app/core/moment_wrapper';
 import { TimeFragment } from '../../types/time';
+import { momentWrapper } from '../../utils/moment_wrapper';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
 export const popoverOptions = {

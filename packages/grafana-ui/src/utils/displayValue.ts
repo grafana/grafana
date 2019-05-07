@@ -17,7 +17,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
-import { DateTimeType, momentWrapper } from 'app/core/moment_wrapper';
+import { DateTimeType, momentWrapper } from './moment_wrapper';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 

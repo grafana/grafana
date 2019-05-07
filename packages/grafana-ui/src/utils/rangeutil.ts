@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTimeType, DateTimeType } from '../moment_wrapper';
+import { isDateTimeType, DateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },

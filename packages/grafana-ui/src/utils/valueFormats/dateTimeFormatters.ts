@@ -1,6 +1,6 @@
 import { toFixed, toFixedScaled } from './valueFormats';
 import { DecimalCount } from '../../types';
-import { toUtc, toDuration as duration, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, toDuration as duration, momentWrapper } from '../moment_wrapper';
 
 interface IntervalsInSeconds {
   [interval: string]: number;

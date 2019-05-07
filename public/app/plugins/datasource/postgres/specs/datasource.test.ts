@@ -1,6 +1,6 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('PostgreSQLDatasource', () => {
   const instanceSettings = { name: 'postgresql' };

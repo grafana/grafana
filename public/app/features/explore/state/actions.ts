@@ -86,7 +86,7 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { isDateTimeType } from 'app/core/moment_wrapper';
+import { isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 /**
  * Updates UI state and save it to the URL

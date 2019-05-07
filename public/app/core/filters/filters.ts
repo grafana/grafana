@@ -2,7 +2,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { momentWrapper } from '../moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 coreModule.filter('stringSort', () => {
   return (input: any) => {

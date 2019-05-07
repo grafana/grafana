@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class ElasticDatasource {
   basicAuth: string;

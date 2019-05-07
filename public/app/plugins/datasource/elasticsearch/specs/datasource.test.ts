@@ -2,7 +2,7 @@ import angular from 'angular';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
-import { toUtc, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv = {

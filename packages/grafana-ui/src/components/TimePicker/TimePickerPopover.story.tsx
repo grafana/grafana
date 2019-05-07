@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
 import { popoverOptions } from './TimePicker.story';
-import { momentWrapper, DateTimeType } from 'app/core/moment_wrapper';
+import { momentWrapper, DateTimeType } from '../../utils/moment_wrapper';
 
 const TimePickerPopoverStories = storiesOf('UI/TimePicker/TimePickerPopover', module);
 

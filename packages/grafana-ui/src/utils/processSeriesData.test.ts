@@ -7,7 +7,7 @@ import {
   guessFieldTypeFromValue,
 } from './processSeriesData';
 import { FieldType, TimeSeries } from '../types/data';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from './moment_wrapper';
 
 describe('toSeriesData', () => {
   it('converts timeseries to series', () => {

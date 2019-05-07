@@ -10,7 +10,7 @@ import { toggleGraph, changeTime } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
-import { toUtc, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface GraphContainerProps {
   exploreId: ExploreId;

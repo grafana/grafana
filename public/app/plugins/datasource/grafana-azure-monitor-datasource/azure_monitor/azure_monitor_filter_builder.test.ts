@@ -19,7 +19,7 @@ jest.mock('app/core/utils/kbn', () => {
 });
 
 import AzureMonitorFilterBuilder from './azure_monitor_filter_builder';
-import { toUtc } from 'app/core/moment_wrapper';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('AzureMonitorFilterBuilder', () => {
   let builder: AzureMonitorFilterBuilder;

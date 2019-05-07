@@ -1,6 +1,6 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 /** @ngInject */
 export function ShareModalCtrl($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {

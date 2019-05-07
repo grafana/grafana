@@ -2,9 +2,8 @@ import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { TimeFragment } from '../../types/time';
 import { Timezone } from '../../utils/datemath';
-
+import { DateTimeType, momentWrapper, isDateTimeType } from '../../utils/moment_wrapper';
 import { stringToDateTimeType } from './time';
-import { DateTimeType, momentWrapper, isDateTimeType } from 'app/core/moment_wrapper';
 
 export interface Props {
   value: TimeFragment;

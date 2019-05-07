@@ -1,5 +1,5 @@
 import { GraphCtrl } from '../module';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('../graph', () => ({}));
 

@@ -7,7 +7,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('../metric_find_query');
 

@@ -185,5 +185,5 @@ angular.module('grafana.directives').directive('gfTimePickerSettings', settingsD
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
 import { inputDateDirective } from './validation';
-import { toUtc, getLocaleData, isDateTimeType, momentWrapper } from 'app/core/moment_wrapper';
+import { toUtc, getLocaleData, isDateTimeType, momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

@@ -1,7 +1,7 @@
 import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
-import { momentWrapper, DateTimeType, toUtc } from 'app/core/moment_wrapper';
+import { momentWrapper, DateTimeType, toUtc } from '../../utils/moment_wrapper';
 
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,

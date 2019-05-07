@@ -11,7 +11,7 @@ import { TimeRange, RawTimeRange } from '@grafana/ui';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, momentWrapper, isDateTimeType } from 'app/core/moment_wrapper';
+import { toUtc, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TimeSrv {
   time: any;

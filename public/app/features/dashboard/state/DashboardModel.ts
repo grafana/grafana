@@ -15,7 +15,7 @@ import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
 import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
-import { toUtc, DateTimeInput, momentWrapper, isDateTimeType } from 'app/core/moment_wrapper';
+import { toUtc, DateTimeInput, momentWrapper, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 export interface CloneOptions {
   saveVariables?: boolean;

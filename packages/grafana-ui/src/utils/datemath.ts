@@ -1,7 +1,7 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
 import { unitOfTime } from 'moment';
-import { DateTimeType, momentWrapper, toUtc, ISO_8601, isDateTimeType } from '../moment_wrapper';
+import { DateTimeType, momentWrapper, toUtc, ISO_8601, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const units: unitOfTime.Base[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 

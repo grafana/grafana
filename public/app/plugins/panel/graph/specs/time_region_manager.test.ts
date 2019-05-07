@@ -1,5 +1,5 @@
 import { TimeRegionManager, colorModes } from '../time_region_manager';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('TimeRegionManager', () => {
   function plotOptionsScenario(desc, func) {

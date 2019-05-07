@@ -2,7 +2,7 @@ import { MssqlDatasource } from '../datasource';
 import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import q from 'q';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {

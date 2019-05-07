@@ -2,7 +2,7 @@ import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('VariableSrv', function(this: any) {
   const ctx = {

@@ -6,7 +6,7 @@ import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 import { popoverOptions } from './TimePicker.story';
-import { momentWrapper } from 'app/core/moment_wrapper';
+import { momentWrapper } from '../../utils/moment_wrapper';
 
 const TimePickerOptionGroupStories = storiesOf('UI/TimePicker/TimePickerOptionGroup', module);
 

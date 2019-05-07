@@ -3,7 +3,7 @@ import sinon, { SinonFakeTimers } from 'sinon';
 import * as dateMath from './datemath';
 import { unitOfTime } from 'moment';
 import each from 'lodash/each';
-import { momentWrapper } from '../moment_wrapper';
+import { momentWrapper } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('DateMath', () => {
   const spans: unitOfTime.Base[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];

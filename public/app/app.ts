@@ -35,7 +35,7 @@ import { setupAngularRoutes } from 'app/routes/routes';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { setLocale } from './core/moment_wrapper';
+import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
