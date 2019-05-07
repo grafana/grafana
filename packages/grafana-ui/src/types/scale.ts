@@ -1,6 +1,6 @@
 export interface Threshold {
   value: number;
-  color?: string;
+  color: string;
   state?: string; // Warning, Error, LowLow, Low, OK, High, HighHigh etc
 }
 

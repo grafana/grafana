@@ -3,7 +3,6 @@ import toString from 'lodash/toString';
 
 import {
   ValueMapping,
-  Threshold,
   DisplayValue,
   FieldType,
   NullValueMode,
@@ -27,7 +26,6 @@ export interface FieldDisplayOptions {
   override: Partial<Field>; // Set these values regardless of the source
 
   // Could these be data driven also?
-  thresholds: Threshold[];
   mappings: ValueMapping[];
 }
 
@@ -131,7 +129,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         const display = getDisplayProcessor({
           field,
           mappings: fieldOptions.mappings,
-          thresholds: fieldOptions.thresholds,
           theme: options.theme,
         });
 

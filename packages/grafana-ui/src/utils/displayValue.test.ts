@@ -1,4 +1,4 @@
-import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, getDecimalsForValue } from './displayValue';
+import { getDisplayProcessor, DisplayProcessor, getDecimalsForValue } from './displayValue';
 import { DisplayValue, MappingType, ValueMapping } from '../types';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
@@ -70,31 +70,6 @@ describe('Process simple display values', () => {
 
   it('boolean false', () => {
     assertSame(false, processors, { text: 'false', numeric: 0 });
-  });
-});
-
-describe('Get color from threshold', () => {
-  it('should get first threshold color when only one threshold', () => {
-    const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
-    expect(getColorFromThreshold(49, thresholds)).toEqual('#7EB26D');
-  });
-
-  it('should get the threshold color if value is same as a threshold', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(50, thresholds)).toEqual('#EAB839');
-  });
-
-  it('should get the nearest threshold color between thresholds', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(55, thresholds)).toEqual('#EAB839');
   });
 });
 

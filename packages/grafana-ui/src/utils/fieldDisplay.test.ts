@@ -57,7 +57,6 @@ describe('FieldDisplay', () => {
     fieldOptions: {
       calcs: [],
       mappings: [],
-      thresholds: [],
       override: {},
       defaults: {},
     },
@@ -70,7 +69,6 @@ describe('FieldDisplay', () => {
       fieldOptions: {
         calcs: [ReducerID.first],
         mappings: [],
-        thresholds: [],
         override: {},
         defaults: {
           title: '$__cell_0 * $__field_name * $__series_name',
@@ -90,7 +88,6 @@ describe('FieldDisplay', () => {
       fieldOptions: {
         calcs: [ReducerID.last],
         mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },
@@ -106,7 +103,6 @@ describe('FieldDisplay', () => {
         limit: 1000,
         calcs: [],
         mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },
@@ -122,7 +118,6 @@ describe('FieldDisplay', () => {
         limit: 2,
         calcs: [],
         mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },

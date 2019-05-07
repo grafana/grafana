@@ -6,7 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, Threshold, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -133,8 +133,6 @@ export class PanelModel {
     _.defaultsDeep(this, _.cloneDeep(defaults));
     // queries must have refId
     this.ensureQueryIds();
-
-    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -144,19 +142,6 @@ export class PanelModel {
           query.refId = getNextRefIdChar(this.targets);
         }
       }
-    }
-  }
-
-  restoreInfintyForThresholds() {
-    if (this.options && this.options.thresholds) {
-      this.options.thresholds = this.options.thresholds.map((threshold: Threshold) => {
-        // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
-        if (threshold.index === 0 && threshold.value === null) {
-          return { ...threshold, value: -Infinity };
-        }
-
-        return threshold;
-      });
     }
   }
 

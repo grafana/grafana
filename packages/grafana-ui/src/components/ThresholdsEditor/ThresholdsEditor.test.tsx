@@ -6,7 +6,9 @@ import { colors } from '../../utils';
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
     onChange: jest.fn(),
-    thresholds: [],
+    scale: {
+      thresholds: [],
+    },
   };
 
   Object.assign(props, propOverrides);
@@ -40,7 +42,7 @@ describe('Add threshold', () => {
   it('should not add threshold at index 0', () => {
     const { instance } = setup();
 
-    instance.onAddThreshold(0);
+    instance.onAddThresholdAfter(instance.state.thresholds[0]);
 
     expect(instance.state.thresholds).toEqual([{ index: 0, value: -Infinity, color: colors[0] }]);
   });
@@ -48,7 +50,7 @@ describe('Add threshold', () => {
   it('should add threshold', () => {
     const { instance } = setup();
 
-    instance.onAddThreshold(1);
+    instance.onAddThresholdAfter(instance.state.thresholds[1]);
 
     expect(instance.state.thresholds).toEqual([
       { index: 0, value: -Infinity, color: colors[0] },
@@ -58,34 +60,38 @@ describe('Add threshold', () => {
 
   it('should add another threshold above a first', () => {
     const { instance } = setup({
-      thresholds: [{ index: 0, value: -Infinity, color: colors[0] }, { index: 1, value: 50, color: colors[2] }],
+      scale: {
+        thresholds: [{ value: -Infinity, color: colors[0] }, { value: 50, color: colors[2] }],
+      },
     });
 
-    instance.onAddThreshold(2);
+    instance.onAddThresholdAfter(instance.state.thresholds[2]);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: colors[0] },
-      { index: 1, value: 50, color: colors[2] },
-      { index: 2, value: 75, color: colors[3] },
+      { value: -Infinity, color: colors[0] },
+      { value: 50, color: colors[2] },
+      { value: 75, color: colors[3] },
     ]);
   });
 
   it('should add another threshold between first and second index', () => {
     const { instance } = setup({
-      thresholds: [
-        { index: 0, value: -Infinity, color: colors[0] },
-        { index: 1, value: 50, color: colors[2] },
-        { index: 2, value: 75, color: colors[3] },
-      ],
+      scale: {
+        thresholds: [
+          { value: -Infinity, color: colors[0] },
+          { value: 50, color: colors[2] },
+          { value: 75, color: colors[3] },
+        ],
+      },
     });
 
-    instance.onAddThreshold(2);
+    instance.onAddThresholdAfter(instance.state.thresholds[2]);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: colors[0] },
-      { index: 1, value: 50, color: colors[2] },
-      { index: 2, value: 62.5, color: colors[4] },
-      { index: 3, value: 75, color: colors[3] },
+      { value: -Infinity, color: colors[0] },
+      { value: 50, color: colors[2] },
+      { value: 62.5, color: colors[4] },
+      { value: 75, color: colors[3] },
     ]);
   });
 });
@@ -93,11 +99,11 @@ describe('Add threshold', () => {
 describe('Remove threshold', () => {
   it('should not remove threshold at index 0', () => {
     const thresholds = [
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D', key: 1 },
+      { value: 50, color: '#EAB839', key: 2 },
+      { value: 75, color: '#6ED0E0', key: 3 },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ scale: { thresholds } });
 
     instance.onRemoveThreshold(thresholds[0]);
 
@@ -106,11 +112,11 @@ describe('Remove threshold', () => {
 
   it('should remove threshold', () => {
     const thresholds = [
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D', key: 1 },
+      { value: 50, color: '#EAB839', key: 2 },
+      { value: 75, color: '#6ED0E0', key: 3 },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ scale: { thresholds } });
 
     instance.onRemoveThreshold(thresholds[1]);
 
@@ -124,11 +130,11 @@ describe('Remove threshold', () => {
 describe('change threshold value', () => {
   it('should not change threshold at index 0', () => {
     const thresholds = [
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D', key: 1 },
+      { value: 50, color: '#EAB839', key: 2 },
+      { value: 75, color: '#6ED0E0', key: 3 },
     ];
-    const { instance } = setup({ thresholds });
+    const { instance } = setup({ scale: { thresholds } });
 
     const mockEvent = ({ target: { value: '12' } } as any) as ChangeEvent<HTMLInputElement>;
 
@@ -140,9 +146,9 @@ describe('change threshold value', () => {
   it('should update value', () => {
     const { instance } = setup();
     const thresholds = [
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D', key: 1 },
+      { value: 50, color: '#EAB839', key: 2 },
+      { value: 75, color: '#6ED0E0', key: 3 },
     ];
 
     instance.state = {
@@ -154,9 +160,9 @@ describe('change threshold value', () => {
     instance.onChangeThresholdValue(mockEvent, thresholds[1]);
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 78, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D' },
+      { value: 78, color: '#EAB839' },
+      { value: 75, color: '#6ED0E0' },
     ]);
   });
 });
@@ -165,9 +171,9 @@ describe('on blur threshold value', () => {
   it('should resort rows and update indexes', () => {
     const { instance } = setup();
     const thresholds = [
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 78, color: '#EAB839' },
-      { index: 2, value: 75, color: '#6ED0E0' },
+      { value: -Infinity, color: '#7EB26D', key: 1 },
+      { value: 78, color: '#EAB839', key: 2 },
+      { value: 75, color: '#6ED0E0', key: 3 },
     ];
 
     instance.setState({
@@ -177,9 +183,9 @@ describe('on blur threshold value', () => {
     instance.onBlur();
 
     expect(instance.state.thresholds).toEqual([
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-      { index: 1, value: 75, color: '#6ED0E0' },
-      { index: 2, value: 78, color: '#EAB839' },
+      { value: -Infinity, color: '#7EB26D' },
+      { value: 75, color: '#6ED0E0' },
+      { value: 78, color: '#EAB839' },
     ]);
   });
 });

@@ -1,8 +1,9 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BarGauge, Props, getValueColor, getBasicAndGradientStyles, getBarGradient, getTitleStyles } from './BarGauge';
+import { BarGauge, Props, getBasicAndGradientStyles, getBarGradient, getTitleStyles } from './BarGauge';
 import { VizOrientation, DisplayValue } from '../../types';
 import { getTheme } from '../../themes';
+import { getScaledFieldHelper } from '../../utils/scale';
 
 // jest.mock('jquery', () => ({
 //   plot: jest.fn(),
@@ -13,15 +14,21 @@ const orange = '#FF9830';
 // const red = '#BB';
 
 function getProps(propOverrides?: Partial<Props>): Props {
+  const field = {
+    name: 'test',
+    min: 0,
+    max: 100,
+    scale: {
+      thresholds: [
+        { index: 0, value: -Infinity, color: 'green' },
+        { index: 1, value: 70, color: 'orange' },
+        { index: 2, value: 90, color: 'red' },
+      ],
+    },
+  };
+
   const props: Props = {
-    maxValue: 100,
-    minValue: 0,
     displayMode: 'basic',
-    thresholds: [
-      { index: 0, value: -Infinity, color: 'green' },
-      { index: 1, value: 70, color: 'orange' },
-      { index: 2, value: 90, color: 'red' },
-    ],
     height: 300,
     width: 300,
     value: {
@@ -29,6 +36,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
       numeric: 25,
     },
     theme: getTheme(),
+    scale: getScaledFieldHelper(field, getTheme().type),
     orientation: VizOrientation.Horizontal,
   };
 
@@ -55,11 +63,11 @@ describe('BarGauge', () => {
   describe('Get value color', () => {
     it('should get the threshold color if value is same as a threshold', () => {
       const props = getProps({ value: getValue(70) });
-      expect(getValueColor(props)).toEqual(orange);
+      expect(props.scale.interpolate(props.value.numeric).color).toEqual(orange);
     });
     it('should get the base threshold', () => {
       const props = getProps({ value: getValue(-10) });
-      expect(getValueColor(props)).toEqual(green);
+      expect(props.scale.interpolate(props.value.numeric).color).toEqual(green);
     });
   });
 

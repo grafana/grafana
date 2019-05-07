@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Threshold, Themeable } from '../../types';
+import { DisplayValue, Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
+import { ScaledFieldHelper } from '../../utils/scale';
 
 export interface Props extends Themeable {
   height: number;
-  maxValue: number;
-  minValue: number;
-  thresholds: Threshold[];
+  scale: ScaledFieldHelper;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
@@ -21,11 +20,8 @@ export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
   static defaultProps: Partial<Props> = {
-    maxValue: 100,
-    minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [],
   };
 
   componentDidMount() {
@@ -37,21 +33,26 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds() {
-    const { maxValue, minValue, thresholds, theme } = this.props;
+    const { scale, theme } = this.props;
 
-    const lastThreshold = thresholds[thresholds.length - 1];
+    const formatted: any[] = [];
+    if (scale.thresholds && scale.thresholds.length) {
+      for (const threshold of scale.thresholds) {
+        formatted.push({
+          value: threshold.value,
+          color: getColorFromHexRgbOrName(threshold.color!, theme.type),
+        });
+      }
 
-    return [
-      ...thresholds.map(threshold => {
-        if (threshold.index === 0) {
-          return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
-        }
-
-        const previousThreshold = thresholds[threshold.index - 1];
-        return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
-      }),
-      { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
-    ];
+      formatted[0].value = scale.minValue;
+      if (formatted.length === 1) {
+        formatted.push({ ...formatted[0] });
+      }
+      formatted[formatted.length - 1].value = scale.maxValue;
+    } else {
+      // TODO the d3 variation
+    }
+    return formatted;
   }
 
   getFontScale(length: number): number {
@@ -62,7 +63,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { scale, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
@@ -85,8 +86,8 @@ export class Gauge extends PureComponent<Props> {
       series: {
         gauges: {
           gauge: {
-            min: minValue,
-            max: maxValue,
+            min: scale.minValue,
+            max: scale.maxValue,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },

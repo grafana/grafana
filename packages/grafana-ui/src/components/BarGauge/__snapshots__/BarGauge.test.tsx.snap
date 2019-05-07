@@ -35,7 +35,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
         "borderRight": "2px solid #73BF69",
         "height": "300px",
         "transition": "width 1s",
-        "width": "60px",
+        "width": "NaNpx",
       }
     }
   />

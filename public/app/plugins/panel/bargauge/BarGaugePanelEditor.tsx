@@ -10,18 +10,25 @@ import {
   FieldDisplayOptions,
   Field,
   FieldPropertiesEditor,
+  Scale,
 } from '@grafana/ui';
 
 // Types
-import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
+import { FormLabel, PanelEditorProps, Select, ValueMapping } from '@grafana/ui';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
+  onScaleChanged = (scale: Scale) => {
+    const fieldOptions = this.props.options.fieldOptions;
+    const defaults = {
+      ...fieldOptions.defaults,
+      scale,
+    };
     this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
-      thresholds,
+      ...fieldOptions,
+      defaults,
     });
+  };
 
   onValueMappingsChanged = (mappings: ValueMapping[]) =>
     this.onDisplayOptionsChanged({
@@ -84,7 +91,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             options={fieldOptions.defaults}
           />
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
+          <ThresholdsEditor onChange={this.onScaleChanged} scale={fieldOptions.defaults.scale} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />

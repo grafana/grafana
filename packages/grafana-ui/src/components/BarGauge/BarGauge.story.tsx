@@ -4,6 +4,7 @@ import { BarGauge, Props } from './BarGauge';
 import { VizOrientation } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import { getScaledFieldHelper } from '../../utils/scale';
 
 const getKnobs = () => {
   return {
@@ -35,6 +36,19 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       threshold2Value,
     } = getKnobs();
 
+    const field = {
+      name: 'test',
+      min: minValue,
+      max: maxValue,
+      scale: {
+        thresholds: [
+          { index: 0, value: -Infinity, color: 'green' },
+          { index: 1, value: threshold1Value, color: threshold1Color },
+          { index: 1, value: threshold2Value, color: threshold2Color },
+        ],
+      },
+    };
+
     const props: Props = {
       theme: {} as any,
       width: 300,
@@ -44,15 +58,9 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         title: title,
         numeric: value,
       },
-      minValue: minValue,
-      maxValue: maxValue,
       orientation: VizOrientation.Vertical,
       displayMode: 'basic',
-      thresholds: [
-        { index: 0, value: -Infinity, color: 'green' },
-        { index: 1, value: threshold1Value, color: threshold1Color },
-        { index: 1, value: threshold2Value, color: threshold2Color },
-      ],
+      scale: getScaledFieldHelper(field), // getTheme().type),
     };
 
     Object.assign(props, overrides);

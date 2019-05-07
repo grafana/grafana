@@ -24,10 +24,16 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
 export const standardFieldDisplayOptions: FieldDisplayOptions = {
   values: false,
   calcs: [ReducerID.mean],
-  defaults: {},
+  defaults: {
+    scale: {
+      thresholds: [
+        { value: -Infinity, color: 'green' }, // Base
+        { value: 80, color: 'red' },
+      ], // 80%
+    },
+  },
   override: {},
   mappings: [],
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
 };
 
 export const defaults: SingleStatOptions = {

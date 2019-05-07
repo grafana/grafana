@@ -18,6 +18,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
+import { getFieldScaleInterpolator } from './scale';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -25,7 +26,6 @@ export interface DisplayValueOptions {
   field?: Partial<Field>;
 
   mappings?: ValueMapping[];
-  thresholds?: Threshold[];
 
   // Alternative to empty string
   noValue?: string;
@@ -39,9 +39,11 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   if (options && !_.isEmpty(options)) {
     const field = options.field ? options.field : {};
     const formatFunc = getValueFormat(field.unit || 'none');
+    const theme = options.theme ? options.theme.type : GrafanaThemeType.Dark;
+    const scale = field.scale ? getFieldScaleInterpolator(field, theme) : null;
 
     return (value: any) => {
-      const { mappings, thresholds, theme } = options;
+      const { mappings } = options;
       let color = field.color;
 
       let text = _.toString(value);
@@ -76,8 +78,8 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
-        if (thresholds && thresholds.length > 0) {
-          color = getColorFromThreshold(numeric, thresholds, theme);
+        if (scale) {
+          color = scale(numeric).color;
         }
       }
 

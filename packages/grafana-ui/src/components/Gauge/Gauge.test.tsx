@@ -3,28 +3,35 @@ import { shallow } from 'enzyme';
 
 import { Gauge, Props } from './Gauge';
 import { getTheme } from '../../themes';
+import { getScaledFieldHelper } from '../../utils/scale';
+import { Threshold } from '../../types/scale';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
 }));
 
-const setup = (propOverrides?: object) => {
+const setup = (thresholds?: Threshold[]) => {
+  const field = {
+    name: 'test',
+    min: 0,
+    max: 100,
+    scale: {
+      thresholds: thresholds ? thresholds : [{ index: 0, value: -Infinity, color: '#7EB26D' }],
+    },
+  };
+
   const props: Props = {
-    maxValue: 100,
-    minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
     height: 300,
     width: 300,
     value: {
       text: '25',
       numeric: 25,
     },
+    scale: getScaledFieldHelper(field, getTheme().type),
     theme: getTheme(),
   };
-
-  Object.assign(props, propOverrides);
 
   const wrapper = shallow(<Gauge {...props} />);
   const instance = wrapper.instance() as Gauge;
@@ -37,7 +44,7 @@ const setup = (propOverrides?: object) => {
 
 describe('Get thresholds formatted', () => {
   it('should return first thresholds color for min and max', () => {
-    const { instance } = setup({ thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }] });
+    const { instance } = setup([{ value: -Infinity, color: '#7EB26D' }]);
 
     expect(instance.getFormattedThresholds()).toEqual([
       { value: 0, color: '#7EB26D' },
@@ -46,13 +53,11 @@ describe('Get thresholds formatted', () => {
   });
 
   it('should get the correct formatted values when thresholds are added', () => {
-    const { instance } = setup({
-      thresholds: [
-        { index: 0, value: -Infinity, color: '#7EB26D' },
-        { index: 1, value: 50, color: '#EAB839' },
-        { index: 2, value: 75, color: '#6ED0E0' },
-      ],
-    });
+    const { instance } = setup([
+      { value: -Infinity, color: '#7EB26D' },
+      { value: 50, color: '#EAB839' },
+      { value: 75, color: '#6ED0E0' },
+    ]);
 
     expect(instance.getFormattedThresholds()).toEqual([
       { value: 0, color: '#7EB26D' },

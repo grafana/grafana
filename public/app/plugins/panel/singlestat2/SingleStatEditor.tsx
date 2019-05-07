@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import {
   PanelEditorProps,
   ThresholdsEditor,
-  Threshold,
   PanelOptionsGrid,
   ValueMappingsEditor,
   ValueMapping,
@@ -11,6 +10,7 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Field,
+  Scale,
 } from '@grafana/ui';
 
 import { SingleStatOptions, SparklineOptions } from './types';
@@ -19,12 +19,17 @@ import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
+  onScaleChanged = (scale: Scale) => {
+    const fieldOptions = this.props.options.fieldOptions;
+    const defaults = {
+      ...fieldOptions.defaults,
+      scale,
+    };
     this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
-      thresholds,
+      ...fieldOptions,
+      defaults,
     });
-
+  };
   onValueMappingsChanged = (mappings: ValueMapping[]) =>
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
@@ -70,7 +75,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
+          <ThresholdsEditor onChange={this.onScaleChanged} scale={fieldOptions.defaults.scale} />
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />

@@ -41,7 +41,6 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
     fieldOptions.mappings = old.valueMappings;
-    fieldOptions.thresholds = old.thresholds;
 
     const field = (fieldOptions.defaults = {} as Field);
     if (valueOptions) {
@@ -55,6 +54,11 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     }
     field.min = old.minValue;
     field.max = old.maxValue;
+    if (old.thresholds) {
+      field.scale = {
+        thresholds: old.thresholds,
+      };
+    }
 
     return omit(old, 'valueMappings', 'thresholds', 'valueOptions');
   }
