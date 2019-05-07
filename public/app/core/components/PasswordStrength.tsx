@@ -1,5 +1,4 @@
 import React from 'react';
-import zxcvbn from 'zxcvbn';
 
 export interface Props {
   password: string;
@@ -8,6 +7,28 @@ export interface Props {
 export class PasswordStrength extends React.Component<Props, any> {
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      getScore(password: string) {
+        if (password.length < 4) {
+          return 1;
+        }
+        if (password.length < 8) {
+          return 2;
+        }
+        return 3;
+      },
+    };
+  }
+
+  componentDidMount() {
+    import(/* webpackChunkName: "zxcvbn" */ 'zxcvbn').then(zxcvbn => {
+      this.setState({
+        getScore(password: string) {
+          return zxcvbn.default(password).score;
+        },
+      });
+    });
   }
 
   render() {
@@ -19,7 +40,7 @@ export class PasswordStrength extends React.Component<Props, any> {
       return null;
     }
 
-    const passwordScore = zxcvbn(password).score;
+    const passwordScore = this.state.getScore(password);
 
     if (passwordScore <= 2) {
       strengthText = 'strength: you can do better.';
