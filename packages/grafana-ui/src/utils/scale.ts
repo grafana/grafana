@@ -151,8 +151,6 @@ export function getScaledFieldHelper(field: Field, theme = GrafanaThemeType.Dark
   const maxValue = Math.max(field.min!, field.max!);
   const thresholds = field.scale!.thresholds!; // HACK assume thresholds now
 
-  console.log('MIN?MAX', field.min, field.max, ' >>> ', minValue, maxValue);
-
   return {
     minValue,
     maxValue,

@@ -131,6 +131,7 @@ export class PanelModel {
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
+
     // queries must have refId
     this.ensureQueryIds();
   }

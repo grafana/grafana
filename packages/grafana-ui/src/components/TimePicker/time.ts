@@ -1,8 +1,7 @@
 import moment, { Moment } from 'moment';
-import { TimeOption, TimeRange, TIME_FORMAT } from '@grafana/ui';
-
-import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { describeTimeRange } from '@grafana/ui/src/utils/rangeutil';
+import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
+import { describeTimeRange } from '../../utils/rangeutil';
+import * as dateMath from '../../utils/datemath';
 
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,

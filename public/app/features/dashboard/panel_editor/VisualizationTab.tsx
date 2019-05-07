@@ -185,11 +185,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
       );
     } else {
       return (
-        <div className="toolbar__main" onClick={this.onOpenVizPicker}>
-          <img className="toolbar__main-image" src={meta.info.logos.small} />
-          <div className="toolbar__main-name">{meta.name}</div>
-          <i className="fa fa-caret-down" />
-        </div>
+        <>
+          <div className="toolbar__main" onClick={this.onOpenVizPicker}>
+            <img className="toolbar__main-image" src={meta.info.logos.small} />
+            <div className="toolbar__main-name">{meta.name}</div>
+            <i className="fa fa-caret-down" />
+          </div>
+          <PluginStateinfo state={meta.state} />
+        </>
       );
     }
   };
@@ -237,7 +240,6 @@ export class VisualizationTab extends PureComponent<Props, State> {
               onClose={this.onCloseVizPicker}
             />
           </FadeIn>
-          <PluginStateinfo state={meta.state} />
           {this.renderPanelOptions()}
         </>
       </EditorTabBody>

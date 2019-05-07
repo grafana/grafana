@@ -55,7 +55,7 @@
     "@types/node": "10.14.1",
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
-    "@types/react": "16.8.13",
+    "@types/react": "16.8.16",
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.8.1",
     "@types/react-transition-group": "2.0.16",

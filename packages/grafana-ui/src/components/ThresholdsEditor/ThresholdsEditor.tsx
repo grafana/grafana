@@ -83,8 +83,6 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const newThresholds = [...thresholds, add];
     sortThresholds(newThresholds);
 
-    console.log('ADDing', prevValue, nextValue, add, newThresholds);
-
     this.setState(
       {
         thresholds: newThresholds,
@@ -114,6 +112,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       }
       return t;
     });
+    if (thresholds.length) {
+      thresholds[0].value = -Infinity;
+    }
     this.setState({ thresholds });
   };
 
@@ -151,10 +152,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const { scheme, thresholds } = this.state;
     this.props.onChange({
       scheme,
-      thresholds: thresholds.map(t => {
-        const { key, ...rest } = t;
-        return rest; // everything except key
-      }),
+      thresholds: threshodsWithoutKey(thresholds),
     });
   };
 
@@ -229,4 +227,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       </ThemeContext.Consumer>
     );
   }
+}
+
+export function threshodsWithoutKey(thresholds: ThresholdWithKey[]): Threshold[] {
+  return thresholds.map(t => {
+    const { key, ...rest } = t;
+    return rest; // everything except key
+  });
 }

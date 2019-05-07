@@ -28,35 +28,38 @@
       "links": [],
       "options": {
         "displayMode": "gradient",
-        "maxValue": 100,
-        "minValue": 0,
-        "orientation": "vertical",
-        "thresholds": [
-          {
-            "color": "green",
-            "index": 0,
-            "value": null
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "watt"
           },
-          {
-            "color": "orange",
-            "index": 1,
-            "value": 40
-          },
-          {
-            "color": "red",
-            "index": 2,
-            "value": 80
-          }
-        ],
-        "valueMappings": [],
-        "valueOptions": {
-          "decimals": null,
-          "prefix": "",
-          "stat": "mean",
-          "suffix": "",
-          "unit": "watt"
-        }
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "orange",
+              "index": 1,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "vertical"
       },
+      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -145,35 +148,38 @@
       "links": [],
       "options": {
         "displayMode": "gradient",
-        "maxValue": 100,
-        "minValue": 0,
-        "orientation": "horizontal",
-        "thresholds": [
-          {
-            "color": "green",
-            "index": 0,
-            "value": null
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "watt"
           },
-          {
-            "color": "orange",
-            "index": 1,
-            "value": 55
-          },
-          {
-            "color": "red",
-            "index": 2,
-            "value": 95
-          }
-        ],
-        "valueMappings": [],
-        "valueOptions": {
-          "decimals": null,
-          "prefix": "",
-          "stat": "mean",
-          "suffix": "",
-          "unit": "watt"
-        }
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "green",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "orange",
+              "index": 1,
+              "value": 55
+            },
+            {
+              "color": "red",
+              "index": 2,
+              "value": 95
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
       },
+      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
           "refId": "E",
@@ -269,40 +275,43 @@
       "links": [],
       "options": {
         "displayMode": "gradient",
-        "maxValue": 100,
-        "minValue": 0,
-        "orientation": "horizontal",
-        "thresholds": [
-          {
-            "color": "blue",
-            "index": 0,
-            "value": null
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
           },
-          {
-            "color": "green",
-            "index": 1,
-            "value": 20
-          },
-          {
-            "color": "orange",
-            "index": 2,
-            "value": 40
-          },
-          {
-            "color": "red",
-            "index": 3,
-            "value": 80
-          }
-        ],
-        "valueMappings": [],
-        "valueOptions": {
-          "decimals": null,
-          "prefix": "",
-          "stat": "mean",
-          "suffix": "",
-          "unit": "celsius"
-        }
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
       },
+      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
           "alias": "Inside",
@@ -356,40 +365,43 @@
       "links": [],
       "options": {
         "displayMode": "basic",
-        "maxValue": 100,
-        "minValue": 0,
-        "orientation": "horizontal",
-        "thresholds": [
-          {
-            "color": "blue",
-            "index": 0,
-            "value": null
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
           },
-          {
-            "color": "green",
-            "index": 1,
-            "value": 20
-          },
-          {
-            "color": "orange",
-            "index": 2,
-            "value": 40
-          },
-          {
-            "color": "red",
-            "index": 3,
-            "value": 80
-          }
-        ],
-        "valueMappings": [],
-        "valueOptions": {
-          "decimals": null,
-          "prefix": "",
-          "stat": "mean",
-          "suffix": "",
-          "unit": "celsius"
-        }
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
       },
+      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
           "alias": "Inside",
@@ -471,5 +483,5 @@
   "timezone": "",
   "title": "Bar Gauge Animated Demo",
   "uid": "k5IUwQeikaa",
-  "version": 4
+  "version": 1
 }
