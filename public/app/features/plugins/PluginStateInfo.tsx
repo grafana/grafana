@@ -1,18 +1,29 @@
 import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { PluginState, Tooltip, ThemeContext } from '@grafana/ui';
+import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
 
 interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): string | null {
+function getPluginStateInfoText(state?: PluginState): PopperContent<any> | null {
   switch (state) {
     case PluginState.alpha:
-      return 'Plugin in alpha state. Means work in progress and updates may include breaking changes.';
+      return (
+        <div>
+          <h5>Alpha Plugin</h5>
+          <p>This plugin is a work in progress and updates may include breaking changes.</p>
+        </div>
+      );
 
     case PluginState.beta:
-      return 'Plugin in beta state. Means there could be bugs and minor breaking changes.';
+      return (
+        <div>
+          <h5>Beta Plugin</h5>
+          <p>There could be bugs and minor breaking changes to this plugin.</p>
+        </div>
+      );
   }
   return null;
 }
@@ -34,10 +45,11 @@ const PluginStateinfo: FC<Props> = props => {
     font-size: 13px;
     padding: 4px 8px;
     margin-left: 16px;
+    cursor: help;
   `;
 
   return (
-    <Tooltip content={text}>
+    <Tooltip content={text} theme={'info'} placement={'top'}>
       <div className={styles}>
         <i className="fa fa-warning" /> {props.state}
       </div>
