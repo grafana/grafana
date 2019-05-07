@@ -308,6 +308,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: queryFailureAction,
     mapper: (state, action): ExploreItemState => {
       const { resultType, response } = action.payload;
+      const queryError = state.queryError ? state.queryError : response;
 
       return {
         ...state,
@@ -315,7 +316,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         tableResult: resultType === 'Table' ? null : state.tableResult,
         logsResult: resultType === 'Logs' ? null : state.logsResult,
         latency: 0,
-        queryError: response,
+        queryError,
         showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,

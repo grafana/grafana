@@ -32,6 +32,7 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
+  DataQueryError,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -86,6 +87,7 @@ import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 
 /**
  * Updates UI state and save it to the URL
@@ -418,6 +420,10 @@ export function queryTransactionFailure(
       return;
     }
 
+    if (!instanceOfDataQueryError(response)) {
+      response = toDataQueryError(response);
+    }
+
     dispatch(
       queryFailureAction({
         exploreId,
@@ -427,6 +433,10 @@ export function queryTransactionFailure(
     );
   };
 }
+
+export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
+  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
+};
 
 /**
  * Complete a query transaction, mark the transaction as `done` and store query state in URL.

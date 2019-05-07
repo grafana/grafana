@@ -180,7 +180,8 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error = item.queryError && item.queryError.refId === query.refId ? item.queryError : null;
+  const error =
+    item.queryError && item.queryError.refId && item.queryError.refId === query.refId ? item.queryError : null;
   const series = graphResult ? graphResult : []; // TODO: use SeriesData
   const queryResponseState =
     graphIsLoading || tableIsLoading || logIsLoading
