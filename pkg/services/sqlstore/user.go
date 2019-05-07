@@ -200,7 +200,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 
 	if err != nil {
 		return err
-	} else if !has {
+	} else if !has || user.IsDisabled {
 		return m.ErrUserNotFound
 	}
 
