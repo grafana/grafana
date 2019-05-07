@@ -73,21 +73,6 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
-    it('should restore -Infinity value for base threshold', () => {
-      expect(model.options.fieldOptions.thresholds).toEqual([
-        {
-          color: '#F2495C',
-          index: 1,
-          value: 50,
-        },
-        {
-          color: '#73BF69',
-          index: 0,
-          value: -Infinity,
-        },
-      ]);
-    });
-
     describe('when changing panel type', () => {
       beforeEach(() => {
         model.changePlugin(getPanelPlugin({ id: 'graph' }));

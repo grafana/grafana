@@ -35,7 +35,9 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
     field.max = old.maxValue;
     if (old.thresholds) {
       field.scale = {
-        thresholds: old.thresholds,
+        thresholds: old.thresholds.map((t: any) => {
+          return { value: t.value, color: t.color }; // Drop index
+        }),
       };
     }
 

@@ -1,5 +1,5 @@
 import { Field } from '../types/data';
-import { ColorScheme } from '../types/scale';
+import { ColorScheme, Threshold } from '../types/scale';
 import { getFieldDisplayProcessor } from './scale';
 
 describe('scale', () => {
@@ -37,9 +37,9 @@ describe('Get color from threshold', () => {
 
   it('should get the threshold color if value is same as a threshold', () => {
     const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
+      { value: 75, color: '#6ED0E0' },
+      { value: 50, color: '#EAB839' },
+      { value: -Infinity, color: '#7EB26D' },
     ];
     const field = {
       name: 'test',
@@ -53,9 +53,9 @@ describe('Get color from threshold', () => {
 
   it('should get the nearest threshold color between thresholds', () => {
     const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
+      { value: 75, color: '#6ED0E0' },
+      { value: 50, color: '#EAB839' },
+      { value: -Infinity, color: '#7EB26D' },
     ];
     const field = {
       name: 'test',
@@ -65,5 +65,29 @@ describe('Get color from threshold', () => {
     };
     const processor = getFieldDisplayProcessor(field);
     expect(processor.interpolate(55).color).toEqual('#EAB839');
+  });
+
+  it('should restore -Infinity value for base threshold', () => {
+    const thresholds = [
+      { value: null, color: '#123456' }, // -Infinity becomes null with JSON
+      { value: 75, color: '#6ED0E0' },
+    ] as Threshold[];
+    const field: Field = {
+      name: 'test',
+      scale: {
+        thresholds,
+      },
+    };
+    const processor = getFieldDisplayProcessor(field);
+    expect(processor.scale.thresholds).toEqual([
+      {
+        color: '#123456',
+        value: -Infinity,
+      },
+      {
+        color: '#6ED0E0',
+        value: 75,
+      },
+    ]);
   });
 });

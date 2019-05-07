@@ -65,5 +65,19 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
   }
 
+  // 6.2->6.3
+  if (old.thresholds && old.fieldOptions) {
+    const fieldOptions = old.fieldOptions as FieldDisplayOptions;
+    if (!fieldOptions.defaults) {
+      fieldOptions.defaults = {};
+    }
+
+    fieldOptions.defaults.scale = {
+      thresholds: old.thresholds.map((t: any) => {
+        return { value: t.value, color: t.color }; // Drop index
+      }),
+    };
+  }
+
   return panel.options;
 };
