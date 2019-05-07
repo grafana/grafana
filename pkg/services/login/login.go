@@ -93,7 +93,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 
 		if extUser.AuthModule == models.AuthModuleLDAP && userQuery.Result.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.Bus.Dispatch(&models.EnableUserCommand{UserId: cmd.Result.Id}); err != nil {
+			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
 			}
 		}

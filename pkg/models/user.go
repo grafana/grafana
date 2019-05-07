@@ -89,12 +89,9 @@ type UpdateUserPermissionsCommand struct {
 	UserId         int64 `json:"-"`
 }
 
-type EnableUserCommand struct {
-	UserId int64
-}
-
 type DisableUserCommand struct {
-	UserId int64
+	UserId     int64
+	IsDisabled bool
 }
 
 type DeleteUserCommand struct {

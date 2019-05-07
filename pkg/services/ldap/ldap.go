@@ -218,7 +218,8 @@ func (auth *Auth) DisableExternalUser(username string) error {
 		auth.log.Debug("Disabling user", "user", userQuery.Result.Login)
 		// disable user in grafana
 		disableUserCmd := &models.DisableUserCommand{
-			UserId: userQuery.Result.UserId,
+			UserId:     userQuery.Result.UserId,
+			IsDisabled: true,
 		}
 
 		if err := bus.Dispatch(disableUserCmd); err != nil {

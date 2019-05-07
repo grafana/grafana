@@ -27,7 +27,6 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
-	bus.AddHandler("sql", EnableUser)
 	bus.AddHandler("sql", DisableUser)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
@@ -478,13 +477,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 func DisableUser(cmd *m.DisableUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		return setIsDisabledUserFlagInTransaction(sess, cmd.UserId, true)
-	})
-}
-
-func EnableUser(cmd *m.EnableUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return setIsDisabledUserFlagInTransaction(sess, cmd.UserId, false)
+		return setIsDisabledUserFlagInTransaction(sess, cmd.UserId, cmd.IsDisabled)
 	})
 }
 
