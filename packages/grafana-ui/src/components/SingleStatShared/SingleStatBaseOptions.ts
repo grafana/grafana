@@ -66,17 +66,19 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
   }
 
   // 6.2->6.3
-  if (old.thresholds && old.fieldOptions) {
-    const fieldOptions = old.fieldOptions as FieldDisplayOptions;
+  if (old.fieldOptions && old.fieldOptions.thresholds) {
+    const { thresholds, ...fieldOptions } = old.fieldOptions;
     if (!fieldOptions.defaults) {
       fieldOptions.defaults = {};
     }
 
     fieldOptions.defaults.scale = {
-      thresholds: old.thresholds.map((t: any) => {
+      thresholds: thresholds.map((t: any) => {
         return { value: t.value, color: t.color }; // Drop index
       }),
     };
+
+    panel.options.fieldOptions = fieldOptions;
   }
 
   return panel.options;

@@ -29,14 +29,15 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
     const { scale } = props;
 
-    const thresholds = scale.thresholds
-      ? scale.thresholds.map(t => {
-          return {
-            ...t,
-            key: counter++,
-          };
-        })
-      : ([] as ThresholdWithKey[]);
+    const thresholds =
+      scale && scale.thresholds
+        ? scale.thresholds.map(t => {
+            return {
+              ...t,
+              key: counter++,
+            };
+          })
+        : ([] as ThresholdWithKey[]);
 
     let needsCallback = false;
     if (!thresholds.length) {
@@ -47,7 +48,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     // Update the state
     this.state = {
       thresholds,
-      scheme: scale.scheme,
+      scheme: scale ? scale.scheme : undefined,
     };
 
     if (needsCallback) {
