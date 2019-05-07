@@ -3,7 +3,7 @@ import puppeteer, { Browser } from 'puppeteer-core';
 export const launchBrowser = async (): Promise<Browser> => {
   const browserFetcher = puppeteer.createBrowserFetcher();
   const localRevisions = await browserFetcher.localRevisions();
-  if (localRevisions && localRevisions.length === 0) {
+  if (localRevisions.length === 0) {
     throw new Error('Could not launch browser because there is no local revisions.');
   }
 

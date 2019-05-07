@@ -15,8 +15,8 @@ export interface EditDataSourcePage {
 
 export const editDataSourcePage = new TestPage<EditDataSourcePage>({
   pageObjects: {
-    saveAndTest: new ClickablePageObject(Selector.fromAriaLabel('save and test button')),
-    alert: new PageObject(Selector.fromAriaLabel('alert')),
-    alertMessage: new PageObject(Selector.fromAriaLabel('alert message')),
+    saveAndTest: new ClickablePageObject(Selector.fromAriaLabel('Save and test button')),
+    alert: new PageObject(Selector.fromAriaLabel('Datasource settings page Alert')),
+    alertMessage: new PageObject(Selector.fromAriaLabel('Datasource settings page Alert message')),
   },
 });

@@ -8,6 +8,6 @@ export interface AddDataSourcePage {
 export const addDataSourcePage = new TestPage<AddDataSourcePage>({
   url: '/datasources/new',
   pageObjects: {
-    testDataDB: new ClickablePageObject(Selector.fromAriaLabel('TestData DB')),
+    testDataDB: new ClickablePageObject(Selector.fromAriaLabel('TestData DB datasource plugin')),
   },
 });
