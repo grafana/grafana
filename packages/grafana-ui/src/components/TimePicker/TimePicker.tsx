@@ -9,7 +9,7 @@ import { Timezone } from '../../utils/datemath';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { getRawTimeRangeToShow } from '../../utils/date';
-import { Tooltip } from '../Tooltip/Tooltip'
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface Props {
   value: TimeRange;
