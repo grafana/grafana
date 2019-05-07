@@ -12,28 +12,29 @@ weight = -13
 
 # What's New in Grafana v6.2
 
-## Highlights
+> More content will be added to this guide before the stable release.
 
-### Improved security
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+
+If you use password for your datasources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
+
+## Improved security
 
 - Ensure encryption of datasource secrets
 - Embedding Grafana not allowed per default
+- Disable browser caching for full page requests
 
-### Lazy load out of view panels
-
-
-
-### Provisioning
+## Provisioning
 
 - Environment variables support, see [Using environment variables](/administration/provisioning/#using-environment-variables) for more information.
 - Reload provisioning configs, see [Admin HTTP API](/http_api/admin/#reload-provisioning-configurations) for more information.
 - Do not allow deletion of provisioned dashboards
 
-### Official support for Elasticsearch 7
+## Official support for Elasticsearch 7
 
 Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#elasticsearch-version) for more information.
 
-### Minor Features and Fixes
+## Minor Features and Fixes
 
 This release contains a lot of small features and fixes:
 
