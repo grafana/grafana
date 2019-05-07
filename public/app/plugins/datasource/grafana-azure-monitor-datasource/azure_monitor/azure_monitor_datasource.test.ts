@@ -308,7 +308,36 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    describe('with a metric names query', () => {
+    describe('with a subscriptions query', () => {
+      const response = {
+        data: {
+          value: [
+            { displayName: 'Primary', subscriptionId: 'sub1' },
+            { displayName: 'Secondary', subscriptionId: 'sub2' },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = options => {
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of subscriptions', () => {
+        return ctx.ds.metricFindQuery('subscriptions()').then(results => {
+          expect(results.length).toBe(2);
+          expect(results[0].text).toBe('Primary - sub1');
+          expect(results[0].value).toBe('sub1');
+          expect(results[1].text).toBe('Secondary - sub2');
+          expect(results[1].value).toBe('sub2');
+        });
+      });
+    });
+
+    describe('with a resource groups query', () => {
       const response = {
         data: {
           value: [{ name: 'grp1' }, { name: 'grp2' }],
@@ -323,7 +352,7 @@ describe('AzureMonitorDatasource', () => {
         };
       });
 
-      it('should return a list of metric names', () => {
+      it('should return a list of resource groups', () => {
         return ctx.ds.metricFindQuery('ResourceGroups()').then(results => {
           expect(results.length).toBe(2);
           expect(results[0].text).toBe('grp1');
@@ -334,7 +363,34 @@ describe('AzureMonitorDatasource', () => {
       });
     });
 
-    describe('with metric definitions query', () => {
+    describe('with a resource groups query that specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [{ name: 'grp1' }, { name: 'grp2' }],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = options => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of resource groups', () => {
+        return ctx.ds.metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)').then(results => {
+          expect(results.length).toBe(2);
+          expect(results[0].text).toBe('grp1');
+          expect(results[0].value).toBe('grp1');
+          expect(results[1].text).toBe('grp2');
+          expect(results[1].value).toBe('grp2');
+        });
+      });
+    });
+
+    describe('with namespaces query', () => {
       const response = {
         data: {
           value: [
@@ -357,8 +413,40 @@ describe('AzureMonitorDatasource', () => {
         };
       });
 
-      it('should return a list of metric definitions', () => {
+      it('should return a list of namespaces', () => {
         return ctx.ds.metricFindQuery('Namespaces(nodesapp)').then(results => {
+          expect(results.length).toEqual(1);
+          expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+          expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
+        });
+      });
+    });
+
+    describe('with namespaces query that specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'test',
+              type: 'Microsoft.Network/networkInterfaces',
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = options => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(options.url).toBe(baseUrl + '/nodesapp/resources?api-version=2018-01-01');
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of namespaces', () => {
+        return ctx.ds.metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)').then(results => {
           expect(results.length).toEqual(1);
           expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
           expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
@@ -399,6 +487,46 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].text).toEqual('nodeapp');
           expect(results[0].value).toEqual('nodeapp');
         });
+      });
+    });
+
+    describe('with resource names query and that specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'Failure Anomalies - nodeapp',
+              type: 'microsoft.insights/alertrules',
+            },
+            {
+              name: 'nodeapp',
+              type: 'microsoft.insights/components',
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = options => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(options.url).toBe(baseUrl + '/nodeapp/resources?api-version=2018-01-01');
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of resource names', () => {
+        return ctx.ds
+          .metricFindQuery(
+            'resourceNames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components )'
+          )
+          .then(results => {
+            expect(results.length).toEqual(1);
+            expect(results[0].text).toEqual('nodeapp');
+            expect(results[0].value).toEqual('nodeapp');
+          });
       });
     });
 
@@ -446,6 +574,57 @@ describe('AzureMonitorDatasource', () => {
           expect(results[1].text).toEqual('Used capacity');
           expect(results[1].value).toEqual('UsedCapacity');
         });
+      });
+    });
+
+    describe('with metric names query and specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: {
+                value: 'Percentage CPU',
+                localizedValue: 'Percentage CPU',
+              },
+            },
+            {
+              name: {
+                value: 'UsedCapacity',
+                localizedValue: 'Used capacity',
+              },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = options => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(options.url).toBe(
+            baseUrl +
+              '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
+              'metricdefinitions?api-version=2018-01-01'
+          );
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of metric names', () => {
+        return ctx.ds
+          .metricFindQuery(
+            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn)'
+          )
+          .then(results => {
+            expect(results.length).toEqual(2);
+            expect(results[0].text).toEqual('Percentage CPU');
+            expect(results[0].value).toEqual('Percentage CPU');
+
+            expect(results[1].text).toEqual('Used capacity');
+            expect(results[1].value).toEqual('UsedCapacity');
+          });
       });
     });
   });

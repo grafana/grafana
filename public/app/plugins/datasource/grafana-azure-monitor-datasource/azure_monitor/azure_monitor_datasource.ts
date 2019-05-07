@@ -136,14 +136,34 @@ export default class AzureMonitorDatasource {
   annotationQuery(options) {}
 
   metricFindQuery(query: string) {
+    const subscriptionsQuery = query.match(/^Subscriptions\(\)/i);
+    if (subscriptionsQuery) {
+      return this.getSubscriptions();
+    }
+
     const resourceGroupsQuery = query.match(/^ResourceGroups\(\)/i);
     if (resourceGroupsQuery) {
       return this.getResourceGroups(this.subscriptionId);
     }
 
+    const resourceGroupsQueryWithSub = query.match(/^ResourceGroups\(([^\)]+?)(,\s?([^,]+?))?\)/i);
+    if (resourceGroupsQueryWithSub) {
+      return this.getResourceGroups(this.toVariable(resourceGroupsQueryWithSub[1]));
+    }
+
     const metricDefinitionsQuery = query.match(/^Namespaces\(([^\)]+?)(,\s?([^,]+?))?\)/i);
     if (metricDefinitionsQuery) {
-      return this.getMetricDefinitions(this.subscriptionId, this.toVariable(metricDefinitionsQuery[1]));
+      if (!metricDefinitionsQuery[3]) {
+        return this.getMetricDefinitions(this.subscriptionId, this.toVariable(metricDefinitionsQuery[1]));
+      }
+    }
+
+    const metricDefinitionsQueryWithSub = query.match(/^Namespaces\(([^,]+?),\s?([^,]+?)\)/i);
+    if (metricDefinitionsQueryWithSub) {
+      return this.getMetricDefinitions(
+        this.toVariable(metricDefinitionsQueryWithSub[1]),
+        this.toVariable(metricDefinitionsQueryWithSub[2])
+      );
     }
 
     const resourceNamesQuery = query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?)\)/i);
@@ -153,13 +173,33 @@ export default class AzureMonitorDatasource {
       return this.getResourceNames(this.subscriptionId, resourceGroup, metricDefinition);
     }
 
+    const resourceNamesQueryWithSub = query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+    if (resourceNamesQueryWithSub) {
+      const subscription = this.toVariable(resourceNamesQueryWithSub[1]);
+      const resourceGroup = this.toVariable(resourceNamesQueryWithSub[2]);
+      const metricDefinition = this.toVariable(resourceNamesQueryWithSub[3]);
+      return this.getResourceNames(subscription, resourceGroup, metricDefinition);
+    }
+
     const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
 
     if (metricNamesQuery) {
-      const resourceGroup = this.toVariable(metricNamesQuery[1]);
-      const metricDefinition = this.toVariable(metricNamesQuery[2]);
-      const resourceName = this.toVariable(metricNamesQuery[3]);
-      return this.getMetricNames(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+      if (metricNamesQuery[3].indexOf(',') === -1) {
+        const resourceGroup = this.toVariable(metricNamesQuery[1]);
+        const metricDefinition = this.toVariable(metricNamesQuery[2]);
+        const resourceName = this.toVariable(metricNamesQuery[3]);
+        return this.getMetricNames(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+      }
+    }
+
+    const metricNamesQueryWithSub = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+
+    if (metricNamesQueryWithSub) {
+      const subscription = this.toVariable(metricNamesQueryWithSub[1]);
+      const resourceGroup = this.toVariable(metricNamesQueryWithSub[2]);
+      const metricDefinition = this.toVariable(metricNamesQueryWithSub[3]);
+      const resourceName = this.toVariable(metricNamesQueryWithSub[4]);
+      return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName);
     }
 
     return undefined;
