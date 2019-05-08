@@ -51,7 +51,7 @@ export { LegendOptions, LegendBasicOptions, LegendRenderOptions, LegendList, Leg
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
-export * from './SingleStatShared/shared';
+export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 
 export { PanelOptionsUIBuilder } from './PanelOptions/PanelOptionsBuilder';

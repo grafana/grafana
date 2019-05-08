@@ -2,7 +2,7 @@
 import _ from 'lodash';
 
 // Services & Utils
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToSeriesData } from './result_transformer';

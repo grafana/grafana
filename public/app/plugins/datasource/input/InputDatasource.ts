@@ -8,7 +8,7 @@ import {
 } from '@grafana/ui/src/types';
 import { InputQuery, InputOptions } from './types';
 
-export class InputDatasource implements DataSourceApi<InputQuery> {
+export class InputDatasource implements DataSourceApi<InputQuery, InputOptions> {
   data: SeriesData[];
 
   // Filled in by grafana plugin system

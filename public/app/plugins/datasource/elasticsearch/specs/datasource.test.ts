@@ -1,5 +1,5 @@
 import angular from 'angular';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
 import moment from 'moment';
 import { ElasticDatasource } from '../datasource';

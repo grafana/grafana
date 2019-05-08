@@ -5,7 +5,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "6.2.0-pre",
+  "version": "6.3.0-pre",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -32,7 +32,7 @@
     "@types/lodash": "4.14.123",
     "@types/node": "11.13.4",
     "@types/papaparse": "4.5.9",
-    "@types/react": "16.8.13",
+    "@types/react": "16.8.16",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
     "@types/react-select": "2.0.15",
@@ -110,6 +110,7 @@
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
     "semver": "5.7.0",
+    "simple-git": "^1.112.0",
     "sinon": "1.17.6",
     "style-loader": "0.23.1",
     "systemjs": "0.20.19",
@@ -147,15 +148,17 @@
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
+    "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
     "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
     "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
     "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p --createVersionCommit",
+    "precommit": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts precommit",
     "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && grunt precommit"
+      "pre-commit": "lint-staged && npm run precommit"
     }
   },
   "lint-staged": {
