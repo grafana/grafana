@@ -11,6 +11,7 @@ import ButtonRow from './ButtonRow';
 
 // Services & Utils
 import appEvents from 'app/core/app_events';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Actions & selectors
@@ -23,7 +24,6 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 import { StoreState } from 'app/types/';
 import { NavModel, DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 
