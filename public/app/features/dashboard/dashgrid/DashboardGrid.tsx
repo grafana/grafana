@@ -233,6 +233,7 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.fullscreen });
       const id = panel.id.toString();
+      panel.isInView = this.isInView(panel);
       panelElements.push(
         <div
           key={id}
@@ -247,7 +248,7 @@ export class DashboardGrid extends PureComponent<Props> {
             dashboard={this.props.dashboard}
             isEditing={panel.isEditing}
             isFullscreen={panel.fullscreen}
-            isInView={this.isInView(panel)}
+            isInView={panel.isInView}
           />
         </div>
       );

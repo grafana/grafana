@@ -3,7 +3,7 @@ import isNumber from 'lodash/isNumber';
 
 import { SeriesData, NullValueMode } from '../types/index';
 
-export enum StatID {
+export enum ReducerID {
   sum = 'sum',
   max = 'max',
   min = 'min',
@@ -24,14 +24,14 @@ export enum StatID {
   allIsNull = 'allIsNull',
 }
 
-export interface FieldStats {
+export interface FieldCalcs {
   [key: string]: any;
 }
 
 // Internal function
-type StatCalculator = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldStats;
+type FieldReducer = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
-export interface StatCalculatorInfo {
+export interface FieldReducerInfo {
   id: string;
   name: string;
   description: string;
@@ -40,16 +40,16 @@ export interface StatCalculatorInfo {
   // Internal details
   emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
-  calculator?: StatCalculator;
+  reduce?: FieldReducer;
 }
 
 /**
  * @param ids list of stat names or null to get all of them
  */
-export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
+export function getFieldReducers(ids?: string[]): FieldReducerInfo[] {
   if (ids === null || ids === undefined) {
     if (!hasBuiltIndex) {
-      getById(StatID.mean);
+      getById(ReducerID.mean);
     }
     return listOfStats;
   }
@@ -60,53 +60,53 @@ export function getStatsCalculators(ids?: string[]): StatCalculatorInfo[] {
       list.push(stat);
     }
     return list;
-  }, new Array<StatCalculatorInfo>());
+  }, new Array<FieldReducerInfo>());
 }
 
-export interface CalculateStatsOptions {
+interface ReduceFieldOptions {
   series: SeriesData;
   fieldIndex: number;
-  stats: string[]; // The stats to calculate
+  reducers: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
 }
 
 /**
  * @returns an object with a key for each selected stat
  */
-export function calculateStats(options: CalculateStatsOptions): FieldStats {
-  const { series, fieldIndex, stats, nullValueMode } = options;
+export function reduceField(options: ReduceFieldOptions): FieldCalcs {
+  const { series, fieldIndex, reducers, nullValueMode } = options;
 
-  if (!stats || stats.length < 1) {
+  if (!reducers || reducers.length < 1) {
     return {};
   }
 
-  const queue = getStatsCalculators(stats);
+  const queue = getFieldReducers(reducers);
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   if (!series.rows || series.rows.length < 1) {
-    const stats = {} as FieldStats;
-    for (const stat of queue) {
-      stats[stat.id] = stat.emptyInputResult !== null ? stat.emptyInputResult : null;
+    const calcs = {} as FieldCalcs;
+    for (const reducer of queue) {
+      calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
     }
-    return stats;
+    return calcs;
   }
 
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
   // Avoid calculating all the standard stats if possible
-  if (queue.length === 1 && queue[0].calculator) {
-    return queue[0].calculator(series, fieldIndex, ignoreNulls, nullAsZero);
+  if (queue.length === 1 && queue[0].reduce) {
+    return queue[0].reduce(series, fieldIndex, ignoreNulls, nullAsZero);
   }
 
   // For now everything can use the standard stats
-  let values = standardStatsStat(series, fieldIndex, ignoreNulls, nullAsZero);
-  for (const calc of queue) {
-    if (!values.hasOwnProperty(calc.id) && calc.calculator) {
+  let values = doStandardCalcs(series, fieldIndex, ignoreNulls, nullAsZero);
+  for (const reducer of queue) {
+    if (!values.hasOwnProperty(reducer.id) && reducer.reduce) {
       values = {
         ...values,
-        ...calc.calculator(series, fieldIndex, ignoreNulls, nullAsZero),
+        ...reducer.reduce(series, fieldIndex, ignoreNulls, nullAsZero),
       };
     }
   }
@@ -121,30 +121,30 @@ export function calculateStats(options: CalculateStatsOptions): FieldStats {
 
 // private registry of all stats
 interface TableStatIndex {
-  [id: string]: StatCalculatorInfo;
+  [id: string]: FieldReducerInfo;
 }
 
-const listOfStats: StatCalculatorInfo[] = [];
+const listOfStats: FieldReducerInfo[] = [];
 const index: TableStatIndex = {};
 let hasBuiltIndex = false;
 
-function getById(id: string): StatCalculatorInfo | undefined {
+function getById(id: string): FieldReducerInfo | undefined {
   if (!hasBuiltIndex) {
     [
       {
-        id: StatID.last,
+        id: ReducerID.last,
         name: 'Last',
         description: 'Last Value (current)',
         standard: true,
         alias: 'current',
-        calculator: calculateLast,
+        reduce: calculateLast,
       },
-      { id: StatID.first, name: 'First', description: 'First Value', standard: true, calculator: calculateFirst },
-      { id: StatID.min, name: 'Min', description: 'Minimum Value', standard: true },
-      { id: StatID.max, name: 'Max', description: 'Maximum Value', standard: true },
-      { id: StatID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
+      { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
+      { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
+      { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
+      { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
       {
-        id: StatID.sum,
+        id: ReducerID.sum,
         name: 'Total',
         description: 'The sum of all values',
         emptyInputResult: 0,
@@ -152,55 +152,55 @@ function getById(id: string): StatCalculatorInfo | undefined {
         alias: 'total',
       },
       {
-        id: StatID.count,
+        id: ReducerID.count,
         name: 'Count',
         description: 'Number of values in response',
         emptyInputResult: 0,
         standard: true,
       },
       {
-        id: StatID.range,
+        id: ReducerID.range,
         name: 'Range',
         description: 'Difference between minimum and maximum values',
         standard: true,
       },
       {
-        id: StatID.delta,
+        id: ReducerID.delta,
         name: 'Delta',
         description: 'Cumulative change in value',
         standard: true,
       },
       {
-        id: StatID.step,
+        id: ReducerID.step,
         name: 'Step',
         description: 'Minimum interval between values',
         standard: true,
       },
       {
-        id: StatID.diff,
+        id: ReducerID.diff,
         name: 'Difference',
         description: 'Difference between first and last values',
         standard: true,
       },
       {
-        id: StatID.logmin,
+        id: ReducerID.logmin,
         name: 'Min (above zero)',
         description: 'Used for log min scale',
         standard: true,
       },
       {
-        id: StatID.changeCount,
+        id: ReducerID.changeCount,
         name: 'Change Count',
         description: 'Number of times the value changes',
         standard: false,
-        calculator: calculateChangeCount,
+        reduce: calculateChangeCount,
       },
       {
-        id: StatID.distinctCount,
+        id: ReducerID.distinctCount,
         name: 'Distinct Count',
         description: 'Number of distinct values',
         standard: false,
-        calculator: calculateDistinctCount,
+        reduce: calculateDistinctCount,
       },
     ].forEach(info => {
       const { id, alias } = info;
@@ -222,13 +222,8 @@ function getById(id: string): StatCalculatorInfo | undefined {
   return index[id];
 }
 
-function standardStatsStat(
-  data: SeriesData,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldStats {
-  const stats = {
+function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
     min: Number.MAX_VALUE,
@@ -247,7 +242,7 @@ function standardStatsStat(
 
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
-  } as FieldStats;
+  } as FieldCalcs;
 
   for (let i = 0; i < data.rows.length; i++) {
     let currentValue = data.rows[i][fieldIndex];
@@ -262,94 +257,94 @@ function standardStatsStat(
     }
 
     if (currentValue !== null) {
-      const isFirst = stats.first === null;
+      const isFirst = calcs.first === null;
       if (isFirst) {
-        stats.first = currentValue;
+        calcs.first = currentValue;
       }
 
       if (isNumber(currentValue)) {
-        stats.sum += currentValue;
-        stats.allIsNull = false;
-        stats.nonNullCount++;
+        calcs.sum += currentValue;
+        calcs.allIsNull = false;
+        calcs.nonNullCount++;
 
         if (!isFirst) {
-          const step = currentValue - stats.last!;
-          if (stats.step > step) {
-            stats.step = step; // the minimum interval
+          const step = currentValue - calcs.last!;
+          if (calcs.step > step) {
+            calcs.step = step; // the minimum interval
           }
 
-          if (stats.last! > currentValue) {
+          if (calcs.last! > currentValue) {
             // counter reset
-            stats.previousDeltaUp = false;
+            calcs.previousDeltaUp = false;
             if (i === data.rows.length - 1) {
               // reset on last
-              stats.delta += currentValue;
+              calcs.delta += currentValue;
             }
           } else {
-            if (stats.previousDeltaUp) {
-              stats.delta += step; // normal increment
+            if (calcs.previousDeltaUp) {
+              calcs.delta += step; // normal increment
             } else {
-              stats.delta += currentValue; // account for counter reset
+              calcs.delta += currentValue; // account for counter reset
             }
-            stats.previousDeltaUp = true;
+            calcs.previousDeltaUp = true;
           }
         }
 
-        if (currentValue > stats.max) {
-          stats.max = currentValue;
+        if (currentValue > calcs.max) {
+          calcs.max = currentValue;
         }
 
-        if (currentValue < stats.min) {
-          stats.min = currentValue;
+        if (currentValue < calcs.min) {
+          calcs.min = currentValue;
         }
 
-        if (currentValue < stats.logmin && currentValue > 0) {
-          stats.logmin = currentValue;
+        if (currentValue < calcs.logmin && currentValue > 0) {
+          calcs.logmin = currentValue;
         }
       }
 
       if (currentValue !== 0) {
-        stats.allIsZero = false;
+        calcs.allIsZero = false;
       }
 
-      stats.last = currentValue;
+      calcs.last = currentValue;
     }
   }
 
-  if (stats.max === -Number.MAX_VALUE) {
-    stats.max = null;
+  if (calcs.max === -Number.MAX_VALUE) {
+    calcs.max = null;
   }
 
-  if (stats.min === Number.MAX_VALUE) {
-    stats.min = null;
+  if (calcs.min === Number.MAX_VALUE) {
+    calcs.min = null;
   }
 
-  if (stats.step === Number.MAX_VALUE) {
-    stats.step = null;
+  if (calcs.step === Number.MAX_VALUE) {
+    calcs.step = null;
   }
 
-  if (stats.nonNullCount > 0) {
-    stats.mean = stats.sum! / stats.nonNullCount;
+  if (calcs.nonNullCount > 0) {
+    calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
-  if (stats.max !== null && stats.min !== null) {
-    stats.range = stats.max - stats.min;
+  if (calcs.max !== null && calcs.min !== null) {
+    calcs.range = calcs.max - calcs.min;
   }
 
-  if (stats.first !== null && stats.last !== null) {
-    if (isNumber(stats.first) && isNumber(stats.last)) {
-      stats.diff = stats.last - stats.first;
+  if (calcs.first !== null && calcs.last !== null) {
+    if (isNumber(calcs.first) && isNumber(calcs.last)) {
+      calcs.diff = calcs.last - calcs.first;
     }
   }
 
-  return stats;
+  return calcs;
 }
 
-function calculateFirst(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldStats {
+function calculateFirst(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   return { first: data.rows[0][fieldIndex] };
 }
 
-function calculateLast(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldStats {
+function calculateLast(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   return { last: data.rows[data.rows.length - 1][fieldIndex] };
 }
 
@@ -358,7 +353,7 @@ function calculateChangeCount(
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
-): FieldStats {
+): FieldCalcs {
   let count = 0;
   let first = true;
   let last: any = null;
@@ -387,7 +382,7 @@ function calculateDistinctCount(
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
-): FieldStats {
+): FieldCalcs {
   const distinct = new Set<any>();
   for (let i = 0; i < data.rows.length; i++) {
     let currentValue = data.rows[i][fieldIndex];

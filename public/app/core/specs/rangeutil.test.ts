@@ -1,4 +1,4 @@
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import _ from 'lodash';
 import moment from 'moment';
 

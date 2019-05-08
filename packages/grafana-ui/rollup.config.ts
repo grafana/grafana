@@ -41,6 +41,7 @@ const buildCjsPackage = ({ env }) => {
             'sortBy',
             'uniqueId',
             'zip',
+            'omit',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
         },
