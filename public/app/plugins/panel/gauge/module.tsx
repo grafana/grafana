@@ -3,9 +3,7 @@ import {
   sharedSingleStatMigrationCheck,
   sharedSingleStatOptionsCheck,
   OptionType,
-  SingleStatValueEditor,
   ThresholdsEditor,
-  IntegerOption,
   OptionsUIType,
   OptionsUIModel,
   PanelOptionsGroup,
@@ -16,7 +14,11 @@ import {
   ValueMapping,
   MappingType,
   Threshold,
-  SingleStatValueOptions,
+  FieldDisplayEditor,
+  FieldDisplayOptions,
+  Field,
+  FieldType,
+  FieldPropertiesEditor,
 } from '@grafana/ui';
 
 import { GaugePanel } from './GaugePanel';
@@ -36,6 +38,36 @@ const optionsModel: OptionsUIModel<GaugeOptions> = {
         content: [
           {
             type: OptionsUIType.Group,
+            config: { title: 'Display' },
+            component: PanelOptionsGroup,
+            content: [
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Object,
+                  component: FieldDisplayEditor,
+                  property: 'fieldOptions',
+                },
+              } as OptionEditor<GaugeOptions, 'fieldOptions'>,
+            ],
+          } as OptionsPanelGroup,
+          {
+            type: OptionsUIType.Group,
+            config: { title: 'Field' },
+            component: PanelOptionsGroup,
+            content: [
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Object,
+                  component: FieldPropertiesEditor,
+                  property: 'fieldOptions.defaults',
+                },
+              } as OptionEditor<FieldDisplayOptions, 'defaults'>,
+            ],
+          } as OptionsPanelGroup,
+          {
+            type: OptionsUIType.Group,
             config: { title: 'Thresholds' },
             component: PanelOptionsGroup,
             content: [
@@ -44,49 +76,9 @@ const optionsModel: OptionsUIModel<GaugeOptions> = {
                 editor: {
                   optionType: OptionType.Object,
                   component: ThresholdsEditor,
-                  property: 'thresholds',
+                  property: 'fieldOptions.thresholds',
                 },
-              } as OptionEditor<GaugeOptions, 'thresholds'>,
-            ],
-          } as OptionsPanelGroup,
-          {
-            type: OptionsUIType.Group,
-            config: { title: 'Value settings' },
-            component: PanelOptionsGroup,
-            content: [
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Object,
-                  component: SingleStatValueEditor,
-                  property: 'valueOptions',
-                },
-              } as OptionEditor<GaugeOptions, 'valueOptions'>,
-            ],
-          } as OptionsPanelGroup,
-          {
-            type: OptionsUIType.Group,
-            config: { title: 'Gauge' },
-            component: PanelOptionsGroup,
-            content: [
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Number,
-                  component: IntegerOption,
-                  property: 'minValue',
-                  label: 'Min value',
-                },
-              } as OptionEditor<GaugeOptions, 'minValue'>,
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Number,
-                  component: IntegerOption,
-                  property: 'maxValue',
-                  label: 'Max value',
-                },
-              } as OptionEditor<GaugeOptions, 'maxValue'>,
+              } as OptionEditor<FieldDisplayOptions, 'thresholds'>,
             ],
           } as OptionsPanelGroup,
         ],
@@ -109,23 +101,32 @@ const thresholdSchema: yup.ObjectSchema<Threshold> = yup.object({
   color: yup.string(),
 });
 
-const valueOptionsYupSchema: yup.ObjectSchema<SingleStatValueOptions> = yup.object({
+const fieldSchema: yup.ObjectSchema<Partial<Field>> = yup.object({
+  name: yup.string(), // The column name
+  title: yup.string(), // The display value for this field.  This supports template variables blank is auto
+  type: yup.mixed().oneOf([FieldType.boolean, FieldType.number, FieldType.other, FieldType.string, FieldType.time]),
+  filterable: yup.boolean(),
   unit: yup.string(),
-  suffix: yup.string(),
-  stat: yup.string(),
-  prefix: yup.string(),
+  dateFormat: yup.string(), // Source data format
   decimals: yup.number().nullable(),
+  color: yup.string(),
+  min: yup.number().nullable(),
+  max: yup.number().nullable(),
+});
+
+const fieldOptionsSchema: yup.ObjectSchema<FieldDisplayOptions> = yup.object({
+  defaults: fieldSchema,
+  override: fieldSchema,
+  calcs: yup.array().of(yup.string()),
+  thresholds: yup.array().of(thresholdSchema),
+  mappings: yup.array().of(valueMappingSchema),
 });
 
 const GaugeOptionsSchema: yup.ObjectSchema<GaugeOptions> = yup.object({
-  minValue: yup.number().required(),
-  maxValue: yup.number().required(),
   showThresholdMarkers: yup.boolean(),
   showThresholdLabels: yup.boolean(),
   orientation: yup.mixed().oneOf([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical]),
-  thresholds: yup.array().of(thresholdSchema),
-  valueMappings: yup.array().of(valueMappingSchema),
-  valueOptions: valueOptionsYupSchema,
+  fieldOptions: fieldOptionsSchema,
 });
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)

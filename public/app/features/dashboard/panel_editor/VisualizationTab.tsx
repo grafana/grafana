@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import set from 'lodash/set';
 
 // Utils & Services
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
@@ -75,10 +76,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
               uiModel={PanelEditor as OptionsUIModel<any>}
               options={this.getReactPanelOptions()}
               onOptionsChange={(key, value) => {
-                const optionsUpdate: { [key: string]: any } = {};
-                optionsUpdate[key as string] = value;
+                // TODO: move this "logic to PanelOptionsBuilder"
+                const optionsUpdate = this.getReactPanelOptions();
+                set(optionsUpdate, key, value); // set mutates object
                 this.onPanelOptionsChanged({
-                  ...this.getReactPanelOptions(),
                   ...optionsUpdate,
                 });
               }}

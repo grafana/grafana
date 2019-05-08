@@ -16,7 +16,7 @@ import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../.
 const labelWidth = 6;
 
 export interface Props {
-  showMinMax: boolean;
+  showMinMax?: boolean;
   value: Partial<Field>;
   onChange: (value: Partial<Field>, event?: React.SyntheticEvent<HTMLElement>) => void;
 }

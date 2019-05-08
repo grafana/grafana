@@ -10,9 +10,10 @@ import {
   isGroupUIModel,
 } from '../../types/panelOptions';
 import { css } from 'emotion';
+import get from 'lodash/get';
 import * as yup from 'yup';
 
-type OptionChangeHandler<TOptions> = <K extends keyof TOptions>(key: K, value: TOptions[K]) => void;
+type OptionChangeHandler<TOptions> = <K extends keyof TOptions>(key: K | string, value: TOptions[K]) => void;
 
 interface PanelOptionsBilderProps<TOptions extends {}> {
   optionsSchema: yup.ObjectSchema<TOptions>;
@@ -115,7 +116,7 @@ const OptionsGroup = ({
       return (
         <OptionEditor
           editor={c.editor}
-          value={options[c.editor.property]}
+          value={get(options, c.editor.property)}
           onChange={(value: any) => {
             onOptionsChange(c.editor.property, value);
           }}
@@ -156,7 +157,7 @@ function OptionsUIElement<TOptions>({
         <OptionEditor
           optionsSchema={optionsSchema}
           editor={uiElement.editor}
-          value={options[uiElement.editor.property]}
+          value={get(options, uiElement.editor.property)}
           onChange={value => {
             onOptionsChange(uiElement.editor.property, value);
           }}

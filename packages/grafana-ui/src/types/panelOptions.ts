@@ -90,7 +90,7 @@ interface AbstractOptionUIModel<ComponentProps, P> {
    * it could be 'minValue'
    * Question: Should we name it option instead of path?
    */
-  property: P;
+  property: P | string; // string tmporarily
   /**
    * Keeping component as optional on purpose to enable default components for simple types,
    * i.e. number
