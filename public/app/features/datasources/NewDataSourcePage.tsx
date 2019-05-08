@@ -63,6 +63,7 @@ class NewDataSourcePage extends PureComponent<Props> {
       return null;
     }
 
+    // apply custom sort ranking
     types.sort((a, b) => {
       const aSort = this.sortingRules[a.id] || 0;
       const bSort = this.sortingRules[b.id] || 0;
@@ -105,14 +106,25 @@ class NewDataSourcePage extends PureComponent<Props> {
         {} as DataSourceCategories
       );
 
-      return this.categoryInfoList.map(category => {
-        return (
-          <div className="add-data-source-category" key={category.id}>
-            <div className="add-data-source-category__header">{category.title}</div>
-            {this.renderTypes(categories[category.id])}
+      return (
+        <>
+          {this.categoryInfoList.map(category => (
+            <div className="add-data-source-category" key={category.id}>
+              <div className="add-data-source-category__header">{category.title}</div>
+              {this.renderTypes(categories[category.id])}
+            </div>
+          ))}
+          <div className="add-data-source-more">
+            <a
+              className="btn btn-secondary"
+              href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
+              target="_blank"
+            >
+              Find more data source plugins on grafana.com
+            </a>
           </div>
-        );
-      });
+        </>
+      );
     }
 
     return this.renderTypes(dataSourceTypes);
@@ -152,14 +164,22 @@ interface DataSourceTypeCardProps {
 }
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
+  const { plugin, onClick } = props;
+
   return (
-    <div className="add-data-source-grid-item" onClick={props.onClick}>
-      <img className="add-data-source-grid-item-logo" src={props.plugin.info.logos.small} />
-      <div className="add-data-source-grid-item-text-wrapper">
-        <span className="add-data-source-grid-item-text">{props.plugin.name}</span>
-        {props.plugin.info.description && (
-          <span className="add-data-source-grid-item-desc">{props.plugin.info.description}</span>
+    <div className="add-data-source-item" onClick={onClick}>
+      <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
+      <div className="add-data-source-item-text-wrapper">
+        <span className="add-data-source-item-text">{plugin.name}</span>
+        {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
+      </div>
+      <div className="add-data-source-item-actions">
+        {plugin.info.author.url && (
+          <a className="btn btn-inverse" href={plugin.info.author.url}>
+            Learn more
+          </a>
         )}
+        <button className="btn btn-primary">Select</button>
       </div>
     </div>
   );
