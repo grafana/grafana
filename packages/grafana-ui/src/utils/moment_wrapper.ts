@@ -1,3 +1,4 @@
+/* tslint:disable:import-blacklist ban ban-types */
 import moment, { MomentInput, DurationInputArg1 } from 'moment';
 
 export interface DateTimeBuiltinFormat {
