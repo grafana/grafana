@@ -214,9 +214,9 @@ func (auth *Auth) DisableExternalUser(username string) error {
 	}
 
 	userInfo := userQuery.Result
-	if userInfo.AuthModule == models.AuthModuleLDAP && !userInfo.IsDisabled {
-		auth.log.Debug("Disabling user", "user", userQuery.Result.Login)
-		// disable user in grafana
+	if !userInfo.IsDisabled {
+		auth.log.Debug("Disabling external user", "user", userQuery.Result.Login)
+		// Mark user as disabled in grafana db
 		disableUserCmd := &models.DisableUserCommand{
 			UserId:     userQuery.Result.UserId,
 			IsDisabled: true,

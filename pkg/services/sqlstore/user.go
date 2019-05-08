@@ -200,7 +200,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 
 	if err != nil {
 		return err
-	} else if !has || user.IsDisabled {
+	} else if !has {
 		return m.ErrUserNotFound
 	}
 
@@ -476,19 +476,14 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 }
 
 func DisableUser(cmd *m.DisableUserCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return setIsDisabledUserFlagInTransaction(sess, cmd.UserId, cmd.IsDisabled)
-	})
-}
-
-func setIsDisabledUserFlagInTransaction(sess *DBSession, userID int64, isDisabled bool) error {
 	user := m.User{}
-	sess.ID(userID).Get(&user)
+	sess := x.Table("user")
+	sess.ID(cmd.UserId).Get(&user)
 
-	user.IsDisabled = isDisabled
+	user.IsDisabled = cmd.IsDisabled
 	sess.UseBool("is_disabled")
 
-	_, err := sess.ID(userID).Update(&user)
+	_, err := sess.ID(cmd.UserId).Update(&user)
 	return err
 }
 

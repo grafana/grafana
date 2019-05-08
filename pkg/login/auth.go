@@ -19,6 +19,7 @@ var (
 	ErrPasswordEmpty         = errors.New("No password provided")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
+	ErrUserDisabled          = errors.New("User is disabled")
 )
 
 func Init() {
@@ -35,7 +36,7 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 	}
 
 	err := loginUsingGrafanaDB(query)
-	if err == nil || (err != m.ErrUserNotFound && err != ErrInvalidCredentials) {
+	if err == nil || (err != m.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
 		return err
 	}
 
@@ -45,7 +46,9 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 			return ldapErr
 		}
 
-		err = ldapErr
+		if err != ErrUserDisabled || ldapErr != LDAP.ErrInvalidCredentials {
+			err = ldapErr
+		}
 	}
 
 	if err == ErrInvalidCredentials || err == LDAP.ErrInvalidCredentials {
