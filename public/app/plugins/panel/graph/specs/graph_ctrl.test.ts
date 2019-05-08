@@ -1,5 +1,5 @@
 import { GraphCtrl } from '../module';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 jest.mock('../graph', () => ({}));
 
@@ -50,7 +50,7 @@ describe('GraphCtrl', () => {
         },
       ];
 
-      ctx.ctrl.range = { from: dateTimeType().valueOf(), to: dateTimeType().valueOf() };
+      ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -62,10 +62,10 @@ describe('GraphCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: dateTimeType()
+        from: dateTime()
           .subtract(1, 'days')
           .valueOf(),
-        to: dateTimeType().valueOf(),
+        to: dateTime().valueOf(),
       };
 
       const data = [

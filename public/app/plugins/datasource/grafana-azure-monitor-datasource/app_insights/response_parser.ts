@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -173,8 +173,8 @@ export default class ResponseParser {
     return _.intersection(keys, ['sum', 'avg', 'min', 'max', 'count', 'unique'])[0];
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return dateTimeType(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 
   static parseMetricNames(result) {

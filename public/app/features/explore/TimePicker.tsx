@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
-import { toUtc, isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -116,8 +116,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     }
 
     const nextTimeRange = {
-      from: this.props.isUtc ? toUtc(from) : dateTimeType(from),
-      to: this.props.isUtc ? toUtc(to) : dateTimeType(to),
+      from: this.props.isUtc ? toUtc(from) : dateTime(from),
+      to: this.props.isUtc ? toUtc(to) : dateTime(to),
     };
     if (onChangeTime) {
       onChangeTime(nextTimeRange);
@@ -149,11 +149,11 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         };
 
         if (rawRange.from.indexOf('now') === -1) {
-          rawRange.from = isUtc ? toUtc(rawRange.from, TIME_FORMAT) : dateTimeType(rawRange.from, TIME_FORMAT);
+          rawRange.from = isUtc ? toUtc(rawRange.from, TIME_FORMAT) : dateTime(rawRange.from, TIME_FORMAT);
         }
 
         if (rawRange.to.indexOf('now') === -1) {
-          rawRange.to = isUtc ? toUtc(rawRange.to, TIME_FORMAT) : dateTimeType(rawRange.to, TIME_FORMAT);
+          rawRange.to = isUtc ? toUtc(rawRange.to, TIME_FORMAT) : dateTime(rawRange.to, TIME_FORMAT);
         }
 
         const rangeString = rangeUtil.describeTimeRange(rawRange);

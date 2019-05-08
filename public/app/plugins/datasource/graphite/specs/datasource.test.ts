@@ -2,7 +2,7 @@ import { GraphiteDatasource } from '../datasource';
 import _ from 'lodash';
 import $q from 'q';
 import { TemplateSrvStub } from 'test/specs/helpers';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {
@@ -86,8 +86,8 @@ describe('graphiteDatasource', () => {
         tags: 'tag1',
       },
       range: {
-        from: dateTimeType(1432288354),
-        to: dateTimeType(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
       rangeRaw: { from: 'now-24h', to: 'now' },
     };

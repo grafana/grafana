@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
 import { popoverOptions } from './TimePicker.story';
-import { dateTimeType, DateTime } from '../../utils/moment_wrapper';
+import { dateTime, DateTime } from '../../utils/moment_wrapper';
 
 const TimePickerPopoverStories = storiesOf('UI/TimePicker/TimePickerPopover', module);
 
@@ -15,8 +15,8 @@ TimePickerPopoverStories.addDecorator(withCenteredStory);
 TimePickerPopoverStories.add('default', () => (
   <UseState
     initialState={{
-      from: dateTimeType(),
-      to: dateTimeType(),
+      from: dateTime(),
+      to: dateTime(),
       raw: { from: 'now-6h' as string | DateTime, to: 'now' as string | DateTime },
     }}
   >

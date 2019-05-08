@@ -83,6 +83,6 @@ export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTime
   return moment.duration(input as DurationInputArg1, unit) as DateTimeDuration;
 };
 
-export const dateTimeType = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
+export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
   return moment(input as MomentInput, formatInput) as DateTime;
 };

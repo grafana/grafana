@@ -1,6 +1,6 @@
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
@@ -39,8 +39,8 @@ describe('MySQLDatasource', () => {
         rawQuery: 'select time_sec, text, tags from table;',
       },
       range: {
-        from: dateTimeType(1432288354),
-        to: dateTimeType(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
     };
 

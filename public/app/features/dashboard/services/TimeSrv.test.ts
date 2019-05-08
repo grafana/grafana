@@ -1,6 +1,6 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
-import { isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('timeSrv', () => {
   const rootScope = {
@@ -164,8 +164,8 @@ describe('timeSrv', () => {
     it('should restore refresh after relative time range is set', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({
-        from: dateTimeType([2011, 1, 1]),
-        to: dateTimeType([2015, 1, 1]),
+        from: dateTime([2011, 1, 1]),
+        to: dateTime([2015, 1, 1]),
       });
       expect(_dashboard.refresh).toBe(false);
       timeSrv.setTime({ from: '2011-01-01', to: 'now' });

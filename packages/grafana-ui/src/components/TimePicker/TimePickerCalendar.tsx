@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { TimeFragment } from '../../types/time';
 import { Timezone } from '../../utils/datemath';
-import { DateTime, dateTimeType, isDateTime } from '../../utils/moment_wrapper';
+import { DateTime, dateTime, isDateTime } from '../../utils/moment_wrapper';
 
 import { stringToDateTimeType } from './time';
 
@@ -22,7 +22,7 @@ export class TimePickerCalendar extends PureComponent<Props> {
       return;
     }
 
-    onChange(dateTimeType(date));
+    onChange(dateTime(date));
   };
 
   render() {
@@ -30,8 +30,7 @@ export class TimePickerCalendar extends PureComponent<Props> {
     const dateValue = isDateTime(value)
       ? value.toDate()
       : stringToDateTimeType(value, isTimezoneUtc, roundup, timezone).toDate();
-    const calendarValue =
-      dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : dateTimeType().toDate();
+    const calendarValue = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : dateTime().toDate();
 
     return (
       <Calendar

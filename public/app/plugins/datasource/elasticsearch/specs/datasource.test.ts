@@ -2,7 +2,7 @@ import angular from 'angular';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
-import { toUtc, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv = {
@@ -159,8 +159,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: dateTimeType([2015, 4, 30, 10]),
-          to: dateTimeType([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -441,8 +441,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: dateTimeType([2015, 4, 30, 10]),
-          to: dateTimeType([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {

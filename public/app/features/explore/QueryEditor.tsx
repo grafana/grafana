@@ -9,7 +9,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
   datasource: any;
@@ -67,8 +67,8 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const timeSrv = getTimeSrv();
     timeSrv.init({
       time: {
-        from: dateTimeType(range.from),
-        to: dateTimeType(range.to),
+        from: dateTime(range.from),
+        to: dateTime(range.to),
       },
       refresh: false,
       getTimezone: () => 'utc',

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { coreModule } from 'app/core/core';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/ui';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
@@ -86,7 +86,7 @@ export class EventEditorCtrl {
 function tryEpochToMoment(timestamp) {
   if (timestamp && _.isNumber(timestamp)) {
     const epoch = Number(timestamp);
-    return dateTimeType(epoch);
+    return dateTime(epoch);
   } else {
     return timestamp;
   }

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import {
   AzureLogsVariable,
   AzureLogsTableData,
@@ -216,7 +216,7 @@ export default class ResponseParser {
     return dataTarget;
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return dateTimeType(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 }

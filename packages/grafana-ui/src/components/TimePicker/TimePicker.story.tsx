@@ -6,7 +6,7 @@ import { TimePicker } from './TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
 import { TimeFragment } from '../../types/time';
-import { dateTimeType } from '../../utils/moment_wrapper';
+import { dateTime } from '../../utils/moment_wrapper';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
 export const popoverOptions = {
@@ -178,8 +178,8 @@ TimePickerStories.add('default', () => {
   return (
     <UseState
       initialState={{
-        from: dateTimeType(),
-        to: dateTimeType(),
+        from: dateTime(),
+        to: dateTime(),
         raw: { from: 'now-6h' as TimeFragment, to: 'now' as TimeFragment },
       }}
     >

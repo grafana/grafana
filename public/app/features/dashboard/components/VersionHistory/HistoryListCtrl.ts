@@ -4,7 +4,7 @@ import angular from 'angular';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTimeType, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -74,8 +74,8 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date) {
-    const now = this.dashboard.timezone === 'browser' ? dateTimeType() : toUtc();
-    const then = this.dashboard.timezone === 'browser' ? dateTimeType(date) : toUtc(date);
+    const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
+    const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
     return then.from(now);
   }
 

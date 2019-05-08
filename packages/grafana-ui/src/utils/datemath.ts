@@ -1,6 +1,6 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
-import { DateTime, dateTimeType, toUtc, ISO_8601, isDateTime, DurationUnit } from '../utils/moment_wrapper';
+import { DateTime, dateTime, toUtc, ISO_8601, isDateTime, DurationUnit } from '../utils/moment_wrapper';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
@@ -23,7 +23,7 @@ export function parse(text: string | DateTime | Date, roundUp?: boolean, timezon
       return text;
     }
     if (isDate(text)) {
-      return dateTimeType(text);
+      return dateTime(text);
     }
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
     return undefined;
@@ -37,7 +37,7 @@ export function parse(text: string | DateTime | Date, roundUp?: boolean, timezon
       if (timezone === 'utc') {
         time = toUtc();
       } else {
-        time = dateTimeType();
+        time = dateTime();
       }
       mathString = text.substring('now'.length);
     } else {
@@ -50,7 +50,7 @@ export function parse(text: string | DateTime | Date, roundUp?: boolean, timezon
         mathString = text.substring(index + 2);
       }
       // We're going to just require ISO8601 timestamps, k?
-      time = dateTimeType(parseString, ISO_8601);
+      time = dateTime(parseString, ISO_8601);
     }
 
     if (!mathString.length) {

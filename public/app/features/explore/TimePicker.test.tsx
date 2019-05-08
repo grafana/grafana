@@ -6,7 +6,7 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import TimePicker from './TimePicker';
 import { RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
-import { toUtc, isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -15,8 +15,8 @@ const DEFAULT_RANGE = {
 
 const fromRaw = (rawRange: RawTimeRange): TimeRange => {
   const raw = {
-    from: isDateTime(rawRange.from) ? dateTimeType(rawRange.from) : rawRange.from,
-    to: isDateTime(rawRange.to) ? dateTimeType(rawRange.to) : rawRange.to,
+    from: isDateTime(rawRange.from) ? dateTime(rawRange.from) : rawRange.from,
+    to: isDateTime(rawRange.to) ? dateTime(rawRange.to) : rawRange.to,
   };
 
   return {
@@ -81,11 +81,11 @@ describe('<TimePicker />', () => {
       },
     };
     const localRange = {
-      from: dateTimeType(1),
-      to: dateTimeType(1000),
+      from: dateTime(1),
+      to: dateTime(1000),
       raw: {
-        from: dateTimeType(1),
-        to: dateTimeType(1000),
+        from: dateTime(1),
+        to: dateTime(1000),
       },
     };
     const expectedRangeString = rangeUtil.describeTimeRange(localRange);
@@ -167,11 +167,11 @@ describe('<TimePicker />', () => {
       },
     };
     const localRange = {
-      from: dateTimeType(2000),
-      to: dateTimeType(4000),
+      from: dateTime(2000),
+      to: dateTime(4000),
       raw: {
-        from: dateTimeType(2000),
-        to: dateTimeType(4000),
+        from: dateTime(2000),
+        to: dateTime(4000),
       },
     };
 
@@ -217,11 +217,11 @@ describe('<TimePicker />', () => {
       },
     };
     const localRange = {
-      from: dateTimeType(1000),
-      to: dateTimeType(3000),
+      from: dateTime(1000),
+      to: dateTime(3000),
       raw: {
-        from: dateTimeType(1000),
-        to: dateTimeType(3000),
+        from: dateTime(1000),
+        to: dateTime(3000),
       },
     };
 
