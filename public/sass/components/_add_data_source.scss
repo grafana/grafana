@@ -40,6 +40,10 @@
   color: $text-color;
   border-radius: 4px;
 
+  background: $panel-editor-viz-item-bg;
+  border: 1px solid transparent;
+  border-radius: 3px;
+
   &:hover {
     background: $card-background-hover;
     color: $text-color-strong;
@@ -48,6 +52,12 @@
       opacity: 1;
       transition: 0.15s opacity ease-in-out;
     }
+  }
+
+  &:hover {
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
   }
 }
 
@@ -67,7 +77,8 @@
 }
 
 .add-data-source-item-logo {
-  margin-right: $space-md;
+  margin-right: $space-lg;
+  margin-left: $space-sm;
   width: 55px;
   max-height: 55px;
 }
