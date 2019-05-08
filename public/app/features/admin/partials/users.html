@@ -56,6 +56,12 @@
             </a>
           </td>
           <td class="text-right">
+            <a ng-click="ctrl.disableUser(user)" class="btn btn-small"
+              ng-class="{'btn-success': user.isDisabled, 'btn-danger': !user.isDisabled}">
+              <i class="fa" ng-class="{'fa-unlock-alt': user.isDisabled, 'fa-lock': !user.isDisabled}"></i>
+            </a>
+          </td>
+          <td class="text-right">
             <a ng-click="ctrl.deleteUser(user)" class="btn btn-danger btn-small">
               <i class="fa fa-remove"></i>
             </a>
