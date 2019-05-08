@@ -1,24 +1,24 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { Select, SelectOptionItem } from '@grafana/ui';
+import { Select, GroupedSelectOptionItem } from '@grafana/ui/src/components/Select/Select';
 import { Variable } from 'app/types/templates';
 
-export interface Props {
-  onChange: (value: string) => void;
-  options: Array<SelectOptionItem<string>>;
+export interface Props<T> {
+  onChange: (value: T) => void;
+  options: Array<GroupedSelectOptionItem<T>>;
   isSearchable: boolean;
-  value: string;
+  value: T;
   placeholder?: string;
   className?: string;
   variables?: Variable[];
 }
 
-interface State {
-  options: Array<SelectOptionItem<string>>;
+interface State<T> {
+  options: Array<GroupedSelectOptionItem<T>>;
 }
 
-export class MetricSelect extends React.Component<Props, State> {
+export class MetricSelect<T> extends React.Component<Props<T>, State<T>> {
   static defaultProps = {
     variables: [],
     options: [],
@@ -34,13 +34,13 @@ export class MetricSelect extends React.Component<Props, State> {
     this.setState({ options: this.buildOptions(this.props) });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  componentWillReceiveProps(nextProps: Props<T>) {
     if (nextProps.options.length > 0 || nextProps.variables.length) {
       this.setState({ options: this.buildOptions(nextProps) });
     }
   }
 
-  shouldComponentUpdate(nextProps: Props) {
+  shouldComponentUpdate(nextProps: Props<T>) {
     const nextOptions = this.buildOptions(nextProps);
     return nextProps.value !== this.props.value || !_.isEqual(nextOptions, this.state.options);
   }
@@ -61,7 +61,7 @@ export class MetricSelect extends React.Component<Props, State> {
 
   getSelectedOption() {
     const { options } = this.state;
-    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
+    const allOptions = options.every(o => o.options.length > 0) ? _.flatten(options.map(o => o.options)) : options;
     return allOptions.find(option => option.value === this.props.value);
   }
 

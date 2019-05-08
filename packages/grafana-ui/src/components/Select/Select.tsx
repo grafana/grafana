@@ -28,6 +28,11 @@ export interface SelectOptionItem<T> {
   [key: string]: any;
 }
 
+export interface GroupedSelectOptionItem<T> extends SelectOptionItem<T> {
+  expanded?: boolean;
+  options?: Array<SelectOptionItem<T>>;
+}
+
 export interface CommonProps<T> {
   defaultValue?: any;
   getOptionLabel?: (item: SelectOptionItem<T>) => string;
