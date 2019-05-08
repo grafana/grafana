@@ -17,7 +17,7 @@ interface State {
 }
 
 export class GeneralTabReference extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       path: '',
@@ -37,7 +37,7 @@ export class GeneralTabReference extends PureComponent<Props, State> {
     }
   };
 
-  editKeyPress = event => {
+  editKeyPress = (event: any) => {
     if ('Enter' === event.key) {
       this.loadDashboard();
     }
