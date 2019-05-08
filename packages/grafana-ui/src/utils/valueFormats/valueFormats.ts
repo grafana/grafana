@@ -1,5 +1,6 @@
 import { getCategories } from './categories';
 import { DecimalCount } from '../../types';
+import { toMomentFormatter } from './dateTimeFormatters';
 
 export type ValueFormatter = (
   value: number,
