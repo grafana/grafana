@@ -18,6 +18,7 @@ import {
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
+  generateNewKeyAndAddRefIdIfMissing,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -104,7 +105,8 @@ const updateExploreUIState = (exploreId: ExploreId, uiStateFragment: Partial<Exp
  */
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return (dispatch, getState) => {
-    const query = generateEmptyQuery(getState().explore[exploreId].queries, index);
+    const queries = getState().explore[exploreId].queries;
+    const query = generateEmptyQuery(queries, index);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
@@ -149,7 +151,9 @@ export function changeQuery(
   return (dispatch, getState) => {
     // Null query means reset
     if (query === null) {
-      query = { ...generateEmptyQuery(getState().explore[exploreId].queries) };
+      const queries = getState().explore[exploreId].queries;
+      const { refId, key } = queries[index];
+      query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
     }
 
     dispatch(changeQueryAction({ exploreId, query, index, override }));
@@ -619,8 +623,9 @@ export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkRes
 export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
   return (dispatch, getState) => {
     // Inject react keys into query objects
-    const queries = rawQueries.map(q => ({ ...q, ...generateEmptyQuery(getState().explore[exploreId].queries) }));
-    dispatch(setQueriesAction({ exploreId, queries }));
+    const queries = getState().explore[exploreId].queries;
+    const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
+    dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     dispatch(runQueries(exploreId));
   };
 }
@@ -784,7 +789,11 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
     const { datasource, queries, range: urlRange, ui } = urlState;
-    const refreshQueries = queries.map(q => ({ ...q, ...generateEmptyQuery(itemState.queries) }));
+    const refreshQueries: DataQuery[] = [];
+    for (let index = 0; index < queries.length; index++) {
+      const query = queries[index];
+      refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
+    }
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
 

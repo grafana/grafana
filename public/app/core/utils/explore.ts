@@ -276,6 +276,13 @@ export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
   return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
+export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
+  const key = generateKey(index);
+  const refId = target.refId || getNextRefIdChar(queries);
+
+  return { ...target, refId, key };
+};
+
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  */

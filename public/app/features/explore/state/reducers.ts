@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import {
   calculateResultsFromQueryTransactions,
-  generateEmptyQuery,
   getIntervals,
   ensureQueries,
   getQueryKeys,
   parseUrlState,
   DEFAULT_UI_STATE,
+  generateNewKeyAndAddRefIdIfMissing,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
@@ -146,7 +146,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { query, index } = action.payload;
 
       // Override path: queries are completely reset
-      const nextQuery: DataQuery = { ...query, ...generateEmptyQuery(state.queries) };
+      const nextQuery: DataQuery = generateNewKeyAndAddRefIdIfMissing(query, queries, index);
       const nextQueries = [...queries];
       nextQueries[index] = nextQuery;
 
@@ -283,18 +283,19 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       let nextQueries: DataQuery[];
       if (index === undefined) {
         // Modify all queries
-        nextQueries = queries.map((query, i) => ({
-          ...modifier({ ...query }, modification),
-          ...generateEmptyQuery(state.queries),
-        }));
+        nextQueries = queries.map((query, i) => {
+          const nextQuery = modifier({ ...query }, modification);
+          return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
+        });
       } else {
         // Modify query only at index
         nextQueries = queries.map((query, i) => {
-          // Synchronize all queries with local query cache to ensure consistency
-          // TODO still needed?
-          return i === index
-            ? { ...modifier({ ...query }, modification), ...generateEmptyQuery(state.queries) }
-            : query;
+          if (i === index) {
+            const nextQuery = modifier({ ...query }, modification);
+            return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
+          }
+
+          return query;
         });
       }
       return {
