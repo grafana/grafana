@@ -81,12 +81,9 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
             />
           </PanelOptionsGroup>
 
-          <FieldPropertiesEditor
-            title="Field"
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            value={fieldOptions.defaults}
-          />
+          <PanelOptionsGroup title="Field">
+            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={fieldOptions.defaults} />
+          </PanelOptionsGroup>
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} value={fieldOptions.thresholds} />
         </PanelOptionsGrid>
