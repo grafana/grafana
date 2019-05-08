@@ -29,17 +29,17 @@ var loginUsingLdap = func(query *models.LoginUserQuery) (bool, error) {
 		return true, ErrNoLDAPServers
 	}
 
-	multipleldap.New(config.Servers)
-
-	externalUser, err := auth.Login(query)
-	if err == nil || err != LDAP.ErrInvalidCredentials {
-		return true, err
-	}
-
-	_, err := user.Upsert(externalUser, setting.LdapAllowSignup)
+	externalUser, err := multipleldap.New(config.Servers).Login(query)
 	if err != nil {
 		return true, err
 	}
 
-	return true, LDAP.ErrInvalidCredentials
+	login, err := user.Upsert(externalUser, setting.LdapAllowSignup)
+	if err != nil {
+		return true, err
+	}
+
+	query.User = login
+
+	return true, nil
 }

@@ -28,13 +28,15 @@ type IConnection interface {
 type IAuth interface {
 	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	Users() ([]*UserInfo, error)
+	Users() ([]*models.ExternalUserInfo, error)
+	Dial() error
+	Close()
 }
 
 // Auth is basic struct of LDAP authorization
 type Auth struct {
 	server            *ServerConfig
-	conn              IConnection
+	connection        IConnection
 	requireSecondBind bool
 	log               log.Logger
 }
@@ -96,17 +98,17 @@ func (auth *Auth) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if auth.server.StartTLS {
-				auth.conn, err = dial("tcp", address)
+				auth.connection, err = dial("tcp", address)
 				if err == nil {
-					if err = auth.conn.StartTLS(tlsCfg); err == nil {
+					if err = auth.connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				auth.conn, err = LDAP.DialTLS("tcp", address, tlsCfg)
+				auth.connection, err = LDAP.DialTLS("tcp", address, tlsCfg)
 			}
 		} else {
-			auth.conn, err = dial("tcp", address)
+			auth.connection, err = dial("tcp", address)
 		}
 
 		if err == nil {
@@ -114,6 +116,11 @@ func (auth *Auth) Dial() error {
 		}
 	}
 	return err
+}
+
+// Close closes the LDAP connection
+func (auth *Auth) Close() {
+	auth.connection.Close()
 }
 
 // Login logs in the user
@@ -225,12 +232,12 @@ func (ldap *Auth) buildExternalUser(user *UserInfo) *models.ExternalUserInfo {
 
 func (auth *Auth) serverBind() error {
 	bindFn := func() error {
-		return auth.conn.Bind(auth.server.BindDN, auth.server.BindPassword)
+		return auth.connection.Bind(auth.server.BindDN, auth.server.BindPassword)
 	}
 
 	if auth.server.BindPassword == "" {
 		bindFn = func() error {
-			return auth.conn.UnauthenticatedBind(auth.server.BindDN)
+			return auth.connection.UnauthenticatedBind(auth.server.BindDN)
 		}
 	}
 
@@ -250,7 +257,7 @@ func (auth *Auth) serverBind() error {
 }
 
 func (auth *Auth) secondBind(user *UserInfo, userPassword string) error {
-	if err := auth.conn.Bind(user.DN, userPassword); err != nil {
+	if err := auth.connection.Bind(user.DN, userPassword); err != nil {
 		auth.log.Info("Second bind failed", "error", err)
 
 		if ldapErr, ok := err.(*LDAP.Error); ok {
@@ -276,12 +283,12 @@ func (auth *Auth) initialBind(username, userPassword string) error {
 	}
 
 	bindFn := func() error {
-		return auth.conn.Bind(bindPath, userPassword)
+		return auth.connection.Bind(bindPath, userPassword)
 	}
 
 	if userPassword == "" {
 		bindFn = func() error {
-			return auth.conn.UnauthenticatedBind(bindPath)
+			return auth.connection.UnauthenticatedBind(bindPath)
 		}
 	}
 
@@ -327,7 +334,7 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 
 		auth.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
 
-		searchResult, err = auth.conn.Search(&searchReq)
+		searchResult, err = auth.connection.Search(&searchReq)
 		if err != nil {
 			return nil, err
 		}
@@ -382,7 +389,7 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 				Filter:       filter,
 			}
 
-			groupSearchResult, err = auth.conn.Search(&groupSearchReq)
+			groupSearchResult, err = auth.connection.Search(&groupSearchReq)
 			if err != nil {
 				return nil, err
 			}
@@ -406,15 +413,11 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 	}, nil
 }
 
-func (ldap *Auth) Users() ([]*UserInfo, error) {
+// Users gets LDAP users
+func (ldap *Auth) Users() ([]*models.ExternalUserInfo, error) {
 	var result *LDAP.SearchResult
 	var err error
 	server := ldap.server
-
-	if err := ldap.Dial(); err != nil {
-		return nil, err
-	}
-	defer ldap.conn.Close()
 
 	for _, base := range server.SearchBaseDNs {
 		attributes := make([]string, 0)
@@ -438,7 +441,7 @@ func (ldap *Auth) Users() ([]*UserInfo, error) {
 			Filter: strings.Replace(server.SearchFilter, "%s", "*", -1),
 		}
 
-		result, err = ldap.conn.Search(&req)
+		result, err = ldap.connection.Search(&req)
 		if err != nil {
 			return nil, err
 		}
@@ -451,11 +454,11 @@ func (ldap *Auth) Users() ([]*UserInfo, error) {
 	return ldap.serializeUsers(result), nil
 }
 
-func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*UserInfo {
-	var serialized []*UserInfo
+func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*models.ExternalUserInfo {
+	var serialized []*models.ExternalUserInfo
 
 	for index := range users.Entries {
-		serialize := &UserInfo{
+		serialize := ldap.buildExternalUser(&UserInfo{
 			DN: getLdapAttrN(
 				"dn",
 				users,
@@ -486,7 +489,7 @@ func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*UserInfo {
 				users,
 				index,
 			),
-		}
+		})
 
 		serialized = append(serialized, serialize)
 	}

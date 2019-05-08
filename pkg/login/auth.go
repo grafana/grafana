@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	LDAP "github.com/grafana/grafana/pkg/services/multipleldap"
 )
 
 var (

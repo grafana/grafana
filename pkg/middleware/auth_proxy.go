@@ -36,7 +36,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *m.ReqContext,
 	}
 
 	// Try to get user id from various sources
-	id, err := auth.GetUserID()
+	id, err := auth.Login()
 	if err != nil {
 		ctx.Handle(500, err.Error(), err.DetailsError)
 		return true
