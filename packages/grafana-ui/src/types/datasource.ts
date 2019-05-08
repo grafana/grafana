@@ -4,7 +4,7 @@ import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
-// NOTE: this seems more general than just DataSource
+// NOTE: this seems more general than just DataSource 
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
