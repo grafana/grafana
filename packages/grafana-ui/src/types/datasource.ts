@@ -11,13 +11,13 @@ export interface DataSourcePluginOptionsEditorProps<TOptions> {
 }
 
 export class DataSourcePlugin<
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TQuery extends DataQuery = DataQuery
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends GrafanaPlugin<DataSourcePluginMeta> {
-  DataSourceClass: DataSourceConstructor<TQuery>;
-  components: DataSourcePluginComponents<TOptions, TQuery>;
+  DataSourceClass: DataSourceConstructor<TQuery, TOptions>;
+  components: DataSourcePluginComponents<TQuery, TOptions>;
 
-  constructor(DataSourceClass: DataSourceConstructor<TQuery>) {
+  constructor(DataSourceClass: DataSourceConstructor<TQuery, TOptions>) {
     super();
     this.DataSourceClass = DataSourceClass;
     this.components = {};
@@ -89,8 +89,8 @@ interface PluginMetaQueryOptions {
 }
 
 export interface DataSourcePluginComponents<
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TQuery extends DataQuery = DataQuery
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -101,14 +101,20 @@ export interface DataSourcePluginComponents<
   ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
 
-export interface DataSourceConstructor<TQuery extends DataQuery = DataQuery> {
-  new (instanceSettings: DataSourceInstanceSettings, ...args: any[]): DataSourceApi<TQuery>;
+export interface DataSourceConstructor<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
+  new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DataSourceApi<TQuery, TOptions>;
 }
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
  */
-export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
+export interface DataSourceApi<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
   /**
    *  min interval range
    */
@@ -158,7 +164,7 @@ export interface DataSourceApi<TQuery extends DataQuery = DataQuery> {
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
-  components?: DataSourcePluginComponents;
+  components?: DataSourcePluginComponents<TQuery, TOptions>;
 
   /**
    * static information about the datasource
