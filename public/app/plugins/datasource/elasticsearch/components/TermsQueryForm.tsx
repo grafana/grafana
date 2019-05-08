@@ -1,9 +1,13 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Select, SelectOptionItem, FormLabel, Input } from '@grafana/ui';
+import { SelectOptionItem, FormLabel, Input } from '@grafana/ui';
+import { Variable } from 'app/types/templates';
+import { MetricSelect } from 'app/core/components/Select/MetricSelect';
+import { GroupedSelectOptionItem } from '@grafana/ui/src/components/Select/Select';
 
 export interface TermsQueryFormProps {
   query: any;
-  fields: SelectOptionItem[];
+  fields: Array<SelectOptionItem<string>>;
+  variables?: Variable[];
   onChange: (query: any, definition: string) => void;
 }
 
@@ -52,10 +56,10 @@ export class TermsQueryForm extends PureComponent<TermsQueryFormProps, TermsQuer
     onChange(termsQuery, `Terms(${field})`);
   }
 
-  onFieldChange = (item: SelectOptionItem) => {
+  onFieldChange = (field: string) => {
     this.setState(
       {
-        field: item.value,
+        field,
       },
       () => {
         this.triggerChange();
@@ -84,26 +88,32 @@ export class TermsQueryForm extends PureComponent<TermsQueryFormProps, TermsQuer
   };
 
   render() {
-    const { fields } = this.props;
+    const { variables, fields } = this.props;
     const { field, query = '', size } = this.state;
+    const groupedFields: GroupedSelectOptionItem<string> = {
+      label: 'Fields',
+      expanded: fields.some(o => o.value === field),
+      options: fields,
+    };
     return (
       <>
         <div className="form-field">
-          <FormLabel className="query-keyword">Field</FormLabel>
-          <Select
-            placeholder="Choose field"
-            options={fields}
-            value={fields.find(o => o.value === field)}
+          <FormLabel>Field</FormLabel>
+          <MetricSelect
+            variables={variables}
+            placeholder="Select field"
+            options={[groupedFields]}
+            value={field}
             onChange={this.onFieldChange}
-            width={11}
+            className="width-15"
           />
         </div>
         <div className="form-field">
-          <FormLabel className="query-keyword">Query</FormLabel>
+          <FormLabel>Query</FormLabel>
           <Input placeholder="lucene query" onBlur={this.onQueryBlur} onChange={this.onQueryChange} value={query} />
         </div>
         <div className="form-field">
-          <FormLabel className="query-keyword">Size</FormLabel>
+          <FormLabel>Size</FormLabel>
           <Input
             className="gf-form-input width-6"
             placeholder="500"

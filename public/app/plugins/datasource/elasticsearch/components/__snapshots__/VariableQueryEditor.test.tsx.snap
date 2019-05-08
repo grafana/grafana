@@ -5,9 +5,7 @@ exports[`ElasticVariableQueryEditor should render component 1`] = `
   <div
     className="form-field"
   >
-    <Component
-      className="query-keyword"
-    >
+    <Component>
       Query Type
     </Component>
     <Select
@@ -57,6 +55,13 @@ exports[`ElasticVariableQueryEditor should render component 1`] = `
   <FieldsQueryForm
     onChange={[Function]}
     query={Object {}}
+    variables={
+      Array [
+        Object {
+          "name": "test",
+        },
+      ]
+    }
   />
 </Fragment>
 `;

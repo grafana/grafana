@@ -1,9 +1,13 @@
 import React, { PureComponent } from 'react';
-import { Select, SelectOptionItem, FormLabel } from '@grafana/ui';
+import { FormLabel } from '@grafana/ui';
 import { FieldTypes } from '../types';
+import { MetricSelect } from 'app/core/components/Select/MetricSelect';
+import { Variable } from 'app/types/templates';
+import { GroupedSelectOptionItem } from '@grafana/ui/src/components/Select/Select';
 
 export interface FieldsQueryFormProps {
   query: any;
+  variables?: Variable[];
   onChange: (query: any, definition: string) => void;
 }
 
@@ -15,14 +19,17 @@ const defaultState: FieldsQueryFormState = {
   type: '',
 };
 
-const fieldTypes: SelectOptionItem[] = [
-  { value: FieldTypes.Any, label: 'Any' },
-  { value: FieldTypes.Number, label: 'Number' },
-  { value: FieldTypes.Date, label: 'Date' },
-  { value: FieldTypes.String, label: 'String' },
-  { value: FieldTypes.Keyword, label: 'Keyword' },
-  { value: FieldTypes.Nested, label: 'Nested' },
-];
+const fieldTypes: GroupedSelectOptionItem<FieldTypes> = {
+  label: 'Field types',
+  options: [
+    { value: FieldTypes.Any, label: 'Any' },
+    { value: FieldTypes.Number, label: 'Number' },
+    { value: FieldTypes.Date, label: 'Date' },
+    { value: FieldTypes.String, label: 'String' },
+    { value: FieldTypes.Keyword, label: 'Keyword' },
+    { value: FieldTypes.Nested, label: 'Nested' },
+  ],
+};
 
 export class FieldsQueryForm extends PureComponent<FieldsQueryFormProps, FieldsQueryFormState> {
   constructor(props: FieldsQueryFormProps) {
@@ -45,37 +52,41 @@ export class FieldsQueryForm extends PureComponent<FieldsQueryFormProps, FieldsQ
     const query: any = {
       find: 'fields',
     };
-    const selectedtype = fieldTypes.find(o => o.value === type);
+    const selectedtype = fieldTypes.options.find(o => o.value === type);
 
     if (defaultState.type !== type) {
       query.type = type;
     }
 
-    onChange(query, `Fields(${selectedtype.label})`);
+    onChange(query, `Fields(${selectedtype ? selectedtype.label : type})`);
   }
 
-  onFieldTypeChange = (item: SelectOptionItem) => {
+  onFieldTypeChange = (type: string) => {
     this.setState(
       {
-        type: item.value,
+        type,
       },
       () => this.triggerChange()
     );
   };
 
   render() {
+    const { variables } = this.props;
     const { type } = this.state;
+    fieldTypes.expanded = fieldTypes.options.some(o => o.value === type);
+
     return (
       <>
         <div className="form-field">
-          <FormLabel className="query-keyword">Field Type</FormLabel>
-          <Select
-            placeholder="Choose field type"
-            isSearchable={false}
-            options={fieldTypes}
-            value={fieldTypes.find(o => o.value === type)}
+          <FormLabel>Field Type</FormLabel>
+          <MetricSelect
+            placeholder="Select field type"
+            isSearchable={true}
+            options={[fieldTypes]}
+            value={type}
             onChange={this.onFieldTypeChange}
-            width={11}
+            variables={variables}
+            className="width-15"
           />
         </div>
       </>

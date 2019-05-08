@@ -7,11 +7,11 @@ import { TermsQueryForm } from './TermsQueryForm';
 
 export interface VariableQueryState {
   find: string;
-  fields?: SelectOptionItem[];
+  fields?: Array<SelectOptionItem<string>>;
   initialQuery?: any;
 }
 
-const queryTypes: SelectOptionItem[] = [
+const queryTypes: Array<SelectOptionItem<MetricFindQueryTypes>> = [
   { value: MetricFindQueryTypes.Fields, label: 'Fields' },
   { value: MetricFindQueryTypes.Terms, label: 'Terms' },
 ];
@@ -38,21 +38,14 @@ export class ElasticVariableQueryEditor extends PureComponent<VariableQueryProps
   }
 
   async componentDidMount() {
-    const { templateSrv } = this.props;
-    const fieldOptions = await this.getFields();
-    const templateVariables = templateSrv.variables.map(v => ({
-      label: `$${v.name}`,
-      value: `$${v.name}`,
-      description: v.current && v.current.value ? `Current value: ${v.current.value}` : v.label || v.name,
-    }));
-    const fields = [...templateVariables, ...fieldOptions];
+    const fields = await this.getFields();
 
     this.setState({
       fields,
     });
   }
 
-  async getFields() {
+  async getFields(): Promise<Array<SelectOptionItem<string>>> {
     const { datasource } = this.props;
     return datasource.getFields({}).then((result: string[]) => {
       return result.map((field: any) => {
@@ -65,7 +58,7 @@ export class ElasticVariableQueryEditor extends PureComponent<VariableQueryProps
     });
   }
 
-  onQueryTypeChange = (item: SelectOptionItem) => {
+  onQueryTypeChange = (item: SelectOptionItem<MetricFindQueryTypes>) => {
     this.setState({
       find: item.value,
     });
@@ -77,13 +70,17 @@ export class ElasticVariableQueryEditor extends PureComponent<VariableQueryProps
   };
 
   renderQueryType() {
+    const { templateSrv } = this.props;
     const { find, initialQuery, fields } = this.state;
+    const variables = templateSrv.variables;
 
     switch (find) {
       case MetricFindQueryTypes.Fields:
-        return <FieldsQueryForm query={initialQuery} onChange={this.onQueryChange} />;
+        return <FieldsQueryForm query={initialQuery} variables={variables} onChange={this.onQueryChange} />;
       case MetricFindQueryTypes.Terms:
-        return <TermsQueryForm query={initialQuery} fields={fields} onChange={this.onQueryChange} />;
+        return (
+          <TermsQueryForm query={initialQuery} fields={fields} variables={variables} onChange={this.onQueryChange} />
+        );
     }
 
     return '';
@@ -95,7 +92,7 @@ export class ElasticVariableQueryEditor extends PureComponent<VariableQueryProps
     return (
       <>
         <div className="form-field">
-          <FormLabel className="query-keyword">Query Type</FormLabel>
+          <FormLabel>Query Type</FormLabel>
           <Select
             placeholder="Choose type"
             isSearchable={false}

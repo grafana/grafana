@@ -38,7 +38,7 @@ describe('TermsQueryForm', () => {
       onChange: jest.fn(),
     };
     const { instance } = setup(props);
-    instance.onFieldChange({ value: 'field.a', label: 'field.a' });
+    instance.onFieldChange('field.a');
     expect(props.onChange.mock.calls.length).toBe(1);
     expect(props.onChange.mock.calls[0][0].find).toBe('terms');
     expect(props.onChange.mock.calls[0][0].field).toBe('field.a');

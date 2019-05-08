@@ -5,52 +5,37 @@ exports[`TermsQueryForm should render component 1`] = `
   <div
     className="form-field"
   >
-    <Component
-      className="query-keyword"
-    >
+    <Component>
       Field
     </Component>
-    <Select
-      autoFocus={false}
-      backspaceRemovesValue={true}
-      className=""
-      components={
-        Object {
-          "Group": [Function],
-          "IndicatorsContainer": [Function],
-          "MenuList": [Function],
-          "Option": [Function],
-          "SingleValue": [Function],
-        }
-      }
-      isClearable={false}
-      isDisabled={false}
-      isLoading={false}
-      isMulti={false}
+    <MetricSelect
+      className="width-15"
       isSearchable={true}
-      maxMenuHeight={300}
-      menuIsOpen={false}
       onChange={[Function]}
-      openMenuOnFocus={false}
       options={
         Array [
           Object {
-            "description": "number",
-            "label": "field.a",
-            "value": "field.a",
+            "expanded": false,
+            "label": "Fields",
+            "options": Array [
+              Object {
+                "description": "number",
+                "label": "field.a",
+                "value": "field.a",
+              },
+            ],
           },
         ]
       }
-      placeholder="Choose field"
-      width={11}
+      placeholder="Select field"
+      value=""
+      variables={Array []}
     />
   </div>
   <div
     className="form-field"
   >
-    <Component
-      className="query-keyword"
-    >
+    <Component>
       Query
     </Component>
     <Input
@@ -64,9 +49,7 @@ exports[`TermsQueryForm should render component 1`] = `
   <div
     className="form-field"
   >
-    <Component
-      className="query-keyword"
-    >
+    <Component>
       Size
     </Component>
     <Input

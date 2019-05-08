@@ -33,10 +33,7 @@ describe('ElasticVariableQueryEditor', () => {
     await instance.componentDidMount();
     const { find, fields, initialQuery } = instance.state;
     expect(find).toBe('fields');
-    expect(fields).toEqual([
-      { value: '$test', label: '$test', description: 'test' },
-      { value: 'field', label: 'field', description: 'number' },
-    ]);
+    expect(fields).toEqual([{ value: 'field', label: 'field', description: 'number' }]);
     expect(initialQuery).toEqual({});
   });
 

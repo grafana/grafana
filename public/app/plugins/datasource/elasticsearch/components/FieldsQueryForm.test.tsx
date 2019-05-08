@@ -1,6 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { FieldsQueryForm } from './FieldsQueryForm';
+import { FieldTypes } from '../types';
 
 const setup = (propOverrides?: object) => {
   const props = {
@@ -49,10 +50,23 @@ describe('FieldsQueryForm', () => {
     };
     const { instance } = setup(props);
     props.onChange.mockReset();
-    instance.onFieldTypeChange({ value: 'keyword', label: 'Keyword' });
+    instance.onFieldTypeChange(FieldTypes.Keyword);
     expect(props.onChange.mock.calls.length).toBe(1);
     expect(props.onChange.mock.calls[0][0].find).toBe('fields');
-    expect(props.onChange.mock.calls[0][0].type).toBe('keyword');
+    expect(props.onChange.mock.calls[0][0].type).toBe(FieldTypes.Keyword);
     expect(props.onChange.mock.calls[0][1]).toBe('Fields(Keyword)');
+  });
+
+  it('when changing type to template variable should trigger change event', () => {
+    const props = {
+      onChange: jest.fn(),
+    };
+    const { instance } = setup(props);
+    props.onChange.mockReset();
+    instance.onFieldTypeChange('$var');
+    expect(props.onChange.mock.calls.length).toBe(1);
+    expect(props.onChange.mock.calls[0][0].find).toBe('fields');
+    expect(props.onChange.mock.calls[0][0].type).toBe('$var');
+    expect(props.onChange.mock.calls[0][1]).toBe('Fields($var)');
   });
 });
