@@ -81,6 +81,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   hasQueryHelp?: boolean;
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
+  sort?: number;
 }
 
 interface PluginMetaQueryOptions {

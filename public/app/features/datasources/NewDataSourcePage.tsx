@@ -34,8 +34,16 @@ class NewDataSourcePage extends PureComponent<Props> {
     { id: 'logging', title: 'Logging & document databases' },
     { id: 'sql', title: 'SQL' },
     { id: 'cloud', title: 'Cloud' },
-    { id: 'other', title: 'Logging & Document DBs & Others' },
+    { id: 'other', title: 'Others' },
   ];
+
+  sortingRules: { [id: string]: number } = {
+    prometheus: 100,
+    graphite: 95,
+    loki: 90,
+    mysql: 80,
+    postgres: 79,
+  };
 
   componentDidMount() {
     this.props.loadDataSourceTypes();
@@ -54,6 +62,19 @@ class NewDataSourcePage extends PureComponent<Props> {
     if (!types) {
       return null;
     }
+
+    types.sort((a, b) => {
+      const aSort = this.sortingRules[a.id] || 0;
+      const bSort = this.sortingRules[b.id] || 0;
+      if (aSort > bSort) {
+        return -1;
+      }
+      if (aSort < bSort) {
+        return 1;
+      }
+
+      return a.name > b.name ? -1 : 1;
+    });
 
     return (
       <div className="add-data-source-grid">
