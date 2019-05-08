@@ -11,6 +11,7 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Field,
+  PanelOptionsGroup,
 } from '@grafana/ui';
 
 import { SingleStatOptions, SparklineOptions } from './types';
@@ -57,13 +58,15 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} />
+          <PanelOptionsGroup title="Display">
+            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} />
+          </PanelOptionsGroup>
 
           <FieldPropertiesEditor
             title="Field (default)"
             showMinMax={true}
             onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
+            value={fieldOptions.defaults}
           />
 
           <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />

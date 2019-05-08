@@ -8,6 +8,7 @@ import {
   FieldDisplayOptions,
   FieldPropertiesEditor,
   Field,
+  PanelOptionsGroup,
 } from '@grafana/ui';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
@@ -40,13 +41,15 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} />
+          <PanelOptionsGroup title="Display">
+            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} />
+          </PanelOptionsGroup>
 
           <FieldPropertiesEditor
             title="Field (default)"
             showMinMax={true}
             onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
+            value={fieldOptions.defaults}
           />
 
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
