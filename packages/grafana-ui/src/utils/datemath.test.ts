@@ -2,7 +2,7 @@ import sinon, { SinonFakeTimers } from 'sinon';
 import each from 'lodash/each';
 
 import * as dateMath from './datemath';
-import { dateTimeType, DurationUnit, DateTimeType } from '../utils/moment_wrapper';
+import { dateTimeType, DurationUnit, DateTime } from '../utils/moment_wrapper';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
@@ -55,8 +55,8 @@ describe('DateMath', () => {
   });
 
   describe('subtraction', () => {
-    let now: DateTimeType;
-    let anchored: DateTimeType;
+    let now: DateTime;
+    let anchored: DateTime;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
@@ -83,7 +83,7 @@ describe('DateMath', () => {
   });
 
   describe('rounding', () => {
-    let now: DateTimeType;
+    let now: DateTime;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);

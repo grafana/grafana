@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTimeType, DateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { isDateTimeType, DateTime } from '../utils/moment_wrapper';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -85,7 +85,7 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
   return groups;
 }
 
-function formatDate(date: DateTimeType) {
+function formatDate(date: DateTime) {
   return date.format(absoluteFormat);
 }
 

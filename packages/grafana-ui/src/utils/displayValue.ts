@@ -17,7 +17,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
-import { DateTimeType, dateTimeType } from './moment_wrapper';
+import { DateTime, dateTimeType } from './moment_wrapper';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -91,7 +91,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   return toStringProcessor;
 }
 
-function toMoment(value: any, numeric: number, format: string): DateTimeType {
+function toMoment(value: any, numeric: number, format: string): DateTime {
   if (!isNaN(numeric)) {
     const v = dateTimeType(numeric);
     if (v.isValid()) {

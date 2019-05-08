@@ -1,6 +1,6 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
-import { DateTimeType, dateTimeType, toUtc, ISO_8601, isDateTimeType, DurationUnit } from '../utils/moment_wrapper';
+import { DateTime, dateTimeType, toUtc, ISO_8601, isDateTimeType, DurationUnit } from '../utils/moment_wrapper';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
@@ -13,11 +13,7 @@ export type Timezone = 'utc';
  * @param roundUp See parseDateMath function.
  * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
  */
-export function parse(
-  text: string | DateTimeType | Date,
-  roundUp?: boolean,
-  timezone?: Timezone
-): DateTimeType | undefined {
+export function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: Timezone): DateTime | undefined {
   if (!text) {
     return undefined;
   }
@@ -70,7 +66,7 @@ export function parse(
  * by parse function. See parse function to see what is considered acceptable.
  * @param text
  */
-export function isValid(text: string | DateTimeType): boolean {
+export function isValid(text: string | DateTime): boolean {
   const date = parse(text);
   if (!date) {
     return false;
@@ -90,7 +86,7 @@ export function isValid(text: string | DateTimeType): boolean {
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
 // TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
-export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTimeType | undefined {
+export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined {
   const dateTime = time;
   let i = 0;
   const len = mathString.length;

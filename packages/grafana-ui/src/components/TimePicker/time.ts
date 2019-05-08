@@ -1,7 +1,7 @@
 import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
-import { dateTimeType, DateTimeType, toUtc } from '../../utils/moment_wrapper';
+import { dateTimeType, DateTime, toUtc } from '../../utils/moment_wrapper';
 
 export const mapTimeOptionToTimeRange = (
   timeOption: TimeOption,
@@ -19,7 +19,7 @@ export const stringToDateTimeType = (
   isTimezoneUtc: boolean,
   roundUp?: boolean,
   timezone?: dateMath.Timezone
-): DateTimeType => {
+): DateTime => {
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
       return dateTimeType();

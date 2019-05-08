@@ -1,13 +1,13 @@
-import { DateTimeType } from '../utils/moment_wrapper';
+import { DateTime } from '../utils/moment_wrapper';
 
 export interface RawTimeRange {
-  from: DateTimeType | string;
-  to: DateTimeType | string;
+  from: DateTime | string;
+  to: DateTime | string;
 }
 
 export interface TimeRange {
-  from: DateTimeType;
-  to: DateTimeType;
+  from: DateTime;
+  to: DateTime;
   raw: RawTimeRange;
 }
 
@@ -47,6 +47,6 @@ export interface TimeOptions {
   [key: string]: TimeOption[];
 }
 
-export type TimeFragment = string | DateTimeType;
+export type TimeFragment = string | DateTime;
 
 export const TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';

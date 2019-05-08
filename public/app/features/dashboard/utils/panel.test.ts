@@ -1,7 +1,7 @@
 import { TimeRange } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { advanceTo, clear } from 'jest-date-mock';
-import { dateTimeType, DateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTimeType, DateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const dashboardTimeRange: TimeRange = {
   from: dateTimeType([2019, 1, 11, 12, 0]),
@@ -50,8 +50,8 @@ describe('applyPanelTimeOverrides', () => {
 
     expect(overrides.timeRange.from.toISOString()).toBe(expectedFromDate.toISOString());
     expect(overrides.timeRange.to.toISOString()).toBe(expectedToDate.toISOString());
-    expect((overrides.timeRange.raw.from as DateTimeType).toISOString()).toEqual(expectedFromDate.toISOString());
-    expect((overrides.timeRange.raw.to as DateTimeType).toISOString()).toEqual(expectedToDate.toISOString());
+    expect((overrides.timeRange.raw.from as DateTime).toISOString()).toEqual(expectedFromDate.toISOString());
+    expect((overrides.timeRange.raw.to as DateTime).toISOString()).toEqual(expectedToDate.toISOString());
   });
 
   it('should apply both relative time and time shift', () => {
@@ -68,7 +68,7 @@ describe('applyPanelTimeOverrides', () => {
 
     expect(overrides.timeRange.from.toISOString()).toBe(expectedFromDate.toISOString());
     expect(overrides.timeRange.to.toISOString()).toBe(expectedToDate.toISOString());
-    expect((overrides.timeRange.raw.from as DateTimeType).toISOString()).toEqual(expectedFromDate.toISOString());
-    expect((overrides.timeRange.raw.to as DateTimeType).toISOString()).toEqual(expectedToDate.toISOString());
+    expect((overrides.timeRange.raw.from as DateTime).toISOString()).toEqual(expectedFromDate.toISOString());
+    expect((overrides.timeRange.raw.to as DateTime).toISOString()).toEqual(expectedToDate.toISOString());
   });
 });

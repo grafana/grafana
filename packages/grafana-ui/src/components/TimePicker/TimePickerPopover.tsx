@@ -5,7 +5,7 @@ import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from './time';
 import { Timezone } from '../../utils/datemath';
-import { DateTimeType } from '../../utils/moment_wrapper';
+import { DateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;
@@ -42,13 +42,13 @@ export class TimePickerPopover extends Component<Props, State> {
     });
   };
 
-  onFromCalendarChanged = (value: DateTimeType) => {
+  onFromCalendarChanged = (value: DateTime) => {
     this.setState({
       value: { ...this.state.value, raw: { ...this.state.value.raw, from: value } },
     });
   };
 
-  onToCalendarChanged = (value: DateTimeType) => {
+  onToCalendarChanged = (value: DateTime) => {
     this.setState({
       value: { ...this.state.value, raw: { ...this.state.value.raw, to: value } },
     });

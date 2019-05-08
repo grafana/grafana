@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { TimeFragment } from '../../types/time';
 import { Timezone } from '../../utils/datemath';
-import { DateTimeType, dateTimeType, isDateTimeType } from '../../utils/moment_wrapper';
+import { DateTime, dateTimeType, isDateTimeType } from '../../utils/moment_wrapper';
 
 import { stringToDateTimeType } from './time';
 
@@ -11,7 +11,7 @@ export interface Props {
   isTimezoneUtc: boolean;
   roundup?: boolean;
   timezone?: Timezone;
-  onChange: (value: DateTimeType) => void;
+  onChange: (value: DateTime) => void;
 }
 
 export class TimePickerCalendar extends PureComponent<Props> {

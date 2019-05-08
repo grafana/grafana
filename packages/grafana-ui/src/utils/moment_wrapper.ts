@@ -4,7 +4,7 @@ export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
-export type DateTimeInput = Date | string | number | Array<string | number> | DateTimeType; // null | undefined
+export type DateTimeInput = Date | string | number | Array<string | number> | DateTime; // null | undefined
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
 export type DurationUnit =
@@ -44,23 +44,23 @@ export interface DateTimeDuration {
   asHours: () => number;
 }
 
-export interface DateTimeType extends Object {
-  add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
-  endOf: (unitOfTime: DurationUnit) => DateTimeType;
+export interface DateTime extends Object {
+  add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
+  endOf: (unitOfTime: DurationUnit) => DateTime;
   format: (formatInput?: FormatInput) => string;
   fromNow: (withoutSuffix?: boolean) => string;
   from: (formaInput: DateTimeInput) => string;
   isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
   isValid: () => boolean;
-  local: () => DateTimeType;
-  locale: (locale: string) => DateTimeType;
-  startOf: (unitOfTime: DurationUnit) => DateTimeType;
-  subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTimeType;
+  local: () => DateTime;
+  locale: (locale: string) => DateTime;
+  startOf: (unitOfTime: DurationUnit) => DateTime;
+  subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
   toDate: () => Date;
   toISOString: () => string;
   valueOf: () => number;
   unix: () => number;
-  utc: () => DateTimeType;
+  utc: () => DateTime;
 }
 
 export const setLocale = (language: string) => {
@@ -71,18 +71,18 @@ export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };
 
-export const isDateTimeType = (value: any): value is DateTimeType => {
+export const isDateTimeType = (value: any): value is DateTime => {
   return moment.isMoment(value);
 };
 
-export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTimeType => {
-  return moment.utc(input as MomentInput, formatInput) as DateTimeType;
+export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
+  return moment.utc(input as MomentInput, formatInput) as DateTime;
 };
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
   return moment.duration(input as DurationInputArg1, unit) as DateTimeDuration;
 };
 
-export const dateTimeType = (input?: DateTimeInput, formatInput?: FormatInput): DateTimeType => {
-  return moment(input as MomentInput, formatInput) as DateTimeType;
+export const dateTimeType = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
+  return moment(input as MomentInput, formatInput) as DateTime;
 };
