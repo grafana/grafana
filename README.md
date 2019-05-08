@@ -156,21 +156,21 @@ GRAFANA_TEST_DB=mysql go test ./pkg/...
 GRAFANA_TEST_DB=postgres go test ./pkg/...
 ```
 
-#### End to end
+#### End-to-end
 
-Execute all end to end tests
+Execute all end-to-end tests
 
 ```bash
 yarn e2e-tests
 ```
 
-Execute all end to end tests using using a specific url
+Execute all end-to-end tests using using a specific url
 
 ```bash
 ENV BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-Debugging all end to end tests
+Debugging all end-to-end tests (BROWSER=1 will start the browser and SLOWMO=1 will delay each puppeteer operation by 100ms)
 
 ```bash
 ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
