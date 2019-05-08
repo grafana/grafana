@@ -23,3 +23,14 @@ func Upsert(
 
 	return query.Result, nil
 }
+
+// Get the users
+func Get(
+	query *models.SearchUsersQuery,
+) ([]*models.UserSearchHitDTO, error) {
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	return query.Result.Users, nil
+}

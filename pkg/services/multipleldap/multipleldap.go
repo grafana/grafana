@@ -89,7 +89,3 @@ func (multiples *MultipleLDAPs) Users(logins []string) (
 
 	return result, nil
 }
-
-func (multiples *MultipleLDAPs) User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	return nil, nil
-}

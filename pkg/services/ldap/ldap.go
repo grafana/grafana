@@ -27,7 +27,6 @@ type IConnection interface {
 // IAuth is interface for LDAP authorization
 type IAuth interface {
 	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users() ([]*models.ExternalUserInfo, error)
 	Dial() error
 	Close()
@@ -144,28 +143,6 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	result, err := ldap.ExtractExternalUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// User gets user from LDAP
-func (ldap *Auth) User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	err := ldap.serverBind()
-	if err != nil {
-		return nil, err
-	}
-
-	// find user entry & attributes
-	user, err := ldap.searchForUser(login.Username)
-	if err != nil {
-		ldap.log.Error("Failed searching for user in ldap", "error", err)
-		return nil, err
 	}
 
 	result, err := ldap.ExtractExternalUser(user)
