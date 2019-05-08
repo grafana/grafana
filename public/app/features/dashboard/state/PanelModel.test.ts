@@ -14,18 +14,20 @@ describe('PanelModel', () => {
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: {
-          thresholds: [
-            {
-              color: '#F2495C',
-              index: 1,
-              value: 50,
-            },
-            {
-              color: '#73BF69',
-              index: 0,
-              value: null,
-            },
-          ],
+          fieldOptions: {
+            thresholds: [
+              {
+                color: '#F2495C',
+                index: 1,
+                value: 50,
+              },
+              {
+                color: '#73BF69',
+                index: 0,
+                value: null,
+              },
+            ],
+          },
         },
       };
       model = new PanelModel(modelJson);
@@ -72,7 +74,7 @@ describe('PanelModel', () => {
     });
 
     it('should restore -Infinity value for base threshold', () => {
-      expect(model.options.thresholds).toEqual([
+      expect(model.options.fieldOptions.thresholds).toEqual([
         {
           color: '#F2495C',
           index: 1,
@@ -87,10 +89,7 @@ describe('PanelModel', () => {
     });
 
     describe('when changing panel type', () => {
-      let panelQueryRunner: any;
-
       beforeEach(() => {
-        panelQueryRunner = model.getQueryRunner();
         model.changePlugin(getPanelPlugin({ id: 'graph' }));
         model.alert = { id: 2 };
       });
@@ -109,9 +108,9 @@ describe('PanelModel', () => {
         expect(model.alert).toBe(undefined);
       });
 
-      it('getQueryRunner() should return same instance after plugin change', () => {
-        const sameQueryRunner = model.getQueryRunner();
-        expect(panelQueryRunner).toBe(sameQueryRunner);
+      it('panelQueryRunner should be cleared', () => {
+        const panelQueryRunner = (model as any).queryRunner;
+        expect(panelQueryRunner).toBeFalsy();
       });
     });
 
@@ -131,18 +130,27 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing to react panel', () => {
+    describe('when changing to react panel from angular panel', () => {
+      let panelQueryRunner: any;
+
       const onPanelTypeChanged = jest.fn();
       const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
         model.changePlugin(reactPlugin);
+        panelQueryRunner = model.getQueryRunner();
       });
 
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].thresholds).toBeDefined();
+        expect(onPanelTypeChanged.mock.calls[0][2].fieldOptions.thresholds).toBeDefined();
+      });
+
+      it('getQueryRunner() should return same instance after changing to another react panel', () => {
+        model.changePlugin(getPanelPlugin({ id: 'react2' }));
+        const sameQueryRunner = model.getQueryRunner();
+        expect(panelQueryRunner).toBe(sameQueryRunner);
       });
     });
 

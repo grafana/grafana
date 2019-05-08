@@ -98,7 +98,9 @@ export default class ResponseParser {
           const bucket = ResponseParser.findOrCreateBucket(data, target);
           bucket.datapoints.push([value.segments[i].segments[j][metricName][aggField], epoch]);
           bucket.refId = query.refId;
-          bucket.query = query.query;
+          bucket.meta = {
+            query: query.query,
+          };
         }
       }
     }

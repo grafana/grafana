@@ -22,127 +22,6 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [60],
-              "type": "gt"
-            },
-            "query": {
-              "params": ["A", "5m", "now"]
-            },
-            "reducer": {
-              "params": [],
-              "type": "avg"
-            },
-            "type": "query"
-          }
-        ],
-        "enabled": true,
-        "frequency": "60s",
-        "handler": 1,
-        "name": "TestData - Always OK",
-        "noDataState": "no_data",
-        "notifications": []
-      },
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "gdev-testdata",
-      "editable": true,
-      "error": false,
-      "fill": 1,
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 3,
-      "isNew": true,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "connected",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "refId": "A",
-          "scenario": "random_walk",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "1,20,90,30,5,0",
-          "target": ""
-        }
-      ],
-      "thresholds": [
-        {
-          "colorMode": "critical",
-          "fill": true,
-          "line": true,
-          "op": "gt",
-          "value": 60
-        }
-      ],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Always OK",
-      "tooltip": {
-        "msResolution": false,
-        "shared": true,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": "",
-          "logBase": 1,
-          "max": "125",
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "alert": {
-        "conditions": [
-          {
-            "evaluator": {
               "params": [177],
               "type": "gt"
             },
@@ -175,8 +54,8 @@
       "fill": 1,
       "gridPos": {
         "h": 7,
-        "w": 12,
-        "x": 12,
+        "w": 10,
+        "x": 0,
         "y": 0
       },
       "id": 4,
@@ -266,14 +145,14 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [1],
+              "params": [100],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": ["A", "15m", "now"]
+              "params": ["A", "5m", "now"]
             },
             "reducer": {
               "params": [],
@@ -283,10 +162,10 @@
           }
         ],
         "executionErrorState": "alerting",
-        "for": "5m",
+        "for": "900000h",
         "frequency": "1m",
         "handler": 1,
-        "name": "TestData - No data",
+        "name": "Always Pending",
         "noDataState": "no_data",
         "notifications": []
       },
@@ -300,11 +179,11 @@
       "fill": 1,
       "gridPos": {
         "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 7
+        "w": 10,
+        "x": 10,
+        "y": 0
       },
-      "id": 5,
+      "id": 7,
       "isNew": true,
       "legend": {
         "avg": false,
@@ -331,8 +210,8 @@
         {
           "refId": "A",
           "scenario": "random_walk",
-          "scenarioId": "no_data_points",
-          "stringInput": "",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "200,445,100,150,200,220,190",
           "target": ""
         }
       ],
@@ -342,13 +221,13 @@
           "fill": true,
           "line": true,
           "op": "gt",
-          "value": 1
+          "value": 100
         }
       ],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "No data",
+      "title": "Always Alerting with For",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -385,6 +264,29 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "dashboardFilter": "",
+      "dashboardTags": [],
+      "folderId": null,
+      "gridPos": {
+        "h": 20,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 9,
+      "limit": 10,
+      "links": [],
+      "nameFilter": "$namefilter",
+      "onlyAlertsOnDashboard": false,
+      "show": "current",
+      "sortOrder": 1,
+      "stateFilter": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Alert list",
+      "type": "alertlist"
     },
     {
       "alert": {
@@ -424,9 +326,9 @@
       "error": false,
       "fill": 1,
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
+        "h": 6,
+        "w": 10,
+        "x": 0,
         "y": 7
       },
       "id": 6,
@@ -516,11 +418,8 @@
         "conditions": [
           {
             "evaluator": {
-              "params": [100],
+              "params": [60],
               "type": "gt"
-            },
-            "operator": {
-              "type": "and"
             },
             "query": {
               "params": ["A", "5m", "now"]
@@ -532,11 +431,10 @@
             "type": "query"
           }
         ],
-        "executionErrorState": "alerting",
-        "for": "900000h",
-        "frequency": "1m",
+        "enabled": true,
+        "frequency": "60s",
         "handler": 1,
-        "name": "Always Pending",
+        "name": "TestData - Always OK",
         "noDataState": "no_data",
         "notifications": []
       },
@@ -549,12 +447,12 @@
       "error": false,
       "fill": 1,
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 14
+        "h": 6,
+        "w": 10,
+        "x": 10,
+        "y": 7
       },
-      "id": 7,
+      "id": 3,
       "isNew": true,
       "legend": {
         "avg": false,
@@ -582,7 +480,7 @@
           "refId": "A",
           "scenario": "random_walk",
           "scenarioId": "csv_metric_values",
-          "stringInput": "200,445,100,150,200,220,190",
+          "stringInput": "1,20,90,30,5,0",
           "target": ""
         }
       ],
@@ -592,13 +490,138 @@
           "fill": true,
           "line": true,
           "op": "gt",
-          "value": 100
+          "value": 60
         }
       ],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Always Alerting with For",
+      "title": "Always OK",
+      "tooltip": {
+        "msResolution": false,
+        "shared": true,
+        "sort": 0,
+        "value_type": "cumulative"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "max": "125",
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [1],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["A", "15m", "now"]
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "for": "5m",
+        "frequency": "1m",
+        "handler": 1,
+        "name": "TestData - No data",
+        "noDataState": "no_data",
+        "notifications": []
+      },
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "gdev-testdata",
+      "editable": true,
+      "error": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 10,
+        "x": 0,
+        "y": 13
+      },
+      "id": 5,
+      "isNew": true,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "connected",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refId": "A",
+          "scenario": "random_walk",
+          "scenarioId": "no_data_points",
+          "stringInput": "",
+          "target": ""
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 1
+        }
+      ],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "No data",
       "tooltip": {
         "msResolution": false,
         "shared": true,
@@ -638,11 +661,44 @@
     }
   ],
   "revision": 2,
-  "schemaVersion": 16,
+  "schemaVersion": 18,
   "style": "dark",
   "tags": ["gdev", "alerting"],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "TestData",
+          "value": "TestData"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "alert name filter",
+        "multi": false,
+        "name": "namefilter",
+        "options": [
+          {
+            "selected": true,
+            "text": "TestData",
+            "value": "TestData"
+          },
+          {
+            "selected": false,
+            "text": "Prometheus",
+            "value": "Prometheus"
+          },
+          {
+            "selected": false,
+            "text": "Graphite",
+            "value": "Graphite"
+          }
+        ],
+        "query": "TestData,Prometheus,Graphite",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -655,5 +711,5 @@
   "timezone": "browser",
   "title": "Alerting with TestData",
   "uid": "7MeksYbmk",
-  "version": 7
+  "version": 1
 }

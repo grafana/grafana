@@ -72,9 +72,12 @@ export class PanelHeader extends Component<Props, State> {
 
   render() {
     const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
-
-    const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
+
+    const panelHeaderClass = classNames({
+      'panel-header': true,
+      'grid-drag-handle': !isFullscreen,
+    });
 
     return (
       <>
