@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { AngularPanelPlugin, DataSourceApi } from '@grafana/ui/src/types';
+import { DataSourceApi } from '@grafana/ui/src/types';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 
 /** @ngInject */
@@ -22,7 +22,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
-  function relativeTemplateUrlToAbs(templateUrl, baseUrl) {
+  function relativeTemplateUrlToAbs(templateUrl: string, baseUrl: string) {
     if (!templateUrl) {
       return undefined;
     }
@@ -69,9 +69,8 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     const panelInfo = config.panels[scope.panel.type];
-    return importPanelPlugin(panelInfo.module).then(panelPlugin => {
-      const angularPanelPlugin = panelPlugin as AngularPanelPlugin;
-      const PanelCtrl = angularPanelPlugin.components.PanelCtrl;
+    return importPanelPlugin(panelInfo.id).then(panelPlugin => {
+      const PanelCtrl = panelPlugin.angularPanelCtrl;
       componentInfo.Component = PanelCtrl;
 
       if (!PanelCtrl || PanelCtrl.registered) {
@@ -118,7 +117,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // Annotations
       case 'annotations-query-ctrl': {
-        return importDataSourcePlugin(scope.ctrl.currentDatasource.meta.module).then(dsPlugin => {
+        return importDataSourcePlugin(scope.ctrl.currentDatasource.meta).then(dsPlugin => {
           return {
             baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
             name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
@@ -134,7 +133,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         const dsMeta = scope.ctrl.datasourceMeta;
-        return importDataSourcePlugin(dsMeta.module).then(dsPlugin => {
+        return importDataSourcePlugin(dsMeta).then(dsPlugin => {
           scope.$watch(
             'ctrl.current',
             () => {
@@ -148,33 +147,33 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             name: 'ds-config-' + dsMeta.id,
             bindings: { meta: '=', current: '=' },
             attrs: { meta: 'ctrl.datasourceMeta', current: 'ctrl.current' },
-            Component: dsPlugin.components.ConfigCtrl,
+            Component: dsPlugin.angularConfigCtrl,
           };
         });
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
         const model = scope.ctrl.model;
-        return importAppPlugin(model.module).then(appPlugin => {
+        return importAppPlugin(model).then(appPlugin => {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
             bindings: { appModel: '=', appEditCtrl: '=' },
             attrs: { 'app-model': 'ctrl.model', 'app-edit-ctrl': 'ctrl' },
-            Component: appPlugin.components.ConfigCtrl,
+            Component: appPlugin.angularConfigCtrl,
           };
         });
       }
       // App Page
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
-        return importAppPlugin(appModel.module).then(appPlugin => {
+        return importAppPlugin(appModel).then(appPlugin => {
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: { appModel: '=' },
             attrs: { 'app-model': 'ctrl.appModel' },
-            Component: appPlugin.pages[scope.ctrl.page.component],
+            Component: appPlugin.angularPages[scope.ctrl.page.component],
           };
         });
       }

@@ -46,7 +46,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      const paramValue = '%5B"now-1h","now","Local",%7B"expr":"metric"%7D%5D';
+      const paramValue = '%5B"now-1h","now","Local","5m",%7B"expr":"metric"%7D,"ui"%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],

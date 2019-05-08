@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,12 +10,11 @@ import (
 	"testing"
 	"time"
 
-	msession "github.com/go-macaron/session"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
@@ -35,16 +35,45 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Code, ShouldEqual, 200)
 		})
 
-		middlewareScenario(t, "middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
+		middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/api/search").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
 			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
-		middlewareScenario(t, "middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/").exec()
+		middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Pragma"), ShouldBeEmpty)
+			So(sc.resp.Header().Get("Expires"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(sc *scenarioContext) {
+			sc.handler(func(c *m.ReqContext) {
+				data := &dtos.IndexViewData{
+					User:     &dtos.CurrentUser{},
+					Settings: map[string]interface{}{},
+					NavTree:  []*dtos.NavLink{},
+				}
+				c.HTML(200, "index-template", data)
+			})
+			sc.fakeReq("GET", "/").exec()
+			So(sc.resp.Code, ShouldEqual, 200)
+			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
+		})
+
+		middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldEqual, "deny")
+		})
+
+		middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(sc *scenarioContext) {
+			setting.AllowEmbedding = true
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("X-Frame-Options"), ShouldBeEmpty)
 		})
 
 		middlewareScenario(t, "Invalid api key", func(sc *scenarioContext) {
@@ -158,7 +187,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: unhashedToken,
@@ -187,14 +216,14 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return &m.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -229,7 +258,7 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.LookupTokenProvider = func(unhashedToken string) (*m.UserToken, error) {
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
 				return nil, m.ErrUserTokenNotFound
 			}
 
@@ -276,52 +305,9 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyHeaderProperty = "username"
 			name := "markelog"
 
-			middlewareScenario(t, "should sync the user if it's not in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
-					return nil
-				})
-
-				sc.fakeReq("GET", "/")
-
-				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
-				sc.exec()
-
-				Convey("Should init user via ldap", func() {
-					So(called, ShouldBeTrue)
-					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
-					So(sc.context.OrgId, ShouldEqual, 4)
-				})
-			})
-
 			middlewareScenario(t, "should not sync the user if it's in the cache", func(sc *scenarioContext) {
-				called := false
-				syncGrafanaUserWithLdapUser = func(query *m.LoginUserQuery) error {
-					called = true
-					query.User = &m.User{Id: 32}
-					return nil
-				}
-
-				bus.AddHandler("test", func(query *m.UpsertUserCommand) error {
-					query.Result = &m.User{Id: 32}
-					return nil
-				})
-
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 32}
+					query.Result = &m.SignedInUser{OrgId: 4, UserId: query.UserId}
 					return nil
 				})
 
@@ -332,17 +318,10 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
-				cacheValue, cacheErr := sc.remoteCacheService.Get(key)
-
 				Convey("Should init user via cache", func() {
-					So(called, ShouldBeFalse)
-
 					So(sc.context.IsSignedIn, ShouldBeTrue)
-					So(sc.context.UserId, ShouldEqual, 32)
+					So(sc.context.UserId, ShouldEqual, 33)
 					So(sc.context.OrgId, ShouldEqual, 4)
-
-					So(cacheValue, ShouldEqual, 33)
-					So(cacheErr, ShouldBeNil)
 				})
 			})
 
@@ -464,6 +443,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		viewsPath, _ := filepath.Abs("../../public/views")
 
 		sc.m = macaron.New()
+		sc.m.Use(AddDefaultResponseHeaders())
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -473,12 +453,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
 		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService))
-		// mock out gc goroutine
-		session.StartSessionGC = func() {}
-		setting.SessionOptions = msession.Options{}
 
 		sc.m.Use(OrgRedirect())
-		sc.m.Use(AddDefaultResponseHeaders())
 
 		sc.defaultHandler = func(c *m.ReqContext) {
 			sc.context = c

@@ -79,7 +79,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   // Active state
   &.active {
     .progress-step-cta {
-      display: inline-block;
+      display: inline-flex;
     }
     .progress-title {
       font-weight: 400;
@@ -94,6 +94,9 @@ $path-position: $marker-size-half - ($path-height / 2);
         background: $brand-gradient;
         -webkit-background-clip: text;
         text-decoration: none;
+      }
+      .gicon {
+        opacity: 1;
       }
     }
   }
@@ -154,6 +157,9 @@ $path-position: $marker-size-half - ($path-height / 2);
   text-decoration: none;
   font-size: 35px;
   vertical-align: sub;
+  .gicon {
+    opacity: 0.7;
+  }
 }
 
 a.progress-link {

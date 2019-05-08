@@ -1,11 +1,11 @@
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import _ from 'lodash';
 import moment from 'moment';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
     it('when custom settings should return default range list', () => {
-      const groups = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
+      const groups: any = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
       expect(_.keys(groups).length).toBe(4);
       expect(groups[3][0].active).toBe(true);
     });

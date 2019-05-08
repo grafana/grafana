@@ -18,10 +18,10 @@ describe('Process simple display values', () => {
     getDisplayProcessor(),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessor({ color: '#FFF' }),
+    getDisplayProcessor({ field: { color: '#FFF' } }),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessor({ unit: 'locale' }),
+    getDisplayProcessor({ field: { unit: 'locale' } }),
   ];
 
   it('support null', () => {
@@ -73,17 +73,6 @@ describe('Process simple display values', () => {
   });
 });
 
-describe('Processor with more configs', () => {
-  it('support prefix & suffix', () => {
-    const processor = getDisplayProcessor({
-      prefix: 'AA_',
-      suffix: '_ZZ',
-    });
-
-    expect(processor('XXX').text).toEqual('AA_XXX_ZZ');
-  });
-});
-
 describe('Get color from threshold', () => {
   it('should get first threshold color when only one threshold', () => {
     const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
@@ -124,7 +113,7 @@ describe('Format value', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '6';
 
-    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
 
     const result = instance(value);
 
@@ -137,7 +126,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
-    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
 
     const result = instance(value);
 
@@ -146,21 +135,21 @@ describe('Format value', () => {
 
   it('should set auto decimals, 1 significant', () => {
     const value = '1.23';
-    const instance = getDisplayProcessor({ decimals: null });
+    const instance = getDisplayProcessor({ field: { decimals: null } });
 
     expect(instance(value).text).toEqual('1.2');
   });
 
   it('should set auto decimals, 2 significant', () => {
     const value = '0.0245';
-    const instance = getDisplayProcessor({ decimals: null });
+    const instance = getDisplayProcessor({ field: { decimals: null } });
 
     expect(instance(value).text).toEqual('0.02');
   });
 
   it('should use override decimals', () => {
     const value = 100030303;
-    const instance = getDisplayProcessor({ decimals: 2, unit: 'bytes' });
+    const instance = getDisplayProcessor({ field: { decimals: 2, unit: 'bytes' } });
     expect(instance(value).text).toEqual('95.40 MiB');
   });
 
@@ -170,7 +159,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
-    const instance = getDisplayProcessor({ mappings: valueMappings, decimals: 1 });
+    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
 
     expect(instance(value).text).toEqual('1-20');
   });

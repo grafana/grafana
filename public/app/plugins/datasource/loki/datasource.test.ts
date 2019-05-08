@@ -1,6 +1,7 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { SeriesData } from '@grafana/ui';
 
 describe('LokiDatasource', () => {
   const instanceSettings: any = {
@@ -50,8 +51,10 @@ describe('LokiDatasource', () => {
       expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=20');
     });
 
-    test('should return log streams when resultFormat is undefined', async done => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
+    test('should return series data', async done => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
       const options = getQueryOptions<LokiQuery>({
@@ -60,21 +63,10 @@ describe('LokiDatasource', () => {
 
       const res = await ds.query(options);
 
-      expect(res.data[0].entries[0].line).toBe('hello');
-      done();
-    });
-
-    test('should return time series when resultFormat is time_series', async done => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
-      backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
-
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'foo', refId: 'B', resultFormat: 'time_series' }],
-      });
-
-      const res = await ds.query(options);
-
-      expect(res.data[0].datapoints).toBeDefined();
+      const seriesData = res.data[0] as SeriesData;
+      expect(seriesData.rows[0][1]).toBe('hello');
+      expect(seriesData.meta.limit).toBe(20);
+      expect(seriesData.meta.search).toBe('(?i)foo');
       done();
     });
   });

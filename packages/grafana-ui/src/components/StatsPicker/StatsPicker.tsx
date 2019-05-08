@@ -5,7 +5,7 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { getStatsCalculators } from '../../utils/statsCalculator';
+import { getFieldReducers } from '../../utils/fieldReducer';
 import { SelectOptionItem } from '../Select/Select';
 
 interface Props {
@@ -34,7 +34,7 @@ export class StatsPicker extends PureComponent<Props> {
   checkInput = () => {
     const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
-    const current = getStatsCalculators(stats);
+    const current = getFieldReducers(stats);
     if (current.length !== stats.length) {
       const found = current.map(v => v.id);
       const notFound = difference(stats, found);
@@ -54,18 +54,18 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
-  onSelectionChange = (item: SelectOptionItem) => {
+  onSelectionChange = (item: SelectOptionItem<string>) => {
     const { onChange } = this.props;
     if (isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
-      onChange([item.value]);
+      onChange(item.value ? [item.value] : []);
     }
   };
 
   render() {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
-    const options = getStatsCalculators().map(s => {
+    const options = getFieldReducers().map(s => {
       return {
         value: s.id,
         label: s.name,
@@ -73,7 +73,7 @@ export class StatsPicker extends PureComponent<Props> {
       };
     });
 
-    const value: SelectOptionItem[] = options.filter(option => stats.find(stat => option.value === stat));
+    const value: Array<SelectOptionItem<string>> = options.filter(option => stats.find(stat => option.value === stat));
 
     return (
       <Select

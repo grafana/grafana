@@ -12,7 +12,7 @@ import (
 
 func GetFolders(c *m.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folders, err := s.GetFolders(c.QueryInt("limit"))
+	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
 	if err != nil {
 		return toFolderError(err)

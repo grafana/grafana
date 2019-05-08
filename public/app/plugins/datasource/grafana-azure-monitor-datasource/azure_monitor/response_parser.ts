@@ -136,7 +136,7 @@ export default class ResponseParser {
   }
 
   static parseMetadata(result: any, metricName: string) {
-    const metricData = _.find(result.data.value, o => {
+    const metricData: any = _.find(result.data.value, o => {
       return _.get(o, 'name.value') === metricName;
     });
 
@@ -180,5 +180,21 @@ export default class ResponseParser {
       });
     }
     return dimensions;
+  }
+
+  static parseSubscriptions(result: any) {
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    const list: Array<{ text: string; value: string }> = [];
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+        list.push({
+          text: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
+          value: _.get(result.data.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
   }
 }

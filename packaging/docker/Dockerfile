@@ -17,6 +17,7 @@ FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
 ARG GF_GID="472"
+ARG DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
@@ -29,7 +30,7 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -qq -y libfontconfig ca-certificates curl && \
+    apt-get install -qq -y libfontconfig1 ca-certificates curl && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 

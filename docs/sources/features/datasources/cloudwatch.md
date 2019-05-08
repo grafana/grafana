@@ -29,9 +29,10 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
+*Auth Provider* | Specify the provider to get credentials.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Assume Role Arn* | Specify the ARN of the role to assume
 
 ## Authentication
@@ -84,6 +85,16 @@ Here is a minimal policy example:
     ]
 }
 ```
+
+### AWS credentials
+If Auth Provider is `Credentials file`, Grafana try to get credentials by following order.
+
+- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
+- Hard-code credentials.
+- Shared credentials file.
+- IAM role for Amazon EC2.
+
+Checkout AWS docs on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
 
 ### AWS credentials file
 

@@ -1,8 +1,9 @@
-import { Plugin, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
+import { PluginMeta } from '@grafana/ui';
 
 export enum ActionTypes {
   LoadPlugins = 'LOAD_PLUGINS',
@@ -14,7 +15,7 @@ export enum ActionTypes {
 
 export interface LoadPluginsAction {
   type: ActionTypes.LoadPlugins;
-  payload: Plugin[];
+  payload: PluginMeta[];
 }
 
 export interface LoadPluginDashboardsAction {
@@ -46,7 +47,7 @@ export const setPluginsSearchQuery = (query: string): SetPluginsSearchQueryActio
   payload: query,
 });
 
-const pluginsLoaded = (plugins: Plugin[]): LoadPluginsAction => ({
+const pluginsLoaded = (plugins: PluginMeta[]): LoadPluginsAction => ({
   type: ActionTypes.LoadPlugins,
   payload: plugins,
 });
