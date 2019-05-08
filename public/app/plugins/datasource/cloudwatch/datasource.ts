@@ -3,7 +3,7 @@ import _ from 'lodash';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
-import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
 // import * as moment from 'moment';
 
 export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
@@ -11,10 +11,16 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
   name: any;
   proxyUrl: any;
   defaultRegion: any;
-  instanceSettings: any;
   standardStatistics: any;
+
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings,
+    private $q,
+    private backendSrv,
+    private templateSrv,
+    private timeSrv
+  ) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
     this.proxyUrl = instanceSettings.url;

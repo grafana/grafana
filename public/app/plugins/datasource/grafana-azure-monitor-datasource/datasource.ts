@@ -3,7 +3,9 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { AzureMonitorQuery } from './types';
-import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
   id: number;
@@ -13,7 +15,12 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private $q
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);

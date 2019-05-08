@@ -5,11 +5,12 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
+import { DataSourceInstanceSettings } from '@grafana/ui';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
-    jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
-  };
+    jsonData: { defaultRegion: 'us-east-1' },
+  } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
 
