@@ -12,6 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/multipleldap"
+	LDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,8 +25,8 @@ const (
 )
 
 var (
-	getLDAPConfig = ldap.GetConfig
-	isLDAPEnabled = ldap.IsEnabled
+	getLDAPConfig = LDAP.GetConfig
+	isLDAPEnabled = LDAP.IsEnabled
 )
 
 // AuthProxy struct
@@ -33,7 +36,7 @@ type AuthProxy struct {
 	orgID  int64
 	header string
 
-	LDAP func(server *ldap.ServerConfig) ldap.IAuth
+	LDAP func(server *LDAP.ServerConfig) LDAP.IAuth
 
 	enabled     bool
 	whitelistIP string
@@ -78,7 +81,7 @@ func New(options *Options) *AuthProxy {
 		orgID:  options.OrgID,
 		header: header,
 
-		LDAP: ldap.New,
+		LDAP: multipleldap.New,
 
 		enabled:     setting.AuthProxyEnabled,
 		headerType:  setting.AuthProxyHeaderProperty,
@@ -227,12 +230,13 @@ func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
 		return 0, newError("No LDAP servers available", nil)
 	}
 
-	for _, server := range config.Servers {
-		author := auth.LDAP(server)
-		if err := author.SyncUser(query); err != nil {
-			return 0, newError(err.Error(), nil)
-		}
+	ldap := LDAP.New(config.Servers)
+	LDAPUser, err := ldap.User(query)
+	if err != nil {
+		return 0, newError(err.Error(), nil)
 	}
+
+	user.Upsert(LDAPUser)
 
 	return query.User.Id, nil
 }

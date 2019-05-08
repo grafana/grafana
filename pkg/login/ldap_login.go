@@ -2,11 +2,13 @@ package login
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/multipleldap"
+	LDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var newLDAP = LDAP.New
 var getLDAPConfig = LDAP.GetConfig
 var isLDAPEnabled = LDAP.IsEnabled
 
@@ -27,13 +29,16 @@ var loginUsingLdap = func(query *models.LoginUserQuery) (bool, error) {
 		return true, ErrNoLDAPServers
 	}
 
-	for _, server := range config.Servers {
-		auth := newLDAP(server)
+	multipleldap.New(config.Servers)
 
-		err := auth.Login(query)
-		if err == nil || err != LDAP.ErrInvalidCredentials {
-			return true, err
-		}
+	externalUser, err := auth.Login(query)
+	if err == nil || err != LDAP.ErrInvalidCredentials {
+		return true, err
+	}
+
+	_, err := user.Upsert(externalUser, setting.LdapAllowSignup)
+	if err != nil {
+		return true, err
 	}
 
 	return true, LDAP.ErrInvalidCredentials

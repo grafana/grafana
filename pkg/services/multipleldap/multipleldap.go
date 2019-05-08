@@ -1,201 +1,86 @@
-package ldap
+package multipleldap
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	LDAP "gopkg.in/ldap.v3"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/bus"
+	models "github.com/grafana/grafana/pkg/models"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-// IConnection is interface for LDAP connection manipulation
-type IConnection interface {
-	Bind(username, password string) error
-	UnauthenticatedBind(username string) error
-	Search(*LDAP.SearchRequest) (*LDAP.SearchResult, error)
-	StartTLS(*tls.Config) error
-	Close()
-}
-
-// IAuth is interface for LDAP authorization
-type IAuth interface {
-	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	Users() ([]*UserInfo, error)
-}
-
-// Auth is basic struct of LDAP authorization
-type Auth struct {
-	server            *ServerConfig
-	conn              IConnection
-	requireSecondBind bool
-	log               log.Logger
-}
-
-var (
-
-	// ErrInvalidCredentials is returned if username and password do not match
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
-)
-
-var dial = func(network, addr string) (IConnection, error) {
-	return LDAP.Dial(network, addr)
+// MultipleLDAPs is basic struct of LDAP authorization
+type MultipleLDAPs struct {
+	ldaps []*LDAP.ServerConfig
 }
 
 // New creates the new LDAP auth
-func New(server *ServerConfig) IAuth {
-	return &Auth{
-		server: server,
-		log:    log.New("ldap"),
+func New(LDAPs []*LDAP.ServerConfig) MultipleLDAPs {
+	return &MultipleLDAPs{
+		ldaps: LDAPs,
 	}
 }
 
-// Dial dials in the LDAP
-func (auth *Auth) Dial() error {
-	if hookDial != nil {
-		return hookDial(auth)
-	}
+// Login tries to log in the user in multiples LDAP
+func (multiples *MultipleLDAPs) Login(query *models.LoginUserQuery) error {
+	for _, server := range multiples.servers {
+		ldap := LDAP.New(server)
 
-	var err error
-	var certPool *x509.CertPool
-	if auth.server.RootCACert != "" {
-		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(auth.server.RootCACert, " ") {
-			pem, err := ioutil.ReadFile(caCertFile)
-			if err != nil {
-				return err
-			}
-			if !certPool.AppendCertsFromPEM(pem) {
-				return errors.New("Failed to append CA certificate " + caCertFile)
-			}
-		}
-	}
-	var clientCert tls.Certificate
-	if auth.server.ClientCert != "" && auth.server.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(auth.server.ClientCert, auth.server.ClientKey)
+		ldap.Dial()
+		defer ldap.Close()
+
+		err := ldap.Login(query)
 		if err != nil {
-			return err
-		}
-	}
-	for _, host := range strings.Split(auth.server.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, auth.server.Port)
-		if auth.server.UseSSL {
-			tlsCfg := &tls.Config{
-				InsecureSkipVerify: auth.server.SkipVerifySSL,
-				ServerName:         host,
-				RootCAs:            certPool,
-			}
-			if len(clientCert.Certificate) > 0 {
-				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
-			}
-			if auth.server.StartTLS {
-				auth.conn, err = dial("tcp", address)
-				if err == nil {
-					if err = auth.conn.StartTLS(tlsCfg); err == nil {
-						return nil
-					}
-				}
-			} else {
-				auth.conn, err = LDAP.DialTLS("tcp", address, tlsCfg)
-			}
-		} else {
-			auth.conn, err = dial("tcp", address)
-		}
-
-		if err == nil {
 			return nil
 		}
-	}
-	return err
-}
 
-// Login logs in the user
-func (ldap *Auth) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
-) {
-	// perform initial authentication
-	if err := ldap.initialBind(query.Username, query.Password); err != nil {
-		return nil, err
-	}
-
-	// find user entry & attributes
-	user, err := ldap.searchForUser(query.Username)
-	if err != nil {
-		return nil, err
-	}
-
-	// check if a second user bind is needed
-	if ldap.requireSecondBind {
-		err = ldap.secondBind(user, query.Password)
-		if err != nil {
-			return nil, err
+		// Continue if we couldn't find the user
+		if err != LDAP.ErrInvalidCredentials {
+			return err
 		}
-	}
-
-	result, err := ldap.ExtractExternalUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// User gets user from LDAP
-func (ldap *Auth) User(login *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	err := ldap.serverBind()
-	if err != nil {
-		return nil, err
-	}
-
-	// find user entry & attributes
-	user, err := ldap.searchForUser(login.Username)
-	if err != nil {
-		ldap.log.Error("Failed searching for user in ldap", "error", err)
-		return nil, err
-	}
-
-	result, err := ldap.ExtractExternalUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// ExtractExternalUser extracts external user info from LDAP user
-func (ldap *Auth) ExtractExternalUser(user *UserInfo) (*models.ExternalUserInfo, error) {
-	result := ldap.buildExternalUser(user)
-	if err := ldap.validateExternalUser(result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// validate that the user has access
-// if there are no ldap group mappings access is true
-// otherwise a single group must match
-func (ldap *Auth) validateExternalUser(user *models.ExternalUserInfo) error {
-	if len(ldap.server.Groups) > 0 && len(user.OrgRoles) < 1 {
-		ldap.log.Error(
-			"Ldap Auth: user does not belong in any of the specified ldap groups",
-			"username", user.Login,
-			"groups", user.Groups,
-		)
-		return ErrInvalidCredentials
 	}
 
 	return nil
 }
 
-func (ldap *Auth) buildExternalUser(user *UserInfo) *models.ExternalUserInfo {
+// SyncUser syncs user with Grafana
+func (auth *MultipleLDAPs) SyncUser(query *models.LoginUserQuery) error {
+	// connect to ldap server
+	err := auth.Dial()
+	if err != nil {
+		return err
+	}
+	defer auth.conn.Close()
+
+	err = auth.serverBind()
+	if err != nil {
+		return err
+	}
+
+	// find user entry & attributes
+	user, err := auth.searchForUser(query.Username)
+	if err != nil {
+		auth.log.Error("Failed searching for user in ldap", "error", err)
+		return err
+	}
+
+	grafanaUser, err := auth.GetGrafanaUserFor(query.ReqContext, user)
+	if err != nil {
+		return err
+	}
+
+	query.User = grafanaUser
+	return nil
+}
+
+func (auth *MultipleLDAPs) GetGrafanaUserFor(
+	ctx *models.ReqContext,
+	user *LDAP.UserInfo,
+) (*models.User, error) {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "ldap",
 		AuthId:     user.DN,
@@ -206,7 +91,7 @@ func (ldap *Auth) buildExternalUser(user *UserInfo) *models.ExternalUserInfo {
 		OrgRoles:   map[int64]models.RoleType{},
 	}
 
-	for _, group := range ldap.server.Groups {
+	for _, group := range auth.server.Groups {
 		// only use the first match for each org
 		if extUser.OrgRoles[group.OrgId] != "" {
 			continue
@@ -220,10 +105,33 @@ func (ldap *Auth) buildExternalUser(user *UserInfo) *models.ExternalUserInfo {
 		}
 	}
 
-	return extUser
+	// validate that the user has access
+	// if there are no ldap group mappings access is true
+	// otherwise a single group must match
+	if len(auth.server.Groups) > 0 && len(extUser.OrgRoles) < 1 {
+		auth.log.Info(
+			"Ldap MultipleLDAPs: user does not belong in any of the specified ldap groups",
+			"username", user.Username,
+			"groups", user.MemberOf,
+		)
+		return nil, ErrInvalidCredentials
+	}
+
+	// add/update user in grafana
+	upsertUserCmd := &models.UpsertUserCommand{
+		ExternalUser:  extUser,
+		SignupAllowed: setting.LdapAllowSignup,
+	}
+
+	err := bus.Dispatch(upsertUserCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return upsertUserCmd.Result, nil
 }
 
-func (auth *Auth) serverBind() error {
+func (auth *MultipleLDAPs) serverBind() error {
 	bindFn := func() error {
 		return auth.conn.Bind(auth.server.BindDN, auth.server.BindPassword)
 	}
@@ -249,7 +157,7 @@ func (auth *Auth) serverBind() error {
 	return nil
 }
 
-func (auth *Auth) secondBind(user *UserInfo, userPassword string) error {
+func (auth *MultipleLDAPs) secondBind(user *UserInfo, userPassword string) error {
 	if err := auth.conn.Bind(user.DN, userPassword); err != nil {
 		auth.log.Info("Second bind failed", "error", err)
 
@@ -264,7 +172,7 @@ func (auth *Auth) secondBind(user *UserInfo, userPassword string) error {
 	return nil
 }
 
-func (auth *Auth) initialBind(username, userPassword string) error {
+func (auth *MultipleLDAPs) initialBind(username, userPassword string) error {
 	if auth.server.BindPassword != "" || auth.server.BindDN == "" {
 		userPassword = auth.server.BindPassword
 		auth.requireSecondBind = true
@@ -299,7 +207,7 @@ func (auth *Auth) initialBind(username, userPassword string) error {
 	return nil
 }
 
-func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
+func (auth *MultipleLDAPs) searchForUser(username string) (*UserInfo, error) {
 	var searchResult *LDAP.SearchResult
 	var err error
 
@@ -406,7 +314,7 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 	}, nil
 }
 
-func (ldap *Auth) Users() ([]*UserInfo, error) {
+func (ldap *MultipleLDAPs) Users() ([]*UserInfo, error) {
 	var result *LDAP.SearchResult
 	var err error
 	server := ldap.server
@@ -451,7 +359,7 @@ func (ldap *Auth) Users() ([]*UserInfo, error) {
 	return ldap.serializeUsers(result), nil
 }
 
-func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*UserInfo {
+func (ldap *MultipleLDAPs) serializeUsers(users *LDAP.SearchResult) []*UserInfo {
 	var serialized []*UserInfo
 
 	for index := range users.Entries {
