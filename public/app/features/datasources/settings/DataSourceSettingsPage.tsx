@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import isString from 'lodash/isString';
 
 // Components
 import Page from 'app/core/components/Page/Page';
@@ -47,6 +48,7 @@ interface State {
   testingMessage?: string;
   testingStatus?: string;
   plugin?: DataSourcePlugin;
+  loadError?: any;
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
@@ -73,9 +75,17 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
-    await loadDataSource(pageId);
-    if (!this.state.plugin) {
-      await this.loadPlugin();
+    if (isNaN(pageId)) {
+      this.setState({ loadError: 'Invalid ID' });
+      return;
+    }
+    try {
+      await loadDataSource(pageId);
+      if (!this.state.plugin) {
+        await this.loadPlugin();
+      }
+    } catch (err) {
+      this.setState({ loadError: err });
     }
   }
 
@@ -174,6 +184,47 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return this.state.dataSource.id > 0;
   }
 
+  renderLoadError(loadError: any) {
+    let showDelete = false;
+    let msg = loadError.toString();
+    if (loadError.data) {
+      if (loadError.data.message) {
+        msg = loadError.data.message;
+      }
+    } else if (isString(loadError)) {
+      showDelete = true;
+    }
+
+    const node = {
+      text: msg,
+      subTitle: 'Data Source Error',
+      icon: 'fa fa-fw fa-warning',
+    };
+    const nav = {
+      node: node,
+      main: node,
+    };
+
+    return (
+      <Page navModel={nav}>
+        <Page.Contents>
+          <div>
+            <div className="gf-form-button-row">
+              {showDelete && (
+                <button type="submit" className="btn btn-danger" onClick={this.onDelete}>
+                  Delete
+                </button>
+              )}
+              <a className="btn btn-inverse" href="datasources">
+                Back
+              </a>
+            </div>
+          </div>
+        </Page.Contents>
+      </Page>
+    );
+  }
+
   renderDashboards() {
     return <div>TODO, render the dashboard import...</div>;
   }
@@ -258,6 +309,12 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   render() {
     const { navModel, tab } = this.props;
+    const { loadError } = this.state;
+
+    if (loadError) {
+      return this.renderLoadError(loadError);
+    }
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
