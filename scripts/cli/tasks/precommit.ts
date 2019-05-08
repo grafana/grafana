@@ -18,7 +18,10 @@ const tasks = {
     gui: ['newer:exec:typecheckPackages'],
   },
   test: {
-    lint: ['no-only-tests', 'no-focus-convey-tests'],
+    lint: {
+      ts: ['no-only-tests'],
+      go: ['no-focus-convey-tests'],
+    },
   },
 };
 
@@ -30,6 +33,7 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
 
   const tsFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.(ts|tsx))$/g));
   const testFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.test.(ts|tsx))$/g));
+  const goTestFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\_test.go)$/g));
   const grafanaUiFiles = tsFiles.filter(file => (file.path as string).indexOf('grafana-ui') > -1);
 
   const grafanaUIFilesChangedOnly = tsFiles.length > 0 && tsFiles.length - grafanaUiFiles.length === 0;
@@ -42,7 +46,11 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
   }
 
   if (testFiles.length) {
-    taskPaths.push('test.lint');
+    taskPaths.push('test.lint.ts');
+  }
+
+  if (goTestFiles.length) {
+    taskPaths.push('test.lint.go');
   }
 
   if (tsFiles.length > 0) {
