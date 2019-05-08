@@ -44,7 +44,11 @@ function interpolateTemplateVars(templateSrv: TemplateSrv) {
   const filterFunc: any = (text: string, scope: any) => {
     let scopedVars;
     if (scope.ctrl) {
-      scopedVars = (scope.ctrl.panel || scope.ctrl.row).scopedVars;
+      scopedVars = {
+        __interval: { text: scope.ctrl.interval, value: scope.ctrl.interval },
+        __interval_ms: { text: scope.ctrl.intervalMs, value: scope.ctrl.intervalMs },
+        ...(scope.ctrl.panel || scope.ctrl.row).scopedVars,
+      };
     } else {
       scopedVars = scope.row.scopedVars;
     }
