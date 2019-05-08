@@ -50,7 +50,3 @@ type ResetUserPasswordForm struct {
 	NewPassword     string `json:"newPassword"`
 	ConfirmPassword string `json:"confirmPassword"`
 }
-
-type AdminDisableUserCmd struct {
-	IsDisabled bool `json:"isDisabled"`
-}

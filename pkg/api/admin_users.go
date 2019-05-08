@@ -112,10 +112,10 @@ func AdminDeleteUser(c *models.ReqContext) {
 }
 
 // POST /api/admin/users/:id/disable
-func AdminDisableUser(c *models.ReqContext, cmd dtos.AdminDisableUserCmd) {
+func AdminDisableUser(c *models.ReqContext) {
 	userID := c.ParamsInt64(":id")
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: cmd.IsDisabled}
+	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 
 	if err := bus.Dispatch(&disableCmd); err != nil {
 		c.JsonApiErr(500, "Failed to disable user", err)
@@ -123,6 +123,20 @@ func AdminDisableUser(c *models.ReqContext, cmd dtos.AdminDisableUserCmd) {
 	}
 
 	c.JsonOK("User disabled")
+}
+
+// POST /api/admin/users/:id/enable
+func AdminEnableUser(c *models.ReqContext) {
+	userID := c.ParamsInt64(":id")
+
+	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
+
+	if err := bus.Dispatch(&disableCmd); err != nil {
+		c.JsonApiErr(500, "Failed to enable user", err)
+		return
+	}
+
+	c.JsonOK("User enabled")
 }
 
 // POST /api/admin/users/:id/logout
