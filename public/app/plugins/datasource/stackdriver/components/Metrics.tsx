@@ -6,6 +6,7 @@ import appEvents from 'app/core/app_events';
 import { MetricDescriptor } from '../types';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { SelectOptionItem } from '@grafana/ui';
 
 export interface Props {
   onChange: (metricDescriptor: MetricDescriptor) => void;
@@ -18,8 +19,8 @@ export interface Props {
 
 interface State {
   metricDescriptors: MetricDescriptor[];
-  metrics: any[];
-  services: any[];
+  metrics: Array<SelectOptionItem<string>>;
+  services: Array<SelectOptionItem<string>>;
   service: string;
   metric: string;
   metricDescriptor: MetricDescriptor;
@@ -136,16 +137,6 @@ export class Metrics extends React.Component<Props, State> {
     }));
 
     return services.length > 0 ? _.uniqBy(services, s => s.value) : [];
-  }
-
-  getTemplateVariablesGroup() {
-    return {
-      label: 'Template Variables',
-      options: this.props.templateSrv.variables.map(v => ({
-        label: `$${v.name}`,
-        value: `$${v.name}`,
-      })),
-    };
   }
 
   render() {

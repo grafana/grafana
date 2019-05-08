@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { getAggregationOptionsByMetric } from '../functions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { GroupedSelectOptionItem } from '@grafana/ui/src/components/Select/Select';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -18,7 +19,7 @@ export interface Props {
 }
 
 export interface State {
-  aggOptions: any[];
+  aggOptions: Array<GroupedSelectOptionItem<string>>;
   displayAdvancedOptions: boolean;
 }
 
