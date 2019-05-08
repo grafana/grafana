@@ -1,9 +1,9 @@
 import _ from 'lodash';
-import moment from 'moment';
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
 import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -157,7 +157,7 @@ class AlertListPanel extends PanelCtrl {
       this.currentAlerts = this.sortResult(
         _.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
-          al.newStateDateAgo = moment(al.newStateDate)
+          al.newStateDateAgo = dateTime(al.newStateDate)
             .locale('en')
             .fromNow(true);
           return al;

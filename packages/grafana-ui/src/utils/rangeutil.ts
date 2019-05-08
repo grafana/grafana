@@ -1,10 +1,10 @@
 // @ts-ignore
 import _ from 'lodash';
-import moment from 'moment';
 
 import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
+import { isDateTime, DateTime } from '../utils/moment_wrapper';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -85,7 +85,7 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
   return groups;
 }
 
-function formatDate(date: any) {
+function formatDate(date: DateTime) {
   return date.format(absoluteFormat);
 }
 
@@ -139,16 +139,16 @@ export function describeTimeRange(range: RawTimeRange): string {
     return option.display;
   }
 
-  if (moment.isMoment(range.from) && moment.isMoment(range.to)) {
+  if (isDateTime(range.from) && isDateTime(range.to)) {
     return formatDate(range.from) + ' to ' + formatDate(range.to);
   }
 
-  if (moment.isMoment(range.from)) {
+  if (isDateTime(range.from)) {
     const toMoment = dateMath.parse(range.to, true);
     return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
   }
 
-  if (moment.isMoment(range.to)) {
+  if (isDateTime(range.to)) {
     const from = dateMath.parse(range.from, false);
     return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
   }
