@@ -38,7 +38,7 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setQueryEditor(QueryEditor: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>) {
+  setQueryEditor(QueryEditor: ComponentClass<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>) {
     this.components.QueryEditor = QueryEditor;
     return this;
   }
@@ -95,7 +95,7 @@ export interface DataSourcePluginComponents<
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
+  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
   ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
@@ -178,7 +178,11 @@ export interface ExploreDataSourceApi<TQuery extends DataQuery = DataQuery> exte
   languageProvider?: any;
 }
 
-export interface QueryEditorProps<DSType extends DataSourceApi, TQuery extends DataQuery> {
+export interface QueryEditorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
   datasource: DSType;
   query: TQuery;
   onRunQuery: () => void;
