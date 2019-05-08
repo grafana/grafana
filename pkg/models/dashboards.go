@@ -323,15 +323,13 @@ type GetDashboardSlugByIdQuery struct {
 	Result string
 }
 
-type IsDashboardProvisionedQuery struct {
+type GetProvisionedDashboardDataByIdQuery struct {
 	DashboardId int64
-
-	Result bool
+	Result      *DashboardProvisioning
 }
 
 type GetProvisionedDashboardDataQuery struct {
-	Name string
-
+	Name   string
 	Result []*DashboardProvisioning
 }
 

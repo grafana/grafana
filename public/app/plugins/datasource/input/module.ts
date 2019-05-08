@@ -1,6 +1,11 @@
-import Datasource from './datasource';
+import { DataSourcePlugin } from '@grafana/ui';
 
-import InputQueryEditor from './InputQueryEditor';
-import InputConfigCtrl from './legacy/InputConfigCtrl';
+import { InputDatasource } from './InputDatasource';
 
-export { Datasource, InputQueryEditor as QueryEditor, InputConfigCtrl as ConfigCtrl };
+import { InputQueryEditor } from './InputQueryEditor';
+import { InputConfigEditor } from './InputConfigEditor';
+import { InputOptions, InputQuery } from './types';
+
+export const plugin = new DataSourcePlugin<InputOptions, InputQuery>(InputDatasource)
+  .setConfigEditor(InputConfigEditor)
+  .setQueryEditor(InputQueryEditor);

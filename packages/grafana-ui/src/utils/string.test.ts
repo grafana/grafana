@@ -1,4 +1,4 @@
-import { stringToJsRegex, stringToMs } from '@grafana/ui';
+import { stringToJsRegex, stringToMs } from './string';
 
 describe('stringToJsRegex', () => {
   it('should parse the valid regex value', () => {

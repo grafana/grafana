@@ -4,7 +4,7 @@ import isEqual from 'lodash/isEqual';
 
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { guessFieldTypes, toSeriesData, isSeriesData } from '@grafana/ui/src/utils';
 
 // Types
@@ -41,7 +41,7 @@ export class PanelQueryState {
   sendLegacy = false;
 
   // A promise for the running query
-  private executor?: Promise<PanelData>;
+  private executor?: Promise<PanelData> = null;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
 
@@ -95,6 +95,7 @@ export class PanelQueryState {
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
     this.request = req;
+    this.datasource = ds;
 
     // Return early if there are no queries to run
     if (!req.targets.length) {

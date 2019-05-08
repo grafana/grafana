@@ -1,4 +1,4 @@
-import { NavModel, NavModelItem } from 'app/types';
+import { NavModel, NavModelItem } from '@grafana/ui';
 
 export const backendSrv = {
   get: jest.fn(),

@@ -4,15 +4,15 @@ import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
 import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
 import PluginList from './PluginList';
-import { NavModel, Plugin } from 'app/types';
 import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
+import { PluginMeta, NavModel } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
-  plugins: Plugin[];
+  plugins: PluginMeta[];
   layoutMode: LayoutMode;
   searchQuery: string;
   hasFetched: boolean;
