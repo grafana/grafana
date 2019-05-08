@@ -14,9 +14,6 @@ var IsEnabled = LDAP.IsEnabled
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = LDAP.ErrInvalidCredentials
 
-// // ServerConfig represents LDAP server config
-// type ServerConfig LDAP.ServerConfig
-
 // MultipleLDAPs is basic struct of LDAP authorization
 type MultipleLDAPs struct {
 	servers []*LDAP.ServerConfig
