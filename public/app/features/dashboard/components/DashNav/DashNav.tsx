@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
@@ -36,28 +35,11 @@ export interface StateProps {
 type Props = StateProps & OwnProps;
 
 export class DashNav extends PureComponent<Props> {
-  timePickerEl: HTMLElement;
-  timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
-  }
-
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-
-    this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.timepickerCmp) {
-      this.timepickerCmp.destroy();
-    }
   }
 
   onOpenSearch = () => {
@@ -275,7 +257,6 @@ export class DashNav extends PureComponent<Props> {
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
             <DashNavTimeControls
               $injector={$injector}
               dashboard={dashboard}
