@@ -4,7 +4,6 @@ import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { NavModel, DataSourcePluginMeta } from '@grafana/ui';
@@ -29,21 +28,17 @@ interface DataSourceCategoryInfo {
 }
 
 class NewDataSourcePage extends PureComponent<Props> {
-  categoryInfoList: DataSourceCategoryInfo[];
-
-  constructor() {
-    super();
-
-    this.categoryInfoList = [
-      { id: 'tsdb', title: 'Time series databases' },
-      { id: 'sql', title: 'SQL databases' },
-      { id: 'cloud', title: 'Cloud vendor services' },
-      { id: 'other', title: 'Logging & Document DBs & Others' },
-    ];
-  }
+  searchInput: HTMLElement;
+  categoryInfoList: DataSourceCategoryInfo[] = [
+    { id: 'tsdb', title: 'Time series databases' },
+    { id: 'sql', title: 'SQL' },
+    { id: 'cloud', title: 'Cloud' },
+    { id: 'other', title: 'Logging & Document DBs & Others' },
+  ];
 
   componentDidMount() {
     this.props.loadDataSourceTypes();
+    this.searchInput.focus();
   }
 
   onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
@@ -102,15 +97,21 @@ class NewDataSourcePage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          <h2 className="add-data-source-header">Choose data source type</h2>
-          <div className="add-data-source-search">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon"
-              inputClassName="gf-form-input width-20"
-              value={dataSourceTypeSearchQuery}
-              onChange={this.onSearchQueryChange}
-              placeholder="Filter by name or type"
-            />
+          <div className="page-action-bar">
+            <div className="gf-form gf-form--grow">
+              <FilterInput
+                ref={elem => (this.searchInput = elem)}
+                labelClassName="gf-form--has-input-icon"
+                inputClassName="gf-form-input width-30"
+                value={dataSourceTypeSearchQuery}
+                onChange={this.onSearchQueryChange}
+                placeholder="Filter by name or type"
+              />
+            </div>
+            <div className="page-action-bar__spacer" />
+            <a className="btn btn-inverse" href="datasources">
+              Cancel
+            </a>
           </div>
           <div>{this.renderList()}</div>
         </Page.Contents>
@@ -128,14 +129,34 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   return (
     <div className="add-data-source-grid-item" onClick={props.onClick}>
       <img className="add-data-source-grid-item-logo" src={props.plugin.info.logos.small} />
-      <span className="add-data-source-grid-item-text">{props.plugin.name}</span>
+      <div className="add-data-source-grid-item-text-wrapper">
+        <span className="add-data-source-grid-item-text">{props.plugin.name}</span>
+        {props.plugin.info.description && (
+          <span className="add-data-source-grid-item-desc">{props.plugin.info.description}</span>
+        )}
+      </div>
     </div>
   );
 };
 
+export function getNavModel(): NavModel {
+  const main = {
+    icon: 'gicon gicon-add-datasources',
+    id: 'datasource-new',
+    text: 'New data source',
+    href: 'datasources/new',
+    subTitle: 'Choose a data source type',
+  };
+
+  return {
+    main: main,
+    node: main,
+  };
+}
+
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'datasources'),
+    navModel: getNavModel(),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
     dataSourceTypeSearchQuery: state.dataSources.dataSourceTypeSearchQuery,
     isLoading: state.dataSources.isLoadingDataSources,

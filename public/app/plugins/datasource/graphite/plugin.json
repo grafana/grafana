@@ -17,7 +17,7 @@
   },
 
   "info": {
-    "description": "Graphite Data Source for Grafana",
+    "description": "OSS time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

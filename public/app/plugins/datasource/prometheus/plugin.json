@@ -30,7 +30,7 @@
     "minInterval": true
   },
   "info": {
-    "description": "Prometheus Data Source for Grafana",
+    "description": "OSS time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

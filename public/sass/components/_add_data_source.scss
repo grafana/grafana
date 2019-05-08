@@ -11,22 +11,22 @@
 }
 
 .add-data-source-category {
-  margin-bottom: $space-lg;
+  margin-bottom: $space-md;
 }
 
 .add-data-source-category__header {
-  font-size: $font-size-lg;
-  margin-bottom: $space-md;
+  font-size: $font-size-h5;
+  margin-bottom: $space-sm;
 }
 
 .add-data-source-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   grid-row-gap: 10px;
   grid-column-gap: 10px;
 
   @include media-breakpoint-up(md) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(1, 1fr);
   }
 }
 
@@ -38,11 +38,22 @@
   background: $card-background;
   box-shadow: $card-shadow;
   color: $text-color;
+  border-radius: 4px;
 
   &:hover {
     background: $card-background-hover;
     color: $text-color-strong;
   }
+}
+
+.add-data-source-grid-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-data-source-grid-item-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
 }
 
 .add-data-source-grid-item-text {
