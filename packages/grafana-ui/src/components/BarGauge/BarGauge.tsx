@@ -1,6 +1,7 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
+import * as d3 from 'd3-scale-chromatic';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
@@ -439,7 +440,26 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 export function getBarGradient(props: Props, maxSize: number): string {
   const { field, value } = props;
   const { minValue, maxValue, scale } = field;
-  const thresholds = scale.thresholds!;
+  let thresholds = scale.thresholds;
+
+  if (!thresholds || !thresholds.length) {
+    const size = maxValue - minValue;
+    const scheme = (d3 as any)[`scheme${scale.scheme}`];
+    const k = scale.discrete ? scale.discrete : scheme.length - 1;
+    const colors = scheme[k];
+
+    console.log('TODO', colors, size);
+
+    thresholds = colors.map((color: string, index: number) => {
+      const per = index / colors.length;
+      return { color, value: minValue + per * size };
+    });
+
+    if (!thresholds) {
+      // WHY!!
+      thresholds = [];
+    }
+  }
 
   const cssDirection = isVertical(props) ? '0deg' : '90deg';
 
@@ -448,7 +468,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
   for (let i = 0; i < thresholds.length; i++) {
     const threshold = thresholds[i];
-    const color = getColorFromHexRgbOrName(threshold.color!);
+    const color = getColorFromHexRgbOrName(threshold.color);
     const valuePercent = Math.min(threshold.value / (maxValue - minValue), 1);
     const pos = valuePercent * maxSize;
     const offset = Math.round(pos - (pos - lastpos) / 2);

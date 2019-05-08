@@ -1,22 +1,37 @@
 import { storiesOf } from '@storybook/react';
-import { number, text } from '@storybook/addon-knobs';
+import { number, text, select } from '@storybook/addon-knobs';
 import { BarGauge, Props } from './BarGauge';
 import { VizOrientation } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { getFieldDisplayProcessor } from '../../utils/scale';
 import { getTheme } from '../../themes/index';
+import { ColorScheme } from '../../types/scale';
 
-const getKnobs = () => {
+const getKnobs = (showThresholds = true) => {
+  if (showThresholds) {
+    return {
+      value: number('value', 70),
+      title: text('title', 'Title'),
+      minValue: number('minValue', 0),
+      maxValue: number('maxValue', 100),
+      threshold1Value: number('threshold1Value', 40),
+      threshold1Color: text('threshold1Color', 'orange'),
+      threshold2Value: number('threshold2Value', 60),
+      threshold2Color: text('threshold2Color', 'red'),
+      sceme: '',
+    };
+  }
   return {
     value: number('value', 70),
     title: text('title', 'Title'),
     minValue: number('minValue', 0),
     maxValue: number('maxValue', 100),
-    threshold1Value: number('threshold1Value', 40),
-    threshold1Color: text('threshold1Color', 'orange'),
-    threshold2Value: number('threshold2Value', 60),
-    threshold2Color: text('threshold2Color', 'red'),
+    threshold1Value: 40,
+    threshold1Color: 'x',
+    threshold2Value: 60,
+    threshold2Color: 'x',
+    scheme: select('Scheme', Object.keys(ColorScheme), ColorScheme.Blues),
   };
 };
 
@@ -24,7 +39,7 @@ const BarGaugeStories = storiesOf('UI/BarGauge/BarGauge', module);
 
 BarGaugeStories.addDecorator(withCenteredStory);
 
-function addBarGaugeStory(name: string, overrides: Partial<Props>) {
+function addBarGaugeStory(name: string, overrides: Partial<Props>, showThresholds = true) {
   BarGaugeStories.add(name, () => {
     const {
       value,
@@ -35,13 +50,15 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       threshold2Color,
       threshold1Value,
       threshold2Value,
-    } = getKnobs();
+      scheme,
+    } = getKnobs(showThresholds);
 
     const field = {
       name: 'test',
       min: minValue,
       max: maxValue,
       scale: {
+        scheme: scheme as ColorScheme,
         thresholds: [
           { index: 0, value: -Infinity, color: 'green' },
           { index: 1, value: threshold1Value, color: threshold1Color },
@@ -49,6 +66,10 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
         ],
       },
     };
+
+    if (!showThresholds) {
+      delete field.scale.thresholds;
+    }
 
     const props: Props = {
       theme: {} as any,
@@ -89,3 +110,14 @@ addBarGaugeStory('LCD Horizontal', {
   height: 500,
   width: 100,
 });
+
+addBarGaugeStory(
+  'Chromatic Gradient',
+  {
+    displayMode: 'gradient',
+    orientation: VizOrientation.Horizontal,
+    height: 100,
+    width: 500,
+  },
+  false
+);
