@@ -1,7 +1,7 @@
 package multipleldap
 
 import (
-	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	LDAP "github.com/grafana/grafana/pkg/services/ldap"
 )
 
@@ -75,6 +75,7 @@ func (multiples *MultipleLDAPs) Users(logins []string) (
 		if err := ldap.Dial(); err != nil {
 			return nil, err
 		}
+
 		defer ldap.Close()
 
 		users, err := ldap.Users()
