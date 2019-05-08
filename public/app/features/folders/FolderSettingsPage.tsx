@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Input } from '@grafana/ui';
+import { Input, NavModel } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel, StoreState, FolderState } from 'app/types';
+import { StoreState, FolderState } from 'app/types';
 import { getFolderByUid, setFolderTitle, saveFolder, deleteFolder } from './state/actions';
 import { getLoadingNav } from './state/navModel';
 

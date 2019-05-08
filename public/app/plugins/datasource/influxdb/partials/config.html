@@ -26,6 +26,19 @@
       />
 		</div>
 	</div>
+
+	<div class="gf-form">
+		<label class="gf-form-label width-8">HTTP Method</label>
+		<div class="gf-form-select-wrapper width-8 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.httpMode" ng-options="f.value as f.name for f in ctrl.httpMode"></select>
+      		<info-popover mode="right-absolute">
+        		You can use either <code>GET</code> or <code>POST</code> HTTP method to query your InfluxDB database. The <code>POST</code>
+				method allows you to perform heavy requests (with a lots of <code>WHERE</code> clause) while the <code>GET</code> method
+				will restrict you and return an error if the query is too large.
+      		</info-popover>
+		</div>
+	</div>
+
 </div>
 
 

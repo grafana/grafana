@@ -25,12 +25,12 @@
         "x": 0,
         "y": 0
       },
-      "headings": false,
+      "headings": true,
       "id": 7,
       "limit": 100,
       "links": [],
       "query": "",
-      "recent": false,
+      "recent": true,
       "search": false,
       "starred": true,
       "tags": [],
@@ -167,5 +167,5 @@
   "timezone": "",
   "title": "Grafana Dev Overview & Home",
   "uid": "j6T00KRZz",
-  "version": 5
+  "version": 1
 }

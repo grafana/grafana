@@ -1,9 +1,10 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, TeamList } from './TeamList';
-import { NavModel, Team, OrgRole } from '../../types';
+import { Team, OrgRole } from '../../types';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
+import { NavModel } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

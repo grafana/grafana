@@ -1,6 +1,7 @@
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
+  Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
 }
@@ -18,6 +19,12 @@ export interface QueryResultMeta {
 
   // Match the result to the query
   requestId?: string;
+
+  // Used in Explore for highlighting
+  search?: string;
+
+  // Used in Explore to show limit applied to search result
+  limit?: number;
 }
 
 export interface QueryResultBase {
@@ -34,10 +41,15 @@ export interface QueryResultBase {
 
 export interface Field {
   name: string; // The column name
+  title?: string; // The display value for this field.  This supports template variables blank is auto
   type?: FieldType;
   filterable?: boolean;
   unit?: string;
   dateFormat?: string; // Source data format
+  decimals?: number | null; // Significant digits (for display)
+  color?: string;
+  min?: number | null;
+  max?: number | null;
 }
 
 export interface Labels {

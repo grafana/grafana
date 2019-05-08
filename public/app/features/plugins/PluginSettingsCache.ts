@@ -1,13 +1,13 @@
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { Plugin } from 'app/types';
+import { PluginMeta } from '@grafana/ui';
 
 type PluginCache = {
-  [key: string]: Plugin;
+  [key: string]: PluginMeta;
 };
 
 const pluginInfoCache: PluginCache = {};
 
-export function getPluginSettings(pluginId: string): Promise<Plugin> {
+export function getPluginSettings(pluginId: string): Promise<PluginMeta> {
   const v = pluginInfoCache[pluginId];
   if (v) {
     return Promise.resolve(v);

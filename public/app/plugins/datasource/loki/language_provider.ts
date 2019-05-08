@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
 
 // Services & Utils
 import { parseSelector, labelRegexp, selectorRegexp } from 'app/plugins/datasource/prometheus/language_utils';
@@ -16,6 +15,7 @@ import {
   HistoryItem,
 } from 'app/types/explore';
 import { LokiQuery } from './types';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -34,7 +34,7 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
   if (recent) {
-    const lastQueried = moment(recent.ts).fromNow();
+    const lastQueried = dateTime(recent.ts).fromNow();
     hint = `${hint} Last queried ${lastQueried}.`;
   }
   return {

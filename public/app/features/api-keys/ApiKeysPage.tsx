@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
+import { ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
@@ -12,7 +12,7 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, Input } from '@grafana/ui';
+import { DeleteButton, Input, NavModel } from '@grafana/ui';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {

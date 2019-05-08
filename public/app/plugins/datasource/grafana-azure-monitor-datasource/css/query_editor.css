@@ -15,7 +15,7 @@
 }
 
 .gf-form-select-wrapper--caret-indent.gf-form-select-wrapper::after {
-  right: 0.775rem
+  right: 0.775rem;
 }
 
 .service-dropdown {

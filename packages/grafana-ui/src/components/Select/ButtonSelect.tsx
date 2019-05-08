@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Select, { SelectOptionItem } from './Select';
-import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
+import { PopperContent } from '../Tooltip/PopperController';
 
 interface ButtonComponentProps {
   label: string | undefined;
@@ -27,23 +27,23 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   );
 };
 
-export interface Props {
+export interface Props<T> {
   className: string | undefined;
-  options: SelectOptionItem[];
-  value: SelectOptionItem;
+  options: Array<SelectOptionItem<T>>;
+  value: SelectOptionItem<T>;
   label?: string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;
-  onChange: (item: SelectOptionItem) => void;
+  onChange: (item: SelectOptionItem<T>) => void;
   tooltipContent?: PopperContent<any>;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
 }
 
-export class ButtonSelect extends PureComponent<Props> {
-  onChange = (item: SelectOptionItem) => {
+export class ButtonSelect<T> extends PureComponent<Props<T>> {
+  onChange = (item: SelectOptionItem<T>) => {
     const { onChange } = this.props;
     onChange(item);
   };

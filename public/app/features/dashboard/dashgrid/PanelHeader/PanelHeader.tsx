@@ -72,9 +72,12 @@ export class PanelHeader extends Component<Props, State> {
 
   render() {
     const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
-
-    const panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     const title = templateSrv.replaceWithText(panel.title, scopedVars);
+
+    const panelHeaderClass = classNames({
+      'panel-header': true,
+      'grid-drag-handle': !isFullscreen,
+    });
 
     return (
       <>
@@ -87,7 +90,12 @@ export class PanelHeader extends Component<Props, State> {
           error={error}
         />
         <div className={panelHeaderClass}>
-          <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
+          <div
+            className="panel-title-container"
+            onClick={this.onMenuToggle}
+            onMouseDown={this.onMouseDown}
+            aria-label="Panel Title"
+          >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">
