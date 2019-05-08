@@ -115,8 +115,14 @@ func AdminDeleteUser(c *models.ReqContext) {
 func AdminDisableUser(c *models.ReqContext) {
 	userID := c.ParamsInt64(":id")
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
+	// External users shouldn't be disabled from API
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
+	if err := bus.Dispatch(authInfoQuery); err == nil {
+		c.JsonApiErr(500, "Could not disable external user", nil)
+		return
+	}
 
+	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
 		c.JsonApiErr(500, "Failed to disable user", err)
 		return
@@ -129,8 +135,14 @@ func AdminDisableUser(c *models.ReqContext) {
 func AdminEnableUser(c *models.ReqContext) {
 	userID := c.ParamsInt64(":id")
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
+	// External users shouldn't be disabled from API
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
+	if err := bus.Dispatch(authInfoQuery); err == nil {
+		c.JsonApiErr(500, "Could not enable external user", nil)
+		return
+	}
 
+	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
 		c.JsonApiErr(500, "Failed to enable user", err)
 		return
