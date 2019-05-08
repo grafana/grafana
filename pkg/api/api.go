@@ -59,8 +59,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/plugins", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
+	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 
 	r.Get("/d/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, hs.Index)
@@ -283,10 +285,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/:uid", Wrap(GetDashboard))
+			dashboardRoute.Get("/uid/:uid", Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", Wrap(DeleteDashboardByUID))
 
-			dashboardRoute.Get("/db/:slug", Wrap(GetDashboard))
+			dashboardRoute.Get("/db/:slug", Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
@@ -391,6 +393,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
+		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLdapCfg))
 	}, reqGrafanaAdmin)
 
 	// rendering

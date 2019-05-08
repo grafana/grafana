@@ -1,6 +1,5 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
-import { PanelPlugin, AngularPanelPlugin } from '@grafana/ui/src/types/panel';
 
 class TablePanelCtrl {}
 
@@ -15,26 +14,31 @@ describe('PanelModel', () => {
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
         options: {
-          thresholds: [
-            {
-              color: '#F2495C',
-              index: 1,
-              value: 50,
-            },
-            {
-              color: '#73BF69',
-              index: 0,
-              value: null,
-            },
-          ],
+          fieldOptions: {
+            thresholds: [
+              {
+                color: '#F2495C',
+                index: 1,
+                value: 50,
+              },
+              {
+                color: '#73BF69',
+                index: 0,
+                value: null,
+              },
+            ],
+          },
         },
       };
       model = new PanelModel(modelJson);
       model.pluginLoaded(
-        getPanelPlugin({
-          id: 'table',
-          angularPlugin: new AngularPanelPlugin(TablePanelCtrl),
-        })
+        getPanelPlugin(
+          {
+            id: 'table',
+          },
+          null, // react
+          TablePanelCtrl // angular
+        )
       );
     });
 
@@ -70,7 +74,7 @@ describe('PanelModel', () => {
     });
 
     it('should restore -Infinity value for base threshold', () => {
-      expect(model.options.thresholds).toEqual([
+      expect(model.options.fieldOptions.thresholds).toEqual([
         {
           color: '#F2495C',
           index: 1,
@@ -103,6 +107,11 @@ describe('PanelModel', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
       });
+
+      it('panelQueryRunner should be cleared', () => {
+        const panelQueryRunner = (model as any).queryRunner;
+        expect(panelQueryRunner).toBeFalsy();
+      });
     });
 
     describe('when changing from angular panel', () => {
@@ -121,23 +130,27 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing to react panel', () => {
+    describe('when changing to react panel from angular panel', () => {
+      let panelQueryRunner: any;
+
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = new PanelPlugin({} as any).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
 
       beforeEach(() => {
-        model.changePlugin(
-          getPanelPlugin({
-            id: 'react',
-            vizPlugin: reactPlugin,
-          })
-        );
+        model.changePlugin(reactPlugin);
+        panelQueryRunner = model.getQueryRunner();
       });
 
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].thresholds).toBeDefined();
+        expect(onPanelTypeChanged.mock.calls[0][2].fieldOptions.thresholds).toBeDefined();
+      });
+
+      it('getQueryRunner() should return same instance after changing to another react panel', () => {
+        model.changePlugin(getPanelPlugin({ id: 'react2' }));
+        const sameQueryRunner = model.getQueryRunner();
+        expect(panelQueryRunner).toBe(sameQueryRunner);
       });
     });
 

@@ -3,6 +3,7 @@ import FakeSchemaData from './__mocks__/schema';
 import Q from 'q';
 import moment from 'moment';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { KustoSchema } from '../types';
 
 describe('AzureLogAnalyticsDatasource', () => {
   const ctx: any = {
@@ -58,7 +59,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ctx.instanceSettings.jsonData.azureLogAnalyticsSameAs = true;
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
 
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           workspacesUrl = options.url;
           return ctx.$q.when({ data: workspaceResponse, status: 200 });
@@ -166,7 +167,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     describe('in time series format', () => {
       describe('and the data is valid (has time, metric and value columns)', () => {
         beforeEach(() => {
-          ctx.backendSrv.datasourceRequest = options => {
+          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
             return ctx.$q.when({ data: response, status: 200 });
           };
@@ -205,7 +206,7 @@ describe('AzureLogAnalyticsDatasource', () => {
               },
             ],
           };
-          ctx.backendSrv.datasourceRequest = options => {
+          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('query=AzureActivity');
             return ctx.$q.when({ data: invalidResponse, status: 200 });
           };
@@ -222,7 +223,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     describe('in tableformat', () => {
       beforeEach(() => {
         options.targets[0].azureLogAnalytics.resultFormat = 'table';
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('query=AzureActivity');
           return ctx.$q.when({ data: response, status: 200 });
         };
@@ -249,14 +250,14 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('metadata');
         return ctx.$q.when({ data: FakeSchemaData.getlogAnalyticsFakeMetadata(), status: 200 });
       };
     });
 
     it('should return a schema with a table and rows', () => {
-      return ctx.ds.azureLogAnalyticsDatasource.getSchema('myWorkspace').then(result => {
+      return ctx.ds.azureLogAnalyticsDatasource.getSchema('myWorkspace').then((result: KustoSchema) => {
         expect(Object.keys(result.Databases.Default.Tables).length).toBe(2);
         expect(result.Databases.Default.Tables.Alert.Name).toBe('Alert');
         expect(result.Databases.Default.Tables.AzureActivity.Name).toBe('AzureActivity');
@@ -302,7 +303,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     let queryResults;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return ctx.$q.when({ data: workspaceResponse, status: 200 });
         } else {
@@ -361,7 +362,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     let annotationResults;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
           return ctx.$q.when({ data: workspaceResponse, status: 200 });
         } else {
