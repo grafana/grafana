@@ -41,8 +41,7 @@ func (r *SearchRequest) MarshalJSON() ([]byte, error) {
 
 // SearchResponseHits represents search response hits
 type SearchResponseHits struct {
-	Hits  []map[string]interface{}
-	Total map[string]interface{}
+	Hits []map[string]interface{}
 }
 
 // SearchResponse represents a search response
@@ -51,21 +50,6 @@ type SearchResponse struct {
 	Aggregations map[string]interface{} `json:"aggregations"`
 	Hits         *SearchResponseHits    `json:"hits"`
 }
-
-// func (r *Response) getErrMsg() string {
-// 	var msg bytes.Buffer
-// 	errJson := simplejson.NewFromAny(r.Err)
-// 	errType, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("type:%s", errType))
-// 	}
-
-// 	reason, err := errJson.Get("type").String()
-// 	if err == nil {
-// 		msg.WriteString(fmt.Sprintf("reason:%s", reason))
-// 	}
-// 	return msg.String()
-// }
 
 // MultiSearchRequest represents a multi search request
 type MultiSearchRequest struct {

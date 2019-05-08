@@ -4,7 +4,7 @@ import $ from 'jquery';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -72,6 +72,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {

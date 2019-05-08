@@ -5,7 +5,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "6.2.0-pre",
+  "version": "6.3.0-pre",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -31,7 +31,7 @@
     "@types/lodash": "4.14.123",
     "@types/node": "11.13.4",
     "@types/papaparse": "4.5.9",
-    "@types/react": "16.8.13",
+    "@types/react": "16.8.16",
     "@types/react-dom": "16.8.4",
     "@types/react-grid-layout": "0.16.7",
     "@types/react-select": "2.0.15",
@@ -144,6 +144,7 @@
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
+    "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
     "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
     "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
@@ -218,6 +219,7 @@
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "6.4.0",
+    "search-query-parser": "1.5.2",
     "slate": "0.33.8",
     "slate-plain-serializer": "0.5.41",
     "slate-prism": "0.5.0",

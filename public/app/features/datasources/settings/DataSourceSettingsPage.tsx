@@ -63,7 +63,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     let importedPlugin: DataSourcePlugin;
 
     try {
-      importedPlugin = await importDataSourcePlugin(dataSourceMeta.module);
+      importedPlugin = await importDataSourcePlugin(dataSourceMeta);
     } catch (e) {
       console.log('Failed to import plugin module', e);
     }
@@ -171,7 +171,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   get hasDataSource() {
-    return Object.keys(this.props.dataSource).length > 0;
+    return this.state.dataSource.id > 0;
   }
 
   render() {
@@ -185,7 +185,14 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                <PluginStateinfo state={dataSourceMeta.state} />
+                {dataSourceMeta.state && (
+                  <div className="gf-form">
+                    <label className="gf-form-label width-10">Plugin state</label>
+                    <label className="gf-form-label gf-form-label--transparent">
+                      <PluginStateinfo state={dataSourceMeta.state} />
+                    </label>
+                  </div>
+                )}
 
                 <BasicSettings
                   dataSourceName={dataSource.name}

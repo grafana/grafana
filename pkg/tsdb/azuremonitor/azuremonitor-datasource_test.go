@@ -107,19 +107,19 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(len(res.Series[0].Points), ShouldEqual, 5)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 2.0875)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549620780000)
+				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549620780000))
 
 				So(res.Series[0].Points[1][0].Float64, ShouldEqual, 2.1525)
-				So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1549620840000)
+				So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1549620840000))
 
 				So(res.Series[0].Points[2][0].Float64, ShouldEqual, 2.155)
-				So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1549620900000)
+				So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1549620900000))
 
 				So(res.Series[0].Points[3][0].Float64, ShouldEqual, 3.6925)
-				So(res.Series[0].Points[3][1].Float64, ShouldEqual, 1549620960000)
+				So(res.Series[0].Points[3][1].Float64, ShouldEqual, int64(1549620960000))
 
 				So(res.Series[0].Points[4][0].Float64, ShouldEqual, 2.44)
-				So(res.Series[0].Points[4][1].Float64, ShouldEqual, 1549621020000)
+				So(res.Series[0].Points[4][1].Float64, ShouldEqual, int64(1549621020000))
 			})
 
 			Convey("when data from query aggregated as total to one time series", func() {
@@ -139,7 +139,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 8.26)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549718940000)
+				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549718940000))
 			})
 
 			Convey("when data from query aggregated as maximum to one time series", func() {
@@ -159,7 +159,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 3.07)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549722360000)
+				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549722360000))
 			})
 
 			Convey("when data from query aggregated as minimum to one time series", func() {
@@ -179,7 +179,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 1.51)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549723380000)
+				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549723380000))
 			})
 
 			Convey("when data from query aggregated as Count to one time series", func() {
@@ -199,7 +199,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(res.Series[0].Points[0][0].Float64, ShouldEqual, 4)
-				So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1549723440000)
+				So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1549723440000))
 			})
 
 			Convey("when data from query aggregated as total and has dimension filter", func() {
