@@ -107,6 +107,7 @@
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
     "semver": "5.7.0",
+    "simple-git": "^1.112.0",
     "sinon": "1.17.6",
     "style-loader": "0.23.1",
     "systemjs": "0.20.19",
@@ -149,11 +150,12 @@
     "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
     "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p --createVersionCommit",
+    "precommit": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts precommit",
     "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && grunt precommit"
+      "pre-commit": "lint-staged && npm run precommit"
     }
   },
   "lint-staged": {
