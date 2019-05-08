@@ -54,6 +54,7 @@ class NewDataSourcePage extends PureComponent<Props> {
                   onClick={() => this.onDataSourceTypeClicked(plugin)}
                   className="add-data-source-grid-item"
                   key={`${plugin.id}-${index}`}
+                  aria-label={`${plugin.name} datasource plugin`}
                 >
                   <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
                   <span className="add-data-source-grid-item-text">{plugin.name}</span>
