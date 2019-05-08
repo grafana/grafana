@@ -62,12 +62,9 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
             <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} />
           </PanelOptionsGroup>
 
-          <FieldPropertiesEditor
-            title="Field (default)"
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            value={fieldOptions.defaults}
-          />
+          <PanelOptionsGroup title="Field (default)">
+            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={fieldOptions.defaults} />
+          </PanelOptionsGroup>
 
           <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
