@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestDsAuthProvider(t *testing.T) {
+func TestInterpolateString(t *testing.T) {
 	Convey("When interpolating string", t, func() {
 		data := templateData{
 			SecureJsonData: map[string]string{

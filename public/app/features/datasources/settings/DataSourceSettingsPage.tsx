@@ -185,7 +185,14 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
             <div>
               <form onSubmit={this.onSubmit}>
                 {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                <PluginStateinfo state={dataSourceMeta.state} />
+                {dataSourceMeta.state && (
+                  <div className="gf-form">
+                    <label className="gf-form-label width-10">Plugin state</label>
+                    <label className="gf-form-label gf-form-label--transparent">
+                      <PluginStateinfo state={dataSourceMeta.state} />
+                    </label>
+                  </div>
+                )}
 
                 <BasicSettings
                   dataSourceName={dataSource.name}

@@ -7,6 +7,12 @@
           ng-change="ctrl.onQueryTypeChange()"></select>
       </div>
     </div>
+    <div class="gf-form" ng-if="ctrl.target.queryType === 'Azure Monitor' || ctrl.target.queryType === 'Azure Log Analytics'">
+      <label class="gf-form-label query-keyword width-9">Subscription</label>
+      <gf-form-dropdown model="ctrl.target.subscription" allow-custom="true" lookup-text="true"
+        get-options="ctrl.subscriptions" on-change="ctrl.onSubscriptionChange()" css-class="min-width-12">
+      </gf-form-dropdown>
+    </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
@@ -99,11 +105,9 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Workspace</label>
-        <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-          <select class="gf-form-input min-width-12" ng-model="ctrl.target.azureLogAnalytics.workspace" ng-options="f.value as f.text for f in ctrl.workspaces"
-            ng-change="ctrl.refresh()"></select>
-        </div>
-      </div>
+        <gf-form-dropdown model="ctrl.target.azureLogAnalytics.workspace" allow-custom="true" lookup-text="true"
+          get-options="ctrl.workspaces" on-change="ctrl.refresh()" css-class="min-width-12">
+        </gf-form-dropdown>
       <div class="gf-form">
         <div class="width-1"></div>
       </div>
@@ -117,9 +121,6 @@
         <div class="gf-form-label gf-form-label--grow"></div>
       </div>
     </div>
-
-    <!-- <kusto-monaco-editor content="ctrl.target.azureLogAnalytics.query" on-change="ctrl.refresh()" get-schema="ctrl.getAzureLogAnalyticsSchema()"
-      default-time-field="TimeGenerated" plugin-base-url={{ctrl.datasource.meta.baseUrl}}></kusto-monaco-editor> -->
 
     <div class="gf-form gf-form--grow">
       <kusto-editor
