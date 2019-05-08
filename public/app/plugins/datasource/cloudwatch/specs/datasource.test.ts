@@ -6,6 +6,8 @@ import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/ui';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
@@ -22,8 +24,8 @@ describe('CloudWatchDatasource', () => {
         to: dateMath.parse(timeSrv.time.to, true),
       };
     },
-  };
-  const backendSrv = {};
+  } as TimeSrv;
+  const backendSrv = {} as BackendSrv;
   const ctx = {
     backendSrv,
     templateSrv,

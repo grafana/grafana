@@ -4,6 +4,9 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // import * as moment from 'moment';
 
 export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
@@ -17,9 +20,9 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
   constructor(
     private instanceSettings: DataSourceInstanceSettings,
     private $q,
-    private backendSrv,
-    private templateSrv,
-    private timeSrv
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
   ) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
