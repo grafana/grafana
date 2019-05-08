@@ -1,6 +1,6 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
-import { DateTime, dateTimeType, toUtc, ISO_8601, isDateTimeType, DurationUnit } from '../utils/moment_wrapper';
+import { DateTime, dateTimeType, toUtc, ISO_8601, isDateTime, DurationUnit } from '../utils/moment_wrapper';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
@@ -19,7 +19,7 @@ export function parse(text: string | DateTime | Date, roundUp?: boolean, timezon
   }
 
   if (typeof text !== 'string') {
-    if (isDateTimeType(text)) {
+    if (isDateTime(text)) {
       return text;
     }
     if (isDate(text)) {
@@ -72,7 +72,7 @@ export function isValid(text: string | DateTime): boolean {
     return false;
   }
 
-  if (isDateTimeType(date)) {
+  if (isDateTime(date)) {
     return date.isValid();
   }
 

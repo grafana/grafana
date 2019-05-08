@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
-import { toUtc, isDateTimeType, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -28,14 +28,14 @@ const getRaw = (isUtc: boolean, range: any) => {
     to: range.raw.to,
   };
 
-  if (isDateTimeType(rawRange.from)) {
+  if (isDateTime(rawRange.from)) {
     if (!isUtc) {
       rawRange.from = rawRange.from.local();
     }
     rawRange.from = rawRange.from.format(TIME_FORMAT);
   }
 
-  if (isDateTimeType(rawRange.to)) {
+  if (isDateTime(rawRange.to)) {
     if (!isUtc) {
       rawRange.to = rawRange.to.local();
     }

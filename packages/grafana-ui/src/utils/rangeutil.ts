@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTimeType, DateTime } from '../utils/moment_wrapper';
+import { isDateTime, DateTime } from '../utils/moment_wrapper';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -139,16 +139,16 @@ export function describeTimeRange(range: RawTimeRange): string {
     return option.display;
   }
 
-  if (isDateTimeType(range.from) && isDateTimeType(range.to)) {
+  if (isDateTime(range.from) && isDateTime(range.to)) {
     return formatDate(range.from) + ' to ' + formatDate(range.to);
   }
 
-  if (isDateTimeType(range.from)) {
+  if (isDateTime(range.from)) {
     const toMoment = dateMath.parse(range.to, true);
     return toMoment ? formatDate(range.from) + ' to ' + toMoment.fromNow() : '';
   }
 
-  if (isDateTimeType(range.to)) {
+  if (isDateTime(range.to)) {
     const from = dateMath.parse(range.from, false);
     return from ? from.fromNow() + ' to ' + formatDate(range.to) : '';
   }

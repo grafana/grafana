@@ -1,5 +1,5 @@
 import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { toUtc, dateTimeType, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function inputDateDirective() {
   return {
@@ -35,7 +35,7 @@ export function inputDateDirective() {
       };
 
       const toUser = currentValue => {
-        if (isDateTimeType(currentValue)) {
+        if (isDateTime(currentValue)) {
           return currentValue.format(format);
         } else {
           return currentValue;

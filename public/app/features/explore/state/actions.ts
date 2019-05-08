@@ -86,7 +86,7 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 /**
  * Updates UI state and save it to the URL
@@ -732,12 +732,12 @@ export function splitOpen(): ThunkResult<void> {
 
 const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
-  if (isDateTimeType(from)) {
+  if (isDateTime(from)) {
     from = from.valueOf().toString(10);
   }
 
   let to = range.raw.to;
-  if (isDateTimeType(to)) {
+  if (isDateTime(to)) {
     to = to.valueOf().toString(10);
   }
 

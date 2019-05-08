@@ -5,7 +5,7 @@ import isBoolean from 'lodash/isBoolean';
 
 // Types
 import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
-import { isDateTimeType } from './moment_wrapper';
+import { isDateTime } from './moment_wrapper';
 
 function convertTableToSeriesData(table: TableData): SeriesData {
   return {
@@ -73,7 +73,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
     return FieldType.boolean;
   }
 
-  if (v instanceof Date || isDateTimeType(v)) {
+  if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
 

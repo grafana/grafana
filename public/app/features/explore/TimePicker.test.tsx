@@ -6,7 +6,7 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import TimePicker from './TimePicker';
 import { RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
-import { toUtc, isDateTimeType, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -15,8 +15,8 @@ const DEFAULT_RANGE = {
 
 const fromRaw = (rawRange: RawTimeRange): TimeRange => {
   const raw = {
-    from: isDateTimeType(rawRange.from) ? dateTimeType(rawRange.from) : rawRange.from,
-    to: isDateTimeType(rawRange.to) ? dateTimeType(rawRange.to) : rawRange.to,
+    from: isDateTime(rawRange.from) ? dateTimeType(rawRange.from) : rawRange.from,
+    to: isDateTime(rawRange.to) ? dateTimeType(rawRange.to) : rawRange.to,
   };
 
   return {

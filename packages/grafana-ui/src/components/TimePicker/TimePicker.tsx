@@ -7,7 +7,7 @@ import { PopperContent } from '../Tooltip/PopperController';
 import { Timezone } from '../../utils/datemath';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
-import { isDateTimeType } from '../../utils/moment_wrapper';
+import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;
@@ -266,7 +266,7 @@ export class TimePicker extends PureComponent<Props, State> {
     } = this.props;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);
-    const isAbsolute = isDateTimeType(value.raw.to);
+    const isAbsolute = isDateTime(value.raw.to);
 
     return (
       <div className="time-picker">

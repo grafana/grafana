@@ -11,7 +11,7 @@ import { TimeRange, RawTimeRange } from '@grafana/ui';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, dateTimeType, isDateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTimeType, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TimeSrv {
   time: any;
@@ -184,7 +184,7 @@ export class TimeSrv {
     _.extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
-    if (isDateTimeType(time.to)) {
+    if (isDateTime(time.to)) {
       this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
     } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
@@ -207,10 +207,10 @@ export class TimeSrv {
   timeRangeForUrl() {
     const range = this.timeRange().raw;
 
-    if (isDateTimeType(range.from)) {
+    if (isDateTime(range.from)) {
       range.from = range.from.valueOf().toString();
     }
-    if (isDateTimeType(range.to)) {
+    if (isDateTime(range.to)) {
       range.to = range.to.valueOf().toString();
     }
 
@@ -220,8 +220,8 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     const raw = {
-      from: isDateTimeType(this.time.from) ? dateTimeType(this.time.from) : this.time.from,
-      to: isDateTimeType(this.time.to) ? dateTimeType(this.time.to) : this.time.to,
+      from: isDateTime(this.time.from) ? dateTimeType(this.time.from) : this.time.from,
+      to: isDateTime(this.time.to) ? dateTimeType(this.time.to) : this.time.to,
     };
 
     const timezone = this.dashboard && this.dashboard.getTimezone();

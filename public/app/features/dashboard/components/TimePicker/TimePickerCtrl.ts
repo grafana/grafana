@@ -50,10 +50,10 @@ export class TimePickerCtrl {
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
       time.to.local();
-      if (isDateTimeType(timeRaw.from)) {
+      if (isDateTime(timeRaw.from)) {
         timeRaw.from.local();
       }
-      if (isDateTimeType(timeRaw.to)) {
+      if (isDateTime(timeRaw.to)) {
         timeRaw.to.local();
       }
       this.isUtc = false;
@@ -66,7 +66,7 @@ export class TimePickerCtrl {
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
-    this.isAbsolute = isDateTimeType(this.timeRaw.to);
+    this.isAbsolute = isDateTime(this.timeRaw.to);
   }
 
   zoom(factor) {
@@ -185,5 +185,5 @@ angular.module('grafana.directives').directive('gfTimePickerSettings', settingsD
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
 import { inputDateDirective } from './validation';
-import { toUtc, getLocaleData, isDateTimeType, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, getLocaleData, isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

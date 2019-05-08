@@ -71,7 +71,7 @@ export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };
 
-export const isDateTimeType = (value: any): value is DateTime => {
+export const isDateTime = (value: any): value is DateTime => {
   return moment.isMoment(value);
 };
 

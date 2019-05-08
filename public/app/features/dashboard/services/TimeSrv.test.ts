@@ -1,6 +1,6 @@
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
-import { isDateTimeType, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
+import { isDateTime, dateTimeType } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('timeSrv', () => {
   const rootScope = {
@@ -43,8 +43,8 @@ describe('timeSrv', () => {
     it('should return parsed when parse is true', () => {
       timeSrv.setTime({ from: 'now', to: 'now-1h' });
       const time = timeSrv.timeRange();
-      expect(isDateTimeType(time.from)).toBe(true);
-      expect(isDateTimeType(time.to)).toBe(true);
+      expect(isDateTime(time.from)).toBe(true);
+      expect(isDateTime(time.to)).toBe(true);
     });
   });
 
