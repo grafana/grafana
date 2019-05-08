@@ -1,10 +1,10 @@
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
-// NOTE: this seems more general than just DataSource 
+// NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
   options: TOptions;
   onOptionsChange: (options: TOptions) => void;
@@ -23,7 +23,7 @@ export class DataSourcePlugin<
     this.components = {};
   }
 
-  setConfigEditor(editor: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>) {
+  setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>) {
     this.components.ConfigEditor = editor;
     return this;
   }
@@ -38,17 +38,17 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setQueryEditor(QueryEditor: ComponentClass<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>) {
+  setQueryEditor(QueryEditor: ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>) {
     this.components.QueryEditor = QueryEditor;
     return this;
   }
 
-  setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>) {
+  setExploreQueryField(ExploreQueryField: ComponentType<ExploreQueryFieldProps<DataSourceApi, TQuery>>) {
     this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
-  setExploreStartPage(ExploreStartPage: ComponentClass<ExploreStartPageProps>) {
+  setExploreStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
     this.components.ExploreStartPage = ExploreStartPage;
     return this;
   }
@@ -95,10 +95,10 @@ export interface DataSourcePluginComponents<
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
-  QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>;
-  ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
-  ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
-  ConfigEditor?: React.ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
+  QueryEditor?: ComponentType<QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>>;
+  ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DataSourceApi, TQuery>>;
+  ExploreStartPage?: ComponentType<ExploreStartPageProps>;
+  ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
 
 export interface DataSourceConstructor<
