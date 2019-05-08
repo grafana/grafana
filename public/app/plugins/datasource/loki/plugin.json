@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Loki",
   "id": "loki",
+  "category": "logging",
 
   "metrics": true,
   "alerting": false,
@@ -11,7 +12,7 @@
   "tables": false,
 
   "info": {
-    "description": "Loki Logging Data Source for Grafana",
+    "description": "A scalable multi-tenant logging solution from Grafana Labs",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

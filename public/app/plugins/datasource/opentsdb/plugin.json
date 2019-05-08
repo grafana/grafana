@@ -11,7 +11,7 @@
   "tables": false,
 
   "info": {
-    "description": "OSS time series database",
+    "description": "Open source time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

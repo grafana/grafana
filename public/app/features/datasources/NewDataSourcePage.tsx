@@ -31,6 +31,7 @@ class NewDataSourcePage extends PureComponent<Props> {
   searchInput: HTMLElement;
   categoryInfoList: DataSourceCategoryInfo[] = [
     { id: 'tsdb', title: 'Time series databases' },
+    { id: 'logging', title: 'Logging & document databases' },
     { id: 'sql', title: 'SQL' },
     { id: 'cloud', title: 'Cloud' },
     { id: 'other', title: 'Logging & Document DBs & Others' },
@@ -50,6 +51,10 @@ class NewDataSourcePage extends PureComponent<Props> {
   };
 
   renderTypes(types: DataSourcePluginMeta[]) {
+    if (!types) {
+      return null;
+    }
+
     return (
       <div className="add-data-source-grid">
         {types.map((plugin, index) => (

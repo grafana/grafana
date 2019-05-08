@@ -5,7 +5,7 @@
   "category": "cloud",
 
   "info": {
-    "description": "Grafana data source for Azure Monitor/Application Insights",
+    "description": "Data source for Microsoft Azure Monitor & Application Insights",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
