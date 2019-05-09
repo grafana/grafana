@@ -58,6 +58,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
     this.state = {
       dataSource: props.dataSource,
+      plugin: props.plugin,
     };
   }
 
