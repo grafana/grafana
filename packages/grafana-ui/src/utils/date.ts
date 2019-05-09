@@ -1,10 +1,6 @@
-﻿import { dateTime, toUtc, isDateTime, DateTimeInput, FormatInput, DateTime } from './moment_wrapper';
+﻿import { dateTime, isDateTime, DateTime } from './moment_wrapper';
 import { TIME_FORMAT } from './..';
 import { RawTimeRange } from '../types/time';
-
-export const momentUtc = (isUtc?: boolean, dateString?: DateTimeInput, format?: FormatInput, strict?: boolean) => {
-  return isUtc ? toUtc(dateString, format) : dateTime(dateString, format);
-};
 
 const getRawDateToShow = (isUtc: boolean, rawDate: DateTime | string): DateTime | string => {
   if (isDateTime(rawDate)) {
