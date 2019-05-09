@@ -70,6 +70,7 @@ export interface Column {
 }
 
 export interface TableData extends QueryResultBase {
+  name?: string;
   columns: Column[];
   rows: any[][];
 }
