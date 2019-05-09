@@ -330,7 +330,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getRangeScopedVars() {
     const range = this.timeSrv.timeRange();
-    const msRange = (range.to as any).diff(range.from); // CHECK!!!!
+    const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     const regularRange = kbn.secondsToHms(msRange / 1000);
     return {
