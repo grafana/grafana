@@ -132,7 +132,7 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	}
 
 	// find user entry & attributes
-	user, err := ldap.searchForUser(query.Username)
+	user, err := ldap.searchUser(query.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func (auth *Auth) initialBind(username, userPassword string) error {
 	return nil
 }
 
-func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
+func (auth *Auth) searchUser(username string) (*UserInfo, error) {
 	var searchResult *LDAP.SearchResult
 	var err error
 
@@ -333,50 +333,9 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 	if auth.server.GroupSearchFilter == "" {
 		memberOf = getLdapAttrArray(auth.server.Attr.MemberOf, searchResult)
 	} else {
-		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
-		var groupSearchResult *LDAP.SearchResult
-		for _, groupSearchBase := range auth.server.GroupSearchBaseDNs {
-			var filter_replace string
-			if auth.server.GroupSearchFilterUserAttribute == "" {
-				filter_replace = getLdapAttr(auth.server.Attr.Username, searchResult)
-			} else {
-				filter_replace = getLdapAttr(auth.server.GroupSearchFilterUserAttribute, searchResult)
-			}
-
-			filter := strings.Replace(
-				auth.server.GroupSearchFilter, "%s",
-				LDAP.EscapeFilter(filter_replace),
-				-1,
-			)
-
-			auth.log.Info("Searching for user's groups", "filter", filter)
-
-			// support old way of reading settings
-			groupIdAttribute := auth.server.Attr.MemberOf
-			// but prefer dn attribute if default settings are used
-			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
-				groupIdAttribute = "dn"
-			}
-
-			groupSearchReq := LDAP.SearchRequest{
-				BaseDN:       groupSearchBase,
-				Scope:        LDAP.ScopeWholeSubtree,
-				DerefAliases: LDAP.NeverDerefAliases,
-				Attributes:   []string{groupIdAttribute},
-				Filter:       filter,
-			}
-
-			groupSearchResult, err = auth.connection.Search(&groupSearchReq)
-			if err != nil {
-				return nil, err
-			}
-
-			if len(groupSearchResult.Entries) > 0 {
-				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(groupIdAttribute, groupSearchResult, i))
-				}
-				break
-			}
+		memberOf, err = auth.getMemberOf(searchResult)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -388,6 +347,57 @@ func (auth *Auth) searchForUser(username string) (*UserInfo, error) {
 		Email:     getLdapAttr(auth.server.Attr.Email, searchResult),
 		MemberOf:  memberOf,
 	}, nil
+}
+
+// getMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
+func (ldap *Auth) getMemberOf(searchResult *LDAP.SearchResult) ([]string, error) {
+	var memberOf []string
+
+	for _, groupSearchBase := range ldap.server.GroupSearchBaseDNs {
+		var filterReplace string
+		if ldap.server.GroupSearchFilterUserAttribute == "" {
+			filterReplace = getLdapAttr(ldap.server.Attr.Username, searchResult)
+		} else {
+			filterReplace = getLdapAttr(ldap.server.GroupSearchFilterUserAttribute, searchResult)
+		}
+
+		filter := strings.Replace(
+			ldap.server.GroupSearchFilter, "%s",
+			LDAP.EscapeFilter(filterReplace),
+			-1,
+		)
+
+		ldap.log.Info("Searching for user's groups", "filter", filter)
+
+		// support old way of reading settings
+		groupIDAttribute := ldap.server.Attr.MemberOf
+		// but prefer dn attribute if default settings are used
+		if groupIDAttribute == "" || groupIDAttribute == "memberOf" {
+			groupIDAttribute = "dn"
+		}
+
+		groupSearchReq := LDAP.SearchRequest{
+			BaseDN:       groupSearchBase,
+			Scope:        LDAP.ScopeWholeSubtree,
+			DerefAliases: LDAP.NeverDerefAliases,
+			Attributes:   []string{groupIDAttribute},
+			Filter:       filter,
+		}
+
+		groupSearchResult, err := ldap.connection.Search(&groupSearchReq)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(groupSearchResult.Entries) > 0 {
+			for i := range groupSearchResult.Entries {
+				memberOf = append(memberOf, getLdapAttrN(groupIDAttribute, groupSearchResult, i))
+			}
+			break
+		}
+	}
+
+	return memberOf, nil
 }
 
 // Users gets LDAP users
