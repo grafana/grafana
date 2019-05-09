@@ -145,7 +145,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses}>
+      <a className={tabClasses} aria-label={`${tab.text} tab button`}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

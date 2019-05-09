@@ -12,7 +12,7 @@
   "tables": false,
 
   "info": {
-    "description": "A scalable multi-tenant logging solution from Grafana Labs",
+    "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

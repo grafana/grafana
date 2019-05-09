@@ -1,8 +1,8 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
-import moment, { unitOfTime } from 'moment';
+import { DateTime, dateTime, toUtc, ISO_8601, isDateTime, DurationUnit } from '../utils/moment_wrapper';
 
-const units: unitOfTime.Base[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export type Timezone = 'utc';
 
@@ -13,21 +13,17 @@ export type Timezone = 'utc';
  * @param roundUp See parseDateMath function.
  * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
  */
-export function parse(
-  text: string | moment.Moment | Date,
-  roundUp?: boolean,
-  timezone?: Timezone
-): moment.Moment | undefined {
+export function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: Timezone): DateTime | undefined {
   if (!text) {
     return undefined;
   }
 
   if (typeof text !== 'string') {
-    if (moment.isMoment(text)) {
+    if (isDateTime(text)) {
       return text;
     }
     if (isDate(text)) {
-      return moment(text);
+      return dateTime(text);
     }
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
     return undefined;
@@ -39,9 +35,9 @@ export function parse(
 
     if (text.substring(0, 3) === 'now') {
       if (timezone === 'utc') {
-        time = moment.utc();
+        time = toUtc();
       } else {
-        time = moment();
+        time = dateTime();
       }
       mathString = text.substring('now'.length);
     } else {
@@ -54,7 +50,7 @@ export function parse(
         mathString = text.substring(index + 2);
       }
       // We're going to just require ISO8601 timestamps, k?
-      time = moment(parseString, moment.ISO_8601);
+      time = dateTime(parseString, ISO_8601);
     }
 
     if (!mathString.length) {
@@ -70,13 +66,13 @@ export function parse(
  * by parse function. See parse function to see what is considered acceptable.
  * @param text
  */
-export function isValid(text: string | moment.Moment): boolean {
+export function isValid(text: string | DateTime): boolean {
   const date = parse(text);
   if (!date) {
     return false;
   }
 
-  if (moment.isMoment(date)) {
+  if (isDateTime(date)) {
     return date.isValid();
   }
 
@@ -90,7 +86,7 @@ export function isValid(text: string | moment.Moment): boolean {
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
 // TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
-export function parseDateMath(mathString: string, time: any, roundUp?: boolean): moment.Moment | undefined {
+export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined {
   const dateTime = time;
   let i = 0;
   const len = mathString.length;

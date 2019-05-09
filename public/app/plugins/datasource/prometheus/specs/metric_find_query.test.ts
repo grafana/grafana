@@ -1,7 +1,7 @@
-import moment from 'moment';
 import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
 import q from 'q';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('PrometheusMetricFindQuery', () => {
   const instanceSettings = {
@@ -12,8 +12,8 @@ describe('PrometheusMetricFindQuery', () => {
     jsonData: { httpMethod: 'GET' },
   };
   const raw = {
-    from: moment.utc('2018-04-25 10:00'),
-    to: moment.utc('2018-04-25 11:00'),
+    from: toUtc('2018-04-25 10:00'),
+    to: toUtc('2018-04-25 11:00'),
   };
   const ctx: any = {
     backendSrvMock: {

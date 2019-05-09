@@ -1,66 +1,15 @@
 import _ from 'lodash';
-import moment from 'moment';
-
-export interface DataTarget {
-  target: string;
-  datapoints: any[];
-  refId: string;
-  query: any;
-}
-export interface TableResult {
-  columns: TableColumn[];
-  rows: any[];
-  type: string;
-  refId: string;
-  query: string;
-}
-
-export interface TableColumn {
-  text: string;
-  type: string;
-}
-
-export interface KustoSchema {
-  Databases: { [key: string]: KustoDatabase };
-  Plugins: any[];
-}
-export interface KustoDatabase {
-  Name: string;
-  Tables: { [key: string]: KustoTable };
-  Functions: { [key: string]: KustoFunction };
-}
-
-export interface KustoTable {
-  Name: string;
-  OrderedColumns: KustoColumn[];
-}
-
-export interface KustoColumn {
-  Name: string;
-  Type: string;
-}
-
-export interface KustoFunction {
-  Name: string;
-  DocString: string;
-  Body: string;
-  Folder: string;
-  FunctionKind: string;
-  InputParameters: any[];
-  OutputColumns: any[];
-}
-
-export interface Variable {
-  text: string;
-  value: string;
-}
-
-export interface AnnotationItem {
-  annotation: any;
-  time: number;
-  text: string;
-  tags: string[];
-}
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import {
+  AzureLogsVariable,
+  AzureLogsTableData,
+  KustoDatabase,
+  KustoFunction,
+  KustoTable,
+  KustoSchema,
+  KustoColumn,
+} from '../types';
+import { TimeSeries, AnnotationEvent } from '@grafana/ui/src/types';
 
 export default class ResponseParser {
   columns: string[];
@@ -86,8 +35,8 @@ export default class ResponseParser {
     return data;
   }
 
-  parseTimeSeriesResult(query, columns, rows): DataTarget[] {
-    const data: DataTarget[] = [];
+  parseTimeSeriesResult(query, columns, rows): TimeSeries[] {
+    const data: TimeSeries[] = [];
     let timeIndex = -1;
     let metricIndex = -1;
     let valueIndex = -1;
@@ -116,36 +65,40 @@ export default class ResponseParser {
       const bucket = ResponseParser.findOrCreateBucket(data, metricName);
       bucket.datapoints.push([row[valueIndex], epoch]);
       bucket.refId = query.refId;
-      bucket.query = query.query;
+      bucket.meta = {
+        query: query.query,
+      };
     });
 
     return data;
   }
 
-  parseTableResult(query, columns, rows): TableResult {
-    const tableResult: TableResult = {
+  parseTableResult(query, columns, rows): AzureLogsTableData {
+    const tableResult: AzureLogsTableData = {
       type: 'table',
       columns: _.map(columns, col => {
         return { text: col.name, type: col.type };
       }),
       rows: rows,
       refId: query.refId,
-      query: query.query,
+      meta: {
+        query: query.query,
+      },
     };
 
     return tableResult;
   }
 
-  parseToVariables(): Variable[] {
+  parseToVariables(): AzureLogsVariable[] {
     const queryResult = this.parseQueryResult();
 
-    const variables: Variable[] = [];
+    const variables: AzureLogsVariable[] = [];
     _.forEach(queryResult, result => {
       _.forEach(_.flattenDeep(result.rows), row => {
         variables.push({
           text: row,
           value: row,
-        } as Variable);
+        } as AzureLogsVariable);
       });
     });
 
@@ -155,7 +108,7 @@ export default class ResponseParser {
   transformToAnnotations(options: any) {
     const queryResult = this.parseQueryResult();
 
-    const list: AnnotationItem[] = [];
+    const list: AnnotationEvent[] = [];
 
     _.forEach(queryResult, result => {
       let timeIndex = -1;
@@ -253,7 +206,7 @@ export default class ResponseParser {
     return functions;
   }
 
-  static findOrCreateBucket(data, target): DataTarget {
+  static findOrCreateBucket(data, target): TimeSeries {
     let dataTarget: any = _.find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [], refId: '', query: '' };
@@ -263,7 +216,7 @@ export default class ResponseParser {
     return dataTarget;
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 }
