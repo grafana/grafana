@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { DataQueryError } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-import { getFirstQueryErrorWithoutRefId, hasRefId } from 'app/core/utils/explore';
+import { getFirstQueryErrorWithoutRefId, getValueWithRefId } from 'app/core/utils/explore';
 
 interface Props {
   queryErrors: DataQueryError[];
@@ -9,7 +9,7 @@ interface Props {
 
 export const ErrorContainer: FunctionComponent<Props> = props => {
   const { queryErrors } = props;
-  const refId = hasRefId(queryErrors);
+  const refId = getValueWithRefId(queryErrors);
   const queryError = refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
   const showError = queryError ? true : false;
   const duration = showError ? 100 : 10;

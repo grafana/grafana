@@ -474,8 +474,12 @@ export const instanceOfDataQueryError = (value: any): value is DataQueryError =>
   return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
 };
 
-export const hasRefId = (value: any): DataQueryError | null => {
+export const getValueWithRefId = (value: any): any | null => {
   if (!value) {
+    return null;
+  }
+
+  if (typeof value !== 'object') {
     return null;
   }
 
@@ -483,14 +487,10 @@ export const hasRefId = (value: any): DataQueryError | null => {
     return value;
   }
 
-  if (typeof value !== 'object') {
-    return null;
-  }
-
   const keys = Object.keys(value);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
-    const refId = hasRefId(value[key]);
+    const refId = getValueWithRefId(value[key]);
     if (refId) {
       return refId;
     }
@@ -512,10 +512,6 @@ export const getRefIds = (value: any): string[] => {
     return [];
   }
 
-  if (value.refId) {
-    return value;
-  }
-
   if (typeof value !== 'object') {
     return [];
   }
@@ -524,6 +520,10 @@ export const getRefIds = (value: any): string[] => {
   const refIds = [];
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
+    if (key === 'refId') {
+      refIds.push(value[key]);
+      continue;
+    }
     refIds.push(getRefIds(value[key]));
   }
 
