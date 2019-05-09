@@ -24,17 +24,17 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
-import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const ctx = {} as any;
 let ctrl;
 const scope = {
   ctrl: {},
   range: {
-    from: moment([2015, 1, 1]),
-    to: moment([2015, 11, 20]),
+    from: dateTime([2015, 1, 1]),
+    to: dateTime([2015, 11, 20]),
   },
   $on: () => {},
 };
@@ -85,8 +85,8 @@ describe('grafanaGraph', () => {
         getTimezone: () => 'browser',
       },
       range: {
-        from: moment([2015, 1, 1, 10]),
-        to: moment([2015, 1, 1, 22]),
+        from: dateTime([2015, 1, 1, 10]),
+        to: dateTime([2015, 1, 1, 22]),
       },
     } as any;
 
@@ -443,8 +443,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than 24 hours', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1, 10]);
-          ctrl.range.to = moment([2015, 1, 1, 22]);
+          ctrl.range.from = dateTime([2015, 1, 1, 10]);
+          ctrl.range.to = dateTime([2015, 1, 1, 22]);
         });
       });
 
@@ -457,8 +457,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than one year', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1]);
-          ctrl.range.to = moment([2015, 11, 20]);
+          ctrl.range.from = dateTime([2015, 1, 1]);
+          ctrl.range.to = dateTime([2015, 11, 20]);
         });
       });
 

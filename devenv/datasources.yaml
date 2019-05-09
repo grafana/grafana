@@ -13,6 +13,11 @@ datasources:
     access: proxy
     url: http://localhost:9090
 
+  - name: gdev-slow-prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:3011
+
   - name: gdev-testdata
     type: testdata
     isDefault: true

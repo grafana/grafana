@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import moment, { Moment } from 'moment';
 
 // Services & Utils
 import * as dateMath from '@grafana/ui/src/utils/datemath';
@@ -21,6 +20,7 @@ import {
   DataSourceApi,
   toSeriesData,
   guessFieldTypes,
+  TimeFragment,
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
@@ -33,6 +33,7 @@ import {
   ResultGetter,
 } from 'app/types/explore';
 import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -401,7 +402,7 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value): Moment | string => {
+const parseRawTime = (value): TimeFragment => {
   if (value === null) {
     return null;
   }
@@ -410,19 +411,19 @@ const parseRawTime = (value): Moment | string => {
     return value;
   }
   if (value.length === 8) {
-    return moment.utc(value, 'YYYYMMDD');
+    return toUtc(value, 'YYYYMMDD');
   }
   if (value.length === 15) {
-    return moment.utc(value, 'YYYYMMDDTHHmmss');
+    return toUtc(value, 'YYYYMMDDTHHmmss');
   }
   // Backward compatibility
   if (value.length === 19) {
-    return moment.utc(value, 'YYYY-MM-DD HH:mm:ss');
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
   if (!isNaN(value)) {
     const epoch = parseInt(value, 10);
-    return moment.utc(epoch);
+    return toUtc(epoch);
   }
 
   return null;

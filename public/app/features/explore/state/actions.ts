@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -87,6 +86,7 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 /**
  * Updates UI state and save it to the URL
@@ -546,7 +546,7 @@ export function queryTransactionSuccess(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<Promise<any>> {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -563,13 +563,13 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     if (datasourceError) {
       // let's not run any queries if data source is in a faulty state
-      return Promise.resolve();
+      return;
     }
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
       dispatch(stateSave()); // Remember to saves to state and update location
-      return Promise.resolve();
+      return;
     }
 
     // Some datasource's query builders allow per-query interval limits,
@@ -578,46 +578,41 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    const tableQueriesPromise =
-      (ignoreUIState || showingTable) && supportsTable
-        ? dispatch(
-            runQueriesForType(
-              exploreId,
-              'Table',
-              {
-                interval,
-                format: 'table',
-                instant: true,
-                valueWithRefId: true,
-              },
-              (data: any[]) => data[0]
-            )
-          )
-        : undefined;
-    const typeQueriesPromise =
-      (ignoreUIState || showingGraph) && supportsGraph
-        ? dispatch(
-            runQueriesForType(
-              exploreId,
-              'Graph',
-              {
-                interval,
-                format: 'time_series',
-                instant: false,
-                maxDataPoints: containerWidth,
-              },
-              makeTimeSeriesList
-            )
-          )
-        : undefined;
-    const logsQueriesPromise =
-      (ignoreUIState || showingLogs) && supportsLogs
-        ? dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }))
-        : undefined;
+    if ((ignoreUIState || showingTable) && supportsTable) {
+      dispatch(
+        runQueriesForType(
+          exploreId,
+          'Table',
+          {
+            interval,
+            format: 'table',
+            instant: true,
+            valueWithRefId: true,
+          },
+          (data: any[]) => data[0]
+        )
+      );
+    }
+    if ((ignoreUIState || showingGraph) && supportsGraph) {
+      dispatch(
+        runQueriesForType(
+          exploreId,
+          'Graph',
+          {
+            interval,
+            format: 'time_series',
+            instant: false,
+            maxDataPoints: containerWidth,
+          },
+          makeTimeSeriesList
+        )
+      );
+    }
+    if ((ignoreUIState || showingLogs) && supportsLogs) {
+      dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
+    }
 
     dispatch(stateSave());
-
-    return Promise.all([tableQueriesPromise, typeQueriesPromise, logsQueriesPromise]);
   };
 }
 
@@ -638,7 +633,8 @@ function runQueriesForType(
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning } = getState().explore[exploreId];
     const datasourceId = datasourceInstance.meta.id;
     // Run all queries concurrently
-    const queryPromises = queries.map(async (query, rowIndex) => {
+    for (let rowIndex = 0; rowIndex < queries.length; rowIndex++) {
+      const query = queries[rowIndex];
       const transaction = buildQueryTransaction(
         query,
         rowIndex,
@@ -661,9 +657,7 @@ function runQueriesForType(
         eventBridge.emit('data-error', response);
         dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
       }
-    });
-
-    return Promise.all(queryPromises);
+    }
   };
 }
 
@@ -732,12 +726,12 @@ export function splitOpen(): ThunkResult<void> {
 
 const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
-  if (moment.isMoment(from)) {
+  if (isDateTime(from)) {
     from = from.valueOf().toString(10);
   }
 
   let to = range.raw.to;
-  if (moment.isMoment(to)) {
+  if (isDateTime(to)) {
     to = to.valueOf().toString(10);
   }
 

@@ -1,7 +1,8 @@
-import { DataSourcePlugin, DataSourceSettings, PluginType, NavModel, NavModelItem, PluginInclude } from '@grafana/ui';
+import { DataSourceSettings, PluginType, NavModel, NavModelItem, PluginInclude } from '@grafana/ui';
 import config from 'app/core/config';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
-export function buildNavModel(dataSource: DataSourceSettings, plugin: DataSourcePlugin): NavModelItem {
+export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
 
   const navModel = {
@@ -102,7 +103,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-    } as DataSourcePlugin
+    } as GenericDataSourcePlugin
   );
 
   let node: NavModelItem;

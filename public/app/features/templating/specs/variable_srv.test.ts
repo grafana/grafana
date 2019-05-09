@@ -1,8 +1,8 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
-import moment from 'moment';
 import $q from 'q';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('VariableSrv', function(this: any) {
   const ctx = {
@@ -106,7 +106,7 @@ describe('VariableSrv', function(this: any) {
       };
 
       const range = {
-        from: moment(new Date())
+        from: dateTime(new Date())
           .subtract(7, 'days')
           .toDate(),
         to: new Date(),
@@ -514,7 +514,7 @@ describe('VariableSrv', function(this: any) {
 
     beforeEach(() => {
       const range = {
-        from: moment(new Date())
+        from: dateTime(new Date())
           .subtract(7, 'days')
           .toDate(),
         to: new Date(),

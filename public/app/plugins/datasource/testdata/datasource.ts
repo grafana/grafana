@@ -78,6 +78,7 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
           for (const t of results.tables || []) {
             const table = t as TableData;
             table.refId = query.refId;
+            table.name = query.alias;
             data.push(table);
           }
 

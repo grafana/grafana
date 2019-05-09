@@ -1,6 +1,6 @@
-import moment from 'moment';
 import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
@@ -10,8 +10,8 @@ describe('MySQLDatasource', () => {
   };
 
   const raw = {
-    from: moment.utc('2018-04-25 10:00'),
-    to: moment.utc('2018-04-25 11:00'),
+    from: toUtc('2018-04-25 10:00'),
+    to: toUtc('2018-04-25 11:00'),
   };
   const ctx = {
     backendSrv,
@@ -39,8 +39,8 @@ describe('MySQLDatasource', () => {
         rawQuery: 'select time_sec, text, tags from table;',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
     };
 

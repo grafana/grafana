@@ -6,7 +6,7 @@ import isString from 'lodash/isString';
 
 // Components
 import Page from 'app/core/components/Page/Page';
-import PluginSettings from './PluginSettings';
+import { PluginSettings, GenericDataSourcePlugin } from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 
@@ -23,7 +23,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
 import { StoreState, UrlQueryMap } from 'app/types/';
-import { NavModel, DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
+import { NavModel, DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
@@ -38,16 +38,17 @@ export interface Props {
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
+  plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
   tab?: string;
 }
 
 interface State {
   dataSource: DataSourceSettings;
+  plugin?: GenericDataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
-  plugin?: DataSourcePlugin;
   loadError?: any;
 }
 
@@ -62,7 +63,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   async loadPlugin(pluginId?: string) {
     const { dataSourceMeta } = this.props;
-    let importedPlugin: DataSourcePlugin;
+    let importedPlugin: GenericDataSourcePlugin;
 
     try {
       importedPlugin = await importDataSourcePlugin(dataSourceMeta);
@@ -225,15 +226,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     );
   }
 
-  renderDashboards() {
-    return <div>TODO, render the dashboard import...</div>;
-  }
-
   renderTabBody(tab: string) {
-    if (tab === 'dashboards') {
-      return this.renderDashboards();
-    }
-
     const { plugin } = this.state;
     if (!plugin || !plugin.addConfigTab) {
       return null; // still loading

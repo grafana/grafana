@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
 
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
@@ -6,6 +6,25 @@ export interface AzureMonitorQuery extends DataQuery {
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   //   appInsights: any;
+}
+
+export interface AzureDataSourceJsonData extends DataSourceJsonData {
+  subscriptionId: string;
+  cloudName: string;
+
+  // monitor
+  tenantId?: string;
+  clientId?: string;
+
+  // logs
+  logAnalyticsSubscriptionId?: string;
+  logAnalyticsTenantId?: string;
+  logAnalyticsClientId?: string;
+  azureLogAnalyticsSameAs?: string;
+  logAnalyticsDefaultWorkspace?: string;
+
+  // App Insights
+  appInsightsAppId?: string;
 }
 
 export interface AzureMetricQuery {
