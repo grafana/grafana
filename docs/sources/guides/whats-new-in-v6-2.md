@@ -14,6 +14,8 @@ weight = -13
 
 > More content will be added to this guide before the stable release.
 
+Grafana v6.2 Beta is now [available for download](https://grafana.com/grafana/download/beta).
+
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
 If you use a password for your datasources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).

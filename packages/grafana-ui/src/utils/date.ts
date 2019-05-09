@@ -1,26 +1,21 @@
-﻿import moment, { MomentInput, MomentFormatSpecification } from 'moment';
+﻿import { dateTime, toUtc, isDateTime, DateTimeInput, FormatInput, DateTime } from './moment_wrapper';
 import { TIME_FORMAT } from './..';
 import { RawTimeRange } from '../types/time';
 
-export const momentUtc = (
-  isUtc?: boolean,
-  dateString?: MomentInput,
-  format?: MomentFormatSpecification,
-  strict?: boolean
-) => {
-  return isUtc ? moment.utc(dateString, format, strict) : moment(dateString, format, strict);
+export const momentUtc = (isUtc?: boolean, dateString?: DateTimeInput, format?: FormatInput, strict?: boolean) => {
+  return isUtc ? toUtc(dateString, format) : dateTime(dateString, format);
 };
 
-const getRawDateToShow = (isUtc: boolean, rawDate: moment.Moment | string): moment.Moment | string => {
-  if (moment.isMoment(rawDate)) {
-    const dateCopy = moment(rawDate); // Avoid mutating the original when doing .local()
+const getRawDateToShow = (isUtc: boolean, rawDate: DateTime | string): DateTime | string => {
+  if (isDateTime(rawDate)) {
+    const dateCopy = dateTime(rawDate); // Avoid mutating the original when doing .local()
     return !isUtc ? dateCopy.local() : dateCopy;
   }
   return rawDate;
 };
 
-const getFormattedRawDate = (rawDate: moment.Moment | string): string => {
-  if (moment.isMoment(rawDate)) {
+const getFormattedRawDate = (rawDate: DateTime | string): string => {
+  if (isDateTime(rawDate)) {
     return rawDate.format(TIME_FORMAT);
   }
   return rawDate;

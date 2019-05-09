@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import moment from 'moment';
 import { ButtonSelect } from '../Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
@@ -10,6 +9,7 @@ import { TimeRange, TimeOption } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { getRawTimeRangeToShow } from '../../utils/date';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;
@@ -137,7 +137,7 @@ export class TimePicker extends PureComponent<Props, State> {
         {isTimezoneUtc && <span className="time-picker-utc">UTC</span>}
       </>
     );
-    const isAbsolute = moment.isMoment(value.raw.to);
+    const isAbsolute = isDateTime(value.raw.to);
 
     return (
       <div className="time-picker">

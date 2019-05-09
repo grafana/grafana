@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import moment from 'moment';
 
 // Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
@@ -10,6 +9,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
   datasource: any;
@@ -67,8 +67,8 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const timeSrv = getTimeSrv();
     timeSrv.init({
       time: {
-        from: moment(range.from),
-        to: moment(range.to),
+        from: dateTime(range.from),
+        to: dateTime(range.to),
       },
       refresh: false,
       getTimezone: () => 'utc',

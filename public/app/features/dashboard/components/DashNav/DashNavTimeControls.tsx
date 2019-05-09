@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import moment from 'moment';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 // Types
 import { DashboardModel } from '../../state';
@@ -80,8 +80,8 @@ export class DashNavTimeControls extends Component<Props> {
     }
 
     this.timeSrv.setTime({
-      from: moment.utc(from),
-      to: moment.utc(to),
+      from: toUtc(from),
+      to: toUtc(to),
     });
   };
 

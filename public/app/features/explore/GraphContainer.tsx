@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeRange, TimeZone, AbsoluteTimeRange, momentUtc } from '@grafana/ui';
+import { TimeRange, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -10,6 +10,7 @@ import { toggleGraph, changeTime } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
@@ -33,8 +34,8 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: momentUtc(timeZone.isUtc, absRange.from),
-      to: momentUtc(timeZone.isUtc, absRange.to),
+      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
+      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
     };
 
     changeTime(exploreId, range);

@@ -1,9 +1,8 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import moment from 'moment';
 import { TimeFragment, TIME_FORMAT } from '../../types/time';
-
-import { stringToMoment, isValidTimeString } from './time';
 import { Input } from '../Input/Input';
+import { stringToDateTimeType, isValidTimeString } from './time';
+import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeFragment;
@@ -23,7 +22,7 @@ export class TimePickerInput extends PureComponent<Props> {
       return isValid;
     }
 
-    const parsed = stringToMoment(value, isTimezoneUtc);
+    const parsed = stringToDateTimeType(value, isTimezoneUtc);
     const isValid = parsed.isValid();
     return isValid;
   };
@@ -36,7 +35,7 @@ export class TimePickerInput extends PureComponent<Props> {
   };
 
   valueToString = (value: TimeFragment) => {
-    if (moment.isMoment(value)) {
+    if (isDateTime(value)) {
       return value.format(TIME_FORMAT);
     } else {
       return value;

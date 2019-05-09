@@ -1,6 +1,5 @@
-import moment from 'moment';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { momentUtc } from '@grafana/ui';
+import { toUtc, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function inputDateDirective() {
   return {
@@ -19,7 +18,12 @@ export function inputDateDirective() {
           return text;
         }
 
-        const parsed = momentUtc($scope.ctrl.isUtc, text, format);
+        let parsed;
+        if ($scope.ctrl.isUtc) {
+          parsed = toUtc(text, format);
+        } else {
+          parsed = dateTime(text, format);
+        }
 
         if (!parsed.isValid()) {
           ngModel.$setValidity('error', false);
@@ -31,7 +35,7 @@ export function inputDateDirective() {
       };
 
       const toUser = currentValue => {
-        if (moment.isMoment(currentValue)) {
+        if (isDateTime(currentValue)) {
           return currentValue.format(format);
         } else {
           return currentValue;

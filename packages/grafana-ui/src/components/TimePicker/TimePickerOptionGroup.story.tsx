@@ -1,11 +1,11 @@
 import React, { ComponentType } from 'react';
 import { storiesOf } from '@storybook/react';
-import moment from 'moment';
 import { action } from '@storybook/addon-actions';
 
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
+import { dateTime } from '../../utils/moment_wrapper';
 
 const TimePickerOptionGroupStories = storiesOf('UI/TimePicker/TimePickerOptionGroup', module);
 
@@ -20,7 +20,7 @@ const data = {
     action('onPopoverClose fired')(timeRange);
   },
   popoverProps: {
-    value: { from: moment(), to: moment(), raw: { from: 'now/d', to: 'now/d' } },
+    value: { from: dateTime(), to: dateTime(), raw: { from: 'now/d', to: 'now/d' } },
     isTimezoneUtc: false,
     onChange: (timeRange: TimeRange) => {
       action('onChange fired')(timeRange);

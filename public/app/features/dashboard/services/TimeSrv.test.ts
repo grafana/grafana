@@ -1,6 +1,6 @@
-import moment from 'moment';
 import { TimeSrv } from './TimeSrv';
 import { ContextSrvStub } from 'test/specs/helpers';
+import { isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('timeSrv', () => {
   const rootScope = {
@@ -43,8 +43,8 @@ describe('timeSrv', () => {
     it('should return parsed when parse is true', () => {
       timeSrv.setTime({ from: 'now', to: 'now-1h' });
       const time = timeSrv.timeRange();
-      expect(moment.isMoment(time.from)).toBe(true);
-      expect(moment.isMoment(time.to)).toBe(true);
+      expect(isDateTime(time.from)).toBe(true);
+      expect(isDateTime(time.to)).toBe(true);
     });
   });
 
@@ -164,8 +164,8 @@ describe('timeSrv', () => {
     it('should restore refresh after relative time range is set', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({
-        from: moment([2011, 1, 1]),
-        to: moment([2015, 1, 1]),
+        from: dateTime([2011, 1, 1]),
+        to: dateTime([2015, 1, 1]),
       });
       expect(_dashboard.refresh).toBe(false);
       timeSrv.setTime({ from: '2011-01-01', to: 'now' });

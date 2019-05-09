@@ -102,7 +102,7 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi, PromQuery> {
+interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi<PromQuery>, PromQuery> {
   history: HistoryItem[];
 }
 
