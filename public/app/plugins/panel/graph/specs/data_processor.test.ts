@@ -1,5 +1,4 @@
 import { DataProcessor } from '../data_processor';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {
@@ -15,12 +14,12 @@ describe('Graph DataProcessor', () => {
       panel.xaxis.values = [];
 
       processor.getSeriesList({
-        dataList: getProcessedSeriesData([
+        dataList: [
           {
             type: 'docs',
             datapoints: [{ hostname: 'server1', avg: 10 }],
           },
-        ]),
+        ],
       });
     });
 

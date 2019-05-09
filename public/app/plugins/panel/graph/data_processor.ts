@@ -1,11 +1,20 @@
 import _ from 'lodash';
-import { colors, getColorFromHexRgbOrName, FieldCache, FieldType, SeriesData, Field } from '@grafana/ui';
+import {
+  LegacyResponseData,
+  TimeRange,
+  colors,
+  getColorFromHexRgbOrName,
+  FieldCache,
+  FieldType,
+  SeriesData,
+  Field,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
-import { TimeRange } from '@grafana/ui';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 
 type Options = {
-  dataList: SeriesData[];
+  dataList: LegacyResponseData[];
   range?: TimeRange;
 };
 
@@ -108,9 +117,9 @@ export class DataProcessor {
     }
   }
 
-  getTimeSeries(seriesData: SeriesData[], options: Options) {
+  getTimeSeries(seriesData: LegacyResponseData[], options: Options) {
     const list: TimeSeries[] = [];
-    for (const series of seriesData) {
+    for (const series of getProcessedSeriesData(options.dataList)) {
       const { fields } = series;
       const cache = new FieldCache(fields);
       const time = cache.getFirstFieldOfType(FieldType.time);

@@ -12,7 +12,6 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -189,7 +188,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.dataList = getProcessedSeriesData(dataList);
+    this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({
       dataList: this.dataList,
       range: this.range,
