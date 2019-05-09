@@ -506,3 +506,26 @@ export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
 
   return errors.filter(error => (error.refId ? false : true))[0];
 };
+
+export const getRefIds = (value: any): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  if (value.refId) {
+    return value;
+  }
+
+  if (typeof value !== 'object') {
+    return [];
+  }
+
+  const keys = Object.keys(value);
+  const refIds = [];
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    refIds.push(getRefIds(value[key]));
+  }
+
+  return _.uniq(_.flatten(refIds));
+};

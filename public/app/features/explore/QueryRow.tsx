@@ -21,6 +21,7 @@ import {
   DataSourceStatus,
   PanelData,
   LoadingState,
+  DataQueryError,
 } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -45,6 +46,7 @@ interface QueryRowProps {
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
+  queryErrors: DataQueryError[];
 }
 
 export class QueryRow extends PureComponent<QueryRowProps> {
@@ -108,6 +110,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       datasourceStatus,
       queryResponse,
       latency,
+      queryErrors,
     } = this.props;
     const QueryField = datasourceInstance.components.ExploreQueryField;
 
@@ -131,6 +134,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
             />
           ) : (
             <QueryEditor
+              error={queryErrors}
               datasource={datasourceInstance}
               onQueryChange={this.onChange}
               onExecuteQuery={this.onRunQuery}
@@ -202,6 +206,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     datasourceStatus,
     queryResponse,
     latency,
+    queryErrors,
   };
 }
 

@@ -230,6 +230,11 @@ export interface RunQueriesPayload {
   exploreId: ExploreId;
 }
 
+export interface ResetQueryErrorPayload {
+  exploreId: ExploreId;
+  refIds: string[];
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -429,6 +434,8 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
 ).create();
 
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
+
+export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

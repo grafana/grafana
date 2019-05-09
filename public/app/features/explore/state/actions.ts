@@ -20,6 +20,7 @@ import {
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
   instanceOfDataQueryError,
+  getRefIds,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -84,6 +85,7 @@ import {
   loadExploreDatasources,
   queryStartAction,
   historyUpdatedAction,
+  resetQueryErrorAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -460,6 +462,7 @@ export function processQueryResults(
 
     const errors: DataQueryError[] = response.data.filter((data: any) => instanceOfDataQueryError(data));
     const series: any[] = response.data.filter((data: any) => !instanceOfDataQueryError(data));
+    const refIds = getRefIds(series);
 
     for (const response of errors) {
       eventBridge.emit('data-error', response);
@@ -471,6 +474,13 @@ export function processQueryResults(
         })
       );
     }
+
+    dispatch(
+      resetQueryErrorAction({
+        exploreId,
+        refIds,
+      })
+    );
 
     const resultGetter =
       resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data : null;

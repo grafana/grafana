@@ -21,6 +21,7 @@ import {
   loadExploreDatasources,
   runQueriesAction,
   historyUpdatedAction,
+  resetQueryErrorAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -524,6 +525,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         history: action.payload.history,
+      };
+    },
+  })
+  .addMapper({
+    filter: resetQueryErrorAction,
+    mapper: (state, action): ExploreItemState => {
+      const { refIds } = action.payload;
+      const queryErrors = state.queryErrors.reduce((allErrors, error) => {
+        if (error.refId && refIds.indexOf(error.refId) !== -1) {
+          return allErrors;
+        }
+
+        return allErrors.concat(error);
+      }, []);
+
+      return {
+        ...state,
+        queryErrors,
       };
     },
   })
