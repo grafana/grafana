@@ -71,6 +71,17 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	cookieState := ctx.GetCookie(OauthStateCookieName)
 
+	// https://github.com/grafana/grafana/pull/7046
+	if cookieState == "" {
+		if ctx.Query("redirected") == "yes" {
+			ctx.Handle(500, "login.OAuthLogin(missing saved state) after redirect", nil)
+			return
+		}
+		loc := setting.AppUrl + "login/" + name + "?" + ctx.Req.URL.RawQuery + "&redirected=yes"
+		ctx.Redirect(loc)
+		return
+	}
+
 	// delete cookie
 	ctx.Resp.Header().Del("Set-Cookie")
 	hs.deleteCookie(ctx.Resp, OauthStateCookieName)

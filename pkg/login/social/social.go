@@ -81,6 +81,7 @@ func NewOAuthService() {
 			TlsClientCa:                  sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:                sec.Key("tls_skip_verify_insecure").MustBool(),
 			SendClientCredentialsViaPost: sec.Key("send_client_credentials_via_post").MustBool(),
+			RedirectUrl:                  sec.Key("redirect_url").String(),
 		}
 
 		if !info.Enabled {
@@ -105,7 +106,7 @@ func NewOAuthService() {
 				AuthURL:  info.AuthUrl,
 				TokenURL: info.TokenUrl,
 			},
-			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			RedirectURL: info.RedirectUrl,
 			Scopes:      info.Scopes,
 		}
 
@@ -191,6 +192,10 @@ func NewOAuthService() {
 				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
+		}
+
+		if len(config.RedirectURL) == 0 {
+			config.RedirectURL = strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name
 		}
 	}
 }
