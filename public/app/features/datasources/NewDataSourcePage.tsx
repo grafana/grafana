@@ -1,13 +1,12 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, FC } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel, DataSourcePluginMeta } from '@grafana/ui';
+import { NavModel, DataSourcePluginMeta, List } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -15,13 +14,40 @@ export interface Props {
   isLoading: boolean;
   addDataSource: typeof addDataSource;
   loadDataSourceTypes: typeof loadDataSourceTypes;
-  dataSourceTypeSearchQuery: string;
+  searchQuery: string;
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
 
+interface DataSourceCategories {
+  [key: string]: DataSourcePluginMeta[];
+}
+
+interface DataSourceCategoryInfo {
+  id: string;
+  title: string;
+}
+
 class NewDataSourcePage extends PureComponent<Props> {
+  searchInput: HTMLElement;
+  categoryInfoList: DataSourceCategoryInfo[] = [
+    { id: 'tsdb', title: 'Time series databases' },
+    { id: 'logging', title: 'Logging & document databases' },
+    { id: 'sql', title: 'SQL' },
+    { id: 'cloud', title: 'Cloud' },
+    { id: 'other', title: 'Others' },
+  ];
+
+  sortingRules: { [id: string]: number } = {
+    prometheus: 100,
+    graphite: 95,
+    loki: 90,
+    mysql: 80,
+    postgres: 79,
+  };
+
   componentDidMount() {
     this.props.loadDataSourceTypes();
+    this.searchInput.focus();
   }
 
   onDataSourceTypeClicked = (plugin: DataSourcePluginMeta) => {
@@ -32,35 +58,108 @@ class NewDataSourcePage extends PureComponent<Props> {
     this.props.setDataSourceTypeSearchQuery(value);
   };
 
+  renderTypes(types: DataSourcePluginMeta[]) {
+    if (!types) {
+      return null;
+    }
+
+    // apply custom sort ranking
+    types.sort((a, b) => {
+      const aSort = this.sortingRules[a.id] || 0;
+      const bSort = this.sortingRules[b.id] || 0;
+      if (aSort > bSort) {
+        return -1;
+      }
+      if (aSort < bSort) {
+        return 1;
+      }
+
+      return a.name > b.name ? -1 : 1;
+    });
+
+    return (
+      <List
+        items={types}
+        getItemKey={item => item.id.toString()}
+        renderItem={item => (
+          <DataSourceTypeCard
+            plugin={item}
+            onClick={() => this.onDataSourceTypeClicked(item)}
+            onLearnMoreClick={this.onLearnMoreClick}
+          />
+        )}
+      />
+    );
+  }
+
+  onLearnMoreClick = (evt: React.SyntheticEvent<HTMLElement>) => {
+    evt.stopPropagation();
+  };
+
+  renderGroupedList() {
+    const { dataSourceTypes } = this.props;
+
+    if (dataSourceTypes.length === 0) {
+      return null;
+    }
+
+    const categories = dataSourceTypes.reduce(
+      (accumulator, item) => {
+        const category = item.category || 'other';
+        const list = accumulator[category] || [];
+        list.push(item);
+        accumulator[category] = list;
+        return accumulator;
+      },
+      {} as DataSourceCategories
+    );
+
+    return (
+      <>
+        {this.categoryInfoList.map(category => (
+          <div className="add-data-source-category" key={category.id}>
+            <div className="add-data-source-category__header">{category.title}</div>
+            {this.renderTypes(categories[category.id])}
+          </div>
+        ))}
+        <div className="add-data-source-more">
+          <a
+            className="btn btn-inverse"
+            href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
+            target="_blank"
+          >
+            Find more data source plugins on grafana.com
+          </a>
+        </div>
+      </>
+    );
+  }
+
   render() {
-    const { navModel, dataSourceTypes, dataSourceTypeSearchQuery, isLoading } = this.props;
+    const { navModel, isLoading, searchQuery, dataSourceTypes } = this.props;
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          <h2 className="add-data-source-header">Choose data source type</h2>
-          <div className="add-data-source-search">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon"
-              inputClassName="gf-form-input width-20"
-              value={dataSourceTypeSearchQuery}
-              onChange={this.onSearchQueryChange}
-              placeholder="Filter by name or type"
-            />
+          <div className="page-action-bar">
+            <div className="gf-form gf-form--grow">
+              <FilterInput
+                ref={elem => (this.searchInput = elem)}
+                labelClassName="gf-form--has-input-icon"
+                inputClassName="gf-form-input width-30"
+                value={searchQuery}
+                onChange={this.onSearchQueryChange}
+                placeholder="Filter by name or type"
+              />
+            </div>
+            <div className="page-action-bar__spacer" />
+            <a className="btn btn-secondary" href="datasources">
+              Cancel
+            </a>
           </div>
-          <div className="add-data-source-grid">
-            {dataSourceTypes.map((plugin, index) => {
-              return (
-                <div
-                  onClick={() => this.onDataSourceTypeClicked(plugin)}
-                  className="add-data-source-grid-item"
-                  key={`${plugin.id}-${index}`}
-                  aria-label={`${plugin.name} datasource plugin`}
-                >
-                  <img className="add-data-source-grid-item-logo" src={plugin.info.logos.small} />
-                  <span className="add-data-source-grid-item-text">{plugin.name}</span>
-                </div>
-              );
-            })}
+          <div>
+            {searchQuery && this.renderTypes(dataSourceTypes)}
+            {!searchQuery && this.renderGroupedList()}
           </div>
         </Page.Contents>
       </Page>
@@ -68,11 +167,57 @@ class NewDataSourcePage extends PureComponent<Props> {
   }
 }
 
+interface DataSourceTypeCardProps {
+  plugin: DataSourcePluginMeta;
+  onClick: () => void;
+  onLearnMoreClick: (evt: React.SyntheticEvent<HTMLElement>) => void;
+}
+
+const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
+  const { plugin, onClick, onLearnMoreClick } = props;
+
+  // find first plugin info link
+  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
+
+  return (
+    <div className="add-data-source-item" onClick={onClick} aria-label={`${plugin.name} datasource plugin`}>
+      <img className="add-data-source-item-logo" src={plugin.info.logos.small} />
+      <div className="add-data-source-item-text-wrapper">
+        <span className="add-data-source-item-text">{plugin.name}</span>
+        {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
+      </div>
+      <div className="add-data-source-item-actions">
+        {learnMoreLink && (
+          <a className="btn btn-inverse" href={learnMoreLink} target="_blank" onClick={onLearnMoreClick}>
+            Learn more
+          </a>
+        )}
+        <button className="btn btn-primary">Select</button>
+      </div>
+    </div>
+  );
+};
+
+export function getNavModel(): NavModel {
+  const main = {
+    icon: 'gicon gicon-add-datasources',
+    id: 'datasource-new',
+    text: 'New data source',
+    href: 'datasources/new',
+    subTitle: 'Choose a data source type',
+  };
+
+  return {
+    main: main,
+    node: main,
+  };
+}
+
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'datasources'),
+    navModel: getNavModel(),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
-    dataSourceTypeSearchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
     isLoading: state.dataSources.isLoadingDataSources,
   };
 }
