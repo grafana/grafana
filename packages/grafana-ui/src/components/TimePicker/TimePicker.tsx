@@ -6,7 +6,7 @@ import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Timezone } from '../../utils/datemath';
-import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
+import { TimeRange, TimeOption } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { getRawTimeRangeToShow } from '../../utils/date';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -14,7 +14,6 @@ import { Tooltip } from '../Tooltip/Tooltip';
 export interface Props {
   value: TimeRange;
   isTimezoneUtc: boolean;
-  popoverOptions: TimeOptions;
   selectOptions: TimeOption[];
   timezone?: Timezone;
   onChange: (timeRange: TimeRange) => void;
@@ -24,7 +23,7 @@ export interface Props {
   tooltipContent?: PopperContent<any>;
 }
 
-const defaultSelectOptions: TimeOption[] = [
+export const defaultSelectOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3, active: false },
   { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3, active: false },
   { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3, active: false },
@@ -41,112 +40,21 @@ const defaultSelectOptions: TimeOption[] = [
   { from: 'now-1y', to: 'now', display: 'Last 1 year', section: 3, active: false },
   { from: 'now-2y', to: 'now', display: 'Last 2 years', section: 3, active: false },
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 3, active: false },
+  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday', section: 3, active: false },
+  { from: 'now-2d/d', to: 'now-2d/d', display: 'Day before yesterday', section: 3, active: false },
+  { from: 'now-7d/d', to: 'now-7d/d', display: 'This day last week', section: 3, active: false },
+  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week', section: 3, active: false },
+  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month', section: 3, active: false },
+  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year', section: 3, active: false },
+  { from: 'now/d', to: 'now/d', display: 'Today', section: 3, active: false },
+  { from: 'now/d', to: 'now', display: 'Today so far', section: 3, active: false },
+  { from: 'now/w', to: 'now/w', display: 'This week', section: 3, active: false },
+  { from: 'now/w', to: 'now', display: 'This week so far', section: 3, active: false },
+  { from: 'now/M', to: 'now/M', display: 'This month', section: 3, active: false },
+  { from: 'now/M', to: 'now', display: 'This month so far', section: 3, active: false },
+  { from: 'now/y', to: 'now/y', display: 'This year', section: 3, active: false },
+  { from: 'now/y', to: 'now', display: 'This year so far', section: 3, active: false },
 ];
-
-const defaultPopoverOptions: TimeOptions = {
-  '0': [
-    {
-      from: 'now-1d/d',
-      to: 'now-1d/d',
-      display: 'Yesterday',
-      section: 0,
-      active: false,
-    },
-    {
-      from: 'now-2d/d',
-      to: 'now-2d/d',
-      display: 'Day before yesterday',
-      section: 0,
-      active: false,
-    },
-    {
-      from: 'now-7d/d',
-      to: 'now-7d/d',
-      display: 'This day last week',
-      section: 0,
-      active: false,
-    },
-    {
-      from: 'now-1w/w',
-      to: 'now-1w/w',
-      display: 'Previous week',
-      section: 0,
-      active: false,
-    },
-    {
-      from: 'now-1M/M',
-      to: 'now-1M/M',
-      display: 'Previous month',
-      section: 0,
-      active: false,
-    },
-    {
-      from: 'now-1y/y',
-      to: 'now-1y/y',
-      display: 'Previous year',
-      section: 0,
-      active: false,
-    },
-  ],
-  '1': [
-    {
-      from: 'now/d',
-      to: 'now/d',
-      display: 'Today',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/d',
-      to: 'now',
-      display: 'Today so far',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/w',
-      to: 'now/w',
-      display: 'This week',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/w',
-      to: 'now',
-      display: 'This week so far',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/M',
-      to: 'now/M',
-      display: 'This month',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/M',
-      to: 'now',
-      display: 'This month so far',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/y',
-      to: 'now/y',
-      display: 'This year',
-      section: 1,
-      active: false,
-    },
-    {
-      from: 'now/y',
-      to: 'now',
-      display: 'This year so far',
-      section: 1,
-      active: false,
-    },
-  ],
-};
 
 const defaultZoomOutTooltip = () => {
   return (
@@ -161,21 +69,18 @@ export interface State {
 }
 
 export class TimePicker extends PureComponent<Props, State> {
-  static defaultSelectOptions = defaultSelectOptions;
-  static defaultPopoverOptions = defaultPopoverOptions;
   state: State = {
     isMenuOpen: false,
   };
 
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
-    const { value, popoverOptions, isTimezoneUtc, timezone } = this.props;
+    const { value, isTimezoneUtc, timezone } = this.props;
     const options = selectOptions.map(timeOption => {
       return { label: timeOption.display, value: timeOption };
     });
 
     const popoverProps: TimePickerPopoverProps = {
       value,
-      options: popoverOptions,
       isTimezoneUtc,
       timezone,
     };

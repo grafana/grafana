@@ -6,7 +6,6 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
-import { popoverOptions } from './TimePicker.story';
 
 const TimePickerPopoverStories = storiesOf('UI/TimePicker/TimePickerPopover', module);
 
@@ -29,7 +28,6 @@ TimePickerPopoverStories.add('default', () => (
             action('onChange fired')(timeRange);
             updateValue(timeRange);
           }}
-          options={popoverOptions}
         />
       );
     }}

@@ -6,7 +6,6 @@ import { action } from '@storybook/addon-actions';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { TimeRange } from '../../types/time';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
-import { popoverOptions } from './TimePicker.story';
 
 const TimePickerOptionGroupStories = storiesOf('UI/TimePicker/TimePickerOptionGroup', module);
 
@@ -22,7 +21,6 @@ const data = {
   },
   popoverProps: {
     value: { from: moment(), to: moment(), raw: { from: 'now/d', to: 'now/d' } },
-    options: popoverOptions,
     isTimezoneUtc: false,
     onChange: (timeRange: TimeRange) => {
       action('onChange fired')(timeRange);

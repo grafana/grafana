@@ -1,5 +1,5 @@
-import React, { Component, SyntheticEvent } from 'react';
-import { TimeRange, TimeOptions, TimeOption } from '../../types/time';
+import React, { Component } from 'react';
+import { TimeRange, TimeOption } from '../../types/time';
 import { Moment } from 'moment';
 
 import { TimePickerCalendar } from './TimePickerCalendar';
@@ -9,7 +9,6 @@ import { Timezone } from '../../utils/datemath';
 
 export interface Props {
   value: TimeRange;
-  options: TimeOptions;
   isTimezoneUtc: boolean;
   timezone?: Timezone;
   onChange?: (timeRange: TimeRange) => void;
@@ -70,40 +69,12 @@ export class TimePickerPopover extends Component<Props, State> {
   };
 
   render() {
-    const { options, isTimezoneUtc, timezone } = this.props;
+    const { isTimezoneUtc, timezone } = this.props;
     const { isFromInputValid, isToInputValid, value } = this.state;
     const isValid = isFromInputValid && isToInputValid;
 
     return (
       <div className={TimePickerPopover.popoverClassName}>
-        <div className="time-picker-popover-box">
-          <div className="time-picker-popover-box-header">
-            <span className="time-picker-popover-box-title">Quick ranges</span>
-          </div>
-          <div className="time-picker-popover-box-body">
-            {Object.keys(options).map(key => {
-              return (
-                <ul key={`popover-quickranges-${key}`}>
-                  {options[key].map(timeOption => (
-                    <li
-                      key={`popover-timeoption-${timeOption.from}-${timeOption.to}`}
-                      className={timeOption.active ? 'active' : ''}
-                    >
-                      <a
-                        onClick={(event: SyntheticEvent) => {
-                          event.preventDefault();
-                          this.onTimeOptionClick(timeOption);
-                        }}
-                      >
-                        {timeOption.display}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              );
-            })}
-          </div>
-        </div>
         <div className="time-picker-popover-box">
           <div className="time-picker-popover-box-header">
             <span className="time-picker-popover-box-title">Custom range</span>

@@ -5,7 +5,7 @@ import moment from 'moment';
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState } from 'app/types';
-import { TimeOptions, TimeRange, RawTimeRange, TimeOption } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeOption } from '@grafana/ui';
 
 // State
 import { updateLocation } from 'app/core/actions';
@@ -16,6 +16,7 @@ import { TimePicker, RefreshPicker } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getRawTimeRangeToShow } from '@grafana/ui';
+import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
 
 export interface Props {
   $injector: any;
@@ -119,17 +120,6 @@ export class DashNavTimeControls extends Component<Props> {
     });
   };
 
-  setActiveInTimeOptions = (options: TimeOptions, rawTimeRange: RawTimeRange): TimeOptions => {
-    const newRange = Object.keys(options).reduce((acc: TimeOptions, currKey: string) => {
-      return {
-        ...acc,
-        [currKey]: this.setActiveTimeOption(options[currKey], rawTimeRange),
-      };
-    }, {});
-
-    return newRange;
-  };
-
   render() {
     const { dashboard } = this.props;
     const intervals = dashboard.timepicker.refresh_intervals;
@@ -150,8 +140,7 @@ export class DashNavTimeControls extends Component<Props> {
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
-          selectOptions={this.setActiveTimeOption(TimePicker.defaultSelectOptions, timePickerValue.raw)}
-          popoverOptions={this.setActiveInTimeOptions(TimePicker.defaultPopoverOptions, timePickerValue.raw)}
+          selectOptions={this.setActiveTimeOption(defaultSelectOptions, timePickerValue.raw)}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
