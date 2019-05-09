@@ -117,14 +117,29 @@ export interface DataSourceConstructor<
 /**
  * The main data source abstraction interface, represents an instance of a data source
  */
-export interface DataSourceApi<
+export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
   /**
+   *  Set in constructor
+   */
+  readonly name: string;
+
+  /**
+   *  Set in constructor
+   */
+  readonly id: number;
+
+  /**
    *  min interval range
    */
   interval?: string;
+
+  constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
+    this.name = instanceSettings.name;
+    this.id = instanceSettings.id;
+  }
 
   /**
    * Imports queries from a different datasource
@@ -139,12 +154,12 @@ export interface DataSourceApi<
   /**
    * Main metrics / data query action
    */
-  query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+  abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
    */
-  testDatasource(): Promise<any>;
+  abstract testDatasource(): Promise<any>;
 
   /**
    *  Get hints for query improvements
@@ -155,16 +170,6 @@ export interface DataSourceApi<
    * Convert a query to a simple text string
    */
   getQueryDisplayText?(query: TQuery): string;
-
-  /**
-   *  Set after constructor is called by Grafana
-   */
-  name?: string;
-
-  /**
-   *  Set after constructor is called by Grafana
-   */
-  id?: number;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -178,7 +183,7 @@ export interface DataSourceApi<
   meta?: DataSourcePluginMeta;
 }
 
-export interface ExploreDataSourceApi<
+export abstract class ExploreDataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {

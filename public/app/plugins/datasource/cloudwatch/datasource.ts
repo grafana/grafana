@@ -9,9 +9,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
+export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
-  name: any;
   proxyUrl: any;
   defaultRegion: any;
   standardStatistics: any;
@@ -24,8 +23,8 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
+    super(instanceSettings);
     this.type = 'cloudwatch';
-    this.name = instanceSettings.name;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;

@@ -17,13 +17,12 @@ export interface TestDataRegistry {
   [key: string]: TestData[];
 }
 
-export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
-  id: number;
+export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
   streams = new StreamHandler();
 
   /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings) {
-    this.id = instanceSettings.id;
+    super(instanceSettings);
   }
 
   query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
