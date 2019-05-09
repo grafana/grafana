@@ -24,6 +24,10 @@
     "links": [
       {
         "name": "Learn more",
+        "url": "https://grafana.com/loki"
+      },
+      {
+        "name": "GitHub Project",
         "url": "https://github.com/grafana/loki"
       }
     ],
