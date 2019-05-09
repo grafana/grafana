@@ -15,7 +15,7 @@
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
     },
-    "links": [{ "name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch" }]
+    "links": [{ "name": "Learn more", "url": "https://grafana.com/docs/features/datasources/elasticsearch/" }]
   },
 
   "alerting": true,

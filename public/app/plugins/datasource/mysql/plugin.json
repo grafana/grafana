@@ -5,7 +5,7 @@
   "category": "sql",
 
   "info": {
-    "description": "MySQL Data Source for Grafana",
+    "description": "Data source for MySQL databases",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

@@ -35,29 +35,21 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  background: $card-background;
   box-shadow: $card-shadow;
-  color: $text-color;
-  border-radius: 4px;
-
   background: $panel-editor-viz-item-bg;
   border: 1px solid transparent;
   border-radius: 3px;
 
   &:hover {
-    background: $card-background-hover;
+    box-shadow: $panel-editor-viz-item-shadow-hover;
+    background: $panel-editor-viz-item-bg-hover;
+    border: $panel-editor-viz-item-border-hover;
     color: $text-color-strong;
 
     .add-data-source-item-actions {
       opacity: 1;
       transition: 0.15s opacity ease-in-out;
     }
-  }
-
-  &:hover {
-    box-shadow: $panel-editor-viz-item-shadow-hover;
-    background: $panel-editor-viz-item-bg-hover;
-    border: $panel-editor-viz-item-border-hover;
   }
 }
 
@@ -91,6 +83,7 @@
 
   > button {
     margin-left: $space-md;
+    cursor: pointer;
   }
 }
 

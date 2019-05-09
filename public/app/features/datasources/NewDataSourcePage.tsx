@@ -14,7 +14,7 @@ export interface Props {
   isLoading: boolean;
   addDataSource: typeof addDataSource;
   loadDataSourceTypes: typeof loadDataSourceTypes;
-  dataSourceTypeSearchQuery: string;
+  searchQuery: string;
   setDataSourceTypeSearchQuery: typeof setDataSourceTypeSearchQuery;
 }
 
@@ -84,54 +84,60 @@ class NewDataSourcePage extends PureComponent<Props> {
             key={`${plugin.id}-${index}`}
             plugin={plugin}
             onClick={() => this.onDataSourceTypeClicked(plugin)}
+            onLearnMoreClick={this.onLearnMoreClick}
           />
         ))}
       </div>
     );
   }
 
-  renderList() {
-    const { dataSourceTypes, dataSourceTypeSearchQuery } = this.props;
+  onLearnMoreClick = (evt: React.SyntheticEvent<HTMLElement>) => {
+    evt.stopPropagation();
+  };
 
-    if (!dataSourceTypeSearchQuery && dataSourceTypes.length > 0) {
-      const categories = dataSourceTypes.reduce(
-        (accumulator, item) => {
-          const category = item.category || 'other';
-          const list = accumulator[category] || [];
-          console.log(category);
-          list.push(item);
-          accumulator[category] = list;
-          return accumulator;
-        },
-        {} as DataSourceCategories
-      );
+  renderGroupedList() {
+    const { dataSourceTypes } = this.props;
 
-      return (
-        <>
-          {this.categoryInfoList.map(category => (
-            <div className="add-data-source-category" key={category.id}>
-              <div className="add-data-source-category__header">{category.title}</div>
-              {this.renderTypes(categories[category.id])}
-            </div>
-          ))}
-          <div className="add-data-source-more">
-            <a
-              className="btn btn-secondary"
-              href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
-              target="_blank"
-            >
-              Find more data source plugins on grafana.com
-            </a>
-          </div>
-        </>
-      );
+    if (dataSourceTypes.length === 0) {
+      return null;
     }
 
-    return this.renderTypes(dataSourceTypes);
+    const categories = dataSourceTypes.reduce(
+      (accumulator, item) => {
+        const category = item.category || 'other';
+        const list = accumulator[category] || [];
+        console.log(category);
+        list.push(item);
+        accumulator[category] = list;
+        return accumulator;
+      },
+      {} as DataSourceCategories
+    );
+
+    return (
+      <>
+        {this.categoryInfoList.map(category => (
+          <div className="add-data-source-category" key={category.id}>
+            <div className="add-data-source-category__header">{category.title}</div>
+            {this.renderTypes(categories[category.id])}
+          </div>
+        ))}
+        <div className="add-data-source-more">
+          <a
+            className="btn btn-inverse"
+            href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
+            target="_blank"
+          >
+            Find more data source plugins on grafana.com
+          </a>
+        </div>
+      </>
+    );
   }
 
   render() {
-    const { navModel, isLoading, dataSourceTypeSearchQuery } = this.props;
+    const { navModel, isLoading, searchQuery, dataSourceTypes } = this.props;
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
@@ -141,7 +147,7 @@ class NewDataSourcePage extends PureComponent<Props> {
                 ref={elem => (this.searchInput = elem)}
                 labelClassName="gf-form--has-input-icon"
                 inputClassName="gf-form-input width-30"
-                value={dataSourceTypeSearchQuery}
+                value={searchQuery}
                 onChange={this.onSearchQueryChange}
                 placeholder="Filter by name or type"
               />
@@ -151,7 +157,10 @@ class NewDataSourcePage extends PureComponent<Props> {
               Cancel
             </a>
           </div>
-          <div>{this.renderList()}</div>
+          <div>
+            {searchQuery && this.renderTypes(dataSourceTypes)}
+            {!searchQuery && this.renderGroupedList()}
+          </div>
         </Page.Contents>
       </Page>
     );
@@ -161,10 +170,14 @@ class NewDataSourcePage extends PureComponent<Props> {
 interface DataSourceTypeCardProps {
   plugin: DataSourcePluginMeta;
   onClick: () => void;
+  onLearnMoreClick: (evt: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
-  const { plugin, onClick } = props;
+  const { plugin, onClick, onLearnMoreClick } = props;
+
+  // find first plugin info link
+  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
 
   return (
     <div className="add-data-source-item" onClick={onClick}>
@@ -174,8 +187,8 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
         {plugin.info.description && <span className="add-data-source-item-desc">{plugin.info.description}</span>}
       </div>
       <div className="add-data-source-item-actions">
-        {plugin.info.author.url && (
-          <a className="btn btn-inverse" href={plugin.info.author.url}>
+        {learnMoreLink && (
+          <a className="btn btn-inverse" href={learnMoreLink} target="_blank" onClick={onLearnMoreClick}>
             Learn more
           </a>
         )}
@@ -204,7 +217,7 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(),
     dataSourceTypes: getDataSourceTypes(state.dataSources),
-    dataSourceTypeSearchQuery: state.dataSources.dataSourceTypeSearchQuery,
+    searchQuery: state.dataSources.dataSourceTypeSearchQuery,
     isLoading: state.dataSources.isLoadingDataSources,
   };
 }
