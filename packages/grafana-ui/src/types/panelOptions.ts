@@ -77,7 +77,7 @@ export interface SelectOptionUIComponentProps<T> extends OptionInputAPI<SelectOp
   options: Array<SelectOptionItem<T>>;
 }
 
-interface AbstractOptionUIModel<ComponentProps, P> {
+export interface AbstractOptionUIModel<ComponentProps, P> {
   optionType: OptionType;
   /**
    * Name of the options object property
