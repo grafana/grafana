@@ -191,7 +191,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   onDataReceived(dataList: LegacyResponseData[]) {
     this.dataList = getProcessedSeriesData(dataList);
     this.seriesList = this.processor.getSeriesList({
-      dataList: dataList,
+      dataList: this.dataList,
       range: this.range,
     });
 
