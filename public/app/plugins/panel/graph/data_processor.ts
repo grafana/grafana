@@ -2,11 +2,10 @@ import _ from 'lodash';
 import { colors, getColorFromHexRgbOrName, FieldCache, FieldType, SeriesData, Field } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
-import { LegacyResponseData, TimeRange } from '@grafana/ui';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { TimeRange } from '@grafana/ui';
 
 type Options = {
-  dataList: LegacyResponseData[];
+  dataList: SeriesData[];
   range?: TimeRange;
 };
 
@@ -29,17 +28,15 @@ export class DataProcessor {
       }
     }
 
-    const series = getProcessedSeriesData(options.dataList);
-
     switch (this.panel.xaxis.mode) {
       case 'series':
       case 'time': {
-        return this.getTimeSeries(series, options);
+        return this.getTimeSeries(options.dataList, options);
       }
       case 'histogram': {
         let histogramDataList: SeriesData[];
         if (this.panel.stack) {
-          histogramDataList = series;
+          histogramDataList = options.dataList;
         } else {
           histogramDataList = [
             {
@@ -114,38 +111,27 @@ export class DataProcessor {
   getTimeSeries(seriesData: SeriesData[], options: Options) {
     const list: TimeSeries[] = [];
     for (const series of seriesData) {
-      const { fields, name } = series;
-      if (fields.length > 2) {
-        const cache = new FieldCache(fields);
-        const time = cache.getFirstFieldOfType(FieldType.time);
-        if (!time) {
+      const { fields } = series;
+      const cache = new FieldCache(fields);
+      const time = cache.getFirstFieldOfType(FieldType.time);
+      if (!time) {
+        continue;
+      }
+
+      const seriesName = series.name ? series.name : series.refId;
+      const prefix = seriesData.length > 1 ? seriesName + ' ' : '';
+
+      for (let i = 0; i < fields.length; i++) {
+        if (fields[i].type !== FieldType.number) {
           continue;
         }
-        const seriesName = series.name ? series.name : series.refId;
-        const prefix = seriesData.length > 1 ? seriesName + ' ' : '';
-        for (let i = 0; i < fields.length; i++) {
-          if (fields[i].type !== FieldType.number) {
-            continue;
-          }
-          list.push(
-            this.toTimeSeries(
-              fields[i],
-              prefix + fields[i].name, // Alias
-              series.rows.map(row => {
-                return [row[i], row[time.index]];
-              }),
-              list.length,
-              options.range
-            )
-          );
-        }
-      } else {
-        // Simple timeseris
         list.push(
           this.toTimeSeries(
-            fields[0],
-            name, // Alias
-            series.rows,
+            fields[i],
+            prefix + fields[i].name, // Alias
+            series.rows.map(row => {
+              return [row[i], row[time.index]];
+            }),
             list.length,
             options.range
           )
