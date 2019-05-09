@@ -202,7 +202,7 @@ export function getNavModel(): NavModel {
   const main = {
     icon: 'gicon gicon-add-datasources',
     id: 'datasource-new',
-    text: 'New data source',
+    text: 'Add data source',
     href: 'datasources/new',
     subTitle: 'Choose a data source type',
   };
