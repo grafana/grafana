@@ -218,11 +218,15 @@ export class FetchWorker extends StreamWorker {
 
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
+    if (!query.stream.url) {
+      throw new Error('Missing Fetch URL');
+    }
+    if (!query.stream.url.startsWith('http')) {
+      throw new Error('Fetch URL must be absolute');
+    }
 
     this.csv = new CSVReader({ callback: this });
-    const url = 'http://localhost:7777/';
-    fetch(new Request(url)).then(response => {
-      console.log('RESPONSE', response.body);
+    fetch(new Request(query.stream.url)).then(response => {
       this.reader = response.body.getReader();
       this.reader.read().then(this.processChunk);
     });
