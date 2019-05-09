@@ -17,7 +17,6 @@
   font-weight: 500;
   margin-left: 4px;
   position: relative;
-  top: -1px;
 }
 
 .time-picker-popover {
@@ -26,7 +25,7 @@
   justify-content: space-around;
   border: 1px solid $popover-border-color;
   border-radius: $border-radius;
-  background-color: $popover-border-color;
+  background: $popover-bg;
   color: $popover-color;
 
   .time-picker-popover-box {
