@@ -66,7 +66,7 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreDataSourceApi, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreDataSourceApi<LokiQuery>, LokiQuery> {
   history: HistoryItem[];
   syntax: any;
   logLabelOptions: any[];

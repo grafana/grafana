@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 // Components
 import Page from 'app/core/components/Page/Page';
-import PluginSettings from './PluginSettings';
+import { PluginSettings, GenericDataSourcePlugin } from './PluginSettings';
 import BasicSettings from './BasicSettings';
 import ButtonRow from './ButtonRow';
 
@@ -22,7 +22,7 @@ import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
 import { StoreState } from 'app/types/';
-import { NavModel, DataSourceSettings, DataSourcePlugin, DataSourcePluginMeta } from '@grafana/ui';
+import { NavModel, DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
@@ -37,12 +37,12 @@ export interface Props {
   setDataSourceName: typeof setDataSourceName;
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
-  plugin?: DataSourcePlugin;
+  plugin?: GenericDataSourcePlugin;
 }
 
 interface State {
   dataSource: DataSourceSettings;
-  plugin: DataSourcePlugin;
+  plugin: GenericDataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
@@ -60,7 +60,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   async loadPlugin(pluginId?: string) {
     const { dataSourceMeta } = this.props;
-    let importedPlugin: DataSourcePlugin;
+    let importedPlugin: GenericDataSourcePlugin;
 
     try {
       importedPlugin = await importDataSourcePlugin(dataSourceMeta);

@@ -171,7 +171,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 value={refreshInterval}
                 tooltip="Refresh"
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} />}
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
             <div className="explore-toolbar-content-item">

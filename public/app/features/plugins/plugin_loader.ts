@@ -106,7 +106,7 @@ exposeToPlugin('app/core/services/backend_srv', {
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('@grafana/ui/src/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/datemath', datemath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
