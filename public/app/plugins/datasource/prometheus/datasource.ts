@@ -19,7 +19,7 @@ import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSet
 import { ExploreUrlState } from 'app/types/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { safeStringifyValue } from 'app/core/utils/explore';
+import { safeStringifyValue, instanceOfDataQueryError } from 'app/core/utils/explore';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -40,6 +40,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private $q,
+    instanceSettings,
+    private $q: angular.IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
@@ -135,7 +137,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options: DataQueryRequest<PromQuery>) {
+  query(options: DataQueryRequest<PromQuery>): Promise<{ data: any }> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -155,7 +157,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      return this.$q.when({ data: [] });
+      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
     const allQueryPromise = _.map(queries, query => {
@@ -166,11 +168,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     });
 
-    return this.$q.all(allQueryPromise).then(responseList => {
+    const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
       let result = [];
 
       _.each(responseList, (response, index) => {
         if (response.cancelled) {
+          return;
+        }
+
+        if (instanceOfDataQueryError(response)) {
+          result.push(response);
           return;
         }
 
@@ -192,6 +199,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       return { data: result };
     });
+
+    return allPromise as Promise<{ data: any }>;
   }
 
   createQuery(target, options, start, end) {
@@ -318,7 +327,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     error.status = err.status;
     error.statusText = err.statusText;
 
-    throw error;
+    return this.$q.resolve(error);
   };
 
   performSuggestQuery(query, cache = false) {

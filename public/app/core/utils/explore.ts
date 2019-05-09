@@ -21,6 +21,7 @@ import {
   toSeriesData,
   guessFieldTypes,
   TimeFragment,
+  DataQueryError,
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
@@ -467,4 +468,41 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
     to: dateMath.parse(raw.to, true, timeZone.raw as any),
     raw,
   };
+};
+
+export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
+  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
+};
+
+export const hasRefId = (value: any): DataQueryError | null => {
+  if (!value) {
+    return null;
+  }
+
+  if (value.refId) {
+    return value;
+  }
+
+  if (typeof value !== 'object') {
+    return null;
+  }
+
+  const keys = Object.keys(value);
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    const refId = hasRefId(value[key]);
+    if (refId) {
+      return refId;
+    }
+  }
+
+  return null;
+};
+
+export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
+  if (!errors) {
+    return null;
+  }
+
+  return errors.filter(error => (error.refId ? false : true))[0];
 };

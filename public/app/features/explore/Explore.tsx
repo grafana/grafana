@@ -87,7 +87,7 @@ interface ExploreProps {
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
   initialUI: ExploreUIState;
-  queryError: DataQueryError;
+  queryErrors: DataQueryError[];
 }
 
 /**
@@ -238,7 +238,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       supportsLogs,
       supportsTable,
       queryKeys,
-      queryError,
+      queryErrors,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -260,7 +260,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <ErrorContainer queryError={queryError} />
+            <ErrorContainer queryErrors={queryErrors} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -318,7 +318,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     urlState,
     update,
-    queryError,
+    queryErrors,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -345,7 +345,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialQueries,
     initialRange,
     initialUI,
-    queryError,
+    queryErrors,
   };
 }
 

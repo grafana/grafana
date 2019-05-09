@@ -256,7 +256,7 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryError: DataQueryError;
+  queryErrors: DataQueryError[];
   latency: number;
 }
 

@@ -1,38 +1,17 @@
 import React, { FunctionComponent } from 'react';
 import { DataQueryError } from '@grafana/ui';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-
-export const hasRefId = (value: any) => {
-  if (!value) {
-    return false;
-  }
-
-  if (value.refId) {
-    return true;
-  }
-
-  if (typeof value !== 'object') {
-    return false;
-  }
-
-  const keys = Object.keys(value);
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    if (hasRefId(value[key])) {
-      return true;
-    }
-  }
-
-  return false;
-};
+import { getFirstQueryErrorWithoutRefId, hasRefId } from 'app/core/utils/explore';
 
 interface Props {
-  queryError: DataQueryError;
+  queryErrors: DataQueryError[];
 }
 
 export const ErrorContainer: FunctionComponent<Props> = props => {
-  const { queryError } = props;
-  const showError = queryError && !hasRefId(queryError);
+  const { queryErrors } = props;
+  const refId = hasRefId(queryErrors);
+  const queryError = refId ? null : getFirstQueryErrorWithoutRefId(queryErrors);
+  const showError = queryError ? true : false;
   const duration = showError ? 100 : 10;
   const message = queryError ? queryError.message : null;
 

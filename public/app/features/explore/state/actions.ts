@@ -19,6 +19,7 @@ import {
   getTimeRange,
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
+  instanceOfDataQueryError,
 } from 'app/core/utils/explore';
 
 // Actions
@@ -407,11 +408,7 @@ export function modifyQueries(
   };
 }
 
-/**
- * Mark a query transaction as failed with an error extracted from the query response.
- * The transaction will be marked as `done`.
- */
-export function queryTransactionFailure(
+export function processQueryErrors(
   exploreId: ExploreId,
   response: any,
   resultType: ResultType,
@@ -419,6 +416,7 @@ export function queryTransactionFailure(
 ): ThunkResult<void> {
   return (dispatch, getState) => {
     const { datasourceInstance } = getState().explore[exploreId];
+
     if (datasourceInstance.meta.id !== datasourceId || response.cancelled) {
       // Navigated away, queries did not matter
       return;
@@ -438,22 +436,14 @@ export function queryTransactionFailure(
   };
 }
 
-export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
-  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
-};
-
 /**
- * Complete a query transaction, mark the transaction as `done` and store query state in URL.
- * If the transaction was started by a scanner, it keeps on scanning for more results.
- * Side-effect: the query is stored in localStorage.
  * @param exploreId Explore area
- * @param transactionId ID
- * @param result Response from `datasourceInstance.query()`
+ * @param response Response from `datasourceInstance.query()`
  * @param latency Duration between request and response
- * @param queries Queries from all query rows
+ * @param resultType The type of result
  * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
  */
-export function queryTransactionSuccess(
+export function processQueryResults(
   exploreId: ExploreId,
   response: any,
   latency: number,
@@ -461,16 +451,30 @@ export function queryTransactionSuccess(
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, scanning, scanner } = getState().explore[exploreId];
+    const { datasourceInstance, scanning, scanner, eventBridge } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
       return;
     }
 
+    const errors: DataQueryError[] = response.data.filter((data: any) => instanceOfDataQueryError(data));
+    const series: any[] = response.data.filter((data: any) => !instanceOfDataQueryError(data));
+
+    for (const response of errors) {
+      eventBridge.emit('data-error', response);
+      dispatch(
+        queryFailureAction({
+          exploreId,
+          response,
+          resultType,
+        })
+      );
+    }
+
     const resultGetter =
       resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data : null;
-    const result = resultGetter ? resultGetter(response.data, null, []) : response.data;
+    const result = resultGetter ? resultGetter(series, null, []) : series;
 
     dispatch(
       querySuccessAction({
@@ -592,10 +596,10 @@ function runQueriesForType(
       // Side-effect: Saving history in localstorage
       const nextHistory = updateHistory(history, datasourceId, queries);
       dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-      dispatch(queryTransactionSuccess(exploreId, response, latency, resultType, datasourceId));
+      dispatch(processQueryResults(exploreId, response, latency, resultType, datasourceId));
     } catch (err) {
       eventBridge.emit('data-error', err);
-      dispatch(queryTransactionFailure(exploreId, err, resultType, datasourceId));
+      dispatch(processQueryErrors(exploreId, err, resultType, datasourceId));
     }
   };
 }

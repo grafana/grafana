@@ -20,7 +20,7 @@ import {
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { safeStringifyValue } from 'app/core/utils/explore';
+import { safeStringifyValue, instanceOfDataQueryError } from 'app/core/utils/explore';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -117,15 +117,19 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         error.status = err.status;
         error.statusText = err.statusText;
 
-        return Promise.reject(error);
+        return Promise.resolve(error);
       })
     );
 
     return Promise.all(queries).then((results: any[]) => {
-      const series: SeriesData[] = [];
+      const series: Array<SeriesData | DataQueryError> = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
+        if (instanceOfDataQueryError(result)) {
+          series.push(result);
+        }
+
         if (result.data) {
           const refId = queryTargets[i].refId;
           for (const stream of result.data.streams || []) {

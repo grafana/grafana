@@ -13,7 +13,6 @@ import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
   datasource: any;
-  error?: string | JSX.Element;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;

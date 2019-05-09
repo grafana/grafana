@@ -132,7 +132,6 @@ export class QueryRow extends PureComponent<QueryRowProps> {
           ) : (
             <QueryEditor
               datasource={datasourceInstance}
-              error={queryResponse.error && queryResponse.error.message ? queryResponse.error.message : null}
               onQueryChange={this.onChange}
               onExecuteQuery={this.onRunQuery}
               initialQuery={query}
@@ -177,11 +176,11 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     tableIsLoading,
     logIsLoading,
     latency,
+    queryErrors,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error =
-    item.queryError && item.queryError.refId && item.queryError.refId === query.refId ? item.queryError : null;
+  const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
   const series = graphResult ? graphResult : []; // TODO: use SeriesData
   const queryResponseState =
     graphIsLoading || tableIsLoading || logIsLoading

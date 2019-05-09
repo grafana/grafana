@@ -104,7 +104,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
-  queryError: null,
+  queryErrors: [],
   latency: 0,
 });
 
@@ -231,6 +231,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         datasourceInstance,
+        queryErrors: [],
+        latency: 0,
+        graphIsLoading: false,
+        logIsLoading: false,
+        tableIsLoading: false,
         supportsGraph,
         supportsLogs,
         supportsTable,
@@ -309,7 +314,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: queryFailureAction,
     mapper: (state, action): ExploreItemState => {
       const { resultType, response } = action.payload;
-      const queryError = state.queryError ? state.queryError : response;
+      const queryErrors = state.queryErrors.concat(response);
 
       return {
         ...state,
@@ -317,7 +322,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         tableResult: resultType === 'Table' ? null : state.tableResult,
         logsResult: resultType === 'Logs' ? null : state.logsResult,
         latency: 0,
-        queryError,
+        queryErrors,
         showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
@@ -333,7 +338,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
-        queryError: null,
+        queryErrors: [],
         latency: 0,
         graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
@@ -356,7 +361,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
         logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
         latency,
-        queryError: null,
         graphIsLoading: false,
         logIsLoading: false,
         tableIsLoading: false,
