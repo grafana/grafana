@@ -193,6 +193,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       dataList: dataList,
       range: this.range,
     });
+    console.log('GOT', this.seriesList);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {

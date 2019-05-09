@@ -1,8 +1,9 @@
 import _ from 'lodash';
-import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
+import { colors, getColorFromHexRgbOrName, FieldCache, FieldType, SeriesData, Field } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 import { LegacyResponseData, TimeRange } from '@grafana/ui';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 
 type Options = {
   dataList: LegacyResponseData[];
@@ -28,28 +29,28 @@ export class DataProcessor {
       }
     }
 
+    const series = getProcessedSeriesData(options.dataList);
+
     switch (this.panel.xaxis.mode) {
       case 'series':
       case 'time': {
-        return options.dataList.map((item, index) => {
-          return this.timeSeriesHandler(item, index, options);
-        });
+        return this.getTimeSeries(series, options);
       }
       case 'histogram': {
-        let histogramDataList;
+        let histogramDataList: SeriesData[];
         if (this.panel.stack) {
-          histogramDataList = options.dataList;
+          histogramDataList = series;
         } else {
           histogramDataList = [
             {
-              target: 'count',
-              datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
+              name: 'count',
+              fields: [{ name: 'Value' }, { name: 'time', type: FieldType.time }],
+              rows: _.concat([], _.flatten(_.map(options.dataList, 'rows'))),
             },
           ];
         }
-        return histogramDataList.map((item, index) => {
-          return this.timeSeriesHandler(item, index, options);
-        });
+
+        return this.getTimeSeries(histogramDataList, options);
       }
       case 'field': {
         return this.customHandler(firstItem);
@@ -110,30 +111,69 @@ export class DataProcessor {
     }
   }
 
-  timeSeriesHandler(seriesData: LegacyResponseData, index: number, options: Options) {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
+  getTimeSeries(seriesData: SeriesData[], options: Options) {
+    const list: TimeSeries[] = [];
+    for (const series of seriesData) {
+      const { fields, name } = series;
+      if (fields.length > 2) {
+        const cache = new FieldCache(fields);
+        const time = cache.getFirstFieldOfType(FieldType.time);
+        if (!time) {
+          continue;
+        }
+        const seriesName = series.name ? series.name : series.refId;
+        const prefix = seriesData.length > 1 ? seriesName + ' ' : '';
+        for (let i = 0; i < fields.length; i++) {
+          if (fields[i].type !== FieldType.number) {
+            continue;
+          }
+          list.push(
+            this.toTimeSeries(
+              fields[i],
+              prefix + fields[i].name, // Alias
+              series.rows.map(row => {
+                return [row[i], row[time.index]];
+              }),
+              list.length,
+              options.range
+            )
+          );
+        }
+      } else {
+        // Simple timeseris
+        list.push(
+          this.toTimeSeries(
+            fields[0],
+            name, // Alias
+            series.rows,
+            list.length,
+            options.range
+          )
+        );
+      }
+    }
+    return list;
+  }
 
+  private toTimeSeries(field: Field, alias: string, datapoints: any[][], index: number, range?: TimeRange) {
     const colorIndex = index % colors.length;
-
     const color = this.panel.aliasColors[alias] || colors[colorIndex];
 
     const series = new TimeSeries({
-      datapoints: datapoints,
+      datapoints: datapoints || [],
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
-      unit: seriesData.unit,
+      unit: field.unit,
     });
 
-    if (datapoints && datapoints.length > 0) {
+    if (datapoints && datapoints.length > 0 && range) {
       const last = datapoints[datapoints.length - 1][1];
-      const from = options.range.from;
+      const from = range.from;
 
       if (last - from.valueOf() < -10000) {
         series.isOutsideRange = true;
       }
     }
-
     return series;
   }
 
