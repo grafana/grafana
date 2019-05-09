@@ -15,7 +15,7 @@ export class TestInfoTab extends PureComponent<Props> {
   render() {
     return (
       <div>
-        See githb for more information about setting up a reproducable test environment.
+        See github for more information about setting up a reproducable test environment.
         <br />
         <br />
         <a className="btn btn-inverse" href="https://github.com/grafana/grafana/tree/master/devenv" target="_blank">
