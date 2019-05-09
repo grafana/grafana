@@ -1,6 +1,5 @@
 // Libaries
 import _ from 'lodash';
-import isNumber from 'lodash/isNumber';
 
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -593,8 +592,8 @@ export class DashboardModel {
     return maxPos.y + maxPos.h - rowYPos;
   }
 
-  removePanel(panel: PanelModel | number) {
-    const index = isNumber(panel) ? this.getPanelInfoById(panel).index : _.indexOf(this.panels, panel);
+  removePanel(panel: PanelModel) {
+    const index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
     this.events.emit('panel-removed', panel);
   }
