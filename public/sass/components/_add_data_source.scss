@@ -19,17 +19,6 @@
   margin-bottom: $space-sm;
 }
 
-.add-data-source-grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  grid-row-gap: 2px;
-  grid-column-gap: 2px;
-
-  @include media-breakpoint-up(md) {
-    grid-template-columns: repeat(1, 1fr);
-  }
-}
-
 .add-data-source-item {
   padding: $space-md;
   display: flex;
@@ -39,6 +28,7 @@
   background: $panel-editor-viz-item-bg;
   border: 1px solid transparent;
   border-radius: 3px;
+  margin-bottom: $space-xxs;
 
   &:hover {
     box-shadow: $panel-editor-viz-item-shadow-hover;

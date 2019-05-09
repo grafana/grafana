@@ -6,7 +6,7 @@ import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel, DataSourcePluginMeta } from '@grafana/ui';
+import { NavModel, DataSourcePluginMeta, List } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -78,16 +78,17 @@ class NewDataSourcePage extends PureComponent<Props> {
     });
 
     return (
-      <div className="add-data-source-grid">
-        {types.map((plugin, index) => (
+      <List
+        items={types}
+        getItemKey={item => item.id.toString()}
+        renderItem={item => (
           <DataSourceTypeCard
-            key={`${plugin.id}-${index}`}
-            plugin={plugin}
-            onClick={() => this.onDataSourceTypeClicked(plugin)}
+            plugin={item}
+            onClick={() => this.onDataSourceTypeClicked(item)}
             onLearnMoreClick={this.onLearnMoreClick}
           />
-        ))}
-      </div>
+        )}
+      />
     );
   }
 
@@ -106,7 +107,6 @@ class NewDataSourcePage extends PureComponent<Props> {
       (accumulator, item) => {
         const category = item.category || 'other';
         const list = accumulator[category] || [];
-        console.log(category);
         list.push(item);
         accumulator[category] = list;
         return accumulator;
@@ -153,7 +153,7 @@ class NewDataSourcePage extends PureComponent<Props> {
               />
             </div>
             <div className="page-action-bar__spacer" />
-            <a className="btn btn-inverse" href="datasources">
+            <a className="btn btn-secondary" href="datasources">
               Cancel
             </a>
           </div>
