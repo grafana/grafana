@@ -9,8 +9,16 @@ import { logStreamToSeriesData } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
 
 // Types
-import { PluginMeta, DataQueryRequest, SeriesData } from '@grafana/ui/src/types';
-import { LokiQuery } from './types';
+import {
+  PluginMeta,
+  DataQueryRequest,
+  SeriesData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+} from '@grafana/ui/src/types';
+import { LokiQuery, LokiOptions } from './types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -30,12 +38,17 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export class LokiDatasource {
+export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   languageProvider: LanguageProvider;
   maxLines: number;
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
+    super(instanceSettings);
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;

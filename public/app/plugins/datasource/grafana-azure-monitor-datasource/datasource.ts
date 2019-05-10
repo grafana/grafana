@@ -7,9 +7,7 @@ import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@gr
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-export default class Datasource implements DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
-  id: number;
-  name: string;
+export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
@@ -21,8 +19,7 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery, Azur
     private templateSrv: TemplateSrv,
     private $q
   ) {
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
+    super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
     this.appInsightsDatasource = new AppInsightsDatasource(
       instanceSettings,

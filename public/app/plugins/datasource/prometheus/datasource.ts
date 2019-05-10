@@ -14,14 +14,15 @@ import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 
 // Types
-import { PromQuery } from './types';
-import { DataQueryRequest, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
+import { PromQuery, PromOptions } from './types';
+import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSettings } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export class PrometheusDatasource implements DataSourceApi<PromQuery> {
+export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
   editorSrc: string;
-  name: string;
   ruleMappings: { [index: string]: string };
   url: string;
   directUrl: string;
@@ -35,25 +36,32 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    private $q,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
+
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
-    this.name = instanceSettings.name;
     this.url = instanceSettings.url;
-    this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.directUrl = instanceSettings.jsonData.directUrl;
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
   }
 
-  init() {
+  init = () => {
     this.loadRules();
-  }
+  };
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;

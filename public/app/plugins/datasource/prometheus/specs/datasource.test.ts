@@ -8,6 +8,10 @@ import {
   prometheusSpecialRegexEscape,
 } from '../datasource';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { PromOptions } from '../types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 jest.mock('../metric_find_query');
 
@@ -18,13 +22,13 @@ const DEFAULT_TEMPLATE_SRV_MOCK = {
 
 describe('PrometheusDatasource', () => {
   const ctx: any = {};
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: {} as any,
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   ctx.backendSrvMock = {};
 
@@ -347,27 +351,27 @@ const HOUR = 60 * MINUTE;
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 const ctx = {} as any;
-const instanceSettings = {
+const instanceSettings = ({
   url: 'proxied',
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
-};
+} as unknown) as DataSourceInstanceSettings<PromOptions>;
 const backendSrv = {
   datasourceRequest: jest.fn(),
 } as any;
 
-const templateSrv = {
+const templateSrv = ({
   getAdhocFilters: () => [],
   replace: jest.fn(str => str),
-};
+} as unknown) as TemplateSrv;
 
-const timeSrv = {
+const timeSrv = ({
   timeRange: () => {
     return { to: { diff: () => 2000 }, from: '' };
   },
-};
+} as unknown) as TimeSrv;
 
 describe('PrometheusDatasource', () => {
   describe('When querying prometheus with one target using query editor target spec', () => {
@@ -1177,13 +1181,13 @@ describe('PrometheusDatasource', () => {
 
 describe('PrometheusDatasource for POST', () => {
   //   const ctx = new helpers.ServiceTestContext();
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   describe('When querying prometheus with one target using query editor target spec', () => {
     let results;

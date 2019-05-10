@@ -59,6 +59,7 @@ export interface DateTime extends Object {
   subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
   toDate: () => Date;
   toISOString: () => string;
+  diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
