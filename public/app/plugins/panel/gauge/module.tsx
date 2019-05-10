@@ -19,6 +19,7 @@ import {
   Field,
   FieldType,
   FieldPropertiesEditor,
+  BooleanOption,
 } from '@grafana/ui';
 
 import { GaugePanel } from './GaugePanel';
@@ -49,6 +50,14 @@ const optionsModel: OptionsUIModel<GaugeOptions> = {
                   property: 'fieldOptions',
                 },
               } as OptionEditor<GaugeOptions, 'fieldOptions'>,
+              {
+                type: OptionsUIType.Editor,
+                editor: {
+                  optionType: OptionType.Boolean,
+                  component: BooleanOption,
+                  property: 'showThresholdLabels',
+                },
+              } as OptionEditor<GaugeOptions, 'showThresholdLabels'>,
             ],
           } as OptionsPanelGroup,
           {
@@ -95,6 +104,7 @@ const valueMappingSchema: yup.ObjectSchema<ValueMapping> = yup.object({
   text: yup.string(),
   type: yup.number().oneOf([MappingType.ValueToText, MappingType.RangeToText]),
 });
+
 const thresholdSchema: yup.ObjectSchema<Threshold> = yup.object({
   index: yup.number(),
   value: yup.number(),
