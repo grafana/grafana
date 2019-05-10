@@ -27,6 +27,7 @@ export const DEFAULT_MAX_LINES = 1000;
 const DEFAULT_QUERY_PARAMS = {
   direction: 'BACKWARD',
   limit: DEFAULT_MAX_LINES,
+  regexp: '',
   query: '',
 };
 
@@ -68,13 +69,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
-    const { query } = parseQuery(interpolated);
+    const { query, regexp } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
     const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
       query,
+      regexp,
       start,
       end,
       limit: this.maxLines,
@@ -158,7 +160,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
-    let { selector } = parsed;
+    let { query: selector } = parsed;
     switch (action.type) {
       case 'ADD_FILTER': {
         selector = addLabelToSelector(selector, action.key, action.value);
@@ -167,7 +169,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       default:
         break;
     }
-    const expression = formatQuery(selector, parsed.filter);
+    const expression = formatQuery(selector, parsed.regexp);
     return { ...query, expr: expression };
   }
 

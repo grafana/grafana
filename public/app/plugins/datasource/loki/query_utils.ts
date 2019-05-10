@@ -5,19 +5,19 @@ const caseInsensitive = '(?i)'; // Golang mode modifier for Loki, doesn't work i
 export function parseQuery(input: string): LokiExpression {
   input = input || '';
   const match = input.match(selectorRegexp);
-  let selector = '';
-  let filter = input;
-  let query = input;
+  let query = '';
+  let regexp = input;
 
   if (match) {
-    selector = match[0].trim();
-    filter = input.replace(selectorRegexp, '').trim();
-    if (filter && filter.search(/\|=|\|~|!=|!~/) === -1) {
-      query = `${selector} |~ "${caseInsensitive}${filter}"`;
+    // Selector
+    query = match[0].trim();
+    regexp = input.replace(selectorRegexp, '').trim();
+    if (regexp && regexp.search(/\|=|\|~|!=|!~/) === -1) {
+      regexp = `|~ "${caseInsensitive}${regexp}"`;
     }
   }
 
-  return { selector, filter, query };
+  return { regexp, query };
 }
 
 export function formatQuery(selector: string, search: string): string {

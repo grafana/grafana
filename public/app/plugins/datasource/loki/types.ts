@@ -24,7 +24,6 @@ export interface LokiLogsStreamEntry {
 }
 
 export interface LokiExpression {
-  selector: string;
-  filter: string;
+  regexp: string;
   query: string;
 }
