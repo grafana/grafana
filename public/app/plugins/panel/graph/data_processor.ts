@@ -55,8 +55,10 @@ export class DataProcessor {
       }
     }
 
+    // Merge all the rows if we want to show a histogram
     if (this.panel.xaxis.mode === 'histogram' && !this.panel.stack && list.length > 1) {
       const first = list[0];
+      first.alias = first.aliasEscaped = 'Count';
       for (let i = 1; i < list.length; i++) {
         first.datapoints = first.datapoints.concat(list[i].datapoints);
       }
