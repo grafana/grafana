@@ -1,9 +1,9 @@
 import { DataProcessor } from '../data_processor';
-import { LegacyResponseData } from '@grafana/ui';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {
-    xaxis: {},
+    xaxis: { mode: 'series' },
     aliasColors: {},
   };
 
@@ -11,7 +11,7 @@ describe('Graph DataProcessor', () => {
 
   describe('getTimeSeries from LegacyResponseData', () => {
     // Try each type of data
-    const dataList = [
+    const dataList = getProcessedSeriesData([
       {
         alias: 'First (time_series)',
         datapoints: [[1, 1001], [2, 1002], [3, 1003]],
@@ -41,11 +41,19 @@ describe('Graph DataProcessor', () => {
         ],
         rows: [[0.1, 1.1, 'a', 1001], [0.2, 2.2, 'b', 1002], [0.3, 3.3, 'c', 1003]],
       },
-    ] as LegacyResponseData[];
+    ]);
 
     it('Should return a new series for each field', () => {
-      const series = processor.getTimeSeries(dataList, { dataList: [] });
+      panel.xaxis.mode = 'series';
+      const series = processor.getSeriesList({ dataList });
       expect(series.length).toEqual(5);
+      expect(series).toMatchSnapshot();
+    });
+
+    it('Should return single histogram', () => {
+      panel.xaxis.mode = 'histogram';
+      const series = processor.getSeriesList({ dataList });
+      expect(series.length).toEqual(1);
       expect(series).toMatchSnapshot();
     });
   });
