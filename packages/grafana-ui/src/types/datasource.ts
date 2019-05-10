@@ -188,7 +188,7 @@ export abstract class ExploreDataSourceApi<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-  getHighlighterExpression?(query: TQuery): string;
+  getHighlighterExpression?(query: TQuery): string[];
   languageProvider?: any;
 }
 

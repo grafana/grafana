@@ -26,6 +26,10 @@ export function formatQuery(selector: string, search: string): string {
   return `${selector || ''} ${search || ''}`.trim();
 }
 
+/**
+ * Returns search terms from a LogQL query.
+ * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
+ */
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const parsed = parseQuery(input);
   // Legacy syntax
@@ -34,16 +38,20 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   }
   let expression = input;
   const results = [];
+  // Consume filter expression from left to right
   while (expression) {
     const filterStart = expression.search(/\|=|\|~|!=|!~/);
+    // Nothing more to search
     if (filterStart === -1) {
-      return results;
+      break;
     }
+    // Drop terms for negative filters
     const skip = expression.substr(filterStart).search(/!=|!~/) === 0;
     expression = expression.substr(filterStart + 2);
     if (skip) {
       continue;
     }
+    // Check if there is more chained
     const filterEnd = expression.search(/\|=|\|~|!=|!~/);
     let filterTerm;
     if (filterEnd === -1) {
@@ -53,6 +61,7 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       expression = expression.substr(filterEnd);
     }
 
+    // Unwrap the filter term by removing quotes
     results.push(filterTerm.replace(/^\s*"/g, '').replace(/"\s*$/g, ''));
   }
   return results;
