@@ -16,6 +16,7 @@ export * from './validate';
 export { getFlotPairs } from './flotPairs';
 export * from './object';
 export * from './fieldCache';
+export * from './moment_wrapper';
 
 export * from './matchers/ids';
 export * from './matchers/matchers';

@@ -1,5 +1,5 @@
-[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana)
-================
+# [Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana)
+
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
 [Community & Forum](https://community.grafana.com)
@@ -12,12 +12,15 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 -->
 
 ## Installation
+
 Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
 
 ## Documentation & Support
+
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
+
 If you want to build a package yourself, or contribute - here is a guide for how to do that. You can always find
 the latest master builds [here](https://grafana.com/grafana/download)
 
@@ -48,7 +51,7 @@ go run build.go build
 
 #### Frontend assets
 
-*For this you need Node.js (LTS version).*
+_For this you need Node.js (LTS version)._
 
 ```bash
 yarn install --pure-lockfile
@@ -80,7 +83,7 @@ yarn start:hot
 env GRAFANA_THEME=light yarn start:hot
 ```
 
-*Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload.*
+_Note: HMR for Angular is not supported. If you edit files in the Angular part of the app, the whole page will reload._
 
 Run tests and rebuild on source change:
 
@@ -128,7 +131,9 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 ### Running tests
 
 #### Frontend
+
 Execute all frontend tests
+
 ```bash
 yarn test
 ```
@@ -139,6 +144,7 @@ Writing & watching frontend tests
 - Jest will run all test files that end with the name ".test.ts"
 
 #### Backend
+
 ```bash
 # Run Golang tests using sqlite3 as database (default)
 go test ./pkg/...
@@ -148,6 +154,26 @@ GRAFANA_TEST_DB=mysql go test ./pkg/...
 
 # Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
 GRAFANA_TEST_DB=postgres go test ./pkg/...
+```
+
+#### End-to-end
+
+Execute all end-to-end tests
+
+```bash
+yarn e2e-tests
+```
+
+Execute all end-to-end tests using using a specific url
+
+```bash
+ENV BASE_URL=http://localhost:3333 yarn e2e-tests
+```
+
+Debugging all end-to-end tests (BROWSER=1 will start the browser and SLOWMO=1 will delay each puppeteer operation by 100ms)
+
+```bash
+ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
 ```
 
 ### Datasource and dashboard provisioning
@@ -171,4 +197,3 @@ plugin development.
 ## License
 
 Grafana is distributed under [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE).
-

@@ -14,6 +14,7 @@ import (
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/pkg/errors"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -23,6 +24,7 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 		return 0, err
 	}
 
+	var num int
 	for _, address := range msg.To {
 		m := gomail.NewMessage()
 		m.SetHeader("From", msg.From)
@@ -34,12 +36,16 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 
 		m.SetBody("text/html", msg.Body)
 
-		if err := dialer.DialAndSend(m); err != nil {
-			return 0, err
+		e := dialer.DialAndSend(m)
+		if e != nil {
+			err = errors.Wrapf(e, "Failed to send notification to email address: %s", address)
+			continue
 		}
+
+		num += 1
 	}
 
-	return len(msg.To), nil
+	return num, err
 }
 
 func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
