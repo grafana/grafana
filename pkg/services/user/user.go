@@ -5,17 +5,20 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// Upserts the user
-func Upsert(
-	externalUser *models.ExternalUserInfo,
-	SignupAllowed bool,
-) (*models.User, error) {
-	// add/update user in grafana
-	query := &models.UpsertUserCommand{
-		ExternalUser:  externalUser,
-		SignupAllowed: SignupAllowed,
-	}
+// UpsertArgs are object for Upsert method
+type UpsertArgs struct {
+	ReqContext    *models.ReqContext
+	ExternalUser  *models.ExternalUserInfo
+	SignupAllowed bool
+}
 
+// Upsert add/update grafana user
+func Upsert(args *UpsertArgs) (*models.User, error) {
+	query := &models.UpsertUserCommand{
+		ReqContext:    args.ReqContext,
+		ExternalUser:  args.ExternalUser,
+		SignupAllowed: args.SignupAllowed,
+	}
 	err := bus.Dispatch(query)
 	if err != nil {
 		return nil, err

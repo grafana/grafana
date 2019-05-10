@@ -34,7 +34,10 @@ var loginUsingLdap = func(query *models.LoginUserQuery) (bool, error) {
 		return true, err
 	}
 
-	login, err := user.Upsert(externalUser, setting.LdapAllowSignup)
+	login, err := user.Upsert(&user.UpsertArgs{
+		ExternalUser:  externalUser,
+		SignupAllowed: setting.LdapAllowSignup,
+	})
 	if err != nil {
 		return true, err
 	}

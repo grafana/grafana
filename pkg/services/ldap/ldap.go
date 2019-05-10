@@ -28,6 +28,7 @@ type IConnection interface {
 type IAuth interface {
 	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users() ([]*models.ExternalUserInfo, error)
+	ExtractGrafanaUser(*UserInfo) (*models.ExternalUserInfo, error)
 	Dial() error
 	Close()
 }
@@ -59,16 +60,16 @@ func New(server *ServerConfig) IAuth {
 }
 
 // Dial dials in the LDAP
-func (auth *Auth) Dial() error {
+func (ldap *Auth) Dial() error {
 	if hookDial != nil {
-		return hookDial(auth)
+		return hookDial(ldap)
 	}
 
 	var err error
 	var certPool *x509.CertPool
-	if auth.server.RootCACert != "" {
+	if ldap.server.RootCACert != "" {
 		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(auth.server.RootCACert, " ") {
+		for _, caCertFile := range strings.Split(ldap.server.RootCACert, " ") {
 			pem, err := ioutil.ReadFile(caCertFile)
 			if err != nil {
 				return err
@@ -79,35 +80,35 @@ func (auth *Auth) Dial() error {
 		}
 	}
 	var clientCert tls.Certificate
-	if auth.server.ClientCert != "" && auth.server.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(auth.server.ClientCert, auth.server.ClientKey)
+	if ldap.server.ClientCert != "" && ldap.server.ClientKey != "" {
+		clientCert, err = tls.LoadX509KeyPair(ldap.server.ClientCert, ldap.server.ClientKey)
 		if err != nil {
 			return err
 		}
 	}
-	for _, host := range strings.Split(auth.server.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, auth.server.Port)
-		if auth.server.UseSSL {
+	for _, host := range strings.Split(ldap.server.Host, " ") {
+		address := fmt.Sprintf("%s:%d", host, ldap.server.Port)
+		if ldap.server.UseSSL {
 			tlsCfg := &tls.Config{
-				InsecureSkipVerify: auth.server.SkipVerifySSL,
+				InsecureSkipVerify: ldap.server.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
-			if auth.server.StartTLS {
-				auth.connection, err = dial("tcp", address)
+			if ldap.server.StartTLS {
+				ldap.connection, err = dial("tcp", address)
 				if err == nil {
-					if err = auth.connection.StartTLS(tlsCfg); err == nil {
+					if err = ldap.connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				auth.connection, err = LDAP.DialTLS("tcp", address, tlsCfg)
+				ldap.connection, err = LDAP.DialTLS("tcp", address, tlsCfg)
 			}
 		} else {
-			auth.connection, err = dial("tcp", address)
+			ldap.connection, err = dial("tcp", address)
 		}
 
 		if err == nil {
@@ -118,8 +119,8 @@ func (auth *Auth) Dial() error {
 }
 
 // Close closes the LDAP connection
-func (auth *Auth) Close() {
-	auth.connection.Close()
+func (ldap *Auth) Close() {
+	ldap.connection.Close()
 }
 
 // Login logs in the user
@@ -127,7 +128,7 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 	// perform initial authentication
-	if err := ldap.initialBind(query.Username, query.Password); err != nil {
+	if err := ldap.authenticate(query.Username, query.Password); err != nil {
 		return nil, err
 	}
 
@@ -145,7 +146,7 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 		}
 	}
 
-	result, err := ldap.ExtractExternalUser(user)
+	result, err := ldap.ExtractGrafanaUser(user)
 	if err != nil {
 		return nil, err
 	}
@@ -153,23 +154,23 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	return result, nil
 }
 
-// ExtractExternalUser extracts external user info from LDAP user
-func (ldap *Auth) ExtractExternalUser(user *UserInfo) (*models.ExternalUserInfo, error) {
-	result := ldap.buildExternalUser(user)
-	if err := ldap.validateExternalUser(result); err != nil {
+// ExtractGrafanaUser extracts external user info from LDAP user
+func (ldap *Auth) ExtractGrafanaUser(user *UserInfo) (*models.ExternalUserInfo, error) {
+	result := ldap.buildGrafanaUser(user)
+	if err := ldap.validateGrafanaUser(result); err != nil {
 		return nil, err
 	}
 
 	return result, nil
 }
 
-// validate that the user has access
-// if there are no ldap group mappings access is true
+// validateGrafanaUser validates user access.
+// If there are no ldap group mappings access is true
 // otherwise a single group must match
-func (ldap *Auth) validateExternalUser(user *models.ExternalUserInfo) error {
+func (ldap *Auth) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	if len(ldap.server.Groups) > 0 && len(user.OrgRoles) < 1 {
 		ldap.log.Error(
-			"Ldap Auth: user does not belong in any of the specified ldap groups",
+			"user does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
 		)
@@ -179,7 +180,7 @@ func (ldap *Auth) validateExternalUser(user *models.ExternalUserInfo) error {
 	return nil
 }
 
-func (ldap *Auth) buildExternalUser(user *UserInfo) *models.ExternalUserInfo {
+func (ldap *Auth) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "ldap",
 		AuthId:     user.DN,
@@ -248,7 +249,7 @@ func (auth *Auth) secondBind(user *UserInfo, userPassword string) error {
 	return nil
 }
 
-func (auth *Auth) initialBind(username, userPassword string) error {
+func (auth *Auth) authenticate(username, userPassword string) error {
 	if auth.server.BindPassword != "" || auth.server.BindDN == "" {
 		userPassword = auth.server.BindPassword
 		auth.requireSecondBind = true
@@ -445,7 +446,7 @@ func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*models.ExternalUse
 	var serialized []*models.ExternalUserInfo
 
 	for index := range users.Entries {
-		serialize := ldap.buildExternalUser(&UserInfo{
+		serialize := ldap.buildGrafanaUser(&UserInfo{
 			DN: getLdapAttrN(
 				"dn",
 				users,

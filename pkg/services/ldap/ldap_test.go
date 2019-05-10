@@ -10,26 +10,27 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestAuth(t *testing.T) {
-	Convey("initialBind", t, func() {
+	Convey("authenticate", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			var actualUsername, actualPassword string
-			conn.bindProvider = func(username, password string) error {
+			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
 			Auth := &Auth{
-				conn: conn,
+				connection: connection,
 				server: &ServerConfig{
 					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
 			}
-			err := Auth.initialBind("user", "pwd")
+			err := Auth.authenticate("user", "pwd")
 			So(err, ShouldBeNil)
 			So(Auth.requireSecondBind, ShouldBeTrue)
 			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
@@ -37,20 +38,20 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			var actualUsername, actualPassword string
-			conn.bindProvider = func(username, password string) error {
+			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
 			Auth := &Auth{
-				conn: conn,
+				connection: connection,
 				server: &ServerConfig{
 					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
 				},
 			}
-			err := Auth.initialBind("user", "pwd")
+			err := Auth.authenticate("user", "pwd")
 			So(err, ShouldBeNil)
 			So(Auth.requireSecondBind, ShouldBeFalse)
 			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
@@ -58,19 +59,19 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
-			conn.unauthenticatedBindProvider = func(username string) error {
+			connection.unauthenticatedBindProvider = func(username string) error {
 				unauthenticatedBindWasCalled = true
 				actualUsername = username
 				return nil
 			}
 			Auth := &Auth{
-				conn:   conn,
-				server: &ServerConfig{},
+				connection: connection,
+				server:     &ServerConfig{},
 			}
-			err := Auth.initialBind("user", "pwd")
+			err := Auth.authenticate("user", "pwd")
 			So(err, ShouldBeNil)
 			So(Auth.requireSecondBind, ShouldBeTrue)
 			So(unauthenticatedBindWasCalled, ShouldBeTrue)
@@ -80,15 +81,15 @@ func TestAuth(t *testing.T) {
 
 	Convey("serverBind", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			var actualUsername, actualPassword string
-			conn.bindProvider = func(username, password string) error {
+			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
 			Auth := &Auth{
-				conn: conn,
+				connection: connection,
 				server: &ServerConfig{
 					BindDN:       "o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
@@ -101,16 +102,16 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
-			conn.unauthenticatedBindProvider = func(username string) error {
+			connection.unauthenticatedBindProvider = func(username string) error {
 				unauthenticatedBindWasCalled = true
 				actualUsername = username
 				return nil
 			}
 			Auth := &Auth{
-				conn: conn,
+				connection: connection,
 				server: &ServerConfig{
 					BindDN: "o=users,dc=grafana,dc=org",
 				},
@@ -122,17 +123,17 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			conn := &mockLdapConn{}
+			connection := &mockLdapConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
-			conn.unauthenticatedBindProvider = func(username string) error {
+			connection.unauthenticatedBindProvider = func(username string) error {
 				unauthenticatedBindWasCalled = true
 				actualUsername = username
 				return nil
 			}
 			Auth := &Auth{
-				conn:   conn,
-				server: &ServerConfig{},
+				connection: connection,
+				server:     &ServerConfig{},
 			}
 			err := Auth.serverBind()
 			So(err, ShouldBeNil)
@@ -155,7 +156,7 @@ func TestAuth(t *testing.T) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{{}},
 			})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{})
+			_, err := Auth.ExtractGrafanaUser(&UserInfo{})
 
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
@@ -169,7 +170,13 @@ func TestAuth(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{})
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{})
+			result, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			So(extractErr, ShouldBeNil)
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
@@ -183,7 +190,13 @@ func TestAuth(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{MemberOf: []string{"cn=users"}})
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{MemberOf: []string{"cn=users"}})
+			result, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			So(extractErr, ShouldBeNil)
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
@@ -197,7 +210,13 @@ func TestAuth(t *testing.T) {
 
 			sc.userQueryReturns(user1)
 
-			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{MemberOf: []string{"CN=users"}})
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{MemberOf: []string{"CN=users"}})
+			result, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			So(extractErr, ShouldBeNil)
 			So(err, ShouldBeNil)
 			So(result, ShouldEqual, user1)
 		})
@@ -213,13 +232,18 @@ func TestAuth(t *testing.T) {
 
 			sc.userQueryReturns(nil)
 
-			result, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				DN:       "torkelo",
 				Username: "torkelo",
 				Email:    "my@email.com",
 				MemberOf: []string{"cn=editor"},
 			})
+			result, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
 
+			So(extractErr, ShouldBeNil)
 			So(err, ShouldBeNil)
 
 			Convey("Should return new user", func() {
@@ -243,11 +267,16 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=users"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should create new org user", func() {
+				So(extractErr, ShouldBeNil)
 				So(err, ShouldBeNil)
 				So(sc.addOrgUserCmd, ShouldNotBeNil)
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
@@ -262,12 +291,18 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=users"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should update org role", func() {
 				So(err, ShouldBeNil)
+				So(extractErr, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
 				So(sc.updateOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
@@ -285,11 +320,16 @@ func TestAuth(t *testing.T) {
 				{OrgId: 1, Role: m.ROLE_EDITOR},
 				{OrgId: 2, Role: m.ROLE_EDITOR},
 			})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=users"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should remove org role", func() {
+				So(extractErr, ShouldBeNil)
 				So(err, ShouldBeNil)
 				So(sc.removeOrgUserCmd, ShouldNotBeNil)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 2)
@@ -305,12 +345,18 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_EDITOR}})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=users"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should update org role", func() {
+				So(extractErr, ShouldBeNil)
 				So(err, ShouldBeNil)
+
 				So(sc.removeOrgUserCmd, ShouldBeNil)
 				So(sc.updateOrgUserCmd, ShouldNotBeNil)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
@@ -326,12 +372,18 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{{OrgId: 1, Role: m.ROLE_ADMIN}})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=admins"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should take first match, and ignore subsequent matches", func() {
 				So(err, ShouldBeNil)
+				So(extractErr, ShouldBeNil)
+
 				So(sc.updateOrgUserCmd, ShouldBeNil)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
@@ -346,12 +398,18 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=admins"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should take first match, and ignore subsequent matches", func() {
+				So(extractErr, ShouldBeNil)
 				So(err, ShouldBeNil)
+
 				So(sc.addOrgUserCmd.Role, ShouldEqual, m.ROLE_ADMIN)
 				So(sc.setUsingOrgCmd.OrgId, ShouldEqual, 1)
 			})
@@ -372,18 +430,24 @@ func TestAuth(t *testing.T) {
 			})
 
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
-			_, err := Auth.GetGrafanaUserFor(nil, &UserInfo{
+			extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
 				MemberOf: []string{"cn=admins"},
+			})
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
 			})
 
 			Convey("Should create user with admin set to true", func() {
+				So(extractErr, ShouldBeNil)
 				So(err, ShouldBeNil)
+
 				So(sc.updateUserPermissionsCmd.IsGrafanaAdmin, ShouldBeTrue)
 			})
 		})
 	})
 
-	Convey("When calling SyncUser", t, func() {
+	Convey("Login()", t, func() {
 		mockLdapConnection := &mockLdapConn{}
 
 		auth := &Auth{
@@ -402,14 +466,8 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			conn: mockLdapConnection,
-			log:  log.New("test-logger"),
-		}
-
-		dialCalled := false
-		dial = func(network, addr string) (IConnection, error) {
-			dialCalled = true
-			return mockLdapConnection, nil
+			connection: mockLdapConnection,
+			log:        log.New("test-logger"),
 		}
 
 		entry := ldap.Entry{
@@ -423,7 +481,7 @@ func TestAuth(t *testing.T) {
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 		mockLdapConnection.setSearchResult(&result)
 
-		AuthScenario("When ldapUser found call syncInfo and orgRoles", func(sc *scenarioContext) {
+		AuthScenario("When user is log in and updated", func(sc *scenarioContext) {
 			// arrange
 			query := &m.LoginUserQuery{
 				Username: "roelgerrits",
@@ -440,17 +498,20 @@ func TestAuth(t *testing.T) {
 			sc.userOrgsQueryReturns([]*m.UserOrgDTO{})
 
 			// act
-			syncErrResult := auth.SyncUser(query)
+			extUser, _ := auth.Login(query)
+			userInfo, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
 
 			// assert
-			So(dialCalled, ShouldBeTrue)
-			So(syncErrResult, ShouldBeNil)
+			// Check absence of the error
+			So(err, ShouldBeNil)
 			// User should be searched in ldap
 			So(mockLdapConnection.searchCalled, ShouldBeTrue)
 			// Info should be updated (email differs)
-			So(sc.updateUserCmd.Email, ShouldEqual, "roel@test.com")
+			So(userInfo.Email, ShouldEqual, "roel@test.com")
 			// User should have admin privileges
-			So(sc.addOrgUserCmd.UserId, ShouldEqual, 1)
 			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
 		})
 	})
@@ -478,11 +539,11 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			conn: mockLdapConnection,
-			log:  log.New("test-logger"),
+			connection: mockLdapConnection,
+			log:        log.New("test-logger"),
 		}
 
-		searchResult, err := Auth.searchForUser("roelgerrits")
+		searchResult, err := Auth.searchUser("roelgerrits")
 
 		So(err, ShouldBeNil)
 		So(searchResult, ShouldNotBeNil)

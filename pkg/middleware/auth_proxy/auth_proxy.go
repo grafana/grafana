@@ -37,11 +37,13 @@ type AuthProxy struct {
 
 	// LDAP func(server *LDAP.ServerConfig) LDAP.IAuth
 
-	enabled     bool
-	whitelistIP string
-	headerType  string
-	headers     map[string]string
-	cacheTTL    int
+	enabled             bool
+	LdapAllowSignup     bool
+	AuthProxyAutoSignUp bool
+	whitelistIP         string
+	headerType          string
+	headers             map[string]string
+	cacheTTL            int
 }
 
 // Error auth proxy specific error
@@ -80,11 +82,13 @@ func New(options *Options) *AuthProxy {
 		orgID:  options.OrgID,
 		header: header,
 
-		enabled:     setting.AuthProxyEnabled,
-		headerType:  setting.AuthProxyHeaderProperty,
-		headers:     setting.AuthProxyHeaders,
-		whitelistIP: setting.AuthProxyWhitelist,
-		cacheTTL:    setting.AuthProxyLdapSyncTtl,
+		enabled:             setting.AuthProxyEnabled,
+		headerType:          setting.AuthProxyHeaderProperty,
+		headers:             setting.AuthProxyHeaders,
+		whitelistIP:         setting.AuthProxyWhitelist,
+		cacheTTL:            setting.AuthProxyLdapSyncTtl,
+		LdapAllowSignup:     setting.LdapAllowSignup,
+		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
 	}
 }
 
@@ -160,7 +164,7 @@ func (auth *AuthProxy) getKey() string {
 	return fmt.Sprintf(CachePrefix, auth.header)
 }
 
-// Login gets user id with whatever means possible
+// Login logs in user id with whatever means possible
 func (auth *AuthProxy) Login() (int64, *Error) {
 	if auth.InCache() {
 
@@ -212,7 +216,7 @@ func (auth *AuthProxy) LoginViaCache() (int64, error) {
 	return userID.(int64), nil
 }
 
-// LoginViaLDAP gets user via LDAP request
+// LoginViaLDAP logs in user via LDAP request
 func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	query := &models.LoginUserQuery{
 		ReqContext: auth.ctx,
@@ -228,13 +232,17 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	}
 
 	ldap := LDAP.New(config.Servers)
-	LDAPUser, err := ldap.Login(query)
+	extUser, err := ldap.Login(query)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
-	// Sync LDAP user
-	user, err := user.Upsert(LDAPUser, setting.LdapAllowSignup)
+	// Have to sync grafana and LDAP user during log in
+	user, err := user.Upsert(&user.UpsertArgs{
+		ReqContext:    auth.ctx,
+		SignupAllowed: auth.LdapAllowSignup,
+		ExternalUser:  extUser,
+	})
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
@@ -242,7 +250,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	return user.Id, nil
 }
 
-// LoginViaHeader gets user from the header only
+// LoginViaHeader logs in user from the header only
 func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "authproxy",
@@ -274,18 +282,16 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		}
 	}
 
-	// add/update user in grafana
-	cmd := &models.UpsertUserCommand{
+	result, err := user.Upsert(&user.UpsertArgs{
 		ReqContext:    auth.ctx,
+		SignupAllowed: auth.LdapAllowSignup,
 		ExternalUser:  extUser,
-		SignupAllowed: setting.AuthProxyAutoSignUp,
-	}
-	err := bus.Dispatch(cmd)
+	})
 	if err != nil {
 		return 0, err
 	}
 
-	return cmd.Result.Id, nil
+	return result.Id, nil
 }
 
 // GetSignedUser get full signed user info
