@@ -172,6 +172,6 @@ this new setting.
 
 ### Session storage is no longer used
 
-In 6.2 we completly removed the session storage since we replaced the previous session implementation with an auth token.
+In 6.2 we completely removed the session storage since we replaced the previous session implementation with an auth token.
 If you are using Auth proxy with LDAP an shared cached is used in Grafana so you might want configure [remote_cache] instead. If not
 Grafana will fallback to using the database as an shared cache.
