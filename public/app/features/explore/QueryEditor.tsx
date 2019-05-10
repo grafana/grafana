@@ -41,11 +41,15 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         datasource,
         target,
         refresh: () => {
-          this.props.onQueryChange(target);
-          this.props.onExecuteQuery();
+          setTimeout(() => {
+            this.props.onQueryChange(target);
+            this.props.onExecuteQuery();
+          }, 1);
         },
         onQueryChange: () => {
-          this.props.onQueryChange(target);
+          setTimeout(() => {
+            this.props.onQueryChange(target);
+          }, 1);
         },
         events: exploreEvents,
         panel: { datasource, targets: [target] },
@@ -54,7 +58,9 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     };
 
     this.component = loader.load(this.element, scopeProps, template);
-    this.props.onQueryChange(target);
+    setTimeout(() => {
+      this.props.onQueryChange(target);
+    }, 1);
   }
 
   componentDidUpdate(prevProps: QueryEditorProps) {
