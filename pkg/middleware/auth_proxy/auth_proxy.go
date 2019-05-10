@@ -8,11 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	LDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -23,10 +26,14 @@ const (
 	CachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
-var (
-	getLDAPConfig = LDAP.GetConfig
-	isLDAPEnabled = LDAP.IsEnabled
-)
+// getLDAPConfig gets LDAP config
+var getLDAPConfig = LDAP.GetConfig
+
+// isLDAPEnabled checks if LDAP is enabled
+var isLDAPEnabled = LDAP.IsEnabled
+
+// newLDAP creates multiple LDAP instance
+var newLDAP = MultipleLDAP.New
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -34,8 +41,6 @@ type AuthProxy struct {
 	ctx    *models.ReqContext
 	orgID  int64
 	header string
-
-	// LDAP func(server *LDAP.ServerConfig) LDAP.IAuth
 
 	enabled             bool
 	LdapAllowSignup     bool
@@ -231,7 +236,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		return 0, newError("No LDAP servers available", nil)
 	}
 
-	ldap := LDAP.New(config.Servers)
+	ldap := newLDAP(config.Servers)
 	extUser, err := ldap.Login(query)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
@@ -243,6 +248,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		SignupAllowed: auth.LdapAllowSignup,
 		ExternalUser:  extUser,
 	})
+	spew.Dump(err)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}

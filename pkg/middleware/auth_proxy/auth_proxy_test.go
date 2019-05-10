@@ -8,24 +8,29 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type TestLDAP struct {
-	ldap.Auth
-	ID         int64
-	syncCalled bool
+type TestMultipleLDAPs struct {
+	MultipleLDAP.MultipleLDAPs
+	ID          int64
+	loginCalled bool
 }
 
-func (stub *TestLDAP) SyncUser(query *models.LoginUserQuery) error {
-	stub.syncCalled = true
-	query.User = &models.User{
-		Id: stub.ID,
+func (stub *TestMultipleLDAPs) Login(query *models.LoginUserQuery) (
+	*models.ExternalUserInfo, error,
+) {
+	stub.loginCalled = true
+	result := &models.ExternalUserInfo{
+		UserId: stub.ID,
 	}
-	return nil
+	return result, nil
 }
 
 func TestMiddlewareContext(t *testing.T) {
@@ -44,7 +49,7 @@ func TestMiddlewareContext(t *testing.T) {
 			},
 		}
 
-		Convey("gets data from the cache", func() {
+		Convey("logs in data from the cache", func() {
 			store := remotecache.NewFakeStore(t)
 			key := fmt.Sprintf(CachePrefix, name)
 			store.Set(key, int64(33), 0)
@@ -55,14 +60,22 @@ func TestMiddlewareContext(t *testing.T) {
 				OrgID: 4,
 			})
 
-			id, err := auth.GetUserID()
+			id, err := auth.Login()
 
 			So(err, ShouldBeNil)
 			So(id, ShouldEqual, 33)
 		})
 
 		Convey("LDAP", func() {
-			Convey("gets data from the LDAP", func() {
+			Convey("logs in via LDAP", func() {
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{
+						Id: 42,
+					}
+
+					return nil
+				})
+
 				isLDAPEnabled = func() bool {
 					return true
 				}
@@ -76,7 +89,16 @@ func TestMiddlewareContext(t *testing.T) {
 					return config, nil
 				}
 
+				stub := &TestMultipleLDAPs{
+					ID: 42,
+				}
+
+				newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+					return stub
+				}
+
 				defer func() {
+					newLDAP = MultipleLDAP.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
@@ -89,19 +111,11 @@ func TestMiddlewareContext(t *testing.T) {
 					OrgID: 4,
 				})
 
-				stub := &TestLDAP{
-					ID: 42,
-				}
-
-				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
-					return stub
-				}
-
-				id, err := auth.GetUserID()
+				id, err := auth.Login()
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
-				So(stub.syncCalled, ShouldEqual, true)
+				So(stub.loginCalled, ShouldEqual, true)
 			})
 
 			Convey("gets nice error if ldap is enabled but not configured", func() {
@@ -117,6 +131,7 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 
 				defer func() {
+					newLDAP = MultipleLDAP.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
@@ -129,20 +144,20 @@ func TestMiddlewareContext(t *testing.T) {
 					OrgID: 4,
 				})
 
-				stub := &TestLDAP{
+				stub := &TestMultipleLDAPs{
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
+				newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
 					return stub
 				}
 
-				id, err := auth.GetUserID()
+				id, err := auth.Login()
 
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldContainSubstring, "Failed to sync user")
 				So(id, ShouldNotEqual, 42)
-				So(stub.syncCalled, ShouldEqual, false)
+				So(stub.loginCalled, ShouldEqual, false)
 			})
 
 		})

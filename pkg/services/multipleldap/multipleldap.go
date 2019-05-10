@@ -14,13 +14,24 @@ var IsEnabled = LDAP.IsEnabled
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = LDAP.ErrInvalidCredentials
 
+// IMultipleLDAPs is interface for MultipleLDAPs
+type IMultipleLDAPs interface {
+	Login(query *models.LoginUserQuery) (
+		*models.ExternalUserInfo, error,
+	)
+
+	Users(logins []string) (
+		[]*models.ExternalUserInfo, error,
+	)
+}
+
 // MultipleLDAPs is basic struct of LDAP authorization
 type MultipleLDAPs struct {
 	servers []*LDAP.ServerConfig
 }
 
 // New creates the new LDAP auth
-func New(LDAPs []*LDAP.ServerConfig) *MultipleLDAPs {
+func New(LDAPs []*LDAP.ServerConfig) IMultipleLDAPs {
 	return &MultipleLDAPs{
 		servers: LDAPs,
 	}
