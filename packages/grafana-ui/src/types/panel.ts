@@ -23,6 +23,7 @@ export interface PanelData {
 }
 
 export interface PanelProps<T = any> {
+  id: number; // ID within the current dashboard
   data: PanelData;
   // TODO: annotation?: PanelData;
 
