@@ -222,7 +222,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get wantsQueryExecution() {
-    return this.props.plugin.meta.dataFormats.length > 0 && !this.hasPanelSnapshot;
+    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
   renderPanel(width: number, height: number): JSX.Element {

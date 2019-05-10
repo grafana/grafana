@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/util"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -154,15 +155,15 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 
 		panels[panel.Id] = map[string]interface{}{
-			"module":       panel.Module,
-			"baseUrl":      panel.BaseUrl,
-			"name":         panel.Name,
-			"id":           panel.Id,
-			"info":         panel.Info,
-			"hideFromList": panel.HideFromList,
-			"sort":         getPanelSort(panel.Id),
-			"dataFormats":  panel.DataFormats,
-			"state":        panel.State,
+			"module":        panel.Module,
+			"baseUrl":       panel.BaseUrl,
+			"name":          panel.Name,
+			"id":            panel.Id,
+			"info":          panel.Info,
+			"hideFromList":  panel.HideFromList,
+			"sort":          getPanelSort(panel.Id),
+			"skipDataQuery": panel.SkipDataQuery,
+			"state":         panel.State,
 		}
 	}
 
