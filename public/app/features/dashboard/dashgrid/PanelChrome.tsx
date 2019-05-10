@@ -222,7 +222,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get wantsQueryExecution() {
-    return this.props.plugin.meta.dataFormats.length > 0 && !this.hasPanelSnapshot;
+    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
   renderPanel(width: number, height: number): JSX.Element {
@@ -250,6 +250,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className="panel-content">
           <PanelComponent
+            id={panel.id}
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions(plugin.defaults)}
