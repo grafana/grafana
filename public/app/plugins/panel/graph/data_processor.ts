@@ -87,10 +87,12 @@ export class DataProcessor {
 
   getTimeSeries(seriesData: LegacyResponseData[], options: Options) {
     const list: TimeSeries[] = [];
+
     for (const series of getProcessedSeriesData(seriesData)) {
       const { fields } = series;
       const cache = new FieldCache(fields);
       const time = cache.getFirstFieldOfType(FieldType.time);
+
       if (!time) {
         continue;
       }
@@ -101,26 +103,24 @@ export class DataProcessor {
         if (fields[i].type !== FieldType.number) {
           continue;
         }
+
         const field = fields[i];
         let name = field.title;
+
         if (!field.title) {
           name = field.name;
         }
+
         if (seriesName && seriesData.length > 0 && name !== seriesName) {
           name = seriesName + ' ' + name;
         }
 
-        list.push(
-          this.toTimeSeries(
-            field,
-            name, // Alias
-            series.rows.map(row => {
-              return [row[i], row[time.index]];
-            }),
-            list.length,
-            options.range
-          )
-        );
+        const datapoints = [];
+        for (const row of series.rows) {
+          datapoints.push([row[i], row[time.index]]);
+        }
+
+        list.push(this.toTimeSeries(field, name, datapoints, list.length, options.range));
       }
     }
     return list;
