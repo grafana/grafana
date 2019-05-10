@@ -15,7 +15,13 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery, PromOptions } from './types';
-import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSettings, DataQueryError } from '@grafana/ui/src/types';
+import {
+  DataQueryRequest,
+  DataSourceApi,
+  AnnotationEvent,
+  DataSourceInstanceSettings,
+  DataQueryError,
+} from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -39,8 +45,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
-    private $q,
-    instanceSettings,
     private $q: angular.IQService,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,

@@ -423,6 +423,8 @@ export function processQueryErrors(
       return;
     }
 
+    console.log(response); // To help finding problems with query syntax
+
     if (!instanceOfDataQueryError(response)) {
       response = toDataQueryError(response);
     }

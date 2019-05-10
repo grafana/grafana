@@ -5,6 +5,7 @@ import { DataSourceInstanceSettings } from '@grafana/ui';
 import { PromOptions } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { IQService } from 'angular';
 jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
@@ -22,7 +23,7 @@ describe('Prometheus editor completer', () => {
   const backendSrv = {} as BackendSrv;
   const datasourceStub = new PrometheusDatasource(
     {} as DataSourceInstanceSettings<PromOptions>,
-    {},
+    {} as IQService,
     backendSrv,
     {} as TemplateSrv,
     {} as TimeSrv
