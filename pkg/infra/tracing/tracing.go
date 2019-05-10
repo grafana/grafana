@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 
@@ -124,6 +125,7 @@ func (jlw *jaegerLogWrapper) Error(msg string) {
 	jlw.logger.Error(msg)
 }
 
-func (jlw *jaegerLogWrapper) Infof(msg string, args ...interface{}) {
-	jlw.logger.Info(msg, args)
+func (jlw *jaegerLogWrapper) Infof(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	jlw.logger.Info(msg)
 }
