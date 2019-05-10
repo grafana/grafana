@@ -356,7 +356,12 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
     return logsModel;
   }
 
-  return undefined;
+  return {
+    hasUniqueLabels: false,
+    rows: [],
+    meta: [],
+    series: [],
+  };
 }
 
 export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
