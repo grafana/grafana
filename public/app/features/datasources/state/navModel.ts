@@ -23,14 +23,14 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     ],
   };
 
-  if (plugin.configTabs) {
-    for (const tab of plugin.configTabs) {
+  if (plugin.configPages) {
+    for (const page of plugin.configPages) {
       navModel.children.push({
         active: false,
-        text: tab.title,
-        icon: tab.icon,
-        url: `datasources/edit/${dataSource.id}/?tab=${tab.id}`,
-        id: `datasource-tab-${tab.id}`,
+        text: page.title,
+        icon: page.icon,
+        url: `datasources/edit/${dataSource.id}/?page=${page.id}`,
+        id: `datasource-page-${page.id}`,
       });
     }
   }

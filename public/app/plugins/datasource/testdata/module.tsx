@@ -14,7 +14,7 @@ export const plugin = new DataSourcePlugin(TestDataDatasource)
   .setConfigEditor(ConfigEditor)
   .setQueryCtrl(TestDataQueryCtrl)
   .setAnnotationQueryCtrl(TestDataAnnotationsQueryCtrl)
-  .addConfigTab({
+  .addConfigPage({
     title: 'Setup',
     icon: 'fa fa-list-alt',
     body: TestInfoTab,

@@ -40,7 +40,7 @@ export interface Props {
   setIsDefault: typeof setIsDefault;
   plugin?: GenericDataSourcePlugin;
   query: UrlQueryMap;
-  tab?: string;
+  page?: string;
 }
 
 interface State {
@@ -227,19 +227,19 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     );
   }
 
-  renderTabBody(tab: string) {
+  renderConfigPageBody(page: string) {
     const { plugin } = this.state;
-    if (!plugin || !plugin.addConfigTab) {
+    if (!plugin || !plugin.configPages) {
       return null; // still loading
     }
 
-    for (const t of plugin.configTabs) {
-      if (t.id === tab) {
-        return <t.body plugin={plugin} query={this.props.query} />;
+    for (const p of plugin.configPages) {
+      if (p.id === page) {
+        return <p.body plugin={plugin} query={this.props.query} />;
       }
     }
 
-    return <div>Tab Not Found: {tab}</div>;
+    return <div>Page Not Found: {page}</div>;
   }
 
   renderSettings() {
@@ -302,7 +302,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { navModel, tab } = this.props;
+    const { navModel, page } = this.props;
     const { loadError } = this.state;
 
     if (loadError) {
@@ -312,7 +312,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && <div>{tab ? this.renderTabBody(tab) : this.renderSettings()}</div>}
+          {this.hasDataSource && <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div>}
         </Page.Contents>
       </Page>
     );
@@ -322,19 +322,19 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
-  const tab = state.location.query.tab as string;
+  const page = state.location.query.page as string;
 
   return {
     navModel: getNavModel(
       state.navIndex,
-      tab ? `datasource-tab-${tab}` : `datasource-settings-${pageId}`,
+      page ? `datasource-page-${page}` : `datasource-settings-${pageId}`,
       getDataSourceLoadingNav('settings')
     ),
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
     query: state.location.query,
-    tab,
+    page,
   };
 }
 
