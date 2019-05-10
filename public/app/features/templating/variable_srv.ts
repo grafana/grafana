@@ -216,7 +216,7 @@ export class VariableSrv {
 
   /**
    * Sets the current selected option (or options) based on the query params in the url. It is possible for values
-   * in the url to not much current options of the variable. In that case the variables current value will be still set
+   * in the url to not match current options of the variable. In that case the variables current value will be still set
    * to that value.
    * @param variable Instance of Variable
    * @param urlValue Value of the query parameter
