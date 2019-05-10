@@ -609,6 +609,18 @@ describe('VariableSrv', function(this: any) {
       await setFromUrl(['one', 'two']);
       expect(setValueMock).toHaveBeenCalledWith({ text: ['one', 'two'], value: ['one', 'two'] });
     });
+
+    it('sets text and value even if it does not match any option', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx);
+      await setFromUrl('none');
+      expect(setValueMock).toHaveBeenCalledWith({ text: 'none', value: 'none' });
+    });
+
+    it('sets text and value even if it does not match any option and it is array', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx);
+      await setFromUrl(['none', 'none2']);
+      expect(setValueMock).toHaveBeenCalledWith({ text: ['none', 'none2'], value: ['none', 'none2'] });
+    });
   });
 });
 

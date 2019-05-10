@@ -245,6 +245,8 @@ export class VariableSrv {
             const t: any = _.find(variable.options, { value: item });
             if (t) {
               acc.push(t.text);
+            } else {
+              acc.push(item);
             }
 
             return acc;
