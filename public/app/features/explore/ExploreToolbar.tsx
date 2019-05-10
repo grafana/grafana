@@ -3,7 +3,16 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId } from 'app/types/explore';
-import { DataSourceSelectItem, RawTimeRange, ClickOutsideWrapper, TimeZone, TimeRange } from '@grafana/ui';
+import {
+  DataSourceSelectItem,
+  RawTimeRange,
+  ClickOutsideWrapper,
+  TimeZone,
+  TimeRange,
+  ButtonSelect,
+  SelectOptionItem,
+  QueryType,
+} from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -13,6 +22,7 @@ import {
   runQueries,
   splitOpen,
   changeRefreshInterval,
+  changeQueryType,
 } from './state/actions';
 import TimePicker from './TimePicker';
 import { getTimeZone } from '../profile/state/selectors';
@@ -61,6 +71,8 @@ interface StateProps {
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
+  supportedQueryTypeOptions: Array<SelectOptionItem<QueryType>>;
+  selectedQueryTypeOption: SelectOptionItem<QueryType>;
 }
 
 interface DispatchProps {
@@ -70,6 +82,7 @@ interface DispatchProps {
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
   changeRefreshInterval: typeof changeRefreshInterval;
+  changeDataType: typeof changeQueryType;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -100,6 +113,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeRefreshInterval(exploreId, item);
   };
 
+  onDataTypeChange = (item: SelectOptionItem<QueryType>) => {
+    const { changeDataType, exploreId } = this.props;
+    changeDataType(exploreId, item.value);
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -115,6 +133,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       refreshInterval,
       onChangeTime,
       split,
+      supportedQueryTypeOptions,
+      selectedQueryTypeOption,
     } = this.props;
 
     return (
@@ -158,6 +178,18 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   iconClassName: 'fa fa-fw fa-columns icon-margin-right',
                   iconSide: IconSide.left,
                 })}
+              </div>
+            ) : null}
+            {!datasourceMissing && supportedQueryTypeOptions.length > 1 ? (
+              <div className="explore-toolbar-content-item">
+                <ButtonSelect
+                  className="navbar-button--attached btn--radius-left-0"
+                  value={selectedQueryTypeOption}
+                  label={selectedQueryTypeOption.label}
+                  options={supportedQueryTypeOptions}
+                  onChange={this.onDataTypeChange}
+                  maxMenuHeight={380}
+                />
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
@@ -208,11 +240,40 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     graphIsLoading,
     logIsLoading,
     tableIsLoading,
+    supportedQueryTypes,
+    queryType,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const loading = graphIsLoading || logIsLoading || tableIsLoading;
+
+  const supportedQueryTypeOptions: Array<SelectOptionItem<QueryType>> = [];
+  let selectedQueryTypeOption = null;
+  for (const supportedQueryType of supportedQueryTypes) {
+    switch (supportedQueryType) {
+      case QueryType.Metrics:
+        const option1 = {
+          value: QueryType.Metrics,
+          label: QueryType.Metrics,
+        };
+        supportedQueryTypeOptions.push(option1);
+        if (queryType === QueryType.Metrics) {
+          selectedQueryTypeOption = option1;
+        }
+        break;
+      case QueryType.Logs:
+        const option2 = {
+          value: QueryType.Logs,
+          label: QueryType.Logs,
+        };
+        supportedQueryTypeOptions.push(option2);
+        if (queryType === QueryType.Logs) {
+          selectedQueryTypeOption = option2;
+        }
+        break;
+    }
+  }
 
   return {
     datasourceMissing,
@@ -223,6 +284,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     selectedDatasource,
     splitted,
     refreshInterval,
+    supportedQueryTypeOptions,
+    selectedQueryTypeOption,
   };
 };
 
@@ -233,6 +296,7 @@ const mapDispatchToProps: DispatchProps = {
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
+  changeDataType: changeQueryType,
 };
 
 export const ExploreToolbar = hot(module)(

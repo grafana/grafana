@@ -11,6 +11,7 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
+  QueryType,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
@@ -258,6 +259,8 @@ export interface ExploreItemState {
 
   queryErrors: DataQueryError[];
   latency: number;
+  supportedQueryTypes: QueryType[];
+  queryType: QueryType;
 }
 
 export interface ExploreUpdateState {

@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest, QueryType } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -152,6 +152,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
       return (
         <QueryEditor
+          queryType={QueryType.Metrics}
           query={query}
           datasource={datasource}
           onChange={onChange}

@@ -31,7 +31,14 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, DataQueryError } from '@grafana/ui';
+import {
+  RawTimeRange,
+  DataQuery,
+  ExploreStartPageProps,
+  ExploreDataSourceApi,
+  DataQueryError,
+  QueryType,
+} from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -79,15 +86,13 @@ interface ExploreProps {
   setQueries: typeof setQueries;
   split: boolean;
   showingStartPage?: boolean;
-  supportsGraph: boolean | null;
-  supportsLogs: boolean | null;
-  supportsTable: boolean | null;
   queryKeys: string[];
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
+  queryType: QueryType;
 }
 
 /**
@@ -234,11 +239,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
       exploreId,
       showingStartPage,
       split,
-      supportsGraph,
-      supportsLogs,
-      supportsTable,
       queryKeys,
       queryErrors,
+      queryType,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -273,9 +276,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {supportsGraph && !supportsLogs && <GraphContainer width={width} exploreId={exploreId} />}
-                          {supportsTable && <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />}
-                          {supportsLogs && (
+                          {queryType === QueryType.Metrics && <GraphContainer width={width} exploreId={exploreId} />}
+                          {queryType === QueryType.Metrics && (
+                            <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />
+                          )}
+                          {queryType === QueryType.Logs && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}
@@ -311,13 +316,11 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     datasourceMissing,
     initialized,
     showingStartPage,
-    supportsGraph,
-    supportsLogs,
-    supportsTable,
     queryKeys,
     urlState,
     update,
     queryErrors,
+    queryType,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -335,9 +338,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialized,
     showingStartPage,
     split,
-    supportsGraph,
-    supportsLogs,
-    supportsTable,
     queryKeys,
     update,
     initialDatasource,
@@ -345,6 +345,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialRange,
     initialUI,
     queryErrors,
+    queryType,
   };
 }
 

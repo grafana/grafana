@@ -23,6 +23,7 @@ import {
   updateDatasourceInstanceAction,
   splitOpenAction,
   splitCloseAction,
+  changeQueryTypeAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -30,7 +31,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery } from '@grafana/ui';
+import { DataSourceApi, DataQuery, QueryType } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -122,6 +123,17 @@ describe('Explore item reducer', () => {
           .thenStateShouldEqual(expectedState);
       });
     });
+
+    describe('when changeDataType is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, {})
+          .whenActionIsDispatched(changeQueryTypeAction({ exploreId: ExploreId.left, queryType: QueryType.Logs }))
+          .thenStateShouldEqual({
+            queryType: QueryType.Logs,
+          });
+      });
+    });
   });
 
   describe('changing datasource', () => {
@@ -160,6 +172,8 @@ describe('Explore item reducer', () => {
             showingStartPage: true,
             queries,
             queryKeys,
+            supportedQueryTypes: [QueryType.Metrics, QueryType.Logs],
+            queryType: QueryType.Logs,
           };
 
           reducerTester()
