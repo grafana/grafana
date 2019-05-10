@@ -35,7 +35,6 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
-  DataQueryError,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -453,28 +452,17 @@ export function processQueryResults(
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, scanning, scanner, eventBridge } = getState().explore[exploreId];
+    const { datasourceInstance, scanning, scanner } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
       return;
     }
 
-    const errors: DataQueryError[] = response.data.filter((data: any) => instanceOfDataQueryError(data));
-    const series: any[] = response.data.filter((data: any) => !instanceOfDataQueryError(data));
+    const series: any[] = response.data;
     const refIds = getRefIds(series);
 
-    for (const response of errors) {
-      eventBridge.emit('data-error', response);
-      dispatch(
-        queryFailureAction({
-          exploreId,
-          response,
-          resultType,
-        })
-      );
-    }
-
+    // Clears any previous errors that now have a successful query, important so Angular editors are updated correctly
     dispatch(
       resetQueryErrorAction({
         exploreId,
@@ -545,30 +533,22 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && supportsTable) {
       dispatch(
-        runQueriesForType(
-          exploreId,
-          'Table',
-          {
-            interval,
-            format: 'table',
-            instant: true,
-            valueWithRefId: true,
-          },
-        )
+        runQueriesForType(exploreId, 'Table', {
+          interval,
+          format: 'table',
+          instant: true,
+          valueWithRefId: true,
+        })
       );
     }
     if ((ignoreUIState || showingGraph) && supportsGraph) {
       dispatch(
-        runQueriesForType(
-          exploreId,
-          'Graph',
-          {
-            interval,
-            format: 'time_series',
-            instant: false,
-            maxDataPoints: containerWidth,
-          },
-        )
+        runQueriesForType(exploreId, 'Graph', {
+          interval,
+          format: 'time_series',
+          instant: false,
+          maxDataPoints: containerWidth,
+        })
       );
     }
     if ((ignoreUIState || showingLogs) && supportsLogs) {

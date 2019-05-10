@@ -17,9 +17,9 @@ import { expandRecordingRules } from './language_utils';
 import { PromQuery, PromOptions } from './types';
 import { DataQueryRequest, DataSourceApi, AnnotationEvent, DataSourceInstanceSettings, DataQueryError } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
+import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { safeStringifyValue, instanceOfDataQueryError } from 'app/core/utils/explore';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -176,11 +176,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           return;
         }
 
-        if (instanceOfDataQueryError(response)) {
-          result.push(response);
-          return;
-        }
-
         // Keeping original start/end for transformers
         const transformerOptions = {
           format: activeTargets[index].format,
@@ -327,7 +322,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     error.status = err.status;
     error.statusText = err.statusText;
 
-    return this.$q.resolve(error);
+    throw error;
   };
 
   performSuggestQuery(query, cache = false) {
