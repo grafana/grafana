@@ -49,7 +49,6 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     type: PluginType.panel,
     module: '',
     baseUrl: '',
-    dataFormats: [],
     info: {
       author: {
         name: '',

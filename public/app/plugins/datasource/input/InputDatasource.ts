@@ -8,23 +8,13 @@ import {
 } from '@grafana/ui/src/types';
 import { InputQuery, InputOptions } from './types';
 
-export class InputDatasource implements DataSourceApi<InputQuery, InputOptions> {
+export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   data: SeriesData[];
 
-  // Filled in by grafana plugin system
-  name?: string;
-
-  // Filled in by grafana plugin system
-  id?: number;
-
   constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
-    if (instanceSettings.jsonData) {
-      this.data = instanceSettings.jsonData.data;
-    }
+    super(instanceSettings);
 
-    if (!this.data) {
-      this.data = [];
-    }
+    this.data = instanceSettings.jsonData.data ? instanceSettings.jsonData.data : [];
   }
 
   getDescription(data: SeriesData[]): string {
