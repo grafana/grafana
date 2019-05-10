@@ -43,7 +43,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     loki: 90,
     mysql: 80,
     postgres: 79,
-    'grafana-cloud': -1,
+    gcloud: -1,
   };
 
   componentDidMount() {
@@ -210,7 +210,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
 
 function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
   return {
-    id: 'grafana-cloud',
+    id: 'gcloud',
     name: 'Grafana Cloud',
     type: PluginType.datasource,
     module: '',
