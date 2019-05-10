@@ -214,8 +214,7 @@ export interface ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
->
-  extends QueryEditorProps<DSType, TQuery, TOptions> {
+> extends QueryEditorProps<DSType, TQuery, TOptions> {
   datasourceStatus: DataSourceStatus;
   history: any[];
   onHint?: (action: QueryFixAction) => void;
