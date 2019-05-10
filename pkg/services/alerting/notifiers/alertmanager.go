@@ -149,12 +149,12 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 	return nil
 }
 
-func replaceIllegalCharsInLabelname(input string) string {
-	re := regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`)
+var labelNamePattern = regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`)
 
+func replaceIllegalCharsInLabelname(input string) string {
 	var result []byte
 	for _, c := range input {
-		if re.Match([]byte{byte(c)}) {
+		if labelNamePattern.Match([]byte{byte(c)}) {
 			result = append(result, byte(c))
 		} else {
 			result = append(result, '_')
