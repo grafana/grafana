@@ -69,7 +69,7 @@ describe('LokiDatasource', () => {
       const seriesData = res.data[0] as SeriesData;
       expect(seriesData.rows[0][1]).toBe('hello');
       expect(seriesData.meta.limit).toBe(20);
-      expect(seriesData.meta.search).toBe('(?i)foo');
+      expect(seriesData.meta.search).toBe('foo');
       done();
     });
   });

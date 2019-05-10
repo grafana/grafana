@@ -134,6 +134,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             const seriesData = logStreamToSeriesData(stream);
             seriesData.refId = refId;
             seriesData.meta = {
+              search: queryTargets[i].regexp,
               limit: this.maxLines,
             };
             series.push(seriesData);
@@ -174,7 +175,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   getHighlighterExpression(query: LokiQuery): string {
-    return undefined;
+    return parseQuery(query.expr).regexp;
   }
 
   getTime(date, roundUp) {
