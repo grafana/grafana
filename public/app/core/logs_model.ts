@@ -446,7 +446,7 @@ export function processLogSeriesRow(
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(message);
   const hasAnsi = hasAnsiCodes(message);
-  const search = series.meta && series.meta.search ? series.meta.search : '';
+  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
   return {
     logLevel,
@@ -455,10 +455,10 @@ export function processLogSeriesRow(
     timeLocal,
     uniqueLabels,
     hasAnsi,
+    searchWords,
     entry: hasAnsi ? ansicolor.strip(message) : message,
     raw: message,
     labels: series.labels,
-    searchWords: search ? [search] : [],
     timestamp: ts,
   };
 }

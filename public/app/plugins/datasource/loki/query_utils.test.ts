@@ -1,4 +1,4 @@
-import { parseQuery } from './query_utils';
+import { parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { LokiExpression } from './types';
 
 describe('parseQuery', () => {
@@ -64,5 +64,24 @@ describe('parseQuery', () => {
       query: '{foo="bar"} |~ "42"',
       regexp: '',
     } as LokiExpression);
+  });
+});
+
+describe('getHighlighterExpressionsFromQuery', () => {
+  it('returns no expressions for empty query', () => {
+    expect(getHighlighterExpressionsFromQuery('')).toEqual([]);
+  });
+  it('returns a single expressions for legacy query', () => {
+    expect(getHighlighterExpressionsFromQuery('{} x')).toEqual(['(?i)x']);
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} x')).toEqual(['(?i)x']);
+  });
+  it('returns an expression for query with filter', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x"')).toEqual(['x']);
+  });
+  it('returns expressions for query with filter chain', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ "y"')).toEqual(['x', 'y']);
+  });
+  it('returns drops expressions for query with negative filter chain', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" != "y"')).toEqual(['x']);
   });
 });

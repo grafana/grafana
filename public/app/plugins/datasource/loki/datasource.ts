@@ -6,7 +6,7 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToSeriesData } from './result_transformer';
-import { formatQuery, parseQuery } from './query_utils';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -134,7 +134,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             const seriesData = logStreamToSeriesData(stream);
             seriesData.refId = refId;
             seriesData.meta = {
-              search: queryTargets[i].regexp,
+              searchWords: getHighlighterExpressionsFromQuery(
+                formatQuery(queryTargets[i].query, queryTargets[i].regexp)
+              ),
               limit: this.maxLines,
             };
             series.push(seriesData);
@@ -174,8 +176,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: LokiQuery): string {
-    return parseQuery(query.expr).regexp;
+  getHighlighterExpression(query: LokiQuery): string[] {
+    return getHighlighterExpressionsFromQuery(query.expr);
   }
 
   getTime(date, roundUp) {

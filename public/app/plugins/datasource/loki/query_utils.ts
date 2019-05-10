@@ -25,3 +25,35 @@ export function parseQuery(input: string): LokiExpression {
 export function formatQuery(selector: string, search: string): string {
   return `${selector || ''} ${search || ''}`.trim();
 }
+
+export function getHighlighterExpressionsFromQuery(input: string): string[] {
+  const parsed = parseQuery(input);
+  // Legacy syntax
+  if (parsed.regexp) {
+    return [parsed.regexp];
+  }
+  let expression = input;
+  const results = [];
+  while (expression) {
+    const filterStart = expression.search(/\|=|\|~|!=|!~/);
+    if (filterStart === -1) {
+      return results;
+    }
+    const skip = expression.substr(filterStart).search(/!=|!~/) === 0;
+    expression = expression.substr(filterStart + 2);
+    if (skip) {
+      continue;
+    }
+    const filterEnd = expression.search(/\|=|\|~|!=|!~/);
+    let filterTerm;
+    if (filterEnd === -1) {
+      filterTerm = expression.trim();
+    } else {
+      filterTerm = expression.substr(0, filterEnd);
+      expression = expression.substr(filterEnd);
+    }
+
+    results.push(filterTerm.replace(/^\s*"/g, '').replace(/"\s*$/g, ''));
+  }
+  return results;
+}
