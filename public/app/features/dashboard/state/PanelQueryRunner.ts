@@ -11,10 +11,21 @@ import { PanelQueryState } from './PanelQueryState';
 import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 // Types
-import { PanelData, DataQuery, TimeRange, ScopedVars, DataQueryRequest, DataSourceApi } from '@grafana/ui';
+import {
+  PanelData,
+  DataQuery,
+  TimeRange,
+  ScopedVars,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceJsonData,
+} from '@grafana/ui';
 
-export interface QueryRunnerOptions<TQuery extends DataQuery = DataQuery> {
-  datasource: string | DataSourceApi<TQuery>;
+export interface QueryRunnerOptions<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> {
+  datasource: string | DataSourceApi<TQuery, TOptions>;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;

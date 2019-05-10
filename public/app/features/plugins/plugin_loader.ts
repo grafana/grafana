@@ -1,3 +1,4 @@
+/* tslint:disable:import-blacklist */
 import System from 'systemjs/dist/system.js';
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
@@ -19,7 +20,7 @@ import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui/src/types';
-import * as datemath from 'app/core/utils/datemath';
+import * as datemath from '@grafana/ui/src/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';

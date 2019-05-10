@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
@@ -34,7 +34,7 @@ export default class InfluxDatasource {
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.responseParser = new ResponseParser();
-    this.httpMode = instanceSettings.jsonData.httpMode;
+    this.httpMode = instanceSettings.jsonData.httpMode || 'GET';
   }
 
   query(options) {

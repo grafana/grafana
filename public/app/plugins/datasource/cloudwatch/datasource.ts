@@ -1,22 +1,30 @@
 import angular from 'angular';
 import _ from 'lodash';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
-import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
+export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
-  name: any;
   proxyUrl: any;
   defaultRegion: any;
-  instanceSettings: any;
   standardStatistics: any;
+
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings,
+    private $q,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
     this.type = 'cloudwatch';
-    this.name = instanceSettings.name;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;

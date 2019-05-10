@@ -1,8 +1,8 @@
-import moment from 'moment';
 import { MssqlDatasource } from '../datasource';
 import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import q from 'q';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {
@@ -29,8 +29,8 @@ describe('MSSQLDatasource', () => {
         rawQuery: 'select time, text, tags from table;',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
     };
 
@@ -209,8 +209,8 @@ describe('MSSQLDatasource', () => {
       },
     };
     const time = {
-      from: moment(1521545610656),
-      to: moment(1521546251185),
+      from: dateTime(1521545610656),
+      to: dateTime(1521546251185),
     };
 
     beforeEach(() => {

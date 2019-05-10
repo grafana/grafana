@@ -1,6 +1,6 @@
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import _ from 'lodash';
-import moment from 'moment';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
@@ -69,7 +69,7 @@ describe('rangeUtil', () => {
 
     it('Date range with absolute to now', () => {
       const text = rangeUtil.describeTimeRange({
-        from: moment([2014, 10, 10, 2, 3, 4]),
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now',
       });
       expect(text).toBe('Nov 10, 2014 02:03:04 to a few seconds ago');
@@ -77,7 +77,7 @@ describe('rangeUtil', () => {
 
     it('Date range with absolute to relative', () => {
       const text = rangeUtil.describeTimeRange({
-        from: moment([2014, 10, 10, 2, 3, 4]),
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now-1d',
       });
       expect(text).toBe('Nov 10, 2014 02:03:04 to a day ago');
@@ -86,7 +86,7 @@ describe('rangeUtil', () => {
     it('Date range with relative to absolute', () => {
       const text = rangeUtil.describeTimeRange({
         from: 'now-7d',
-        to: moment([2014, 10, 10, 2, 3, 4]),
+        to: dateTime([2014, 10, 10, 2, 3, 4]),
       });
       expect(text).toBe('7 days ago to Nov 10, 2014 02:03:04');
     });

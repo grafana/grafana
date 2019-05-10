@@ -171,7 +171,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 value={refreshInterval}
                 tooltip="Refresh"
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} />}
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
             <div className="explore-toolbar-content-item">
@@ -203,14 +203,16 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     datasourceInstance,
     datasourceMissing,
     exploreDatasources,
-    queryTransactions,
     range,
     refreshInterval,
+    graphIsLoading,
+    logIsLoading,
+    tableIsLoading,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = queryTransactions.some(qt => !qt.done);
+  const loading = graphIsLoading || logIsLoading || tableIsLoading;
 
   return {
     datasourceMissing,

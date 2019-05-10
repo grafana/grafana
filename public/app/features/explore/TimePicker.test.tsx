@@ -1,12 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import sinon from 'sinon';
-import moment from 'moment';
 
-import * as dateMath from 'app/core/utils/datemath';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import TimePicker from './TimePicker';
 import { RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
+import { toUtc, isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -15,8 +15,8 @@ const DEFAULT_RANGE = {
 
 const fromRaw = (rawRange: RawTimeRange): TimeRange => {
   const raw = {
-    from: moment.isMoment(rawRange.from) ? moment(rawRange.from) : rawRange.from,
-    to: moment.isMoment(rawRange.to) ? moment(rawRange.to) : rawRange.to,
+    from: isDateTime(rawRange.from) ? dateTime(rawRange.from) : rawRange.from,
+    to: isDateTime(rawRange.to) ? dateTime(rawRange.to) : rawRange.to,
   };
 
   return {
@@ -73,19 +73,19 @@ describe('<TimePicker />', () => {
 
   it('apply with absolute range and non-utc', () => {
     const range = {
-      from: moment.utc(1),
-      to: moment.utc(1000),
+      from: toUtc(1),
+      to: toUtc(1000),
       raw: {
-        from: moment.utc(1),
-        to: moment.utc(1000),
+        from: toUtc(1),
+        to: toUtc(1000),
       },
     };
     const localRange = {
-      from: moment(1),
-      to: moment(1000),
+      from: dateTime(1),
+      to: dateTime(1000),
       raw: {
-        from: moment(1),
-        to: moment(1000),
+        from: dateTime(1),
+        to: dateTime(1000),
       },
     };
     const expectedRangeString = rangeUtil.describeTimeRange(localRange);
@@ -110,11 +110,11 @@ describe('<TimePicker />', () => {
 
   it('apply with absolute range and utc', () => {
     const range = {
-      from: moment.utc(1),
-      to: moment.utc(1000),
+      from: toUtc(1),
+      to: toUtc(1000),
       raw: {
-        from: moment.utc(1),
-        to: moment.utc(1000),
+        from: toUtc(1),
+        to: toUtc(1000),
       },
     };
     const onChangeTime = sinon.spy();
@@ -137,11 +137,11 @@ describe('<TimePicker />', () => {
 
   it('moves ranges backward by half the range on left arrow click when utc', () => {
     const rawRange = {
-      from: moment.utc(2000),
-      to: moment.utc(4000),
+      from: toUtc(2000),
+      to: toUtc(4000),
       raw: {
-        from: moment.utc(2000),
-        to: moment.utc(4000),
+        from: toUtc(2000),
+        to: toUtc(4000),
       },
     };
     const range = fromRaw(rawRange);
@@ -159,19 +159,19 @@ describe('<TimePicker />', () => {
 
   it('moves ranges backward by half the range on left arrow click when not utc', () => {
     const range = {
-      from: moment.utc(2000),
-      to: moment.utc(4000),
+      from: toUtc(2000),
+      to: toUtc(4000),
       raw: {
-        from: moment.utc(2000),
-        to: moment.utc(4000),
+        from: toUtc(2000),
+        to: toUtc(4000),
       },
     };
     const localRange = {
-      from: moment(2000),
-      to: moment(4000),
+      from: dateTime(2000),
+      to: dateTime(4000),
       raw: {
-        from: moment(2000),
-        to: moment(4000),
+        from: dateTime(2000),
+        to: dateTime(4000),
       },
     };
 
@@ -188,11 +188,11 @@ describe('<TimePicker />', () => {
 
   it('moves ranges forward by half the range on right arrow click when utc', () => {
     const range = {
-      from: moment.utc(1000),
-      to: moment.utc(3000),
+      from: toUtc(1000),
+      to: toUtc(3000),
       raw: {
-        from: moment.utc(1000),
-        to: moment.utc(3000),
+        from: toUtc(1000),
+        to: toUtc(3000),
       },
     };
 
@@ -209,19 +209,19 @@ describe('<TimePicker />', () => {
 
   it('moves ranges forward by half the range on right arrow click when not utc', () => {
     const range = {
-      from: moment.utc(1000),
-      to: moment.utc(3000),
+      from: toUtc(1000),
+      to: toUtc(3000),
       raw: {
-        from: moment.utc(1000),
-        to: moment.utc(3000),
+        from: toUtc(1000),
+        to: toUtc(3000),
       },
     };
     const localRange = {
-      from: moment(1000),
-      to: moment(3000),
+      from: dateTime(1000),
+      to: dateTime(3000),
       raw: {
-        from: moment(1000),
-        to: moment(3000),
+        from: dateTime(1000),
+        to: dateTime(3000),
       },
     };
 

@@ -69,6 +69,28 @@ jobs:
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
+  
+  end-to-end-test:
+      docker:
+        - image: circleci/node:8-browsers
+        - image: grafana/grafana:master
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
 
   codespell:
     docker:

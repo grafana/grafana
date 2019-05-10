@@ -333,22 +333,29 @@ describe('LogsParsers', () => {
   });
 });
 
+const emptyLogsModel = {
+  hasUniqueLabels: false,
+  rows: [],
+  meta: [],
+  series: [],
+};
+
 describe('seriesDataToLogsModel', () => {
-  it('given empty series should return undefined', () => {
-    expect(seriesDataToLogsModel([] as SeriesData[], 0)).toBeUndefined();
+  it('given empty series should return empty logs model', () => {
+    expect(seriesDataToLogsModel([] as SeriesData[], 0)).toMatchObject(emptyLogsModel);
   });
 
-  it('given series without correct series name should not be processed', () => {
+  it('given series without correct series name should return empty logs model', () => {
     const series: SeriesData[] = [
       {
         fields: [],
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
-  it('given series without a time field should not be processed', () => {
+  it('given series without a time field should return empty logs model', () => {
     const series: SeriesData[] = [
       {
         fields: [
@@ -360,10 +367,10 @@ describe('seriesDataToLogsModel', () => {
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
-  it('given series without a string field should not be processed', () => {
+  it('given series without a string field should return empty logs model', () => {
     const series: SeriesData[] = [
       {
         fields: [
@@ -375,7 +382,7 @@ describe('seriesDataToLogsModel', () => {
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toBeUndefined();
+    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {

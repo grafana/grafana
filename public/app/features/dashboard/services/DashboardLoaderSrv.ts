@@ -1,9 +1,10 @@
+/* tslint:disable:import-blacklist */
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import impressionSrv from 'app/core/services/impression_srv';
 
 export class DashboardLoaderSrv {
