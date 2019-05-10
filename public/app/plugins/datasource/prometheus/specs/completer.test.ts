@@ -1,6 +1,11 @@
 import { PromCompleter } from '../completer';
 import { PrometheusDatasource } from '../datasource';
 import { BackendSrv } from 'app/core/services/backend_srv';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { PromOptions } from '../types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { IQService } from 'angular';
 jest.mock('../datasource');
 jest.mock('app/core/services/backend_srv');
 
@@ -16,7 +21,13 @@ describe('Prometheus editor completer', () => {
   const editor = {};
 
   const backendSrv = {} as BackendSrv;
-  const datasourceStub = new PrometheusDatasource({}, {}, backendSrv, {}, {});
+  const datasourceStub = new PrometheusDatasource(
+    {} as DataSourceInstanceSettings<PromOptions>,
+    {} as IQService,
+    backendSrv,
+    {} as TemplateSrv,
+    {} as TimeSrv
+  );
 
   datasourceStub.metadataRequest = jest.fn(() =>
     Promise.resolve({ data: { data: [{ metric: { job: 'node', instance: 'localhost:9100' } }] } })

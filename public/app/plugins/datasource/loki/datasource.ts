@@ -9,8 +9,18 @@ import { logStreamToSeriesData } from './result_transformer';
 import { formatQuery, parseQuery } from './query_utils';
 
 // Types
-import { PluginMeta, DataQueryRequest, SeriesData } from '@grafana/ui/src/types';
-import { LokiQuery } from './types';
+import {
+  PluginMeta,
+  DataQueryRequest,
+  SeriesData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataQueryError,
+} from '@grafana/ui/src/types';
+import { LokiQuery, LokiOptions } from './types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -30,12 +40,17 @@ function serializeParams(data: any) {
     .join('&');
 }
 
-export class LokiDatasource {
+export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   languageProvider: LanguageProvider;
   maxLines: number;
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
+    super(instanceSettings);
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
@@ -52,16 +67,18 @@ export class LokiDatasource {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  prepareQueryTarget(target, options) {
+  prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
+    const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
       ...parseQuery(interpolated),
       start,
       end,
       limit: this.maxLines,
+      refId,
     };
   }
 
@@ -74,16 +91,47 @@ export class LokiDatasource {
       return Promise.resolve({ data: [] });
     }
 
-    const queries = queryTargets.map(target => this._request('/api/prom/query', target));
+    const queries = queryTargets.map(target =>
+      this._request('/api/prom/query', target).catch((err: any) => {
+        if (err.cancelled) {
+          return err;
+        }
+
+        const error: DataQueryError = {
+          message: 'Unknown error during query transaction. Please check JS console logs.',
+          refId: target.refId,
+        };
+
+        if (err.data) {
+          if (typeof err.data === 'string') {
+            error.message = err.data;
+          } else if (err.data.error) {
+            error.message = safeStringifyValue(err.data.error);
+          }
+        } else if (err.message) {
+          error.message = err.message;
+        } else if (typeof err === 'string') {
+          error.message = err;
+        }
+
+        error.status = err.status;
+        error.statusText = err.statusText;
+
+        throw error;
+      })
+    );
 
     return Promise.all(queries).then((results: any[]) => {
-      const series: SeriesData[] = [];
+      const series: Array<SeriesData | DataQueryError> = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
+
         if (result.data) {
+          const refId = queryTargets[i].refId;
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
+            seriesData.refId = refId;
             seriesData.meta = {
               search: queryTargets[i].regexp,
               limit: this.maxLines,

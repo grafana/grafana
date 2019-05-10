@@ -84,3 +84,5 @@ debug.test
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+
+theOutput/

@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import moment from 'moment';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
 import {
@@ -17,6 +16,7 @@ import {
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -356,7 +356,12 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
     return logsModel;
   }
 
-  return undefined;
+  return {
+    hasUniqueLabels: false,
+    rows: [],
+    meta: [],
+    series: [],
+  };
 }
 
 export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
@@ -435,7 +440,7 @@ export function processLogSeriesRow(
   const ts = row[timeFieldIndex];
   const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
   const message = row[stringFieldIndex];
-  const time = moment(ts);
+  const time = dateTime(ts);
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');

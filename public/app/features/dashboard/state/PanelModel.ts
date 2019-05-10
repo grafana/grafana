@@ -313,7 +313,7 @@ export class PanelModel {
   }
 
   hasTitle() {
-    return !!this.title.length;
+    return this.title && this.title.length > 0;
   }
 
   destroy() {
