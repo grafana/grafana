@@ -19,6 +19,7 @@ function convertTableToSeriesData(table: TableData): SeriesData {
     rows: table.rows,
     refId: table.refId,
     meta: table.meta,
+    name: table.name,
   };
 }
 
