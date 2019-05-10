@@ -10,9 +10,9 @@ export interface GraphLegendItemProps {
   key?: React.Key;
   item: LegendItem;
   className?: string;
-  onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onSeriesColorChange: SeriesColorChangeHandler;
-  onToggleAxis: () => void;
+  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onSeriesColorChange?: SeriesColorChangeHandler;
+  onToggleAxis?: () => void;
 }
 
 export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> = ({
@@ -25,12 +25,20 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
     <>
       <LegendSeriesIcon
         color={item.color}
-        onColorChange={color => onSeriesColorChange(item.label, color)}
+        onColorChange={color => {
+          if (onSeriesColorChange) {
+            onSeriesColorChange(item.label, color);
+          }
+        }}
         onToggleAxis={onToggleAxis}
         yAxis={item.yAxis}
       />
       <div
-        onClick={event => onLabelClick(item, event)}
+        onClick={event => {
+          if (onLabelClick) {
+            onLabelClick(item, event);
+          }
+        }}
         className={css`
           cursor: pointer;
           white-space: nowrap;
@@ -75,12 +83,20 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
         >
           <LegendSeriesIcon
             color={item.color}
-            onColorChange={color => onSeriesColorChange(item.label, color)}
+            onColorChange={color => {
+              if (onSeriesColorChange) {
+                onSeriesColorChange(item.label, color);
+              }
+            }}
             onToggleAxis={onToggleAxis}
             yAxis={item.yAxis}
           />
           <div
-            onClick={event => onLabelClick(item, event)}
+            onClick={event => {
+              if (onLabelClick) {
+                onLabelClick(item, event);
+              }
+            }}
             className={css`
               cursor: pointer;
               white-space: nowrap;

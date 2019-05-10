@@ -1,15 +1,14 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
+import difference from 'lodash/difference';
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { TimeZone, AbsoluteTimeRange, GraphLegend, LegendItem } from '@grafana/ui';
+import { TimeZone, AbsoluteTimeRange, GraphLegend, LegendItem, LegendDisplayMode } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
-
-import { equal, intersect } from './utils/set';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -88,7 +87,7 @@ interface GraphState {
    * Type parameter refers to the `alias` property of a `TimeSeries`.
    * Consequently, all series sharing the same alias will share visibility state.
    */
-  hiddenSeries: Set<string>;
+  hiddenSeries: string[];
   showAllTimeSeries: boolean;
 }
 
@@ -97,11 +96,11 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   dynamicOptions = null;
 
   state = {
-    hiddenSeries: new Set(),
+    hiddenSeries: [],
     showAllTimeSeries: false,
   };
 
-  getGraphData() {
+  getGraphData(): TimeSeries[] {
     const { data } = this.props;
 
     return this.state.showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
@@ -120,7 +119,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       prevProps.split !== this.props.split ||
       prevProps.height !== this.props.height ||
       prevProps.width !== this.props.width ||
-      !equal(prevState.hiddenSeries, this.state.hiddenSeries)
+      prevState.hiddenSeries !== this.state.hiddenSeries
     ) {
       this.draw();
     }
@@ -167,38 +166,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     );
   };
 
-  onToggleSeries = (series: TimeSeries, exclusive: boolean) => {
-    this.setState((state, props) => {
-      const { data, onToggleSeries } = props;
-      const { hiddenSeries } = state;
-
-      // Deduplicate series as visibility tracks the alias property
-      const oneSeriesVisible = hiddenSeries.size === new Set(data.map(d => d.alias)).size - 1;
-
-      let nextHiddenSeries = new Set();
-      if (exclusive) {
-        if (hiddenSeries.has(series.alias) || !oneSeriesVisible) {
-          nextHiddenSeries = new Set(data.filter(d => d.alias !== series.alias).map(d => d.alias));
-        }
-      } else {
-        // Prune hidden series no longer part of those available from the most recent query
-        const availableSeries = new Set(data.map(d => d.alias));
-        nextHiddenSeries = intersect(new Set(hiddenSeries), availableSeries);
-        if (nextHiddenSeries.has(series.alias)) {
-          nextHiddenSeries.delete(series.alias);
-        } else {
-          nextHiddenSeries.add(series.alias);
-        }
-      }
-      if (onToggleSeries) {
-        onToggleSeries(series.alias, nextHiddenSeries);
-      }
-      return {
-        hiddenSeries: nextHiddenSeries,
-      };
-    }, this.draw);
-  };
-
   draw() {
     const { userOptions = {} } = this.props;
     const { hiddenSeries } = this.state;
@@ -209,7 +176,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     if (data && data.length > 0) {
       series = data
-        .filter((ts: TimeSeries) => !hiddenSeries.has(ts.alias))
+        .filter((ts: TimeSeries) => hiddenSeries.indexOf(ts.alias) === -1)
         .map((ts: TimeSeries) => ({
           color: ts.color,
           label: ts.label,
@@ -231,16 +198,48 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   getLegendItems = (): LegendItem[] => {
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
+
     return data.map<LegendItem>(series => {
       return {
-        label: series.alias
+        label: series.alias,
+        color: series.color,
+        isVisible: hiddenSeries.indexOf(series.alias) === -1,
+        yAxis: 1,
       };
     });
   };
 
+  onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
+    const { hiddenSeries } = this.state;
+    const data = this.getGraphData();
+
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      // Toggling series with key makes the series itself to toggle
+      if (hiddenSeries.indexOf(label) > -1) {
+        this.setState({
+          hiddenSeries: hiddenSeries.filter(series => series !== label),
+        });
+      } else {
+        this.setState({
+          hiddenSeries: hiddenSeries.concat([label]),
+        });
+      }
+    } else {
+      // Toggling series with out key toggles all the series but the clicked one
+      const allSeriesLabels = data.map(series => series.label);
+
+      if (hiddenSeries.length + 1 === allSeriesLabels.length) {
+        this.setState({ hiddenSeries: [] });
+      } else {
+        this.setState({
+          hiddenSeries: difference(allSeriesLabels, [label]),
+        });
+      }
+    }
+  }
+
   render() {
     const { height = 100, id = 'graph' } = this.props;
-
     return (
       <>
         {this.props.data && this.props.data.length > MAX_NUMBER_OF_TIME_SERIES && !this.state.showAllTimeSeries && (
@@ -253,8 +252,15 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           </div>
         )}
         <div id={id} className="explore-graph" style={{ height }} />
-        <GraphLegend items={this.getLegendItems()} />
-        {/* <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} /> */}
+
+        <GraphLegend
+          items={this.getLegendItems()}
+          displayMode={LegendDisplayMode.List}
+          placement="under"
+          onLabelClick={(item, event) => {
+            this.onSeriesToggle(item.label, event);
+          }}
+        />
       </>
     );
   }
