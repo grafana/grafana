@@ -49,18 +49,25 @@ export class NavModelSrv {
   }
 
   getNotFoundNav() {
-    const node = {
-      text: 'Page not found',
-      icon: 'fa fa-fw fa-warning',
-      subTitle: '404 Error',
-    };
-
-    return {
-      breadcrumbs: [node],
-      node: node,
-      main: node,
-    };
+    return getNotFoundNav(); // the exported function
   }
+}
+
+export function getNotFoundNav(): NavModel {
+  return getWarningNav('Page not found', '404 Error');
+}
+
+export function getWarningNav(text: string, subTitle?: string): NavModel {
+  const node = {
+    text,
+    subTitle,
+    icon: 'fa fa-fw fa-warning',
+  };
+  return {
+    breadcrumbs: [node],
+    node: node,
+    main: node,
+  };
 }
 
 coreModule.service('navModelSrv', NavModelSrv);

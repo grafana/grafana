@@ -33,6 +33,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { List } from './List/List';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -51,5 +52,5 @@ export { LegendOptions, LegendBasicOptions, LegendRenderOptions, LegendList, Leg
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
-export * from './SingleStatShared/shared';
+export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';

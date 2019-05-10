@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
-import moment from 'moment';
-import { TimeRange, TimeOptions, TimeOption, SelectOptionItem } from '@grafana/ui';
-import { ButtonSelect } from '@grafana/ui/src/components/Select/ButtonSelect';
+import { ButtonSelect } from '../Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
 import { TimePickerOptionGroup } from './TimePickerOptionGroup';
-import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
-import { Timezone } from '../../../../../public/app/core/utils/datemath';
+import { PopperContent } from '../Tooltip/PopperController';
+import { Timezone } from '../../utils/datemath';
+import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
+import { SelectOptionItem } from '../Select/Select';
+import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;
@@ -265,7 +266,7 @@ export class TimePicker extends PureComponent<Props, State> {
     } = this.props;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const rangeString = mapTimeRangeToRangeString(value);
-    const isAbsolute = moment.isMoment(value.raw.to);
+    const isAbsolute = isDateTime(value.raw.to);
 
     return (
       <div className="time-picker">

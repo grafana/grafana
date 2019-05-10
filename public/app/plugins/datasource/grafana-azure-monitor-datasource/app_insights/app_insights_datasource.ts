@@ -2,6 +2,10 @@ import _ from 'lodash';
 import AppInsightsQuerystringBuilder from './app_insights_querystring_builder';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { AzureDataSourceJsonData } from '../types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export interface LogAnalyticsColumn {
   text: string;
@@ -16,7 +20,12 @@ export default class AppInsightsDatasource {
   logAnalyticsColumns: { [key: string]: LogAnalyticsColumn[] } = {};
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private $q
+  ) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId;
     this.baseUrl = `/appinsights/${this.version}/apps/${this.applicationId}`;

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 

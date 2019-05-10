@@ -30,8 +30,12 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+
+    // check for colon as as "word boundary" symbol
+    const isColonBounded = word.endsWith(':');
+
     previousWord = word;
-    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+    if (!insideSelector && !isColonBounded && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
       return `${word}{}`;
     }
     return word;

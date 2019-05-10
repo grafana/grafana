@@ -14,7 +14,6 @@ import { Themeable } from '../../types/theme';
 
 import { sortSeriesData } from '../../utils/processSeriesData';
 
-import { SeriesData, InterpolateFunction } from '@grafana/ui';
 import {
   TableCellBuilder,
   ColumnStyle,
@@ -23,6 +22,8 @@ import {
   simpleCellBuilder,
 } from './TableCellBuilder';
 import { stringToJsRegex } from '../../utils/index';
+import { SeriesData } from '../../types/data';
+import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
   data: SeriesData;

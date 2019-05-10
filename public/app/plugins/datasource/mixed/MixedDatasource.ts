@@ -11,6 +11,7 @@ import {
   LoadingState,
   DataStreamState,
   DataStreamObserver,
+  DataSourceInstanceSettings,
 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
@@ -19,7 +20,11 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
-export class MixedDatasource implements DataSourceApi<DataQuery> {
+export class MixedDatasource extends DataSourceApi<DataQuery> {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
+  }
+
   query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
     // Remove any hidden or invalid queries
     const queries = request.targets.filter(t => {

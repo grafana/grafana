@@ -1,14 +1,14 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataStreamState, DataStreamObserver } from '@grafana/ui';
+import { DataStreamState, DataStreamObserver, DataSourceInstanceSettings } from '@grafana/ui';
 import { MixedDatasource } from './MixedDatasource';
 
-const defaultDS = new MockDataSourceApi({ data: ['A', 'B'] }, 'DefaultDS');
+const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['A', 'B'] });
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
-  A: new MockDataSourceApi({ data: ['AAAA'] }, 'DSA'),
-  B: new MockDataSourceApi({ data: ['BBBB'] }, 'DSB'),
-  C: new MockDataSourceApi({ data: ['CCCC'] }, 'DSC'),
+  A: new MockDataSourceApi('DSA', { data: ['AAAA'] }),
+  B: new MockDataSourceApi('DSB', { data: ['BBBB'] }),
+  C: new MockDataSourceApi('DSC', { data: ['CCCC'] }),
 });
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
@@ -61,7 +61,7 @@ describe('MixedDatasource', () => {
       }
     };
 
-    const ds = new MixedDatasource();
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
     const res = await ds.query(request, dummyStream);
     expect(res.data.length).toBeFalsy();
     await waiter;

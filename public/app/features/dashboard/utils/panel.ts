@@ -8,15 +8,16 @@ import { TimeRange } from '@grafana/ui';
 
 // Utils
 import { isString as _isString } from 'lodash';
-import * as rangeUtil from 'app/core/utils/rangeutil';
-import * as dateMath from 'app/core/utils/datemath';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
 
 // Constants
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -168,4 +169,13 @@ export function getResolution(panel: PanelModel): number {
   const width = htmlEl.getBoundingClientRect().width; // https://stackoverflow.com/a/21454625
 
   return panel.maxDataPoints ? panel.maxDataPoints : Math.ceil(width * (panel.gridPos.w / 24));
+}
+
+export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: number): number {
+  return (
+    containerHeight -
+    (panel.hasTitle() ? config.theme.panelHeaderHeight : 0) -
+    config.theme.panelPadding * 2 -
+    PANEL_BORDER
+  );
 }

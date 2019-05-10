@@ -1,3 +1,5 @@
+import { ComponentClass } from 'react';
+
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
   beta = 'beta', // Will show a warning banner
@@ -21,13 +23,29 @@ export interface PluginMeta {
   module: string;
   baseUrl: string;
 
+  // Define plugin requirements
+  dependencies?: PluginDependencies;
+
   // Filled in by the backend
   jsonData?: { [str: string]: any };
+  secureJsonData?: { [str: string]: any };
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
   latestVersion?: string;
   pinned?: boolean;
+}
+
+interface PluginDependencyInfo {
+  id: string;
+  name: string;
+  version: string;
+  type: PluginType;
+}
+
+export interface PluginDependencies {
+  grafanaVersion: string;
+  plugins: PluginDependencyInfo[];
 }
 
 export enum PluginIncludeType {
@@ -44,6 +62,10 @@ export interface PluginInclude {
   name: string;
   path?: string;
   icon?: string;
+
+  role?: string; // "Viewer", Admin, editor???
+  addToNav?: boolean; // Show in the sidebar... only if type=page?
+
   // Angular app pages
   component?: string;
 }
@@ -69,44 +91,35 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export class GrafanaPlugin<T extends PluginMeta> {
+export interface PluginConfigTabProps<T extends PluginMeta> {
+  meta: T;
+  query: { [s: string]: any }; // The URL query parameters
+}
+
+export interface PluginConfigTab<T extends PluginMeta> {
+  title: string; // Display
+  icon?: string;
+  id: string; // Unique, in URL
+
+  body: ComponentClass<PluginConfigTabProps<T>>;
+}
+
+export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
   meta?: T;
 
-  // Soon this will also include common config options
-}
+  // Config control (app/datasource)
+  angularConfigCtrl?: any;
 
-export class AppPlugin extends GrafanaPlugin<PluginMeta> {
-  angular?: {
-    ConfigCtrl?: any;
-    pages: { [component: string]: any };
-  };
+  // Show configuration tabs on the plugin page
+  configTabs?: Array<PluginConfigTab<T>>;
 
-  setComponentsFromLegacyExports(pluginExports: any) {
-    const legacy = {
-      ConfigCtrl: undefined,
-      pages: {} as any,
-    };
-
-    if (pluginExports.ConfigCtrl) {
-      legacy.ConfigCtrl = pluginExports.ConfigCtrl;
-      this.angular = legacy;
+  // Tabs on the plugin page
+  addConfigTab(tab: PluginConfigTab<T>) {
+    if (!this.configTabs) {
+      this.configTabs = [];
     }
-
-    const { meta } = this;
-    if (meta && meta.includes) {
-      for (const include of meta.includes) {
-        const { type, component } = include;
-        if (type === PluginIncludeType.page && component) {
-          const exp = pluginExports[component];
-          if (!exp) {
-            console.warn('App Page uses unknown component: ', component, meta);
-            continue;
-          }
-          legacy.pages[component] = exp;
-          this.angular = legacy;
-        }
-      }
-    }
+    this.configTabs.push(tab);
+    return this;
   }
 }
