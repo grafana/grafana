@@ -6,10 +6,9 @@ import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { TimeZone, AbsoluteTimeRange } from '@grafana/ui';
+import { TimeZone, AbsoluteTimeRange, GraphLegend, LegendItem } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import Legend from './Legend';
 import { equal, intersect } from './utils/set';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -229,10 +228,18 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     $.plot($el, series, options);
   }
 
-  render() {
-    const { height = 100, id = 'graph' } = this.props;
+  getLegendItems = (): LegendItem[] => {
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
+    return data.map<LegendItem>(series => {
+      return {
+        label: series.alias
+      };
+    });
+  };
+
+  render() {
+    const { height = 100, id = 'graph' } = this.props;
 
     return (
       <>
@@ -246,7 +253,8 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
           </div>
         )}
         <div id={id} className="explore-graph" style={{ height }} />
-        <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} />
+        <GraphLegend items={this.getLegendItems()} />
+        {/* <Legend data={data} hiddenSeries={hiddenSeries} onToggleSeries={this.onToggleSeries} /> */}
       </>
     );
   }
