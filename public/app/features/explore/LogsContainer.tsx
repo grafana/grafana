@@ -113,8 +113,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, queryTransactions, scanning, scanRange, range } = item;
-  const loading = queryTransactions.some(qt => qt.resultType === 'Logs' && !qt.done);
+  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range } = item;
+  const loading = logIsLoading;
   const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);

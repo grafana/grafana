@@ -12,8 +12,8 @@ import 'app/features/plugins/plugin_loader';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
+  error?: any;
   datasource: any;
-  error?: string | JSX.Element;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;
@@ -55,6 +55,14 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     this.component = loader.load(this.element, scopeProps, template);
     this.props.onQueryChange(target);
+  }
+
+  componentDidUpdate(prevProps: QueryEditorProps) {
+    if (prevProps.error !== this.props.error && this.component) {
+      // Some query controllers listen to data error events and need a digest
+      // for some reason this needs to be done in next tick
+      setTimeout(this.component.digest);
+    }
   }
 
   componentWillUnmount() {

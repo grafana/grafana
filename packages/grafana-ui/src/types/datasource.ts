@@ -214,16 +214,10 @@ export interface ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> {
-  datasource: DSType;
+> extends QueryEditorProps<DSType, TQuery, TOptions> {
   datasourceStatus: DataSourceStatus;
-  query: TQuery;
-  error?: string | JSX.Element;
-  hint?: QueryHint;
   history: any[];
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: TQuery) => void;
-  onExecuteHint?: (action: QueryFixAction) => void;
+  onHint?: (action: QueryFixAction) => void;
 }
 
 export interface ExploreStartPageProps {

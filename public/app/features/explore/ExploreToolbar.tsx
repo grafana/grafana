@@ -203,14 +203,16 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     datasourceInstance,
     datasourceMissing,
     exploreDatasources,
-    queryTransactions,
     range,
     refreshInterval,
+    graphIsLoading,
+    logIsLoading,
+    tableIsLoading,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = queryTransactions.some(qt => !qt.done);
+  const loading = graphIsLoading || logIsLoading || tableIsLoading;
 
   return {
     datasourceMissing,

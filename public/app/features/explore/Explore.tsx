@@ -31,7 +31,7 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi } from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -54,6 +54,7 @@ import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
+import { ErrorContainer } from './ErrorContainer';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -86,6 +87,7 @@ interface ExploreProps {
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
   initialUI: ExploreUIState;
+  queryErrors: DataQueryError[];
 }
 
 /**
@@ -236,6 +238,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       supportsLogs,
       supportsTable,
       queryKeys,
+      queryErrors,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -257,6 +260,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
+            <ErrorContainer queryErrors={queryErrors} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -313,6 +317,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     urlState,
     update,
+    queryErrors,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -339,6 +344,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialQueries,
     initialRange,
     initialUI,
+    queryErrors,
   };
 }
 
