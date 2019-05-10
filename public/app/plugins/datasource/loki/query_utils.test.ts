@@ -11,8 +11,8 @@ describe('parseQuery', () => {
 
   it('returns regexp for strings without query', () => {
     expect(parseQuery('test')).toEqual({
-      query: '',
-      regexp: 'test',
+      query: 'test',
+      regexp: '',
     } as LokiExpression);
   });
 
@@ -26,14 +26,14 @@ describe('parseQuery', () => {
   it('returns query for strings with query and search string', () => {
     expect(parseQuery('x {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: 'x',
+      regexp: '(?i)x',
     } as LokiExpression);
   });
 
   it('returns query for strings with query and regexp', () => {
     expect(parseQuery('{foo="bar"} x|y')).toEqual({
       query: '{foo="bar"}',
-      regexp: 'x|y',
+      regexp: '(?i)x|y',
     } as LokiExpression);
   });
 
@@ -47,22 +47,22 @@ describe('parseQuery', () => {
   it('returns query and regexp with quantifiers', () => {
     expect(parseQuery('{foo="bar"} \\.java:[0-9]{1,5}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '\\.java:[0-9]{1,5}',
+      regexp: '(?i)\\.java:[0-9]{1,5}',
     } as LokiExpression);
     expect(parseQuery('\\.java:[0-9]{1,5} {foo="bar"}')).toEqual({
       query: '{foo="bar"}',
-      regexp: '\\.java:[0-9]{1,5}',
+      regexp: '(?i)\\.java:[0-9]{1,5}',
     } as LokiExpression);
   });
 
   it('returns query with filter operands as is', () => {
     expect(parseQuery('{foo="bar"} |= "x|y"')).toEqual({
-      query: '{foo="bar"}',
-      regexp: '|= "x|y"',
+      query: '{foo="bar"} |= "x|y"',
+      regexp: '',
     } as LokiExpression);
     expect(parseQuery('{foo="bar"} |~ "42"')).toEqual({
-      query: '{foo="bar"}',
-      regexp: '|~ "42"',
+      query: '{foo="bar"} |~ "42"',
+      regexp: '',
     } as LokiExpression);
   });
 });
