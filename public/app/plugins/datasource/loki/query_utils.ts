@@ -13,7 +13,9 @@ export function parseQuery(input: string): LokiExpression {
     // Keep old-style regexp, otherwise take whole query
     if (regexp && regexp.search(/\|=|\|~|!=|!~/) === -1) {
       query = match[0].trim();
-      regexp = `${caseInsensitive}${regexp}`;
+      if (!regexp.startsWith(caseInsensitive)) {
+        regexp = `${caseInsensitive}${regexp}`;
+      }
     } else {
       regexp = '';
     }
