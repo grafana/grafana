@@ -26,22 +26,7 @@ export class DataProcessor {
       return [];
     }
 
-    // auto detect xaxis mode
-    let firstItem;
-    if (options.dataList && options.dataList.length > 0) {
-      firstItem = options.dataList[0];
-      const autoDetectMode = this.getAutoDetectXAxisMode(firstItem);
-      if (this.panel.xaxis.mode !== autoDetectMode) {
-        this.panel.xaxis.mode = autoDetectMode;
-        this.setPanelDefaultsForNewXAxisMode();
-      }
-    }
-
     switch (this.panel.xaxis.mode) {
-      case 'series':
-      case 'time': {
-        return this.getTimeSeries(options.dataList, options);
-      }
       case 'histogram': {
         let histogramDataList: SeriesData[];
         if (this.panel.stack) {
@@ -58,30 +43,13 @@ export class DataProcessor {
 
         return this.getTimeSeries(histogramDataList, options);
       }
-      case 'field': {
-        return this.customHandler(firstItem);
+      case 'series':
+      default: {
+        return this.getTimeSeries(options.dataList, options);
       }
     }
 
     return [];
-  }
-
-  getAutoDetectXAxisMode(firstItem) {
-    switch (firstItem.type) {
-      case 'docs':
-        return 'field';
-      case 'table':
-        return 'field';
-      default: {
-        if (this.panel.xaxis.mode === 'series') {
-          return 'series';
-        }
-        if (this.panel.xaxis.mode === 'histogram') {
-          return 'histogram';
-        }
-        return 'time';
-      }
-    }
   }
 
   setPanelDefaultsForNewXAxisMode() {
@@ -180,16 +148,6 @@ export class DataProcessor {
     return series;
   }
 
-  customHandler(dataItem) {
-    const nameField = this.panel.xaxis.name;
-    if (!nameField) {
-      throw {
-        message: 'No field name specified to use for x-axis, check your axes settings',
-      };
-    }
-    return [];
-  }
-
   validateXAxisSeriesValue() {
     switch (this.panel.xaxis.mode) {
       case 'series': {
@@ -206,40 +164,6 @@ export class DataProcessor {
         return;
       }
     }
-  }
-
-  getDataFieldNames(dataList, onlyNumbers) {
-    if (dataList.length === 0) {
-      return [];
-    }
-
-    const fields = [];
-    const firstItem = dataList[0];
-    const fieldParts = [];
-
-    function getPropertiesRecursive(obj) {
-      _.forEach(obj, (value, key) => {
-        if (_.isObject(value)) {
-          fieldParts.push(key);
-          getPropertiesRecursive(value);
-        } else {
-          if (!onlyNumbers || _.isNumber(value)) {
-            const field = fieldParts.concat(key).join('.');
-            fields.push(field);
-          }
-        }
-      });
-      fieldParts.pop();
-    }
-
-    if (firstItem.type === 'docs') {
-      if (firstItem.datapoints.length === 0) {
-        return [];
-      }
-      getPropertiesRecursive(firstItem.datapoints[0]);
-    }
-
-    return fields;
   }
 
   getXAxisValueOptions(options) {
