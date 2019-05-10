@@ -14,7 +14,7 @@ describe('OptionsUIBuilder', () => {
             .addBooleanEditor('showThresholdLabels')
             .addNestedOptionsGroup('fieldOptions', {})
               .addThresholdsEditor('thresholds')
-            .endGroup() // How to return parent groupd ctx type here?
+            .endGroup() // How to return parent group ctx type here?
           .endGroup()
           .addGroup({})
             // We are in the context of fieldOptions option still... unfortunately
