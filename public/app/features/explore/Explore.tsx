@@ -275,7 +275,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}
-                              onChangeTime={this.onChangeTime}
                               onClickLabel={this.onClickLabel}
                               onStartScanning={this.onStartScanning}
                               onStopScanning={this.onStopScanning}
