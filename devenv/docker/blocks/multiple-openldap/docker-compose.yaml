@@ -7,8 +7,8 @@
     ports:
       - "389:389"
 
-  plebs-openldap:
-    build: docker/blocks/multiple-openldap/plebs-ldap-server
+  openldap:
+    build: docker/blocks/multiple-openldap/ldap-server
     environment:
       SLAPD_PASSWORD: grafana
       SLAPD_DOMAIN: grafana.org

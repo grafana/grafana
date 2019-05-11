@@ -4,7 +4,7 @@ This is very similar to openldap docker block, but it creates multiple ldap serv
 
 Any ldif files added to the prepopulate subdirectory will be automatically imported into the OpenLdap database.
 
-"admins-ldap-server" block contains admin group and admin users. The "plebs-ldap-server" block has all the rest of the users (see below).
+"admins-ldap-server" block contains admin group and admin users. The "ldap-server" block has all the rest of the users. See below for the full list of users.
 
 This blocks are here to help with testing multiple LDAP servers, for any other LDAP related development and testing "openldap" block should be used.
 
@@ -33,6 +33,6 @@ frontend
   ldap-tobias
   ldap-daniel
 editors
-  ldap-editors
+  ldap-editor
 no groups
   ldap-viewer
