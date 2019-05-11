@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -233,8 +231,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
 
-	ldap := newLDAP(config.Servers)
-	extUser, err := ldap.Login(query)
+	extUser, err := newLDAP(config.Servers).Login(query)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
@@ -245,7 +242,6 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		SignupAllowed: auth.LdapAllowSignup,
 		ExternalUser:  extUser,
 	})
-	spew.Dump(err)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
