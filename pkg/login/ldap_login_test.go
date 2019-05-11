@@ -6,8 +6,9 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +19,7 @@ func TestLdapLogin(t *testing.T) {
 		Convey("Given ldap enabled and no server configured", func() {
 			setting.LdapEnabled = true
 
-			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
+			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
 				getLDAPConfig = func() (*LDAP.Config, error) {
 					config := &LDAP.Config{
@@ -39,7 +40,7 @@ func TestLdapLogin(t *testing.T) {
 				})
 
 				Convey("it should not call ldap login", func() {
-					So(sc.ldapAuthenticatorMock.loginCalled, ShouldBeFalse)
+					So(sc.LDAPAuthenticatorMock.loginCalled, ShouldBeFalse)
 				})
 			})
 		})
@@ -47,9 +48,9 @@ func TestLdapLogin(t *testing.T) {
 		Convey("Given ldap disabled", func() {
 			setting.LdapEnabled = false
 
-			ldapLoginScenario("When login", func(sc *ldapLoginScenarioContext) {
+			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(&m.LoginUserQuery{
+				enabled, err := loginUsingLdap(&models.LoginUserQuery{
 					Username: "user",
 					Password: "pwd",
 				})
@@ -63,23 +64,11 @@ func TestLdapLogin(t *testing.T) {
 				})
 
 				Convey("it should not call ldap login", func() {
-					So(sc.ldapAuthenticatorMock.loginCalled, ShouldBeFalse)
+					So(sc.LDAPAuthenticatorMock.loginCalled, ShouldBeFalse)
 				})
 			})
 		})
 	})
-}
-
-func mockLdapAuthenticator(valid bool) *mockAuth {
-	mock := &mockAuth{
-		validLogin: valid,
-	}
-
-	newLDAP = func(server *LDAP.ServerConfig) LDAP.IAuth {
-		return mock
-	}
-
-	return mock
 }
 
 type mockAuth struct {
@@ -87,46 +76,56 @@ type mockAuth struct {
 	loginCalled bool
 }
 
-func (auth *mockAuth) Login(query *m.LoginUserQuery) error {
+func (auth *mockAuth) Login(query *models.LoginUserQuery) (
+	*models.ExternalUserInfo,
+	error,
+) {
 	auth.loginCalled = true
 
 	if !auth.validLogin {
-		return errTest
+		return nil, errTest
 	}
 
-	return nil
-}
-
-func (auth *mockAuth) Users() ([]*LDAP.UserInfo, error) {
 	return nil, nil
 }
 
-func (auth *mockAuth) SyncUser(query *m.LoginUserQuery) error {
-	return nil
-}
-
-func (auth *mockAuth) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LDAP.UserInfo) (*m.User, error) {
+func (auth *mockAuth) Users(logins []string) (
+	[]*models.ExternalUserInfo,
+	error,
+) {
 	return nil, nil
 }
 
-type ldapLoginScenarioContext struct {
-	loginUserQuery        *m.LoginUserQuery
-	ldapAuthenticatorMock *mockAuth
+func mockLDAPAuthenticator(valid bool) *mockAuth {
+	mock := &mockAuth{
+		validLogin: valid,
+	}
+
+	newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+		return mock
+	}
+
+	return mock
 }
 
-type ldapLoginScenarioFunc func(c *ldapLoginScenarioContext)
+type LDAPLoginScenarioContext struct {
+	loginUserQuery        *models.LoginUserQuery
+	LDAPAuthenticatorMock *mockAuth
+}
 
-func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
+type LDAPLoginScenarioFunc func(c *LDAPLoginScenarioContext)
+
+func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 	Convey(desc, func() {
 		mock := &mockAuth{}
 
-		sc := &ldapLoginScenarioContext{
-			loginUserQuery: &m.LoginUserQuery{
+		sc := &LDAPLoginScenarioContext{
+			loginUserQuery: &models.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
-			ldapAuthenticatorMock: mock,
+			LDAPAuthenticatorMock: mock,
 		}
 
 		getLDAPConfig = func() (*LDAP.Config, error) {
@@ -141,19 +140,19 @@ func ldapLoginScenario(desc string, fn ldapLoginScenarioFunc) {
 			return config, nil
 		}
 
-		newLDAP = func(server *LDAP.ServerConfig) LDAP.IAuth {
+		newLDAP = func(server []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
 			return mock
 		}
 
 		defer func() {
-			newLDAP = LDAP.New
-			getLDAPConfig = LDAP.GetConfig
+			newLDAP = MultipleLDAP.New
+			getLDAPConfig = MultipleLDAP.GetConfig
 		}()
 
 		fn(sc)
 	})
 }
 
-func (sc *ldapLoginScenarioContext) withLoginResult(valid bool) {
-	sc.ldapAuthenticatorMock = mockLdapAuthenticator(valid)
+func (sc *LDAPLoginScenarioContext) withLoginResult(valid bool) {
+	sc.LDAPAuthenticatorMock = mockLDAPAuthenticator(valid)
 }
