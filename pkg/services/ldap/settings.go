@@ -108,11 +108,11 @@ func readConfig(configFile string) (*Config, error) {
 
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load ldap config file", err)
+		return nil, errutil.Wrap("Failed to load LDAP config file", err)
 	}
 
 	if len(result.Servers) == 0 {
-		return nil, xerrors.New("ldap enabled but no ldap servers defined in config file")
+		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
 	}
 
 	// set default org id

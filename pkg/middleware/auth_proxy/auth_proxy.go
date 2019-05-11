@@ -232,9 +232,6 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	if err != nil {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
-	if len(config.Servers) == 0 {
-		return 0, newError("No LDAP servers available", nil)
-	}
 
 	ldap := newLDAP(config.Servers)
 	extUser, err := ldap.Login(query)
