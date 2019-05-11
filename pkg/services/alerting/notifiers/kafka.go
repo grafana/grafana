@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -32,7 +32,7 @@ func init() {
 	})
 }
 
-func NewKafkaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewKafkaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"}
@@ -101,7 +101,7 @@ func (this *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	topicUrl := this.Endpoint + "/topics/" + this.Topic
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        topicUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
