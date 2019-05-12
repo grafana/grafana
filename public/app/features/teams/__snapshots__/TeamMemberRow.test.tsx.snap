@@ -97,9 +97,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
           isDisabled={false}
           isLoading={false}
           isMulti={false}
+          isOpen={false}
           isSearchable={false}
           maxMenuHeight={300}
-          menuIsOpen={false}
           onChange={[Function]}
           openMenuOnFocus={false}
           options={
@@ -123,7 +123,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               "value": 0,
             }
           }
-          width={null}
         />
       </div>
     </td>
@@ -183,9 +182,9 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
           isDisabled={false}
           isLoading={false}
           isMulti={false}
+          isOpen={false}
           isSearchable={false}
           maxMenuHeight={300}
-          menuIsOpen={false}
           onChange={[Function]}
           openMenuOnFocus={false}
           options={
@@ -209,7 +208,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               "value": 0,
             }
           }
-          width={null}
         />
       </div>
     </td>
