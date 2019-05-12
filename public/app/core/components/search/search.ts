@@ -33,6 +33,11 @@ class SearchQueryParser {
   }
 }
 
+interface SelectedIndicies {
+  dashboardIndex?: number;
+  folderIndex?: number;
+}
+
 export class SearchCtrl {
   isOpen: boolean;
   query: SearchQuery;
@@ -299,18 +304,14 @@ export class SearchCtrl {
     this.moveSelection(0);
   }
 
-  private getFlattenedResultForNavigation(): Array<{
-    folderIndex: number;
-    dashboardIndex: number;
-  }> {
+  private getFlattenedResultForNavigation(): SelectedIndicies[] {
     let folderIndex = 0;
 
     return _.flatMap(this.results, (s: any) => {
-      let result = [];
+      let result: SelectedIndicies[] = [];
 
       result.push({
         folderIndex: folderIndex,
-        dashboardIndex: 0,
       });
 
       let dashboardIndex = 0;
