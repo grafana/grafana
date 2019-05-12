@@ -77,6 +77,10 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("username", "Grafana")
 
+	if this.Mention != "" {
+		bodyJSON.Set("content", this.Mention)
+	}
+
 	fields := make([]map[string]interface{}, 0)
 
 	for _, evt := range evalContext.EvalMatches {
@@ -93,11 +97,6 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"icon_url": "https://grafana.com/assets/img/fav32.png",
 	}
 
-	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
-	}
-
 	color, _ := strconv.ParseInt(strings.TrimLeft(evalContext.GetStateModel().Color, "#"), 16, 0)
 
 	embed := simplejson.New()
@@ -105,7 +104,7 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	//Discord takes integer for color
 	embed.Set("color", color)
 	embed.Set("url", ruleUrl)
-	embed.Set("description", message)
+	embed.Set("description", evalContext.Rule.Message)
 	embed.Set("type", "rich")
 	embed.Set("fields", fields)
 	embed.Set("footer", footer)
