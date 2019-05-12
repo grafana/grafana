@@ -69,14 +69,14 @@ export class Gauge extends PureComponent<Props> {
 
     const backgroundColor = selectThemeVariant(
       {
-        dark: theme.colors.dark3,
-        light: '#e6e6e6',
+        dark: theme.colors.dark8,
+        light: theme.colors.gray6,
       },
       theme.type
     );
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 6, 40) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;
@@ -181,7 +181,7 @@ function calculateGaugeAutoProps(width: number, height: number, title: string | 
   const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
   const titleHeight = titleFontSize * 1.5;
   const availableHeight = showLabel ? height - titleHeight : height;
-  const gaugeHeight = Math.min(availableHeight * 0.7, width);
+  const gaugeHeight = Math.min(availableHeight, width);
 
   return {
     showLabel,
