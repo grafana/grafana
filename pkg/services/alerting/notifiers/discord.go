@@ -24,15 +24,27 @@ func init() {
 		Factory:     NewDiscordNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Discord settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Webhook URL</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Mention</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.mention"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Mention a user or a group using @ when notifying in a channel
+        </info-popover>
+      </div>
+      <div class="gf-form  max-width-30">
+        <span class="gf-form-label width-10">Webhook URL</span>
+        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
       </div>
     `,
 	})
 }
 
 func NewDiscordNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+	mention := model.Settings.Get("mention").MustString()
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
@@ -40,6 +52,7 @@ func NewDiscordNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 
 	return &DiscordNotifier{
 		NotifierBase: NewNotifierBase(model),
+		Mention:      mention,
 		WebhookURL:   url,
 		log:          log.New("alerting.notifier.discord"),
 	}, nil
@@ -47,6 +60,7 @@ func NewDiscordNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 
 type DiscordNotifier struct {
 	NotifierBase
+	Mention    string
 	WebhookURL string
 	log        log.Logger
 }
@@ -79,6 +93,11 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"icon_url": "https://grafana.com/assets/img/fav32.png",
 	}
 
+	message := this.Mention
+	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
+		message += " " + evalContext.Rule.Message
+	}
+
 	color, _ := strconv.ParseInt(strings.TrimLeft(evalContext.GetStateModel().Color, "#"), 16, 0)
 
 	embed := simplejson.New()
@@ -86,7 +105,7 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	//Discord takes integer for color
 	embed.Set("color", color)
 	embed.Set("url", ruleUrl)
-	embed.Set("description", evalContext.Rule.Message)
+	embed.Set("description", message)
 	embed.Set("type", "rich")
 	embed.Set("fields", fields)
 	embed.Set("footer", footer)
