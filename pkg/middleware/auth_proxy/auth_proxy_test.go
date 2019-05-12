@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -124,10 +125,7 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 
 				getLDAPConfig = func() (*ldap.Config, error) {
-					config := &ldap.Config{
-						Servers: []*ldap.ServerConfig{},
-					}
-					return config, nil
+					return nil, errors.New("Something went wrong")
 				}
 
 				defer func() {
