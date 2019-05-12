@@ -17,14 +17,16 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// AlertingService is the background process that
+// schedules alert evaluations and makes sure notifications
+// are sent.
 type AlertingService struct {
 	RenderService rendering.Service `inject:""`
 
-	execQueue chan *Job
-	//clock         clock.Clock
+	execQueue     chan *Job
 	ticker        *Ticker
-	scheduler     Scheduler
-	evalHandler   EvalHandler
+	scheduler     scheduler
+	evalHandler   evalHandler
 	ruleReader    RuleReader
 	log           log.Logger
 	resultHandler ResultHandler
@@ -34,20 +36,16 @@ func init() {
 	registry.RegisterService(&AlertingService{})
 }
 
-func NewEngine() *AlertingService {
-	e := &AlertingService{}
-	e.Init()
-	return e
-}
-
+// IsDisabled returns true if the alerting service is disable for this instance
 func (e *AlertingService) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
+// Init initalizes the AlertingService
 func (e *AlertingService) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
 	e.execQueue = make(chan *Job, 1000)
-	e.scheduler = NewScheduler()
+	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler()
 	e.ruleReader = NewRuleReader()
 	e.log = log.New("alerting.engine")
@@ -55,6 +53,7 @@ func (e *AlertingService) Init() error {
 	return nil
 }
 
+// Run starts the alerting service background process
 func (e *AlertingService) Run(ctx context.Context) error {
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })

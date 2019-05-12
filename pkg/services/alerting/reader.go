@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,16 +25,7 @@ func NewRuleReader() *DefaultRuleReader {
 		log: log.New("alerting.ruleReader"),
 	}
 
-	go ruleReader.initReader()
 	return ruleReader
-}
-
-func (arr *DefaultRuleReader) initReader() {
-	heartbeat := time.NewTicker(time.Second * 10)
-
-	for range heartbeat.C {
-		arr.heartbeat()
-	}
 }
 
 func (arr *DefaultRuleReader) Fetch() []*Rule {
@@ -57,9 +47,4 @@ func (arr *DefaultRuleReader) Fetch() []*Rule {
 
 	metrics.M_Alerting_Active_Alerts.Set(float64(len(res)))
 	return res
-}
-
-func (arr *DefaultRuleReader) heartbeat() {
-	arr.clusterSize = 1
-	arr.serverPosition = 1
 }

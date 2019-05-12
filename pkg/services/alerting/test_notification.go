@@ -27,7 +27,7 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := NewNotificationService(nil).(*notificationService)
+	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{
 		Name:     cmd.Name,
