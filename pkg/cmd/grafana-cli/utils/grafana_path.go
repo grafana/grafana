@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -10,14 +11,14 @@ import (
 func GetGrafanaPluginDir(currentOS string) string {
 	//currentOS := runtime.GOOS
 
-	if isDevenvironment() {
+	if isDevEnvironment() {
 		return "../data/plugins"
 	}
 
 	return returnOsDefault(currentOS)
 }
 
-func isDevenvironment() bool {
+func isDevEnvironment() bool {
 	// if ../conf/defaults.ini exists, grafana is not installed as package
 	// that its in development environment.
 	ex, err := os.Executable()
@@ -26,9 +27,18 @@ func isDevenvironment() bool {
 		return false
 	}
 	exPath := filepath.Dir(ex)
-	defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
-	_, err = os.Stat(defaultsPath)
-	return err == nil
+	_, dir := path.Split(exPath)
+	if dir == "bin" {
+		// In dev env the executable for current platform is created in 'bin/' dir
+		defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
+		_, err = os.Stat(defaultsPath)
+		return err == nil
+	} else {
+		// But at the same time there are per platform directories that contain the binaries and can also be used.
+		defaultsPath := filepath.Join(exPath, "../../conf/defaults.ini")
+		_, err = os.Stat(defaultsPath)
+		return err == nil
+	}
 }
 
 func returnOsDefault(currentOs string) string {
