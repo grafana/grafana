@@ -107,7 +107,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
     isLoading: false,
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
-    isOpen: false,
     components: {
       Option: SelectOption,
       SingleValue,

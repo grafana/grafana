@@ -97,7 +97,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
           isDisabled={false}
           isLoading={false}
           isMulti={false}
-          isOpen={false}
           isSearchable={false}
           maxMenuHeight={300}
           onChange={[Function]}
@@ -182,7 +181,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
           isDisabled={false}
           isLoading={false}
           isMulti={false}
-          isOpen={false}
           isSearchable={false}
           maxMenuHeight={300}
           onChange={[Function]}
