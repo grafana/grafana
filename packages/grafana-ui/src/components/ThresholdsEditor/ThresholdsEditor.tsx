@@ -216,7 +216,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                         </div>
                         <div
                           className="thresholds-row-color-indicator"
-                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color!, theme.type) }}
+                          style={{ backgroundColor: getColorFromHexRgbOrName(threshold.color, theme.type) }}
                         />
                         <div className="thresholds-row-input">{this.renderInput(threshold)}</div>
                       </div>
