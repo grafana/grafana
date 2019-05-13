@@ -210,10 +210,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
+    const exclusive = event.ctrlKey || event.metaKey || event.shiftKey;
+
     this.setState((state, props) => {
       const { data } = props;
       let nextHiddenSeries = [];
-      if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      if (exclusive) {
         // Toggling series with key makes the series itself to toggle
         if (state.hiddenSeries.indexOf(label) > -1) {
           nextHiddenSeries = state.hiddenSeries.filter(series => series !== label);
