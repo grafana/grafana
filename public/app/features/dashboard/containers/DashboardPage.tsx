@@ -287,7 +287,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         />
         <div className="scroll-canvas scroll-canvas--dashboard">
           <CustomScrollbar
-            autoHeightMin={'100%'}
+            autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
             scrollTop={updateScrollTop}
             updateAfterMountMs={500}

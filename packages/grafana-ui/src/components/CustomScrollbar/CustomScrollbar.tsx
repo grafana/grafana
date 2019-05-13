@@ -71,10 +71,10 @@ export class CustomScrollbar extends Component<Props> {
     this.updateScroll();
   }
 
-  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined) => (props: any) => {
+  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => {
     return (
       <div
-        {...props}
+        {...passedProps}
         className={cx(
           css`
             visibility: ${hideTrack ? 'none' : 'visible'};
@@ -85,8 +85,28 @@ export class CustomScrollbar extends Component<Props> {
     );
   };
 
-  renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical') => (props: any) => {
-    return <div {...props} className={thumb} />;
+  renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical', passedProps: any) => {
+    return <div {...passedProps} className={thumb} />;
+  };
+
+  renderTrackHorizontal = (passedProps: any) => {
+    return this.renderTrack('track-horizontal', this.props.hideHorizontalTrack, passedProps);
+  };
+
+  renderTrackVertical = (passedProps: any) => {
+    return this.renderTrack('track-vertical', this.props.hideVerticalTrack, passedProps);
+  };
+
+  renderThumbHorizontal = (passedProps: any) => {
+    return this.renderThumb('thumb-horizontal', passedProps);
+  };
+
+  renderThumbVertical = (passedProps: any) => {
+    return this.renderThumb('thumb-vertical', passedProps);
+  };
+
+  renderView = (passedProps: any) => {
+    return <div {...passedProps} className="view" />;
   };
 
   render() {
@@ -99,15 +119,7 @@ export class CustomScrollbar extends Component<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
-      hideHorizontalTrack,
-      hideVerticalTrack,
     } = this.props;
-
-    const RenderTrackHorizontal = this.renderTrack('track-horizontal', hideHorizontalTrack);
-    const RenderTrackVertical = this.renderTrack('track-vertical', hideVerticalTrack);
-    const RenderThumbHorizontal = this.renderThumb('thumb-horizontal');
-    const RenderThumbVertical = this.renderThumb('thumb-vertical');
-    const RenderView = (props: any) => <div {...props} className="view" />;
 
     return (
       <Scrollbars
@@ -122,11 +134,11 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={RenderTrackHorizontal}
-        renderTrackVertical={RenderTrackVertical}
-        renderThumbHorizontal={RenderThumbHorizontal}
-        renderThumbVertical={RenderThumbVertical}
-        renderView={RenderView}
+        renderTrackHorizontal={this.renderTrackHorizontal}
+        renderTrackVertical={this.renderTrackVertical}
+        renderThumbHorizontal={this.renderThumbHorizontal}
+        renderThumbVertical={this.renderThumbVertical}
+        renderView={this.renderView}
       >
         {children}
       </Scrollbars>
