@@ -89,12 +89,13 @@ func (ts *TracingService) initGlobalTracer() error {
 
 	if ts.useZipkinPropagation {
 		zipkinPropagator := zipkin.NewZipkinB3HTTPHeaderPropagator()
-		shared := jaegercfg.ZipkinSharedRPCSpan(ts.useSharedZipkinSpans)
 		options = append(options,
 			jaegercfg.Injector(opentracing.HTTPHeaders, zipkinPropagator),
 			jaegercfg.Extractor(opentracing.HTTPHeaders, zipkinPropagator),
-			shared,
 		)
+		if ts.useSharedZipkinSpans {
+			options = append(options, jaegercfg.ZipkinSharedRPCSpan(true))
+		}
 	}
 
 	tracer, closer, err := cfg.NewTracer(options...)
