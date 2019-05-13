@@ -329,11 +329,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       }
 
       return true;
-    } else {
+    } else if (!event.shiftKey) {
+      // Run queries if Shift is not pressed, otherwise pass through
       this.executeOnChangeAndRunQueries();
 
-      return undefined;
+      return true;
     }
+    return undefined;
   };
 
   onKeyDown = (event: KeyboardEvent, change: Change) => {

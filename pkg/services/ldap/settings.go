@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/xerrors"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )

@@ -22,7 +22,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     showPermissionLevels: true,
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = this.getCleanState();
   }
@@ -36,7 +36,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = evt => {
+  onTypeChanged = (evt: any) => {
     const type = evt.target.value as AclTarget;
 
     switch (type) {
@@ -65,7 +65,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ permission: permission.value });
   };
 
-  onSubmit = async evt => {
+  onSubmit = async (evt: React.SyntheticEvent) => {
     evt.preventDefault();
     await this.props.onAddPermission(this.state);
     this.setState(this.getCleanState());

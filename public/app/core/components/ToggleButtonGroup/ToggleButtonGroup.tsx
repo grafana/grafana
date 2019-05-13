@@ -21,7 +21,7 @@ export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupPr
 }
 
 interface ToggleButtonProps {
-  onChange?: (value) => void;
+  onChange?: (value: any) => void;
   selected?: boolean;
   value: any;
   className?: string;
@@ -37,7 +37,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
   tooltip,
   onChange,
 }) => {
-  const onClick = event => {
+  const onClick = (event: React.SyntheticEvent) => {
     event.stopPropagation();
     if (onChange) {
       onChange(value);

@@ -4,7 +4,7 @@
   "id": "loki",
   "category": "logging",
 
-  "metrics": true,
+  "metrics": false,
   "alerting": false,
   "annotations": false,
   "logs": true,
