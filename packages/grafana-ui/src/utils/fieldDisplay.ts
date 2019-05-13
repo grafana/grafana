@@ -2,8 +2,6 @@ import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
 import {
-  ValueMapping,
-  Threshold,
   DisplayValue,
   FieldType,
   NullValueMode,
@@ -25,10 +23,6 @@ export interface FieldDisplayOptions {
 
   defaults: Partial<Field>; // Use these values unless otherwise stated
   override: Partial<Field>; // Set these values regardless of the source
-
-  // Could these be data driven also?
-  thresholds: Threshold[];
-  mappings: ValueMapping[];
 }
 
 export const VAR_SERIES_NAME = '__series_name';
@@ -130,8 +124,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
         const display = getDisplayProcessor({
           field,
-          mappings: fieldOptions.mappings,
-          thresholds: fieldOptions.thresholds,
           theme: options.theme,
         });
 
@@ -264,6 +256,11 @@ export function getFieldProperties(...props: PartialField[]): Field {
   let field = props[0] as Field;
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
+  }
+
+  // First value is always -Infinity
+  if (field.thresholds && field.thresholds.length) {
+    field.thresholds[0].value = -Infinity;
   }
 
   // Verify that max > min

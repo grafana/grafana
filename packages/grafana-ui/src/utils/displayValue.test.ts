@@ -102,7 +102,7 @@ describe('Format value', () => {
   it('should return if value isNaN', () => {
     const valueMappings: ValueMapping[] = [];
     const value = 'N/A';
-    const instance = getDisplayProcessor({ mappings: valueMappings });
+    const instance = getDisplayProcessor({ field: { mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -113,7 +113,7 @@ describe('Format value', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '6';
 
-    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
+    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -126,7 +126,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
-    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
+    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -159,7 +159,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
-    const instance = getDisplayProcessor({ mappings: valueMappings, field: { decimals: 1 } });
+    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
 
     expect(instance(value).text).toEqual('1-20');
   });

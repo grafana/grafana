@@ -7,25 +7,13 @@ import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import {
-  Threshold,
-  ValueMapping,
-  DecimalInfo,
-  DisplayValue,
-  GrafanaTheme,
-  GrafanaThemeType,
-  DecimalCount,
-  Field,
-} from '../types';
+import { Threshold, DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount, Field } from '../types';
 import { DateTime, dateTime } from './moment_wrapper';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
   field?: Partial<Field>;
-
-  mappings?: ValueMapping[];
-  thresholds?: Threshold[];
 
   // Alternative to empty string
   noValue?: string;
@@ -41,7 +29,8 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
-      const { mappings, thresholds, theme } = options;
+      const { theme } = options;
+      const { mappings, thresholds } = field;
       let color = field.color;
 
       let text = _.toString(value);

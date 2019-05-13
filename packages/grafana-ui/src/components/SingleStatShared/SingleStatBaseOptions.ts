@@ -40,18 +40,16 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     const { valueOptions } = old;
 
     const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
-    fieldOptions.mappings = old.valueMappings;
-    fieldOptions.thresholds = old.thresholds;
 
     const field = (fieldOptions.defaults = {} as Field);
-    if (valueOptions) {
-      field.unit = valueOptions.unit;
-      field.decimals = valueOptions.decimals;
+    field.mappings = old.valueMappings;
+    field.thresholds = old.thresholds;
+    field.unit = valueOptions.unit;
+    field.decimals = valueOptions.decimals;
 
-      // Make sure the stats have a valid name
-      if (valueOptions.stat) {
-        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
-      }
+    // Make sure the stats have a valid name
+    if (valueOptions.stat) {
+      fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
     }
 
     field.min = old.minValue;
@@ -59,6 +57,16 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     // remove old props
     return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+  } else if (old.fieldOptions) {
+    // Move mappins & thresholds to field defautls (6.3+)
+    const { mappings, thresholds, ...fieldOptions } = old.fieldOptions;
+    fieldOptions.defaults = {
+      mappings,
+      thresholds,
+      ...fieldOptions.defaults,
+    };
+    old.fieldOptions = fieldOptions;
+    return old;
   }
 
   return panel.options;
