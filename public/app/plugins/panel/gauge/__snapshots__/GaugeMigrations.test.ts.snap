@@ -24,22 +24,18 @@ Object {
       "thresholds": Array [
         Object {
           "color": "green",
-          "index": 0,
-          "value": null,
+          "value": -Infinity,
         },
         Object {
           "color": "#EAB839",
-          "index": 1,
           "value": -25,
         },
         Object {
           "color": "#6ED0E0",
-          "index": 2,
           "value": 0,
         },
         Object {
           "color": "red",
-          "index": 3,
           "value": 25,
         },
       ],

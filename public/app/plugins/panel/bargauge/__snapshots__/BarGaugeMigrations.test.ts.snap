@@ -14,17 +14,14 @@ Object {
       "thresholds": Array [
         Object {
           "color": "green",
-          "index": 0,
-          "value": null,
+          "value": -Infinity,
         },
         Object {
           "color": "orange",
-          "index": 1,
           "value": 40,
         },
         Object {
           "color": "red",
-          "index": 2,
           "value": 80,
         },
       ],
