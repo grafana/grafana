@@ -110,6 +110,8 @@ describe('Stats Calculators', () => {
     expect(reduce(allNull2, 0, ReducerID.allIsNull)).toEqual(true);
 
     expect(reduce(empty, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allNull, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allNull2, 0, ReducerID.allIsZero)).toEqual(false);
     expect(reduce(allZero, 0, ReducerID.allIsZero)).toEqual(true);
   });
 });

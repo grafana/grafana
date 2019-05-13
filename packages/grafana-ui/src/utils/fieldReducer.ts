@@ -195,7 +195,7 @@ function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: bool
     count: 0,
     nonNullCount: 0,
     allIsNull: true,
-    allIsZero: false,
+    allIsZero: true,
     range: null,
     diff: null,
     delta: 0,
@@ -286,6 +286,10 @@ function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: bool
 
   if (calcs.nonNullCount > 0) {
     calcs.mean = calcs.sum! / calcs.nonNullCount;
+  }
+
+  if (calcs.allIsNull) {
+    calcs.allIsZero = false;
   }
 
   if (calcs.max !== null && calcs.min !== null) {
