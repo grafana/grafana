@@ -1,6 +1,14 @@
 import { ReducerID, reduceField, fieldReducers } from './fieldReducer';
 
 import _ from 'lodash';
+import { SeriesData } from '../types/data';
+
+/**
+ * Run a reducer and get back the value
+ */
+function reduce(series: SeriesData, fieldIndex: number, id: string): any {
+  return reduceField({ series, fieldIndex, reducers: [id] })[id];
+}
 
 describe('Stats Calculators', () => {
   const basicTable = {
@@ -77,5 +85,31 @@ describe('Stats Calculators', () => {
 
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
+  });
+
+  it('consistenly check allIsNull/allIsZero', () => {
+    const empty = {
+      fields: [{ name: 'A' }],
+      rows: [],
+    };
+    const allNull = ({
+      fields: [{ name: 'A' }],
+      rows: [null, null, null, null],
+    } as unknown) as SeriesData;
+    const allNull2 = {
+      fields: [{ name: 'A' }],
+      rows: [[null], [null], [null], [null]],
+    };
+    const allZero = {
+      fields: [{ name: 'A' }],
+      rows: [[0], [0], [0], [0]],
+    };
+
+    expect(reduce(empty, 0, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allNull, 0, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allNull2, 0, ReducerID.allIsNull)).toEqual(true);
+
+    expect(reduce(empty, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allZero, 0, ReducerID.allIsZero)).toEqual(true);
   });
 });

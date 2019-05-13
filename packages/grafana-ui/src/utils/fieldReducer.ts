@@ -157,12 +157,14 @@ export const fieldReducers = new ExtensionRegistry<FieldReducerInfo>(() => [
     id: ReducerID.allIsZero,
     name: 'All Zeros',
     description: 'All values are zero',
+    emptyInputResult: false,
     standard: true,
   },
   {
     id: ReducerID.allIsNull,
     name: 'All Nulls',
     description: 'All values are null',
+    emptyInputResult: true,
     standard: true,
   },
   {
@@ -204,7 +206,7 @@ function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: bool
   } as FieldCalcs;
 
   for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][fieldIndex];
+    let currentValue = data.rows[i] ? data.rows[i][fieldIndex] : null;
 
     if (currentValue === null) {
       if (ignoreNulls) {
