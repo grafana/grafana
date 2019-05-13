@@ -1,7 +1,7 @@
 import React from 'react';
 import { cx } from 'emotion';
 
-interface SeriesIconProps {
+export interface SeriesIconProps {
   color: string;
   className?: string;
 }

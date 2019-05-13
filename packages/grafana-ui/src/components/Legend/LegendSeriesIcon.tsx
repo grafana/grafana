@@ -1,6 +1,6 @@
 import React from 'react';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
-import { SeriesIcon } from './SeriesIcon';
+import { SeriesIcon, SeriesIconProps } from './SeriesIcon';
 
 interface LegendSeriesIconProps {
   disabled: boolean;
@@ -17,10 +17,16 @@ export const LegendSeriesIcon: React.FunctionComponent<LegendSeriesIconProps> = 
   onColorChange,
   onToggleAxis,
 }) => {
-  const iconProps = {
+  let iconProps: SeriesIconProps = {
     color,
-    className: !disabled && 'pointer',
   };
+
+  if (!disabled) {
+    iconProps = {
+      ...iconProps,
+      className: 'pointer',
+    };
+  }
 
   return disabled ? (
     <span className="graph-legend-icon">
