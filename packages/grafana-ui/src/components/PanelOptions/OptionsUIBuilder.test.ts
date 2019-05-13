@@ -1,28 +1,36 @@
 import { OptionsGroupUIBuilder } from './OptionsUIBuilder';
 import { SingleStatBaseOptions } from '../SingleStatShared/SingleStatBaseOptions';
+import { BooleanOption } from './BooleanOption';
+import { IntegerOption } from './NumericInputOption';
 interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
 }
 
 describe('OptionsUIBuilder', () => {
-    it('allows group as root', () => {
-      const builder = new OptionsGroupUIBuilder<GaugeOptions>();
+  it('allows group as root', () => {
+    const builder = new OptionsGroupUIBuilder<GaugeOptions>();
 
-      const schema = builder
-          .addGroup({})
-            .addBooleanEditor('showThresholdLabels')
-            .addNestedOptionsGroup('fieldOptions', {})
-              .addThresholdsEditor('thresholds')
-            .endGroup() // How to return parent groupd ctx type here?
-          .endGroup()
-          .addGroup({})
-            // We are in the context of fieldOptions option still... unfortunately
-            .addFieldPropertiesEditor('')
-          .endGroup()
-        .getUIModel()
-
-      console.log(schema);
-    });
+    const schema = builder
+      .addGroup({})
+      .addBooleanEditor('showThresholdLabels')
+      .addBooleanEditor('showThresholdMarkers')
+      .addNestedOptionsGroup('fieldOptions', {})
+      .addThresholdsEditor('thresholds')
+      .addNestedOptionsGroup('override', {})
+      .addOptionEditor('max', {
+        component: IntegerOption,
+        properties: { label: 'whatever' },
+      })
+      .endGroup()
+      .endGroup()
+      .addGroup({})
+      // .addOptionEditor('orientation', {
+      //   component: BooleanOption as any,
+      // })
+      .endGroup()
+      .getUIModel();
+    debugger;
+    console.log(schema);
   });
 });

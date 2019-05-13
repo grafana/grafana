@@ -1,6 +1,5 @@
 import { OptionsGroup, OptionsUIType, OptionEditor, OptionUIComponentProps } from '../../types/panelOptions';
-import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
-import { Omit } from '../../types/utils';
+import { Omit, Subtract } from '../../types/utils';
 import React from 'react';
 import { BooleanOption } from './BooleanOption';
 import { IntegerOption } from './NumericInputOption';
@@ -17,22 +16,27 @@ interface UIModelBuilder<TModel> {
   getUIModel(): TModel;
 }
 
-interface EditorOptions {
+interface EditorOptions<TProps> {
   label?: string;
   placeholder?: string;
   description?: string;
+  properties?: TProps;
 }
 
-interface EditorConfig<TValueType extends {}> extends EditorOptions {
-  component: React.ComponentType<OptionUIComponentProps<TValueType>>;
+interface EditorConfig<TValueType extends {}, TProps>
+  extends EditorOptions<Subtract<TProps, OptionUIComponentProps<TValueType>>> {
+  propertyPath: string;
+  component: React.ComponentType<TProps>;
 }
+
+type SimplifiedEditorConfig<TValueType extends {}, TProps> = Omit<EditorConfig<TValueType, TProps>, 'propertyPath'>;
 
 type InferOptionType<TOptions extends object, TKey extends keyof TOptions> = TOptions[TKey];
 type KeysMatching<T, V> = { [K in keyof T]: T[K] extends V ? K : never }[keyof T];
 class OptionEditorUIBuilder implements UIModelBuilder<OptionEditor<any, any>> {
-  private model: EditorConfig<any>;
+  private model: EditorConfig<any, any>;
 
-  constructor(config: EditorConfig<any>) {
+  constructor(config: EditorConfig<any, any>) {
     this.model = config;
   }
 
@@ -44,26 +48,35 @@ class OptionEditorUIBuilder implements UIModelBuilder<OptionEditor<any, any>> {
   };
 }
 
-export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
-  implements UIModelBuilder<OptionsGroup<any>> {
+export class OptionsGroupUIBuilder<
+  TOptions extends {},
+  TContext = undefined,
+  TPContext = undefined,
+  TConfig extends {} = {}
+> implements UIModelBuilder<OptionsGroup<any>> {
   private groupContent: Array<UIModelBuilder<OptionEditor<any, any> | OptionsGroup<any>>> = [];
   private config: TConfig | null;
   private component: React.ComponentType<TConfig>;
-
-  private ctx: OptionsGroupUIBuilder<TOptions, TConfig> | null;
+  private ctx?: OptionsGroupUIBuilder<TContext, any, any, any>;
+  private path?: string;
 
   constructor(
-    ctx?: OptionsGroupUIBuilder<any, any> | null,
+    ctx?: OptionsGroupUIBuilder<any, any>,
     config?: TConfig,
-    component?: React.ComponentType<TConfig>
+    component?: React.ComponentType<TConfig>,
+    path?: string
   ) {
-    this.ctx = ctx || null;
+    this.ctx = ctx;
     this.config = config || null;
     // @ts-ignore
-    this.component = component || PanelOptionsGroup;
+    this.component = component;
+    this.path = path || (this.ctx && this.ctx.path);
   }
 
-  addGroup = ({ component, ...rest }: GroupConfig<any>): OptionsGroupUIBuilder<TOptions, TConfig> => {
+  addGroup = ({
+    component,
+    ...rest
+  }: GroupConfig<any>): OptionsGroupUIBuilder<TOptions, TContext, TPContext, TConfig> => {
     const group = new OptionsGroupUIBuilder(this, rest, component);
     this.groupContent.push(group);
     return group as any;
@@ -72,14 +85,20 @@ export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
   addNestedOptionsGroup = <T extends keyof TOptions, KConfig>(
     property: T,
     { component, ...rest }: GroupConfig<any>
-  ): OptionsGroupUIBuilder<TOptions[T], TConfig> => {
-    const group = new OptionsGroupUIBuilder<TOptions[T]>(this, rest, component);
+  ): OptionsGroupUIBuilder<TOptions[T], TOptions> => {
+    const group = new OptionsGroupUIBuilder<TOptions[T], TOptions, TContext>(this, rest, component, property);
     this.groupContent.push(group);
     return group as any;
   };
 
-  addOptionEditor = <T extends keyof TOptions>(property: T, config: EditorConfig<InferOptionType<TOptions, T>>) => {
-    const editor: OptionEditorUIBuilder = new OptionEditorUIBuilder(config);
+  addOptionEditor = <T extends keyof TOptions, TProps>(
+    property: T,
+    config: SimplifiedEditorConfig<InferOptionType<TOptions, T>, TProps>
+  ) => {
+    const editor: OptionEditorUIBuilder = new OptionEditorUIBuilder({
+      ...config,
+      propertyPath: this.path ? `${this.path}.${property}` : (property as string),
+    });
     this.groupContent.push(editor);
     return this;
   };
@@ -100,7 +119,7 @@ export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
 
   addFieldDisplayEditor = <T extends keyof TOptions>(
     property: KeysMatching<TOptions, FieldDisplayOptions>,
-    config?: EditorOptions
+    config?: EditorOptions<any> // TODO: type aditiona props
   ) => {
     return this.addOptionEditor(property, {
       component: FieldDisplayEditor as any,
@@ -110,7 +129,7 @@ export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
 
   addFieldPropertiesEditor = <T extends keyof TOptions>(
     property: KeysMatching<TOptions, FieldDisplayOptions>,
-    config?: EditorOptions
+    config?: EditorOptions<any> // TODO: type aditiona props
   ) => {
     return this.addOptionEditor(property, {
       component: FieldPropertiesEditor as any,
@@ -120,7 +139,7 @@ export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
 
   addThresholdsEditor = <T extends keyof TOptions>(
     property: KeysMatching<TOptions, Threshold[]>,
-    config?: EditorOptions
+    config?: EditorOptions<any> // TODO: type aditiona props
   ) => {
     return this.addOptionEditor(property, {
       component: ThresholdsEditor as any,
@@ -128,10 +147,11 @@ export class OptionsGroupUIBuilder<TOptions extends {}, TConfig extends {} = {}>
     });
   };
 
-  endGroup = () => {
+  endGroup = (): OptionsGroupUIBuilder<TContext, TPContext extends null | undefined ? TContext : TPContext, any> => {
     if (this.ctx) {
       return this.ctx;
     }
+
     return this;
   };
 
