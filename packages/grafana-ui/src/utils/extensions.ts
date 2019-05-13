@@ -1,15 +1,9 @@
 import { SelectOptionItem } from '../components/index';
 
-export interface ExtensionProps<T = any> {
-  options: T;
-  onOptionsChange: (options: T) => void;
-}
-
-export interface Extension<TOptions = any> {
+export interface Extension {
   id: string; // Unique Key -- saved in configs
   name: string; // Display Name, can change without breaking configs
   description: string;
-  defaultOptions?: TOptions; // what to use when creating a new instance
   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
 
   /**

@@ -32,7 +32,7 @@ export interface FieldCalcs {
 // Internal function
 type FieldReducer = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
-export interface FieldReducerInfo extends Extension<any> {
+export interface FieldReducerInfo extends Extension {
   // Internal details
   emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
