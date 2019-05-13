@@ -9,8 +9,6 @@ import (
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
-	//currentOS := runtime.GOOS
-
 	if isDevEnvironment() {
 		return "../data/plugins"
 	}
