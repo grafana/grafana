@@ -21,7 +21,7 @@ export interface QueryResultMeta {
   requestId?: string;
 
   // Used in Explore for highlighting
-  search?: string;
+  searchWords?: string[];
 
   // Used in Explore to show limit applied to search result
   limit?: number;
@@ -70,6 +70,7 @@ export interface Column {
 }
 
 export interface TableData extends QueryResultBase {
+  name?: string;
   columns: Column[];
   rows: any[][];
 }

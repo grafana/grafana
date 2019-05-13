@@ -9,18 +9,9 @@ import * as yup from 'yup';
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelPluginMeta extends PluginMeta {
+  skipDataQuery?: boolean;
   hideFromList?: boolean;
   sort: number;
-
-  // if length>0 the query tab will show up
-  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
-  // so it will be deprecated soon
-  dataFormats?: PanelDataFormat[];
-}
-
-export enum PanelDataFormat {
-  Table = 'table',
-  TimeSeries = 'time_series',
 }
 
 export interface PanelData {
@@ -34,6 +25,7 @@ export interface PanelData {
 }
 
 export interface PanelProps<T = any> {
+  id: number; // ID within the current dashboard
   data: PanelData;
   // TODO: annotation?: PanelData;
 

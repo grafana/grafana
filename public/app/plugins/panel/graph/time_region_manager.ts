@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
-import moment from 'moment';
 import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 type TimeRegionColorDefinition = {
   fill: string;
@@ -83,7 +83,10 @@ export class TimeRegionManager {
       return;
     }
 
-    const tRange = { from: moment(this.panelCtrl.range.from).utc(), to: moment(this.panelCtrl.range.to).utc() };
+    const tRange = {
+      from: dateTime(this.panelCtrl.range.from).utc(),
+      to: dateTime(this.panelCtrl.range.to).utc(),
+    };
 
     let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor: TimeRegionColorDefinition;
 
@@ -143,7 +146,7 @@ export class TimeRegionManager {
 
       regions = [];
 
-      fromStart = moment(tRange.from);
+      fromStart = dateTime(tRange.from);
       fromStart.set('hour', 0);
       fromStart.set('minute', 0);
       fromStart.set('second', 0);
@@ -160,7 +163,7 @@ export class TimeRegionManager {
           break;
         }
 
-        fromEnd = moment(fromStart);
+        fromEnd = dateTime(fromStart);
 
         if (hRange.from.h <= hRange.to.h) {
           fromEnd.add(hRange.to.h - hRange.from.h, 'hours');

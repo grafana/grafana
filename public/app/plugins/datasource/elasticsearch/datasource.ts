@@ -1,9 +1,9 @@
 import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class ElasticDatasource {
   basicAuth: string;
@@ -176,7 +176,7 @@ export class ElasticDatasource {
 
         const event = {
           annotation: annotation,
-          time: moment.utc(time).valueOf(),
+          time: toUtc(time).valueOf(),
           text: getFieldFromSource(source, textField),
           tags: getFieldFromSource(source, tagsField),
         };

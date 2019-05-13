@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import $ from 'jquery';
-import moment from 'moment';
 import * as d3 from 'd3';
 import { appEvents, contextSrv } from 'app/core/core';
 import * as ticksUtils from 'app/core/utils/ticks';
@@ -8,6 +7,7 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -713,8 +713,8 @@ export class HeatmapRenderer {
       const timeTo = this.xScale.invert(Math.max(this.selection.x1, this.selection.x2) - this.yAxisWidth);
 
       this.ctrl.timeSrv.setTime({
-        from: moment.utc(timeFrom),
-        to: moment.utc(timeTo),
+        from: toUtc(timeFrom),
+        to: toUtc(timeTo),
       });
     }
 
