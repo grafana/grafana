@@ -98,7 +98,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
-      const expressions = [datasourceInstance.getHighlighterExpression(value)];
+      const expressions = datasourceInstance.getHighlighterExpression(value);
       this.props.highlightLogsExpressionAction({ exploreId, expressions });
     }
   }, 500);
