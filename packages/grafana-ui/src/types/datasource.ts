@@ -78,6 +78,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  alerting?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -181,6 +182,11 @@ export abstract class DataSourceApi<
    * static information about the datasource
    */
   meta?: DataSourcePluginMeta;
+
+  /**
+   * Used by alerting to check if query contains template variables
+   */
+  targetContainsTemplate?(query: TQuery): boolean;
 }
 
 export abstract class ExploreDataSourceApi<
@@ -188,7 +194,7 @@ export abstract class ExploreDataSourceApi<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-  getHighlighterExpression?(query: TQuery): string;
+  getHighlighterExpression?(query: TQuery): string[];
   languageProvider?: any;
 }
 
@@ -214,16 +220,10 @@ export interface ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> {
-  datasource: DSType;
+> extends QueryEditorProps<DSType, TQuery, TOptions> {
   datasourceStatus: DataSourceStatus;
-  query: TQuery;
-  error?: string | JSX.Element;
-  hint?: QueryHint;
   history: any[];
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: TQuery) => void;
-  onExecuteHint?: (action: QueryFixAction) => void;
+  onHint?: (action: QueryFixAction) => void;
 }
 
 export interface ExploreStartPageProps {

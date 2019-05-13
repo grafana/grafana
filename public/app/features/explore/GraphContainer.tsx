@@ -71,8 +71,8 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
-  const { graphResult, queryTransactions, range, showingGraph, showingTable } = item;
-  const loading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
+  const { graphResult, graphIsLoading, range, showingGraph, showingTable } = item;
+  const loading = graphIsLoading;
   return { graphResult, loading, range, showingGraph, showingTable, split, timeZone: getTimeZone(state.user) };
 }
 

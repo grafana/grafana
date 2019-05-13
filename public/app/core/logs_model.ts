@@ -123,7 +123,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       try {
         const parsed = JSON.parse(line);
         _.map(parsed, (value, key) => {
@@ -149,7 +149,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   logfmt: {
     buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
         fields.push(substring.trim());
         return '';
@@ -273,9 +273,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   // intervalMs = intervalMs * 10;
 
   // Graph time series by log level
-  const seriesByLevel = {};
+  const seriesByLevel: any = {};
   const bucketSize = intervalMs * 10;
-  const seriesList = [];
+  const seriesList: any[] = [];
 
   for (const row of rows) {
     let series = seriesByLevel[row.logLevel];
@@ -312,7 +312,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   }
 
   return seriesList.map(series => {
-    series.datapoints.sort((a, b) => {
+    series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
 
@@ -446,7 +446,7 @@ export function processLogSeriesRow(
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(message);
   const hasAnsi = hasAnsiCodes(message);
-  const search = series.meta && series.meta.search ? series.meta.search : '';
+  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
   return {
     logLevel,
@@ -455,10 +455,10 @@ export function processLogSeriesRow(
     timeLocal,
     uniqueLabels,
     hasAnsi,
+    searchWords,
     entry: hasAnsi ? ansicolor.strip(message) : message,
     raw: message,
     labels: series.labels,
-    searchWords: search ? [search] : [],
     timestamp: ts,
   };
 }

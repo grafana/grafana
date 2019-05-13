@@ -6,7 +6,7 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToSeriesData } from './result_transformer';
-import { formatQuery, parseQuery } from './query_utils';
+import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
@@ -15,10 +15,12 @@ import {
   SeriesData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataQueryError,
 } from '@grafana/ui/src/types';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -65,16 +67,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  prepareQueryTarget(target, options) {
+  prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
+    const { query, regexp } = parseQuery(interpolated);
     const start = this.getTime(options.range.from, false);
     const end = this.getTime(options.range.to, true);
+    const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
-      ...parseQuery(interpolated),
+      query,
+      regexp,
       start,
       end,
       limit: this.maxLines,
+      refId,
     };
   }
 
@@ -87,18 +93,50 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return Promise.resolve({ data: [] });
     }
 
-    const queries = queryTargets.map(target => this._request('/api/prom/query', target));
+    const queries = queryTargets.map(target =>
+      this._request('/api/prom/query', target).catch((err: any) => {
+        if (err.cancelled) {
+          return err;
+        }
+
+        const error: DataQueryError = {
+          message: 'Unknown error during query transaction. Please check JS console logs.',
+          refId: target.refId,
+        };
+
+        if (err.data) {
+          if (typeof err.data === 'string') {
+            error.message = err.data;
+          } else if (err.data.error) {
+            error.message = safeStringifyValue(err.data.error);
+          }
+        } else if (err.message) {
+          error.message = err.message;
+        } else if (typeof err === 'string') {
+          error.message = err;
+        }
+
+        error.status = err.status;
+        error.statusText = err.statusText;
+
+        throw error;
+      })
+    );
 
     return Promise.all(queries).then((results: any[]) => {
-      const series: SeriesData[] = [];
+      const series: Array<SeriesData | DataQueryError> = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
         if (result.data) {
+          const refId = queryTargets[i].refId;
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
+            seriesData.refId = refId;
             seriesData.meta = {
-              search: queryTargets[i].regexp,
+              searchWords: getHighlighterExpressionsFromQuery(
+                formatQuery(queryTargets[i].query, queryTargets[i].regexp)
+              ),
               limit: this.maxLines,
             };
             series.push(seriesData);
@@ -125,7 +163,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   modifyQuery(query: LokiQuery, action: any): LokiQuery {
     const parsed = parseQuery(query.expr || '');
-    let selector = parsed.query;
+    let { query: selector } = parsed;
     switch (action.type) {
       case 'ADD_FILTER': {
         selector = addLabelToSelector(selector, action.key, action.value);
@@ -138,8 +176,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return { ...query, expr: expression };
   }
 
-  getHighlighterExpression(query: LokiQuery): string {
-    return parseQuery(query.expr).regexp;
+  getHighlighterExpression(query: LokiQuery): string[] {
+    return getHighlighterExpressionsFromQuery(query.expr);
   }
 
   getTime(date, roundUp) {
