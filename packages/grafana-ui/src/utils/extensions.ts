@@ -1,4 +1,3 @@
-import { ComponentClass } from 'react';
 import { SelectOptionItem } from '../components/index';
 
 export interface ExtensionProps<T = any> {
@@ -18,21 +17,6 @@ export interface Extension<TOptions = any> {
    *  like: 'all' and 'any' matchers;
    */
   excludeFromPicker?: boolean;
-
-  /**
-   * Convert the options to a string
-   */
-  getOptionsDisplayText?: (options: TOptions) => string;
-
-  /**
-   * The Options editor
-   */
-  editor?: ComponentClass<ExtensionProps<TOptions>>;
-
-  /**
-   * ??? maybe a readonly alternative to `getOptionsDisplayText`?
-   */
-  display?: ComponentClass<ExtensionProps<TOptions>>;
 }
 
 interface ExtensionSelectInfo {
