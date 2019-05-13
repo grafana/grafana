@@ -210,32 +210,31 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
-    const { hiddenSeries } = this.state;
-    const data = this.getGraphData();
-
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      // Toggling series with key makes the series itself to toggle
-      if (hiddenSeries.indexOf(label) > -1) {
-        this.setState({
-          hiddenSeries: hiddenSeries.filter(series => series !== label),
-        });
+    this.setState((state, props) => {
+      const { data } = props;
+      let nextHiddenSeries = [];
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        // Toggling series with key makes the series itself to toggle
+        if (state.hiddenSeries.indexOf(label) > -1) {
+          nextHiddenSeries = state.hiddenSeries.filter(series => series !== label);
+        } else {
+          nextHiddenSeries = state.hiddenSeries.concat([label]);
+        }
       } else {
-        this.setState({
-          hiddenSeries: hiddenSeries.concat([label]),
-        });
-      }
-    } else {
-      // Toggling series with out key toggles all the series but the clicked one
-      const allSeriesLabels = data.map(series => series.label);
+        // Toggling series with out key toggles all the series but the clicked one
+        const allSeriesLabels = data.map(series => series.label);
 
-      if (hiddenSeries.length + 1 === allSeriesLabels.length) {
-        this.setState({ hiddenSeries: [] });
-      } else {
-        this.setState({
-          hiddenSeries: difference(allSeriesLabels, [label]),
-        });
+        if (state.hiddenSeries.length + 1 === allSeriesLabels.length) {
+          nextHiddenSeries = [];
+        } else {
+          nextHiddenSeries = difference(allSeriesLabels, [label]);
+        }
       }
-    }
+
+      return {
+        hiddenSeries: nextHiddenSeries,
+      };
+    }, this.draw);
   }
 
   render() {

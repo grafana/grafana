@@ -21,9 +21,12 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
   onToggleAxis,
   onLabelClick,
 }) => {
+  const theme = useContext(ThemeContext);
+
   return (
     <>
       <LegendSeriesIcon
+        disabled={!onSeriesColorChange}
         color={item.color}
         onColorChange={color => {
           if (onSeriesColorChange) {
@@ -42,6 +45,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
         className={css`
           cursor: pointer;
           white-space: nowrap;
+          color: ${!item.isVisible && theme.colors.linkDisabled};
         `}
       >
         {item.label}
@@ -82,6 +86,7 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
           `}
         >
           <LegendSeriesIcon
+            disabled={!!onSeriesColorChange}
             color={item.color}
             onColorChange={color => {
               if (onSeriesColorChange) {

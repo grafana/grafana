@@ -116,6 +116,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
               onSeriesColorChange={onSeriesColorChange}
               onSeriesAxisToggle={onSeriesAxisToggle}
               onToggleSort={onToggleSort}
+              enableSeriesColorChange
             />
           </CustomScrollbar>
         </div>
