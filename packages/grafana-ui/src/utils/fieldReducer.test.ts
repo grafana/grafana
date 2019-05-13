@@ -9,24 +9,11 @@ describe('Stats Calculators', () => {
   };
 
   it('should load all standard stats', () => {
-    const names = [
-      ReducerID.sum,
-      ReducerID.max,
-      ReducerID.min,
-      ReducerID.logmin,
-      ReducerID.mean,
-      ReducerID.last,
-      ReducerID.first,
-      ReducerID.count,
-      ReducerID.range,
-      ReducerID.diff,
-      ReducerID.step,
-      ReducerID.delta,
-      // ReducerID.allIsZero,
-      // ReducerID.allIsNull,
-    ];
-    const stats = fieldReducers.list(names);
-    expect(stats.length).toBe(names.length);
+    for (const id of Object.keys(ReducerID)) {
+      const reducer = fieldReducers.getIfExists(id);
+      const found = reducer ? reducer.id : '<NOT FOUND>';
+      expect(found).toEqual(id);
+    }
   });
 
   it('should fail to load unknown stats', () => {
