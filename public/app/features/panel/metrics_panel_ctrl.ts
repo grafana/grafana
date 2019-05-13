@@ -15,6 +15,7 @@ import {
   PanelData,
   LoadingState,
   DataQueryResponse,
+  SeriesData,
 } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -37,6 +38,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
+  dataFormat = PanelQueryRunnerFormat.legacy;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -134,16 +136,6 @@ class MetricsPanelCtrl extends PanelCtrl {
 
       this.loading = false;
 
-      // The result should already be processed, but just in case
-      if (!data.legacy) {
-        data.legacy = data.series.map(v => {
-          if (isSeriesData(v)) {
-            return toLegacyResponseData(v);
-          }
-          return v;
-        });
-      }
-
       if (data.request) {
         const { range, timeInfo } = data.request;
         if (range) {
@@ -152,6 +144,22 @@ class MetricsPanelCtrl extends PanelCtrl {
         if (timeInfo) {
           this.timeInfo = timeInfo;
         }
+      }
+
+      // Some Angular panels have migrated to SeriesData format
+      if (this.dataFormat === PanelQueryRunnerFormat.series) {
+        this.handleSeriesData(data.series);
+        return;
+      }
+
+      // The result should already be processed, but just in case
+      if (!data.legacy) {
+        data.legacy = data.series.map(v => {
+          if (isSeriesData(v)) {
+            return toLegacyResponseData(v);
+          }
+          return v;
+        });
       }
 
       // Make the results look like they came directly from a <6.2 datasource request
@@ -198,7 +206,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     const queryRunner = panel.getQueryRunner();
 
     if (!this.querySubscription) {
-      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.legacy);
+      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, this.dataFormat);
     }
 
     return queryRunner.run({
@@ -214,6 +222,16 @@ class MetricsPanelCtrl extends PanelCtrl {
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
     });
+  }
+
+  handleSeriesData(data: SeriesData[]) {
+    this.loading = false;
+
+    if (this.dashboard.snapshot) {
+      this.panel.snapshotData = data;
+    }
+
+    // Subclasses that asked for SeriesData will override
   }
 
   handleQueryResult(result: DataQueryResponse) {
