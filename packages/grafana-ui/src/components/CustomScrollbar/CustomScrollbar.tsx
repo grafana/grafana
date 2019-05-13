@@ -42,9 +42,10 @@ export class CustomScrollbar extends Component<Props> {
 
   updateScroll() {
     const ref = this.ref.current;
+    const { scrollTop } = this.props;
 
-    if (ref && !isNil(this.props.scrollTop)) {
-      ref.scrollTop(this.props.scrollTop);
+    if (ref && !isNil(scrollTop)) {
+      ref.scrollTop(scrollTop);
     }
   }
 
@@ -70,6 +71,24 @@ export class CustomScrollbar extends Component<Props> {
     this.updateScroll();
   }
 
+  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined) => (props: any) => {
+    return (
+      <div
+        {...props}
+        className={cx(
+          css`
+            visibility: ${hideTrack ? 'none' : 'visible'};
+          `,
+          track
+        )}
+      />
+    );
+  };
+
+  renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical') => (props: any) => {
+    return <div {...props} className={thumb} />;
+  };
+
   render() {
     const {
       className,
@@ -84,6 +103,12 @@ export class CustomScrollbar extends Component<Props> {
       hideVerticalTrack,
     } = this.props;
 
+    const RenderTrackHorizontal = this.renderTrack('track-horizontal', hideHorizontalTrack);
+    const RenderTrackVertical = this.renderTrack('track-vertical', hideVerticalTrack);
+    const RenderThumbHorizontal = this.renderThumb('thumb-horizontal');
+    const RenderThumbVertical = this.renderThumb('thumb-vertical');
+    const RenderView = (props: any) => <div {...props} className="view" />;
+
     return (
       <Scrollbars
         ref={this.ref}
@@ -97,31 +122,11 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={props => (
-          <div
-            {...props}
-            className={cx(
-              css`
-                visibility: ${hideHorizontalTrack ? 'none' : 'visible'};
-              `,
-              'track-horizontal'
-            )}
-          />
-        )}
-        renderTrackVertical={props => (
-          <div
-            {...props}
-            className={cx(
-              css`
-                visibility: ${hideVerticalTrack ? 'none' : 'visible'};
-              `,
-              'track-vertical'
-            )}
-          />
-        )}
-        renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
-        renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
-        renderView={props => <div {...props} className="view" />}
+        renderTrackHorizontal={RenderTrackHorizontal}
+        renderTrackVertical={RenderTrackVertical}
+        renderThumbHorizontal={RenderThumbHorizontal}
+        renderThumbVertical={RenderThumbVertical}
+        renderView={RenderView}
       >
         {children}
       </Scrollbars>
