@@ -43,7 +43,7 @@
 				<select 
 				  ng-model="ctrl.target.stream.type" 
 				  class="gf-form-input"
-					ng-options="type for type in ['signal','logs']"
+					ng-options="type for type in ['signal','logs', 'fetch']"
 				  ng-change="ctrl.streamChanged()" />
 				</select>
 			</div>
@@ -78,7 +78,16 @@
 				step="0.1"
 				ng-change="ctrl.streamChanged()" />
 		</div>
-		<div class="gf-form gf-form--grow">
+		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type === 'fetch'">
+			<label class="gf-form-label query-keyword">URL</label>
+			<input type="string" 
+				class="gf-form-input gf-form-label--grow" 
+				placeholder="Fetch URL" 
+				ng-model="ctrl.target.stream.url" 
+				ng-change="ctrl.streamChanged()" 
+				ng-model-onblur />
+		</div>
+		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type !== 'fetch'">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>

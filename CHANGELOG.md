@@ -49,7 +49,7 @@
 
 ### Breaking changes
 
-* **Gauge Panel**: The suffix / prefix options have been removed from the new Guage Panel (introduced in v6.0). [#16870](https://github.com/grafana/grafana/issues/16870).
+* **Gauge Panel**: The suffix / prefix options have been removed from the new Gauge Panel (introduced in v6.0). [#16870](https://github.com/grafana/grafana/issues/16870).
 
 
 # 6.1.6 (2019-04-29)

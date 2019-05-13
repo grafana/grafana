@@ -97,7 +97,6 @@ describe('Explore item reducer', () => {
         const queryTransactions: QueryTransaction[] = [];
         const initalState: Partial<ExploreItemState> = {
           datasourceError: null,
-          queryTransactions: [{} as QueryTransaction],
           graphResult: [],
           tableResult: {} as TableModel,
           logsResult: {} as LogsModel,

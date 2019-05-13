@@ -2,11 +2,13 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { StackdriverQuery, MetricDescriptor } from './types';
-import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions } from './types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export default class StackdriverDatasource implements DataSourceApi<StackdriverQuery> {
-  id: number;
+export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
   baseUrl: string;
   projectName: string;
@@ -15,10 +17,15 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
   metricTypes: any[];
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypes = [];
@@ -62,7 +69,7 @@ export default class StackdriverDatasource implements DataSourceApi<StackdriverQ
     }
   }
 
-  interpolateFilters(filters: string[], scopedVars: object) {
+  interpolateFilters(filters: string[], scopedVars: ScopedVars) {
     return (filters || []).map(f => {
       return this.templateSrv.replace(f, scopedVars || {}, 'regex');
     });

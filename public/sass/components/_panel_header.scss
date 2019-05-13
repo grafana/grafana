@@ -126,6 +126,7 @@ $panel-header-no-title-zindex: 1;
   left: 0;
   width: $panel-header-height;
   height: $panel-header-height;
+  z-index: $panel-header-no-title-zindex + 1;
   top: 0;
 
   .fa {
@@ -138,7 +139,8 @@ $panel-header-no-title-zindex: 1;
 
   &--info {
     display: block;
-    @include panel-corner-color(lighten($panel-corner, 4%));
+    @include panel-corner-color(lighten($panel-corner, 6%));
+
     .fa:before {
       content: '\f129';
     }
@@ -146,7 +148,7 @@ $panel-header-no-title-zindex: 1;
 
   &--links {
     display: block;
-    @include panel-corner-color(lighten($panel-corner, 4%));
+    @include panel-corner-color(lighten($panel-corner, 6%));
     .fa {
       left: 4px;
     }
