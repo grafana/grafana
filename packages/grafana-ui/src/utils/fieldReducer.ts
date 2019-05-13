@@ -154,6 +154,18 @@ export const fieldReducers = new ExtensionRegistry<FieldReducerInfo>(() => [
     standard: true,
   },
   {
+    id: ReducerID.allIsZero,
+    name: 'All Zeros',
+    description: 'All values are zero',
+    standard: true,
+  },
+  {
+    id: ReducerID.allIsNull,
+    name: 'All Nulls',
+    description: 'All values are null',
+    standard: true,
+  },
+  {
     id: ReducerID.changeCount,
     name: 'Change Count',
     description: 'Number of times the value changes',
