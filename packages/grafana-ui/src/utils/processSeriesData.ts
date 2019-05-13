@@ -173,7 +173,6 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
     columns: fields.map(f => {
       return {
         text: f.name,
-        filterable: f.filterable,
         unit: f.unit,
         refId: series.refId,
         meta: series.meta,

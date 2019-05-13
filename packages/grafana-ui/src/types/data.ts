@@ -43,7 +43,6 @@ export interface Field {
   name: string; // The column name
   title?: string; // The display value for this field.  This supports template variables blank is auto
   type?: FieldType;
-  filterable?: boolean;
   unit?: string;
   dateFormat?: string; // Source data format
   decimals?: number | null; // Significant digits (for display)

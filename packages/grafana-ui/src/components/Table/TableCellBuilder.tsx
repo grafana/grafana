@@ -105,7 +105,6 @@ export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: 
       },
       style,
       props.theme,
-      schema,
       props.replaceVariables
     ).build;
   }
@@ -120,7 +119,6 @@ export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: 
       },
       style,
       props.theme,
-      schema,
       props.replaceVariables
     ).build;
     // TODO!!!!  all the mapping stuff!!!!
@@ -137,7 +135,6 @@ export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: 
       },
       style,
       props.theme,
-      schema,
       props.replaceVariables,
       valueFormatter
     ).build;
@@ -154,13 +151,9 @@ class CellBuilderWithStyle {
     private mapper: ValueMapper,
     private style: ColumnStyle,
     private theme: GrafanaTheme,
-    private column: Field,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
-  ) {
-    //
-    console.log('COLUMN', column.name, theme);
-  }
+  ) {}
 
   getColorForValue = (value: any): string | null => {
     const { thresholds, colors } = this.style;
@@ -244,40 +237,6 @@ class CellBuilderWithStyle {
         >
           {value}
         </a>
-      );
-    }
-
-    // ??? I don't think this will still work!
-    if (this.column.filterable) {
-      cellClasses.push('table-panel-cell-filterable');
-      value = (
-        <>
-          {value}
-          <span>
-            <a
-              className="table-panel-filter-link"
-              data-link-tooltip
-              data-original-title="Filter out value"
-              data-placement="bottom"
-              data-row={props.rowIndex}
-              data-column={props.columnIndex}
-              data-operator="!="
-            >
-              <i className="fa fa-search-minus" />
-            </a>
-            <a
-              className="table-panel-filter-link"
-              data-link-tooltip
-              data-original-title="Filter for value"
-              data-placement="bottom"
-              data-row={props.rowIndex}
-              data-column={props.columnIndex}
-              data-operator="="
-            >
-              <i className="fa fa-search-plus" />
-            </a>
-          </span>
-        </>
       );
     }
 
