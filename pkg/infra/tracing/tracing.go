@@ -59,9 +59,7 @@ func (ts *TracingService) parseSettings() {
 	ts.samplerType = section.Key("sampler_type").MustString("")
 	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
 	ts.useZipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
-	if ts.useZipkinPropagation {
-		ts.useSharedZipkinSpans = section.Key("shared_zipkin_spans").MustBool(true)
-	}
+	ts.useSharedZipkinSpans = section.Key("shared_zipkin_spans").MustBool(true)
 }
 
 func (ts *TracingService) initGlobalTracer() error {
