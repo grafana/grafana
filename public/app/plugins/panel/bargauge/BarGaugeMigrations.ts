@@ -1,5 +1,8 @@
 import { PanelModel } from '@grafana/ui';
-import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import {
+  sharedSingleStatMigrationCheck,
+  migrateOldThresholds,
+} from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { BarGaugeOptions } from './types';
 
 export const barGaugePanelMigrationCheck = (panel: PanelModel<BarGaugeOptions>): Partial<BarGaugeOptions> => {
@@ -16,7 +19,7 @@ export const barGaugePanelMigrationCheck = (panel: PanelModel<BarGaugeOptions>):
       const { mappings, thresholds, ...rest } = fieldOptions;
       rest.default = {
         mappings,
-        thresholds,
+        thresholds: migrateOldThresholds(thresholds),
         ...rest.defaults,
       };
       return {

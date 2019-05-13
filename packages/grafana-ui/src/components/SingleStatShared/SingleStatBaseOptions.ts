@@ -3,8 +3,8 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field } from '../../types';
-import { getFieldReducers } from '../../utils/index';
+import { Field, Threshold } from '../../types';
+import { getFieldReducers, sortThresholds } from '../../utils/index';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -43,7 +43,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     const field = (fieldOptions.defaults = {} as Field);
     field.mappings = old.valueMappings;
-    field.thresholds = old.thresholds;
+    field.thresholds = migrateOldThresholds(old.thresholds);
     field.unit = valueOptions.unit;
     field.decimals = valueOptions.decimals;
 
@@ -62,7 +62,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     const { mappings, thresholds, ...fieldOptions } = old.fieldOptions;
     fieldOptions.defaults = {
       mappings,
-      thresholds,
+      thresholds: migrateOldThresholds(thresholds),
       ...fieldOptions.defaults,
     };
     old.fieldOptions = fieldOptions;
@@ -71,3 +71,19 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
   return panel.options;
 };
+
+export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
+  if (!thresholds || !thresholds.length) {
+    return undefined;
+  }
+  const copy = thresholds.map(t => {
+    return {
+      // Drops 'index'
+      value: t.value === null ? -Infinity : t.value,
+      color: t.color,
+    };
+  });
+  sortThresholds(copy);
+  copy[0].value = -Infinity;
+  return copy;
+}

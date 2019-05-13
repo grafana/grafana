@@ -1,6 +1,9 @@
 import { PanelModel, Field, getFieldReducers } from '@grafana/ui';
 import { GaugeOptions } from './types';
-import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import {
+  sharedSingleStatMigrationCheck,
+  migrateOldThresholds,
+} from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { FieldDisplayOptions } from '@grafana/ui/src/utils/fieldDisplay';
 
 export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
@@ -22,7 +25,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
 
     const field = (fieldOptions.defaults = {} as Field);
     field.mappings = old.valueMappings;
-    field.thresholds = old.thresholds;
+    field.thresholds = migrateOldThresholds(old.thresholds);
     field.unit = valueOptions.unit;
     field.decimals = valueOptions.decimals;
 
@@ -41,7 +44,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
       const { mappings, thresholds, ...rest } = fieldOptions;
       rest.default = {
         mappings,
-        thresholds,
+        thresholds: migrateOldThresholds(thresholds),
         ...rest.defaults,
       };
       return {
