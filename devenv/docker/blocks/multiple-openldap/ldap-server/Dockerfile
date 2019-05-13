@@ -22,8 +22,8 @@ VOLUME ["/etc/ldap", "/var/lib/ldap"]
 COPY modules/ /etc/ldap.dist/modules
 COPY prepopulate/ /etc/ldap.dist/prepopulate
 
-COPY entrypoint.sh /entrypoint.sh
-COPY prepopulate.sh /prepopulate.sh
+COPY ../entrypoint.sh /entrypoint.sh
+COPY ../prepopulate.sh /prepopulate.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
