@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"

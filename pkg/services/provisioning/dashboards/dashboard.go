@@ -3,7 +3,7 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/pkg/errors"
 )
 
