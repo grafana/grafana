@@ -7,13 +7,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery, TimeRange, QueryType } from '@grafana/ui';
+import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
   error?: any;
-  queryType: QueryType;
   datasource: any;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
@@ -31,7 +30,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       return;
     }
 
-    const { queryType, datasource, initialQuery, exploreEvents, range } = this.props;
+    const { datasource, initialQuery, exploreEvents, range } = this.props;
     this.initTimeSrv(range);
 
     const loader = getAngularLoader();
@@ -55,7 +54,6 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         events: exploreEvents,
         panel: { datasource, targets: [target] },
         dashboard: {},
-        queryType,
       },
     };
 

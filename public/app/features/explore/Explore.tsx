@@ -31,14 +31,7 @@ import {
 } from './state/actions';
 
 // Types
-import {
-  RawTimeRange,
-  DataQuery,
-  ExploreStartPageProps,
-  ExploreDataSourceApi,
-  DataQueryError,
-  QueryType,
-} from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -46,6 +39,7 @@ import {
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
+  ExploreMode,
 } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -92,7 +86,7 @@ interface ExploreProps {
   initialRange: RawTimeRange;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
-  queryType: QueryType;
+  mode: ExploreMode;
 }
 
 /**
@@ -241,7 +235,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       split,
       queryKeys,
       queryErrors,
-      queryType,
+      mode,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -276,11 +270,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {queryType === QueryType.Metrics && <GraphContainer width={width} exploreId={exploreId} />}
-                          {queryType === QueryType.Metrics && (
+                          {mode === ExploreMode.Metrics && <GraphContainer width={width} exploreId={exploreId} />}
+                          {mode === ExploreMode.Metrics && (
                             <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />
                           )}
-                          {queryType === QueryType.Logs && (
+                          {mode === ExploreMode.Logs && (
                             <LogsContainer
                               width={width}
                               exploreId={exploreId}
@@ -320,7 +314,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
     queryErrors,
-    queryType,
+    mode,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -345,7 +339,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialRange,
     initialUI,
     queryErrors,
-    queryType,
+    mode,
   };
 }
 

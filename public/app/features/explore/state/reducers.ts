@@ -8,8 +8,8 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState } from 'app/types/explore';
-import { DataQuery, QueryType } from '@grafana/ui/src/types';
+import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
+import { DataQuery } from '@grafana/ui/src/types';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -22,7 +22,7 @@ import {
   runQueriesAction,
   historyUpdatedAction,
   resetQueryErrorAction,
-  changeQueryTypeAction,
+  changeModeAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -108,8 +108,8 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   queryErrors: [],
   latency: 0,
-  supportedQueryTypes: [],
-  queryType: null,
+  supportedModes: [],
+  mode: null,
 });
 
 /**
@@ -169,10 +169,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: changeQueryTypeAction,
+    filter: changeModeAction,
     mapper: (state, action): ExploreItemState => {
-      const queryType = action.payload.queryType;
-      return { ...state, queryType: queryType };
+      const mode = action.payload.mode;
+      return { ...state, mode };
     },
   })
   .addMapper({
@@ -236,16 +236,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsLogs = datasourceInstance.meta.logs;
       const supportsTable = datasourceInstance.meta.tables;
 
-      let dataType = QueryType.Metrics;
-      const supportedDataTypes: QueryType[] = [];
+      const mode = ExploreMode.Metrics;
+      const supportedModes: ExploreMode[] = [];
 
       if (supportsGraph) {
-        supportedDataTypes.push(QueryType.Metrics);
+        supportedModes.push(ExploreMode.Metrics);
       }
 
       if (supportsLogs) {
-        supportedDataTypes.push(QueryType.Logs);
-        dataType = QueryType.Logs;
+        supportedModes.push(ExploreMode.Logs);
       }
 
       // Custom components
@@ -265,8 +264,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         StartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: getQueryKeys(state.queries, datasourceInstance),
-        supportedQueryTypes: supportedDataTypes,
-        queryType: dataType,
+        supportedModes,
+        mode,
       };
     },
   })

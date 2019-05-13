@@ -11,12 +11,16 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
-  QueryType,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
+
+export enum ExploreMode {
+  Metrics = 'Metrics',
+  Logs = 'Logs',
+}
 
 export interface CompletionItem {
   /**
@@ -259,8 +263,8 @@ export interface ExploreItemState {
 
   queryErrors: DataQueryError[];
   latency: number;
-  supportedQueryTypes: QueryType[];
-  queryType: QueryType;
+  supportedModes: ExploreMode[];
+  mode: ExploreMode;
 }
 
 export interface ExploreUpdateState {

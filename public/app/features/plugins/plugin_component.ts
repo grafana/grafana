@@ -106,12 +106,11 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return $q.when({
           baseUrl: ds.meta.baseUrl,
           name: 'query-ctrl-' + ds.meta.id,
-          bindings: { target: '=', panelCtrl: '=', datasource: '=', queryType: '=' },
+          bindings: { target: '=', panelCtrl: '=', datasource: '=' },
           attrs: {
             target: 'ctrl.target',
             'panel-ctrl': 'ctrl',
             datasource: 'ctrl.datasource',
-            'query-type': 'ctrl.queryType',
           },
           Component: ds.components.QueryCtrl,
         });

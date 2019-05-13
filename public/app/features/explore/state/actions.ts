@@ -35,7 +35,6 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
-  QueryType,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -45,6 +44,7 @@ import {
   QueryOptions,
   ExploreUIState,
   QueryTransaction,
+  ExploreMode,
 } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
@@ -86,7 +86,7 @@ import {
   queryStartAction,
   historyUpdatedAction,
   resetQueryErrorAction,
-  changeQueryTypeAction,
+  changeModeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -143,11 +143,11 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
 }
 
 /**
- * Change the query type used in Explore.
+ * Change the display mode in Explore.
  */
-export function changeQueryType(exploreId: ExploreId, queryType: QueryType): ThunkResult<void> {
+export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
-    dispatch(changeQueryTypeAction({ exploreId, queryType }));
+    dispatch(changeModeAction({ exploreId, mode }));
     dispatch(runQueries(exploreId));
   };
 }
@@ -523,7 +523,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
       showingTable,
       datasourceError,
       containerWidth,
-      queryType,
+      mode,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -543,7 +543,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && queryType === QueryType.Metrics) {
+    if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Table', {
           interval,
@@ -553,7 +553,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
         })
       );
     }
-    if ((ignoreUIState || showingGraph) && queryType === QueryType.Metrics) {
+    if ((ignoreUIState || showingGraph) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Graph', {
           interval,
@@ -563,7 +563,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
         })
       );
     }
-    if ((ignoreUIState || showingLogs) && queryType === QueryType.Logs) {
+    if ((ignoreUIState || showingLogs) && mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 

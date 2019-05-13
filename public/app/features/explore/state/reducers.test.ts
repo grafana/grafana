@@ -12,6 +12,7 @@ import {
   ExploreState,
   QueryTransaction,
   RangeScanner,
+  ExploreMode,
 } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
@@ -23,7 +24,7 @@ import {
   updateDatasourceInstanceAction,
   splitOpenAction,
   splitCloseAction,
-  changeQueryTypeAction,
+  changeModeAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -31,7 +32,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, QueryType } from '@grafana/ui';
+import { DataSourceApi, DataQuery } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -128,9 +129,9 @@ describe('Explore item reducer', () => {
       it('then it should set correct state', () => {
         reducerTester()
           .givenReducer(itemReducer, {})
-          .whenActionIsDispatched(changeQueryTypeAction({ exploreId: ExploreId.left, queryType: QueryType.Logs }))
+          .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
           .thenStateShouldEqual({
-            queryType: QueryType.Logs,
+            mode: ExploreMode.Logs,
           });
       });
     });
@@ -172,8 +173,8 @@ describe('Explore item reducer', () => {
             showingStartPage: true,
             queries,
             queryKeys,
-            supportedQueryTypes: [QueryType.Metrics, QueryType.Logs],
-            queryType: QueryType.Logs,
+            supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
+            mode: ExploreMode.Metrics,
           };
 
           reducerTester()

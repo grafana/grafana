@@ -9,7 +9,6 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
-  QueryType,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -19,6 +18,7 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
+  ExploreMode,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -50,9 +50,9 @@ export interface AddQueryRowPayload {
   query: DataQuery;
 }
 
-export interface ChangeQueryTypePayload {
+export interface ChangeModePayload {
   exploreId: ExploreId;
-  queryType: QueryType;
+  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -252,9 +252,9 @@ export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explo
 export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
 
 /**
- * Change the query type of Explore.
+ * Change the mode of Explore.
  */
-export const changeQueryTypeAction = actionCreatorFactory<ChangeQueryTypePayload>('explore/CHANGE_QUERY_TYPE').create();
+export const changeModeAction = actionCreatorFactory<ChangeModePayload>('explore/CHANGE_MODE').create();
 
 /**
  * Query change handler for the query row with the given index.
