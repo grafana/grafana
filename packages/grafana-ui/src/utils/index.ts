@@ -18,9 +18,5 @@ export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
 
-export * from './matchers/ids';
-export * from './matchers/matchers';
-export * from './transform/transformers';
-
 // Names are too general to export
 // rangeutils, datemath
