@@ -167,6 +167,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   draw() {
+    console.log('draw');
     const { userOptions = {} } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
@@ -236,7 +237,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       return {
         hiddenSeries: nextHiddenSeries,
       };
-    }, this.draw);
+    });
   }
 
   render() {
