@@ -28,19 +28,22 @@ import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import QueryStatus from './QueryStatus';
 
-interface QueryRowProps {
+interface PropsFromParent {
+  exploreId: ExploreId;
+  index: number;
+  exploreEvents: Emitter;
+}
+
+interface QueryRowProps extends PropsFromParent {
   addQueryRow: typeof addQueryRow;
   changeQuery: typeof changeQuery;
   className?: string;
-  exploreId: ExploreId;
   datasourceInstance: ExploreDataSourceApi;
   datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
-  index: number;
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
-  exploreEvents: Emitter;
   range: TimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
@@ -219,9 +222,7 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(QueryRow)
-);
+export default hot(module)(connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(QueryRow) as React.ComponentType<PropsFromParent>);

@@ -78,6 +78,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  alerting?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
@@ -181,6 +182,11 @@ export abstract class DataSourceApi<
    * static information about the datasource
    */
   meta?: DataSourcePluginMeta;
+
+  /**
+   * Used by alerting to check if query contains template variables
+   */
+  targetContainsTemplate?(query: TQuery): boolean;
 }
 
 export abstract class ExploreDataSourceApi<

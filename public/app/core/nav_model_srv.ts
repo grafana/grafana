@@ -15,7 +15,7 @@ export class NavModelSrv {
     return _.find(this.navItems, { id: 'cfg' });
   }
 
-  getNav(...args) {
+  getNav(...args: string[]) {
     let children = this.navItems;
     const nav = {
       breadcrumbs: [],
