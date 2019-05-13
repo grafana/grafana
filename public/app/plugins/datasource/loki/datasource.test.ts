@@ -61,7 +61,7 @@ describe('LokiDatasource', () => {
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'foo', refId: 'B' }],
+        targets: [{ expr: '{} foo', refId: 'B' }],
       });
 
       const res = await ds.query(options);
@@ -69,7 +69,7 @@ describe('LokiDatasource', () => {
       const seriesData = res.data[0] as SeriesData;
       expect(seriesData.rows[0][1]).toBe('hello');
       expect(seriesData.meta.limit).toBe(20);
-      expect(seriesData.meta.search).toBe('(?i)foo');
+      expect(seriesData.meta.searchWords).toEqual(['(?i)foo']);
       done();
     });
   });

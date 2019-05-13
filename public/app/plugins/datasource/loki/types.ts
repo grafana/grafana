@@ -22,3 +22,8 @@ export interface LokiLogsStreamEntry {
   // Legacy, was renamed to ts
   timestamp?: string;
 }
+
+export interface LokiExpression {
+  regexp: string;
+  query: string;
+}
