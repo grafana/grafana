@@ -167,7 +167,6 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   draw() {
-    console.log('draw');
     const { userOptions = {} } = this.props;
     const { hiddenSeries } = this.state;
     const data = this.getGraphData();
@@ -213,7 +212,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {
     // This implementation is more or less a copy of GraphPanel's logic.
     // TODO: we need to use Graph's panel controller or split it into smaller
-    // controllers to remove code duplication. Right now we are limited since Explore
+    // controllers to remove code duplication. Right now we cant easily use that, since Explore
     // is not using SeriesData for graph yet
 
     const exclusive = event.ctrlKey || event.metaKey || event.shiftKey;
