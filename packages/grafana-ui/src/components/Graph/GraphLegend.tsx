@@ -11,7 +11,6 @@ import { css } from 'emotion';
 import { selectThemeVariant } from '../../themes/index';
 
 interface GraphLegendProps extends LegendProps {
-  enableSeriesColorChange?: boolean;
   displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
@@ -30,12 +29,9 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   onSeriesAxisToggle,
   placement,
   className,
-  enableSeriesColorChange,
-  onSeriesColorChange,
   ...graphLegendItemProps
 }) => {
   const theme = useContext(ThemeContext);
-  const seriesColorChangeHandler = enableSeriesColorChange ? onSeriesColorChange : undefined;
 
   if (displayMode === LegendDisplayMode.Table) {
     const columns = items
@@ -95,7 +91,6 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
             className={css`
               background: ${index % 2 === 0 ? legendTableEvenRowBackground : 'none'};
             `}
-            onSeriesColorChange={seriesColorChangeHandler}
             {...graphLegendItemProps}
           />
         )}
@@ -115,7 +110,6 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
               onSeriesAxisToggle(item.label, item.yAxis === 1 ? 2 : 1);
             }
           }}
-          onSeriesColorChange={seriesColorChangeHandler}
           {...graphLegendItemProps}
         />
       )}

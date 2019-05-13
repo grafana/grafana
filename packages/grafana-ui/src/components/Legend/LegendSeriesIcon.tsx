@@ -1,4 +1,5 @@
 import React from 'react';
+import { css, cx } from 'emotion';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { SeriesIcon, SeriesIconProps } from './SeriesIcon';
 
@@ -29,7 +30,15 @@ export const LegendSeriesIcon: React.FunctionComponent<LegendSeriesIconProps> = 
   }
 
   return disabled ? (
-    <span className="graph-legend-icon">
+    <span
+      className={cx(
+        'graph-legend-icon',
+        disabled &&
+          css`
+            cursor: default;
+          `
+      )}
+    >
       <SeriesIcon {...iconProps} />
     </span>
   ) : (
