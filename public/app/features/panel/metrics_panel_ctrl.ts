@@ -227,7 +227,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   handleSeriesData(data: SeriesData[]) {
     this.loading = false;
 
-    if (this.dashboard.snapshot) {
+    if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
 
