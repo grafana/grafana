@@ -355,12 +355,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queryIntervals } = state;
       const { result, resultType, latency } = action.payload;
       const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
-
       return {
         ...state,
         graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
         tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
         logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
+        logsContext: resultType === 'Logs' ? results.logsContext : state.logsContext,
         latency,
         graphIsLoading: false,
         logIsLoading: false,

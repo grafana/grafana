@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime } from '@grafana/ui';
+import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime, DataSourceApi } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { toggleLogs, changeDedupStrategy, changeTime } from './state/actions';
@@ -15,10 +15,12 @@ import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/featur
 import { getTimeZone } from '../profile/state/selectors';
 
 interface LogsContainerProps {
+  datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
+  logsContext?: LogsModel;
   dedupedResult?: LogsModel;
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
@@ -64,12 +66,18 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
+  queryRowContext = async  (row: LogRowModel) => {
+    const { datasourceInstance } = this.props;
+    if()
+  }
+
   render() {
     const {
       exploreId,
       loading,
       logsHighlighterExpressions,
       logsResult,
+      logsContext,
       dedupedResult,
       onClickLabel,
       onStartScanning,
@@ -88,6 +96,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
         <Logs
           dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
           data={logsResult}
+          context={logsContext}
           dedupedData={dedupedResult}
           exploreId={exploreId}
           highlighterExpressions={logsHighlighterExpressions}
@@ -104,6 +113,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           scanRange={scanRange}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
+          getRowContext={this.getRowContext}
         />
       </Panel>
     );
@@ -113,7 +123,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range } = item;
+  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range, logsContext, datasourceInstance} = item;
   const loading = logIsLoading;
   const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
@@ -124,6 +134,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     loading,
     logsHighlighterExpressions,
     logsResult,
+    logsContext,
     scanning,
     scanRange,
     showingLogs,
@@ -132,6 +143,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
+    datasourceInstance,
   };
 }
 
@@ -140,6 +152,7 @@ const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
   changeTime,
+
 };
 
 export default hot(module)(

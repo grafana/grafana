@@ -17,7 +17,7 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
 } from '@grafana/ui/src/types';
-import { LokiQuery, LokiOptions } from './types';
+import { LokiQuery, LokiOptions, LokiQueryDirection } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -38,6 +38,10 @@ function serializeParams(data: any) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(v);
     })
     .join('&');
+}
+
+interface LokiContextQueryOptions {
+  direction: LokiQueryDirection;
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
@@ -75,6 +79,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
+      direction: target.direction || 'BACKWARD',
       query,
       regexp,
       start,
@@ -185,6 +190,23 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() * 1e6);
+  }
+
+  queryLogRowContext(query: DataQueryRequest<LokiQuery>, options?: LokiContextQueryOptions) {
+    return this.query({
+      query
+    });
+    // interval,
+    // intervalMs,
+    // panelId,
+    // targets: [...configuredQueries, ...contextQueries], // Datasources rely on DataQueries being passed under the targets key.
+    // range,
+    // rangeRaw: range.raw,
+    // scopedVars: {
+    //   __interval: { text: interval, value: interval },
+    //   __interval_ms: { text: intervalMs, value: intervalMs },
+    // },
+    // maxDataPoints: queryOptions.maxDataPoints,
   }
 
   testDatasource() {

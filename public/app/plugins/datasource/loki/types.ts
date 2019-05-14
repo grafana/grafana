@@ -1,7 +1,10 @@
 import { DataQuery, Labels, DataSourceJsonData } from '@grafana/ui/src/types';
 
+export type LokiQueryDirection = "BACKWARD" | "FORWARD";
+
 export interface LokiQuery extends DataQuery {
   expr: string;
+  direction?: LokiQueryDirection;
 }
 
 export interface LokiOptions extends DataSourceJsonData {

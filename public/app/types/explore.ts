@@ -174,6 +174,11 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel;
+
+  /**
+   * Log query result to retrieve log line context
+   */
+  logsContext?: LogsModel;
   /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.

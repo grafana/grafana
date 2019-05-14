@@ -5,7 +5,7 @@ import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
+import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind, LogRowModel } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
@@ -43,6 +43,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 
 interface Props {
   data?: LogsModel;
+  context?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
   exploreId: string;
@@ -149,6 +150,11 @@ export default class Logs extends PureComponent<Props, State> {
     this.props.onStopScanning();
   };
 
+  getRowContext = (row: LogRowModel
+    ) => {
+
+  }
+
   render() {
     const {
       data,
@@ -169,7 +175,7 @@ export default class Logs extends PureComponent<Props, State> {
     }
 
     const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
-    const { dedupStrategy } = this.props;
+    const { dedupStrategy, context } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
@@ -252,15 +258,17 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={index}
                 getRows={getRows}
+                getRowContext={this.getRowContext}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
+                context={context}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
-              />
-            ))}
+                />
+                ))}
           {hasData &&
             !deferLogs &&
             renderAll &&
@@ -268,7 +276,9 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={PREVIEW_LIMIT + index}
                 getRows={getRows}
+                getRowContext={this.getRowContext}
                 row={row}
+                context={context}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}

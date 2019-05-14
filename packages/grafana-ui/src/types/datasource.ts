@@ -173,6 +173,11 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
+   * Convert a query to a simple text string
+   */
+   queryLogRowContext?<TContextOptions>(query: DataQueryRequest<TQuery>, options: TContextOptions): string;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */

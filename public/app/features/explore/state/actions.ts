@@ -820,3 +820,75 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
   };
 }
+
+/**
+ * Close the split view and save URL state.
+ */
+// export function loadLogRowContext(exploreId: ExploreId, logRow: string): ThunkResult<void> {
+//   return (dispatch, getState) => {
+//     // const itemState = getState().explore[exploreId];
+//     dispatch(runContextQuery(exploreId));
+//     // debugger
+//     // console.log(exploreId, logRow, itemState, dispatch)
+//     // dispatch(stateSave());
+//   };
+// }
+
+// export function runContextQuery(exploreId: ExploreId): ThunkResult<void> {
+//   return (dispatch, getState) => {
+//     // const itemState = getState().explore[exploreId];
+//     // const {
+//     //   datasourceInstance,
+//     //   queries,
+//     //   showingLogs,
+//     //   showingGraph,
+//     //   showingTable,
+//     //   supportsGraph,
+//     //   supportsLogs,
+//     //   supportsTable,
+//     //   datasourceError,
+//     //   containerWidth,
+//     // } = getState().explore[exploreId];
+
+//     // if (datasourceError) {
+//     //   // let's not run any queries if data source is in a faulty state
+//     //   return;
+//     // }
+
+//     // // if (!hasNonEmptyQuery(queries)) {
+//     // //   dispatch(clearQueriesAction({ exploreId }));
+//     // //   dispatch(stateSave()); // Remember to saves to state and update location
+//     // //   return;
+//     // // }
+
+//     // // Some datasource's query builders allow per-query interval limits,
+//     // // but we're using the datasource interval limit for now
+//     // const interval = datasourceInstance.interval;
+
+//     // dispatch(runQueriesAction({ exploreId }));
+//     // // Keep table queries first since they need to return quickly
+
+//     // // if ((ignoreUIState || showingLogs) && supportsLogs) {
+//     //   // dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
+//     //   const datasourceId = datasourceInstance.meta.id;
+//     // const transaction = buildQueryTransaction(queries, 'Logs', { interval, format: 'logs' }), range, queryIntervals, scanning);
+//     // dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
+//     // try {
+//     //   const now = Date.now();
+//     //   const response = await datasourceInstance.query(transaction.options);
+//     //   eventBridge.emit('data-received', response.data || []);
+//     //   const latency = Date.now() - now;
+//     //   // Side-effect: Saving history in localstorage
+//     //   const nextHistory = updateHistory(history, datasourceId, queries);
+//     //   dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+//     //   dispatch(processQueryResults(exploreId, response, latency, resultType, datasourceId));
+//     // } catch (err) {
+//     //   eventBridge.emit('data-error', err);
+//     //   dispatch(processQueryErrors(exploreId, err, resultType, datasourceId));
+//     // }
+//     //   // dispatch(runContextQuery(exploreId));
+//     // // }
+
+//     // dispatch(stateSave());
+//   };
+// }

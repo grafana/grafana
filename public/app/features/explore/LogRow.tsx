@@ -3,21 +3,32 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
+import {
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+  calculateFieldStats,
+  getParser,
+  LogsModel,
+} from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
+import { css } from 'emotion';
 
 interface Props {
   highlighterExpressions?: string[];
   row: LogRowModel;
+  context?: LogsModel;
   showDuplicates: boolean;
   showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
+  onContextClick?: () => void;
+  className?: string;
 }
 
 interface State {
@@ -29,6 +40,7 @@ interface State {
   parser?: LogsParser;
   parsedFieldHighlights: string[];
   showFieldStats: boolean;
+  showContext: boolean;
 }
 
 /**
@@ -63,6 +75,7 @@ export class LogRow extends PureComponent<Props, State> {
     parser: undefined,
     parsedFieldHighlights: [],
     showFieldStats: false,
+    showContext: false,
   };
 
   componentWillUnmount() {
@@ -110,7 +123,21 @@ export class LogRow extends PureComponent<Props, State> {
     }
   };
 
-  render() {
+  onContextClick = () => {
+    if (this.props.onContextClick) {
+      this.props.onContextClick();
+    }
+  };
+
+  toggleContext = () => {
+    this.setState(state => {
+      return {
+        showContext: !state.showContext,
+      };
+    });
+  };
+
+  renderLogRow() {
     const {
       getRows,
       highlighterExpressions,
@@ -129,6 +156,7 @@ export class LogRow extends PureComponent<Props, State> {
       parsed,
       parsedFieldHighlights,
       showFieldStats,
+      showContext,
     } = this.state;
     const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
@@ -139,7 +167,7 @@ export class LogRow extends PureComponent<Props, State> {
     });
 
     return (
-      <div className="logs-row">
+      <div className={`logs-row ${this.props.className}`}>
         {showDuplicates && (
           <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
         )}
@@ -190,8 +218,60 @@ export class LogRow extends PureComponent<Props, State> {
               />
             </div>
           )}
+
+          {<span
+            onClick={this.toggleContext}
+            className={css`
+              visibility: hidden;
+              .logs-row:hover & {
+                visibility: visible;
+
+                margin-left: 10px;
+                color: blue;
+                text-decoration: underline;
+              }
+            `}
+          >
+            {showContext ? 'Hide' : 'Show'} context
+          </span>}
         </div>
       </div>
     );
+  }
+
+  // getRowContext() {
+  //   const buffer = 10;
+
+  //   if (!this.props.context) {
+  //     return {
+  //       pre: null,
+  //       post: null,
+  //     };
+  //   }
+  //   const row = this.props.context.rows.filter(r => r.raw === this.props.row.raw)[0];
+  //   const rowIndex = this.props.context.rows.indexOf(row);
+
+  //   return {
+  //     pre: this.props.context.rows.slice(rowIndex - buffer, rowIndex),
+  //     post: this.props.context.rows.slice(rowIndex + 1, rowIndex + 1+ buffer),
+  //   };
+  // }
+  render() {
+    const { showContext } = this.state;
+    if (showContext) {
+      const { pre, post } = this.getRowContext();
+      console.log(pre, post)
+      return (
+        <>
+          <LogRowContext row={this.props.row} direction="forward">
+          {this.renderLogRow()}
+          <LogRowContext row={this.props.row} direction="backward">
+          {/* {post.map(row => {
+            return <LogRow {...this.props} row={row}  className={css`background: red;`} key={row.raw}/>;
+          })} */}
+        </>
+      );
+    }
+    return this.renderLogRow();
   }
 }

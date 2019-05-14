@@ -126,6 +126,14 @@ export function buildQueryTransaction(
     return combinedKey;
   }, '');
 
+  const contextQueries = configuredQueries.map(q => {
+    return {
+      ...q,
+      expr: (q as any).expr.match(/\{(.*?)\}/)[0], //query utils
+      refId: `${q.refId}-ctx`,
+    };
+  });
+
   // Clone range for query request
   // const queryRange: RawTimeRange = { ...range };
   // const { from, to, raw } = this.timeSrv.timeRange();
@@ -139,7 +147,7 @@ export function buildQueryTransaction(
     interval,
     intervalMs,
     panelId,
-    targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
+    targets: [...configuredQueries, ...contextQueries], // Datasources rely on DataQueries being passed under the targets key.
     range,
     rangeRaw: range.raw,
     scopedVars: {
@@ -324,9 +332,14 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
+const isContextResult = (result) => (result as any).refId.indexOf('-ctx') > -1;
+
 export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
   const flattenedResult: any[] = _.flatten(result);
+  let logsContext, logsResult;
+
   const graphResult = resultType === 'Graph' && result ? result : null;
+
   const tableResult =
     resultType === 'Table' && result
       ? mergeTablesIntoModel(
@@ -334,15 +347,29 @@ export function calculateResultsFromQueryTransactions(result: any, resultType: R
           ...flattenedResult.filter((r: any) => r.columns && r.rows).map((r: any) => r as TableModel)
         )
       : mergeTablesIntoModel(new TableModel());
-  const logsResult =
-    resultType === 'Logs' && result
-      ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
-      : null;
+
+  if (resultType === 'Logs') {
+    logsResult =
+      resultType === 'Logs' && result
+        ? seriesDataToLogsModel(
+            flattenedResult.filter(r => !isContextResult(r)).map(r => guessFieldTypes(toSeriesData(r))),
+            graphInterval
+          )
+        : null;
+    logsContext =
+      resultType === 'Logs' && result
+        ? seriesDataToLogsModel(
+            flattenedResult.filter(r => isContextResult(r)).map(r => guessFieldTypes(toSeriesData(r))),
+            graphInterval
+          )
+        : null;
+  }
 
   return {
     graphResult,
     tableResult,
     logsResult,
+    logsContext,
   };
 }
 
