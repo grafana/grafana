@@ -91,17 +91,17 @@ export interface PluginMetaInfo {
   version: string;
 }
 
-export interface PluginConfigTabProps<T extends PluginMeta> {
-  meta: T;
+export interface PluginConfigPageProps<T extends GrafanaPlugin> {
+  plugin: T;
   query: { [s: string]: any }; // The URL query parameters
 }
 
-export interface PluginConfigTab<T extends PluginMeta> {
+export interface PluginConfigPage<T extends GrafanaPlugin> {
   title: string; // Display
   icon?: string;
   id: string; // Unique, in URL
 
-  body: ComponentClass<PluginConfigTabProps<T>>;
+  body: ComponentClass<PluginConfigPageProps<T>>;
 }
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
@@ -112,14 +112,14 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page
-  configTabs?: Array<PluginConfigTab<T>>;
+  configPages?: Array<PluginConfigPage<GrafanaPlugin>>;
 
   // Tabs on the plugin page
-  addConfigTab(tab: PluginConfigTab<T>) {
-    if (!this.configTabs) {
-      this.configTabs = [];
+  addConfigPage(tab: PluginConfigPage<GrafanaPlugin>) {
+    if (!this.configPages) {
+      this.configPages = [];
     }
-    this.configTabs.push(tab);
+    this.configPages.push(tab);
     return this;
   }
 }
