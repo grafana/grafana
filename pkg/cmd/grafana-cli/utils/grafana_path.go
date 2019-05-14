@@ -25,8 +25,8 @@ func isDevEnvironment() bool {
 		return false
 	}
 	exPath := filepath.Dir(ex)
-	_, dir := path.Split(exPath)
-	if dir == "bin" {
+	_, last := path.Split(exPath)
+	if last == "bin" {
 		// In dev env the executable for current platform is created in 'bin/' dir
 		defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
 		_, err = os.Stat(defaultsPath)
