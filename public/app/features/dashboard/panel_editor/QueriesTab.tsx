@@ -22,7 +22,7 @@ import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafa
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
-import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import DashboardQueryEditor from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
 
 interface Props {
@@ -167,7 +167,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderToolbar = () => {
     const { currentDS, isAddingMixed } = this.state;
-    const showAddButton = !isAddingMixed && currentDS.name !== SHARED_DASHBODARD_QUERY;
+    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
     return (
       <>
@@ -230,8 +230,6 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const isDashboardQuery = currentDS.name === SHARED_DASHBODARD_QUERY;
-
     return (
       <EditorTabBody
         heading="Query"
@@ -240,12 +238,8 @@ export class QueriesTab extends PureComponent<Props, State> {
         setScrollTop={this.setScrollTop}
         scrollTop={scrollTop}
       >
-        {isDashboardQuery ? (
-          <DashboardQueryEditor
-            query={panel.targets[0]}
-            panelData={data}
-            onChange={query => this.onQueryChange(query, 0)}
-          />
+        {isSharedDashboardQuery(currentDS.name) ? (
+          <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onQueryChange(query, 0)} />
         ) : (
           <>
             <div className="query-editor-rows">

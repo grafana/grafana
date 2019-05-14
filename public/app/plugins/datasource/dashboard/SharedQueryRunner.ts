@@ -56,10 +56,11 @@ export class SharedQueryRunner {
       console.log('Connecting panel: ', this.containerPanel.id, 'to:', this.listenId);
     }
 
+    // If the target has refreshed recently, use the exising data
     const data = this.listenRunner.getCurrentData();
     if (data.request && data.request.startTime) {
       const elapsed = Date.now() - data.request.startTime;
-      if (elapsed < 100) {
+      if (elapsed < 150) {
         return Promise.resolve(data);
       }
     }
@@ -73,11 +74,8 @@ export class SharedQueryRunner {
         datasource,
         queries: targets,
       };
-      console.log('fullscreen so deligate:', modified);
       return this.listenRunner.run(modified);
     } else {
-      // TODO, maybe set a timer to make sure refresh is called soon?
-      console.log('Send refresh for', this.containerPanel.id, 'to:', this.listenId);
       this.listenPanel.refresh();
     }
     return Promise.resolve(data);
