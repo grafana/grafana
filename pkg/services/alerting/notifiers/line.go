@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -32,7 +32,7 @@ const (
 	lineNotifyUrl string = "https://notify-api.line.me/api/notify"
 )
 
-func NewLINENotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	token := model.Settings.Get("token").MustString()
 	if token == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
@@ -56,7 +56,7 @@ func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var err error
 	switch evalContext.Rule.State {
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		err = this.createAlert(evalContext)
 	}
 	return err
@@ -79,7 +79,7 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 		form.Add("imageFullsize", evalContext.ImagePublicUrl)
 	}
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        lineNotifyUrl,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

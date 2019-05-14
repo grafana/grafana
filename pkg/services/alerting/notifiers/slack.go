@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -99,7 +99,7 @@ func init() {
 
 }
 
-func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -171,7 +171,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := this.Mention
-	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 	image_url := ""
@@ -212,7 +212,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		body["icon_url"] = this.IconUrl
 	}
 	data, _ := json.Marshal(&body)
-	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: this.Url, Body: string(data)}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send slack notification", "error", err, "webhook", this.Name)
 		return err
@@ -235,7 +235,7 @@ func SlackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url stri
 	if err != nil {
 		return err
 	}
-	cmd := &m.SendWebhookSync{Url: url, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST"}
+	cmd := &models.SendWebhookSync{Url: url, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST"}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
 		return err

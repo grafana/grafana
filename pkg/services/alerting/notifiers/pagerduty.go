@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -43,7 +43,7 @@ var (
 	pagerdutyEventApiUrl = "https://events.pagerduty.com/v2/enqueue"
 )
 
-func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
@@ -67,13 +67,13 @@ type PagerdutyNotifier struct {
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
-	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
+	if evalContext.Rule.State == models.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)
 		return nil
 	}
 
 	eventType := "trigger"
-	if evalContext.Rule.State == m.AlertStateOK {
+	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
 	}
 	customData := triggMetrString
@@ -122,7 +122,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        pagerdutyEventApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
