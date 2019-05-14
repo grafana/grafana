@@ -47,7 +47,6 @@ export interface Field {
   unit?: string;
   dateFormat?: string; // Source data format
   decimals?: number | null; // Significant digits (for display)
-  color?: string;
   min?: number | null;
   max?: number | null;
 }
