@@ -1,7 +1,7 @@
 import { ComponentType, ComponentClass } from 'react';
 import { TimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
-import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
+import { TableData, TimeSeries, SeriesData, LoadingState, Field } from './data';
 import { PanelData } from './panel';
 
 // NOTE: this seems more general than just DataSource
@@ -363,9 +363,15 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface DefaultFieldInfo {
+  name: string; // regex... will be matcher
+  field: Partial<Field>;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
+  fields?: DefaultFieldInfo[];
 }
 
 /**

@@ -1,6 +1,7 @@
-import { DataSourceSettings, PluginType, NavModel, NavModelItem, PluginInclude } from '@grafana/ui';
+import { DataSourceSettings, PluginType, NavModel, NavModelItem, PluginInclude, PluginState } from '@grafana/ui';
 import config from 'app/core/config';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+import { DS_PAGE_ID_FIELDS } from '../settings/DataSourceSettingsPage';
 
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
@@ -22,6 +23,16 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       },
     ],
   };
+
+  if (plugin.meta.state === PluginState.alpha) {
+    navModel.children.push({
+      active: false,
+      text: 'Fields',
+      icon: 'fa fa-fw fa-id-card-o',
+      url: `datasources/edit/${dataSource.id}/?page=${DS_PAGE_ID_FIELDS}`,
+      id: `datasource-page-${DS_PAGE_ID_FIELDS}`,
+    });
+  }
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {

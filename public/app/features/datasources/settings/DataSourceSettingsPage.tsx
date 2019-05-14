@@ -27,6 +27,7 @@ import { NavModel, DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui'
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import FieldSettings from './FieldSettings';
 
 export interface Props {
   navModel: NavModel;
@@ -51,6 +52,8 @@ interface State {
   testingStatus?: string;
   loadError?: any;
 }
+
+export const DS_PAGE_ID_FIELDS = 'fields';
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -229,13 +232,26 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   renderConfigPageBody(page: string) {
     const { plugin } = this.state;
-    if (!plugin || !plugin.configPages) {
+    if (!plugin) {
       return null; // still loading
     }
 
-    for (const p of plugin.configPages) {
-      if (p.id === page) {
-        return <p.body plugin={plugin} query={this.props.query} />;
+    if (page === DS_PAGE_ID_FIELDS) {
+      return (
+        <FieldSettings
+          plugin={plugin}
+          dataSource={this.state.dataSource}
+          dataSourceMeta={this.props.dataSourceMeta}
+          onModelChange={this.onModelChange}
+        />
+      );
+    }
+
+    if (plugin.configPages) {
+      for (const p of plugin.configPages) {
+        if (p.id === page) {
+          return <p.body plugin={plugin} query={this.props.query} />;
+        }
       }
     }
 
