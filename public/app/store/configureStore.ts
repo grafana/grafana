@@ -1,5 +1,6 @@
 import { createStore, applyMiddleware, compose, combineReducers } from 'redux';
 import thunk from 'redux-thunk';
+import { combineEpics, createEpicMiddleware } from 'redux-observable';
 // import { createLogger } from 'redux-logger';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -14,6 +15,7 @@ import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
+import { startSubscriptionsEpic, startSubscriptionEpic } from 'app/features/explore/state/epics';
 
 const rootReducers = {
   ...sharedReducers,
@@ -34,6 +36,10 @@ export function addRootReducer(reducers) {
   Object.assign(rootReducers, ...reducers);
 }
 
+export const rootEpic: any = combineEpics(startSubscriptionsEpic, startSubscriptionEpic);
+
+const epicMiddleware = createEpicMiddleware();
+
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
@@ -41,8 +47,10 @@ export function configureStore() {
 
   if (process.env.NODE_ENV !== 'production') {
     // DEV builds we had the logger middleware
-    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk))));
+    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, epicMiddleware))));
   } else {
-    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk))));
+    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, epicMiddleware))));
   }
+
+  epicMiddleware.run(rootEpic);
 }

@@ -91,6 +91,11 @@ import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
+import {
+  startSubscriptionsAction,
+  stopSubscriptionAction,
+  subscriptionDataReceivedAction,
+} from 'app/features/explore/state/epics';
 
 /**
  * Updates UI state and save it to the URL
@@ -587,6 +592,21 @@ function runQueriesForType(
     const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
     dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
     try {
+      dispatch(
+        startSubscriptionsAction({
+          targets: [
+            {
+              url:
+                'api/datasources/proxy/19/api/prom/tail?query=%7B__filename__' +
+                '%3D%22%2Fvar%2Flog%2Fpods%2F00002425-61c9-11e9-9c9b-42010a8a0079%2Ftsdb-gw%2F0.log%22%7D',
+              refId: 'A',
+            },
+          ],
+          exploreId,
+          dataReceivedActionCreator: subscriptionDataReceivedAction,
+          stopsActionCreator: stopSubscriptionAction,
+        })
+      );
       const now = Date.now();
       const response = await datasourceInstance.query(transaction.options);
       eventBridge.emit('data-received', response.data || []);

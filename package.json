@@ -229,6 +229,7 @@
     "react-window": "1.7.1",
     "redux": "4.0.1",
     "redux-logger": "3.0.6",
+    "redux-observable": "1.1.0",
     "redux-thunk": "2.3.0",
     "remarkable": "1.7.1",
     "reselect": "4.0.0",
