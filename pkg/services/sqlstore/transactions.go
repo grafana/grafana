@@ -10,6 +10,11 @@ import (
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
+// WithTransactionalDbSession calls the callback with an session within a transaction
+func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
+	return inTransactionWithRetryCtx(ss.engine, ctx, callback, 0)
+}
+
 func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
