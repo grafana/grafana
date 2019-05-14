@@ -1,8 +1,10 @@
 import React from 'react';
+import { css, cx } from 'emotion';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
-import { SeriesIcon } from './SeriesIcon';
+import { SeriesIcon, SeriesIconProps } from './SeriesIcon';
 
 interface LegendSeriesIconProps {
+  disabled: boolean;
   color: string;
   yAxis: number;
   onColorChange: (color: string) => void;
@@ -10,12 +12,36 @@ interface LegendSeriesIconProps {
 }
 
 export const LegendSeriesIcon: React.FunctionComponent<LegendSeriesIconProps> = ({
+  disabled,
   yAxis,
   color,
   onColorChange,
   onToggleAxis,
 }) => {
-  return (
+  let iconProps: SeriesIconProps = {
+    color,
+  };
+
+  if (!disabled) {
+    iconProps = {
+      ...iconProps,
+      className: 'pointer',
+    };
+  }
+
+  return disabled ? (
+    <span
+      className={cx(
+        'graph-legend-icon',
+        disabled &&
+          css`
+            cursor: default;
+          `
+      )}
+    >
+      <SeriesIcon {...iconProps} />
+    </span>
+  ) : (
     <SeriesColorPicker
       yaxis={yAxis}
       color={color}
@@ -25,7 +51,7 @@ export const LegendSeriesIcon: React.FunctionComponent<LegendSeriesIconProps> = 
     >
       {({ ref, showColorPicker, hideColorPicker }) => (
         <span ref={ref} onClick={showColorPicker} onMouseLeave={hideColorPicker} className="graph-legend-icon">
-          <SeriesIcon color={color} />
+          <SeriesIcon {...iconProps} />
         </span>
       )}
     </SeriesColorPicker>
