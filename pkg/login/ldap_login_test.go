@@ -96,6 +96,10 @@ func (auth *mockAuth) Users(logins []string) (
 	return nil, nil
 }
 
+func (auth *mockAuth) Add(dn string, values map[string][]string) error {
+	return nil
+}
+
 func mockLDAPAuthenticator(valid bool) *mockAuth {
 	mock := &mockAuth{
 		validLogin: valid,
