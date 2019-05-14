@@ -1318,7 +1318,7 @@
   "refresh": "",
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["whatsnew"],
+  "tags": ["gdev", "demo"],
   "templating": {
     "list": []
   },
