@@ -12,7 +12,6 @@ function exit_if_fail {
 
 export GRAFANA_TEST_DB=mysql
 
-go test -tags=integration -count=1 ./pkg/infra/serverlock/...
-# time for d in $(go list ./pkg/...); do
-#   exit_if_fail go test -tags=integration $d
-# done
+time for d in $(go list ./pkg/...); do
+  exit_if_fail go test -tags=integration $d
+done
