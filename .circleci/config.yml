@@ -231,7 +231,7 @@ jobs:
           command: '/tmp/bootstrap.sh'
       - run:
           name: build grafana backend
-          command: './scripts/build/build.sh --fast --backend-only'
+          command: './scripts/build/build.sh --backend-only'
       - persist_to_workspace:
           root: .
           paths:
@@ -276,7 +276,7 @@ jobs:
           command: '/tmp/bootstrap.sh'
       - run:
           name: package grafana
-          command: './scripts/build/build.sh --fast --package-only'
+          command: './scripts/build/build.sh --package-only'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
