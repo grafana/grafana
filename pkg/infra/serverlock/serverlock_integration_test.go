@@ -7,34 +7,32 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestServerLok(t *testing.T) {
 	sl := createTestableServerLock(t)
 
-	Convey("Server lock integration tests", t, func() {
-		counter := 0
-		var err error
-		incCounter := func() { counter++ }
-		atInterval := time.Second * 1
-		ctx := context.Background()
+	counter := 0
+	fn := func() { counter++ }
+	atInterval := time.Second * 1
+	ctx := context.Background()
 
-		//this time `fn` should be executed
-		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+	//this time `fn` should be executed
+	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
 
-		//this should not execute `fn`
-		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
-		So(sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter), ShouldBeNil)
+	//this should not execute `fn`
+	for i := 0; i < 4; i++ {
+		go func() {
+			assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+		}()
+	}
 
-		// wait 5 second.
-		<-time.After(atInterval * 2)
+	// wait 1.5 second.
+	<-time.After(time.Second*1 + time.Second/2)
 
-		// now `fn` should be executed again
-		err = sl.LockAndExecute(ctx, "test-operation", atInterval, incCounter)
-		So(err, ShouldBeNil)
-		So(counter, ShouldEqual, 2)
-	})
+	// now `fn` should be executed again
+	err := sl.LockAndExecute(ctx, "test-operation", atInterval, fn)
+	assert.Nil(t, err)
+	assert.Equal(t, counter, 2)
 }
