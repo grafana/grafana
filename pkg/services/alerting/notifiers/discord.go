@@ -43,8 +43,8 @@ func init() {
 	})
 }
 
-
 func NewDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	mention := model.Settings.Get("mention").MustString()
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
