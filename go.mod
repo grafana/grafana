@@ -11,6 +11,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/codegangsta/cli v1.20.0
+	github.com/corpix/uarand v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
@@ -36,6 +37,7 @@ require (
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104
 	github.com/hashicorp/go-version v1.1.0
+	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/klauspost/compress v1.4.1 // indirect

@@ -1,0 +1,6 @@
+hash: 9238b15272824ad573d8ef645fb468cb646b72598c63eae8977c3410ebfebe4a
+updated: 2017-07-23T15:10:00.972860398Z
+imports:
+- name: github.com/corpix/uarand
+  version: 031be390f409fb4bac8fb299e3bcd101479f89f8
+testImports: []
