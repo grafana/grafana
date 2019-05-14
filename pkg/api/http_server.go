@@ -227,8 +227,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.AddDefaultResponseHeaders())
 
-	if setting.AppSubUrl != "" {
-		m.SetURLPrefix(setting.AppSubUrl)
+	if setting.AppBasePath != "" {
+		m.SetURLPrefix(setting.AppBasePath)
 	}
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),

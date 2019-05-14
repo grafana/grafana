@@ -51,6 +51,7 @@ var (
 	AppUrl       string
 	AppSubUrl    string
 	InstanceName string
+	AppBasePath  string
 
 	// build
 	BuildVersion    string
@@ -205,8 +206,9 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl    string
-	AppSubUrl string
+	AppUrl      string
+	AppSubUrl   string
+	AppBasePath string
 
 	// Paths
 	ProvisioningPath string
@@ -280,6 +282,14 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
 
 	return appUrl, appSubUrl, nil
+}
+
+func parseAppBasePath(section *ini.Section) (string, error) {
+	appBasePath, err := valueAsString(section, "base_path", "")
+	if err != nil {
+		return "", err
+	}
+	return appBasePath, nil
 }
 
 func ToAbsUrl(relativeUrl string) string {
@@ -612,6 +622,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	cfg.AppUrl = AppUrl
 	cfg.AppSubUrl = AppSubUrl
+
+	AppBasePath, err = parseAppBasePath(server)
+	if err != nil {
+		return err
+	}
+	cfg.AppBasePath = AppBasePath
 
 	Protocol = HTTP
 	protocolStr, err := valueAsString(server, "protocol", "http")
