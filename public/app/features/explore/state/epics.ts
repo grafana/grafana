@@ -5,8 +5,9 @@ import { map, takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
 import { config } from '../../../core/config';
-import { updateDatasourceInstanceAction, resetExploreAction } from './actionTypes';
+import { updateDatasourceInstanceAction, resetExploreAction, changeRefreshIntervalAction } from './actionTypes';
 import { EMPTY } from 'rxjs';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https' ? 'wss://' : 'ws://';
@@ -21,8 +22,6 @@ export interface StartSubscriptionsPayload {
   exploreId: ExploreId;
   dataReceivedActionCreator: ActionCreator<SubscriptionDataReceivedPayload>;
   stopsActionCreator: ActionCreator<StopSubscriptionPayload>;
-  pauseActionCreator?: ActionCreator<PauseSubscriptionPayload>;
-  playActionCreator?: ActionCreator<PauseSubscriptionPayload>;
 }
 
 export const startSubscriptionsAction = actionCreatorFactory<StartSubscriptionsPayload>(
@@ -35,8 +34,6 @@ export interface StartSubscriptionPayload {
   exploreId: ExploreId;
   dataReceivedActionCreator: ActionCreator<SubscriptionDataReceivedPayload>;
   stopsActionCreator: ActionCreator<StopSubscriptionPayload>;
-  pauseActionCreator?: ActionCreator<PauseSubscriptionPayload>;
-  playActionCreator?: ActionCreator<PauseSubscriptionPayload>;
 }
 
 export const startSubscriptionAction = actionCreatorFactory<StartSubscriptionPayload>(
@@ -67,17 +64,15 @@ export const subscriptionDataReceivedAction = actionCreatorFactory<SubscriptionD
 export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(startSubscriptionsAction.type).pipe(
     mergeMap((action: ActionOf<StartSubscriptionsPayload>) => {
-      const {
-        exploreId,
-        dataReceivedActionCreator,
-        stopsActionCreator,
-        pauseActionCreator,
-        playActionCreator,
-      } = action.payload;
-      const { datasourceInstance, queries } = state$.value.explore[exploreId];
+      const { exploreId, dataReceivedActionCreator, stopsActionCreator } = action.payload;
+      const { datasourceInstance, queries, refreshInterval } = state$.value.explore[exploreId];
 
       if (!datasourceInstance || !datasourceInstance.convertToStreamTargets) {
-        return EMPTY;
+        return EMPTY; //do nothing if datasource does not support streaming
+      }
+
+      if (!refreshInterval || !isLive(refreshInterval)) {
+        return EMPTY; //do nothing if refresh interval is not 'LIVE'
       }
 
       const request: any = { targets: queries };
@@ -88,8 +83,6 @@ export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSta
           exploreId,
           dataReceivedActionCreator,
           stopsActionCreator,
-          pauseActionCreator,
-          playActionCreator,
         })
       );
     })
@@ -107,12 +100,17 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
               startSubscriptionAction.type,
               stopsActionCreator.type,
               resetExploreAction.type,
-              updateDatasourceInstanceAction.type
+              updateDatasourceInstanceAction.type,
+              changeRefreshIntervalAction.type
             )
             .pipe(
               filter(action => {
                 if (action.type === resetExploreAction.type || action.type === updateDatasourceInstanceAction.type) {
                   return true; // stops all subscriptions if user navigates away from explore or changes data source
+                }
+
+                if (action.type === changeRefreshIntervalAction.type) {
+                  return !isLive(action.payload.refreshInterval); // stops all subscriptions if user changes refresh interval away from 'Live'
                 }
 
                 return action.payload.exploreId === exploreId && action.payload.refId === refId;

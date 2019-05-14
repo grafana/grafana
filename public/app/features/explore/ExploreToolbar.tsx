@@ -72,6 +72,7 @@ interface StateProps {
   refreshInterval: string;
   supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
   selectedModeOption: SelectOptionItem<ExploreMode>;
+  hasLiveOption: boolean;
 }
 
 interface DispatchProps {
@@ -134,6 +135,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       split,
       supportedModeOptions,
       selectedModeOption,
+      hasLiveOption,
     } = this.props;
 
     return (
@@ -212,6 +214,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 onRefresh={this.onRunQuery}
                 value={refreshInterval}
                 tooltip="Refresh"
+                hasLiveOption={hasLiveOption}
               />
               {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
@@ -257,6 +260,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const loading = graphIsLoading || logIsLoading || tableIsLoading;
+  const hasLiveOption = datasourceInstance && datasourceInstance.convertToStreamTargets ? true : false;
 
   const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
   let selectedModeOption = null;
@@ -296,6 +300,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     refreshInterval,
     supportedModeOptions,
     selectedModeOption,
+    hasLiveOption,
   };
 };
 
