@@ -129,25 +129,36 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-      } else if (data.state === LoadingState.Done) {
-        this.loading = false;
+        return;
+      }
 
-        // The result should already be processed, but just in case
-        if (!data.legacy) {
-          data.legacy = data.series.map(v => {
-            if (isSeriesData(v)) {
-              return toLegacyResponseData(v);
-            }
-            return v;
-          });
-        }
+      this.loading = false;
 
-        // Make the results look like they came directly from a <6.2 datasource request
-        // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({
-          data: data.legacy,
+      // The result should already be processed, but just in case
+      if (!data.legacy) {
+        data.legacy = data.series.map(v => {
+          if (isSeriesData(v)) {
+            return toLegacyResponseData(v);
+          }
+          return v;
         });
       }
+
+      if (data.request) {
+        const { range, timeInfo } = data.request;
+        if (range) {
+          this.range = range;
+        }
+        if (timeInfo) {
+          this.timeInfo = timeInfo;
+        }
+      }
+
+      // Make the results look like they came directly from a <6.2 datasource request
+      // NOTE: any object other than 'data' is no longer supported supported
+      this.handleQueryResult({
+        data: data.legacy,
+      });
     },
   };
 
