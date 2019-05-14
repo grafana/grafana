@@ -13,10 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// Config holds list of connections to LDAP
 type Config struct {
 	Servers []*ServerConfig `toml:"servers"`
 }
 
+// ServerConfig holds connection data to LDAP
 type ServerConfig struct {
 	Host          string       `toml:"host"`
 	Port          int          `toml:"port"`
