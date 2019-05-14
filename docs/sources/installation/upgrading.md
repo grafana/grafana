@@ -169,3 +169,9 @@ configuration.
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
 that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
 this new setting.
+
+### Session storage is no longer used
+
+In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
+If you are using Auth proxy with LDAP an shared cached is used in Grafana so you might want configure [remote_cache] instead. If not
+Grafana will fallback to using the database as an shared cache.
