@@ -68,6 +68,24 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.backendSrv.datasourceRequest(req);
   }
 
+  convertToStreamTargets = (options: DataQueryRequest<LokiQuery>): Array<{ url: string; refId: string }> => {
+    return options.targets
+      .filter(target => target.expr && !target.hide)
+      .map(target => {
+        const interpolated = this.templateSrv.replace(target.expr);
+        const { query, regexp } = parseQuery(interpolated);
+        const refId = target.refId;
+        const baseUrl = this.instanceSettings.url;
+        const params = serializeParams({ query, regexp });
+        const url = `${baseUrl}/api/prom/tail?${params}`;
+
+        return {
+          url,
+          refId,
+        };
+      });
+  };
+
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
     const { query, regexp } = parseQuery(interpolated);
