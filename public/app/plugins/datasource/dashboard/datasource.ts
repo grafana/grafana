@@ -4,7 +4,7 @@ import { DashboardQuery } from './types';
 /**
  * This should not really be called
  */
-export class DashboardDatasource implements DataSourceApi<DashboardQuery> {
+export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   getCollapsedText(query: DashboardQuery) {
     return `Dashboard Reference: ${query.panelId}`;
   }

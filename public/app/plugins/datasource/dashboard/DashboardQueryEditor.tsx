@@ -2,14 +2,13 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, SelectOptionItem, DataQuery, SeriesData, DataQueryError, QueryEditorProps } from '@grafana/ui';
+import { Select, SelectOptionItem, DataQuery, SeriesData, DataQueryError, PanelData } from '@grafana/ui';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './SharedQueryRunner';
-import { DashboardDatasource } from './datasource';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
 
@@ -25,8 +24,10 @@ function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
 }
 
-interface Props extends QueryEditorProps<DashboardDatasource, DashboardQuery> {
-  // standard
+interface Props {
+  query: DashboardQuery;
+  panelData: PanelData;
+  onChange: (query: DashboardQuery) => void;
 }
 
 type State = {
@@ -65,7 +66,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
         const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
 
-        const queryData = filterPanelDataToQuery(panelData, query.refId);
+        const qData = filterPanelDataToQuery(panelData, query.refId);
+        const queryData = qData ? qData : panelData;
         info.push({
           refId: query.refId,
           query: fmt(query),
