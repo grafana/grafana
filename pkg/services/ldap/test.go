@@ -100,6 +100,18 @@ func AuthScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *models.GetExternalUserInfoByLoginQuery) error {
+			sc.getExternalUserInfoByLoginQuery = cmd
+			sc.getExternalUserInfoByLoginQuery.Result = &models.ExternalUserInfo{UserId: 42, IsDisabled: false}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+			sc.disableExternalUserCalled = true
+			sc.disableUserCmd = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *models.AddOrgUserCommand) error {
 			sc.addOrgUserCmd = cmd
 			return nil
@@ -130,16 +142,19 @@ func AuthScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	loginUserQuery           *models.LoginUserQuery
-	getUserByAuthInfoQuery   *models.GetUserByAuthInfoQuery
-	getUserOrgListQuery      *models.GetUserOrgListQuery
-	createUserCmd            *models.CreateUserCommand
-	addOrgUserCmd            *models.AddOrgUserCommand
-	updateOrgUserCmd         *models.UpdateOrgUserCommand
-	removeOrgUserCmd         *models.RemoveOrgUserCommand
-	updateUserCmd            *models.UpdateUserCommand
-	setUsingOrgCmd           *models.SetUsingOrgCommand
-	updateUserPermissionsCmd *models.UpdateUserPermissionsCommand
+	loginUserQuery                  *models.LoginUserQuery
+	getUserByAuthInfoQuery          *models.GetUserByAuthInfoQuery
+	getExternalUserInfoByLoginQuery *models.GetExternalUserInfoByLoginQuery
+	getUserOrgListQuery             *models.GetUserOrgListQuery
+	createUserCmd                   *models.CreateUserCommand
+	disableUserCmd                  *models.DisableUserCommand
+	addOrgUserCmd                   *models.AddOrgUserCommand
+	updateOrgUserCmd                *models.UpdateOrgUserCommand
+	removeOrgUserCmd                *models.RemoveOrgUserCommand
+	updateUserCmd                   *models.UpdateUserCommand
+	setUsingOrgCmd                  *models.SetUsingOrgCommand
+	updateUserPermissionsCmd        *models.UpdateUserPermissionsCommand
+	disableExternalUserCalled       bool
 }
 
 func (sc *scenarioContext) userQueryReturns(user *models.User) {
@@ -158,6 +173,17 @@ func (sc *scenarioContext) userQueryReturns(user *models.User) {
 func (sc *scenarioContext) userOrgsQueryReturns(orgs []*models.UserOrgDTO) {
 	bus.AddHandler("test", func(query *models.GetUserOrgListQuery) error {
 		query.Result = orgs
+		return nil
+	})
+}
+
+func (sc *scenarioContext) getExternalUserInfoByLoginQueryReturns(externalUser *models.ExternalUserInfo) {
+	bus.AddHandler("test", func(cmd *models.GetExternalUserInfoByLoginQuery) error {
+		sc.getExternalUserInfoByLoginQuery = cmd
+		sc.getExternalUserInfoByLoginQuery.Result = &models.ExternalUserInfo{
+			UserId:     externalUser.UserId,
+			IsDisabled: externalUser.IsDisabled,
+		}
 		return nil
 	})
 }
