@@ -8,6 +8,7 @@ import { config } from '../../../core/config';
 import { updateDatasourceInstanceAction, resetExploreAction, changeRefreshIntervalAction } from './actionTypes';
 import { EMPTY } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { SeriesData } from '@grafana/ui/src/types/data';
 
 const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https' ? 'wss://' : 'ws://';
@@ -21,7 +22,6 @@ const convertToWebSocketUrl = (url: string) => {
 export interface StartSubscriptionsPayload {
   exploreId: ExploreId;
   dataReceivedActionCreator: ActionCreator<SubscriptionDataReceivedPayload>;
-  stopsActionCreator: ActionCreator<StopSubscriptionPayload>;
 }
 
 export const startSubscriptionsAction = actionCreatorFactory<StartSubscriptionsPayload>(
@@ -33,27 +33,14 @@ export interface StartSubscriptionPayload {
   refId: string;
   exploreId: ExploreId;
   dataReceivedActionCreator: ActionCreator<SubscriptionDataReceivedPayload>;
-  stopsActionCreator: ActionCreator<StopSubscriptionPayload>;
 }
 
 export const startSubscriptionAction = actionCreatorFactory<StartSubscriptionPayload>(
   'explore/START_SUBSCRIPTION'
 ).create();
 
-export interface StopSubscriptionPayload {
-  refId: string;
-  exploreId: ExploreId;
-}
-
-export const stopSubscriptionAction = actionCreatorFactory<StopSubscriptionPayload>(
-  'explore/STOP_SUBSCRIPTION'
-).create();
-
-export interface PauseSubscriptionPayload extends StopSubscriptionPayload {}
-export interface PlaySubscriptionPayload extends StopSubscriptionPayload {}
-
 export interface SubscriptionDataReceivedPayload {
-  data: any;
+  data: SeriesData;
   exploreId: ExploreId;
 }
 
@@ -64,7 +51,7 @@ export const subscriptionDataReceivedAction = actionCreatorFactory<SubscriptionD
 export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(startSubscriptionsAction.type).pipe(
     mergeMap((action: ActionOf<StartSubscriptionsPayload>) => {
-      const { exploreId, dataReceivedActionCreator, stopsActionCreator } = action.payload;
+      const { exploreId, dataReceivedActionCreator } = action.payload;
       const { datasourceInstance, queries, refreshInterval } = state$.value.explore[exploreId];
 
       if (!datasourceInstance || !datasourceInstance.convertToStreamTargets) {
@@ -82,35 +69,37 @@ export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSta
           refId: target.refId,
           exploreId,
           dataReceivedActionCreator,
-          stopsActionCreator,
         })
       );
     })
   );
 };
 
-export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = action$ => {
+export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(startSubscriptionAction.type).pipe(
     mergeMap((action: ActionOf<StartSubscriptionPayload>) => {
-      const { url, exploreId, refId, dataReceivedActionCreator, stopsActionCreator } = action.payload;
+      const { url, exploreId, refId, dataReceivedActionCreator } = action.payload;
       return webSocket(url).pipe(
         takeUntil(
           action$
             .ofType(
               startSubscriptionAction.type,
-              stopsActionCreator.type,
               resetExploreAction.type,
               updateDatasourceInstanceAction.type,
               changeRefreshIntervalAction.type
             )
             .pipe(
               filter(action => {
-                if (action.type === resetExploreAction.type || action.type === updateDatasourceInstanceAction.type) {
-                  return true; // stops all subscriptions if user navigates away from explore or changes data source
+                if (action.type === resetExploreAction.type) {
+                  return true; // stops all subscriptions if user navigates away
                 }
 
-                if (action.type === changeRefreshIntervalAction.type) {
-                  return !isLive(action.payload.refreshInterval); // stops all subscriptions if user changes refresh interval away from 'Live'
+                if (action.type === updateDatasourceInstanceAction.type && action.payload.exploreId === exploreId) {
+                  return true; // stops subscriptions if user changes data source
+                }
+
+                if (action.type === changeRefreshIntervalAction.type && action.payload.exploreId === exploreId) {
+                  return !isLive(action.payload.refreshInterval); // stops subscriptions if user changes refresh interval away from 'Live'
                 }
 
                 return action.payload.exploreId === exploreId && action.payload.refId === refId;
@@ -118,9 +107,18 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
               tap(value => console.log('Stopping subscription', value))
             )
         ),
-        map(data => {
+        map(result => {
+          const { datasourceInstance } = state$.value.explore[exploreId];
+
+          if (!datasourceInstance || !datasourceInstance.resultToSeriesData) {
+            return null; //do nothing if datasource does not support streaming
+          }
+
+          const data = datasourceInstance.resultToSeriesData(result, refId);
+
           return dataReceivedActionCreator({ data, exploreId });
-        })
+        }),
+        filter(action => action !== null)
       );
     })
   );

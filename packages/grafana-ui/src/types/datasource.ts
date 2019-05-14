@@ -160,6 +160,8 @@ export abstract class DataSourceApi<
 
   convertToStreamTargets?(options: DataQueryRequest<TQuery>): Array<{ url: string; refId: string }>;
 
+  resultToSeriesData?(data: any, refId?: string): SeriesData;
+
   /**
    * Test & verify datasource settings & connection details
    */

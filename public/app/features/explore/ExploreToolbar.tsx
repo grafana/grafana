@@ -73,6 +73,7 @@ interface StateProps {
   supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
   selectedModeOption: SelectOptionItem<ExploreMode>;
   hasLiveOption: boolean;
+  isLive: boolean;
 }
 
 interface DispatchProps {
@@ -136,6 +137,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       supportedModeOptions,
       selectedModeOption,
       hasLiveOption,
+      isLive,
     } = this.props;
 
     return (
@@ -205,9 +207,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
-              <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
-              </ClickOutsideWrapper>
+              {!isLive && (
+                <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
+                  <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
+                </ClickOutsideWrapper>
+              )}
 
               <RefreshPicker
                 onIntervalChanged={this.onChangeRefreshInterval}
@@ -219,21 +223,25 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
-            <div className="explore-toolbar-content-item">
-              <button className="btn navbar-button" onClick={this.onClearAll}>
-                Clear All
-              </button>
-            </div>
-            <div className="explore-toolbar-content-item">
-              {createResponsiveButton({
-                splitted,
-                title: 'Run Query',
-                onClick: this.onRunQuery,
-                buttonClassName: 'navbar-button--secondary',
-                iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
-                iconSide: IconSide.right,
-              })}
-            </div>
+            {!isLive && (
+              <>
+                <div className="explore-toolbar-content-item">
+                  <button className="btn navbar-button" onClick={this.onClearAll}>
+                    Clear All
+                  </button>
+                </div>
+                <div className="explore-toolbar-content-item">
+                  {createResponsiveButton({
+                    splitted,
+                    title: 'Run Query',
+                    onClick: this.onRunQuery,
+                    buttonClassName: 'navbar-button--secondary',
+                    iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
+                    iconSide: IconSide.right,
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -255,6 +263,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     tableIsLoading,
     supportedModes,
     mode,
+    isLive,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
@@ -301,6 +310,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     supportedModeOptions,
     selectedModeOption,
     hasLiveOption,
+    isLive,
   };
 };
 

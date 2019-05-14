@@ -91,11 +91,7 @@ import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
-import {
-  startSubscriptionsAction,
-  stopSubscriptionAction,
-  subscriptionDataReceivedAction,
-} from 'app/features/explore/state/epics';
+import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/features/explore/state/epics';
 
 /**
  * Updates UI state and save it to the URL
@@ -594,7 +590,6 @@ function runQueriesForType(
         startSubscriptionsAction({
           exploreId,
           dataReceivedActionCreator: subscriptionDataReceivedAction,
-          stopsActionCreator: stopSubscriptionAction,
         })
       );
     }

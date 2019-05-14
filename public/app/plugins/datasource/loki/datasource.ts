@@ -86,6 +86,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
   };
 
+  resultToSeriesData = (data: any, refId?: string): SeriesData => {
+    const seriesData = logStreamToSeriesData(data);
+    seriesData.refId = refId;
+    return seriesData;
+  };
+
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
     const { query, regexp } = parseQuery(interpolated);

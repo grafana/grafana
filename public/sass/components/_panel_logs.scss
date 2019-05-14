@@ -323,3 +323,21 @@ $column-horizontal-spacing: 10px;
     background: $blue;
   }
 }
+
+.logs-row.fresh {
+  color: $text-color;
+  background-color: $blue-faint;
+  transition: background-color 500ms ease-in-out;
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  flex: auto;
+}
+
+.logs-row.old {
+  opacity: 0.9;
+  width: 100%;
+  display: flex;
+  flex-flow: row;
+  flex: auto;
+}
