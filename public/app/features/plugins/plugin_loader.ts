@@ -25,6 +25,7 @@ import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { getAngularLoader } from 'app/core/services/AngularLoader';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -94,6 +95,11 @@ exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
   __esModule: true,
 });
+
+/**
+ * Include angular elements in react -- helpful for migrations
+ */
+exposeToPlugin('app/core/services/AngularLoader', getAngularLoader);
 
 /**
  * NOTE: this is added temporarily while we explore a long term solution
