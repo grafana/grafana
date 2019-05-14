@@ -23,7 +23,7 @@ export interface State {
 export class TeamPicker extends Component<Props, State> {
   debouncedSearch: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isLoading: false };
     this.search = this.search.bind(this);
@@ -42,8 +42,8 @@ export class TeamPicker extends Component<Props, State> {
       query = '';
     }
 
-    return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
-      const teams = result.teams.map(team => {
+    return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then((result: any) => {
+      const teams = result.teams.map((team: any) => {
         return {
           id: team.id,
           value: team.id,

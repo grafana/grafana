@@ -12,7 +12,6 @@ import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
@@ -126,7 +125,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onRunQuery }),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',

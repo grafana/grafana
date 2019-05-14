@@ -6,7 +6,7 @@ import xss from 'xss';
  * See https://github.com/bvaughn/react-highlight-words#props
  */
 export function findHighlightChunksInText({ searchWords, textToHighlight }) {
-  return findMatchesInText(textToHighlight, searchWords.join(' '));
+  return searchWords.reduce((acc, term) => [...acc, ...findMatchesInText(textToHighlight, term)], []);
 }
 
 const cleanNeedle = (needle: string): string => {

@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
 import DropDownChild from './DropDownChild';
+import { NavModelItem } from '@grafana/ui';
 
 interface Props {
-  link: any;
+  link: NavModelItem;
 }
 
 const SideMenuDropDown: FC<Props> = props => {

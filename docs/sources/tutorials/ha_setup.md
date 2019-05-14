@@ -30,7 +30,8 @@ Currently alerting supports a limited form of high availability. Since v4.2.0, a
 
 ## User sessions
 
-> Beginning with Grafana v6.0 and above the following only applies when using [Auth Proxy Authentication](/auth/auth-proxy/).
+> After Grafana 6.2 you don't need to configure session storage since the database will be used by default.
+> If you want to offload the login session data from the database you can configure [remote_cache]({{< relref "configuration.md" >}}#remote-cache)
 
 The second thing to consider is how to deal with user sessions and how to configure your load balancer in front of Grafana.
 Grafana supports two ways of storing session data: locally on disk or in a database/cache-server.

@@ -11,7 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -19,7 +21,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   renderError: boolean;
   hiddenSeries: any = {};
   seriesList: TimeSeries[] = [];
-  dataList: LegacyResponseData[] = [];
+  dataList: SeriesData[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -127,6 +129,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
+    this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel);
 
     this.events.on('render', this.onRender.bind(this));
@@ -187,10 +190,18 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
+  // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.dataList = dataList;
+    this.handleSeriesData(getProcessedSeriesData(dataList));
+  }
+
+  // Directly support SeriesData skipping event callbacks
+  handleSeriesData(data: SeriesData[]) {
+    super.handleSeriesData(data);
+
+    this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
-      dataList: dataList,
+      dataList: this.dataList,
       range: this.range,
     });
 

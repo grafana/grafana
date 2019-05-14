@@ -27,7 +27,7 @@ const timezones = [
 export class SharedPreferences extends PureComponent<Props, State> {
   backendSrv: BackendSrv = getBackendSrv();
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -72,7 +72,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   }
 
-  onSubmitForm = async event => {
+  onSubmitForm = async (event: React.SyntheticEvent) => {
     event.preventDefault();
 
     const { homeDashboardId, theme, timezone } = this.state;

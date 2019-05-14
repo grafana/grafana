@@ -234,7 +234,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     // image rendering (phantomjs/headless chrome) to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
-      profiler.renderingCompleted(panel.id);
+      profiler.renderingCompleted();
     }
 
     // do not render component until we have first data

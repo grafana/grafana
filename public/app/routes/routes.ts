@@ -110,6 +110,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
+      reloadOnSearch: false, // for tabs
       resolve: {
         component: () => DataSourceSettingsPage,
       },

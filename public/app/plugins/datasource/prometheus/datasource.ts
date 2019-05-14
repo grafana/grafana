@@ -137,7 +137,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return escapedValues.join('|');
   }
 
-  targetContainsTemplate(target) {
+  targetContainsTemplate(target: PromQuery) {
     return this.templateSrv.variableExists(target.expr);
   }
 
