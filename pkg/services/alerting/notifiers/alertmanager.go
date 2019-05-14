@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -27,7 +27,7 @@ func init() {
 	})
 }
 
-func NewAlertmanagerNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -46,24 +46,24 @@ type AlertmanagerNotifier struct {
 	log log.Logger
 }
 
-func (this *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *alerting.EvalContext, notificationState *m.AlertNotificationState) bool {
+func (this *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *alerting.EvalContext, notificationState *models.AlertNotificationState) bool {
 	this.log.Debug("Should notify", "ruleId", evalContext.Rule.Id, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
 
 	// Do not notify when we become OK for the first time.
-	if (evalContext.PrevAlertState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
+	if (evalContext.PrevAlertState == models.AlertStatePending) && (evalContext.Rule.State == models.AlertStateOK) {
 		return false
 	}
 	// Notify on Alerting -> OK to resolve before alertmanager timeout.
-	if (evalContext.PrevAlertState == m.AlertStateAlerting) && (evalContext.Rule.State == m.AlertStateOK) {
+	if (evalContext.PrevAlertState == models.AlertStateAlerting) && (evalContext.Rule.State == models.AlertStateOK) {
 		return true
 	}
-	return evalContext.Rule.State == m.AlertStateAlerting
+	return evalContext.Rule.State == models.AlertStateAlerting
 }
 
 func (this *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, match *alerting.EvalMatch, ruleUrl string) *simplejson.Json {
 	alertJSON := simplejson.New()
 	alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
-	if evalContext.Rule.State == m.AlertStateOK {
+	if evalContext.Rule.State == models.AlertStateOK {
 		alertJSON.Set("endsAt", time.Now().UTC().Format(time.RFC3339))
 	}
 	alertJSON.Set("generatorURL", ruleUrl)
@@ -128,7 +128,7 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 	bodyJSON := simplejson.NewFromAny(alerts)
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        this.Url + "/api/v1/alerts",
 		HttpMethod: "POST",
 		Body:       string(body),

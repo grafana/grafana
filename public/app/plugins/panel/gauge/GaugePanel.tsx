@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, FieldDisplay, getFieldDisplayValues } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
@@ -42,7 +42,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   render() {
-    const { height, width, options, data, renderCounter } = this.props;
+    const { height, width, data, renderCounter } = this.props;
     return (
       <VizRepeater
         getValues={this.getValues}
@@ -51,7 +51,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={options.orientation}
+        orientation={VizOrientation.Auto}
       />
     );
   }

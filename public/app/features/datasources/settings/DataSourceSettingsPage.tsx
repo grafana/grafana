@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import isString from 'lodash/isString';
 
 // Components
 import Page from 'app/core/components/Page/Page';
@@ -21,7 +22,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { StoreState } from 'app/types/';
+import { StoreState, UrlQueryMap } from 'app/types/';
 import { NavModel, DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
@@ -38,14 +39,17 @@ export interface Props {
   updateDataSource: typeof updateDataSource;
   setIsDefault: typeof setIsDefault;
   plugin?: GenericDataSourcePlugin;
+  query: UrlQueryMap;
+  page?: string;
 }
 
 interface State {
   dataSource: DataSourceSettings;
-  plugin: GenericDataSourcePlugin;
+  plugin?: GenericDataSourcePlugin;
   isTesting?: boolean;
   testingMessage?: string;
   testingStatus?: string;
+  loadError?: any;
 }
 
 export class DataSourceSettingsPage extends PureComponent<Props, State> {
@@ -73,9 +77,17 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { loadDataSource, pageId } = this.props;
-    await loadDataSource(pageId);
-    if (!this.state.plugin) {
-      await this.loadPlugin();
+    if (isNaN(pageId)) {
+      this.setState({ loadError: 'Invalid ID' });
+      return;
+    }
+    try {
+      await loadDataSource(pageId);
+      if (!this.state.plugin) {
+        await this.loadPlugin();
+      }
+    } catch (err) {
+      this.setState({ loadError: err });
     }
   }
 
@@ -174,70 +186,133 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
     return this.state.dataSource.id > 0;
   }
 
+  renderLoadError(loadError: any) {
+    let showDelete = false;
+    let msg = loadError.toString();
+    if (loadError.data) {
+      if (loadError.data.message) {
+        msg = loadError.data.message;
+      }
+    } else if (isString(loadError)) {
+      showDelete = true;
+    }
+
+    const node = {
+      text: msg,
+      subTitle: 'Data Source Error',
+      icon: 'fa fa-fw fa-warning',
+    };
+    const nav = {
+      node: node,
+      main: node,
+    };
+
+    return (
+      <Page navModel={nav}>
+        <Page.Contents>
+          <div>
+            <div className="gf-form-button-row">
+              {showDelete && (
+                <button type="submit" className="btn btn-danger" onClick={this.onDelete}>
+                  Delete
+                </button>
+              )}
+              <a className="btn btn-inverse" href="datasources">
+                Back
+              </a>
+            </div>
+          </div>
+        </Page.Contents>
+      </Page>
+    );
+  }
+
+  renderConfigPageBody(page: string) {
+    const { plugin } = this.state;
+    if (!plugin || !plugin.configPages) {
+      return null; // still loading
+    }
+
+    for (const p of plugin.configPages) {
+      if (p.id === page) {
+        return <p.body plugin={plugin} query={this.props.query} />;
+      }
+    }
+
+    return <div>Page Not Found: {page}</div>;
+  }
+
+  renderSettings() {
+    const { dataSourceMeta, setDataSourceName, setIsDefault } = this.props;
+    const { testingMessage, testingStatus, dataSource, plugin } = this.state;
+
+    return (
+      <form onSubmit={this.onSubmit}>
+        {this.isReadOnly() && this.renderIsReadOnlyMessage()}
+        {dataSourceMeta.state && (
+          <div className="gf-form">
+            <label className="gf-form-label width-10">Plugin state</label>
+            <label className="gf-form-label gf-form-label--transparent">
+              <PluginStateinfo state={dataSourceMeta.state} />
+            </label>
+          </div>
+        )}
+
+        <BasicSettings
+          dataSourceName={dataSource.name}
+          isDefault={dataSource.isDefault}
+          onDefaultChange={state => setIsDefault(state)}
+          onNameChange={name => setDataSourceName(name)}
+        />
+
+        {plugin && (
+          <PluginSettings
+            plugin={plugin}
+            dataSource={this.state.dataSource}
+            dataSourceMeta={dataSourceMeta}
+            onModelChange={this.onModelChange}
+          />
+        )}
+
+        <div className="gf-form-group">
+          {testingMessage && (
+            <div className={`alert-${testingStatus} alert`}>
+              <div className="alert-icon">
+                {testingStatus === 'error' ? (
+                  <i className="fa fa-exclamation-triangle" />
+                ) : (
+                  <i className="fa fa-check" />
+                )}
+              </div>
+              <div className="alert-body">
+                <div className="alert-title">{testingMessage}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <ButtonRow
+          onSubmit={event => this.onSubmit(event)}
+          isReadOnly={this.isReadOnly()}
+          onDelete={this.onDelete}
+          onTest={event => this.onTest(event)}
+        />
+      </form>
+    );
+  }
+
   render() {
-    const { dataSourceMeta, navModel, setDataSourceName, setIsDefault } = this.props;
-    const { testingMessage, testingStatus, plugin, dataSource } = this.state;
+    const { navModel, page } = this.props;
+    const { loadError } = this.state;
+
+    if (loadError) {
+      return this.renderLoadError(loadError);
+    }
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!this.hasDataSource}>
-          {this.hasDataSource && (
-            <div>
-              <form onSubmit={this.onSubmit}>
-                {this.isReadOnly() && this.renderIsReadOnlyMessage()}
-                {dataSourceMeta.state && (
-                  <div className="gf-form">
-                    <label className="gf-form-label width-10">Plugin state</label>
-                    <label className="gf-form-label gf-form-label--transparent">
-                      <PluginStateinfo state={dataSourceMeta.state} />
-                    </label>
-                  </div>
-                )}
-
-                <BasicSettings
-                  dataSourceName={dataSource.name}
-                  isDefault={dataSource.isDefault}
-                  onDefaultChange={state => setIsDefault(state)}
-                  onNameChange={name => setDataSourceName(name)}
-                />
-
-                {dataSourceMeta.module && plugin && (
-                  <PluginSettings
-                    plugin={plugin}
-                    dataSource={this.state.dataSource}
-                    dataSourceMeta={dataSourceMeta}
-                    onModelChange={this.onModelChange}
-                  />
-                )}
-
-                <div className="gf-form-group">
-                  {testingMessage && (
-                    <div className={`alert-${testingStatus} alert`} aria-label="Datasource settings page Alert">
-                      <div className="alert-icon">
-                        {testingStatus === 'error' ? (
-                          <i className="fa fa-exclamation-triangle" />
-                        ) : (
-                          <i className="fa fa-check" />
-                        )}
-                      </div>
-                      <div className="alert-body">
-                        <div className="alert-title" aria-label="Datasource settings page Alert message">
-                          {testingMessage}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <ButtonRow
-                  onSubmit={event => this.onSubmit(event)}
-                  isReadOnly={this.isReadOnly()}
-                  onDelete={this.onDelete}
-                  onTest={event => this.onTest(event)}
-                />
-              </form>
-            </div>
-          )}
+          {this.hasDataSource && <div>{page ? this.renderConfigPageBody(page) : this.renderSettings()}</div>}
         </Page.Contents>
       </Page>
     );
@@ -247,11 +322,19 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 function mapStateToProps(state: StoreState) {
   const pageId = getRouteParamsId(state.location);
   const dataSource = getDataSource(state.dataSources, pageId);
+  const page = state.location.query.page as string;
+
   return {
-    navModel: getNavModel(state.navIndex, `datasource-settings-${pageId}`, getDataSourceLoadingNav('settings')),
+    navModel: getNavModel(
+      state.navIndex,
+      page ? `datasource-page-${page}` : `datasource-settings-${pageId}`,
+      getDataSourceLoadingNav('settings')
+    ),
     dataSource: getDataSource(state.dataSources, pageId),
     dataSourceMeta: getDataSourceMeta(state.dataSources, dataSource.type),
     pageId: pageId,
+    query: state.location.query,
+    page,
   };
 }
 

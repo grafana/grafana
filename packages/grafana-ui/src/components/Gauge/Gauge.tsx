@@ -76,7 +76,7 @@ export class Gauge extends PureComponent<Props> {
     );
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 5, 40) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
     const thresholdLabelFontSize = fontSize / 2.5;

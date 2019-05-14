@@ -31,7 +31,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
     return (value: any) => {
       const { theme } = options;
       const { mappings, thresholds } = field;
-      let color = field.color;
+      let color;
 
       let text = _.toString(value);
       let numeric = toNumber(value);
@@ -65,7 +65,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
-        if (thresholds && thresholds.length > 0) {
+        if (thresholds && thresholds.length) {
           color = getColorFromThreshold(numeric, thresholds, theme);
         }
       }

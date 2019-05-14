@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,12 +23,12 @@ type EvalContext struct {
 	Rule           *Rule
 	log            log.Logger
 
-	dashboardRef *m.DashboardRef
+	dashboardRef *models.DashboardRef
 
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
-	PrevAlertState  m.AlertStateType
+	PrevAlertState  models.AlertStateType
 
 	Ctx context.Context
 }
@@ -53,22 +53,22 @@ type StateDescription struct {
 
 func (c *EvalContext) GetStateModel() *StateDescription {
 	switch c.Rule.State {
-	case m.AlertStateOK:
+	case models.AlertStateOK:
 		return &StateDescription{
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	case m.AlertStateNoData:
+	case models.AlertStateNoData:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "No Data",
 		}
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
-	case m.AlertStateUnknown:
+	case models.AlertStateUnknown:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "Unknown",
@@ -90,12 +90,12 @@ func (c *EvalContext) GetNotificationTitle() string {
 	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
-func (c *EvalContext) GetDashboardUID() (*m.DashboardRef, error) {
+func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &m.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
+	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
 	if err := bus.Dispatch(uidQuery); err != nil {
 		return nil, err
 	}
@@ -115,29 +115,29 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, m.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation
-func (c *EvalContext) GetNewState() m.AlertStateType {
+func (c *EvalContext) GetNewState() models.AlertStateType {
 	ns := getNewStateInternal(c)
-	if ns != m.AlertStateAlerting || c.Rule.For == 0 {
+	if ns != models.AlertStateAlerting || c.Rule.For == 0 {
 		return ns
 	}
 
 	since := time.Since(c.Rule.LastStateChange)
-	if c.PrevAlertState == m.AlertStatePending && since > c.Rule.For {
-		return m.AlertStateAlerting
+	if c.PrevAlertState == models.AlertStatePending && since > c.Rule.For {
+		return models.AlertStateAlerting
 	}
 
-	if c.PrevAlertState == m.AlertStateAlerting {
-		return m.AlertStateAlerting
+	if c.PrevAlertState == models.AlertStateAlerting {
+		return models.AlertStateAlerting
 	}
 
-	return m.AlertStatePending
+	return models.AlertStatePending
 }
 
-func getNewStateInternal(c *EvalContext) m.AlertStateType {
+func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.Id,
@@ -145,14 +145,14 @@ func getNewStateInternal(c *EvalContext) m.AlertStateType {
 			"error", c.Error,
 			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
 
-		if c.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+		if c.Rule.ExecutionErrorState == models.ExecutionErrorKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
 	}
 
 	if c.Firing {
-		return m.AlertStateAlerting
+		return models.AlertStateAlerting
 	}
 
 	if c.NoDataFound {
@@ -161,11 +161,11 @@ func getNewStateInternal(c *EvalContext) m.AlertStateType {
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
 
-		if c.Rule.NoDataState == m.NoDataKeepState {
+		if c.Rule.NoDataState == models.NoDataKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.NoDataState.ToAlertState()
 	}
 
-	return m.AlertStateOK
+	return models.AlertStateOK
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -100,7 +100,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
-	getDsInfo := &m.GetDataSourceByIdQuery{
+	getDsInfo := &models.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
 	}
@@ -139,7 +139,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
+func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
