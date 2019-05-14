@@ -18,6 +18,8 @@ export default class GraphiteQuery {
   constructor(datasource, target, templateSrv?, scopedVars?) {
     this.datasource = datasource;
     this.target = target;
+    this.templateSrv = templateSrv;
+    this.scopedVars = scopedVars;
     this.parseTarget();
 
     this.removeTagValue = '-- remove tag --';
@@ -59,7 +61,7 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    const seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
+    const seriesByTagFunc: any = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
@@ -98,7 +100,7 @@ export default class GraphiteQuery {
         this.functions.push(innerFunc);
         break;
       case 'series-ref':
-        if (this.segments.length > 0) {
+        if (this.segments.length > 0 || this.getSeriesByTagFuncIndex() >= 0) {
           this.addFunctionParameter(func, astNode.value);
         } else {
           this.segments.push(astNode);
@@ -133,7 +135,7 @@ export default class GraphiteQuery {
   }
 
   moveAliasFuncLast() {
-    const aliasFunc = _.find(this.functions, func => {
+    const aliasFunc: any = _.find(this.functions, func => {
       return func.def.name.startsWith('alias');
     });
 
@@ -156,11 +158,17 @@ export default class GraphiteQuery {
 
   moveFunction(func, offset) {
     const index = this.functions.indexOf(func);
+    // @ts-ignore
     _.move(this.functions, index, index + offset);
   }
 
   updateModelTarget(targets) {
-    // render query
+    const wrapFunction = (target: string, func: any) => {
+      return func.render(target, (value: string) => {
+        return this.templateSrv.replace(value, this.scopedVars);
+      });
+    };
+
     if (!this.target.textEditor) {
       const metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
@@ -300,10 +308,6 @@ export default class GraphiteQuery {
       })
     );
   }
-}
-
-function wrapFunction(target, func) {
-  return func.render(target);
 }
 
 function renderTagString(tag) {

@@ -39,6 +39,8 @@ export interface DashboardAcl {
   name?: string;
   inherited?: boolean;
   sortRank?: number;
+  userAvatarUrl?: string;
+  teamAvatarUrl?: string;
 }
 
 export interface DashboardPermissionInfo {
@@ -96,5 +98,25 @@ export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
     value: PermissionLevel.Admin,
     label: 'Admin',
     description: 'Can add/remove permissions and can add, edit and delete dashboards.',
+  },
+];
+
+export enum TeamPermissionLevel {
+  Member = 0,
+  Admin = 4,
+}
+
+export interface TeamPermissionInfo {
+  value: TeamPermissionLevel;
+  label: string;
+  description: string;
+}
+
+export const teamsPermissionLevels: TeamPermissionInfo[] = [
+  { value: TeamPermissionLevel.Member, label: 'Member', description: 'Is team member' },
+  {
+    value: TeamPermissionLevel.Admin,
+    label: 'Admin',
+    description: 'Can add/remove permissions, members and delete team.',
   },
 ];

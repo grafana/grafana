@@ -3,8 +3,6 @@
   "name": "Heatmap",
   "id": "heatmap",
 
-  "dataFormats": ["time_series"],
-
   "info": {
     "description": "Heatmap Panel for Grafana",
     "author": {

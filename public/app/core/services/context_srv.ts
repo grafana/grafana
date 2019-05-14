@@ -3,6 +3,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 export class User {
+  id: number;
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
@@ -43,7 +44,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
-  hasRole(role) {
+  hasRole(role: string) {
     return this.user.orgRole === role;
   }
 

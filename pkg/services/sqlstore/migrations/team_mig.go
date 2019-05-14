@@ -54,4 +54,8 @@ func addTeamMigrations(mg *Migrator) {
 	mg.AddMigration("Add column external to team_member table", NewAddColumnMigration(teamMemberV1, &Column{
 		Name: "external", Type: DB_Bool, Nullable: true,
 	}))
+
+	mg.AddMigration("Add column permission to team_member table", NewAddColumnMigration(teamMemberV1, &Column{
+		Name: "permission", Type: DB_SmallInt, Nullable: true,
+	}))
 }

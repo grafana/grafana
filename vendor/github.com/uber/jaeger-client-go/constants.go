@@ -16,7 +16,7 @@ package jaeger
 
 const (
 	// JaegerClientVersion is the version of the client library reported as Span tag.
-	JaegerClientVersion = "Go-2.14.0"
+	JaegerClientVersion = "Go-2.16.0"
 
 	// JaegerClientVersionTagKey is the name of the tag used to report client version.
 	JaegerClientVersionTagKey = "jaeger.version"
@@ -82,4 +82,7 @@ const (
 
 	// DefaultUDPSpanServerPort is the default port to send the spans to, via UDP
 	DefaultUDPSpanServerPort = 6831
+
+	// DefaultMaxTagValueLength is the default max length of byte array or string allowed in the tag value.
+	DefaultMaxTagValueLength = 256
 )

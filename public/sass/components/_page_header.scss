@@ -5,11 +5,11 @@
 }
 
 .page-header {
-  padding: 2.5rem 0 0 0;
+  padding: $space-xl 0 0 0;
 
   .btn {
     float: right;
-    margin-left: 1rem;
+    margin-left: $space-md;
 
     // better align icons
     .fa {
@@ -22,7 +22,7 @@
 .page-header__inner {
   flex-grow: 1;
   display: flex;
-  margin-bottom: 2.5rem;
+  margin-bottom: $space-xl;
 }
 
 .page-header__title {

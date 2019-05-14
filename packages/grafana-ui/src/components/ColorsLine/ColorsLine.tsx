@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { ColorPicker } from '..';
-import { colors } from '@grafana/ui';
+import { colors } from '../../utils/colors';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 export type ColorsDef = {

@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
-import moment from 'moment';
 import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 type TimeRegionColorDefinition = {
   fill: string;
@@ -83,7 +83,10 @@ export class TimeRegionManager {
       return;
     }
 
-    const tRange = { from: moment(this.panelCtrl.range.from).utc(), to: moment(this.panelCtrl.range.to).utc() };
+    const tRange = {
+      from: dateTime(this.panelCtrl.range.from).utc(),
+      to: dateTime(this.panelCtrl.range.to).utc(),
+    };
 
     let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor: TimeRegionColorDefinition;
 
@@ -143,70 +146,55 @@ export class TimeRegionManager {
 
       regions = [];
 
-      if (
-        hRange.from.h >= tRange.from.hour() &&
-        hRange.from.h <= tRange.from.hour() &&
-        hRange.from.m >= tRange.from.minute() &&
-        hRange.from.m <= tRange.from.minute() &&
-        hRange.to.h >= tRange.to.hour() &&
-        hRange.to.h <= tRange.to.hour() &&
-        hRange.to.m >= tRange.to.minute() &&
-        hRange.to.m <= tRange.to.minute()
-      ) {
-        regions.push({ from: tRange.from.valueOf(), to: tRange.to.startOf('hour').valueOf() });
-      } else {
-        fromStart = moment(tRange.from);
-        fromStart.set('hour', 0);
-        fromStart.set('minute', 0);
-        fromStart.set('second', 0);
-        fromStart.add(hRange.from.h, 'hours');
-        fromStart.add(hRange.from.m, 'minutes');
-        fromStart.add(hRange.from.s, 'seconds');
+      fromStart = dateTime(tRange.from);
+      fromStart.set('hour', 0);
+      fromStart.set('minute', 0);
+      fromStart.set('second', 0);
+      fromStart.add(hRange.from.h, 'hours');
+      fromStart.add(hRange.from.m, 'minutes');
+      fromStart.add(hRange.from.s, 'seconds');
 
-        while (fromStart.unix() <= tRange.to.unix()) {
-          while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
-            fromStart.add(24, 'hours');
-          }
-
-          if (fromStart.unix() > tRange.to.unix()) {
-            break;
-          }
-
-          fromEnd = moment(fromStart);
-
-          if (hRange.from.h <= hRange.to.h) {
-            fromEnd.add(hRange.to.h - hRange.from.h, 'hours');
-          } else if (hRange.from.h + hRange.to.h < 23) {
-            fromEnd.add(hRange.to.h, 'hours');
-
-            while (fromEnd.hour() !== hRange.to.h) {
-              fromEnd.add(-1, 'hours');
-            }
-          } else {
-            fromEnd.add(24 - hRange.from.h, 'hours');
-
-            while (fromEnd.hour() !== hRange.to.h) {
-              fromEnd.add(1, 'hours');
-            }
-          }
-
-          fromEnd.set('minute', hRange.to.m);
-          fromEnd.set('second', hRange.to.s);
-
-          while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
-            fromEnd.add(24, 'hours');
-          }
-
-          const outsideRange =
-            (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
-            (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
-
-          if (!outsideRange) {
-            regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
-          }
-
+      while (fromStart.unix() <= tRange.to.unix()) {
+        while (hRange.from.dayOfWeek && hRange.from.dayOfWeek !== fromStart.isoWeekday()) {
           fromStart.add(24, 'hours');
         }
+
+        if (fromStart.unix() > tRange.to.unix()) {
+          break;
+        }
+
+        fromEnd = dateTime(fromStart);
+
+        if (hRange.from.h <= hRange.to.h) {
+          fromEnd.add(hRange.to.h - hRange.from.h, 'hours');
+        } else if (hRange.from.h > hRange.to.h) {
+          while (fromEnd.hour() !== hRange.to.h) {
+            fromEnd.add(1, 'hours');
+          }
+        } else {
+          fromEnd.add(24 - hRange.from.h, 'hours');
+
+          while (fromEnd.hour() !== hRange.to.h) {
+            fromEnd.add(1, 'hours');
+          }
+        }
+
+        fromEnd.set('minute', hRange.to.m);
+        fromEnd.set('second', hRange.to.s);
+
+        while (hRange.to.dayOfWeek && hRange.to.dayOfWeek !== fromEnd.isoWeekday()) {
+          fromEnd.add(24, 'hours');
+        }
+
+        const outsideRange =
+          (fromStart.unix() < tRange.from.unix() && fromEnd.unix() < tRange.from.unix()) ||
+          (fromStart.unix() > tRange.to.unix() && fromEnd.unix() > tRange.to.unix());
+
+        if (!outsideRange) {
+          regions.push({ from: fromStart.valueOf(), to: fromEnd.valueOf() });
+        }
+
+        fromStart.add(24, 'hours');
       }
 
       timeRegionColor = getColor(timeRegion, this.theme);

@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -28,7 +28,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	}
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 		datasource.User,
-		datasource.Password,
+		datasource.DecryptedPassword(),
 		protocol,
 		datasource.Url,
 		datasource.Database,

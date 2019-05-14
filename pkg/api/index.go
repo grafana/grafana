@@ -233,7 +233,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 
 			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "gicon gicon-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "gicon gicon-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/"})
 			}
 
 			if len(appLink.Children) > 0 {
@@ -325,6 +325,27 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 				{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
 			},
 		})
+	}
+
+	if (c.OrgRole == m.ROLE_EDITOR || c.OrgRole == m.ROLE_VIEWER) && hs.Cfg.EditorsCanAdmin {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/org/teams",
+			Children: []*dtos.NavLink{
+				{
+					Text:        "Teams",
+					Id:          "teams",
+					Description: "Manage org groups",
+					Icon:        "gicon gicon-team",
+					Url:         setting.AppSubUrl + "/org/teams",
+				},
+			},
+		}
+
+		data.NavTree = append(data.NavTree, cfgNode)
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{

@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import * as rangeUtil from 'app/core/utils/rangeutil';
-import { RawTimeRange, Switch } from '@grafana/ui';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogLevel, LogsMetaKind } from 'app/core/logs_model';
+import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
@@ -48,12 +48,13 @@ interface Props {
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  range?: RawTimeRange;
+  range: TimeRange;
+  timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: Set<LogLevel>;
-  onChangeTime?: (range: RawTimeRange) => void;
+  onChangeTime?: (range: AbsoluteTimeRange) => void;
   onClickLabel?: (label: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
@@ -156,6 +157,7 @@ export default class Logs extends PureComponent<Props, State> {
       loading = false,
       onClickLabel,
       range,
+      timeZone,
       scanning,
       scanRange,
       width,
@@ -169,6 +171,7 @@ export default class Logs extends PureComponent<Props, State> {
     const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
+    const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
     const meta = [...data.meta];
@@ -190,6 +193,10 @@ export default class Logs extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
     const timeSeries = data.series.map(series => new TimeSeries(series));
+    const absRange = {
+      from: range.from.valueOf(),
+      to: range.to.valueOf(),
+    };
 
     return (
       <div className="logs-panel">
@@ -198,7 +205,8 @@ export default class Logs extends PureComponent<Props, State> {
             data={timeSeries}
             height={100}
             width={width}
-            range={range}
+            range={absRange}
+            timeZone={timeZone}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
             onToggleSeries={this.onToggleLogLevel}
@@ -240,14 +248,14 @@ export default class Logs extends PureComponent<Props, State> {
         <div className="logs-rows">
           {hasData &&
           !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
-            firstRows.map(row => (
+            firstRows.map((row, index) => (
               <LogRow
-                key={row.key + row.duplicates}
+                key={index}
                 getRows={getRows}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
@@ -256,13 +264,13 @@ export default class Logs extends PureComponent<Props, State> {
           {hasData &&
             !deferLogs &&
             renderAll &&
-            lastRows.map(row => (
+            lastRows.map((row, index) => (
               <LogRow
-                key={row.key + row.duplicates}
+                key={PREVIEW_LIMIT + index}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
-                showLabels={showLabels}
+                showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}

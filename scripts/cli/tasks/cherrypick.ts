@@ -27,13 +27,10 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
       continue;
     }
 
-    console.log(item.number + ' closed_at ' + item.closed_at + ' ' + item.html_url);
+    console.log(`${item.title} (${item.number}) closed_at ${item.closed_at}`);
+    console.log(`\tURL: ${item.closed_at} ${item.html_url}`);
     const issueDetails = await client.get(item.pull_request.url);
-    const commits = await client.get(issueDetails.data.commits_url);
-
-    for (const commit of commits.data) {
-      console.log(commit.commit.message + ' sha: ' + commit.sha);
-    }
+    console.log(`\tMerge sha: ${issueDetails.data.merge_commit_sha}`);
   }
 };
 

@@ -22,6 +22,8 @@ import DataSourceSettingsPage from '../features/datasources/settings/DataSourceS
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
+import PluginPage from '../features/plugins/PluginPage';
+import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
 
 // Types
@@ -108,6 +110,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
+      reloadOnSearch: false, // for tabs
       resolve: {
         component: () => DataSourceSettingsPage,
       },
@@ -164,6 +167,14 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
+    .when('/a/:pluginId/', {
+      // Someday * and will get a ReactRouter under that path!
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => AppRootPage,
+      },
+    })
     .when('/org', {
       template: '<react-container />',
       resolve: {
@@ -195,7 +206,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Editor', 'Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
         component: () => TeamList,
       },
     })
@@ -207,7 +218,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org/teams/edit/:id/:page?', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Admin'],
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
         component: () => TeamPages,
       },
     })
@@ -301,10 +312,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => PluginListPage,
       },
     })
-    .when('/plugins/:pluginId/edit', {
-      templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
-      controller: 'PluginEditCtrl',
-      controllerAs: 'ctrl',
+    .when('/plugins/:pluginId/', {
+      template: '<react-container />',
+      reloadOnSearch: false, // tabs from query parameters
+      resolve: {
+        component: () => PluginPage,
+      },
     })
     .when('/plugins/:pluginId/page/:slug', {
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',

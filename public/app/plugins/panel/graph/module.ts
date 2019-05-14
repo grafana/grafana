@@ -9,14 +9,17 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
-import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
+import TimeSeries from 'app/core/time_series2';
+import { colors, getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
   renderError: boolean;
   hiddenSeries: any = {};
-  seriesList: any = [];
-  dataList: any = [];
+  seriesList: TimeSeries[] = [];
+  dataList: SeriesData[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -71,7 +74,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
-    paceLength: 10,
+    spaceLength: 10,
     // show hide points
     points: false,
     // point radius in pixels
@@ -126,6 +129,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
+    this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel, this.dashboard);
 
     this.events.on('render', this.onRender.bind(this));
@@ -188,14 +192,22 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   private recalculateSeries(dataList) {
     this.seriesList = this.processor.getSeriesList({
-      dataList: dataList,
+      dataList: this.dataList,
       range: this.range,
     });
   }
 
-  onDataReceived(dataList) {
-    this.dataList = dataList;
-    this.recalculateSeries(dataList);
+  // This should only be called from the snapshot callback
+  onDataReceived(dataList: LegacyResponseData[]) {
+    this.handleSeriesData(getProcessedSeriesData(dataList));
+  }
+
+  // Directly support SeriesData skipping event callbacks
+  handleSeriesData(data: SeriesData[]) {
+    super.handleSeriesData(data);
+
+    this.dataList = data;
+    this.recalculateSeries(data);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -265,7 +277,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleAxis = info => {
-    let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
+    let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);

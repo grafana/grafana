@@ -4,7 +4,7 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, TableData, GrafanaThemeType } from '../../types/index';
+import { ScopedVars, SeriesData, GrafanaThemeType } from '../../types/index';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -29,23 +29,21 @@ export function columnIndexToLeter(column: number) {
   return String.fromCharCode(A + c2);
 }
 
-export function makeDummyTable(columnCount: number, rowCount: number): TableData {
+export function makeDummyTable(columnCount: number, rowCount: number): SeriesData {
   return {
-    columns: Array.from(new Array(columnCount), (x, i) => {
+    fields: Array.from(new Array(columnCount), (x, i) => {
       return {
-        text: columnIndexToLeter(i),
+        name: columnIndexToLeter(i),
       };
     }),
     rows: Array.from(new Array(rowCount), (x, rowId) => {
       const suffix = (rowId + 1).toString();
       return Array.from(new Array(columnCount), (x, colId) => columnIndexToLeter(colId) + suffix);
     }),
-    type: 'table',
-    columnMap: {},
   };
 }
 
-storiesOf('Alpha/Table', module)
+storiesOf('UI/Table', module)
   .add('Basic Table', () => {
     // NOTE: This example does not seem to survice rotate &
     // Changing fixed headers... but the next one does?
@@ -58,7 +56,7 @@ storiesOf('Alpha/Table', module)
 
     return withFullSizeStory(Table, {
       styles: [],
-      data: simpleTable,
+      data: { ...simpleTable },
       replaceVariables,
       showHeader,
       fixedHeader,

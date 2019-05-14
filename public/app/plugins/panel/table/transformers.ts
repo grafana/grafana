@@ -154,7 +154,7 @@ transformers['table'] = {
 
     return columns;
   },
-  transform: (data, panel, model) => {
+  transform: (data: any[], panel, model) => {
     if (!data || data.length === 0) {
       return;
     }

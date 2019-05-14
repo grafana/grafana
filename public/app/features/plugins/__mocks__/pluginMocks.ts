@@ -1,6 +1,7 @@
-import { Plugin, PanelPlugin, PanelDataFormat } from 'app/types';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/ui';
+import { ComponentType } from 'enzyme';
 
-export const getMockPlugins = (amount: number): Plugin[] => {
+export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins = [];
 
   for (let i = 0; i <= amount; i++) {
@@ -33,12 +34,18 @@ export const getMockPlugins = (amount: number): Plugin[] => {
   return plugins;
 };
 
-export const getPanelPlugin = (options: { id: string; sort?: number; hideFromList?: boolean }): PanelPlugin => {
-  return {
+export const getPanelPlugin = (
+  options: Partial<PanelPluginMeta>,
+  reactPanel?: ComponentType<PanelProps>,
+  angularPanel?: any
+): PanelPlugin => {
+  const plugin = new PanelPlugin(reactPanel);
+  plugin.angularPanelCtrl = angularPanel;
+  plugin.meta = {
     id: options.id,
+    type: PluginType.panel,
     name: options.id,
     sort: options.sort || 1,
-    dataFormats: [PanelDataFormat.TimeSeries],
     info: {
       author: {
         name: options.id + 'name',
@@ -57,6 +64,7 @@ export const getPanelPlugin = (options: { id: string; sort?: number; hideFromLis
     module: '',
     baseUrl: '',
   };
+  return plugin;
 };
 
 export const getMockPlugin = () => {
@@ -79,9 +87,9 @@ export const getMockPlugin = () => {
     },
     latestVersion: '1',
     name: 'pretty cool plugin 1',
+    baseUrl: 'path/to/plugin',
     pinned: false,
-    state: '',
-    type: '',
-    module: {},
-  };
+    type: PluginType.panel,
+    module: 'path/to/module',
+  } as PluginMeta;
 };

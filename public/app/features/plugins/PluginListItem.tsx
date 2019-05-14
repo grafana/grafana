@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { Plugin } from 'app/types';
+import { PluginMeta } from '@grafana/ui';
 
 interface Props {
-  plugin: Plugin;
+  plugin: PluginMeta;
 }
 
 const PluginListItem: FC<Props> = props => {
@@ -10,12 +10,9 @@ const PluginListItem: FC<Props> = props => {
 
   return (
     <li className="card-item-wrapper">
-      <a className="card-item" href={`plugins/${plugin.id}/edit`}>
+      <a className="card-item" href={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
-          <div className="card-item-type">
-            <i className={`icon-gf icon-gf-${plugin.type}`} />
-            {plugin.type}
-          </div>
+          <div className="card-item-type">{plugin.type}</div>
           {plugin.hasUpdate && (
             <div className="card-item-notice">
               <span bs-tooltip="plugin.latestVersion">Update available!</span>
