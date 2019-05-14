@@ -117,7 +117,7 @@ func AdminDisableUser(c *models.ReqContext) {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err == nil {
+	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
 		c.JsonApiErr(500, "Could not disable external user", nil)
 		return
 	}
@@ -137,7 +137,7 @@ func AdminEnableUser(c *models.ReqContext) {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err == nil {
+	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
 		c.JsonApiErr(500, "Could not enable external user", nil)
 		return
 	}
