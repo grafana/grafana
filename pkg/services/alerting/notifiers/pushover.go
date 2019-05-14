@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -95,7 +95,7 @@ func init() {
 	})
 }
 
-func NewPushoverNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	userKey := model.Settings.Get("userKey").MustString()
 	apiToken := model.Settings.Get("apiToken").MustString()
 	device := model.Settings.Get("device").MustString()
@@ -169,7 +169,7 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        PUSHOVER_ENDPOINT,
 		HttpMethod: "POST",
 		HttpHeader: headers,
@@ -248,7 +248,7 @@ func (this *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext,
 
 	// Add sound
 	sound := this.AlertingSound
-	if evalContext.Rule.State == m.AlertStateOK {
+	if evalContext.Rule.State == models.AlertStateOK {
 		sound = this.OkSound
 	}
 	if sound != "default" {

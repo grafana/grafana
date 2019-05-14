@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
@@ -168,7 +168,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 	ctx.condition = condition
 
-	condition.HandleRequest = func(context context.Context, dsInfo *m.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {Series: ctx.series},
@@ -182,8 +182,8 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
 
-		bus.AddHandler("test", func(query *m.GetDataSourceByIdQuery) error {
-			query.Result = &m.DataSource{Id: 1, Type: "graphite"}
+		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})
 

@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type RuleReader interface {
@@ -16,7 +16,6 @@ type RuleReader interface {
 
 type DefaultRuleReader struct {
 	sync.RWMutex
-	//serverID       string
 	serverPosition int
 	clusterSize    int
 	log            log.Logger
@@ -40,7 +39,7 @@ func (arr *DefaultRuleReader) initReader() {
 }
 
 func (arr *DefaultRuleReader) Fetch() []*Rule {
-	cmd := &m.GetAllAlertsQuery{}
+	cmd := &models.GetAllAlertsQuery{}
 
 	if err := bus.Dispatch(cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)

@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -44,7 +44,7 @@ var (
 	opsgenieAlertURL = "https://api.opsgenie.com/v2/alerts"
 )
 
-func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	apiKey := model.Settings.Get("apiKey").MustString()
 	apiUrl := model.Settings.Get("apiUrl").MustString()
@@ -76,11 +76,11 @@ func (this *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	var err error
 	switch evalContext.Rule.State {
-	case m.AlertStateOK:
+	case models.AlertStateOK:
 		if this.AutoClose {
 			err = this.closeAlert(evalContext)
 		}
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		err = this.createAlert(evalContext)
 	}
 	return err
@@ -115,7 +115,7 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 	bodyJSON.Set("details", details)
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        this.ApiUrl,
 		Body:       string(body),
 		HttpMethod: "POST",
@@ -139,7 +139,7 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 	bodyJSON.Set("source", "Grafana")
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", this.ApiUrl, evalContext.Rule.Id),
 		Body:       string(body),
 		HttpMethod: "POST",

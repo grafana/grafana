@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,7 +14,7 @@ func TestDingDingNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &m.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "dingding_testing",
 				Type:     "dingding",
 				Settings: settingsJSON,
@@ -28,7 +28,7 @@ func TestDingDingNotifier(t *testing.T) {
 			json := `{ "url": "https://www.google.com" }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &m.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "dingding_testing",
 				Type:     "dingding",
 				Settings: settingsJSON,
