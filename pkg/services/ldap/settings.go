@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Config struct {
@@ -68,9 +68,10 @@ func IsEnabled() bool {
 
 // ReloadConfig reads the config from the disc and caches it.
 func ReloadConfig() error {
-	if IsEnabled() == false {
+	if !IsEnabled() {
 		return nil
 	}
+
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
@@ -82,7 +83,7 @@ func ReloadConfig() error {
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
 func GetConfig() (*Config, error) {
-	if IsEnabled() == false {
+	if !IsEnabled() {
 		return nil, nil
 	}
 

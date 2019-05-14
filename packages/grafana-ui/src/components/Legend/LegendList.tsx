@@ -28,7 +28,7 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
     );
   };
 
-  const getItemKey = (item: LegendItem) => item.label;
+  const getItemKey = (item: LegendItem) => `${item.label}`;
 
   const styles = {
     wrapper: cx(

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func NewGoogleChatNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewGoogleChatNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -199,7 +199,7 @@ func (this *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error 
 	}
 	body, _ := json.Marshal(res1D)
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        this.Url,
 		HttpMethod: "POST",
 		HttpHeader: headers,
