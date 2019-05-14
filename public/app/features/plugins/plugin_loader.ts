@@ -25,6 +25,7 @@ import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
@@ -104,6 +105,11 @@ exposeToPlugin('app/core/services/backend_srv', {
   BackendSrv,
   getBackendSrv,
 });
+
+/**
+ * Added temporarily while we look for a better way to do this
+ */
+exposeToPlugin('app/features/plugins/datasource_srv', getDatasourceSrv);
 
 exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', datemath);
