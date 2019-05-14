@@ -166,7 +166,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div className={css({ padding: '16px' })}>
-        <h4>Reuse the results from panel:</h4>
+        <h4>Use Results From:</h4>
         <div className="gf-form">
           <Select
             placeholder="Choose Panel"
