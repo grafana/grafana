@@ -22,14 +22,11 @@ func TestServerLok(t *testing.T) {
 	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
 
 	//this should not execute `fn`
-	for i := 0; i < 4; i++ {
-		go func() {
-			assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
-		}()
-	}
+	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
 
-	// wait 1.5 second.
-	<-time.After(time.Second*1 + time.Second/2)
+	// wait 2 second.
+	<-time.After(time.Second * 2)
 
 	// now `fn` should be executed again
 	err := sl.LockAndExecute(ctx, "test-operation", atInterval, fn)
