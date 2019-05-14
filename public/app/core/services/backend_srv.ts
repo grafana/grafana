@@ -30,7 +30,7 @@ export class BackendSrv implements BackendService {
     return this.request({ method: 'DELETE', url });
   }
 
-  post(url: string, data: any) {
+  post(url: string, data?: any) {
     return this.request({ method: 'POST', url, data });
   }
 

@@ -3,11 +3,11 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InputDatasource } from './InputDatasource';
-import { InputQuery } from './types';
+import { InputQuery, InputOptions } from './types';
 
 import { FormLabel, Select, QueryEditorProps, SelectOptionItem, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
 
-type Props = QueryEditorProps<InputDatasource, InputQuery>;
+type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
 const options = [
   { value: 'panel', label: 'Panel', description: 'Save data in the panel configuration.' },

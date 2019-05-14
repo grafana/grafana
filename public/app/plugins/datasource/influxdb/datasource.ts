@@ -34,7 +34,7 @@ export default class InfluxDatasource {
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.responseParser = new ResponseParser();
-    this.httpMode = instanceSettings.jsonData.httpMode;
+    this.httpMode = instanceSettings.jsonData.httpMode || 'GET';
   }
 
   query(options) {

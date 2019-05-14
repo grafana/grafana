@@ -15,7 +15,7 @@ interface State {
 }
 
 class StateHistory extends PureComponent<Props, State> {
-  state = {
+  state: State = {
     stateHistoryItems: [],
   };
 
@@ -24,8 +24,8 @@ class StateHistory extends PureComponent<Props, State> {
 
     getBackendSrv()
       .get(`/api/annotations?dashboardId=${dashboard.id}&panelId=${panelId}&limit=50&type=alert`)
-      .then(res => {
-        const items = res.map(item => {
+      .then((res: any[]) => {
+        const items = res.map((item: any) => {
           return {
             stateModel: alertDef.getStateDisplayModel(item.newState),
             time: dashboard.formatDate(item.time, 'MMM D, YYYY HH:mm:ss'),

@@ -20,7 +20,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 

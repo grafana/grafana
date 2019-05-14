@@ -14,9 +14,10 @@ export interface TestDataQuery extends DataQuery {
 }
 
 export interface StreamingQuery {
-  type: 'signal' | 'logs';
+  type: 'signal' | 'logs' | 'fetch';
   speed: number;
   spread: number;
   noise: number; // wiggle around the signal for min/max
   buffer?: number;
+  url?: string; // the Fetch URL
 }

@@ -34,5 +34,11 @@
     },
     "skipLibCheck": true
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
+  "include": [
+    "public/app/**/*.ts",
+    "public/app/**/*.tsx",
+    "public/test/**/*.ts",
+    "public/vendor/**/*.ts",
+    "public/e2e-test/**/*.ts"
+  ]
 }

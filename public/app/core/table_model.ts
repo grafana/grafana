@@ -26,15 +26,19 @@ export default class TableModel implements TableData {
 
     if (table) {
       if (table.columns) {
-        table.columns.forEach(col => this.addColumn(col));
+        for (const col of table.columns) {
+          this.addColumn(col);
+        }
       }
       if (table.rows) {
-        table.rows.forEach(row => this.addRow(row));
+        for (const row of table.rows) {
+          this.addRow(row);
+        }
       }
     }
   }
 
-  sort(options) {
+  sort(options: { col: number; desc: boolean }) {
     if (options.col === null || this.columns.length <= options.col) {
       return;
     }
@@ -54,21 +58,21 @@ export default class TableModel implements TableData {
     this.columns[options.col].desc = options.desc;
   }
 
-  addColumn(col) {
+  addColumn(col: Column) {
     if (!this.columnMap[col.text]) {
       this.columns.push(col);
       this.columnMap[col.text] = col;
     }
   }
 
-  addRow(row) {
+  addRow(row: any[]) {
     this.rows.push(row);
   }
 }
 
 // Returns true if both rows have matching non-empty fields as well as matching
 // indexes where one field is empty and the other is not
-function areRowsMatching(columns, row, otherRow) {
+function areRowsMatching(columns: Column[], row: any[], otherRow: any[]) {
   let foundFieldToMatch = false;
   for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
     if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
@@ -96,7 +100,7 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   }
 
   // Track column indexes of union: name -> index
-  const columnNames = {};
+  const columnNames: { [key: string]: any } = {};
 
   // Union of all non-value columns
   const columnsUnion = tables.slice().reduce((acc, series) => {
@@ -119,7 +123,7 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   const flattenedRows = tables.reduce((acc, series, seriesIndex) => {
     const mapper = columnIndexMapper[seriesIndex];
     series.rows.forEach(row => {
-      const alteredRow = [];
+      const alteredRow: any[] = [];
       // Shifting entries according to index mapper
       mapper.forEach((to, from) => {
         alteredRow[to] = row[from];
@@ -130,7 +134,8 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
   }, []);
 
   // Merge rows that have same values for columns
-  const mergedRows = {};
+  const mergedRows: { [key: string]: any } = {};
+
   const compactedRows = flattenedRows.reduce((acc, row, rowIndex) => {
     if (!mergedRows[rowIndex]) {
       // Look from current row onwards

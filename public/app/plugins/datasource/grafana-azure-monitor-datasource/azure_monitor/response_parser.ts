@@ -1,6 +1,6 @@
-import moment from 'moment';
 import _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -95,8 +95,8 @@ export default class ResponseParser {
     return dataPoints;
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 
   static getKeyForAggregationField(dataObj): string {
