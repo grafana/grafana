@@ -1,0 +1,1 @@
+{"version":3,"file":"navModel.js","sourceRoot":"","sources":["../../../../app/core/actions/navModel.ts"],"names":[],"mappings":"AAEA,MAAM,CAAN,IAAY,WAEX;AAFD,WAAY,WAAW;IACrB,kDAAmC,CAAA;AACrC,CAAC,EAFW,WAAW,KAAX,WAAW,QAEtB;AASD,MAAM,CAAC,IAAM,cAAc,GAAG,UAAC,IAAkB,IAA2B,OAAA,CAAC;IAC3E,IAAI,EAAE,WAAW,CAAC,cAAc;IAChC,OAAO,EAAE,IAAI;CACd,CAAC,EAH0E,CAG1E,CAAC"}

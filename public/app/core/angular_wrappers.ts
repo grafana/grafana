@@ -9,7 +9,7 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, ColorsLine } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 
 export function registerAngularDirectives() {
@@ -34,6 +34,13 @@ export function registerAngularDirectives() {
     'series',
     'onColorChange',
     'onToggleAxis',
+  ]);
+  react2AngularDirective('colorsLine', ColorsLine, [
+    'label',
+    'tooltip',
+    'editable',
+    'defaultColorsProvider',
+    'updateColorsDelegate',
   ]);
   react2AngularDirective('metricSelect', MetricSelect, [
     'options',

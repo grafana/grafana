@@ -5,16 +5,14 @@ import './time_regions_form';
 
 import template from './template';
 import _ from 'lodash';
-
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
+import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
-
   renderError: boolean;
   hiddenSeries: any = {};
   seriesList: any = [];
@@ -111,6 +109,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     targets: [{}],
     // series color overrides
     aliasColors: {},
+    // panel custom colors pattern
     colors: [],
     // other style overrides
     seriesOverrides: [],
@@ -187,12 +186,16 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
-  onDataReceived(dataList) {
-    this.dataList = dataList;
+  private recalculateSeries(dataList) {
     this.seriesList = this.processor.getSeriesList({
       dataList: dataList,
       range: this.range,
     });
+  }
+
+  onDataReceived(dataList) {
+    this.dataList = dataList;
+    this.recalculateSeries(dataList);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -279,6 +282,27 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
     this.render();
   }
+
+  getColorsPalette = ((inherited: boolean) => {
+    const fullArray = arr => {
+      if (arr.length > 0) {
+        return arr;
+      }
+      return null;
+    };
+    const palette: any = {
+      editable: this.panel.colors.length < 1,
+      colors: inherited ? fullArray(this.dashboard.colors.slice(0)) || colors.slice(0) : this.panel.colors.slice(0),
+      source: inherited && this.dashboard.colors.length > 0 ? 'Dashboard' : inherited ? 'Global' : 'Custom',
+    };
+    return palette;
+  }).bind(this);
+
+  setColorsPalette = ((colors: string[]) => {
+    this.panel.colors = colors;
+    this.recalculateSeries(this.dataList);
+    this.render(this.seriesList);
+  }).bind(this);
 
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;

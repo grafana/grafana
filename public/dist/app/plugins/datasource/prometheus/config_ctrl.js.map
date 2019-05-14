@@ -1,0 +1,1 @@
+{"version":3,"file":"config_ctrl.js","sourceRoot":"","sources":["../../../../../app/plugins/datasource/prometheus/config_ctrl.ts"],"names":[],"mappings":"AAAA;IAIE,gBAAgB;IAChB,8BAAY,MAAM;QAChB,IAAI,CAAC,OAAO,CAAC,QAAQ,CAAC,UAAU,GAAG,IAAI,CAAC,OAAO,CAAC,QAAQ,CAAC,UAAU,IAAI,KAAK,CAAC;IAC/E,CAAC;IANM,gCAAW,GAAG,+DAA+D,CAAC;IAOvF,2BAAC;CAAA,AARD,IAQC;SARY,oBAAoB"}

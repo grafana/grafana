@@ -1,0 +1,61 @@
+colors-line {
+  width: 100%;
+}
+
+.gf-form-colorsline-container {
+  /*background-color:#09090b;*/
+  width: 100%;
+  display: flex;
+  padding: 10px 5px;
+  height: 35px;
+}
+
+.gf-form-colorsline-container a {
+  height: 15px;
+  flex-grow: 1;
+  margin: 0;
+}
+
+.gf-form-colorsline-container button {
+  width: 25px;
+  margin-left: -12.5px;
+  margin-right: -12.5px;
+  margin-top: -5px;
+  margin-bottom: -5px;
+  z-index: 5;
+  height: 25px;
+  background-color: #444;
+  border: 0;
+  border-radius: 100%;
+  font-weight: bold;
+  padding: 0;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  line-height: 25px;
+}
+
+.gf-form-colorsline-container button:last-of-type {
+  margin-left: 10px;
+  margin-right: 5px;
+  opacity: 1;
+}
+
+.gf-form-colorsline-container button:last-of-type:hover {
+  background-color: #222;
+}
+
+.gf-form-colorsline-container button:hover {
+  opacity: 1;
+}
+
+.gf-form-colorsline-container a:first-of-type {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.gf-form-colorsline-container a:last-of-type {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}

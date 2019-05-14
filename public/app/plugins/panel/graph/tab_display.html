@@ -186,6 +186,22 @@
       </label>
     </div>
   </div>
+  <gf-form-switch
+      class="gf-form"
+      label="Custom Colors"
+      label-class="width-15"
+      checked="ctrl.panel.customPalette"
+      on-change="ctrl.setColorsPalette([]); ctrl.render();"
+  ></gf-form-switch>
+  <colors-line
+    class="gf-form"
+    label="'Colors Pattern'"
+    tooltip="'Use CTRL+Click to remove a color'"
+    label-class="width-15"
+    colorslineClass="max-width"
+    editable="ctrl.panel.customPalette" 
+    defaultColorsProvider="ctrl.getColorsPalette"
+    updateColorsDelegate="ctrl.setColorsPalette"></colors-line>
   <div class="gf-form-button-row">
     <button class="btn btn-inverse" ng-click="ctrl.addSeriesOverride()">
       <i class="fa fa-plus"></i>&nbsp;Add series override<tip>Regex match example: /server[0-3]/i </tip>

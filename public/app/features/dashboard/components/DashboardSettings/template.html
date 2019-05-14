@@ -67,6 +67,21 @@
 			<select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
 		</div>
 	</div>
+		<gf-form-switch
+      class="gf-form"
+      label="Custom Colors"
+      label-class="width-15"
+      checked="ctrl.dashboard.customPalette"
+      on-change="ctrl.dashboard.setColorsPalette([]); ctrl.dashboard.render();"></gf-form-switch>
+		<colors-line
+			class="gf-form"
+			label="'Colors Pattern'"
+			tooltip="'Use CTRL+Click to remove a color'"
+			label-class="width-15"
+			colorslineClass="max-width"
+			editable="ctrl.dashboard.customPalette" 
+			defaultColorsProvider="ctrl.dashboard.getColorsPalette"
+			updateColorsDelegate="ctrl.dashboard.setColorsPalette"></colors-line>
 	<div class="gf-form-button-row">
 	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
 		  Delete Dashboard

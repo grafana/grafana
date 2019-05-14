@@ -3,7 +3,7 @@ import moment from 'moment';
 import _ from 'lodash';
 
 // Constants
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { colors, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 // Utils & Services
@@ -42,7 +42,8 @@ export class DashboardModel {
   links: any;
   gnetId: any;
   panels: PanelModel[];
-  colors: [];
+  customPalette: boolean;
+  colors: string[];
   // ------------------
   // not persisted
   // ------------------
@@ -89,6 +90,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
+    this.customPalette = data.customPalette || false;
     this.colors = data.colors || [];
 
     this.resetOriginalVariables();
@@ -934,4 +936,18 @@ export class DashboardModel {
       panel.render();
     }
   }
+
+  getColorsPalette = ((inherited: boolean) => {
+    const palette: any = {
+      editable: this.colors.length < 1,
+      colors: inherited ? colors.slice(0) : this.colors.slice(0),
+      source: inherited ? 'Global' : 'Custom',
+    };
+    return palette;
+  }).bind(this);
+
+  setColorsPalette = ((colors: string[]) => {
+    this.colors = colors;
+    this.render();
+  }).bind(this);
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"DashboardListCtrl.js","sourceRoot":"","sources":["../../../../app/features/manage-dashboards/DashboardListCtrl.ts"],"names":[],"mappings":"AAAA;IAGE,gBAAgB;IAChB,2BAAY,WAAW;QACrB,IAAI,CAAC,QAAQ,GAAG,WAAW,CAAC,MAAM,CAAC,YAAY,EAAE,mBAAmB,EAAE,CAAC,CAAC,CAAC;IAC3E,CAAC;IACH,wBAAC;AAAD,CAAC,AAPD,IAOC"}
