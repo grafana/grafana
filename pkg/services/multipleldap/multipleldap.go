@@ -23,6 +23,8 @@ type IMultipleLDAPs interface {
 	Users(logins []string) (
 		[]*models.ExternalUserInfo, error,
 	)
+
+	Add(dn string, values map[string][]string) error
 }
 
 // MultipleLDAPs is basic struct of LDAP authorization
@@ -35,6 +37,28 @@ func New(LDAPs []*LDAP.ServerConfig) IMultipleLDAPs {
 	return &MultipleLDAPs{
 		servers: LDAPs,
 	}
+}
+
+// Add adds user to the *first* defined LDAP
+func (multiples *MultipleLDAPs) Add(
+	dn string,
+	values map[string][]string,
+) error {
+	server := multiples.servers[0]
+	ldap := LDAP.New(server)
+
+	if err := ldap.Dial(); err != nil {
+		return err
+	}
+
+	defer ldap.Close()
+
+	err := ldap.Add(dn, values)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Login tries to log in the user in multiples LDAP

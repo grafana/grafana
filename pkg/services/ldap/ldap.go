@@ -19,6 +19,7 @@ import (
 type IConnection interface {
 	Bind(username, password string) error
 	UnauthenticatedBind(username string) error
+	Add(*LDAP.AddRequest) error
 	Search(*LDAP.SearchRequest) (*LDAP.SearchResult, error)
 	StartTLS(*tls.Config) error
 	Close()
@@ -26,7 +27,8 @@ type IConnection interface {
 
 // IAuth is interface for LDAP authorization
 type IAuth interface {
-	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
+	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
+	Add(string, map[string][]string) error
 	Users() ([]*models.ExternalUserInfo, error)
 	ExtractGrafanaUser(*UserInfo) (*models.ExternalUserInfo, error)
 	Dial() error
@@ -127,6 +129,7 @@ func (ldap *Auth) Close() {
 func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
+
 	// perform initial authentication
 	if err := ldap.authenticate(query.Username, query.Password); err != nil {
 		return nil, err
@@ -152,6 +155,75 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	}
 
 	return result, nil
+}
+
+// Add adds user to LDAP
+func (ldap *Auth) Add(dn string, values map[string][]string) error {
+	err := ldap.authenticate(ldap.server.BindDN, ldap.server.BindPassword)
+	if err != nil {
+		return err
+	}
+
+	attributes := make([]LDAP.Attribute, 0)
+	for key, value := range values {
+		attributes = append(attributes, LDAP.Attribute{
+			Type: key,
+			Vals: value,
+		})
+	}
+
+	request := &LDAP.AddRequest{
+		DN:         dn,
+		Attributes: attributes,
+	}
+
+	err = ldap.connection.Add(request)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Users gets LDAP users
+func (ldap *Auth) Users() ([]*models.ExternalUserInfo, error) {
+	var result *LDAP.SearchResult
+	var err error
+	server := ldap.server
+
+	for _, base := range server.SearchBaseDNs {
+		attributes := make([]string, 0)
+		inputs := server.Attr
+		attributes = appendIfNotEmpty(
+			attributes,
+			inputs.Username,
+			inputs.Surname,
+			inputs.Email,
+			inputs.Name,
+			inputs.MemberOf,
+		)
+
+		req := LDAP.SearchRequest{
+			BaseDN:       base,
+			Scope:        LDAP.ScopeWholeSubtree,
+			DerefAliases: LDAP.NeverDerefAliases,
+			Attributes:   attributes,
+
+			// Doing a star here to get all the users in one go
+			Filter: strings.Replace(server.SearchFilter, "%s", "*", -1),
+		}
+
+		result, err = ldap.connection.Search(&req)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(result.Entries) > 0 {
+			break
+		}
+	}
+
+	return ldap.serializeUsers(result), nil
 }
 
 // ExtractGrafanaUser extracts external user info from LDAP user
@@ -399,47 +471,6 @@ func (ldap *Auth) getMemberOf(searchResult *LDAP.SearchResult) ([]string, error)
 	}
 
 	return memberOf, nil
-}
-
-// Users gets LDAP users
-func (ldap *Auth) Users() ([]*models.ExternalUserInfo, error) {
-	var result *LDAP.SearchResult
-	var err error
-	server := ldap.server
-
-	for _, base := range server.SearchBaseDNs {
-		attributes := make([]string, 0)
-		inputs := server.Attr
-		attributes = appendIfNotEmpty(
-			attributes,
-			inputs.Username,
-			inputs.Surname,
-			inputs.Email,
-			inputs.Name,
-			inputs.MemberOf,
-		)
-
-		req := LDAP.SearchRequest{
-			BaseDN:       base,
-			Scope:        LDAP.ScopeWholeSubtree,
-			DerefAliases: LDAP.NeverDerefAliases,
-			Attributes:   attributes,
-
-			// Doing a star here to get all the users in one go
-			Filter: strings.Replace(server.SearchFilter, "%s", "*", -1),
-		}
-
-		result, err = ldap.connection.Search(&req)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(result.Entries) > 0 {
-			break
-		}
-	}
-
-	return ldap.serializeUsers(result), nil
 }
 
 func (ldap *Auth) serializeUsers(users *LDAP.SearchResult) []*models.ExternalUserInfo {

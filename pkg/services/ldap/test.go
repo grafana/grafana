@@ -13,9 +13,13 @@ import (
 )
 
 type mockLdapConn struct {
-	result                      *ldap.SearchResult
-	searchCalled                bool
-	searchAttributes            []string
+	searchResult     *ldap.SearchResult
+	searchCalled     bool
+	searchAttributes []string
+
+	addParams *ldap.AddRequest
+	addCalled bool
+
 	bindProvider                func(username, password string) error
 	unauthenticatedBindProvider func(username string) error
 }
@@ -39,13 +43,19 @@ func (c *mockLdapConn) UnauthenticatedBind(username string) error {
 func (c *mockLdapConn) Close() {}
 
 func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
-	c.result = result
+	c.searchResult = result
 }
 
 func (c *mockLdapConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
 	c.searchAttributes = sr.Attributes
-	return c.result, nil
+	return c.searchResult, nil
+}
+
+func (c *mockLdapConn) Add(request *ldap.AddRequest) error {
+	c.addCalled = true
+	c.addParams = request
+	return nil
 }
 
 func (c *mockLdapConn) StartTLS(*tls.Config) error {

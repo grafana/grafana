@@ -448,7 +448,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("Login()", t, func() {
-		mockLdapConnection := &mockLdapConn{}
+		mockLDAPConnection := &mockLdapConn{}
 
 		auth := &Auth{
 			server: &ServerConfig{
@@ -466,7 +466,7 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			connection: mockLdapConnection,
+			connection: mockLDAPConnection,
 			log:        log.New("test-logger"),
 		}
 
@@ -479,7 +479,7 @@ func TestAuth(t *testing.T) {
 				{Name: "memberof", Values: []string{"admins"}},
 			}}
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-		mockLdapConnection.setSearchResult(&result)
+		mockLDAPConnection.setSearchResult(&result)
 
 		AuthScenario("When user is log in and updated", func(sc *scenarioContext) {
 			// arrange
@@ -505,19 +505,96 @@ func TestAuth(t *testing.T) {
 			})
 
 			// assert
+
 			// Check absence of the error
 			So(err, ShouldBeNil)
+
 			// User should be searched in ldap
-			So(mockLdapConnection.searchCalled, ShouldBeTrue)
+			So(mockLDAPConnection.searchCalled, ShouldBeTrue)
+
 			// Info should be updated (email differs)
 			So(userInfo.Email, ShouldEqual, "roel@test.com")
+
 			// User should have admin privileges
 			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
 		})
 	})
 
+	Convey("Add()", t, func() {
+		mockLDAPConnection := &mockLdapConn{}
+
+		auth := &Auth{
+			server: &ServerConfig{
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			connection: mockLDAPConnection,
+			log:        log.New("test-logger"),
+		}
+
+		AuthScenario("Add user", func(sc *scenarioContext) {
+			err := auth.Add(
+				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
+				map[string][]string{
+					"mail":         {"ldap-viewer@grafana.com"},
+					"userPassword": {"grafana"},
+					"objectClass": {
+						"person",
+						"top",
+						"inetOrgPerson",
+						"organizationalPerson",
+					},
+					"sn": {"ldap-tuz"},
+					"cn": {"ldap-tuz"},
+				},
+			)
+
+			// assert
+			So(err, ShouldBeNil)
+			So(mockLDAPConnection.addCalled, ShouldBeTrue)
+			So(mockLDAPConnection.addParams, ShouldResemble, &ldap.AddRequest{
+				DN: "cn=ldap-tuz,ou=users,dc=grafana,dc=org",
+				Attributes: []ldap.Attribute{
+					{
+						Type: "mail",
+						Vals: []string{
+							"ldap-viewer@grafana.com",
+						},
+					},
+					{
+						Type: "userPassword",
+						Vals: []string{
+							"grafana",
+						},
+					},
+					{
+						Type: "objectClass",
+						Vals: []string{
+							"person",
+							"top",
+							"inetOrgPerson",
+							"organizationalPerson",
+						},
+					},
+					{
+						Type: "sn",
+						Vals: []string{
+							"ldap-tuz",
+						},
+					},
+					{
+						Type: "cn",
+						Vals: []string{
+							"ldap-tuz",
+						},
+					},
+				},
+				Controls: nil,
+			})
+		})
+	})
+
 	Convey("When searching for a user and not all five attributes are mapped", t, func() {
-		mockLdapConnection := &mockLdapConn{}
+		mockLDAPConnection := &mockLdapConn{}
 		entry := ldap.Entry{
 			DN: "dn", Attributes: []*ldap.EntryAttribute{
 				{Name: "username", Values: []string{"roelgerrits"}},
@@ -527,7 +604,7 @@ func TestAuth(t *testing.T) {
 				{Name: "memberof", Values: []string{"admins"}},
 			}}
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-		mockLdapConnection.setSearchResult(&result)
+		mockLDAPConnection.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
 		Auth := &Auth{
@@ -539,7 +616,7 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			connection: mockLdapConnection,
+			connection: mockLDAPConnection,
 			log:        log.New("test-logger"),
 		}
 
@@ -549,9 +626,9 @@ func TestAuth(t *testing.T) {
 		So(searchResult, ShouldNotBeNil)
 
 		// User should be searched in ldap
-		So(mockLdapConnection.searchCalled, ShouldBeTrue)
+		So(mockLDAPConnection.searchCalled, ShouldBeTrue)
 
 		// No empty attributes should be added to the search request
-		So(len(mockLdapConnection.searchAttributes), ShouldEqual, 3)
+		So(len(mockLDAPConnection.searchAttributes), ShouldEqual, 3)
 	})
 }
