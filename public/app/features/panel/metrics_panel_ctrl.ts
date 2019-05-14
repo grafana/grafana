@@ -146,27 +146,25 @@ class MetricsPanelCtrl extends PanelCtrl {
         }
       }
 
-      // Some Angular panels have migrated to SeriesData format
-      if (this.dataFormat === PanelQueryRunnerFormat.series) {
-        this.handleSeriesData(data.series);
-        return;
-      }
+      if (this.dataFormat === PanelQueryRunnerFormat.legacy) {
+        // The result should already be processed, but just in case
+        if (!data.legacy) {
+          data.legacy = data.series.map(v => {
+            if (isSeriesData(v)) {
+              return toLegacyResponseData(v);
+            }
+            return v;
+          });
+        }
 
-      // The result should already be processed, but just in case
-      if (!data.legacy) {
-        data.legacy = data.series.map(v => {
-          if (isSeriesData(v)) {
-            return toLegacyResponseData(v);
-          }
-          return v;
+        // Make the results look like they came directly from a <6.2 datasource request
+        // NOTE: any object other than 'data' is no longer supported supported
+        this.handleQueryResult({
+          data: data.legacy,
         });
+      } else {
+        this.handleSeriesData(data.series);
       }
-
-      // Make the results look like they came directly from a <6.2 datasource request
-      // NOTE: any object other than 'data' is no longer supported supported
-      this.handleQueryResult({
-        data: data.legacy,
-      });
     },
   };
 
