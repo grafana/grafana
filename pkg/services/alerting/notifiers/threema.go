@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -76,7 +76,7 @@ type ThreemaNotifier struct {
 	log         log.Logger
 }
 
-func NewThreemaNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -127,11 +127,11 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	// Determine emoji
 	stateEmoji := ""
 	switch evalContext.Rule.State {
-	case m.AlertStateOK:
+	case models.AlertStateOK:
 		stateEmoji = "\u2705 " // White Heavy Check Mark
-	case m.AlertStateNoData:
+	case models.AlertStateNoData:
 		stateEmoji = "\u2753 " // Black Question Mark Ornament
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		stateEmoji = "\u26A0 " // Warning sign
 	}
 
@@ -154,7 +154,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        url,
 		Body:       body,
 		HttpMethod: "POST",
