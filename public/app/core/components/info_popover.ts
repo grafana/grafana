@@ -8,7 +8,7 @@ export function infoPopover() {
     restrict: 'E',
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
-    link: (scope: any, elem: any, attrs: any, transclude: any) => {
+    link: (scope: any, elem: any, attrs: any, ctrl: any, transclude: any) => {
       const offset = attrs.offset || '0 -10px';
       const position = attrs.position || 'right middle';
       let classes = 'drop-help drop-hide-out-of-bounds';
