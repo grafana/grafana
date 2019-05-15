@@ -562,7 +562,7 @@ func TestAuth(t *testing.T) {
 				ShouldEqual,
 				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
 			)
-			So(hasCN, ShouldEqual, true)
+
 			attrs := mockLDAPConnection.addParams.Attributes
 			for _, value := range attrs {
 				if value.Type == "mail" {
