@@ -175,7 +175,7 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		urlPostfix: ".windows-amd64.zip",
 	},
 	{
-		os:         "win",
+		os:         "win-installer",
 		arch:       "amd64",
 		urlPostfix: ".windows-amd64.msi",
 	},
