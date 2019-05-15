@@ -9,26 +9,26 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type RuleReader interface {
-	Fetch() []*Rule
+type ruleReader interface {
+	fetch() []*Rule
 }
 
-type DefaultRuleReader struct {
+type defaultRuleReader struct {
 	sync.RWMutex
 	serverPosition int
 	clusterSize    int
 	log            log.Logger
 }
 
-func NewRuleReader() *DefaultRuleReader {
-	ruleReader := &DefaultRuleReader{
+func newRuleReader() *defaultRuleReader {
+	ruleReader := &defaultRuleReader{
 		log: log.New("alerting.ruleReader"),
 	}
 
 	return ruleReader
 }
 
-func (arr *DefaultRuleReader) Fetch() []*Rule {
+func (arr *defaultRuleReader) fetch() []*Rule {
 	cmd := &models.GetAllAlertsQuery{}
 
 	if err := bus.Dispatch(cmd); err != nil {

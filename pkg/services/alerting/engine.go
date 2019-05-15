@@ -27,7 +27,7 @@ type AlertingService struct {
 	ticker        *Ticker
 	scheduler     scheduler
 	evalHandler   evalHandler
-	ruleReader    RuleReader
+	ruleReader    ruleReader
 	log           log.Logger
 	resultHandler ResultHandler
 }
@@ -47,7 +47,7 @@ func (e *AlertingService) Init() error {
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler()
-	e.ruleReader = NewRuleReader()
+	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = NewResultHandler(e.RenderService)
 	return nil
@@ -79,7 +79,7 @@ func (e *AlertingService) alertingTicker(grafanaCtx context.Context) error {
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
-				e.scheduler.Update(e.ruleReader.Fetch())
+				e.scheduler.Update(e.ruleReader.fetch())
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
