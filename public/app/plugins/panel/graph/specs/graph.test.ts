@@ -167,8 +167,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. min descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'min';
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
@@ -222,6 +225,23 @@ describe('grafanaGraph', () => {
     it('highest last value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
       expect(ctx.plotData[1].alias).toBe('series1');
+    });
+  });
+
+  describe('stacked series should not sort if legend is not as table or sort key column is not visible', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = false;
+        ctrl.panel.legend[sortKey] = false;
+        ctrl.panel.stack = true;
+      });
+    });
+    it('highest value should be first', () => {
+      expect(ctx.plotData[0].alias).toBe('series1');
+      expect(ctx.plotData[1].alias).toBe('series2');
     });
   });
 
