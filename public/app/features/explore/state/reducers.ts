@@ -236,7 +236,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsLogs = datasourceInstance.meta.logs;
       const supportsTable = datasourceInstance.meta.tables;
 
-      const mode = ExploreMode.Metrics;
+      let mode = ExploreMode.Metrics;
       const supportedModes: ExploreMode[] = [];
 
       if (supportsGraph) {
@@ -245,6 +245,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       if (supportsLogs) {
         supportedModes.push(ExploreMode.Logs);
+      }
+
+      if (supportedModes.length === 1) {
+        mode = supportedModes[0];
       }
 
       // Custom components
