@@ -83,10 +83,10 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedBeta:    false,
 			expectedStable:  false,
 			expectedArch:    "amd64",
-			expectedOs:      "win",
+			expectedOs:      "win-installer",
 			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0-pre1asdf.windows-amd64.msi",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"win", "amd64", ".windows-amd64.msi", ""}},
+			buildArtifacts:  []buildArtifact{{"win-installer", "amd64", ".windows-amd64.msi", ""}},
 		},
 		{
 			version:         "v5.4.0-pre1asdf",
@@ -97,10 +97,10 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedBeta:    false,
 			expectedStable:  false,
 			expectedArch:    "amd64",
-			expectedOs:      "win-installer",
+			expectedOs:      "win",
 			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0-pre1asdf.windows-amd64.zip",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"win-installer", "amd64", ".windows-amd64.zip", ""}},
+			buildArtifacts:  []buildArtifact{{"win", "amd64", ".windows-amd64.zip", ""}},
 		},
 	}
 
