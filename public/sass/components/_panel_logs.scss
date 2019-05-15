@@ -326,11 +326,13 @@ $column-horizontal-spacing: 10px;
 
 .logs-rows.live {
   display: flex;
-  flex-direction: column;
+  flex-flow: column nowrap;
   height: 80vh;
-  overflow-y: scroll;
-  flex: 1 1 auto;
-  justify-content: flex-end;
+  overflow-y: auto;
+}
+
+.logs-rows.live > :first-child {
+  margin-top: auto !important;
 }
 
 .logs-row.fresh {
