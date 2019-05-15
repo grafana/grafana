@@ -56,10 +56,11 @@ github.com/benbjohnson/clock
 github.com/beorn7/perks/quantile
 # github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
 github.com/bradfitz/gomemcache/memcache
+# github.com/brianvoe/gofakeit v3.17.0+incompatible
+github.com/brianvoe/gofakeit
+github.com/brianvoe/gofakeit/data
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
-# github.com/corpix/uarand v0.1.0
-github.com/corpix/uarand
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
@@ -122,8 +123,6 @@ github.com/hashicorp/go-plugin/internal/plugin
 github.com/hashicorp/go-version
 # github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
 github.com/hashicorp/yamux
-# github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
-github.com/icrowley/fake
 # github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 github.com/inconshreveable/log15
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af

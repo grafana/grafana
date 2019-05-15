@@ -1,3 +1,0 @@
-package: github.com/icrowley/fake
-import:
-- package: github.com/corpix/uarand
