@@ -1,6 +1,8 @@
 package multildap
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 )
@@ -13,6 +15,9 @@ var IsEnabled = ldap.IsEnabled
 
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = ldap.ErrInvalidCredentials
+
+// ErrNoLDAPServers is returned when there is no LDAP servers specified
+var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
@@ -45,6 +50,10 @@ func (multiples *MultiLDAP) Add(
 	dn string,
 	values map[string][]string,
 ) error {
+	if len(multiples.configs) == 0 {
+		return ErrNoLDAPServers
+	}
+
 	config := multiples.configs[0]
 	ldap := ldap.New(config)
 
@@ -64,6 +73,10 @@ func (multiples *MultiLDAP) Add(
 
 // Remove removes user from the *first* defined LDAP
 func (multiples *MultiLDAP) Remove(dn string) error {
+	if len(multiples.configs) == 0 {
+		return ErrNoLDAPServers
+	}
+
 	config := multiples.configs[0]
 	ldap := ldap.New(config)
 
@@ -85,6 +98,10 @@ func (multiples *MultiLDAP) Remove(dn string) error {
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
+	if len(multiples.configs) == 0 {
+		return nil, ErrNoLDAPServers
+	}
+
 	for _, config := range multiples.configs {
 		server := ldap.New(config)
 
@@ -121,8 +138,11 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
 ) {
-
 	var result []*models.ExternalUserInfo
+
+	if len(multiples.configs) == 0 {
+		return nil, ErrNoLDAPServers
+	}
 
 	for _, config := range multiples.configs {
 		server := ldap.New(config)

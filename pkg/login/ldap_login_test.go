@@ -36,11 +36,11 @@ func TestLdapLogin(t *testing.T) {
 				})
 
 				Convey("it should return no LDAP servers error", func() {
-					So(err, ShouldEqual, ErrNoLDAPServers)
+					So(err, ShouldEqual, errTest)
 				})
 
 				Convey("it should not call ldap login", func() {
-					So(sc.LDAPAuthenticatorMock.loginCalled, ShouldBeFalse)
+					So(sc.LDAPAuthenticatorMock.loginCalled, ShouldBeTrue)
 				})
 			})
 		})

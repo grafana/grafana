@@ -30,9 +30,6 @@ var loginUsingLdap = func(query *models.LoginUserQuery) (bool, error) {
 	if err != nil {
 		return true, errutil.Wrap("Failed to get LDAP config", err)
 	}
-	if len(config.Servers) == 0 {
-		return true, ErrNoLDAPServers
-	}
 
 	externalUser, err := newLDAP(config.Servers).Login(query)
 	if err != nil {
