@@ -548,48 +548,57 @@ func TestAuth(t *testing.T) {
 				},
 			)
 
-			// assert
+			hasMail := false
+			hasUserPassword := false
+			hasObjectClass := false
+			hasSN := false
+			hasCN := false
+
 			So(err, ShouldBeNil)
+			So(mockLDAPConnection.addParams.Controls, ShouldBeNil)
 			So(mockLDAPConnection.addCalled, ShouldBeTrue)
-			So(mockLDAPConnection.addParams, ShouldResemble, &ldap.AddRequest{
-				DN: "cn=ldap-tuz,ou=users,dc=grafana,dc=org",
-				Attributes: []ldap.Attribute{
-					{
-						Type: "mail",
-						Vals: []string{
-							"ldap-viewer@grafana.com",
-						},
-					},
-					{
-						Type: "userPassword",
-						Vals: []string{
-							"grafana",
-						},
-					},
-					{
-						Type: "objectClass",
-						Vals: []string{
-							"person",
-							"top",
-							"inetOrgPerson",
-							"organizationalPerson",
-						},
-					},
-					{
-						Type: "sn",
-						Vals: []string{
-							"ldap-tuz",
-						},
-					},
-					{
-						Type: "cn",
-						Vals: []string{
-							"ldap-tuz",
-						},
-					},
-				},
-				Controls: nil,
-			})
+			So(
+				mockLDAPConnection.addParams.DN,
+				ShouldEqual,
+				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
+			)
+			So(hasCN, ShouldEqual, true)
+			attrs := mockLDAPConnection.addParams.Attributes
+			for _, value := range attrs {
+				if value.Type == "mail" {
+					So(value.Vals, ShouldContain, "ldap-viewer@grafana.com")
+					hasMail = true
+				}
+
+				if value.Type == "userPassword" {
+					hasUserPassword = true
+					So(value.Vals, ShouldContain, "grafana")
+				}
+
+				if value.Type == "objectClass" {
+					hasObjectClass = true
+					So(value.Vals, ShouldContain, "person")
+					So(value.Vals, ShouldContain, "top")
+					So(value.Vals, ShouldContain, "inetOrgPerson")
+					So(value.Vals, ShouldContain, "organizationalPerson")
+				}
+
+				if value.Type == "sn" {
+					hasSN = true
+					So(value.Vals, ShouldContain, "ldap-tuz")
+				}
+
+				if value.Type == "cn" {
+					hasCN = true
+					So(value.Vals, ShouldContain, "ldap-tuz")
+				}
+			}
+
+			So(hasMail, ShouldBeTrue)
+			So(hasUserPassword, ShouldBeTrue)
+			So(hasObjectClass, ShouldBeTrue)
+			So(hasSN, ShouldBeTrue)
+			So(hasCN, ShouldBeTrue)
 		})
 	})
 
