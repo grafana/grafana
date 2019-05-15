@@ -53,11 +53,4 @@ export default class AdminListUsersCtrl {
       },
     });
   }
-
-  disableUser(user) {
-    const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
-    this.backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
-      this.getUsers();
-    });
-  }
 }
