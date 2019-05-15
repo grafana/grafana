@@ -39,17 +39,17 @@ func (dc *databaseCache) Run(ctx context.Context) error {
 }
 
 func (dc *databaseCache) internalRunGC() {
-	dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	err := dc.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		now := getTime().Unix()
 		sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
 
 		_, err := session.Exec(sql, now)
-		if err != nil {
-			dc.log.Error("failed to run garbage collect", "error", err)
-		}
-
 		return err
 	})
+
+	if err != nil {
+		dc.log.Error("failed to run garbage collect", "error", err)
+	}
 }
 
 func (dc *databaseCache) Get(key string) (interface{}, error) {
