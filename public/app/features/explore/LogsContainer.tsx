@@ -120,7 +120,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
     if (isLive) {
       return (
-        <div>
+        <div className="logs-rows live">
           {this.oldRows.map((row, index) => {
             return (
               <div className="logs-row old" key={`${row.timeEpochMs}-${index}`}>

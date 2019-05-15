@@ -39,15 +39,20 @@ const createResponsiveButton = (options: {
   buttonClassName?: string;
   iconClassName?: string;
   iconSide?: IconSide;
+  disabled?: boolean;
 }) => {
   const defaultOptions = {
     iconSide: IconSide.left,
   };
   const props = { ...options, defaultOptions };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide } = props;
+  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled } = props;
 
   return (
-    <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
+    <button
+      className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
+      onClick={onClick}
+      disabled={disabled || false}
+    >
       {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
       {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
@@ -203,6 +208,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   onClick: split,
                   iconClassName: 'fa fa-fw fa-columns icon-margin-right',
                   iconSide: IconSide.left,
+                  disabled: isLive,
                 })}
               </div>
             ) : null}
@@ -223,25 +229,22 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
-            {!isLive && (
-              <>
-                <div className="explore-toolbar-content-item">
-                  <button className="btn navbar-button" onClick={this.onClearAll}>
-                    Clear All
-                  </button>
-                </div>
-                <div className="explore-toolbar-content-item">
-                  {createResponsiveButton({
-                    splitted,
-                    title: 'Run Query',
-                    onClick: this.onRunQuery,
-                    buttonClassName: 'navbar-button--secondary',
-                    iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
-                    iconSide: IconSide.right,
-                  })}
-                </div>
-              </>
-            )}
+            <div className="explore-toolbar-content-item">
+              <button className="btn navbar-button" onClick={this.onClearAll}>
+                Clear All
+              </button>
+            </div>
+            <div className="explore-toolbar-content-item">
+              {createResponsiveButton({
+                splitted,
+                title: 'Run Query',
+                onClick: this.onRunQuery,
+                buttonClassName: 'navbar-button--secondary',
+                iconClassName:
+                  loading && !isLive ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
+                iconSide: IconSide.right,
+              })}
+            </div>
           </div>
         </div>
       </div>

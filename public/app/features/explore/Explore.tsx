@@ -237,8 +237,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
       queryKeys,
       queryErrors,
       mode,
+      isLive,
     } = this.props;
-    const exploreClass = split ? 'explore explore-split' : 'explore';
+    const splitClass = split ? 'explore explore-split' : 'explore';
+    const exploreClass = isLive ? `${splitClass} explore-live` : splitClass;
+    const exploreContainerClass = isLive ? 'explore-container explore-live' : 'explore-container';
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -256,7 +259,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         </FadeIn>
 
         {datasourceInstance && (
-          <div className="explore-container">
+          <div className={exploreContainerClass}>
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
             <ErrorContainer queryErrors={queryErrors} />
             <AutoSizer onResize={this.onResize} disableHeight>

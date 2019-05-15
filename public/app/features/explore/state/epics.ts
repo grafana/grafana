@@ -5,7 +5,12 @@ import { map, takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
 import { config } from '../../../core/config';
-import { updateDatasourceInstanceAction, resetExploreAction, changeRefreshIntervalAction } from './actionTypes';
+import {
+  updateDatasourceInstanceAction,
+  resetExploreAction,
+  changeRefreshIntervalAction,
+  clearQueriesAction,
+} from './actionTypes';
 import { EMPTY } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { SeriesData } from '@grafana/ui/src/types/data';
@@ -86,7 +91,8 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
               startSubscriptionAction.type,
               resetExploreAction.type,
               updateDatasourceInstanceAction.type,
-              changeRefreshIntervalAction.type
+              changeRefreshIntervalAction.type,
+              clearQueriesAction.type
             )
             .pipe(
               filter(action => {
@@ -100,6 +106,10 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
 
                 if (action.type === changeRefreshIntervalAction.type && action.payload.exploreId === exploreId) {
                   return !isLive(action.payload.refreshInterval); // stops subscriptions if user changes refresh interval away from 'Live'
+                }
+
+                if (action.type === clearQueriesAction.type && action.payload.exploreId === exploreId) {
+                  return true; // stops subscriptions if user clears all queries
                 }
 
                 return action.payload.exploreId === exploreId && action.payload.refId === refId;

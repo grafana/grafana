@@ -324,20 +324,21 @@ $column-horizontal-spacing: 10px;
   }
 }
 
+.logs-rows.live {
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  overflow-y: scroll;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
 .logs-row.fresh {
   color: $text-color;
   background-color: $blue-faint;
   transition: background-color 500ms ease-in-out;
-  width: 100%;
-  display: flex;
-  flex-flow: row;
-  flex: auto;
 }
 
 .logs-row.old {
-  opacity: 0.9;
-  width: 100%;
-  display: flex;
-  flex-flow: row;
-  flex: auto;
+  opacity: 0.8;
 }
