@@ -89,7 +89,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
   sortLegend() {
     let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
-    if (this.props.sort) {
+    if (this.props.sort && this.props[this.props.sort]) {
       seriesList = _.sortBy(seriesList, series => {
         let sort = series.stats[this.props.sort];
         if (sort === null) {
@@ -99,6 +99,15 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       }) as TimeSeries[];
       if (this.props.sortDesc) {
         seriesList = seriesList.reverse();
+      }
+    } else {
+      const { min, max, avg, current, total, values } = this.props;
+      const seriesValuesProps = { min, max, avg, current, total, values };
+      for (const property in seriesValuesProps) {
+        if (seriesValuesProps[property]) {
+          this.props.onToggleSort(property, this.props.sortDesc);
+          break;
+        }
       }
     }
     return seriesList;
