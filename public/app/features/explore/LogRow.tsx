@@ -126,10 +126,6 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = () => {
-    // if (this.props.getRowContext) {
-    //   this.props.getRowContext(this.props.row);
-    // }
-
     this.setState(state => {
       return {
         showContext: !state.showContext,
