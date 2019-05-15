@@ -1,21 +1,21 @@
-package multipleldap
+package multildap
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap"
 )
 
 // GetConfig gets LDAP config
-var GetConfig = LDAP.GetConfig
+var GetConfig = ldap.GetConfig
 
 // IsEnabled checks if LDAP is enabled
-var IsEnabled = LDAP.IsEnabled
+var IsEnabled = ldap.IsEnabled
 
 // ErrInvalidCredentials is returned if username and password do not match
-var ErrInvalidCredentials = LDAP.ErrInvalidCredentials
+var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 
-// IMultipleLDAPs is interface for MultipleLDAPs
-type IMultipleLDAPs interface {
+// IMultiLDAP is interface for MultiLDAP
+type IMultiLDAP interface {
 	Login(query *models.LoginUserQuery) (
 		*models.ExternalUserInfo, error,
 	)
@@ -28,25 +28,25 @@ type IMultipleLDAPs interface {
 	Remove(dn string) error
 }
 
-// MultipleLDAPs is basic struct of LDAP authorization
-type MultipleLDAPs struct {
-	servers []*LDAP.ServerConfig
+// MultiLDAP is basic struct of LDAP authorization
+type MultiLDAP struct {
+	configs []*ldap.ServerConfig
 }
 
 // New creates the new LDAP auth
-func New(LDAPs []*LDAP.ServerConfig) IMultipleLDAPs {
-	return &MultipleLDAPs{
-		servers: LDAPs,
+func New(LDAPs []*ldap.ServerConfig) IMultiLDAP {
+	return &MultiLDAP{
+		configs: LDAPs,
 	}
 }
 
 // Add adds user to the *first* defined LDAP
-func (multiples *MultipleLDAPs) Add(
+func (multiples *MultiLDAP) Add(
 	dn string,
 	values map[string][]string,
 ) error {
-	server := multiples.servers[0]
-	ldap := LDAP.New(server)
+	config := multiples.configs[0]
+	ldap := ldap.New(config)
 
 	if err := ldap.Dial(); err != nil {
 		return err
@@ -63,9 +63,9 @@ func (multiples *MultipleLDAPs) Add(
 }
 
 // Remove removes user from the *first* defined LDAP
-func (multiples *MultipleLDAPs) Remove(dn string) error {
-	server := multiples.servers[0]
-	ldap := LDAP.New(server)
+func (multiples *MultiLDAP) Remove(dn string) error {
+	config := multiples.configs[0]
+	ldap := ldap.New(config)
 
 	if err := ldap.Dial(); err != nil {
 		return err
@@ -82,26 +82,26 @@ func (multiples *MultipleLDAPs) Remove(dn string) error {
 }
 
 // Login tries to log in the user in multiples LDAP
-func (multiples *MultipleLDAPs) Login(query *models.LoginUserQuery) (
+func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-	for _, server := range multiples.servers {
-		ldap := LDAP.New(server)
+	for _, config := range multiples.configs {
+		server := ldap.New(config)
 
-		if err := ldap.Dial(); err != nil {
+		if err := server.Dial(); err != nil {
 			return nil, err
 		}
 
-		defer ldap.Close()
+		defer server.Close()
 
-		user, err := ldap.Login(query)
+		user, err := server.Login(query)
 
 		if user != nil {
 			return user, nil
 		}
 
 		// Continue if we couldn't find the user
-		if err == LDAP.ErrInvalidCredentials {
+		if err == ErrInvalidCredentials {
 			continue
 		}
 
@@ -117,23 +117,23 @@ func (multiples *MultipleLDAPs) Login(query *models.LoginUserQuery) (
 }
 
 // Users gets users from multiple LDAP servers
-func (multiples *MultipleLDAPs) Users(logins []string) (
+func (multiples *MultiLDAP) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
 ) {
 
 	var result []*models.ExternalUserInfo
 
-	for _, server := range multiples.servers {
-		ldap := LDAP.New(server)
+	for _, config := range multiples.configs {
+		server := ldap.New(config)
 
-		if err := ldap.Dial(); err != nil {
+		if err := server.Dial(); err != nil {
 			return nil, err
 		}
 
-		defer ldap.Close()
+		defer server.Close()
 
-		users, err := ldap.Users()
+		users, err := server.Users()
 		if err != nil {
 			return nil, err
 		}

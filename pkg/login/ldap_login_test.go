@@ -7,8 +7,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/models"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
-	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,9 +21,9 @@ func TestLdapLogin(t *testing.T) {
 
 			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
-				getLDAPConfig = func() (*LDAP.Config, error) {
-					config := &LDAP.Config{
-						Servers: []*LDAP.ServerConfig{},
+				getLDAPConfig = func() (*ldap.Config, error) {
+					config := &ldap.Config{
+						Servers: []*ldap.ServerConfig{},
 					}
 
 					return config, nil
@@ -100,12 +100,16 @@ func (auth *mockAuth) Add(dn string, values map[string][]string) error {
 	return nil
 }
 
+func (auth *mockAuth) Remove(dn string) error {
+	return nil
+}
+
 func mockLDAPAuthenticator(valid bool) *mockAuth {
 	mock := &mockAuth{
 		validLogin: valid,
 	}
 
-	newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+	newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
 		return mock
 	}
 
@@ -132,9 +136,9 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 			LDAPAuthenticatorMock: mock,
 		}
 
-		getLDAPConfig = func() (*LDAP.Config, error) {
-			config := &LDAP.Config{
-				Servers: []*LDAP.ServerConfig{
+		getLDAPConfig = func() (*ldap.Config, error) {
+			config := &ldap.Config{
+				Servers: []*ldap.ServerConfig{
 					{
 						Host: "",
 					},
@@ -144,13 +148,13 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 			return config, nil
 		}
 
-		newLDAP = func(server []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+		newLDAP = func(server []*ldap.ServerConfig) multildap.IMultiLDAP {
 			return mock
 		}
 
 		defer func() {
-			newLDAP = MultipleLDAP.New
-			getLDAPConfig = MultipleLDAP.GetConfig
+			newLDAP = multildap.New
+			getLDAPConfig = multildap.GetConfig
 		}()
 
 		fn(sc)

@@ -13,18 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
-	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type TestMultipleLDAPs struct {
-	MultipleLDAP.MultipleLDAPs
+type TestMultiLDAP struct {
+	multildap.MultiLDAP
 	ID          int64
 	loginCalled bool
 }
 
-func (stub *TestMultipleLDAPs) Login(query *models.LoginUserQuery) (
+func (stub *TestMultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 	stub.loginCalled = true
@@ -90,16 +89,16 @@ func TestMiddlewareContext(t *testing.T) {
 					return config, nil
 				}
 
-				stub := &TestMultipleLDAPs{
+				stub := &TestMultiLDAP{
 					ID: 42,
 				}
 
-				newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
 					return stub
 				}
 
 				defer func() {
-					newLDAP = MultipleLDAP.New
+					newLDAP = multildap.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
@@ -129,7 +128,7 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 
 				defer func() {
-					newLDAP = MultipleLDAP.New
+					newLDAP = multildap.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
@@ -142,11 +141,11 @@ func TestMiddlewareContext(t *testing.T) {
 					OrgID: 4,
 				})
 
-				stub := &TestMultipleLDAPs{
+				stub := &TestMultiLDAP{
 					ID: 42,
 				}
 
-				newLDAP = func(servers []*LDAP.ServerConfig) MultipleLDAP.IMultipleLDAPs {
+				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
 					return stub
 				}
 

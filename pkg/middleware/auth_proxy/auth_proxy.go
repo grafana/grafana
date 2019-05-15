@@ -12,8 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
-	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,13 +24,13 @@ const (
 )
 
 // getLDAPConfig gets LDAP config
-var getLDAPConfig = LDAP.GetConfig
+var getLDAPConfig = ldap.GetConfig
 
 // isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = LDAP.IsEnabled
+var isLDAPEnabled = ldap.IsEnabled
 
 // newLDAP creates multiple LDAP instance
-var newLDAP = MultipleLDAP.New
+var newLDAP = multildap.New
 
 // AuthProxy struct
 type AuthProxy struct {

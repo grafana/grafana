@@ -2,20 +2,20 @@ package login
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	MultipleLDAP "github.com/grafana/grafana/pkg/services/multipleldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // getLDAPConfig gets LDAP config
-var getLDAPConfig = MultipleLDAP.GetConfig
+var getLDAPConfig = multildap.GetConfig
 
 // isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = MultipleLDAP.IsEnabled
+var isLDAPEnabled = multildap.IsEnabled
 
 // newLDAP creates multiple LDAP instance
-var newLDAP = MultipleLDAP.New
+var newLDAP = multildap.New
 
 // loginUsingLdap logs in user using LDAP. It returns whether LDAP is enabled and optional error and query arg will be
 // populated with the logged in user if successful.
