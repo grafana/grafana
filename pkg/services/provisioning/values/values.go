@@ -11,10 +11,11 @@
 package values
 
 import (
-	"github.com/pkg/errors"
 	"os"
 	"reflect"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type IntValue struct {
@@ -33,7 +34,7 @@ func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	val.Raw = interpolated.raw
 	val.value, err = strconv.Atoi(interpolated.value)
-	return errors.Wrap(err, "cannot convert value int")
+	return errutil.Wrap("cannot convert value int", err)
 }
 
 func (val *IntValue) Value() int {
