@@ -16,16 +16,16 @@ import (
 func TestAuth(t *testing.T) {
 	Convey("authenticate", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server: &ServerConfig{
+				config: &ServerConfig{
 					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
@@ -38,16 +38,16 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server: &ServerConfig{
+				config: &ServerConfig{
 					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
 				},
 			}
@@ -59,7 +59,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -67,9 +67,9 @@ func TestAuth(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server:     &ServerConfig{},
+				config:     &ServerConfig{},
 			}
 			err := Auth.authenticate("user", "pwd")
 			So(err, ShouldBeNil)
@@ -81,16 +81,16 @@ func TestAuth(t *testing.T) {
 
 	Convey("serverBind", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server: &ServerConfig{
+				config: &ServerConfig{
 					BindDN:       "o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
@@ -102,7 +102,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -110,9 +110,9 @@ func TestAuth(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server: &ServerConfig{
+				config: &ServerConfig{
 					BindDN: "o=users,dc=grafana,dc=org",
 				},
 			}
@@ -123,7 +123,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			connection := &mockLdapConn{}
+			connection := &mockLDAPConn{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -131,9 +131,9 @@ func TestAuth(t *testing.T) {
 				actualUsername = username
 				return nil
 			}
-			Auth := &Auth{
+			Auth := &Server{
 				connection: connection,
-				server:     &ServerConfig{},
+				config:     &ServerConfig{},
 			}
 			err := Auth.serverBind()
 			So(err, ShouldBeNil)
@@ -161,7 +161,7 @@ func TestAuth(t *testing.T) {
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
 
-		AuthScenario("Given wildcard group match", func(sc *scenarioContext) {
+		authScenario("Given wildcard group match", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "*", OrgRole: "Admin"},
@@ -181,7 +181,7 @@ func TestAuth(t *testing.T) {
 			So(result, ShouldEqual, user1)
 		})
 
-		AuthScenario("Given exact group match", func(sc *scenarioContext) {
+		authScenario("Given exact group match", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
@@ -201,7 +201,7 @@ func TestAuth(t *testing.T) {
 			So(result, ShouldEqual, user1)
 		})
 
-		AuthScenario("Given group match with different case", func(sc *scenarioContext) {
+		authScenario("Given group match with different case", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
@@ -221,7 +221,7 @@ func TestAuth(t *testing.T) {
 			So(result, ShouldEqual, user1)
 		})
 
-		AuthScenario("Given no existing grafana user", func(sc *scenarioContext) {
+		authScenario("Given no existing grafana user", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=admin", OrgRole: "Admin"},
@@ -259,7 +259,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("When syncing ldap groups to grafana org roles", t, func() {
-		AuthScenario("given no current user orgs", func(sc *scenarioContext) {
+		authScenario("given no current user orgs", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=users", OrgRole: "Admin"},
@@ -283,7 +283,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given different current org role", func(sc *scenarioContext) {
+		authScenario("given different current org role", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=users", OrgId: 1, OrgRole: "Admin"},
@@ -309,7 +309,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
+		authScenario("given current org role is removed in ldap", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=users", OrgId: 2, OrgRole: "Admin"},
@@ -336,7 +336,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given org role is updated in config", func(sc *scenarioContext) {
+		authScenario("given org role is updated in config", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=admin", OrgId: 1, OrgRole: "Admin"},
@@ -363,7 +363,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
+		authScenario("given multiple matching ldap groups", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
@@ -389,7 +389,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
+		authScenario("given multiple matching ldap groups and no existing groups", func(sc *scenarioContext) {
 			Auth := New(&ServerConfig{
 				Groups: []*GroupToOrgRole{
 					{GroupDN: "cn=admins", OrgId: 1, OrgRole: "Admin"},
@@ -420,7 +420,7 @@ func TestAuth(t *testing.T) {
 			})
 		})
 
-		AuthScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
+		authScenario("given ldap groups with grafana_admin=true", func(sc *scenarioContext) {
 			trueVal := true
 
 			Auth := New(&ServerConfig{
@@ -448,10 +448,10 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("Login()", t, func() {
-		mockLDAPConnection := &mockLdapConn{}
+		mockLDAPConnection := &mockLDAPConn{}
 
-		auth := &Auth{
-			server: &ServerConfig{
+		auth := &Server{
+			config: &ServerConfig{
 				Host:       "",
 				RootCACert: "",
 				Groups: []*GroupToOrgRole{
@@ -481,13 +481,11 @@ func TestAuth(t *testing.T) {
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 		mockLDAPConnection.setSearchResult(&result)
 
-		AuthScenario("When user is log in and updated", func(sc *scenarioContext) {
+		authScenario("When user is log in and updated", func(sc *scenarioContext) {
 			// arrange
 			query := &m.LoginUserQuery{
 				Username: "roelgerrits",
 			}
-
-			hookDial = nil
 
 			sc.userQueryReturns(&m.User{
 				Id:    1,
@@ -521,17 +519,17 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("Add()", t, func() {
-		mockLDAPConnection := &mockLdapConn{}
+		mockLDAPConnection := &mockLDAPConn{}
 
-		auth := &Auth{
-			server: &ServerConfig{
+		auth := &Server{
+			config: &ServerConfig{
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
 			connection: mockLDAPConnection,
 			log:        log.New("test-logger"),
 		}
 
-		AuthScenario("Add user", func(sc *scenarioContext) {
+		authScenario("Add user", func(sc *scenarioContext) {
 			err := auth.Add(
 				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
 				map[string][]string{
@@ -603,7 +601,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("When searching for a user and not all five attributes are mapped", t, func() {
-		mockLDAPConnection := &mockLdapConn{}
+		mockLDAPConnection := &mockLDAPConn{}
 		entry := ldap.Entry{
 			DN: "dn", Attributes: []*ldap.EntryAttribute{
 				{Name: "username", Values: []string{"roelgerrits"}},
@@ -616,8 +614,8 @@ func TestAuth(t *testing.T) {
 		mockLDAPConnection.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
-		Auth := &Auth{
-			server: &ServerConfig{
+		Auth := &Server{
+			config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
 					Name:     "name",

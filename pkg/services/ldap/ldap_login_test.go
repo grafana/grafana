@@ -11,8 +11,8 @@ import (
 
 func TestLdapLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {
-		AuthScenario("When login with invalid credentials", func(scenario *scenarioContext) {
-			connection := &mockLdapConn{}
+		authScenario("When login with invalid credentials", func(scenario *scenarioContext) {
+			connection := &mockLDAPConn{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
@@ -22,8 +22,8 @@ func TestLdapLogin(t *testing.T) {
 					ResultCode: 49,
 				}
 			}
-			auth := &Auth{
-				server: &ServerConfig{
+			auth := &Server{
+				config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -42,8 +42,8 @@ func TestLdapLogin(t *testing.T) {
 			})
 		})
 
-		AuthScenario("When login with valid credentials", func(scenario *scenarioContext) {
-			connection := &mockLdapConn{}
+		authScenario("When login with valid credentials", func(scenario *scenarioContext) {
+			connection := &mockLDAPConn{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
 					{Name: "username", Values: []string{"markelog"}},
@@ -59,8 +59,8 @@ func TestLdapLogin(t *testing.T) {
 			connection.bindProvider = func(username, password string) error {
 				return nil
 			}
-			auth := &Auth{
-				server: &ServerConfig{
+			auth := &Server{
+				config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -72,15 +72,15 @@ func TestLdapLogin(t *testing.T) {
 				log:        log.New("test-logger"),
 			}
 
-			_, err := auth.Login(scenario.loginUserQuery)
+			resp, err := auth.Login(scenario.loginUserQuery)
 
 			Convey("it should not return error", func() {
 				So(err, ShouldBeNil)
 			})
 
-			// Convey("it should get user", func() {
-			// 	So(scenario.loginUserQuery.User.Login, ShouldEqual, "markelog")
-			// })
+			Convey("it should get user", func() {
+				So(resp.Login, ShouldEqual, "markelog")
+			})
 		})
 	})
 }

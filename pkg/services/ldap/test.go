@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type mockLdapConn struct {
+type mockLDAPConn struct {
 	searchResult     *ldap.SearchResult
 	searchCalled     bool
 	searchAttributes []string
@@ -24,7 +24,7 @@ type mockLdapConn struct {
 	unauthenticatedBindProvider func(username string) error
 }
 
-func (c *mockLdapConn) Bind(username, password string) error {
+func (c *mockLDAPConn) Bind(username, password string) error {
 	if c.bindProvider != nil {
 		return c.bindProvider(username, password)
 	}
@@ -32,7 +32,7 @@ func (c *mockLdapConn) Bind(username, password string) error {
 	return nil
 }
 
-func (c *mockLdapConn) UnauthenticatedBind(username string) error {
+func (c *mockLDAPConn) UnauthenticatedBind(username string) error {
 	if c.unauthenticatedBindProvider != nil {
 		return c.unauthenticatedBindProvider(username)
 	}
@@ -40,29 +40,33 @@ func (c *mockLdapConn) UnauthenticatedBind(username string) error {
 	return nil
 }
 
-func (c *mockLdapConn) Close() {}
+func (c *mockLDAPConn) Close() {}
 
-func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
+func (c *mockLDAPConn) setSearchResult(result *ldap.SearchResult) {
 	c.searchResult = result
 }
 
-func (c *mockLdapConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+func (c *mockLDAPConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
 	c.searchAttributes = sr.Attributes
 	return c.searchResult, nil
 }
 
-func (c *mockLdapConn) Add(request *ldap.AddRequest) error {
+func (c *mockLDAPConn) Add(request *ldap.AddRequest) error {
 	c.addCalled = true
 	c.addParams = request
 	return nil
 }
 
-func (c *mockLdapConn) StartTLS(*tls.Config) error {
+func (c *mockLDAPConn) StartTLS(*tls.Config) error {
 	return nil
 }
 
-func AuthScenario(desc string, fn scenarioFunc) {
+func (c *mockLDAPConn) Del(*ldap.DelRequest) error {
+	return nil
+}
+
+func authScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -72,10 +76,6 @@ func AuthScenario(desc string, fn scenarioFunc) {
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
-		}
-
-		hookDial = func(auth *Auth) error {
-			return nil
 		}
 
 		loginService := &login.LoginService{
