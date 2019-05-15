@@ -3,6 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
+import { LogRowModel } from 'app/core/logs_model';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -173,9 +174,9 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * Convert a query to a simple text string
+   * Retrieve context for a given log row
    */
-   queryLogRowContext?<TContextOptions>(query: DataQueryRequest<TQuery>, options: TContextOptions): string;
+  getLogRowContext?(row: LogRowModel, limit?: number): Promise<LogRowContextQueryResponse>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -285,6 +286,10 @@ export interface DataStreamState {
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+}
+
+export interface LogRowContextQueryResponse {
+  data: string[][];
 }
 
 export interface DataQuery {

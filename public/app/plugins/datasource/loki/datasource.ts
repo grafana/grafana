@@ -17,10 +17,11 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
 } from '@grafana/ui/src/types';
-import { LokiQuery, LokiOptions, LokiQueryDirection } from './types';
+import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { LogRowModel } from 'app/core/logs_model';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -38,10 +39,6 @@ function serializeParams(data: any) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(v);
     })
     .join('&');
-}
-
-interface LokiContextQueryOptions {
-  direction: LokiQueryDirection;
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
@@ -79,7 +76,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const refId = target.refId;
     return {
       ...DEFAULT_QUERY_PARAMS,
-      direction: target.direction || 'BACKWARD',
       query,
       regexp,
       start,
@@ -192,22 +188,62 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  queryLogRowContext(query: DataQueryRequest<LokiQuery>, options?: LokiContextQueryOptions) {
-    return this.query({
-      query
+  prepareLogRowContextQueryTargets = (row: LogRowModel, limit: number) => {
+    const query = Object.keys(row.labels)
+      .map(label => {
+        return `${label}="${row.labels[label]}"`;
+      })
+      .join(',');
+    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1000000; // 2h buffer
+    const timeEpochNs = row.timeEpochMs * 1000000;
+
+    const commontTargetOptons = {
+      limit,
+      query: `{${query}}`,
+    };
+    return [
+      // Target for "before" context
+      {
+        ...commontTargetOptons,
+        start: timeEpochNs - contextTimeBuffer,
+        end: timeEpochNs,
+        direction: 'BACKWARD',
+      },
+      // Target for "after" context
+      {
+        ...commontTargetOptons,
+        start: timeEpochNs + 1, // +1 not to include the log row of interest
+        end: timeEpochNs + contextTimeBuffer,
+        direction: 'FORWARD',
+      },
+    ];
+  };
+
+  getLogRowContext = (row: LogRowModel, limit?: number) => {
+    // Preparing two targets, for preceeding and following log queries
+    const targets = this.prepareLogRowContextQueryTargets(row, limit || 10);
+
+    return Promise.all(
+      targets.map(target => {
+        return this._request('/api/prom/query', target);
+      })
+    ).then((results: any[]) => {
+      const logs: string[][] = []; // array of preceeding and following logs for a given row
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.data) {
+          logs[i] = [];
+          for (const stream of result.data.streams || []) {
+            if (stream.entries) {
+              const logsModel = stream.entries.map(entry => entry.line);
+              logs[i] = logs[i].concat(logsModel);
+            }
+          }
+        }
+      }
+      return { data: logs };
     });
-    // interval,
-    // intervalMs,
-    // panelId,
-    // targets: [...configuredQueries, ...contextQueries], // Datasources rely on DataQueries being passed under the targets key.
-    // range,
-    // rangeRaw: range.raw,
-    // scopedVars: {
-    //   __interval: { text: interval, value: interval },
-    //   __interval_ms: { text: intervalMs, value: intervalMs },
-    // },
-    // maxDataPoints: queryOptions.maxDataPoints,
-  }
+  };
 
   testDatasource() {
     return this._request('/api/prom/label')
