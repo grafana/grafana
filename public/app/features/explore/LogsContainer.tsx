@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime } from '@grafana/ui';
+import moment from 'moment';
+import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
@@ -41,13 +42,12 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
-      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
+      from: timeZone.isUtc ? moment.utc(absRange.from) : moment(absRange.from),
+      to: timeZone.isUtc ? moment.utc(absRange.to) : moment(absRange.to),
     };
 
     changeTime(exploreId, range);
   };
-
   onClickLogsButton = () => {
     this.props.toggleLogs(this.props.exploreId, this.props.showingLogs);
   };
