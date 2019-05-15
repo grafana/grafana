@@ -162,7 +162,7 @@ func createTestSnapshot(sqlstore *SqlStore, key string, expires int64) *m.Dashbo
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
-		_, err = sqlstore.engine.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
+		_, err = sqlstore.Engine.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
 		So(err, ShouldBeNil)
 	}
 

@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -66,6 +67,7 @@ type HTTPServer struct {
 	QuotaService        *quota.QuotaService      `inject:""`
 	RemoteCacheService  *remotecache.RemoteCache `inject:""`
 	ProvisioningService ProvisioningService      `inject:""`
+	SqlStore            *sqlstore.SqlStore       `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -238,6 +240,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,
 		hs.RemoteCacheService,
+		hs.SqlStore,
 	))
 	m.Use(middleware.OrgRedirect())
 

@@ -50,21 +50,15 @@ func GetDataSources(c *m.ReqContext) Response {
 }
 
 func GetDataSourceById(c *m.ReqContext) Response {
-	query := m.GetDataSourceByIdQuery{
-		Id:    c.ParamsInt64(":id"),
-		OrgId: c.OrgId,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
+	ds, err := c.DatasourceService.GetDataSourceById(c.ParamsInt64(":id"), c.OrgId)
+	if err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
 	dtos := convertModelToDtos(ds)
-
 	return JSON(200, &dtos)
 }
 

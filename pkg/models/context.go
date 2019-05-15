@@ -9,6 +9,10 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+type DatasourceService interface {
+	GetDataSourceById(id int64, orgId int64) (*DataSource, error)
+}
+
 type ReqContext struct {
 	*macaron.Context
 	*SignedInUser
@@ -19,6 +23,8 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+
+	DatasourceService DatasourceService
 }
 
 // Handle handles and logs error by given status.

@@ -52,7 +52,7 @@ type SqlStore struct {
 	CacheService *cache.CacheService `inject:""`
 
 	dbCfg           DatabaseConfig
-	engine          *xorm.Engine
+	Engine          *xorm.Engine
 	log             log.Logger
 	Dialect         migrator.Dialect
 	skipEnsureAdmin bool
@@ -60,12 +60,12 @@ type SqlStore struct {
 
 // NewSession returns a new DBSession
 func (ss *SqlStore) NewSession() *DBSession {
-	return &DBSession{Session: ss.engine.NewSession()}
+	return &DBSession{Session: ss.Engine.NewSession()}
 }
 
 // WithDbSession calls the callback with an session attached to the context.
 func (ss *SqlStore) WithDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	sess, err := startSession(ctx, ss.engine, false)
+	sess, err := startSession(ctx, ss.Engine, false)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbT
 }
 
 func (ss *SqlStore) inTransactionWithRetryCtx(ctx context.Context, callback dbTransactionFunc, retry int) error {
-	sess, err := startSession(ctx, ss.engine, true)
+	sess, err := startSession(ctx, ss.Engine, true)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,8 @@ func (ss *SqlStore) Init() error {
 		return fmt.Errorf("Fail to connect to database: %v", err)
 	}
 
-	ss.engine = engine
-	ss.Dialect = migrator.NewDialect(ss.engine)
+	ss.Engine = engine
+	ss.Dialect = migrator.NewDialect(ss.Engine)
 
 	// temporarily still set global var
 	x = engine
@@ -386,8 +386,8 @@ func InitTestDB(t *testing.T) *SqlStore {
 		t.Fatalf("Failed to init test database: %v", err)
 	}
 
-	sqlstore.engine.DatabaseTZ = time.UTC
-	sqlstore.engine.TZLocation = time.UTC
+	sqlstore.Engine.DatabaseTZ = time.UTC
+	sqlstore.Engine.TZLocation = time.UTC
 
 	return sqlstore
 }

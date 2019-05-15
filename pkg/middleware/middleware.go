@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
@@ -24,7 +27,7 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
+func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache, sqlStore *sqlstore.SqlStore) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
@@ -67,6 +70,15 @@ func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCa
 				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
 			}
 		}
+
+		sessionCtx := context.Background()
+		// TODO not sure what to do with the error here
+		_ = sqlStore.InTransaction(sessionCtx, func(sessionCtx context.Context) error {
+			// Looks weird here but WithDbSession puts session into the context
+			ctx.DatasourceService = datasources.NewDatasourceService(sessionCtx, sqlStore)
+			c.Next()
+			return nil
+		})
 	}
 }
 
