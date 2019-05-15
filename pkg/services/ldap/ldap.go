@@ -20,6 +20,7 @@ type IConnection interface {
 	Bind(username, password string) error
 	UnauthenticatedBind(username string) error
 	Add(*LDAP.AddRequest) error
+	Del(*LDAP.DelRequest) error
 	Search(*LDAP.SearchRequest) (*LDAP.SearchResult, error)
 	StartTLS(*tls.Config) error
 	Close()
@@ -29,6 +30,7 @@ type IConnection interface {
 type IAuth interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Add(string, map[string][]string) error
+	Remove(string) error
 	Users() ([]*models.ExternalUserInfo, error)
 	ExtractGrafanaUser(*UserInfo) (*models.ExternalUserInfo, error)
 	Dial() error
@@ -157,7 +159,7 @@ func (ldap *Auth) Login(query *models.LoginUserQuery) (
 	return result, nil
 }
 
-// Add adds user to LDAP
+// Add adds stuff to LDAP
 func (ldap *Auth) Add(dn string, values map[string][]string) error {
 	err := ldap.authenticate(ldap.server.BindDN, ldap.server.BindPassword)
 	if err != nil {
@@ -178,6 +180,22 @@ func (ldap *Auth) Add(dn string, values map[string][]string) error {
 	}
 
 	err = ldap.connection.Add(request)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Remove removes stuff from LDAP
+func (ldap *Auth) Remove(dn string) error {
+	err := ldap.authenticate(ldap.server.BindDN, ldap.server.BindPassword)
+	if err != nil {
+		return err
+	}
+
+	request := LDAP.NewDelRequest(dn, nil)
+	err = ldap.connection.Del(request)
 	if err != nil {
 		return err
 	}

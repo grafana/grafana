@@ -25,6 +25,7 @@ type IMultipleLDAPs interface {
 	)
 
 	Add(dn string, values map[string][]string) error
+	Remove(dn string) error
 }
 
 // MultipleLDAPs is basic struct of LDAP authorization
@@ -54,6 +55,25 @@ func (multiples *MultipleLDAPs) Add(
 	defer ldap.Close()
 
 	err := ldap.Add(dn, values)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Remove removes user from the *first* defined LDAP
+func (multiples *MultipleLDAPs) Remove(dn string) error {
+	server := multiples.servers[0]
+	ldap := LDAP.New(server)
+
+	if err := ldap.Dial(); err != nil {
+		return err
+	}
+
+	defer ldap.Close()
+
+	err := ldap.Remove(dn)
 	if err != nil {
 		return err
 	}
