@@ -29,7 +29,7 @@ type AlertingService struct {
 	evalHandler   evalHandler
 	ruleReader    ruleReader
 	log           log.Logger
-	resultHandler ResultHandler
+	resultHandler resultHandler
 }
 
 func init() {
@@ -49,7 +49,7 @@ func (e *AlertingService) Init() error {
 	e.evalHandler = NewEvalHandler()
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
-	e.resultHandler = NewResultHandler(e.RenderService)
+	e.resultHandler = newResultHandler(e.RenderService)
 	return nil
 }
 
@@ -210,7 +210,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		// dont reuse the evalContext and get its own context.
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
-		e.resultHandler.Handle(evalContext)
+		e.resultHandler.handle(evalContext)
 		span.Finish()
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)

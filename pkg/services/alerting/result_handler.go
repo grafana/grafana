@@ -13,23 +13,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-type ResultHandler interface {
-	Handle(evalContext *EvalContext) error
+type resultHandler interface {
+	handle(evalContext *EvalContext) error
 }
 
-type DefaultResultHandler struct {
+type defaultResultHandler struct {
 	notifier *notificationService
 	log      log.Logger
 }
 
-func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
-	return &DefaultResultHandler{
+func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
 		notifier: newNotificationService(renderService),
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
