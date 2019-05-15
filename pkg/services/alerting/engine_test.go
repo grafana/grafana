@@ -33,7 +33,7 @@ func (handler *FakeEvalHandler) Eval(evalContext *EvalContext) {
 
 type FakeResultHandler struct{}
 
-func (handler *FakeResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 	return nil
 }
 
