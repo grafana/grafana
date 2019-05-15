@@ -9,18 +9,19 @@ import {
   LogsParser,
   calculateFieldStats,
   getParser,
-  LogsModel,
 } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css } from 'emotion';
+import { LogRowContextProvider, LogRowContextRows } from './LogRowContextProvider';
+import { LogRowContextQueryResponse, ClickOutsideWrapper } from '@grafana/ui';
+import { LogRowContext } from './LogRowContext';
 
 interface Props {
   highlighterExpressions?: string[];
   row: LogRowModel;
-  context?: LogsModel;
   showDuplicates: boolean;
   showLabels: boolean;
   showLocalTime: boolean;
@@ -28,6 +29,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
+  getRowContext?: (row: LogRowModel, limit: number) => Promise<LogRowContextQueryResponse>;
   className?: string;
 }
 
@@ -123,13 +125,11 @@ export class LogRow extends PureComponent<Props, State> {
     }
   };
 
-  onContextClick = () => {
-    if (this.props.onContextClick) {
-      this.props.onContextClick();
-    }
-  };
-
   toggleContext = () => {
+    // if (this.props.getRowContext) {
+    //   this.props.getRowContext(this.props.row);
+    // }
+
     this.setState(state => {
       return {
         showContext: !state.showContext,
@@ -137,7 +137,7 @@ export class LogRow extends PureComponent<Props, State> {
     });
   };
 
-  renderLogRow() {
+  renderLogRow(context?: LogRowContextRows) {
     const {
       getRows,
       highlighterExpressions,
@@ -188,90 +188,92 @@ export class LogRow extends PureComponent<Props, State> {
           </div>
         )}
         <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
-          {parsed && (
-            <Highlighter
-              autoEscape
-              highlightTag={FieldHighlight(this.onClickHighlight)}
-              textToHighlight={entry}
-              searchWords={parsedFieldHighlights}
-              highlightClassName="logs-row__field-highlight"
-            />
-          )}
-          {!parsed && needsHighlighter && (
-            <Highlighter
-              textToHighlight={entry}
-              searchWords={highlights}
-              findChunks={findHighlightChunksInText}
-              highlightClassName={highlightClassName}
-            />
-          )}
-          {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
-          {!hasAnsi && !parsed && !needsHighlighter && entry}
-          {showFieldStats && (
-            <div className="logs-row__stats">
-              <LogLabelStats
-                stats={fieldStats}
-                label={fieldLabel}
-                value={fieldValue}
-                onClickClose={this.onClickClose}
-                rowCount={fieldCount}
-              />
-            </div>
-          )}
-
-          {<span
-            onClick={this.toggleContext}
+          <div
             className={css`
-              visibility: hidden;
-              .logs-row:hover & {
-                visibility: visible;
-
-                margin-left: 10px;
-                color: blue;
-                text-decoration: underline;
-              }
+              position: relative;
             `}
           >
-            {showContext ? 'Hide' : 'Show'} context
-          </span>}
+            {showContext && context && (
+              <ClickOutsideWrapper onClick={this.toggleContext}>
+                <LogRowContext context={context} />
+              </ClickOutsideWrapper>
+            )}
+
+            {parsed && (
+              <Highlighter
+                autoEscape
+                highlightTag={FieldHighlight(this.onClickHighlight)}
+                textToHighlight={entry}
+                searchWords={parsedFieldHighlights}
+                highlightClassName="logs-row__field-highlight"
+              />
+            )}
+            {!parsed && needsHighlighter && (
+              <Highlighter
+                textToHighlight={entry}
+                searchWords={highlights}
+                findChunks={findHighlightChunksInText}
+                highlightClassName={highlightClassName}
+              />
+            )}
+            {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
+            {!hasAnsi && !parsed && !needsHighlighter && entry}
+            {showFieldStats && (
+              <div className="logs-row__stats">
+                <LogLabelStats
+                  stats={fieldStats}
+                  label={fieldLabel}
+                  value={fieldValue}
+                  onClickClose={this.onClickClose}
+                  rowCount={fieldCount}
+                />
+              </div>
+            )}
+
+            {row.searchWords && row.searchWords.length > 0 && (
+              <span
+                onClick={e => {
+                  e.stopPropagation();
+                  this.toggleContext();
+                }}
+                className={css`
+                  visibility: hidden;
+                  white-space: nowrap;
+                  cursor: pointer;
+                  .logs-row:hover & {
+                    visibility: visible;
+                    margin-left: 10px;
+                    text-decoration: underline;
+                  }
+                `}
+              >
+                {showContext ? 'Hide' : 'Show'} context
+              </span>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // getRowContext() {
-  //   const buffer = 10;
-
-  //   if (!this.props.context) {
-  //     return {
-  //       pre: null,
-  //       post: null,
-  //     };
-  //   }
-  //   const row = this.props.context.rows.filter(r => r.raw === this.props.row.raw)[0];
-  //   const rowIndex = this.props.context.rows.indexOf(row);
-
-  //   return {
-  //     pre: this.props.context.rows.slice(rowIndex - buffer, rowIndex),
-  //     post: this.props.context.rows.slice(rowIndex + 1, rowIndex + 1+ buffer),
-  //   };
-  // }
   render() {
     const { showContext } = this.state;
+
     if (showContext) {
-      const { pre, post } = this.getRowContext();
-      console.log(pre, post)
       return (
         <>
-          <LogRowContext row={this.props.row} direction="forward">
-          {this.renderLogRow()}
-          <LogRowContext row={this.props.row} direction="backward">
-          {/* {post.map(row => {
-            return <LogRow {...this.props} row={row}  className={css`background: red;`} key={row.raw}/>;
-          })} */}
+          <LogRowContextProvider
+            row={this.props.row}
+            getRowContext={this.props.getRowContext}
+          >
+            {({ result }) => {
+              return <>{this.renderLogRow(result)}</>;
+            }}
+          </LogRowContextProvider>
         </>
       );
     }
+
     return this.renderLogRow();
   }
 }

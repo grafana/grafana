@@ -43,7 +43,6 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
 
 interface Props {
   data?: LogsModel;
-  context?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
   exploreId: string;
@@ -61,6 +60,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
+  getRowContext?: (row: LogRowModel, limit: number) => Promise<any>;
 }
 
 interface State {
@@ -150,11 +150,6 @@ export default class Logs extends PureComponent<Props, State> {
     this.props.onStopScanning();
   };
 
-  getRowContext = (row: LogRowModel
-    ) => {
-
-  }
-
   render() {
     const {
       data,
@@ -175,7 +170,7 @@ export default class Logs extends PureComponent<Props, State> {
     }
 
     const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
-    const { dedupStrategy, context } = this.props;
+    const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
@@ -258,17 +253,16 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={index}
                 getRows={getRows}
-                getRowContext={this.getRowContext}
+                getRowContext={this.props.getRowContext}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
-                context={context}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
-                />
-                ))}
+              />
+            ))}
           {hasData &&
             !deferLogs &&
             renderAll &&
@@ -276,9 +270,8 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={PREVIEW_LIMIT + index}
                 getRows={getRows}
-                getRowContext={this.getRowContext}
+                getRowContext={this.props.getRowContext}
                 row={row}
-                context={context}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
                 showLocalTime={showLocalTime}
