@@ -3,13 +3,7 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import {
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsParser,
-  calculateFieldStats,
-  getParser,
-} from 'app/core/logs_model';
+import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
@@ -258,10 +252,7 @@ export class LogRow extends PureComponent<Props, State> {
     if (showContext) {
       return (
         <>
-          <LogRowContextProvider
-            row={this.props.row}
-            getRowContext={this.props.getRowContext}
-          >
+          <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
             {({ result }) => {
               return <>{this.renderLogRow(result)}</>;
             }}

@@ -18,7 +18,6 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({ con
     overflow-y: auto;
     padding: 10px;
     background: ${theme.colors.pageBg};
-
   `;
 
   return (
@@ -28,7 +27,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({ con
           className={cx(
             css`
               top: -250px;
-              box-shadow: 0 0  20px -5px ${theme.colors.black};
+              box-shadow: 0 0 20px -5px ${theme.colors.black};
             `,
             commonStyles
           )}

@@ -1,7 +1,7 @@
-import { LogRowModel } from "app/core/logs_model";
-import { LogRowContextQueryResponse } from "@grafana/ui";
-import { useState } from "react";
-import useAsync from "react-use/lib/useAsync";
+import { LogRowModel } from 'app/core/logs_model';
+import { LogRowContextQueryResponse } from '@grafana/ui';
+import { useState } from 'react';
+import useAsync from 'react-use/lib/useAsync';
 
 export interface LogRowContextRows {
   before?: string[];
