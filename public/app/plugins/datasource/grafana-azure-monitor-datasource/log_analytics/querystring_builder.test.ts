@@ -90,12 +90,12 @@ describe('LogAnalyticsDatasource', () => {
     });
   });
 
-  describe('when using $__from and $__to is in the query and range is until now', () => {
+  describe('when using $az__from and $az__to is in the query and range is until now', () => {
     beforeEach(() => {
-      builder.rawQueryString = 'query=Tablename | where myTime >= $__from and myTime <= $__to';
+      builder.rawQueryString = 'query=Tablename | where myTime >= $az__from and myTime <= $az__to';
     });
 
-    it('should replace $__from and $__to with a datetime and the now() function', () => {
+    it('should replace $az__from and $az__to with a datetime and the now() function', () => {
       const query = builder.generate().uriString;
 
       expect(query).toContain('where%20myTime%20%3E%3D%20datetime(');
@@ -103,14 +103,14 @@ describe('LogAnalyticsDatasource', () => {
     });
   });
 
-  describe('when using $__from and $__to is in the query and range is a specific interval', () => {
+  describe('when using $az__from and $az__to is in the query and range is a specific interval', () => {
     beforeEach(() => {
-      builder.rawQueryString = 'query=Tablename | where myTime >= $__from and myTime <= $__to';
+      builder.rawQueryString = 'query=Tablename | where myTime >= $az__from and myTime <= $az__to';
       builder.options.range.to = dateTime().subtract(1, 'hour');
       builder.options.rangeRaw.to = 'now-1h';
     });
 
-    it('should replace $__from and $__to with datetimes', () => {
+    it('should replace $az__from and $az__to with datetimes', () => {
       const query = builder.generate().uriString;
 
       expect(query).toContain('where%20myTime%20%3E%3D%20datetime(');
