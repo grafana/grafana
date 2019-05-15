@@ -39,7 +39,7 @@ export const ToggleButton: FC<ToggleButtonProps> = ({
 }) => {
   const onClick = (event: React.SyntheticEvent) => {
     event.stopPropagation();
-    if (onChange) {
+    if (!selected && onChange) {
       onChange(value);
     }
   };
