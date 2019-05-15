@@ -210,8 +210,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. current descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'current';
+        const sortKey = 'current';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
