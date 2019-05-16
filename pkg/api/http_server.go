@@ -227,9 +227,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.AddDefaultResponseHeaders())
 
-	if setting.AppBasePath != "" {
-		m.SetURLPrefix(setting.AppBasePath)
+	if !setting.UseProxySetup && setting.AppSubUrl != "" {
+		m.SetURLPrefix(setting.AppSubUrl)
 	}
+
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
