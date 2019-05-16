@@ -26,7 +26,7 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 		sess.Cols("id", "password", "secure_json_data")
 		sess.Table("data_source")
 		sess.In("type", datasourceTypes)
-		sess.Where("password IS NOT NULL")
+		sess.Where("password IS NOT NULL AND password != ''")
 		err := sess.Find(&passwordRows)
 
 		if err != nil {
@@ -41,7 +41,7 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 		sess.Cols("id", "basic_auth_password", "secure_json_data")
 		sess.Table("data_source")
 		sess.In("type", datasourceTypes)
-		sess.Where("basic_auth_password IS NOT NULL")
+		sess.Where("basic_auth_password IS NOT NULL AND basic_auth_password != ''")
 		err = sess.Find(&basicAuthRows)
 		if err != nil {
 			return errutil.Wrap("basic_auth_password select failed", err)
