@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
@@ -18,6 +17,7 @@ import {
   DecimalCount,
   Field,
 } from '../types';
+import { DateTime, dateTime } from './moment_wrapper';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
@@ -42,7 +42,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
 
     return (value: any) => {
       const { mappings, thresholds, theme } = options;
-      let color = field.color;
+      let color;
 
       let text = _.toString(value);
       let numeric = toNumber(value);
@@ -76,7 +76,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
-        if (thresholds && thresholds.length > 0) {
+        if (thresholds && thresholds.length) {
           color = getColorFromThreshold(numeric, thresholds, theme);
         }
       }
@@ -91,18 +91,18 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   return toStringProcessor;
 }
 
-function toMoment(value: any, numeric: number, format: string): moment.Moment {
+function toMoment(value: any, numeric: number, format: string): DateTime {
   if (!isNaN(numeric)) {
-    const v = moment(numeric);
+    const v = dateTime(numeric);
     if (v.isValid()) {
       return v;
     }
   }
-  const v = moment(value, format);
+  const v = dateTime(value, format);
   if (v.isValid) {
     return v;
   }
-  return moment(value); // moment will try to parse the format
+  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

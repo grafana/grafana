@@ -12,6 +12,7 @@ import {
   ExploreState,
   QueryTransaction,
   RangeScanner,
+  ExploreMode,
 } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
@@ -23,6 +24,7 @@ import {
   updateDatasourceInstanceAction,
   splitOpenAction,
   splitCloseAction,
+  changeModeAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -97,7 +99,6 @@ describe('Explore item reducer', () => {
         const queryTransactions: QueryTransaction[] = [];
         const initalState: Partial<ExploreItemState> = {
           datasourceError: null,
-          queryTransactions: [{} as QueryTransaction],
           graphResult: [],
           tableResult: {} as TableModel,
           logsResult: {} as LogsModel,
@@ -121,6 +122,17 @@ describe('Explore item reducer', () => {
           .givenReducer(itemReducer, initalState)
           .whenActionIsDispatched(testDataSourceFailureAction({ exploreId: ExploreId.left, error }))
           .thenStateShouldEqual(expectedState);
+      });
+    });
+
+    describe('when changeDataType is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, {})
+          .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
+          .thenStateShouldEqual({
+            mode: ExploreMode.Logs,
+          });
       });
     });
   });
@@ -161,6 +173,8 @@ describe('Explore item reducer', () => {
             showingStartPage: true,
             queries,
             queryKeys,
+            supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
+            mode: ExploreMode.Metrics,
           };
 
           reducerTester()

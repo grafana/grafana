@@ -18,7 +18,11 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
 }
 
-export class Input extends PureComponent<Props> {
+interface State {
+  error: string | null;
+}
+
+export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
   };

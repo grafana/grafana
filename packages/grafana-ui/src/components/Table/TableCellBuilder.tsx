@@ -3,11 +3,11 @@ import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
 import { Table, Props } from './Table';
-import moment from 'moment';
 import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
 import { InterpolateFunction } from '../../types/panel';
 import { Field } from '../../types/data';
+import { dateTime } from '../../utils/moment_wrapper';
 
 export interface TableCellBuilderOptions {
   value: any;
@@ -96,7 +96,7 @@ export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: 
         if (_.isArray(v)) {
           v = v[0];
         }
-        let date = moment(v);
+        let date = dateTime(v);
         if (false) {
           // TODO?????? this.props.isUTC) {
           date = date.utc();

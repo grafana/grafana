@@ -1,0 +1,19 @@
+  admins-openldap:
+    build: docker/blocks/multiple-openldap/admins-ldap-server
+    environment:
+      SLAPD_PASSWORD: grafana
+      SLAPD_DOMAIN: grafana.org
+      SLAPD_ADDITIONAL_MODULES: memberof
+    ports:
+      - "389:389"
+
+  openldap:
+    build: docker/blocks/multiple-openldap/ldap-server
+    environment:
+      SLAPD_PASSWORD: grafana
+      SLAPD_DOMAIN: grafana.org
+      SLAPD_ADDITIONAL_MODULES: memberof
+    ports:
+      - "388:389"
+
+

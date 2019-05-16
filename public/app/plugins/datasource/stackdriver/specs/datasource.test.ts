@@ -1,28 +1,32 @@
 import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
-import moment from 'moment';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { StackdriverOptions } from '../types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('StackdriverDataSource', () => {
-  const instanceSettings = {
+  const instanceSettings = ({
     jsonData: {
       defaultProject: 'testproject',
     },
-  };
+  } as unknown) as DataSourceInstanceSettings<StackdriverOptions>;
   const templateSrv = new TemplateSrv();
-  const timeSrv = {};
+  const timeSrv = {} as TimeSrv;
 
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
       let ds;
       let result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.resolve({ status: 200 });
           },
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -35,9 +39,9 @@ describe('StackdriverDataSource', () => {
       let ds;
       let result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -50,7 +54,7 @@ describe('StackdriverDataSource', () => {
       let ds;
       let result;
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () =>
             Promise.reject({
               statusText: 'Bad Request',
@@ -58,7 +62,7 @@ describe('StackdriverDataSource', () => {
                 error: { code: 400, message: 'Field interval.endTime had an invalid value' },
               },
             }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
         result = await ds.testDatasource();
       });
@@ -73,8 +77,8 @@ describe('StackdriverDataSource', () => {
   describe('When performing query', () => {
     const options = {
       range: {
-        from: moment.utc('2017-08-22T20:00:00Z'),
-        to: moment.utc('2017-08-22T23:59:00Z'),
+        from: toUtc('2017-08-22T20:00:00Z'),
+        to: toUtc('2017-08-22T23:59:00Z'),
       },
       rangeRaw: {
         from: 'now-4h',
@@ -103,9 +107,9 @@ describe('StackdriverDataSource', () => {
       };
 
       beforeEach(() => {
-        const backendSrv = {
+        const backendSrv = ({
           datasourceRequest: async () => Promise.resolve({ status: 200, data: response }),
-        };
+        } as unknown) as BackendSrv;
         ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
       });
 
@@ -122,7 +126,7 @@ describe('StackdriverDataSource', () => {
     let ds;
     let result;
     beforeEach(async () => {
-      const backendSrv = {
+      const backendSrv = ({
         async datasourceRequest() {
           return Promise.resolve({
             data: {
@@ -139,7 +143,7 @@ describe('StackdriverDataSource', () => {
             },
           });
         },
-      };
+      } as unknown) as BackendSrv;
       ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
       result = await ds.getMetricTypes();
     });
@@ -155,12 +159,14 @@ describe('StackdriverDataSource', () => {
     });
   });
 
+  const noopBackendSrv = ({} as unknown) as BackendSrv;
+
   describe('when interpolating a template variable for the filter', () => {
     let interpolated;
     describe('and is single value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv('filtervalue1');
-        const ds = new StackdriverDataSource(instanceSettings, {}, filterTemplateSrv, timeSrv);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, filterTemplateSrv, timeSrv);
         interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '${test}'], {});
       });
 
@@ -173,7 +179,7 @@ describe('StackdriverDataSource', () => {
     describe('and is multi value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv(['filtervalue1', 'filtervalue2'], true);
-        const ds = new StackdriverDataSource(instanceSettings, {}, filterTemplateSrv, timeSrv);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, filterTemplateSrv, timeSrv);
         interpolated = ds.interpolateFilters(['resource.label.zone', '=~', '[[test]]'], {});
       });
 
@@ -189,7 +195,7 @@ describe('StackdriverDataSource', () => {
     describe('and is single value variable', () => {
       beforeEach(() => {
         const groupByTemplateSrv = initTemplateSrv('groupby1');
-        const ds = new StackdriverDataSource(instanceSettings, {}, groupByTemplateSrv, timeSrv);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -202,7 +208,7 @@ describe('StackdriverDataSource', () => {
     describe('and is multi value variable', () => {
       beforeEach(() => {
         const groupByTemplateSrv = initTemplateSrv(['groupby1', 'groupby2'], true);
-        const ds = new StackdriverDataSource(instanceSettings, {}, groupByTemplateSrv, timeSrv);
+        const ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, groupByTemplateSrv, timeSrv);
         interpolated = ds.interpolateGroupBys(['[[test]]'], {});
       });
 
@@ -217,7 +223,7 @@ describe('StackdriverDataSource', () => {
   describe('unit parsing', () => {
     let ds, res;
     beforeEach(() => {
-      ds = new StackdriverDataSource(instanceSettings, {}, templateSrv, timeSrv);
+      ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, templateSrv, timeSrv);
     });
     describe('when theres only one target', () => {
       describe('and the stackdriver unit doesnt have a corresponding grafana unit', () => {

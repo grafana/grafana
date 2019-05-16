@@ -2,12 +2,12 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputDatasource } from './InputDatasource';
-import { InputQuery } from './types';
+import { InputDatasource, describeSeriesData } from './InputDatasource';
+import { InputQuery, InputOptions } from './types';
 
 import { FormLabel, Select, QueryEditorProps, SelectOptionItem, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
 
-type Props = QueryEditorProps<InputDatasource, InputQuery>;
+type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
 const options = [
   { value: 'panel', label: 'Panel', description: 'Save data in the panel configuration.' },
@@ -80,10 +80,10 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
           <div className="btn btn-link">
             {query.data ? (
-              datasource.getDescription(query.data)
+              describeSeriesData(query.data)
             ) : (
               <a href={`datasources/edit/${id}/`}>
-                {name}: {datasource.getDescription(datasource.data)} &nbsp;&nbsp;
+                {name}: {describeSeriesData(datasource.data)} &nbsp;&nbsp;
                 <i className="fa fa-pencil-square-o" />
               </a>
             )}

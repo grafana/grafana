@@ -19,7 +19,6 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import moment from 'moment';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
@@ -36,6 +35,7 @@ import { setupAngularRoutes } from 'app/routes/routes';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
+import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -68,7 +68,7 @@ export class GrafanaApp {
   init() {
     const app = angular.module('grafana', []);
 
-    moment.locale(config.bootData.user.locale);
+    setLocale(config.bootData.user.locale);
 
     app.config(
       (
