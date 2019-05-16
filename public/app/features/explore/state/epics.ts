@@ -1,5 +1,5 @@
 import { Epic } from 'redux-observable';
-import { webSocket } from 'rxjs/webSocket';
+import { EMPTY } from 'rxjs';
 import { map, takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
 
 import { StoreState, ExploreId } from 'app/types';
@@ -11,9 +11,9 @@ import {
   changeRefreshIntervalAction,
   clearQueriesAction,
 } from './actionTypes';
-import { EMPTY } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { SeriesData } from '@grafana/ui/src/types/data';
+import { EpicDependencies } from 'app/store/configureStore';
 
 const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https' ? 'wss://' : 'ws://';
@@ -80,11 +80,15 @@ export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSta
   );
 };
 
-export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
+export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = (
+  action$,
+  state$,
+  { getWebSocket }
+) => {
   return action$.ofType(startSubscriptionAction.type).pipe(
     mergeMap((action: ActionOf<StartSubscriptionPayload>) => {
       const { url, exploreId, refId, dataReceivedActionCreator } = action.payload;
-      return webSocket(url).pipe(
+      return getWebSocket(url).pipe(
         takeUntil(
           action$
             .ofType(

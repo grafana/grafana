@@ -16,6 +16,7 @@ import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
 import { startSubscriptionsEpic, startSubscriptionEpic } from 'app/features/explore/state/epics';
+import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 
 const rootReducers = {
   ...sharedReducers,
@@ -38,7 +39,15 @@ export function addRootReducer(reducers) {
 
 export const rootEpic: any = combineEpics(startSubscriptionsEpic, startSubscriptionEpic);
 
-const epicMiddleware = createEpicMiddleware();
+export interface EpicDependencies {
+  getWebSocket: <T>(urlConfigOrSource: string) => WebSocketSubject<T>;
+}
+
+const dependencies: EpicDependencies = {
+  getWebSocket: webSocket,
+};
+
+const epicMiddleware = createEpicMiddleware({ dependencies });
 
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
