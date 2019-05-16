@@ -38,6 +38,7 @@ interface QueryRowProps extends PropsFromParent {
   addQueryRow: typeof addQueryRow;
   changeQuery: typeof changeQuery;
   className?: string;
+  exploreId: ExploreId;
   datasourceInstance: ExploreDataSourceApi;
   datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
