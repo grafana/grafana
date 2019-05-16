@@ -149,17 +149,10 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 	return nil
 }
 
-var labelNamePattern = regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`)
+// regexp that matches all none valid label name characters
+// https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+var labelNamePattern = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
 func replaceIllegalCharsInLabelname(input string) string {
-	var result []byte
-	for _, c := range input {
-		if labelNamePattern.Match([]byte{byte(c)}) {
-			result = append(result, byte(c))
-		} else {
-			result = append(result, '_')
-		}
-	}
-
-	return string(result)
+	return labelNamePattern.ReplaceAllString(input, "_")
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
-	tcs := []struct {
+	cases := []struct {
 		input    string
 		expected string
 	}{
@@ -23,13 +23,13 @@ func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
 			expected: "foobar",
 		},
 		{
-			input:    `foo.,\][!?#="~*^&+|<>\'bar`,
-			expected: "foo____________________bar",
+			input:    `foo.,\][!?#="~*^&+|<>\'bar09_09`,
+			expected: "foo____________________bar09_09",
 		},
 	}
 
-	for _, tc := range tcs {
-		assert.Equal(t, replaceIllegalCharsInLabelname(tc.input), tc.expected)
+	for _, c := range cases {
+		assert.Equal(t, replaceIllegalCharsInLabelname(c.input), c.expected)
 	}
 }
 
