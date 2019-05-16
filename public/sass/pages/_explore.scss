@@ -92,6 +92,7 @@
 .explore-toolbar-content-item:first-child {
   padding-left: $dashboard-padding;
   margin-right: auto;
+  display: flex;
 }
 
 @media only screen and (max-width: 1545px) {
@@ -412,4 +413,22 @@
 .cheat-sheet-item__expression {
   margin: $space-xs 0;
   cursor: pointer;
+}
+
+.query-type-toggle {
+  margin-left: 5px;
+
+  .toggle-button-group {
+    padding-top: 2px;
+  }
+
+  .btn.active {
+    background-color: $input-bg;
+    background-image: none;
+    background-clip: padding-box;
+    border: $input-border;
+    border-radius: $input-border-radius;
+    @include box-shadow($input-box-shadow);
+    color: $input-color;
+  }
 }
