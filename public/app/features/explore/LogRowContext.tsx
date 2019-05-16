@@ -22,7 +22,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({ con
 
   return (
     <div>
-      {context.after && (
+      {context.after && context.after.length > 0 && (
         <div
           className={cx(
             css`
@@ -33,7 +33,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({ con
           )}
         >
           <List
-            items={context.after.reverse()}
+            items={context.after}
             renderItem={item => {
               return (
                 <div
@@ -49,7 +49,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({ con
         </div>
       )}
 
-      {context.before && (
+      {context.before && context.before.length > 0 && (
         <div
           className={cx(
             css`
