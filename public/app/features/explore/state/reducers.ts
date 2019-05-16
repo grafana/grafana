@@ -95,7 +95,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   scanning: false,
   scanRange: null,
   showingGraph: true,
-  showingLogs: true,
   showingTable: true,
   graphIsLoading: false,
   logIsLoading: false,

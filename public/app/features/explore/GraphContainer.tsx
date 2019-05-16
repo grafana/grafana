@@ -51,7 +51,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
     }
 
     return (
-      <Panel label="Graph" isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
+      <Panel label="Graph" isCollapsable isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
         <Graph
           data={graphResult}
           height={graphHeight}

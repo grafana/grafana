@@ -32,7 +32,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     }
 
     return (
-      <Panel label="Table" loading={loading} isOpen={showingTable} onToggle={this.onClickTableButton}>
+      <Panel label="Table" loading={loading} isCollapsable isOpen={showingTable} onToggle={this.onClickTableButton}>
         <Table data={tableResult} loading={loading} onClickCell={onClickCell} />
       </Panel>
     );
