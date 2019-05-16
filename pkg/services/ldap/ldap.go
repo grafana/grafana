@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -128,18 +127,34 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 
-	// perform initial authentication
-	if err := server.authenticate(query.Username, query.Password); err != nil {
-		return nil, err
-	}
-
-	// find user entry & attributes
-	user, err := server.searchUser(query.Username)
+	// Perform initial authentication
+	err := server.authenticate(query.Username, query.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	// check if a second user bind is needed
+	// Find user entry & attributes
+	users, err := server.Users([]string{query.Username})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) > 0 {
+		err = errors.New(
+			"LDAP search matched more than one entry, please review your filter setting",
+		)
+
+		return nil, err
+	}
+
+	// If we couldn't find the user -
+	// we should show incorrect credentials err
+	if len(users) == 0 {
+		return nil, ErrInvalidCredentials
+	}
+
+	// Check if a second user bind is needed
+	user := users[0]
 	if server.requireSecondBind {
 		err = server.secondBind(user, query.Password)
 		if err != nil {
@@ -147,12 +162,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		}
 	}
 
-	result, err := server.ExtractGrafanaUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return user, nil
 }
 
 // Add adds stuff to LDAP
@@ -215,19 +225,8 @@ func (server *Server) Users(logins []string) (
 	var config = server.config
 
 	for _, base := range config.SearchBaseDNs {
-		attributes := make([]string, 0)
-		inputs := config.Attr
-		attributes = appendIfNotEmpty(
-			attributes,
-			inputs.Username,
-			inputs.Surname,
-			inputs.Email,
-			inputs.Name,
-			inputs.MemberOf,
-		)
-
 		result, err = server.connection.Search(
-			server.getSearchRequest(base, attributes, logins),
+			server.getSearchRequest(base, logins),
 		)
 		if err != nil {
 			return nil, err
@@ -238,7 +237,12 @@ func (server *Server) Users(logins []string) (
 		}
 	}
 
-	return server.serializeUsers(result), nil
+	serializedUsers, err := server.serializeUsers(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return serializedUsers, nil
 }
 
 // ExtractGrafanaUser extracts external user info from LDAP user
@@ -270,11 +274,29 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 // getSearchRequest returns LDAP search request for users
 func (server *Server) getSearchRequest(
 	base string,
-	attributes, logins []string,
+	logins []string,
 ) *ldap.SearchRequest {
+	attributes := []string{}
+
+	inputs := server.config.Attr
+	attributes = appendIfNotEmpty(
+		attributes,
+		inputs.Username,
+		inputs.Surname,
+		inputs.Email,
+		inputs.Name,
+		inputs.MemberOf,
+	)
+
 	search := ""
 	for _, login := range logins {
-		search = search + strings.Replace(server.config.SearchFilter, "%s", login, -1)
+		query := strings.Replace(
+			server.config.SearchFilter,
+			"%s", ldap.EscapeFilter(login),
+			-1,
+		)
+
+		search = search + query
 	}
 
 	filter := fmt.Sprintf("(|%s)", search)
@@ -288,15 +310,18 @@ func (server *Server) getSearchRequest(
 	}
 }
 
+// buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
 func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "ldap",
 		AuthId:     user.DN,
-		Name:       fmt.Sprintf("%s %s", user.FirstName, user.LastName),
-		Login:      user.Username,
-		Email:      user.Email,
-		Groups:     user.MemberOf,
-		OrgRoles:   map[int64]models.RoleType{},
+		Name: strings.TrimSpace(
+			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+		),
+		Login:    user.Username,
+		Email:    user.Email,
+		Groups:   user.MemberOf,
+		OrgRoles: map[int64]models.RoleType{},
 	}
 
 	for _, group := range server.config.Groups {
@@ -345,8 +370,12 @@ func (server *Server) serverBind() error {
 	return nil
 }
 
-func (server *Server) secondBind(user *UserInfo, userPassword string) error {
-	if err := server.connection.Bind(user.DN, userPassword); err != nil {
+func (server *Server) secondBind(
+	user *models.ExternalUserInfo,
+	userPassword string,
+) error {
+	err := server.connection.Bind(user.AuthId, userPassword)
+	if err != nil {
 		server.log.Info("Second bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -422,8 +451,6 @@ func (server *Server) searchUser(username string) (*UserInfo, error) {
 			),
 		}
 
-		server.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
-
 		searchResult, err = server.connection.Search(&searchReq)
 		if err != nil {
 			return nil, err
@@ -439,17 +466,14 @@ func (server *Server) searchUser(username string) (*UserInfo, error) {
 	}
 
 	if len(searchResult.Entries) > 1 {
-		return nil, errors.New("Ldap search matched more than one entry, please review your filter setting")
+		return nil, errors.New(
+			"LDAP search matched more than one entry, please review your filter setting",
+		)
 	}
 
-	var memberOf []string
-	if server.config.GroupSearchFilter == "" {
-		memberOf = getLdapAttrArray(server.config.Attr.MemberOf, searchResult)
-	} else {
-		memberOf, err = server.getMemberOf(searchResult)
-		if err != nil {
-			return nil, err
-		}
+	memberOf, err := server.getMemberOf(searchResult)
+	if err != nil {
+		return nil, err
 	}
 
 	return &UserInfo{
@@ -462,8 +486,8 @@ func (server *Server) searchUser(username string) (*UserInfo, error) {
 	}, nil
 }
 
-// getMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
-func (server *Server) getMemberOf(searchResult *ldap.SearchResult) ([]string, error) {
+// requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
+func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string, error) {
 	var memberOf []string
 
 	for _, groupSearchBase := range server.config.GroupSearchBaseDNs {
@@ -515,11 +539,18 @@ func (server *Server) getMemberOf(searchResult *ldap.SearchResult) ([]string, er
 
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
-func (server *Server) serializeUsers(users *ldap.SearchResult) []*models.ExternalUserInfo {
+func (server *Server) serializeUsers(
+	users *ldap.SearchResult,
+) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
 
 	for index := range users.Entries {
-		serialize := server.buildGrafanaUser(&UserInfo{
+		memberOf, err := server.getMemberOf(users)
+		if err != nil {
+			return nil, err
+		}
+
+		userInfo := &UserInfo{
 			DN: getLdapAttrN(
 				"dn",
 				users,
@@ -545,17 +576,34 @@ func (server *Server) serializeUsers(users *ldap.SearchResult) []*models.Externa
 				users,
 				index,
 			),
-			MemberOf: getLdapAttrArrayN(
-				server.config.Attr.MemberOf,
-				users,
-				index,
-			),
-		})
+			MemberOf: memberOf,
+		}
 
-		serialized = append(serialized, serialize)
+		serialized = append(
+			serialized,
+			server.buildGrafanaUser(userInfo),
+		)
 	}
 
-	return serialized
+	return serialized, nil
+}
+
+// getMemberOf finds memberOf property or request it
+func (server *Server) getMemberOf(search *ldap.SearchResult) (
+	[]string, error,
+) {
+	if server.config.GroupSearchFilter == "" {
+		memberOf := getLdapAttrArray(server.config.Attr.MemberOf, search)
+
+		return memberOf, nil
+	}
+
+	memberOf, err := server.requestMemberOf(search)
+	if err != nil {
+		return nil, err
+	}
+
+	return memberOf, nil
 }
 
 func appendIfNotEmpty(slice []string, values ...string) []string {
