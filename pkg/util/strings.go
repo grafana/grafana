@@ -73,13 +73,13 @@ func ToCamelCase(str string) string {
 	var finalParts []string
 	parts := strings.Split(str, "_")
 
- 	for _, part := range parts {
+	for _, part := range parts {
 		finalParts = append(finalParts, strings.Split(part, "-")...)
 	}
 
- 	for index, part := range finalParts[1:] {
+	for index, part := range finalParts[1:] {
 		finalParts[index+1] = strings.Title(part)
 	}
 
- 	return strings.Join(finalParts, "")
+	return strings.Join(finalParts, "")
 }
