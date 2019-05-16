@@ -8,10 +8,11 @@ import {
   CustomScrollbar,
 } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import { LogRowContextRows } from './LogRowContextProvider';
+import { LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
 
 interface LogRowContextProps {
   context: LogRowContextRows;
+  hasMoreContextRows: HasMoreContextRows;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
 }
@@ -57,7 +58,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       overflow: hidden;
       background: ${theme.colors.pageBg};
       background: linear-gradient(180deg, ${gradientTop} 0%, ${gradientBottom} 104.25%);
-      box-shadow: 0px 10px 20px ${boxShadowColor};
+      box-shadow: 0px 10px 20px ${boxShadowColor}, 0px 0px 2px ${boxShadowColor};
       border: 1px solid ${borderColor};
     `,
     header: css`
@@ -77,24 +78,25 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
 interface LogRowContextGroupHeaderProps {
   rows: string[];
   onLoadMoreContext: () => void;
+  shouldScrollToBottom?: boolean;
+  canLoadMoreRows?: boolean;
 }
-interface LogRowContextGroupProps {
+interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   rows: string[];
   className: string;
-  shouldScrollToBottom?: boolean;
-  onLoadMoreContext: () => void;
 }
 
 const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
   rows,
   onLoadMoreContext,
+  canLoadMoreRows,
 }) => {
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
   return (
     <div className={header}>
       Found {rows.length} rows.
-      {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && (
+      {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
         <span
           className={css`
             margin-left: 10px;
@@ -116,6 +118,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   rows,
   className,
   shouldScrollToBottom,
+  canLoadMoreRows,
   onLoadMoreContext,
 }) => {
   const theme = useContext(ThemeContext);
@@ -129,10 +132,16 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
     }
   });
 
+  const headerProps = {
+    rows,
+    onLoadMoreContext,
+    canLoadMoreRows,
+  };
+
   return (
     <div className={cx(className, commonStyles)}>
       {/* When displaying "after" context */}
-      {shouldScrollToBottom && <LogRowContextGroupHeader rows={rows} onLoadMoreContext={onLoadMoreContext} />}
+      {shouldScrollToBottom && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
         <CustomScrollbar autoHide scrollTop={scrollTop}>
           <div ref={listContainerRef}>
@@ -154,7 +163,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
         </CustomScrollbar>
       </div>
       {/* When displaying "before" context */}
-      {!shouldScrollToBottom && <LogRowContextGroupHeader rows={rows} onLoadMoreContext={onLoadMoreContext} />}
+      {!shouldScrollToBottom && <LogRowContextGroupHeader {...headerProps} />}
     </div>
   );
 };
@@ -163,6 +172,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   context,
   onOutsideClick,
   onLoadMoreContext,
+  hasMoreContextRows,
 }) => {
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
@@ -174,6 +184,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
               top: -250px;
             `}
             shouldScrollToBottom
+            canLoadMoreRows={hasMoreContextRows.after}
             onLoadMoreContext={onLoadMoreContext}
           />
         )}
@@ -181,7 +192,8 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         {context.before && context.before.length > 0 && (
           <LogRowContextGroup
             onLoadMoreContext={onLoadMoreContext}
-            rows={context.after}
+            canLoadMoreRows={hasMoreContextRows.before}
+            rows={context.before}
             className={css`
               top: 100%;
             `}

@@ -8,10 +8,19 @@ export interface LogRowContextRows {
   after?: string[];
 }
 
+export interface HasMoreContextRows {
+  before: boolean;
+  after: boolean;
+}
+
 interface LogRowContextProviderProps {
   row: LogRowModel;
   getRowContext: (row: LogRowModel, limit?: number) => Promise<LogRowContextQueryResponse>;
-  children: (props: { result: LogRowContextRows; updateLimit: () => void }) => JSX.Element;
+  children: (props: {
+    result: LogRowContextRows;
+    hasMoreContextRows: HasMoreContextRows;
+    updateLimit: () => void;
+  }) => JSX.Element;
 }
 
 export const LogRowContextProvider: React.FunctionComponent<LogRowContextProviderProps> = ({
@@ -20,7 +29,11 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   children,
 }) => {
   const [limit, setLimit] = useState(10);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<LogRowContextQueryResponse>(null);
+  const [hasMoreContextRows, setHasMoreContextRows] = useState({
+    before: true,
+    after: true,
+  });
 
   const { value } = useAsync(async () => {
     return getRowContext(row, limit);
@@ -28,7 +41,25 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
 
   useEffect(() => {
     if (value) {
-      setResult(value);
+      setResult(currentResult => {
+        let hasMoreLogsBefore = true,
+          hasMoreLogsAfter = true;
+
+        if (currentResult && currentResult.data[0].length === value.data[0].length) {
+          hasMoreLogsBefore = false;
+        }
+
+        if (currentResult && currentResult.data[1].length === value.data[1].length) {
+          hasMoreLogsAfter = false;
+        }
+
+        setHasMoreContextRows({
+          before: hasMoreLogsBefore,
+          after: hasMoreLogsAfter,
+        });
+
+        return value;
+      });
     }
   }, [value]);
 
@@ -37,6 +68,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       before: result ? result.data[0] : [],
       after: result ? result.data[1] : [],
     },
+    hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
   });
 };

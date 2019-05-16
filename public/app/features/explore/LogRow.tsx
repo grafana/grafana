@@ -9,7 +9,7 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css } from 'emotion';
-import { LogRowContextProvider, LogRowContextRows } from './LogRowContextProvider';
+import { LogRowContextProvider, LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
 import { LogRowContextQueryResponse, ThemeContext, selectThemeVariant, GrafanaTheme } from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
@@ -161,8 +161,7 @@ export class LogRow extends PureComponent<Props, State> {
     });
   };
 
-  renderLogRow(context?: LogRowContextRows, updateLimit?: () => void) {
-    console.log(this.state.showContext);
+  renderLogRow(context?: LogRowContextRows, hasMoreContextRows?: HasMoreContextRows, updateLimit?: () => void) {
     const {
       getRows,
       highlighterExpressions,
@@ -229,6 +228,7 @@ export class LogRow extends PureComponent<Props, State> {
                   {showContext && context && (
                     <LogRowContext
                       context={context}
+                      hasMoreContextRows={hasMoreContextRows}
                       onOutsideClick={this.toggleContext}
                       onLoadMoreContext={() => {
                         if (updateLimit) {
@@ -307,8 +307,8 @@ export class LogRow extends PureComponent<Props, State> {
       return (
         <>
           <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
-            {({ result, updateLimit }) => {
-              return <>{this.renderLogRow(result, updateLimit)}</>;
+            {({ result, hasMoreContextRows, updateLimit }) => {
+              return <>{this.renderLogRow(result, hasMoreContextRows, updateLimit)}</>;
             }}
           </LogRowContextProvider>
         </>
