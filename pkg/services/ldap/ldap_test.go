@@ -14,7 +14,89 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	Convey("authenticate", t, func() {
+	Convey("Add()", t, func() {
+		connection := &mockLDAPConn{}
+
+		auth := &Server{
+			config: &ServerConfig{
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			connection: connection,
+			log:        log.New("test-logger"),
+		}
+
+		Convey("Adds user", func() {
+			err := auth.Add(
+				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
+				map[string][]string{
+					"mail":         {"ldap-viewer@grafana.com"},
+					"userPassword": {"grafana"},
+					"objectClass": {
+						"person",
+						"top",
+						"inetOrgPerson",
+						"organizationalPerson",
+					},
+					"sn": {"ldap-tuz"},
+					"cn": {"ldap-tuz"},
+				},
+			)
+
+			hasMail := false
+			hasUserPassword := false
+			hasObjectClass := false
+			hasSN := false
+			hasCN := false
+
+			So(err, ShouldBeNil)
+			So(connection.addParams.Controls, ShouldBeNil)
+			So(connection.addCalled, ShouldBeTrue)
+			So(
+				connection.addParams.DN,
+				ShouldEqual,
+				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
+			)
+
+			attrs := connection.addParams.Attributes
+			for _, value := range attrs {
+				if value.Type == "mail" {
+					So(value.Vals, ShouldContain, "ldap-viewer@grafana.com")
+					hasMail = true
+				}
+
+				if value.Type == "userPassword" {
+					hasUserPassword = true
+					So(value.Vals, ShouldContain, "grafana")
+				}
+
+				if value.Type == "objectClass" {
+					hasObjectClass = true
+					So(value.Vals, ShouldContain, "person")
+					So(value.Vals, ShouldContain, "top")
+					So(value.Vals, ShouldContain, "inetOrgPerson")
+					So(value.Vals, ShouldContain, "organizationalPerson")
+				}
+
+				if value.Type == "sn" {
+					hasSN = true
+					So(value.Vals, ShouldContain, "ldap-tuz")
+				}
+
+				if value.Type == "cn" {
+					hasCN = true
+					So(value.Vals, ShouldContain, "ldap-tuz")
+				}
+			}
+
+			So(hasMail, ShouldBeTrue)
+			So(hasUserPassword, ShouldBeTrue)
+			So(hasObjectClass, ShouldBeTrue)
+			So(hasSN, ShouldBeTrue)
+			So(hasCN, ShouldBeTrue)
+		})
+	})
+
+	Convey("authenticate()", t, func() {
 		Convey("Given bind dn and password configured", func() {
 			connection := &mockLDAPConn{}
 			var actualUsername, actualPassword string
@@ -515,88 +597,6 @@ func TestAuth(t *testing.T) {
 
 			// User should have admin privileges
 			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
-		})
-	})
-
-	Convey("Add()", t, func() {
-		mockLDAPConnection := &mockLDAPConn{}
-
-		auth := &Server{
-			config: &ServerConfig{
-				SearchBaseDNs: []string{"BaseDNHere"},
-			},
-			connection: mockLDAPConnection,
-			log:        log.New("test-logger"),
-		}
-
-		authScenario("Add user", func(sc *scenarioContext) {
-			err := auth.Add(
-				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
-				map[string][]string{
-					"mail":         {"ldap-viewer@grafana.com"},
-					"userPassword": {"grafana"},
-					"objectClass": {
-						"person",
-						"top",
-						"inetOrgPerson",
-						"organizationalPerson",
-					},
-					"sn": {"ldap-tuz"},
-					"cn": {"ldap-tuz"},
-				},
-			)
-
-			hasMail := false
-			hasUserPassword := false
-			hasObjectClass := false
-			hasSN := false
-			hasCN := false
-
-			So(err, ShouldBeNil)
-			So(mockLDAPConnection.addParams.Controls, ShouldBeNil)
-			So(mockLDAPConnection.addCalled, ShouldBeTrue)
-			So(
-				mockLDAPConnection.addParams.DN,
-				ShouldEqual,
-				"cn=ldap-tuz,ou=users,dc=grafana,dc=org",
-			)
-
-			attrs := mockLDAPConnection.addParams.Attributes
-			for _, value := range attrs {
-				if value.Type == "mail" {
-					So(value.Vals, ShouldContain, "ldap-viewer@grafana.com")
-					hasMail = true
-				}
-
-				if value.Type == "userPassword" {
-					hasUserPassword = true
-					So(value.Vals, ShouldContain, "grafana")
-				}
-
-				if value.Type == "objectClass" {
-					hasObjectClass = true
-					So(value.Vals, ShouldContain, "person")
-					So(value.Vals, ShouldContain, "top")
-					So(value.Vals, ShouldContain, "inetOrgPerson")
-					So(value.Vals, ShouldContain, "organizationalPerson")
-				}
-
-				if value.Type == "sn" {
-					hasSN = true
-					So(value.Vals, ShouldContain, "ldap-tuz")
-				}
-
-				if value.Type == "cn" {
-					hasCN = true
-					So(value.Vals, ShouldContain, "ldap-tuz")
-				}
-			}
-
-			So(hasMail, ShouldBeTrue)
-			So(hasUserPassword, ShouldBeTrue)
-			So(hasObjectClass, ShouldBeTrue)
-			So(hasSN, ShouldBeTrue)
-			So(hasCN, ShouldBeTrue)
 		})
 	})
 

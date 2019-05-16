@@ -19,6 +19,9 @@ var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 // ErrNoLDAPServers is returned when there is no LDAP servers specified
 var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 
+// ErrDidNotFindUser if request for user is unsuccessful
+var ErrDidNotFindUser = errors.New("Did not find a user")
+
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
 	Login(query *models.LoginUserQuery) (
@@ -27,6 +30,10 @@ type IMultiLDAP interface {
 
 	Users(logins []string) (
 		[]*models.ExternalUserInfo, error,
+	)
+
+	User(login string) (
+		*models.ExternalUserInfo, error,
 	)
 
 	Add(dn string, values map[string][]string) error
@@ -133,6 +140,39 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	return nil, ErrInvalidCredentials
 }
 
+// User gets a user by login
+func (multiples *MultiLDAP) User(login string) (
+	*models.ExternalUserInfo,
+	error,
+) {
+	search := []string{login}
+
+	if len(multiples.configs) == 0 {
+		return nil, ErrNoLDAPServers
+	}
+
+	for _, config := range multiples.configs {
+		server := ldap.New(config)
+
+		if err := server.Dial(); err != nil {
+			return nil, err
+		}
+
+		defer server.Close()
+
+		users, err := server.Users(search)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(users) != 0 {
+			return users[0], nil
+		}
+	}
+
+	return nil, ErrDidNotFindUser
+}
+
 // Users gets users from multiple LDAP servers
 func (multiples *MultiLDAP) Users(logins []string) (
 	[]*models.ExternalUserInfo,
@@ -153,7 +193,7 @@ func (multiples *MultiLDAP) Users(logins []string) (
 
 		defer server.Close()
 
-		users, err := server.Users()
+		users, err := server.Users(logins)
 		if err != nil {
 			return nil, err
 		}

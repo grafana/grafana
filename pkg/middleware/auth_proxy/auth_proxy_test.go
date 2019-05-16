@@ -49,7 +49,7 @@ func TestMiddlewareContext(t *testing.T) {
 			},
 		}
 
-		Convey("logs in data from the cache", func() {
+		Convey("logs in user from the cache", func() {
 			store := remotecache.NewFakeStore(t)
 			key := fmt.Sprintf(CachePrefix, name)
 			store.Set(key, int64(33), 0)

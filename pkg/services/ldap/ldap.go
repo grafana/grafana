@@ -31,7 +31,7 @@ type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Add(string, map[string][]string) error
 	Remove(string) error
-	Users() ([]*models.ExternalUserInfo, error)
+	Users([]string) ([]*models.ExternalUserInfo, error)
 	ExtractGrafanaUser(*UserInfo) (*models.ExternalUserInfo, error)
 	Dial() error
 	Close()
@@ -123,7 +123,7 @@ func (server *Server) Close() {
 	server.connection.Close()
 }
 
-// Login logs in the user
+// Login authenticates the user, search it and then serialize it
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
@@ -200,7 +200,10 @@ func (server *Server) Remove(dn string) error {
 }
 
 // Users gets LDAP users
-func (server *Server) Users() ([]*models.ExternalUserInfo, error) {
+func (server *Server) Users(logins []string) (
+	[]*models.ExternalUserInfo,
+	error,
+) {
 	var result *ldap.SearchResult
 	var err error
 	config := server.config
@@ -217,17 +220,10 @@ func (server *Server) Users() ([]*models.ExternalUserInfo, error) {
 			inputs.MemberOf,
 		)
 
-		req := ldap.SearchRequest{
-			BaseDN:       base,
-			Scope:        ldap.ScopeWholeSubtree,
-			DerefAliases: ldap.NeverDerefAliases,
-			Attributes:   attributes,
-
-			// Doing a star here to get all the users in one go
-			Filter: strings.Replace(config.SearchFilter, "%s", "*", -1),
-		}
+		req := server.getSearchRequest(base, attributes, logins)
 
 		result, err = server.connection.Search(&req)
+
 		if err != nil {
 			return nil, err
 		}
@@ -264,6 +260,28 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	}
 
 	return nil
+}
+
+func (server *Server) getSearchRequest(
+	base string,
+	attributes, logins []string,
+) ldap.SearchRequest {
+	search := ""
+	for _, login := range logins {
+		search = search + strings.Replace(server.config.SearchFilter, "%s", login, -1)
+	}
+
+	filter := fmt.Sprintf("(|%s)", search)
+
+	request := ldap.SearchRequest{
+		BaseDN:       base,
+		Scope:        ldap.ScopeWholeSubtree,
+		DerefAliases: ldap.NeverDerefAliases,
+		Attributes:   attributes,
+		Filter:       filter,
+	}
+
+	return request
 }
 
 func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
@@ -338,6 +356,7 @@ func (server *Server) secondBind(user *UserInfo, userPassword string) error {
 	return nil
 }
 
+// authenticate authenticates the user
 func (server *Server) authenticate(username, userPassword string) error {
 	if server.config.BindPassword != "" || server.config.BindDN == "" {
 		userPassword = server.config.BindPassword

@@ -150,17 +150,6 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	return false, newError("Proxy authentication required", err)
 }
 
-// InCache checks if we have user in cache
-func (auth *AuthProxy) InCache() bool {
-	userID, _ := auth.LoginViaCache()
-
-	if userID == 0 {
-		return false
-	}
-
-	return true
-}
-
 // getKey forms a key for the cache
 func (auth *AuthProxy) getKey() string {
 	return fmt.Sprintf(CachePrefix, auth.header)
@@ -168,11 +157,10 @@ func (auth *AuthProxy) getKey() string {
 
 // Login logs in user id with whatever means possible
 func (auth *AuthProxy) Login() (int64, *Error) {
-	if auth.InCache() {
 
+	id, _ := auth.GetUserViaCache()
+	if id != 0 {
 		// Error here means absent cache - we don't need to handle that
-		id, _ := auth.LoginViaCache()
-
 		return id, nil
 	}
 
@@ -187,7 +175,7 @@ func (auth *AuthProxy) Login() (int64, *Error) {
 		}
 
 		if err != nil {
-			return 0, newError("Failed to sync user", err)
+			return 0, newError("Failed to get the user", err)
 		}
 
 		return id, nil
@@ -196,7 +184,7 @@ func (auth *AuthProxy) Login() (int64, *Error) {
 	id, err := auth.LoginViaHeader()
 	if err != nil {
 		return 0, newError(
-			"Failed to login as user specified in auth proxy header",
+			"Failed to log in as user, specified in auth proxy header",
 			err,
 		)
 	}
@@ -204,8 +192,8 @@ func (auth *AuthProxy) Login() (int64, *Error) {
 	return id, nil
 }
 
-// LoginViaCache gets the user from cache
-func (auth *AuthProxy) LoginViaCache() (int64, error) {
+// GetUserViaCache gets user id from cache
+func (auth *AuthProxy) GetUserViaCache() (int64, error) {
 	var (
 		cacheKey    = auth.getKey()
 		userID, err = auth.store.Get(cacheKey)
@@ -220,17 +208,12 @@ func (auth *AuthProxy) LoginViaCache() (int64, error) {
 
 // LoginViaLDAP logs in user via LDAP request
 func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
-	query := &models.LoginUserQuery{
-		ReqContext: auth.ctx,
-		Username:   auth.header,
-	}
-
 	config, err := getLDAPConfig()
 	if err != nil {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
 
-	extUser, err := newLDAP(config.Servers).Login(query)
+	extUser, err := newLDAP(config.Servers).User(auth.header)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
@@ -283,7 +266,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 
 	result, err := user.Upsert(&user.UpsertArgs{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LdapAllowSignup,
+		SignupAllowed: true,
 		ExternalUser:  extUser,
 	})
 	if err != nil {
@@ -308,21 +291,18 @@ func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember() *Error {
+func (auth *AuthProxy) Remember(id int64) *Error {
+	key := auth.getKey()
 
-	// Make sure we do not rewrite the expiration time
-	if auth.InCache() {
+	// Check if user already in cache
+	userID, _ := auth.store.Get(key)
+	if userID != nil {
 		return nil
 	}
 
-	var (
-		key        = auth.getKey()
-		value, _   = auth.LoginViaCache()
-		expiration = time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(-auth.cacheTTL) * time.Minute
 
-		err = auth.store.Set(key, value, expiration)
-	)
-
+	err := auth.store.Set(key, id, expiration)
 	if err != nil {
 		return newError(err.Error(), nil)
 	}
