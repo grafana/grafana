@@ -284,14 +284,6 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	return appUrl, appSubUrl, nil
 }
 
-func parseAppBasePath(section *ini.Section) (string, error) {
-	appBasePath, err := valueAsString(section, "base_path", "")
-	if err != nil {
-		return "", err
-	}
-	return appBasePath, nil
-}
-
 func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
