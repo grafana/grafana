@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -13,7 +14,7 @@ import (
 
 const AdminUserId = 1
 
-func resetPasswordCommand(c CommandLine, sqlStore *sqlstore.SqlStore) error {
+func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
 	newPassword := c.Args().First()
 
 	password := models.Password(newPassword)

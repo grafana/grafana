@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func EncryptDatasourcePaswords(c commands.CommandLine, sqlStore *sqlstore.SqlStore) error {
+func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
 	var passwordRows []map[string]string
 	datasourceTypes := []string{
 		"mysql",
@@ -84,13 +84,13 @@ func getUpdatedSecureJsonData(row map[string]string, passwordFieldName string) (
 		return nil, err
 	}
 
- 	var secureJsonData map[string]interface{}
+	var secureJsonData map[string]interface{}
 
- 	if err := json.Unmarshal([]byte(row["secure_json_data"]), &secureJsonData); err != nil {
+	if err := json.Unmarshal([]byte(row["secure_json_data"]), &secureJsonData); err != nil {
 		return nil, err
 	}
 
- 	jsonFieldName := util.ToCamelCase(passwordFieldName)
+	jsonFieldName := util.ToCamelCase(passwordFieldName)
 	secureJsonData[jsonFieldName] = encryptedPassword
 	return secureJsonData, nil
 }
