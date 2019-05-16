@@ -1,5 +1,4 @@
 import React, { createRef } from 'react';
-// @ts-ignore
 import _ from 'lodash';
 import { FixedSizeList } from 'react-window';
 

@@ -7,7 +7,7 @@ import {
   guessFieldTypeFromValue,
 } from './processSeriesData';
 import { FieldType, TimeSeries } from '../types/data';
-import moment from 'moment';
+import { dateTime } from './moment_wrapper';
 
 describe('toSeriesData', () => {
   it('converts timeseries to series', () => {
@@ -45,7 +45,7 @@ describe('toSeriesData', () => {
     expect(guessFieldTypeFromValue(true)).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue(false)).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue(new Date())).toBe(FieldType.time);
-    expect(guessFieldTypeFromValue(moment())).toBe(FieldType.time);
+    expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
   });
 
   it('Guess Colum Types from strings', () => {

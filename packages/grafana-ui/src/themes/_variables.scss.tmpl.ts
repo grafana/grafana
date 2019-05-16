@@ -171,6 +171,7 @@ $zindex-tooltip: ${theme.zIndex.tooltip};
 $zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
 $zindex-modal: ${theme.zIndex.modal};
 $zindex-typeahead: ${theme.zIndex.typeahead};
+$zindex-timepicker-popover: 1070;
 
 // Buttons
 //
@@ -196,9 +197,9 @@ $side-menu-width: 60px;
 
 // dashboard
 $dashboard-padding: $space-md;
-$panel-padding: 0 ${theme.panelPadding.horizontal}px ${theme.panelPadding.vertical}px ${
-    theme.panelPadding.horizontal
-  }px;
+$panel-padding: ${theme.panelPadding}px;
+$panel-header-height: ${theme.panelHeaderHeight}px;
+$panel-header-z-index: 10;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

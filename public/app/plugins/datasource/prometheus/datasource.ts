@@ -4,7 +4,7 @@ import $ from 'jquery';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -14,14 +14,22 @@ import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 
 // Types
-import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
+import { PromQuery, PromOptions } from './types';
+import {
+  DataQueryRequest,
+  DataSourceApi,
+  AnnotationEvent,
+  DataSourceInstanceSettings,
+  DataQueryError,
+} from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
+import { safeStringifyValue } from 'app/core/utils/explore';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export class PrometheusDatasource implements DataSourceApi<PromQuery> {
+export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
   editorSrc: string;
-  name: string;
   ruleMappings: { [index: string]: string };
   url: string;
   directUrl: string;
@@ -35,34 +43,51 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
   resultTransformer: ResultTransformer;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv: BackendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    private $q: angular.IQService,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
+
     this.type = 'prometheus';
     this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
-    this.name = instanceSettings.name;
     this.url = instanceSettings.url;
-    this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.directUrl = instanceSettings.jsonData.directUrl;
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
   }
 
-  init() {
+  init = () => {
     this.loadRules();
-  }
+  };
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  _addTracingHeaders(httpOptions: any, options: any) {
+    httpOptions.headers = options.headers || {};
+    const proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
   }
 
   _request(url, data?, options?: any) {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {
@@ -75,9 +100,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           }).join('&');
       }
     } else {
-      options.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+      options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       options.transformRequest = data => {
         return $.param(data);
       };
@@ -89,9 +112,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     }
 
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      options.headers.Authorization = this.basicAuth;
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -116,11 +137,11 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     return escapedValues.join('|');
   }
 
-  targetContainsTemplate(target) {
+  targetContainsTemplate(target: PromQuery) {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options: DataQueryOptions<PromQuery>) {
+  query(options: DataQueryRequest<PromQuery>): Promise<{ data: any }> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -140,7 +161,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      return this.$q.when({ data: [] });
+      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
     const allQueryPromise = _.map(queries, query => {
@@ -151,16 +172,12 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
       }
     });
 
-    return this.$q.all(allQueryPromise).then(responseList => {
+    const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
       let result = [];
 
       _.each(responseList, (response, index) => {
-        if (response.status === 'error') {
-          const error = {
-            index,
-            ...response.error,
-          };
-          throw error;
+        if (response.cancelled) {
+          return;
         }
 
         // Keeping original start/end for transformers
@@ -181,6 +198,8 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
 
       return { data: result };
     });
+
+    return allPromise as Promise<{ data: any }>;
   }
 
   createQuery(target, options, start, end) {
@@ -227,12 +246,14 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     query.requestId = options.panelId + target.refId;
+    query.refId = target.refId;
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
+    this._addTracingHeaders(query, options);
 
     return query;
   }
@@ -261,7 +282,9 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
+      this.handleErrors(err, query)
+    );
   }
 
   performInstantQuery(query, time) {
@@ -273,8 +296,38 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
+      this.handleErrors(err, query)
+    );
   }
+
+  handleErrors = (err: any, target: PromQuery) => {
+    if (err.cancelled) {
+      return err;
+    }
+
+    const error: DataQueryError = {
+      message: 'Unknown error during query transaction. Please check JS console logs.',
+      refId: target.refId,
+    };
+
+    if (err.data) {
+      if (typeof err.data === 'string') {
+        error.message = err.data;
+      } else if (err.data.error) {
+        error.message = safeStringifyValue(err.data.error);
+      }
+    } else if (err.message) {
+      error.message = err.message;
+    } else if (typeof err === 'string') {
+      error.message = err;
+    }
+
+    error.status = err.status;
+    error.statusText = err.statusText;
+
+    throw error;
+  };
 
   performSuggestQuery(query, cache = false) {
     const url = '/api/v1/label/__name__/values';

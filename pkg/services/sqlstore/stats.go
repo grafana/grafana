@@ -89,52 +89,84 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 }
 
 func GetAdminStats(query *m.GetAdminStatsQuery) error {
-	var rawSql = `SELECT
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("user") + `
-	  ) AS users,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("org") + `
-	  ) AS orgs,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("dashboard") + `
-	  ) AS dashboards,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("dashboard_snapshot") + `
-	  ) AS snapshots,
-	  (
-		SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
-		FROM ` + dialect.Quote("dashboard_tag") + `
-	  ) AS tags,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("data_source") + `
-	  ) AS datasources,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("playlist") + `
-	  ) AS playlists,
-	  (
-		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
-	  ) AS stars,
-	  (
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("alert") + `
-	  ) AS alerts,
+	activeEndDate := time.Now().Add(-activeUserTimeLimit)
+	roleCounter := func(role, alias string) string {
+		sql :=
+			`
 			(
 				SELECT COUNT(*)
-		from ` + dialect.Quote("user") + ` where last_seen_at > ?
-			) as active_users
+				FROM ` + dialect.Quote("user") + ` as u
+				WHERE 
+				(SELECT COUNT(*) 
+					FROM org_user 
+					WHERE org_user.user_id=u.id 
+					AND org_user.role='` + role + `')>0
+			) as ` + alias + `,
+			(
+				SELECT COUNT(*)
+				FROM ` + dialect.Quote("user") + ` as u
+				WHERE 
+				(SELECT COUNT(*) 
+					FROM org_user 
+					WHERE org_user.user_id=u.id 
+					AND org_user.role='` + role + `')>0
+				AND u.last_seen_at>?
+			) as active_` + alias
+
+		return sql
+	}
+
+	var rawSql = `SELECT
+		  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("org") + `
+		  ) AS orgs,
+		  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard") + `
+		) AS dashboards,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard_snapshot") + `
+		  ) AS snapshots,
+		  (
+		SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
+		FROM ` + dialect.Quote("dashboard_tag") + `
+		  ) AS tags,
+		  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("data_source") + `
+		  ) AS datasources,
+		  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("playlist") + `
+		  ) AS playlists,
+		  (
+		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
+		  ) AS stars,
+		  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("alert") + `
+		) AS alerts,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user") + `
+		) AS users,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
+		) as active_users,
+		` + roleCounter("Admin", "admins") + `,
+		` + roleCounter("Editor", "editors") + `,
+		` + roleCounter("Viewer", "viewers") + `,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user_auth_token") + ` where rotated_at > ?
+		) as active_sessions
 	  `
 
-	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
-
 	var stats m.AdminStats
-	_, err := x.SQL(rawSql, activeUserDeadlineDate).Get(&stats)
+	_, err := x.SQL(rawSql, activeEndDate, activeEndDate, activeEndDate, activeEndDate, activeEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import React, { Context } from 'react';
 import ReactDOM from 'react-dom';
@@ -37,8 +36,8 @@ export interface QueryFieldProps {
   cleanText?: (text: string) => string;
   disabled?: boolean;
   initialQuery: string | null;
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: string) => void;
+  onRunQuery?: () => void;
+  onChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
   onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
@@ -150,7 +149,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       if (documentChanged) {
         const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
         if (textChanged && invokeParentOnValueChanged) {
-          this.executeOnQueryChangeAndExecuteQueries();
+          this.executeOnChangeAndRunQueries();
+        }
+        if (textChanged && !invokeParentOnValueChanged) {
+          this.updateLogsHighlights();
         }
       }
     });
@@ -164,15 +166,22 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  executeOnQueryChangeAndExecuteQueries = () => {
+  updateLogsHighlights = () => {
+    const { onChange } = this.props;
+    if (onChange) {
+      onChange(Plain.serialize(this.state.value));
+    }
+  };
+
+  executeOnChangeAndRunQueries = () => {
     // Send text change to parent
-    const { onQueryChange, onExecuteQuery } = this.props;
-    if (onQueryChange) {
-      onQueryChange(Plain.serialize(this.state.value));
+    const { onChange, onRunQuery } = this.props;
+    if (onChange) {
+      onChange(Plain.serialize(this.state.value));
     }
 
-    if (onExecuteQuery) {
-      onExecuteQuery();
+    if (onRunQuery) {
+      onRunQuery();
       this.setState({ lastExecutedValue: this.state.value });
     }
   };
@@ -320,11 +329,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       }
 
       return true;
-    } else {
-      this.executeOnQueryChangeAndExecuteQueries();
+    } else if (!event.shiftKey) {
+      // Run queries if Shift is not pressed, otherwise pass through
+      this.executeOnChangeAndRunQueries();
 
-      return undefined;
+      return true;
     }
+    return undefined;
   };
 
   onKeyDown = (event: KeyboardEvent, change: Change) => {
@@ -404,7 +415,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     this.placeholdersBuffer.clearPlaceholders();
 
     if (previousValue !== currentValue) {
-      this.executeOnQueryChangeAndExecuteQueries();
+      this.executeOnChangeAndRunQueries();
     }
   };
 

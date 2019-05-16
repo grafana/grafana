@@ -1,4 +1,3 @@
-// @ts-ignore
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
@@ -30,7 +29,7 @@ export class BackendSrv {
     return this.request({ method: 'DELETE', url });
   }
 
-  post(url: string, data: any) {
+  post(url: string, data?: any) {
     return this.request({ method: 'POST', url, data });
   }
 

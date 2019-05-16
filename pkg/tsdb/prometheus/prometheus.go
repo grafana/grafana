@@ -12,7 +12,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	api "github.com/prometheus/client_golang/api"
@@ -70,7 +70,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
 			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.BasicAuthPassword,
+			password:  dsInfo.DecryptedBasicAuthPassword(),
 		}
 	}
 

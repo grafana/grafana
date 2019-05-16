@@ -1,8 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { PluginListPage, Props } from './PluginListPage';
-import { NavModel, Plugin } from '../../types';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
+import { PluginMeta, NavModel } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -14,7 +14,7 @@ const setup = (propOverrides?: object) => {
         text: 'Plugins',
       },
     } as NavModel,
-    plugins: [] as Plugin[],
+    plugins: [] as PluginMeta[],
     searchQuery: '',
     setPluginsSearchQuery: jest.fn(),
     setPluginsLayoutMode: jest.fn(),

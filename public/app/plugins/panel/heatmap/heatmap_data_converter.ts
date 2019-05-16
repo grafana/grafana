@@ -253,7 +253,7 @@ function convertToHeatMap(seriesList, yBucketSize, xBucketSize, logBase = 1) {
   // |*   | --/ |1|,
   // |____|     |0|
   //
-  _.forEach(heatmap, xBucket => {
+  _.forEach(heatmap, (xBucket: any) => {
     if (logBase !== 1) {
       xBucket.buckets = convertToLogScaleValueBuckets(xBucket, yBucketSize, logBase);
     } else {

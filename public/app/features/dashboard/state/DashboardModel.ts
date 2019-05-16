@@ -1,6 +1,4 @@
 // Libaries
-import moment, { MomentInput } from 'moment';
-// @ts-ignore
 import _ from 'lodash';
 
 // Constants
@@ -17,6 +15,7 @@ import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
 import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -179,7 +178,7 @@ export class DashboardModel {
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         const current = copy.templating.list[i];
-        const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -449,7 +448,7 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    const variable = _.find(this.templating.list, { name: panel.repeat });
+    const variable: any = _.find(this.templating.list, { name: panel.repeat } as any);
     if (!variable) {
       return;
     }
@@ -699,12 +698,12 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date: MomentInput, format?: string) {
-    date = moment.isMoment(date) ? date : moment(date);
+  formatDate(date: DateTimeInput, format?: string) {
+    date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
-    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
+    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
   }
 
   destroy() {
@@ -719,7 +718,7 @@ export class DashboardModel {
 
     if (row.collapsed) {
       row.collapsed = false;
-      const hasRepeat = _.some(row.panels, (p: PanelModel) => p.repeat);
+      const hasRepeat = _.some(row.panels as PanelModel[], (p: PanelModel) => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
@@ -818,10 +817,10 @@ export class DashboardModel {
     return this.graphTooltip === 1;
   }
 
-  getRelativeTime(date: MomentInput) {
-    date = moment.isMoment(date) ? date : moment(date);
+  getRelativeTime(date: DateTimeInput) {
+    date = isDateTime(date) ? date : dateTime(date);
 
-    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
   }
 
   isTimezoneUtc() {

@@ -28,7 +28,7 @@ export class DataSourcePicker extends PureComponent<Props> {
     super(props);
   }
 
-  onChange = (item: SelectOptionItem) => {
+  onChange = (item: SelectOptionItem<string>) => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
     this.props.onChange(ds);
   };

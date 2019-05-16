@@ -13,16 +13,14 @@ import { AngularComponent } from 'app/core/services/AngularLoader';
 
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { PanelPlugin } from 'app/types/plugins';
-
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
 
 interface PanelEditorProps {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  onTypeChanged: (newType: PanelPluginMeta) => void;
 }
 
 interface PanelEditorTab {
@@ -57,7 +55,7 @@ const getPanelEditorTab = (tabId: PanelEditorTabIds): PanelEditorTab => {
 };
 
 export class PanelEditor extends PureComponent<PanelEditorProps> {
-  constructor(props) {
+  constructor(props: PanelEditorProps) {
     super(props);
   }
 
@@ -107,7 +105,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     ];
 
     // handle panels that do not have queries tab
-    if (plugin.dataFormats.length === 0) {
+    if (plugin.meta.skipDataQuery) {
       // remove queries tab
       tabs.shift();
       // switch tab
@@ -116,7 +114,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
       }
     }
 
-    if (config.alertingEnabled && plugin.id === 'graph') {
+    if (config.alertingEnabled && plugin.meta.id === 'graph') {
       tabs.push(getPanelEditorTab(PanelEditorTabIds.Alert));
     }
 
@@ -147,7 +145,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses}>
+      <a className={tabClasses} aria-label={`${tab.text} tab button`}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

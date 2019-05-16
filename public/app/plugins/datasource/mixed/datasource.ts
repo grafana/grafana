@@ -1,15 +1,17 @@
 import _ from 'lodash';
 
-import { DataSourceApi, DataQuery, DataQueryOptions } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-class MixedDatasource implements DataSourceApi<DataQuery> {
+class MixedDatasource extends DataSourceApi<DataQuery> {
   /** @ngInject */
-  constructor(private datasourceSrv: DatasourceSrv) {}
+  constructor(instanceSettings: DataSourceInstanceSettings, private datasourceSrv: DatasourceSrv) {
+    super(instanceSettings);
+  }
 
-  query(options: DataQueryOptions<DataQuery>) {
+  query(options: DataQueryRequest<DataQuery>) {
     const sets = _.groupBy(options.targets, 'datasource');
-    const promises = _.map(sets, (targets: DataQuery[]) => {
+    const promises: any = _.map(sets, (targets: DataQuery[]) => {
       const dsName = targets[0].datasource;
       if (dsName === '-- Mixed --') {
         return Promise.resolve([]);

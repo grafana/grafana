@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import moment from 'moment';
 import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TableRenderer {
   formatters: any[];
@@ -101,11 +101,11 @@ export class TableRenderer {
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (_.isString(v) && !isNaN(v) && v.length > 12) {
+        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
           v = parseInt(v, 10);
         }
 
-        let date = moment(v);
+        let date = dateTime(v);
 
         if (this.isUtc) {
           date = date.utc();

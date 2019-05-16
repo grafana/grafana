@@ -32,6 +32,8 @@ import * as gaugePanel from 'app/plugins/panel/gauge/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 
+import * as exampleApp from 'app/plugins/app/example-app/module';
+
 const builtInPlugins = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
   'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
@@ -66,6 +68,8 @@ const builtInPlugins = {
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
+
+  'app/plugins/app/example-app/module': exampleApp,
 };
 
 export default builtInPlugins;

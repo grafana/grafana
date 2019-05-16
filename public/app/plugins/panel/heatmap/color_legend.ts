@@ -36,7 +36,7 @@ coreModule.directive('colorLegend', () => {
         const legendWidth = Math.floor(legendElem.outerWidth());
 
         if (panel.color.mode === 'spectrum') {
-          const colorScheme = _.find(ctrl.colorSchemes, {
+          const colorScheme: any = _.find(ctrl.colorSchemes, {
             value: panel.color.colorScheme,
           });
           const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, legendWidth);
@@ -76,7 +76,7 @@ coreModule.directive('heatmapLegend', () => {
           const minValue = cardStats.min;
 
           if (panel.color.mode === 'spectrum') {
-            const colorScheme = _.find(ctrl.colorSchemes, {
+            const colorScheme: any = _.find(ctrl.colorSchemes, {
               value: panel.color.colorScheme,
             });
             drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minValue);
