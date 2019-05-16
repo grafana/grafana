@@ -157,7 +157,10 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 
 // Add adds stuff to LDAP
 func (server *Server) Add(dn string, values map[string][]string) error {
-	err := server.authenticate(server.config.BindDN, server.config.BindPassword)
+	err := server.authenticate(
+		server.config.BindDN,
+		server.config.BindPassword,
+	)
 	if err != nil {
 		return err
 	}
@@ -185,7 +188,10 @@ func (server *Server) Add(dn string, values map[string][]string) error {
 
 // Remove removes stuff from LDAP
 func (server *Server) Remove(dn string) error {
-	err := server.authenticate(server.config.BindDN, server.config.BindPassword)
+	err := server.authenticate(
+		server.config.BindDN,
+		server.config.BindPassword,
+	)
 	if err != nil {
 		return err
 	}

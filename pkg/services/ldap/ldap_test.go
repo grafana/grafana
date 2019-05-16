@@ -96,6 +96,28 @@ func TestAuth(t *testing.T) {
 		})
 	})
 
+	Convey("Remove()", t, func() {
+		connection := &mockLDAPConn{}
+
+		auth := &Server{
+			config: &ServerConfig{
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			connection: connection,
+			log:        log.New("test-logger"),
+		}
+
+		Convey("Removes the user", func() {
+			dn := "cn=ldap-tuz,ou=users,dc=grafana,dc=org"
+			err := auth.Remove(dn)
+
+			So(err, ShouldBeNil)
+			So(connection.delCalled, ShouldBeTrue)
+			So(connection.delParams.Controls, ShouldBeNil)
+			So(connection.delParams.DN, ShouldEqual, dn)
+		})
+	})
+
 	Convey("authenticate()", t, func() {
 		Convey("Given bind dn and password configured", func() {
 			connection := &mockLDAPConn{}

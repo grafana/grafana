@@ -20,6 +20,9 @@ type mockLDAPConn struct {
 	addParams *ldap.AddRequest
 	addCalled bool
 
+	delParams *ldap.DelRequest
+	delCalled bool
+
 	bindProvider                func(username, password string) error
 	unauthenticatedBindProvider func(username string) error
 }
@@ -58,11 +61,13 @@ func (c *mockLDAPConn) Add(request *ldap.AddRequest) error {
 	return nil
 }
 
-func (c *mockLDAPConn) StartTLS(*tls.Config) error {
+func (c *mockLDAPConn) Del(request *ldap.DelRequest) error {
+	c.delCalled = true
+	c.delParams = request
 	return nil
 }
 
-func (c *mockLDAPConn) Del(*ldap.DelRequest) error {
+func (c *mockLDAPConn) StartTLS(*tls.Config) error {
 	return nil
 }
 
