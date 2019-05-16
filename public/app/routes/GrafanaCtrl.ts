@@ -52,6 +52,14 @@ export class GrafanaCtrl {
       bridgeSrv.init();
     };
 
+    // Export services to plugins via window
+    (window as any).grafanaRuntime = {
+      angularLoader,
+      backendSrv,
+      datasourceSrv,
+      timeSrv,
+    };
+
     $rootScope.colors = colors;
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
