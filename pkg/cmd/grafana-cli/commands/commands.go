@@ -7,12 +7,13 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func runDbCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runDbCommand(command func(commandLine CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 		cmd := &contextCommandLine{context}
 
@@ -28,7 +29,7 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 		engine.Bus = bus.GetBus()
 		engine.Init()
 
-		if err := command(cmd); err != nil {
+		if err := command(cmd, engine); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s\n\n", err)
 
@@ -104,6 +105,17 @@ var adminCommands = []cli.Command{
 			cli.StringFlag{
 				Name:  "config",
 				Usage: "path to config file",
+			},
+		},
+	},
+	{
+		Name:   "data-migration",
+		Usage:  "Runs a script that migrates or cleanups data in your db",
+		Subcommands: []cli.Command{
+			{
+				Name:   "encrypt-datasource-passwords",
+				Usage:  "encrypt-datasource-passwords",
+				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
 			},
 		},
 	},
