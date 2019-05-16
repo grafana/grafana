@@ -337,10 +337,14 @@ $column-horizontal-spacing: 10px;
 
 .logs-row.fresh {
   color: $text-color;
-  background-color: $blue-faint;
-  transition: background-color 500ms ease-in-out;
+  background-color: $blue-light, 20%;
 }
 
 .logs-row.old {
   opacity: 0.8;
+}
+
+.logs-rows-indicator {
+  font-size: $font-size-md;
+  padding: $space-sm 0;
 }

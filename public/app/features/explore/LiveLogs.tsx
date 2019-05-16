@@ -1,10 +1,39 @@
 import React, { PureComponent } from 'react';
+import { css, cx } from 'emotion';
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant } from '@grafana/ui';
+
 import { LogsModel, LogRowModel } from 'app/core/logs_model';
 import ElapsedTime from './ElapsedTime';
 
-export const rowSorter = (a: LogRowModel, b: LogRowModel) => a.timeEpochMs - b.timeEpochMs;
+const rowSorter = (a: LogRowModel, b: LogRowModel) => a.timeEpochMs - b.timeEpochMs;
 
-export interface Props {
+const getStyles = (theme: GrafanaTheme) => ({
+  logsRowsLive: css`
+    label: logs-rows-live;
+    display: flex;
+    flex-flow: column nowrap;
+    height: 75vh;
+    overflow-y: auto;
+    :first-child {
+      margin-top: auto !important;
+    }
+  `,
+  logsRowFresh: css`
+    label: logs-row-fresh;
+    color: ${theme.colors.text};
+    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.gray1 }, theme.type)};
+  `,
+  logsRowOld: css`
+    label: logs-row-old;
+    opacity: 0.8;
+  `,
+  logsRowsIndicator: css`
+    font-size: ${theme.typography.size.md};
+    padding: ${theme.spacing.gutter} 0;
+  `,
+});
+
+export interface Props extends Themeable {
   logsResult?: LogsModel;
 }
 
@@ -13,7 +42,7 @@ export interface State {
   renderCount: number;
 }
 
-export class LiveLogs extends PureComponent<Props, State> {
+class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement = null;
 
   constructor(props: Props) {
@@ -38,27 +67,26 @@ export class LiveLogs extends PureComponent<Props, State> {
   }
 
   render() {
+    const { theme } = this.props;
     const { prevRows, renderCount } = this.state;
+    const styles = getStyles(theme);
     const rows: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
-    const freshRows = rows.filter(row => !prevRows.includes(row)).sort(rowSorter);
+    const freshRows = rows
+      .filter(row => !prevRows.includes(row))
+      .map(row => ({ ...row, fresh: true }))
+      .sort(rowSorter);
     const oldRows = prevRows.filter(row => rows.includes(row)).sort(rowSorter);
+    const rowsToRender = oldRows.concat(freshRows);
 
     return (
       <>
-        <div className="logs-rows live">
-          {oldRows.map((row, index) => {
+        <div className={cx(['logs-rows', styles.logsRowsLive])}>
+          {rowsToRender.map((row: any, index) => {
             return (
-              <div className="logs-row old" key={`${row.timeEpochMs}-${index}`}>
-                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
-                  {row.timeLocal}
-                </div>
-                <div className="logs-row__message">{row.entry}</div>
-              </div>
-            );
-          })}
-          {freshRows.map((row, index) => {
-            return (
-              <div className="logs-row fresh" key={`${row.timeEpochMs}-${index}`}>
+              <div
+                className={row.fresh ? cx(['logs-row', styles.logsRowFresh]) : cx(['logs-row', styles.logsRowOld])}
+                key={`${row.timeEpochMs}-${index}`}
+              >
                 <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
@@ -68,8 +96,7 @@ export class LiveLogs extends PureComponent<Props, State> {
           })}
           <div ref={element => (this.liveEndDiv = element)} />
         </div>
-        <div className="explore-panel__loader explore-panel__loader--active" />
-        <div>
+        <div className="logs-rows-indicator">
           <span>
             Last line received: <ElapsedTime renderCount={renderCount} humanize={true} /> ago
           </span>
@@ -78,3 +105,5 @@ export class LiveLogs extends PureComponent<Props, State> {
     );
   }
 }
+
+export const LiveLogsWithTheme = withTheme(LiveLogs);
