@@ -3,6 +3,7 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -50,6 +51,9 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 			return errutil.Wrap("basic_auth_password updates failed", err)
 		}
 
+		fmt.Println("Warning: Datasource provisioning files need to be manually changed to prevent overwriting of " +
+			"the data during provisioning. See https://grafana.com/docs/installation/upgrading/#upgrading-to-v6-2 for " +
+			"details")
 		return nil
 	})
 }
