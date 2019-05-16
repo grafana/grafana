@@ -7,10 +7,81 @@ import (
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestLdapLogin(t *testing.T) {
-	Convey("Login using ldap", t, func() {
+func TestLDAPLogin(t *testing.T) {
+	Convey("Login()", t, func() {
+		authScenario("When user is log in and updated", func(sc *scenarioContext) {
+			// arrange
+			mockConnectionection := &mockConnection{}
+
+			auth := &Server{
+				config: &ServerConfig{
+					Host:       "",
+					RootCACert: "",
+					Groups: []*GroupToOrgRole{
+						{GroupDN: "*", OrgRole: "Admin"},
+					},
+					Attr: AttributeMap{
+						Username: "username",
+						Surname:  "surname",
+						Email:    "email",
+						Name:     "name",
+						MemberOf: "memberof",
+					},
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: mockConnectionection,
+				log:        log.New("test-logger"),
+			}
+
+			entry := ldap.Entry{
+				DN: "dn", Attributes: []*ldap.EntryAttribute{
+					{Name: "username", Values: []string{"roelgerrits"}},
+					{Name: "surname", Values: []string{"Gerrits"}},
+					{Name: "email", Values: []string{"roel@test.com"}},
+					{Name: "name", Values: []string{"Roel"}},
+					{Name: "memberof", Values: []string{"admins"}},
+				}}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			mockConnectionection.setSearchResult(&result)
+
+			query := &models.LoginUserQuery{
+				Username: "roelgerrits",
+			}
+
+			sc.userQueryReturns(&models.User{
+				Id:    1,
+				Email: "roel@test.net",
+				Name:  "Roel Gerrits",
+				Login: "roelgerrits",
+			})
+			sc.userOrgsQueryReturns([]*models.UserOrgDTO{})
+
+			// act
+			extUser, _ := auth.Login(query)
+			userInfo, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			// assert
+
+			// Check absence of the error
+			So(err, ShouldBeNil)
+
+			// User should be searched in ldap
+			So(mockConnectionection.searchCalled, ShouldBeTrue)
+
+			// Info should be updated (email differs)
+			So(userInfo.Email, ShouldEqual, "roel@test.com")
+
+			// User should have admin privileges
+			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
+		})
+
 		authScenario("When login with invalid credentials", func(scenario *scenarioContext) {
 			connection := &mockConnection{}
 			entry := ldap.Entry{}
