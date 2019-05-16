@@ -1,15 +1,12 @@
 package ldap
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	ldap "gopkg.in/ldap.v3"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestAuth(t *testing.T) {
@@ -117,119 +114,44 @@ func TestAuth(t *testing.T) {
 		})
 	})
 
-	Convey("ExtractGrafanaUser()", t, func() {
-		Convey("When translating ldap user to grafana user", func() {
+	Convey("Users()", t, func() {
+		Convey("find one user", func() {
+			mockConnectionection := &mockConnection{}
+			entry := ldap.Entry{
+				DN: "dn", Attributes: []*ldap.EntryAttribute{
+					{Name: "username", Values: []string{"roelgerrits"}},
+					{Name: "surname", Values: []string{"Gerrits"}},
+					{Name: "email", Values: []string{"roel@test.com"}},
+					{Name: "name", Values: []string{"Roel"}},
+					{Name: "memberof", Values: []string{"admins"}},
+				}}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			mockConnectionection.setSearchResult(&result)
 
-			var user1 = &models.User{}
-
-			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-				cmd.Result = user1
-				cmd.Result.Login = "torkelo"
-				return nil
-			})
-
-			Convey("Given no ldap group map match", func() {
-				Auth := New(&ServerConfig{
-					Groups: []*GroupToOrgRole{{}},
-				})
-				_, err := Auth.ExtractGrafanaUser(&UserInfo{})
-
-				So(err, ShouldEqual, ErrInvalidCredentials)
-			})
-
-			authScenario("Given wildcard group match", func(sc *scenarioContext) {
-				Auth := New(&ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{GroupDN: "*", OrgRole: "Admin"},
+			// Set up attribute map without surname and email
+			server := &Server{
+				config: &ServerConfig{
+					Attr: AttributeMap{
+						Username: "username",
+						Name:     "name",
+						MemberOf: "memberof",
 					},
-				})
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: mockConnectionection,
+				log:        log.New("test-logger"),
+			}
 
-				sc.userQueryReturns(user1)
+			searchResult, err := server.Users([]string{"roelgerrits"})
 
-				extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{})
-				result, err := user.Upsert(&user.UpsertArgs{
-					SignupAllowed: true,
-					ExternalUser:  extUser,
-				})
+			So(err, ShouldBeNil)
+			So(searchResult, ShouldNotBeNil)
 
-				So(extractErr, ShouldBeNil)
-				So(err, ShouldBeNil)
-				So(result, ShouldEqual, user1)
-			})
+			// User should be searched in ldap
+			So(mockConnectionection.searchCalled, ShouldBeTrue)
 
-			authScenario("Given exact group match", func(sc *scenarioContext) {
-				Auth := New(&ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{GroupDN: "cn=users", OrgRole: "Admin"},
-					},
-				})
-
-				sc.userQueryReturns(user1)
-
-				extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{MemberOf: []string{"cn=users"}})
-				result, err := user.Upsert(&user.UpsertArgs{
-					SignupAllowed: true,
-					ExternalUser:  extUser,
-				})
-
-				So(extractErr, ShouldBeNil)
-				So(err, ShouldBeNil)
-				So(result, ShouldEqual, user1)
-			})
-
-			authScenario("Given group match with different case", func(sc *scenarioContext) {
-				Auth := New(&ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{GroupDN: "cn=users", OrgRole: "Admin"},
-					},
-				})
-
-				sc.userQueryReturns(user1)
-
-				extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{MemberOf: []string{"CN=users"}})
-				result, err := user.Upsert(&user.UpsertArgs{
-					SignupAllowed: true,
-					ExternalUser:  extUser,
-				})
-
-				So(extractErr, ShouldBeNil)
-				So(err, ShouldBeNil)
-				So(result, ShouldEqual, user1)
-			})
-
-			authScenario("Given no existing grafana user", func(sc *scenarioContext) {
-				Auth := New(&ServerConfig{
-					Groups: []*GroupToOrgRole{
-						{GroupDN: "cn=admin", OrgRole: "Admin"},
-						{GroupDN: "cn=editor", OrgRole: "Editor"},
-						{GroupDN: "*", OrgRole: "Viewer"},
-					},
-				})
-
-				sc.userQueryReturns(nil)
-
-				extUser, extractErr := Auth.ExtractGrafanaUser(&UserInfo{
-					DN:       "torkelo",
-					Username: "torkelo",
-					Email:    "my@email.com",
-					MemberOf: []string{"cn=editor"},
-				})
-				result, err := user.Upsert(&user.UpsertArgs{
-					SignupAllowed: true,
-					ExternalUser:  extUser,
-				})
-
-				So(extractErr, ShouldBeNil)
-				So(err, ShouldBeNil)
-
-				Convey("Should return new user", func() {
-					So(result.Login, ShouldEqual, "torkelo")
-				})
-
-				Convey("Should set isGrafanaAdmin to false by default", func() {
-					So(result.IsAdmin, ShouldBeFalse)
-				})
-			})
+			// No empty attributes should be added to the search request
+			So(len(mockConnectionection.searchAttributes), ShouldEqual, 3)
 		})
 	})
 }

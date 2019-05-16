@@ -122,13 +122,13 @@ func (server *Server) Close() {
 	server.connection.Close()
 }
 
-// Login authenticates the user, search it and then serialize it
+// Login intialBinds the user, search it and then serialize it
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 
 	// Perform initial authentication
-	err := server.authenticate(query.Username, query.Password)
+	err := server.intialBind(query.Username, query.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -136,14 +136,6 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	// Find user entry & attributes
 	users, err := server.Users([]string{query.Username})
 	if err != nil {
-		return nil, err
-	}
-
-	if len(users) > 0 {
-		err = errors.New(
-			"LDAP search matched more than one entry, please review your filter setting",
-		)
-
 		return nil, err
 	}
 
@@ -167,7 +159,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 
 // Add adds stuff to LDAP
 func (server *Server) Add(dn string, values map[string][]string) error {
-	err := server.authenticate(
+	err := server.intialBind(
 		server.config.BindDN,
 		server.config.BindPassword,
 	)
@@ -198,7 +190,7 @@ func (server *Server) Add(dn string, values map[string][]string) error {
 
 // Remove removes stuff from LDAP
 func (server *Server) Remove(dn string) error {
-	err := server.authenticate(
+	err := server.intialBind(
 		server.config.BindDN,
 		server.config.BindPassword,
 	)
@@ -389,8 +381,7 @@ func (server *Server) secondBind(
 	return nil
 }
 
-// authenticate authenticates the user
-func (server *Server) authenticate(username, userPassword string) error {
+func (server *Server) intialBind(username, userPassword string) error {
 	if server.config.BindPassword != "" || server.config.BindDN == "" {
 		userPassword = server.config.BindPassword
 		server.requireSecondBind = true
@@ -423,67 +414,6 @@ func (server *Server) authenticate(username, userPassword string) error {
 	}
 
 	return nil
-}
-
-func (server *Server) searchUser(username string) (*UserInfo, error) {
-	var searchResult *ldap.SearchResult
-	var err error
-
-	for _, searchBase := range server.config.SearchBaseDNs {
-		attributes := make([]string, 0)
-		inputs := server.config.Attr
-		attributes = appendIfNotEmpty(attributes,
-			inputs.Username,
-			inputs.Surname,
-			inputs.Email,
-			inputs.Name,
-			inputs.MemberOf)
-
-		searchReq := ldap.SearchRequest{
-			BaseDN:       searchBase,
-			Scope:        ldap.ScopeWholeSubtree,
-			DerefAliases: ldap.NeverDerefAliases,
-			Attributes:   attributes,
-			Filter: strings.Replace(
-				server.config.SearchFilter,
-				"%s", ldap.EscapeFilter(username),
-				-1,
-			),
-		}
-
-		searchResult, err = server.connection.Search(&searchReq)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(searchResult.Entries) > 0 {
-			break
-		}
-	}
-
-	if len(searchResult.Entries) == 0 {
-		return nil, ErrInvalidCredentials
-	}
-
-	if len(searchResult.Entries) > 1 {
-		return nil, errors.New(
-			"LDAP search matched more than one entry, please review your filter setting",
-		)
-	}
-
-	memberOf, err := server.getMemberOf(searchResult)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserInfo{
-		DN:        searchResult.Entries[0].DN,
-		LastName:  getLdapAttr(server.config.Attr.Surname, searchResult),
-		FirstName: getLdapAttr(server.config.Attr.Name, searchResult),
-		Username:  getLdapAttr(server.config.Attr.Username, searchResult),
-		Email:     getLdapAttr(server.config.Attr.Email, searchResult),
-		MemberOf:  memberOf,
-	}, nil
 }
 
 // requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups

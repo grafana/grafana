@@ -96,6 +96,13 @@ func (auth *mockAuth) Users(logins []string) (
 	return nil, nil
 }
 
+func (auth *mockAuth) User(login string) (
+	*models.ExternalUserInfo,
+	error,
+) {
+	return nil, nil
+}
+
 func (auth *mockAuth) Add(dn string, values map[string][]string) error {
 	return nil
 }
