@@ -15,7 +15,7 @@ import (
 
 func TestAuth(t *testing.T) {
 	Convey("Add()", t, func() {
-		connection := &mockLDAPConn{}
+		connection := &mockConnection{}
 
 		auth := &Server{
 			config: &ServerConfig{
@@ -97,7 +97,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("Remove()", t, func() {
-		connection := &mockLDAPConn{}
+		connection := &mockConnection{}
 
 		auth := &Server{
 			config: &ServerConfig{
@@ -120,7 +120,7 @@ func TestAuth(t *testing.T) {
 
 	Convey("authenticate()", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
@@ -142,7 +142,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
@@ -163,7 +163,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -185,7 +185,7 @@ func TestAuth(t *testing.T) {
 
 	Convey("serverBind", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
@@ -206,7 +206,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -227,7 +227,7 @@ func TestAuth(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			connection := &mockLDAPConn{}
+			connection := &mockConnection{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -552,7 +552,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("Login()", t, func() {
-		mockLDAPConnection := &mockLDAPConn{}
+		mockConnectionection := &mockConnection{}
 
 		auth := &Server{
 			config: &ServerConfig{
@@ -570,7 +570,7 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			connection: mockLDAPConnection,
+			connection: mockConnectionection,
 			log:        log.New("test-logger"),
 		}
 
@@ -583,7 +583,7 @@ func TestAuth(t *testing.T) {
 				{Name: "memberof", Values: []string{"admins"}},
 			}}
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-		mockLDAPConnection.setSearchResult(&result)
+		mockConnectionection.setSearchResult(&result)
 
 		authScenario("When user is log in and updated", func(sc *scenarioContext) {
 			// arrange
@@ -612,7 +612,7 @@ func TestAuth(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// User should be searched in ldap
-			So(mockLDAPConnection.searchCalled, ShouldBeTrue)
+			So(mockConnectionection.searchCalled, ShouldBeTrue)
 
 			// Info should be updated (email differs)
 			So(userInfo.Email, ShouldEqual, "roel@test.com")
@@ -623,7 +623,7 @@ func TestAuth(t *testing.T) {
 	})
 
 	Convey("When searching for a user and not all five attributes are mapped", t, func() {
-		mockLDAPConnection := &mockLDAPConn{}
+		mockConnectionection := &mockConnection{}
 		entry := ldap.Entry{
 			DN: "dn", Attributes: []*ldap.EntryAttribute{
 				{Name: "username", Values: []string{"roelgerrits"}},
@@ -633,7 +633,7 @@ func TestAuth(t *testing.T) {
 				{Name: "memberof", Values: []string{"admins"}},
 			}}
 		result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-		mockLDAPConnection.setSearchResult(&result)
+		mockConnectionection.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
 		Auth := &Server{
@@ -645,7 +645,7 @@ func TestAuth(t *testing.T) {
 				},
 				SearchBaseDNs: []string{"BaseDNHere"},
 			},
-			connection: mockLDAPConnection,
+			connection: mockConnectionection,
 			log:        log.New("test-logger"),
 		}
 
@@ -655,9 +655,9 @@ func TestAuth(t *testing.T) {
 		So(searchResult, ShouldNotBeNil)
 
 		// User should be searched in ldap
-		So(mockLDAPConnection.searchCalled, ShouldBeTrue)
+		So(mockConnectionection.searchCalled, ShouldBeTrue)
 
 		// No empty attributes should be added to the search request
-		So(len(mockLDAPConnection.searchAttributes), ShouldEqual, 3)
+		So(len(mockConnectionection.searchAttributes), ShouldEqual, 3)
 	})
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type mockLDAPConn struct {
+type mockConnection struct {
 	searchResult     *ldap.SearchResult
 	searchCalled     bool
 	searchAttributes []string
@@ -27,7 +27,7 @@ type mockLDAPConn struct {
 	unauthenticatedBindProvider func(username string) error
 }
 
-func (c *mockLDAPConn) Bind(username, password string) error {
+func (c *mockConnection) Bind(username, password string) error {
 	if c.bindProvider != nil {
 		return c.bindProvider(username, password)
 	}
@@ -35,7 +35,7 @@ func (c *mockLDAPConn) Bind(username, password string) error {
 	return nil
 }
 
-func (c *mockLDAPConn) UnauthenticatedBind(username string) error {
+func (c *mockConnection) UnauthenticatedBind(username string) error {
 	if c.unauthenticatedBindProvider != nil {
 		return c.unauthenticatedBindProvider(username)
 	}
@@ -43,31 +43,31 @@ func (c *mockLDAPConn) UnauthenticatedBind(username string) error {
 	return nil
 }
 
-func (c *mockLDAPConn) Close() {}
+func (c *mockConnection) Close() {}
 
-func (c *mockLDAPConn) setSearchResult(result *ldap.SearchResult) {
+func (c *mockConnection) setSearchResult(result *ldap.SearchResult) {
 	c.searchResult = result
 }
 
-func (c *mockLDAPConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+func (c *mockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
 	c.searchAttributes = sr.Attributes
 	return c.searchResult, nil
 }
 
-func (c *mockLDAPConn) Add(request *ldap.AddRequest) error {
+func (c *mockConnection) Add(request *ldap.AddRequest) error {
 	c.addCalled = true
 	c.addParams = request
 	return nil
 }
 
-func (c *mockLDAPConn) Del(request *ldap.DelRequest) error {
+func (c *mockConnection) Del(request *ldap.DelRequest) error {
 	c.delCalled = true
 	c.delParams = request
 	return nil
 }
 
-func (c *mockLDAPConn) StartTLS(*tls.Config) error {
+func (c *mockConnection) StartTLS(*tls.Config) error {
 	return nil
 }
 
