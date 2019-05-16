@@ -125,7 +125,7 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
           const { datasourceInstance } = state$.value.explore[exploreId];
 
           if (!datasourceInstance || !datasourceInstance.resultToSeriesData) {
-            return []; //do nothing if datasource does not support streaming
+            return [null]; //do nothing if datasource does not support streaming
           }
 
           return datasourceInstance
