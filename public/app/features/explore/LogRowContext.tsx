@@ -58,8 +58,9 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
       overflow: hidden;
       background: ${theme.colors.pageBg};
       background: linear-gradient(180deg, ${gradientTop} 0%, ${gradientBottom} 104.25%);
-      box-shadow: 0px 10px 20px ${boxShadowColor}, 0px 0px 2px ${boxShadowColor};
+      box-shadow: 0px 2px 4px ${boxShadowColor}, 0px 0px 2px ${boxShadowColor};
       border: 1px solid ${borderColor};
+      border-radius: ${theme.border.radius.md};
     `,
     header: css`
       height: 30px;
@@ -95,7 +96,13 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const { header } = getLogRowContextStyles(theme);
   return (
     <div className={header}>
-      Found {rows.length} rows.
+      <span
+        className={css`
+          opacity: 0.6;
+        `}
+      >
+        Found {rows.length} rows.
+      </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
         <span
           className={css`
