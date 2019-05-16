@@ -44,6 +44,7 @@ import {
   QueryOptions,
   ExploreUIState,
   QueryTransaction,
+  ExploreMode,
 } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
@@ -85,6 +86,7 @@ import {
   queryStartAction,
   historyUpdatedAction,
   resetQueryErrorAction,
+  changeModeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { LogsDedupStrategy } from 'app/core/logs_model';
@@ -136,6 +138,16 @@ export function changeDatasource(exploreId: ExploreId, datasource: string, repla
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance));
     dispatch(runQueries(exploreId, false, replaceUrl));
+  };
+}
+
+/**
+ * Change the display mode in Explore.
+ */
+export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
+  return dispatch => {
+    dispatch(changeModeAction({ exploreId, mode }));
+    dispatch(runQueries(exploreId));
   };
 }
 
@@ -508,11 +520,9 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
       showingLogs,
       showingGraph,
       showingTable,
-      supportsGraph,
-      supportsLogs,
-      supportsTable,
       datasourceError,
       containerWidth,
+      mode,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -532,7 +542,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
 
     dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && supportsTable) {
+    if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Table', {
           interval,
@@ -542,7 +552,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
         })
       );
     }
-    if ((ignoreUIState || showingGraph) && supportsGraph) {
+    if ((ignoreUIState || showingGraph) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Graph', {
           interval,
@@ -552,7 +562,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
         })
       );
     }
-    if ((ignoreUIState || showingLogs) && supportsLogs) {
+    if ((ignoreUIState || showingLogs) && mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
