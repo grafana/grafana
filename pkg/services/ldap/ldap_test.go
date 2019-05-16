@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -120,9 +120,9 @@ func TestAuth(t *testing.T) {
 	Convey("ExtractGrafanaUser()", t, func() {
 		Convey("When translating ldap user to grafana user", func() {
 
-			var user1 = &m.User{}
+			var user1 = &models.User{}
 
-			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpsertUserCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 				cmd.Result = user1
 				cmd.Result.Login = "torkelo"
 				return nil
