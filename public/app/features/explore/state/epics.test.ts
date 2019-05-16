@@ -35,7 +35,7 @@ const setup = (options: any = {}) => {
         refId,
       },
     ],
-    resultToSeriesData: data => data,
+    resultToSeriesData: data => [data],
   };
   const itemState = makeExploreItemState();
   const explore: Partial<ExploreState> = {

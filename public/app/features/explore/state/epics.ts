@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
 import { EMPTY } from 'rxjs';
-import { map, takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
+import { takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
 
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
@@ -121,16 +121,16 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
               tap(value => console.log('Stopping subscription', value))
             )
         ),
-        map(result => {
+        mergeMap((result: any) => {
           const { datasourceInstance } = state$.value.explore[exploreId];
 
           if (!datasourceInstance || !datasourceInstance.resultToSeriesData) {
-            return null; //do nothing if datasource does not support streaming
+            return []; //do nothing if datasource does not support streaming
           }
 
-          const data = datasourceInstance.resultToSeriesData(result, refId);
-
-          return dataReceivedActionCreator({ data, exploreId });
+          return datasourceInstance
+            .resultToSeriesData(result, refId)
+            .map(data => dataReceivedActionCreator({ data, exploreId }));
         }),
         filter(action => action !== null)
       );

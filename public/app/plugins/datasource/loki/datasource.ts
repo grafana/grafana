@@ -86,10 +86,22 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
   };
 
-  resultToSeriesData = (data: any, refId?: string): SeriesData => {
-    const seriesData = logStreamToSeriesData(data);
-    seriesData.refId = refId;
-    return seriesData;
+  resultToSeriesData = (data: any, refId: string): SeriesData[] => {
+    const toSeriesData = (stream: any, refId: string) => ({
+      ...logStreamToSeriesData(stream),
+      refId,
+    });
+
+    if (data.streams) {
+      // new Loki API purposed in https://github.com/grafana/loki/pull/590
+      const series: SeriesData[] = [];
+      for (const stream of data.streams || []) {
+        series.push(toSeriesData(stream, refId));
+      }
+      return series;
+    }
+
+    return [toSeriesData(data, refId)];
   };
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
