@@ -171,7 +171,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
 
 		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert("custom", ss.dbCfg)
+			tlsCert, err := makeCert(ss.dbCfg)
 			if err != nil {
 				return "", err
 			}
