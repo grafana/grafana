@@ -241,6 +241,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           }
         }
       }
+
+      // Following context logs are requested in "forward" direction.
+      //This means, that we need to reverse those to make them sorted
+      // in descending order (by timestamp)
+      logs[1].reverse();
+
       return { data: logs };
     });
   };
