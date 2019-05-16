@@ -68,11 +68,13 @@ interface State {
   showLabels: boolean;
   showLocalTime: boolean;
   showUtc: boolean;
+  selectingText: boolean;
 }
 
 export default class Logs extends PureComponent<Props, State> {
   deferLogsTimer: NodeJS.Timer;
   renderAllTimer: NodeJS.Timer;
+  textSelectionTimer: NodeJS.Timer;
 
   state = {
     deferLogs: true,
@@ -80,6 +82,7 @@ export default class Logs extends PureComponent<Props, State> {
     showLabels: false,
     showLocalTime: true,
     showUtc: false,
+    selectingText: false,
   };
 
   componentDidMount() {
@@ -103,6 +106,7 @@ export default class Logs extends PureComponent<Props, State> {
   componentWillUnmount() {
     clearTimeout(this.deferLogsTimer);
     clearTimeout(this.renderAllTimer);
+    clearTimeout(this.textSelectionTimer);
   }
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -149,6 +153,22 @@ export default class Logs extends PureComponent<Props, State> {
     this.props.onStopScanning();
   };
 
+  onMouseDownLogRows = () => {
+    // Don't identify this as a text selection right away, user might release mouse button fast
+    this.textSelectionTimer = setTimeout(() => {
+      this.setState({
+        selectingText: true,
+      });
+    }, 200);
+  };
+
+  onMouseUpLogRows = (event: React.SyntheticEvent) => {
+    clearTimeout(this.textSelectionTimer);
+    this.setState({
+      selectingText: false,
+    });
+  };
+
   render() {
     const {
       data,
@@ -168,7 +188,7 @@ export default class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
+    const { deferLogs, renderAll, showLabels, showLocalTime, showUtc, selectingText } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
@@ -245,7 +265,7 @@ export default class Logs extends PureComponent<Props, State> {
           </div>
         )}
 
-        <div className="logs-rows">
+        <div className="logs-rows" onMouseDown={this.onMouseDownLogRows} onMouseUp={this.onMouseUpLogRows}>
           {hasData &&
           !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
             firstRows.map((row, index) => (
@@ -259,6 +279,7 @@ export default class Logs extends PureComponent<Props, State> {
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
+                parsingEnabled={!selectingText}
               />
             ))}
           {hasData &&
@@ -274,6 +295,7 @@ export default class Logs extends PureComponent<Props, State> {
                 showLocalTime={showLocalTime}
                 showUtc={showUtc}
                 onClickLabel={onClickLabel}
+                parsingEnabled={!selectingText}
               />
             ))}
           {hasData && deferLogs && <span>Rendering {dedupedData.rows.length} rows...</span>}
