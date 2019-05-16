@@ -4,8 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/grafana/grafana/pkg/log"
 	"io/ioutil"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var tlslog = log.New("tls_mysql")
