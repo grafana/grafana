@@ -14,6 +14,37 @@ import (
 )
 
 func TestLDAPHelpers(t *testing.T) {
+	Convey("serializeUsers()", t, func() {
+		server := &Server{
+			config: &ServerConfig{
+				Attr: AttributeMap{
+					Username: "username",
+					Name:     "name",
+					MemberOf: "memberof",
+					Email:    "email",
+				},
+				SearchBaseDNs: []string{"BaseDNHere"},
+			},
+			connection: &mockConnection{},
+			log:        log.New("test-logger"),
+		}
+
+		entry := ldap.Entry{
+			DN: "dn", Attributes: []*ldap.EntryAttribute{
+				{Name: "username", Values: []string{"roelgerrits"}},
+				{Name: "surname", Values: []string{"Gerrits"}},
+				{Name: "email", Values: []string{"roel@test.com"}},
+				{Name: "name", Values: []string{"Roel"}},
+				{Name: "memberof", Values: []string{"admins"}},
+			}}
+		users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+
+		result := server.serializeUsers(users)
+
+		So(result[0].Login, ShouldEqual, "roelgerrits")
+		So(result[0].Email, ShouldEqual, "roel@test.com")
+		So(result[0].Groups, ShouldContain, "admins")
+	})
 
 	Convey("serverBind()", t, func() {
 		Convey("Given bind dn and password configured", func() {

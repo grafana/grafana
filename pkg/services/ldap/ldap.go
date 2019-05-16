@@ -212,7 +212,7 @@ func (server *Server) Users(logins []string) (
 ) {
 	var result *ldap.SearchResult
 	var err error
-	config := server.config
+	var config = server.config
 
 	for _, base := range config.SearchBaseDNs {
 		attributes := make([]string, 0)
@@ -226,10 +226,9 @@ func (server *Server) Users(logins []string) (
 			inputs.MemberOf,
 		)
 
-		req := server.getSearchRequest(base, attributes, logins)
-
-		result, err = server.connection.Search(&req)
-
+		result, err = server.connection.Search(
+			server.getSearchRequest(base, attributes, logins),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -268,10 +267,11 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	return nil
 }
 
+// getSearchRequest returns LDAP search request for users
 func (server *Server) getSearchRequest(
 	base string,
 	attributes, logins []string,
-) ldap.SearchRequest {
+) *ldap.SearchRequest {
 	search := ""
 	for _, login := range logins {
 		search = search + strings.Replace(server.config.SearchFilter, "%s", login, -1)
@@ -279,15 +279,13 @@ func (server *Server) getSearchRequest(
 
 	filter := fmt.Sprintf("(|%s)", search)
 
-	request := ldap.SearchRequest{
+	return &ldap.SearchRequest{
 		BaseDN:       base,
 		Scope:        ldap.ScopeWholeSubtree,
 		DerefAliases: ldap.NeverDerefAliases,
 		Attributes:   attributes,
 		Filter:       filter,
 	}
-
-	return request
 }
 
 func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
