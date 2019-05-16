@@ -31,12 +31,12 @@ func isDevEnvironment() bool {
 		defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
 		_, err = os.Stat(defaultsPath)
 		return err == nil
-	} else {
-		// But at the same time there are per platform directories that contain the binaries and can also be used.
-		defaultsPath := filepath.Join(exPath, "../../conf/defaults.ini")
-		_, err = os.Stat(defaultsPath)
-		return err == nil
 	}
+
+	// But at the same time there are per platform directories that contain the binaries and can also be used.
+	defaultsPath := filepath.Join(exPath, "../../conf/defaults.ini")
+	_, err = os.Stat(defaultsPath)
+	return err == nil
 }
 
 func returnOsDefault(currentOs string) string {
