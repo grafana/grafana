@@ -63,6 +63,7 @@ export class RefreshPicker extends PureComponent<Props> {
     const cssClasses = classNames({
       'refresh-picker': true,
       'refresh-picker--off': selectedValue.label === offOption.label,
+      'refresh-picker--live': selectedValue === liveOption,
     });
 
     return (
@@ -74,7 +75,7 @@ export class RefreshPicker extends PureComponent<Props> {
             </button>
           </Tooltip>
           <ButtonSelect
-            className="navbar-button--attached btn--radius-left-0"
+            className="navbar-button--attached btn--radius-left-0$"
             value={selectedValue}
             label={selectedValue.label}
             options={options}
