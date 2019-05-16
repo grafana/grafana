@@ -101,7 +101,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     } = this.props;
 
     if (isLive) {
-      return <LiveLogs logsResult={logsResult} />;
+      return (
+        <Panel label="Logs" loading={false} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
+          <LiveLogs logsResult={logsResult} />
+        </Panel>
+      );
     }
 
     return (
