@@ -1,8 +1,18 @@
+import configureMockStore from 'redux-mock-store';
 import { PlaylistSrv } from '../playlist_srv';
+import { setStore } from 'app/store/store';
 
-const dashboards = [{ uri: 'dash1' }, { uri: 'dash2' }];
+const mockStore = configureMockStore();
 
-const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => {
+setStore(
+  mockStore({
+    location: {},
+  })
+);
+
+const dashboards = [{ url: 'dash1' }, { url: 'dash2' }];
+
+const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any, any> }] => {
   const mockBackendSrv = {
     get: jest.fn(url => {
       switch (url) {
@@ -19,6 +29,7 @@ const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => 
   const mockLocation = {
     url: jest.fn(),
     search: () => ({}),
+    path: () => '/playlists/1',
   };
 
   const mockTimeout = jest.fn();
@@ -27,7 +38,7 @@ const createPlaylistSrv = (): [PlaylistSrv, { url: jest.MockInstance<any> }] => 
   return [new PlaylistSrv(mockLocation, mockTimeout, mockBackendSrv), mockLocation];
 };
 
-const mockWindowLocation = (): [jest.MockInstance<any>, () => void] => {
+const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
   const oldLocation = window.location;
   const hrefMock = jest.fn();
 
@@ -50,13 +61,12 @@ const mockWindowLocation = (): [jest.MockInstance<any>, () => void] => {
 
 describe('PlaylistSrv', () => {
   let srv: PlaylistSrv;
-  let mockLocationService: { url: jest.MockInstance<any> };
-  let hrefMock: jest.MockInstance<any>;
+  let hrefMock: jest.MockInstance<any, any>;
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
 
   beforeEach(() => {
-    [srv, mockLocationService] = createPlaylistSrv();
+    [srv] = createPlaylistSrv();
     [hrefMock, unmockLocation] = mockWindowLocation();
 
     // This will be cached in the srv when start() is called
@@ -71,7 +81,6 @@ describe('PlaylistSrv', () => {
     await srv.start(1);
 
     for (let i = 0; i < 6; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
@@ -84,7 +93,6 @@ describe('PlaylistSrv', () => {
 
     // 1 complete loop
     for (let i = 0; i < 3; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
@@ -93,11 +101,38 @@ describe('PlaylistSrv', () => {
 
     // Another 2 loops
     for (let i = 0; i < 4; i++) {
-      expect(mockLocationService.url).toHaveBeenLastCalledWith(`dashboard/${dashboards[i % 2].uri}?`);
       srv.next();
     }
 
     expect(hrefMock).toHaveBeenCalledTimes(3);
     expect(hrefMock).toHaveBeenLastCalledWith(initialUrl);
+  });
+
+  it('storeUpdated should stop playlist when navigating away', async () => {
+    await srv.start(1);
+
+    srv.storeUpdated();
+
+    expect(srv.isPlaying).toBe(false);
+  });
+
+  it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
+    await srv.start(1);
+
+    srv.next();
+
+    setStore(
+      mockStore({
+        location: {
+          path: 'dash2',
+        },
+      })
+    );
+
+    expect((srv as any).validPlaylistUrl).toBe('dash2');
+
+    srv.storeUpdated();
+
+    expect(srv.isPlaying).toBe(true);
   });
 });

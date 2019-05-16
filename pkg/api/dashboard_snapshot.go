@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
@@ -99,8 +99,14 @@ func CreateDashboardSnapshot(c *m.ReqContext, cmd m.CreateDashboardSnapshotComma
 
 		metrics.M_Api_Dashboard_Snapshot_External.Inc()
 	} else {
-		cmd.Key = util.GetRandomString(32)
-		cmd.DeleteKey = util.GetRandomString(32)
+		if cmd.Key == "" {
+			cmd.Key = util.GetRandomString(32)
+		}
+
+		if cmd.DeleteKey == "" {
+			cmd.DeleteKey = util.GetRandomString(32)
+		}
+
 		url = setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
 
 		metrics.M_Api_Dashboard_Snapshot_Create.Inc()

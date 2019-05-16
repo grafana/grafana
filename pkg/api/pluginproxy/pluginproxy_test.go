@@ -1,6 +1,7 @@
 package pluginproxy
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -44,4 +45,107 @@ func TestPluginProxy(t *testing.T) {
 		})
 	})
 
+	Convey("When SendUserHeader config is enabled", t, func() {
+		req := getPluginProxiedRequest(
+			&m.ReqContext{
+				SignedInUser: &m.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			nil,
+		)
+
+		Convey("Should add header with username", func() {
+			// Get will return empty string even if header is not set
+			So(req.Header.Get("X-Grafana-User"), ShouldEqual, "test_user")
+		})
+	})
+
+	Convey("When SendUserHeader config is disabled", t, func() {
+		req := getPluginProxiedRequest(
+			&m.ReqContext{
+				SignedInUser: &m.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: false},
+			nil,
+		)
+		Convey("Should not add header with username", func() {
+			// Get will return empty string even if header is not set
+			So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
+		})
+	})
+
+	Convey("When SendUserHeader config is enabled but user is anonymous", t, func() {
+		req := getPluginProxiedRequest(
+			&m.ReqContext{
+				SignedInUser: &m.SignedInUser{IsAnonymous: true},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			nil,
+		)
+
+		Convey("Should not add header with username", func() {
+			// Get will return empty string even if header is not set
+			So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
+		})
+	})
+
+	Convey("When getting templated url", t, func() {
+		route := &plugins.AppPluginRoute{
+			Url:    "{{.JsonData.dynamicUrl}}",
+			Method: "GET",
+		}
+
+		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
+			query.Result = &m.PluginSetting{
+				JsonData: map[string]interface{}{
+					"dynamicUrl": "https://dynamic.grafana.com",
+				},
+			}
+			return nil
+		})
+
+		req := getPluginProxiedRequest(
+			&m.ReqContext{
+				SignedInUser: &m.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
+		Convey("Headers should be updated", func() {
+			header, err := getHeaders(route, 1, "my-app")
+			So(err, ShouldBeNil)
+			So(header.Get("X-Grafana-User"), ShouldEqual, "")
+		})
+		Convey("Should set req.URL to be interpolated value from jsonData", func() {
+			So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com")
+		})
+		Convey("Route url should not be modified", func() {
+			So(route.Url, ShouldEqual, "{{.JsonData.dynamicUrl}}")
+		})
+	})
+
+}
+
+// getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
+func getPluginProxiedRequest(ctx *m.ReqContext, cfg *setting.Cfg, route *plugins.AppPluginRoute) *http.Request {
+	// insert dummy route if none is specified
+	if route == nil {
+		route = &plugins.AppPluginRoute{
+			Path:    "api/v4/",
+			Url:     "https://www.google.com",
+			ReqRole: m.ROLE_EDITOR,
+		}
+	}
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
+
+	req, err := http.NewRequest(http.MethodGet, route.Url, nil)
+	So(err, ShouldBeNil)
+	proxy.Director(req)
+	return req
 }

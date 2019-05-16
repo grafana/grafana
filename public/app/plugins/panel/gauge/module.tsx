@@ -1,4 +1,10 @@
-import GaugePanelOptions, { defaultProps } from './GaugePanelOptions';
+import { PanelPlugin, sharedSingleStatMigrationCheck, sharedSingleStatOptionsCheck } from '@grafana/ui';
+import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
+import { GaugeOptions, defaults } from './types';
 
-export { GaugePanel as Panel, GaugePanelOptions as PanelOptions, defaultProps as PanelDefaults };
+export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
+  .setDefaults(defaults)
+  .setEditor(GaugePanelEditor)
+  .setPanelChangeHandler(sharedSingleStatOptionsCheck)
+  .setMigrationHandler(sharedSingleStatMigrationCheck);

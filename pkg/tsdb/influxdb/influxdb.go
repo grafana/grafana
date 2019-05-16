@@ -3,17 +3,18 @@ package influxdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
-	"golang.org/x/net/context/ctxhttp"
-
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 type InfluxDBExecutor struct {
@@ -33,6 +34,8 @@ func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint,
 var (
 	glog log.Logger
 )
+
+var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 'POST'")
 
 func init() {
 	glog = log.New("tsdb.influxdb")
@@ -71,13 +74,13 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
+	defer resp.Body.Close()
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status)
 	}
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
-	defer resp.Body.Close()
 	dec.UseNumber()
 	err = dec.Decode(&response)
 
@@ -109,28 +112,49 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
+
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "query")
+	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := func() (*http.Request, error) {
+		switch httpMode {
+		case "GET":
+			return http.NewRequest(http.MethodGet, u.String(), nil)
+		case "POST":
+			bodyValues := url.Values{}
+			bodyValues.Add("q", query)
+			body := bodyValues.Encode()
+			return http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
+		default:
+			return nil, ErrInvalidHttpMode
+		}
+	}()
+
 	if err != nil {
 		return nil, err
 	}
 
-	params := req.URL.Query()
-	params.Set("q", query)
-	params.Set("db", dsInfo.Database)
-	params.Set("epoch", "s")
-	req.URL.RawQuery = params.Encode()
-
 	req.Header.Set("User-Agent", "Grafana")
 
+	params := req.URL.Query()
+	params.Set("db", dsInfo.Database)
+	params.Set("epoch", "s")
+
+	if httpMode == "GET" {
+		params.Set("q", query)
+	} else if httpMode == "POST" {
+		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+	}
+
+	req.URL.RawQuery = params.Encode()
+
 	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
 	if !dsInfo.BasicAuth && dsInfo.User != "" {
-		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
+		req.SetBasicAuth(dsInfo.User, dsInfo.DecryptedPassword())
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

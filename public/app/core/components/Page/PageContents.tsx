@@ -10,7 +10,6 @@ interface Props {
 }
 
 class PageContents extends Component<Props> {
-
   render() {
     const { isLoading } = this.props;
 

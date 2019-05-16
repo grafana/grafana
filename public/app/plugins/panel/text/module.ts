@@ -37,10 +37,7 @@ export class TextPanelCtrl extends PanelCtrl {
 
     const renderWhenChanged = (scope: any) => {
       const { panel } = scope.ctrl;
-      return [
-        panel.content,
-        panel.mode
-      ].join();
+      return [panel.content, panel.mode].join();
     };
 
     $scope.$watch(

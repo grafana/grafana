@@ -40,7 +40,7 @@ func (session *Session) cacheUpdate(table *core.Table, tableName, sqlStr string,
 		}
 	}
 
-	cacher := session.engine.getCacher2(table)
+	cacher := session.engine.getCacher(tableName)
 	session.engine.logger.Debug("[cacheUpdate] get cache sql", newsql, args[nStart:])
 	ids, err := core.GetCacheSql(cacher, tableName, newsql, args[nStart:])
 	if err != nil {
@@ -167,7 +167,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var isMap = t.Kind() == reflect.Map
 	var isStruct = t.Kind() == reflect.Struct
 	if isStruct {
-		if err := session.statement.setRefValue(v); err != nil {
+		if err := session.statement.setRefBean(bean); err != nil {
 			return 0, err
 		}
 
@@ -176,12 +176,10 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 		}
 
 		if session.statement.ColumnStr == "" {
-			colNames, args = buildUpdates(session.engine, session.statement.RefTable, bean, false, false,
-				false, false, session.statement.allUseBool, session.statement.useAllCols,
-				session.statement.mustColumnMap, session.statement.nullableMap,
-				session.statement.columnMap, true, session.statement.unscoped)
+			colNames, args = session.statement.buildUpdates(bean, false, false,
+				false, false, true)
 		} else {
-			colNames, args, err = genCols(session.statement.RefTable, session, bean, true, true)
+			colNames, args, err = session.genUpdateColumns(bean)
 			if err != nil {
 				return 0, err
 			}
@@ -202,7 +200,8 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	table := session.statement.RefTable
 
 	if session.statement.UseAutoTime && table != nil && table.Updated != "" {
-		if _, ok := session.statement.columnMap[strings.ToLower(table.Updated)]; !ok {
+		if !session.statement.columnMap.contain(table.Updated) &&
+			!session.statement.omitColumnMap.contain(table.Updated) {
 			colNames = append(colNames, session.engine.Quote(table.Updated)+" = ?")
 			col := table.UpdatedColumn()
 			val, t := session.engine.nowTime(col)
@@ -362,12 +361,11 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 		}
 	}
 
-	if table != nil {
-		if cacher := session.engine.getCacher2(table); cacher != nil && session.statement.UseCache {
-			//session.cacheUpdate(table, tableName, sqlStr, args...)
-			cacher.ClearIds(tableName)
-			cacher.ClearBeans(tableName)
-		}
+	if cacher := session.engine.getCacher(tableName); cacher != nil && session.statement.UseCache {
+		//session.cacheUpdate(table, tableName, sqlStr, args...)
+		session.engine.logger.Debug("[cacheUpdate] clear table ", tableName)
+		cacher.ClearIds(tableName)
+		cacher.ClearBeans(tableName)
 	}
 
 	// handle after update processors
@@ -401,4 +399,93 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	// --
 
 	return res.RowsAffected()
+}
+
+func (session *Session) genUpdateColumns(bean interface{}) ([]string, []interface{}, error) {
+	table := session.statement.RefTable
+	colNames := make([]string, 0, len(table.ColumnsSeq()))
+	args := make([]interface{}, 0, len(table.ColumnsSeq()))
+
+	for _, col := range table.Columns() {
+		if !col.IsVersion && !col.IsCreated && !col.IsUpdated {
+			if session.statement.omitColumnMap.contain(col.Name) {
+				continue
+			}
+		}
+		if col.MapType == core.ONLYFROMDB {
+			continue
+		}
+
+		fieldValuePtr, err := col.ValueOf(bean)
+		if err != nil {
+			return nil, nil, err
+		}
+		fieldValue := *fieldValuePtr
+
+		if col.IsAutoIncrement {
+			switch fieldValue.Type().Kind() {
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
+				if fieldValue.Int() == 0 {
+					continue
+				}
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint, reflect.Uint64:
+				if fieldValue.Uint() == 0 {
+					continue
+				}
+			case reflect.String:
+				if len(fieldValue.String()) == 0 {
+					continue
+				}
+			case reflect.Ptr:
+				if fieldValue.Pointer() == 0 {
+					continue
+				}
+			}
+		}
+
+		if (col.IsDeleted && !session.statement.unscoped) || col.IsCreated {
+			continue
+		}
+
+		if len(session.statement.columnMap) > 0 {
+			if !session.statement.columnMap.contain(col.Name) {
+				continue
+			} else if _, ok := session.statement.incrColumns[col.Name]; ok {
+				continue
+			} else if _, ok := session.statement.decrColumns[col.Name]; ok {
+				continue
+			}
+		}
+
+		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
+		if _, ok := getFlagForColumn(session.statement.nullableMap, col); ok {
+			if col.Nullable && isZero(fieldValue.Interface()) {
+				var nilValue *int
+				fieldValue = reflect.ValueOf(nilValue)
+			}
+		}
+
+		if col.IsUpdated && session.statement.UseAutoTime /*&& isZero(fieldValue.Interface())*/ {
+			// if time is non-empty, then set to auto time
+			val, t := session.engine.nowTime(col)
+			args = append(args, val)
+
+			var colName = col.Name
+			session.afterClosures = append(session.afterClosures, func(bean interface{}) {
+				col := table.GetColumn(colName)
+				setColumnTime(bean, col, t)
+			})
+		} else if col.IsVersion && session.statement.checkVersion {
+			args = append(args, 1)
+		} else {
+			arg, err := session.value2Interface(col, fieldValue)
+			if err != nil {
+				return colNames, args, err
+			}
+			args = append(args, arg)
+		}
+
+		colNames = append(colNames, session.engine.Quote(col.Name)+" = ?")
+	}
+	return colNames, args, nil
 }

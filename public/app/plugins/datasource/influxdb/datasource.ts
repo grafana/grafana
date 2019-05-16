@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
@@ -17,6 +17,7 @@ export default class InfluxDatasource {
   withCredentials: any;
   interval: any;
   responseParser: any;
+  httpMode: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
@@ -33,6 +34,7 @@ export default class InfluxDatasource {
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.responseParser = new ResponseParser();
+    this.httpMode = instanceSettings.jsonData.httpMode || 'GET';
   }
 
   query(options) {
@@ -78,46 +80,48 @@ export default class InfluxDatasource {
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options).then((data): any => {
-      if (!data || !data.results) {
-        return [];
-      }
-
-      const seriesList = [];
-      for (i = 0; i < data.results.length; i++) {
-        const result = data.results[i];
-        if (!result || !result.series) {
-          continue;
+    return this._seriesQuery(allQueries, options).then(
+      (data): any => {
+        if (!data || !data.results) {
+          return [];
         }
 
-        const target = queryTargets[i];
-        let alias = target.alias;
-        if (alias) {
-          alias = this.templateSrv.replace(target.alias, options.scopedVars);
-        }
-
-        const influxSeries = new InfluxSeries({
-          series: data.results[i].series,
-          alias: alias,
-        });
-
-        switch (target.resultFormat) {
-          case 'table': {
-            seriesList.push(influxSeries.getTable());
-            break;
+        const seriesList = [];
+        for (i = 0; i < data.results.length; i++) {
+          const result = data.results[i];
+          if (!result || !result.series) {
+            continue;
           }
-          default: {
-            const timeSeries = influxSeries.getTimeSeries();
-            for (y = 0; y < timeSeries.length; y++) {
-              seriesList.push(timeSeries[y]);
+
+          const target = queryTargets[i];
+          let alias = target.alias;
+          if (alias) {
+            alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
+          const influxSeries = new InfluxSeries({
+            series: data.results[i].series,
+            alias: alias,
+          });
+
+          switch (target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
             }
-            break;
+            default: {
+              const timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
-      }
 
-      return { data: seriesList };
-    });
+        return { data: seriesList };
+      }
+    );
   }
 
   annotationQuery(options) {
@@ -127,7 +131,7 @@ export default class InfluxDatasource {
       });
     }
 
-    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw });
+    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
@@ -184,11 +188,11 @@ export default class InfluxDatasource {
     }
 
     if (options && options.range) {
-      const timeFilter = this.getTimeFilter({ rangeRaw: options.range });
+      const timeFilter = this.getTimeFilter({ rangeRaw: options.range, timezone: options.timezone });
       query = query.replace('$timeFilter', timeFilter);
     }
 
-    return this._influxRequest('GET', '/query', { q: query, epoch: 'ms' }, options);
+    return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
   serializeParams(params) {
@@ -243,7 +247,12 @@ export default class InfluxDatasource {
       params.db = this.database;
     }
 
-    if (method === 'GET') {
+    if (method === 'POST' && _.has(data, 'q')) {
+      // verb is POST and 'q' param is defined
+      _.extend(params, _.omit(data, ['q']));
+      data = this.serializeParams(_.pick(data, ['q']));
+    } else if (method === 'GET' || method === 'POST') {
+      // verb is GET, or POST without 'q' param
       _.extend(params, data);
       data = null;
     }
@@ -264,6 +273,10 @@ export default class InfluxDatasource {
     }
     if (this.basicAuth) {
       req.headers.Authorization = this.basicAuth;
+    }
+
+    if (method === 'POST') {
+      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
 
     return this.backendSrv.datasourceRequest(req).then(
@@ -291,8 +304,8 @@ export default class InfluxDatasource {
   }
 
   getTimeFilter(options) {
-    const from = this.getInfluxTime(options.rangeRaw.from, false);
-    const until = this.getInfluxTime(options.rangeRaw.to, true);
+    const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
+    const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
     const fromIsAbsolute = from[from.length - 1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
@@ -302,7 +315,7 @@ export default class InfluxDatasource {
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date, roundUp) {
+  getInfluxTime(date, roundUp, timezone) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
@@ -314,7 +327,7 @@ export default class InfluxDatasource {
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }
-      date = dateMath.parse(date, roundUp);
+      date = dateMath.parse(date, roundUp, timezone);
     }
 
     return date.valueOf() + 'ms';

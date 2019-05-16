@@ -7,9 +7,8 @@
       <div class="page-action-bar__spacer">
       </div>
 
-      <a href="alerting/notification/new" class="btn btn-success">
-        <i class="fa fa-plus"></i>
-        New Channel
+      <a href="alerting/notification/new" class="btn btn-primary">
+        New channel
       </a>
     </div>
 
@@ -48,7 +47,7 @@
   <div ng-if="ctrl.notifications.length === 0">
     <empty-list-cta model="{
       title: 'There are no notification channels defined yet',
-      buttonIcon: 'gicon gicon-add-alert-notification-channel',
+      buttonIcon: 'gicon gicon-alert-notification-channel',
       buttonLink: 'alerting/notification/new',
       buttonTitle: 'Add channel',
       proTip: 'You can include images in your alert notifications.',

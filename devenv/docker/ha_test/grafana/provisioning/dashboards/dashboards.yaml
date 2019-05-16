@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+ - name: 'Alerts'
+   folder: 'Alerts'
+   type: file
+   options:
+     path: /etc/grafana/provisioning/dashboards/alerts
+
+ - name: 'MySQL'
+   folder: 'MySQL'
+   type: file
+   options:
+     path: /etc/grafana/provisioning/dashboards/mysql

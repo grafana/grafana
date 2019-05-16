@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,7 +15,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "pageduty_testing",
 					Type:     "pagerduty",
 					Settings: settingsJSON,
@@ -29,7 +29,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				json := `{ "integrationKey": "abcdefgh0123456789" }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
 					Type:     "pagerduty",
 					Settings: settingsJSON,
@@ -53,7 +53,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
 					Type:     "pagerduty",
 					Settings: settingsJSON,

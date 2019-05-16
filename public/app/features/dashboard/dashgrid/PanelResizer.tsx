@@ -66,7 +66,7 @@ export class PanelResizer extends PureComponent<Props, State> {
 
     return (
       <>
-        {render(isEditing ? {height: editorHeight} : this.noStyles)}
+        {render(isEditing ? { height: editorHeight } : this.noStyles)}
         {isEditing && (
           <div className="panel-editor-container__resizer">
             <Draggable axis="y" grid={[100, 1]} onDrag={this.onDrag} position={{ x: 0, y: 0 }}>

@@ -1,10 +1,15 @@
+// Libraries
 import React from 'react';
-import { NoOptionsMessage, IndicatorsContainer, resetSelectStyles } from '@grafana/ui';
+// @ts-ignore
+import { components } from '@torkelo/react-select';
+// @ts-ignore
 import AsyncSelect from '@torkelo/react-select/lib/Async';
 
+// Components
 import { TagOption } from './TagOption';
 import { TagBadge } from './TagBadge';
-import { components } from '@torkelo/react-select';
+import { NoOptionsMessage, IndicatorsContainer, resetSelectStyles } from '@grafana/ui';
+import { escapeStringForRegex } from '../FilterInput/FilterInput';
 
 export interface Props {
   tags: string[];
@@ -15,12 +20,12 @@ export interface Props {
 export class TagFilter extends React.Component<Props, any> {
   inlineTags: boolean;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
-  onLoadOptions = query => {
-    return this.props.tagOptions().then(options => {
+  onLoadOptions = (query: string) => {
+    return this.props.tagOptions().then((options: any[]) => {
       return options.map(option => ({
         value: option.term,
         label: option.term,
@@ -46,22 +51,22 @@ export class TagFilter extends React.Component<Props, any> {
       placeholder: 'Tags',
       loadingMessage: () => 'Loading...',
       noOptionsMessage: () => 'No tags found',
-      getOptionValue: i => i.value,
-      getOptionLabel: i => i.label,
+      getOptionValue: (i: any) => i.value,
+      getOptionLabel: (i: any) => i.label,
       value: tags,
       styles: resetSelectStyles(),
-      filterOption: (option, searchQuery) => {
-        const regex = RegExp(searchQuery, 'i');
+      filterOption: (option: any, searchQuery: string) => {
+        const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
         return regex.test(option.value);
       },
       components: {
         Option: TagOption,
         IndicatorsContainer,
         NoOptionsMessage,
-        MultiValueLabel: () => {
+        MultiValueLabel: (): any => {
           return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
         },
-        MultiValueRemove: props => {
+        MultiValueRemove: (props: any) => {
           const { data } = props;
 
           return (

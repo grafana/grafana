@@ -1,4 +1,9 @@
 import _ from 'lodash';
+import {
+  createChangeHandler,
+  createResetHandler,
+  PasswordFieldEnum,
+} from '../../../features/datasources/utils/passwordHandlers';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -6,6 +11,8 @@ export class PostgresConfigCtrl {
   current: any;
   datasourceSrv: any;
   showTimescaleDBHelp: boolean;
+  onPasswordReset: ReturnType<typeof createResetHandler>;
+  onPasswordChange: ReturnType<typeof createChangeHandler>;
 
   /** @ngInject */
   constructor($scope, datasourceSrv) {
@@ -14,6 +21,8 @@ export class PostgresConfigCtrl {
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
     this.showTimescaleDBHelp = false;
     this.autoDetectFeatures();
+    this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
+    this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);
   }
 
   autoDetectFeatures() {

@@ -1,12 +1,14 @@
 const path = require('path');
 
-module.exports = (baseConfig, env, config) => {
-
+module.exports = ({config, mode}) => {
   config.module.rules.push({
     test: /\.(ts|tsx)$/,
     use: [
       {
         loader: require.resolve('awesome-typescript-loader'),
+        options: {
+          configFileName: path.resolve(__dirname+'/../tsconfig.json')
+        }
       },
     ],
   });
@@ -15,15 +17,12 @@ module.exports = (baseConfig, env, config) => {
     test: /\.scss$/,
     use: [
       {
-        loader: 'style-loader',
+        loader: 'style-loader/useable',
       },
       {
         loader: 'css-loader',
         options: {
           importLoaders: 2,
-          url: false,
-          sourceMap: false,
-          minimize: false,
         },
       },
       {
@@ -33,7 +32,12 @@ module.exports = (baseConfig, env, config) => {
           config: { path: __dirname + '../../../../scripts/webpack/postcss.config.js' },
         },
       },
-      { loader: 'sass-loader', options: { sourceMap: false } },
+      {
+        loader: 'sass-loader',
+        options: {
+          sourceMap: false,
+        },
+      },
     ],
   });
 

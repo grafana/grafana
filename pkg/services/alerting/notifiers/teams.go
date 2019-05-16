@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -26,7 +26,7 @@ func init() {
 
 }
 
-func NewTeamsNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -74,8 +74,15 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != m.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		message = evalContext.Rule.Message
+	}
+
+	images := make([]map[string]interface{}, 0)
+	if evalContext.ImagePublicUrl != "" {
+		images = append(images, map[string]interface{}{
+			"image": evalContext.ImagePublicUrl,
+		})
 	}
 
 	body := map[string]interface{}{
@@ -88,14 +95,10 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"themeColor": evalContext.GetStateModel().Color,
 		"sections": []map[string]interface{}{
 			{
-				"title": "Details",
-				"facts": fields,
-				"images": []map[string]interface{}{
-					{
-						"image": evalContext.ImagePublicUrl,
-					},
-				},
-				"text": message,
+				"title":  "Details",
+				"facts":  fields,
+				"images": images,
+				"text":   message,
 			},
 		},
 		"potentialAction": []map[string]interface{}{
@@ -123,7 +126,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	data, _ := json.Marshal(&body)
-	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: this.Url, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send teams notification", "error", err, "webhook", this.Name)

@@ -3,16 +3,17 @@
   "name": "Dashboard list",
   "id": "dashlist",
 
+  "skipDataQuery": true,
+
   "info": {
     "description": "List of dynamic links to other dashboards",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
-},
+    },
     "logos": {
       "small": "img/icn-dashlist-panel.svg",
       "large": "img/icn-dashlist-panel.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }

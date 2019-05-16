@@ -3,9 +3,9 @@ import coreModule from '../core_module';
 
 export class JsonEditorCtrl {
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     $scope.json = angular.toJson($scope.model.object, true);
-    $scope.canUpdate = $scope.model.updateHandler !== void 0 && $scope.contextSrv.isEditor;
+    $scope.canUpdate = $scope.model.updateHandler !== void 0 && $scope.model.canUpdate;
     $scope.canCopy = $scope.model.enableCopy;
 
     $scope.update = () => {

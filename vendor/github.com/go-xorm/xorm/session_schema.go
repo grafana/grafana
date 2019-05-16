@@ -6,9 +6,7 @@ package xorm
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/go-xorm/core"
@@ -34,8 +32,7 @@ func (session *Session) CreateTable(bean interface{}) error {
 }
 
 func (session *Session) createTable(bean interface{}) error {
-	v := rValue(bean)
-	if err := session.statement.setRefValue(v); err != nil {
+	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
 
@@ -54,8 +51,7 @@ func (session *Session) CreateIndexes(bean interface{}) error {
 }
 
 func (session *Session) createIndexes(bean interface{}) error {
-	v := rValue(bean)
-	if err := session.statement.setRefValue(v); err != nil {
+	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
 
@@ -78,8 +74,7 @@ func (session *Session) CreateUniques(bean interface{}) error {
 }
 
 func (session *Session) createUniques(bean interface{}) error {
-	v := rValue(bean)
-	if err := session.statement.setRefValue(v); err != nil {
+	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
 
@@ -103,8 +98,7 @@ func (session *Session) DropIndexes(bean interface{}) error {
 }
 
 func (session *Session) dropIndexes(bean interface{}) error {
-	v := rValue(bean)
-	if err := session.statement.setRefValue(v); err != nil {
+	if err := session.statement.setRefBean(bean); err != nil {
 		return err
 	}
 
@@ -128,11 +122,7 @@ func (session *Session) DropTable(beanOrTableName interface{}) error {
 }
 
 func (session *Session) dropTable(beanOrTableName interface{}) error {
-	tableName, err := session.engine.tableName(beanOrTableName)
-	if err != nil {
-		return err
-	}
-
+	tableName := session.engine.TableName(beanOrTableName)
 	var needDrop = true
 	if !session.engine.dialect.SupportDropIfExists() {
 		sqlStr, args := session.engine.dialect.TableCheckSql(tableName)
@@ -144,8 +134,8 @@ func (session *Session) dropTable(beanOrTableName interface{}) error {
 	}
 
 	if needDrop {
-		sqlStr := session.engine.Dialect().DropTableSql(tableName)
-		_, err = session.exec(sqlStr)
+		sqlStr := session.engine.Dialect().DropTableSql(session.engine.TableName(tableName, true))
+		_, err := session.exec(sqlStr)
 		return err
 	}
 	return nil
@@ -157,10 +147,7 @@ func (session *Session) IsTableExist(beanOrTableName interface{}) (bool, error) 
 		defer session.Close()
 	}
 
-	tableName, err := session.engine.tableName(beanOrTableName)
-	if err != nil {
-		return false, err
-	}
+	tableName := session.engine.TableName(beanOrTableName)
 
 	return session.isTableExist(tableName)
 }
@@ -173,24 +160,15 @@ func (session *Session) isTableExist(tableName string) (bool, error) {
 
 // IsTableEmpty if table have any records
 func (session *Session) IsTableEmpty(bean interface{}) (bool, error) {
-	v := rValue(bean)
-	t := v.Type()
-
-	if t.Kind() == reflect.String {
-		if session.isAutoClose {
-			defer session.Close()
-		}
-		return session.isTableEmpty(bean.(string))
-	} else if t.Kind() == reflect.Struct {
-		rows, err := session.Count(bean)
-		return rows == 0, err
+	if session.isAutoClose {
+		defer session.Close()
 	}
-	return false, errors.New("bean should be a struct or struct's point")
+	return session.isTableEmpty(session.engine.TableName(bean))
 }
 
 func (session *Session) isTableEmpty(tableName string) (bool, error) {
 	var total int64
-	sqlStr := fmt.Sprintf("select count(*) from %s", session.engine.Quote(tableName))
+	sqlStr := fmt.Sprintf("select count(*) from %s", session.engine.Quote(session.engine.TableName(tableName, true)))
 	err := session.queryRow(sqlStr).Scan(&total)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -255,6 +233,12 @@ func (session *Session) Sync2(beans ...interface{}) error {
 		return err
 	}
 
+	session.autoResetStatement = false
+	defer func() {
+		session.autoResetStatement = true
+		session.resetStatement()
+	}()
+
 	var structTables []*core.Table
 
 	for _, bean := range beans {
@@ -264,7 +248,8 @@ func (session *Session) Sync2(beans ...interface{}) error {
 			return err
 		}
 		structTables = append(structTables, table)
-		var tbName = session.tbNameNoSchema(table)
+		tbName := engine.TableName(bean)
+		tbNameWithSchema := engine.TableName(tbName, true)
 
 		var oriTable *core.Table
 		for _, tb := range tables {
@@ -309,32 +294,32 @@ func (session *Session) Sync2(beans ...interface{}) error {
 							if engine.dialect.DBType() == core.MYSQL ||
 								engine.dialect.DBType() == core.POSTGRES {
 								engine.logger.Infof("Table %s column %s change type from %s to %s\n",
-									tbName, col.Name, curType, expectedType)
-								_, err = session.exec(engine.dialect.ModifyColumnSql(table.Name, col))
+									tbNameWithSchema, col.Name, curType, expectedType)
+								_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
 							} else {
 								engine.logger.Warnf("Table %s column %s db type is %s, struct type is %s\n",
-									tbName, col.Name, curType, expectedType)
+									tbNameWithSchema, col.Name, curType, expectedType)
 							}
 						} else if strings.HasPrefix(curType, core.Varchar) && strings.HasPrefix(expectedType, core.Varchar) {
 							if engine.dialect.DBType() == core.MYSQL {
 								if oriCol.Length < col.Length {
 									engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
-										tbName, col.Name, oriCol.Length, col.Length)
-									_, err = session.exec(engine.dialect.ModifyColumnSql(table.Name, col))
+										tbNameWithSchema, col.Name, oriCol.Length, col.Length)
+									_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
 								}
 							}
 						} else {
 							if !(strings.HasPrefix(curType, expectedType) && curType[len(expectedType)] == '(') {
 								engine.logger.Warnf("Table %s column %s db type is %s, struct type is %s",
-									tbName, col.Name, curType, expectedType)
+									tbNameWithSchema, col.Name, curType, expectedType)
 							}
 						}
 					} else if expectedType == core.Varchar {
 						if engine.dialect.DBType() == core.MYSQL {
 							if oriCol.Length < col.Length {
 								engine.logger.Infof("Table %s column %s change type from varchar(%d) to varchar(%d)\n",
-									tbName, col.Name, oriCol.Length, col.Length)
-								_, err = session.exec(engine.dialect.ModifyColumnSql(table.Name, col))
+									tbNameWithSchema, col.Name, oriCol.Length, col.Length)
+								_, err = session.exec(engine.dialect.ModifyColumnSql(tbNameWithSchema, col))
 							}
 						}
 					}
@@ -348,7 +333,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 					}
 				} else {
 					session.statement.RefTable = table
-					session.statement.tableName = tbName
+					session.statement.tableName = tbNameWithSchema
 					err = session.addColumn(col.Name)
 				}
 				if err != nil {
@@ -371,7 +356,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 				if oriIndex != nil {
 					if oriIndex.Type != index.Type {
-						sql := engine.dialect.DropIndexSql(tbName, oriIndex)
+						sql := engine.dialect.DropIndexSql(tbNameWithSchema, oriIndex)
 						_, err = session.exec(sql)
 						if err != nil {
 							return err
@@ -387,7 +372,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 			for name2, index2 := range oriTable.Indexes {
 				if _, ok := foundIndexNames[name2]; !ok {
-					sql := engine.dialect.DropIndexSql(tbName, index2)
+					sql := engine.dialect.DropIndexSql(tbNameWithSchema, index2)
 					_, err = session.exec(sql)
 					if err != nil {
 						return err
@@ -398,12 +383,12 @@ func (session *Session) Sync2(beans ...interface{}) error {
 			for name, index := range addedNames {
 				if index.Type == core.UniqueType {
 					session.statement.RefTable = table
-					session.statement.tableName = tbName
-					err = session.addUnique(tbName, name)
+					session.statement.tableName = tbNameWithSchema
+					err = session.addUnique(tbNameWithSchema, name)
 				} else if index.Type == core.IndexType {
 					session.statement.RefTable = table
-					session.statement.tableName = tbName
-					err = session.addIndex(tbName, name)
+					session.statement.tableName = tbNameWithSchema
+					err = session.addIndex(tbNameWithSchema, name)
 				}
 				if err != nil {
 					return err
@@ -428,7 +413,7 @@ func (session *Session) Sync2(beans ...interface{}) error {
 
 		for _, colName := range table.ColumnsSeq() {
 			if oriTable.GetColumn(colName) == nil {
-				engine.logger.Warnf("Table %s has column %s but struct has not related field", table.Name, colName)
+				engine.logger.Warnf("Table %s has column %s but struct has not related field", engine.TableName(table.Name, true), colName)
 			}
 		}
 	}

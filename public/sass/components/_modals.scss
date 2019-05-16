@@ -24,7 +24,7 @@
   z-index: $zindex-modal;
   width: 100%;
   background: $page-bg;
-  @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  @include box-shadow(0 3px 7px rgba(0, 0, 0, 0.3));
   @include background-clip(padding-box);
   outline: none;
 
@@ -47,7 +47,7 @@
   font-size: $font-size-h3;
   float: left;
   padding-top: $spacer * 0.75;
-  margin: 0 $spacer*3 0 $spacer*1.5;
+  margin: 0 $spacer * 3 0 $spacer * 1.5;
 
   .gicon {
     position: relative;
@@ -66,7 +66,7 @@
 }
 
 .modal-content {
-  padding: $spacer*2;
+  padding: $spacer * 2;
 
   &--has-scroll {
     max-height: calc(100vh - 400px);
@@ -98,14 +98,14 @@
   .confirm-modal-icon {
     padding-top: 41px;
     font-size: 280%;
-    color: $green;
+    color: $green-base;
     padding-bottom: 20px;
   }
 
   .confirm-modal-text {
     font-size: $font-size-h4;
     color: $link-color;
-    margin-bottom: $spacer*2;
+    margin-bottom: $spacer * 2;
     padding-top: $spacer;
   }
 
@@ -122,7 +122,7 @@
   }
 
   .modal-content-confirm-text {
-    margin-bottom: 2rem;
+    margin-bottom: $space-xl;
     span {
       text-align: center;
     }
@@ -143,17 +143,20 @@
 
   .share-modal-big-icon {
     margin-bottom: 10px;
-    margin-right: 2rem;
-    .fa,
-    .icon-gf {
+    margin-right: $space-xl;
+    .fa {
       font-size: 50px;
+    }
+    .gicon {
+      width: 48px;
+      height: 48px;
     }
   }
 
   .share-modal-info-text {
     margin-top: 5px;
     strong {
-      color: $headings-color;
+      color: $text-color-emphasis;
       font-weight: 500;
     }
   }

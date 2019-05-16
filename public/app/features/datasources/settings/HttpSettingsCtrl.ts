@@ -1,4 +1,5 @@
 import { coreModule } from 'app/core/core';
+import { createChangeHandler, createResetHandler, PasswordFieldEnum } from '../utils/passwordHandlers';
 
 coreModule.directive('datasourceHttpSettings', () => {
   return {
@@ -9,7 +10,7 @@ coreModule.directive('datasourceHttpSettings', () => {
     },
     templateUrl: 'public/app/features/datasources/partials/http_settings.html',
     link: {
-      pre: ($scope, elem, attrs) => {
+      pre: ($scope: any, elem, attrs) => {
         // do not show access option if direct access is disabled
         $scope.showAccessOption = $scope.noDirectAccess !== 'true';
         $scope.showAccessHelp = false;
@@ -20,6 +21,9 @@ coreModule.directive('datasourceHttpSettings', () => {
         $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
+
+        $scope.onBasicAuthPasswordReset = createResetHandler($scope, PasswordFieldEnum.BasicAuthPassword);
+        $scope.onBasicAuthPasswordChange = createChangeHandler($scope, PasswordFieldEnum.BasicAuthPassword);
       },
     },
   };

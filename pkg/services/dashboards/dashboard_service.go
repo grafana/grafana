@@ -5,16 +5,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DashboardService service for operating on dashboards
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(dashboardId int64, orgId int64) error
 }
 
 // DashboardProvisioningService service for operating on provisioned dashboards
@@ -22,6 +24,9 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error)
+	UnprovisionDashboard(dashboardId int64) error
+	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
 // NewService factory for creating a new dashboard service
@@ -33,7 +38,9 @@ var NewService = func() DashboardService {
 
 // NewProvisioningService factory for creating a new dashboard provisioning service
 var NewProvisioningService = func() DashboardProvisioningService {
-	return &dashboardServiceImpl{}
+	return &dashboardServiceImpl{
+		log: log.New("dashboard-provisioning-service"),
+	}
 }
 
 type SaveDashboardDTO struct {
@@ -53,6 +60,16 @@ type dashboardServiceImpl struct {
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Result, nil
+}
+
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
+	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashboardId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
 		return nil, err
@@ -119,14 +136,12 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	}
 
 	if validateProvisionedDashboard {
-		isDashboardProvisioned := &models.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-		err := bus.Dispatch(isDashboardProvisioned)
-
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dash.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if isDashboardProvisioned.Result {
+		if provisionedData != nil {
 			return nil, models.ErrDashboardCannotSaveProvisionedDashboard
 		}
 	}
@@ -241,6 +256,32 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 	return cmd.Result, nil
 }
 
+// DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
+// operations by the user where we want to make sure user does not delete provisioned dashboard.
+func (dr *dashboardServiceImpl) DeleteDashboard(dashboardId int64, orgId int64) error {
+	return dr.deleteDashboard(dashboardId, orgId, true)
+}
+
+// DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
+func (dr *dashboardServiceImpl) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
+	return dr.deleteDashboard(dashboardId, orgId, false)
+}
+
+func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, validateProvisionedDashboard bool) error {
+	if validateProvisionedDashboard {
+		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardId(dashboardId)
+		if err != nil {
+			return errutil.Wrap("failed to check if dashboard is provisioned", err)
+		}
+
+		if provisionedData != nil {
+			return models.ErrDashboardCannotDeleteProvisionedDashboard
+		}
+	}
+	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
+	return bus.Dispatch(cmd)
+}
+
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	cmd, err := dr.buildSaveDashboardCommand(dto, false, true)
 	if err != nil {
@@ -253,6 +294,13 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.
 	}
 
 	return cmd.Result, nil
+}
+
+// UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
+// and provisioned dashboards are left behind but not deleted.
+func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
+	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
+	return bus.Dispatch(cmd)
 }
 
 type FakeDashboardService struct {
@@ -273,6 +321,16 @@ func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO) (*models.Das
 
 func (s *FakeDashboardService) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
 	return s.SaveDashboard(dto)
+}
+
+func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) error {
+	for index, dash := range s.SavedDashboards {
+		if dash.Dashboard.Id == dashboardId && dash.OrgId == orgId {
+			s.SavedDashboards = append(s.SavedDashboards[:index], s.SavedDashboards[index+1:]...)
+			break
+		}
+	}
+	return nil
 }
 
 func MockDashboardService(mock *FakeDashboardService) {

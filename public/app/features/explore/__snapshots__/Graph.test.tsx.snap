@@ -7,454 +7,132 @@ exports[`Render should render component 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />
-  <Legend
-    data={
+  <GraphLegend
+    displayMode="list"
+    items={
       Array [
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "+Inf",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.1",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.2",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.4",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "1",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "120",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "20",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "3",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "60",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "8",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "+Inf",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.1",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.4",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "1",
-          },
-          "values": Array [
-            Array [
-              1537847900,
-              "953",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "120",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "20",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "3",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "60",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "8",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
       ]
     }
-    hiddenSeries={Set {}}
-    onToggleSeries={[Function]}
+    onLabelClick={[Function]}
+    placement="under"
   />
 </Fragment>
 `;
@@ -480,477 +158,138 @@ exports[`Render should render component with disclaimer 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />
-  <Legend
-    data={
+  <GraphLegend
+    displayMode="list"
+    items={
       Array [
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "+Inf",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.1",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.2",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.4",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "1",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "120",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "20",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "3",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "60",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/label/:name/values",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "8",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "16",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "+Inf",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.1",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "0.4",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "1",
-          },
-          "values": Array [
-            Array [
-              1537847900,
-              "953",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "120",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "20",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "3",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "60",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/metrics",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "8",
-          },
-          "values": Array [
-            Array [
-              1537858060,
-              "1195",
-            ],
-            Array [
-              1537858080,
-              "1195",
-            ],
-            Array [
-              1537858100,
-              "1195",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
         Object {
-          "metric": Object {
-            "__name__": "prometheus_http_request_duration_seconds_bucket",
-            "handler": "/query",
-            "instance": "localhost:9090",
-            "job": "prometheus",
-            "le": "+Inf",
-          },
-          "values": Array [
-            Array [
-              1537858100,
-              "55",
-            ],
-            Array [
-              1537861960,
-              "1",
-            ],
-            Array [
-              1537861980,
-              "1",
-            ],
-          ],
+          "color": undefined,
+          "isVisible": true,
+          "label": undefined,
+          "yAxis": 1,
         },
       ]
     }
-    hiddenSeries={Set {}}
-    onToggleSeries={[Function]}
+    onLabelClick={[Function]}
+    placement="under"
   />
 </Fragment>
 `;
@@ -962,14 +301,15 @@ exports[`Render should show query return no time series 1`] = `
     id="graph"
     style={
       Object {
-        "height": "100px",
+        "height": 100,
       }
     }
   />
-  <Legend
-    data={Array []}
-    hiddenSeries={Set {}}
-    onToggleSeries={[Function]}
+  <GraphLegend
+    displayMode="list"
+    items={Array []}
+    onLabelClick={[Function]}
+    placement="under"
   />
 </Fragment>
 `;

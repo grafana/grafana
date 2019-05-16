@@ -2,11 +2,14 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { Graph } from './Graph';
 import { mockData } from './__mocks__/mockData';
+import { DefaultTimeZone } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props = {
+    size: { width: 10, height: 20 },
     data: mockData().slice(0, 19),
-    range: { from: 'now-6h', to: 'now' },
+    range: { from: 0, to: 1 },
+    timeZone: DefaultTimeZone,
     ...propOverrides,
   };
 

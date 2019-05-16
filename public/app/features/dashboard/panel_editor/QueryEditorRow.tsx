@@ -7,14 +7,18 @@ import _ from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { Emitter } from 'app/core/utils/emitter';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi } from '@grafana/ui';
+import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
+import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
   panel: PanelModel;
+  data: PanelData;
   query: DataQuery;
+  dashboard: DashboardModel;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onMoveQuery: (query: DataQuery, direction: number) => void;
@@ -27,35 +31,46 @@ interface State {
   loadedDataSourceValue: string | null | undefined;
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
-  angularScope: AngularQueryComponentScope | null;
+  hasTextEditMode: boolean;
+  queryResponse?: PanelData;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
+  angularScope: AngularQueryComponentScope | null;
   angularQueryEditor: AngularComponent | null = null;
 
   state: State = {
     datasource: null,
     isCollapsed: false,
-    angularScope: null,
     loadedDataSourceValue: undefined,
+    hasTextEditMode: false,
+    queryResponse: null,
   };
 
   componentDidMount() {
     this.loadDatasource();
   }
 
+  componentWillUnmount() {
+    if (this.angularQueryEditor) {
+      this.angularQueryEditor.destroy();
+    }
+  }
+
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, query } = this.props;
+    const { panel, query, dashboard } = this.props;
     const { datasource } = this.state;
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
+      dashboard: dashboard,
       refresh: () => panel.refresh(),
       render: () => panel.render(),
       events: panel.events,
+      range: getTimeSrv().timeRange(),
     };
   }
 
@@ -64,11 +79,30 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const dataSourceSrv = getDatasourceSrv();
     const datasource = await dataSourceSrv.get(query.datasource || panel.datasource);
 
-    this.setState({ datasource, loadedDataSourceValue: this.props.dataSourceValue });
+    this.setState({
+      datasource,
+      loadedDataSourceValue: this.props.dataSourceValue,
+      hasTextEditMode: false,
+    });
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
+    const { data, query } = this.props;
+
+    if (data !== prevProps.data) {
+      this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
+
+      if (this.angularScope) {
+        this.angularScope.range = getTimeSrv().timeRange();
+      }
+
+      if (this.angularQueryEditor) {
+        // Some query controllers listen to data error events and need a digest
+        // for some reason this needs to be done in next tick
+        setTimeout(this.angularQueryEditor.digest);
+      }
+    }
 
     // check if we need to load another datasource
     if (loadedDataSourceValue !== this.props.dataSourceValue) {
@@ -89,17 +123,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
 
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
+    this.angularScope = scopeProps.ctrl;
 
     // give angular time to compile
     setTimeout(() => {
-      this.setState({ angularScope: scopeProps.ctrl });
-    }, 10);
-  }
-
-  componentWillUnmount() {
-    if (this.angularQueryEditor) {
-      this.angularQueryEditor.destroy();
-    }
+      this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
+    }, 100);
   }
 
   onToggleCollapse = () => {
@@ -111,21 +140,24 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor() {
-    const { query, onChange } = this.props;
-    const { datasource } = this.state;
+    const { query, data, onChange } = this.props;
+    const { datasource, queryResponse } = this.state;
 
-    if (datasource.pluginExports.QueryCtrl) {
+    if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (datasource.pluginExports.QueryEditor) {
-      const QueryEditor = datasource.pluginExports.QueryEditor;
+    if (datasource.components.QueryEditor) {
+      const QueryEditor = datasource.components.QueryEditor;
+
       return (
         <QueryEditor
           query={query}
           datasource={datasource}
           onChange={onChange}
           onRunQuery={this.onRunQuery}
+          queryResponse={queryResponse}
+          panelData={data}
         />
       );
     }
@@ -134,10 +166,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   onToggleEditMode = () => {
-    const { angularScope } = this.state;
-
-    if (angularScope && angularScope.toggleEditorMode) {
-      angularScope.toggleEditorMode();
+    if (this.angularScope && this.angularScope.toggleEditorMode) {
+      this.angularScope.toggleEditorMode();
       this.angularQueryEditor.digest();
     }
 
@@ -145,11 +175,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       this.setState({ isCollapsed: false });
     }
   };
-
-  get hasTextEditMode() {
-    const { angularScope } = this.state;
-    return angularScope && angularScope.toggleEditorMode;
-  }
 
   onRemoveQuery = () => {
     this.props.onRemoveQuery(this.props.query);
@@ -167,18 +192,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderCollapsedText(): string | null {
-    const { angularScope } = this.state;
-
-    if (angularScope && angularScope.getCollapsedText) {
-      return angularScope.getCollapsedText();
+    const { datasource } = this.state;
+    if (datasource.getQueryDisplayText) {
+      return datasource.getQueryDisplayText(this.props.query);
     }
 
+    if (this.angularScope && this.angularScope.getCollapsedText) {
+      return this.angularScope.getCollapsedText();
+    }
     return null;
   }
 
   render() {
     const { query, inMixedMode } = this.props;
-    const { datasource, isCollapsed } = this.state;
+    const { datasource, isCollapsed, hasTextEditMode } = this.state;
     const isDisabled = query.hide;
 
     const bodyClasses = classNames('query-editor-row__body gf-form-query', {
@@ -208,7 +235,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             {isCollapsed && <div>{this.renderCollapsedText()}</div>}
           </div>
           <div className="query-editor-row__actions">
-            {this.hasTextEditMode && (
+            {hasTextEditMode && (
               <button
                 className="query-editor-row__action"
                 onClick={this.onToggleEditMode}
@@ -244,10 +271,42 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 export interface AngularQueryComponentScope {
   target: DataQuery;
   panel: PanelModel;
+  dashboard: DashboardModel;
   events: Emitter;
   refresh: () => void;
   render: () => void;
   datasource: DataSourceApi;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
+  range: TimeRange;
+}
+
+/**
+ * Get a version of the PanelData limited to the query we are looking at
+ */
+export function filterPanelDataToQuery(data: PanelData, refId: string): PanelData | undefined {
+  const series = data.series.filter(series => series.refId === refId);
+
+  // No matching series
+  if (!series.length) {
+    return undefined;
+  }
+
+  // Don't pass the request if all requests are the same
+  const request: DataQueryRequest = undefined;
+  // TODO: look in sub-requets to match the info
+
+  // Only say this is an error if the error links to the query
+  let state = LoadingState.Done;
+  const error = data.error && data.error.refId === refId ? data.error : undefined;
+  if (error) {
+    state = LoadingState.Error;
+  }
+
+  return {
+    state,
+    series,
+    request,
+    error,
+  };
 }

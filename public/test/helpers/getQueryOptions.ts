@@ -1,14 +1,15 @@
-import { DataQueryOptions, DataQuery } from '@grafana/ui';
-import moment from 'moment';
+import { DataQueryRequest, DataQuery } from '@grafana/ui';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
+export function getQueryOptions<TQuery extends DataQuery>(
+  options: Partial<DataQueryRequest<TQuery>>
+): DataQueryRequest<TQuery> {
+  const raw = { from: 'now', to: 'now-1h' };
+  const range = { from: dateTime(), to: dateTime(), raw: raw };
 
-export function getQueryOptions<TQuery extends DataQuery>(options: Partial<DataQueryOptions<TQuery>>): DataQueryOptions<TQuery> {
-  const raw = {from: 'now', to: 'now-1h'};
-  const range = { from: moment(), to: moment(), raw: raw};
-
-  const defaults: DataQueryOptions<TQuery> = {
+  const defaults: DataQueryRequest<TQuery> = {
+    requestId: 'TEST',
     range: range,
-    rangeRaw: raw,
     targets: [],
     scopedVars: {},
     timezone: 'browser',
@@ -17,6 +18,7 @@ export function getQueryOptions<TQuery extends DataQuery>(options: Partial<DataQ
     interval: '60s',
     intervalMs: 60000,
     maxDataPoints: 500,
+    startTime: 0,
   };
 
   Object.assign(defaults, options);

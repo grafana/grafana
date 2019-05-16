@@ -1,5 +1,5 @@
-import moment from 'moment';
 import _ from 'lodash';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -98,7 +98,9 @@ export default class ResponseParser {
           const bucket = ResponseParser.findOrCreateBucket(data, target);
           bucket.datapoints.push([value.segments[i].segments[j][metricName][aggField], epoch]);
           bucket.refId = query.refId;
-          bucket.query = query.query;
+          bucket.meta = {
+            query: query.query,
+          };
         }
       }
     }
@@ -144,7 +146,7 @@ export default class ResponseParser {
   }
 
   static findOrCreateBucket(data, target) {
-    let dataTarget = _.find(data, ['target', target]);
+    let dataTarget: any = _.find(data, ['target', target]);
     if (!dataTarget) {
       dataTarget = { target: target, datapoints: [] };
       data.push(dataTarget);
@@ -171,8 +173,8 @@ export default class ResponseParser {
     return _.intersection(keys, ['sum', 'avg', 'min', 'max', 'count', 'unique'])[0];
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 
   static parseMetricNames(result) {
@@ -197,6 +199,30 @@ export default class ResponseParser {
 
   parseGroupBys() {
     return ResponseParser.toTextValueList(this.results.supportedGroupBy);
+  }
+
+  parseQuerySchema() {
+    const result = {
+      Type: 'AppInsights',
+      Tables: {},
+    };
+    if (this.results && this.results.data && this.results.data.Tables) {
+      for (let i = 0; i < this.results.data.Tables[0].Rows.length; i++) {
+        const column = this.results.data.Tables[0].Rows[i];
+        const columnTable = column[0];
+        const columnName = column[1];
+        const columnType = column[2];
+        if (result.Tables[columnTable]) {
+          result.Tables[columnTable].OrderedColumns.push({ Name: columnName, Type: columnType });
+        } else {
+          result.Tables[columnTable] = {
+            Name: columnTable,
+            OrderedColumns: [{ Name: columnName, Type: columnType }],
+          };
+        }
+      }
+    }
+    return result;
   }
 
   static toTextValueList(values) {

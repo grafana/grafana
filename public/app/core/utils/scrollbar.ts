@@ -15,7 +15,7 @@ export default function getScrollbarWidth() {
       position: 'absolute',
       top: '-9999px',
       overflow: 'scroll',
-      MsOverflowStyle: 'scrollbar'
+      MsOverflowStyle: 'scrollbar',
     };
 
     Object.keys(newStyles).map(style => {
@@ -23,7 +23,7 @@ export default function getScrollbarWidth() {
     });
 
     document.body.appendChild(div);
-    scrollbarWidth = (div.offsetWidth - div.clientWidth);
+    scrollbarWidth = div.offsetWidth - div.clientWidth;
     document.body.removeChild(div);
   } else {
     scrollbarWidth = 0;

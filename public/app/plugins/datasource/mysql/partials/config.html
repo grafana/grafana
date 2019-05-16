@@ -1,4 +1,3 @@
-
 <h3 class="page-heading">MySQL Connection</h3>
 
 <div class="gf-form-group">
@@ -17,19 +16,40 @@
 			<span class="gf-form-label width-7">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
 		</div>
-		<div class="gf-form max-width-15">
-			<span class="gf-form-label width-7">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>
+		<div class="gf-form">
+      <secret-form-field
+        isConfigured="ctrl.current.secureJsonFields.password"
+        value="ctrl.current.secureJsonData.password"
+        on-reset="ctrl.onPasswordReset"
+        on-change="ctrl.onPasswordChange"
+        inputWidth="9"
+      />
 		</div>
 	</div>
-</div>
+
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<gf-form-checkbox class="gf-form" label="TLS Client Auth" label-class="width-10"
+				checked="ctrl.current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-checkbox>
+			<gf-form-checkbox class="gf-form" label="With CA Cert" tooltip="Needed for
+				verifing self-signed TLS Certs" checked="ctrl.current.jsonData.tlsAuthWithCACert" label-class="width-11"
+				switch-class="max-width-6"></gf-form-checkbox>
+		</div>
+		<div class="gf-form-inline">
+			<gf-form-checkbox class="gf-form" label="Skip TLS Verify" label-class="width-10"
+				checked="ctrl.current.jsonData.tlsSkipVerify" switch-class="max-width-6"></gf-form-checkbox>
+		</div>
+	</div>
+
+<datasource-tls-auth-settings current="ctrl.current" ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert)">
+</datasource-tls-auth-settings>
 
 <b>Connection limits</b>
 
 <div class="gf-form-group">
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max open</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
 		<info-popover mode="right-absolute">
 			The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than 0 and the
 			<i>Max open connections</i> is less than <i>Max idle connections</i>, then <i>Max idle connections</i> will be
@@ -39,7 +59,7 @@
 	</div>
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max idle</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
 		<info-popover mode="right-absolute">
 			The maximum number of connections in the idle connection pool. If <i>Max open connections</i> is greater than 0 but
 			less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced to match the
@@ -48,7 +68,7 @@
 	</div>
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max lifetime</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
 		<info-popover mode="right-absolute">
 			The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.<br/><br/>
 			This should always be lower than configured <a href="https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout" target="_blank">wait_timeout</a> in MySQL.
@@ -62,7 +82,14 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-9">Min time interval</span>
-			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="1m"></input>
+			<input
+        type="text"
+        class="gf-form-input width-6 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.timeInterval"
+        spellcheck='false'
+        placeholder="1m"
+        ng-pattern="/^\d+[Mwdhmsy]$/"
+      ></input>
 			<info-popover mode="right-absolute">
 				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example <code>1m</code> if your data is written every minute.
@@ -84,4 +111,3 @@
 		</p>
 	</div>
 </div>
-

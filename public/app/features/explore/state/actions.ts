@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import { ThunkAction } from 'redux-thunk';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -16,20 +15,26 @@ import {
   updateHistory,
   buildQueryTransaction,
   serializeStateToUrlParam,
+  parseUrlState,
+  getTimeRange,
+  getTimeRangeFromUrl,
+  generateNewKeyAndAddRefIdIfMissing,
+  instanceOfDataQueryError,
+  getRefIds,
 } from 'app/core/utils/explore';
 
 // Actions
 import { updateLocation } from 'app/core/actions';
 
 // Types
-import { StoreState } from 'app/types';
+import { ThunkResult } from 'app/types';
 import {
   RawTimeRange,
-  TimeRange,
   DataSourceApi,
   DataQuery,
   DataSourceSelectItem,
-  QueryHint,
+  QueryFixAction,
+  TimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -37,56 +42,111 @@ import {
   RangeScanner,
   ResultType,
   QueryOptions,
-  QueryTransaction,
   ExploreUIState,
+  QueryTransaction,
+  ExploreMode,
 } from 'app/types/explore';
-
 import {
-  Action as ThunkableAction,
-  ActionTypes,
-  AddQueryRowAction,
-  ChangeSizeAction,
-  HighlightLogsExpressionAction,
-  LoadDatasourceFailureAction,
-  LoadDatasourceMissingAction,
-  LoadDatasourcePendingAction,
-  LoadDatasourceSuccessAction,
-  QueryTransactionStartAction,
-  ScanStopAction,
-  UpdateDatasourceInstanceAction,
-  QueriesImported,
+  updateDatasourceInstanceAction,
+  changeQueryAction,
+  changeRefreshIntervalAction,
+  ChangeRefreshIntervalPayload,
+  changeSizeAction,
+  ChangeSizePayload,
+  changeTimeAction,
+  scanStopAction,
+  clearQueriesAction,
+  initializeExploreAction,
+  loadDatasourceMissingAction,
+  loadDatasourcePendingAction,
+  queriesImportedAction,
+  LoadDatasourceReadyPayload,
+  loadDatasourceReadyAction,
+  modifyQueriesAction,
+  queryFailureAction,
+  querySuccessAction,
+  scanRangeAction,
+  scanStartAction,
+  setQueriesAction,
+  splitCloseAction,
+  splitOpenAction,
+  addQueryRowAction,
+  toggleGraphAction,
+  toggleLogsAction,
+  toggleTableAction,
+  ToggleGraphPayload,
+  ToggleLogsPayload,
+  ToggleTablePayload,
+  updateUIStateAction,
+  runQueriesAction,
+  testDataSourcePendingAction,
+  testDataSourceSuccessAction,
+  testDataSourceFailureAction,
+  loadExploreDatasources,
+  queryStartAction,
+  historyUpdatedAction,
+  resetQueryErrorAction,
+  changeModeAction,
 } from './actionTypes';
+import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
+import { LogsDedupStrategy } from 'app/core/logs_model';
+import { getTimeZone } from 'app/features/profile/state/selectors';
+import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ThunkableAction>;
+/**
+ * Updates UI state and save it to the URL
+ */
+const updateExploreUIState = (exploreId: ExploreId, uiStateFragment: Partial<ExploreUIState>): ThunkResult<void> => {
+  return dispatch => {
+    dispatch(updateUIStateAction({ exploreId, ...uiStateFragment }));
+    dispatch(stateSave());
+  };
+};
 
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): AddQueryRowAction {
-  const query = generateEmptyQuery(index + 1);
-  return { type: ActionTypes.AddQueryRow, payload: { exploreId, index, query } };
+export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const queries = getState().explore[exploreId].queries;
+    const query = generateEmptyQuery(queries, index);
+
+    dispatch(addQueryRowAction({ exploreId, index, query }));
+  };
 }
 
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasource: string, replaceUrl = false): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const newDataSourceInstance = await getDatasourceSrv().get(datasource);
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
-    const modifiedQueries = getState().explore[exploreId].modifiedQueries;
+    let newDataSourceInstance: DataSourceApi = null;
 
-    await dispatch(importQueries(exploreId, modifiedQueries, currentDataSourceInstance, newDataSourceInstance));
-
-    dispatch(updateDatasourceInstance(exploreId, newDataSourceInstance));
-
-    try {
-      await dispatch(loadDatasource(exploreId, newDataSourceInstance));
-    } catch (error) {
-      console.error(error);
-      return;
+    if (!datasource) {
+      newDataSourceInstance = await getDatasourceSrv().get();
+    } else {
+      newDataSourceInstance = await getDatasourceSrv().get(datasource);
     }
 
+    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
+    const queries = getState().explore[exploreId].queries;
+
+    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
+
+    dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+
+    await dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    dispatch(runQueries(exploreId, false, replaceUrl));
+  };
+}
+
+/**
+ * Change the display mode in Explore.
+ */
+export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
+  return dispatch => {
+    dispatch(changeModeAction({ exploreId, mode }));
     dispatch(runQueries(exploreId));
   };
 }
@@ -101,13 +161,15 @@ export function changeQuery(
   index: number,
   override: boolean
 ): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch, getState) => {
     // Null query means reset
     if (query === null) {
-      query = { ...generateEmptyQuery(index) };
+      const queries = getState().explore[exploreId].queries;
+      const { refId, key } = queries[index];
+      query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
     }
 
-    dispatch({ type: ActionTypes.ChangeQuery, payload: { exploreId, query, index, override } });
+    dispatch(changeQueryAction({ exploreId, query, index, override }));
     if (override) {
       dispatch(runQueries(exploreId));
     }
@@ -121,18 +183,30 @@ export function changeQuery(
 export function changeSize(
   exploreId: ExploreId,
   { height, width }: { height: number; width: number }
-): ChangeSizeAction {
-  return { type: ActionTypes.ChangeSize, payload: { exploreId, height, width } };
+): ActionOf<ChangeSizePayload> {
+  return changeSizeAction({ exploreId, height, width });
 }
 
 /**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
  */
-export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<void> {
-  return dispatch => {
-    dispatch({ type: ActionTypes.ChangeTime, payload: { exploreId, range } });
+export function changeTime(exploreId: ExploreId, rawRange: RawTimeRange): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
+    dispatch(changeTimeAction({ exploreId, range }));
     dispatch(runQueries(exploreId));
   };
+}
+
+/**
+ * Change the refresh interval of Explore. Called from the Refresh picker.
+ */
+export function changeRefreshInterval(
+  exploreId: ExploreId,
+  refreshInterval: string
+): ActionOf<ChangeRefreshIntervalPayload> {
+  return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
 
 /**
@@ -140,17 +214,40 @@ export function changeTime(exploreId: ExploreId, range: TimeRange): ThunkResult<
  */
 export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   return dispatch => {
-    dispatch(scanStop(exploreId));
-    dispatch({ type: ActionTypes.ClearQueries, payload: { exploreId } });
+    dispatch(scanStopAction({ exploreId }));
+    dispatch(clearQueriesAction({ exploreId }));
     dispatch(stateSave());
   };
 }
 
 /**
- * Highlight expressions in the log results
+ * Loads all explore data sources and sets the chosen datasource.
+ * If there are no datasources a missing datasource action is dispatched.
  */
-export function highlightLogsExpression(exploreId: ExploreId, expressions: string[]): HighlightLogsExpressionAction {
-  return { type: ActionTypes.HighlightLogsExpression, payload: { exploreId, expressions } };
+export function loadExploreDatasourcesAndSetDatasource(
+  exploreId: ExploreId,
+  datasourceName: string
+): ThunkResult<void> {
+  return dispatch => {
+    const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
+      .getExternal()
+      .map(
+        (ds: any) =>
+          ({
+            value: ds.name,
+            name: ds.name,
+            meta: ds.meta,
+          } as DataSourceSelectItem)
+      );
+
+    dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
+
+    if (exploreDatasources.length >= 1) {
+      dispatch(changeDatasource(exploreId, datasourceName, true));
+    } else {
+      dispatch(loadDatasourceMissingAction({ exploreId }));
+    }
+  };
 }
 
 /**
@@ -161,172 +258,59 @@ export function initializeExplore(
   exploreId: ExploreId,
   datasourceName: string,
   queries: DataQuery[],
-  range: RawTimeRange,
+  rawRange: RawTimeRange,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
 ): ThunkResult<void> {
-  return async dispatch => {
-    const exploreDatasources: DataSourceSelectItem[] = getDatasourceSrv()
-      .getExternal()
-      .map(ds => ({
-        value: ds.name,
-        name: ds.name,
-        meta: ds.meta,
-      }));
-
-    dispatch({
-      type: ActionTypes.InitializeExplore,
-      payload: {
+  return async (dispatch, getState) => {
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRange(timeZone, rawRange);
+    dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
+    dispatch(
+      initializeExploreAction({
         exploreId,
         containerWidth,
-        datasourceName,
         eventBridge,
-        exploreDatasources,
         queries,
         range,
         ui,
-      },
-    });
-
-    if (exploreDatasources.length >= 1) {
-      let instance;
-
-      if (datasourceName) {
-        try {
-          instance = await getDatasourceSrv().get(datasourceName);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      // Checking on instance here because requested datasource could be deleted already
-      if (!instance) {
-        instance = await getDatasourceSrv().get();
-      }
-
-      dispatch(updateDatasourceInstance(exploreId, instance));
-
-      try {
-        await dispatch(loadDatasource(exploreId, instance));
-      } catch (error) {
-        console.error(error);
-        return;
-      }
-      dispatch(runQueries(exploreId, true));
-    } else {
-      dispatch(loadDatasourceMissing(exploreId));
-    }
+      })
+    );
   };
 }
 
 /**
- * Initialize the wrapper split state
+ * Datasource loading was successfully completed.
  */
-export function initializeExploreSplit() {
-  return async dispatch => {
-    dispatch({ type: ActionTypes.InitializeExploreSplit });
-  };
-}
-
-/**
- * Display an error that happened during the selection of a datasource
- */
-export const loadDatasourceFailure = (exploreId: ExploreId, error: string): LoadDatasourceFailureAction => ({
-  type: ActionTypes.LoadDatasourceFailure,
-  payload: {
-    exploreId,
-    error,
-  },
-});
-
-/**
- * Display an error when no datasources have been configured
- */
-export const loadDatasourceMissing = (exploreId: ExploreId): LoadDatasourceMissingAction => ({
-  type: ActionTypes.LoadDatasourceMissing,
-  payload: { exploreId },
-});
-
-/**
- * Start the async process of loading a datasource to display a loading indicator
- */
-export const loadDatasourcePending = (
+export const loadDatasourceReady = (
   exploreId: ExploreId,
-  requestedDatasourceName: string
-): LoadDatasourcePendingAction => ({
-  type: ActionTypes.LoadDatasourcePending,
-  payload: {
-    exploreId,
-    requestedDatasourceName,
-  },
-});
-
-export const queriesImported = (exploreId: ExploreId, queries: DataQuery[]): QueriesImported => {
-  return {
-    type: ActionTypes.QueriesImported,
-    payload: {
-      exploreId,
-      queries,
-    },
-  };
-};
-
-/**
- * Datasource loading was successfully completed. The instance is stored in the state as well in case we need to
- * run datasource-specific code. Existing queries are imported to the new datasource if an importer exists,
- * e.g., Prometheus -> Loki queries.
- */
-export const loadDatasourceSuccess = (exploreId: ExploreId, instance: any): LoadDatasourceSuccessAction => {
-  // Capabilities
-  const supportsGraph = instance.meta.metrics;
-  const supportsLogs = instance.meta.logs;
-  const supportsTable = instance.meta.tables;
-  // Custom components
-  const StartPage = instance.pluginExports.ExploreStartPage;
-
+  instance: DataSourceApi
+): ActionOf<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
   store.set(LAST_USED_DATASOURCE_KEY, instance.name);
 
-  return {
-    type: ActionTypes.LoadDatasourceSuccess,
-    payload: {
-      exploreId,
-      StartPage,
-      datasourceInstance: instance,
-      history,
-      showingStartPage: Boolean(StartPage),
-      supportsGraph,
-      supportsLogs,
-      supportsTable,
-    },
-  };
+  return loadDatasourceReadyAction({
+    exploreId,
+    history,
+  });
 };
-
-/**
- * Updates datasource instance before datasouce loading has started
- */
-export function updateDatasourceInstance(
-  exploreId: ExploreId,
-  instance: DataSourceApi
-): UpdateDatasourceInstanceAction {
-  return {
-    type: ActionTypes.UpdateDatasourceInstance,
-    payload: {
-      exploreId,
-      datasourceInstance: instance,
-    },
-  };
-}
 
 export function importQueries(
   exploreId: ExploreId,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi,
   targetDataSource: DataSourceApi
-) {
+): ThunkResult<void> {
   return async dispatch => {
+    if (!sourceDataSource) {
+      // explore not initialized
+      dispatch(queriesImportedAction({ exploreId, queries }));
+      return;
+    }
+
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
     if (sourceDataSource.meta.id === targetDataSource.meta.id) {
@@ -340,25 +324,20 @@ export function importQueries(
       importedQueries = ensureQueries();
     }
 
-    const nextQueries = importedQueries.map((q, i) => ({
-      ...importedQueries[i],
-      ...generateEmptyQuery(i),
-    }));
+    const nextQueries = ensureQueries(importedQueries);
 
-    dispatch(queriesImported(exploreId, nextQueries));
+    dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
 }
 
 /**
- * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
+ * Tests datasource.
  */
-export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const datasourceName = instance.name;
-
-    // Keep ID to track selection
-    dispatch(loadDatasourcePending(exploreId, datasourceName));
+export const testDatasource = (exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> => {
+  return async dispatch => {
     let datasourceError = null;
+
+    dispatch(testDataSourcePendingAction({ exploreId }));
 
     try {
       const testResult = await instance.testDatasource();
@@ -368,9 +347,35 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     if (datasourceError) {
-      dispatch(loadDatasourceFailure(exploreId, datasourceError));
-      return Promise.reject(`${datasourceName} loading failed`);
+      dispatch(testDataSourceFailureAction({ exploreId, error: datasourceError }));
+      return;
     }
+
+    dispatch(testDataSourceSuccessAction({ exploreId }));
+  };
+};
+
+/**
+ * Reconnects datasource when there is a connection failure.
+ */
+export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const instance = getState().explore[exploreId].datasourceInstance;
+    dispatch(changeDatasource(exploreId, instance.name));
+  };
+};
+
+/**
+ * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
+ */
+export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const datasourceName = instance.name;
+
+    // Keep ID to track selection
+    dispatch(loadDatasourcePendingAction({ exploreId, requestedDatasourceName: datasourceName }));
+
+    await dispatch(testDatasource(exploreId, instance));
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
       // User already changed datasource again, discard results
@@ -378,7 +383,11 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
     }
 
     if (instance.init) {
-      instance.init();
+      try {
+        instance.init();
+      } catch (err) {
+        console.log(err);
+      }
     }
 
     if (datasourceName !== getState().explore[exploreId].requestedDatasourceName) {
@@ -386,8 +395,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
       return;
     }
 
-    dispatch(loadDatasourceSuccess(exploreId, instance));
-    return Promise.resolve();
+    dispatch(loadDatasourceReady(exploreId, instance));
   };
 }
 
@@ -400,209 +408,131 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
  */
 export function modifyQueries(
   exploreId: ExploreId,
-  modification: any,
+  modification: QueryFixAction,
   index: number,
   modifier: any
 ): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.ModifyQueries, payload: { exploreId, modification, index, modifier } });
+    dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
     if (!modification.preventSubmit) {
       dispatch(runQueries(exploreId));
     }
   };
 }
 
-/**
- * Mark a query transaction as failed with an error extracted from the query response.
- * The transaction will be marked as `done`.
- */
-export function queryTransactionFailure(
+export function processQueryErrors(
   exploreId: ExploreId,
-  transactionId: string,
   response: any,
+  resultType: ResultType,
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, queryTransactions } = getState().explore[exploreId];
+    const { datasourceInstance } = getState().explore[exploreId];
+
     if (datasourceInstance.meta.id !== datasourceId || response.cancelled) {
       // Navigated away, queries did not matter
       return;
     }
 
-    // Transaction might have been discarded
-    if (!queryTransactions.find(qt => qt.id === transactionId)) {
-      return;
+    console.error(response); // To help finding problems with query syntax
+
+    if (!instanceOfDataQueryError(response)) {
+      response = toDataQueryError(response);
     }
 
-    console.error(response);
-
-    let error: string;
-    let errorDetails: string;
-    if (response.data) {
-      if (typeof response.data === 'string') {
-        error = response.data;
-      } else if (response.data.error) {
-        error = response.data.error;
-        if (response.data.response) {
-          errorDetails = response.data.response;
-        }
-      } else {
-        throw new Error('Could not handle error response');
-      }
-    } else if (response.message) {
-      error = response.message;
-    } else if (typeof response === 'string') {
-      error = response;
-    } else {
-      error = 'Unknown error during query transaction. Please check JS console logs.';
-    }
-
-    // Mark transactions as complete
-    const nextQueryTransactions = queryTransactions.map(qt => {
-      if (qt.id === transactionId) {
-        return {
-          ...qt,
-          error,
-          errorDetails,
-          done: true,
-        };
-      }
-      return qt;
-    });
-
-    dispatch({
-      type: ActionTypes.QueryTransactionFailure,
-      payload: { exploreId, queryTransactions: nextQueryTransactions },
-    });
+    dispatch(
+      queryFailureAction({
+        exploreId,
+        response,
+        resultType,
+      })
+    );
   };
 }
 
 /**
- * Start a query transaction for the given result type.
  * @param exploreId Explore area
- * @param transaction Query options and `done` status.
- * @param resultType Associate the transaction with a result viewer, e.g., Graph
- * @param rowIndex Index is used to associate latency for this transaction with a query row
- */
-export function queryTransactionStart(
-  exploreId: ExploreId,
-  transaction: QueryTransaction,
-  resultType: ResultType,
-  rowIndex: number
-): QueryTransactionStartAction {
-  return { type: ActionTypes.QueryTransactionStart, payload: { exploreId, resultType, rowIndex, transaction } };
-}
-
-/**
- * Complete a query transaction, mark the transaction as `done` and store query state in URL.
- * If the transaction was started by a scanner, it keeps on scanning for more results.
- * Side-effect: the query is stored in localStorage.
- * @param exploreId Explore area
- * @param transactionId ID
- * @param result Response from `datasourceInstance.query()`
+ * @param response Response from `datasourceInstance.query()`
  * @param latency Duration between request and response
- * @param queries Queries from all query rows
+ * @param resultType The type of result
  * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
  */
-export function queryTransactionSuccess(
+export function processQueryResults(
   exploreId: ExploreId,
-  transactionId: string,
-  result: any,
+  response: any,
   latency: number,
-  queries: DataQuery[],
+  resultType: ResultType,
   datasourceId: string
 ): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { datasourceInstance, history, queryTransactions, scanner, scanning } = getState().explore[exploreId];
+    const { datasourceInstance, scanning, scanner } = getState().explore[exploreId];
 
     // If datasource already changed, results do not matter
     if (datasourceInstance.meta.id !== datasourceId) {
       return;
     }
 
-    // Transaction might have been discarded
-    const transaction = queryTransactions.find(qt => qt.id === transactionId);
-    if (!transaction) {
-      return;
-    }
+    const series: any[] = response.data;
+    const refIds = getRefIds(series);
 
-    // Get query hints
-    let hints: QueryHint[];
-    if (datasourceInstance.getQueryHints) {
-      hints = datasourceInstance.getQueryHints(transaction.query, result);
-    }
-
-    // Mark transactions as complete and attach result
-    const nextQueryTransactions = queryTransactions.map(qt => {
-      if (qt.id === transactionId) {
-        return {
-          ...qt,
-          hints,
-          latency,
-          result,
-          done: true,
-        };
-      }
-      return qt;
-    });
-
-    // Side-effect: Saving history in localstorage
-    const nextHistory = updateHistory(history, datasourceId, queries);
-
-    dispatch({
-      type: ActionTypes.QueryTransactionSuccess,
-      payload: {
+    // Clears any previous errors that now have a successful query, important so Angular editors are updated correctly
+    dispatch(
+      resetQueryErrorAction({
         exploreId,
-        history: nextHistory,
-        queryTransactions: nextQueryTransactions,
-      },
-    });
+        refIds,
+      })
+    );
+
+    const resultGetter =
+      resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data : null;
+    const result = resultGetter ? resultGetter(series, null, []) : series;
+
+    dispatch(
+      querySuccessAction({
+        exploreId,
+        result,
+        resultType,
+        latency,
+      })
+    );
 
     // Keep scanning for results if this was the last scanning transaction
     if (scanning) {
       if (_.size(result) === 0) {
-        const other = nextQueryTransactions.find(qt => qt.scanning && !qt.done);
-        if (!other) {
-          const range = scanner();
-          dispatch({ type: ActionTypes.ScanRange, payload: { exploreId, range } });
-        }
+        const range = scanner();
+        dispatch(scanRangeAction({ exploreId, range }));
       } else {
         // We can stop scanning if we have a result
-        dispatch(scanStop(exploreId));
+        dispatch(scanStopAction({ exploreId }));
       }
     }
-  };
-}
-
-/**
- * Remove query row of the given index, as well as associated query results.
- */
-export function removeQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
-  return dispatch => {
-    dispatch({ type: ActionTypes.RemoveQueryRow, payload: { exploreId, index } });
-    dispatch(runQueries(exploreId));
   };
 }
 
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceUrl = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
-      modifiedQueries,
+      queries,
       showingLogs,
       showingGraph,
       showingTable,
-      supportsGraph,
-      supportsLogs,
-      supportsTable,
+      datasourceError,
+      containerWidth,
+      mode,
     } = getState().explore[exploreId];
 
-    if (!hasNonEmptyQuery(modifiedQueries)) {
-      dispatch({ type: ActionTypes.RunQueriesEmpty, payload: { exploreId } });
-      dispatch(stateSave()); // Remember to saves to state and update location
+    if (datasourceError) {
+      // let's not run any queries if data source is in a faulty state
+      return;
+    }
+
+    if (!hasNonEmptyQuery(queries)) {
+      dispatch(clearQueriesAction({ exploreId }));
+      dispatch(stateSave(replaceUrl)); // Remember to save to state and update location
       return;
     }
 
@@ -610,41 +540,33 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
+    dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && supportsTable) {
+    if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
-        runQueriesForType(
-          exploreId,
-          'Table',
-          {
-            interval,
-            format: 'table',
-            instant: true,
-            valueWithRefId: true,
-          },
-          data => data[0]
-        )
+        runQueriesForType(exploreId, 'Table', {
+          interval,
+          format: 'table',
+          instant: true,
+          valueWithRefId: true,
+        })
       );
     }
-    if ((ignoreUIState || showingGraph) && supportsGraph) {
+    if ((ignoreUIState || showingGraph) && mode === ExploreMode.Metrics) {
       dispatch(
-        runQueriesForType(
-          exploreId,
-          'Graph',
-          {
-            interval,
-            format: 'time_series',
-            instant: false,
-          },
-          makeTimeSeriesList
-        )
+        runQueriesForType(exploreId, 'Graph', {
+          interval,
+          format: 'time_series',
+          instant: false,
+          maxDataPoints: containerWidth,
+        })
       );
     }
-    if ((ignoreUIState || showingLogs) && supportsLogs) {
+    if ((ignoreUIState || showingLogs) && mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
-    dispatch(stateSave());
+    dispatch(stateSave(replaceUrl));
   };
 }
 
@@ -658,44 +580,28 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false) {
 function runQueriesForType(
   exploreId: ExploreId,
   resultType: ResultType,
-  queryOptions: QueryOptions,
-  resultGetter?: any
-) {
+  queryOptions: QueryOptions
+): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const {
-      datasourceInstance,
-      eventBridge,
-      modifiedQueries: queries,
-      queryIntervals,
-      range,
-      scanning,
-    } = getState().explore[exploreId];
+    const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning, history } = getState().explore[
+      exploreId
+    ];
     const datasourceId = datasourceInstance.meta.id;
-
-    // Run all queries concurrently
-    queries.forEach(async (query, rowIndex) => {
-      const transaction = buildQueryTransaction(
-        query,
-        rowIndex,
-        resultType,
-        queryOptions,
-        range,
-        queryIntervals,
-        scanning
-      );
-      dispatch(queryTransactionStart(exploreId, transaction, resultType, rowIndex));
-      try {
-        const now = Date.now();
-        const res = await datasourceInstance.query(transaction.options);
-        eventBridge.emit('data-received', res.data || []);
-        const latency = Date.now() - now;
-        const results = resultGetter ? resultGetter(res.data) : res.data;
-        dispatch(queryTransactionSuccess(exploreId, transaction.id, results, latency, queries, datasourceId));
-      } catch (response) {
-        eventBridge.emit('data-error', response);
-        dispatch(queryTransactionFailure(exploreId, transaction.id, response, datasourceId));
-      }
-    });
+    const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
+    dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
+    try {
+      const now = Date.now();
+      const response = await datasourceInstance.query(transaction.options);
+      eventBridge.emit('data-received', response.data || []);
+      const latency = Date.now() - now;
+      // Side-effect: Saving history in localstorage
+      const nextHistory = updateHistory(history, datasourceId, queries);
+      dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+      dispatch(processQueryResults(exploreId, response, latency, resultType, datasourceId));
+    } catch (err) {
+      eventBridge.emit('data-error', err);
+      dispatch(processQueryErrors(exploreId, err, resultType, datasourceId));
+    }
   };
 }
 
@@ -707,19 +613,12 @@ function runQueriesForType(
 export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkResult<void> {
   return dispatch => {
     // Register the scanner
-    dispatch({ type: ActionTypes.ScanStart, payload: { exploreId, scanner } });
+    dispatch(scanStartAction({ exploreId, scanner }));
     // Scanning must trigger query run, and return the new range
     const range = scanner();
     // Set the new range to be displayed
-    dispatch({ type: ActionTypes.ScanRange, payload: { exploreId, range } });
+    dispatch(scanRangeAction({ exploreId, range }));
   };
-}
-
-/**
- * Stop any scanning for more results.
- */
-export function scanStop(exploreId: ExploreId): ScanStopAction {
-  return { type: ActionTypes.ScanStop, payload: { exploreId } };
 }
 
 /**
@@ -727,16 +626,11 @@ export function scanStop(exploreId: ExploreId): ScanStopAction {
  * Use this action for clicks on query examples. Triggers a query run.
  */
 export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
-  return dispatch => {
+  return (dispatch, getState) => {
     // Inject react keys into query objects
-    const queries = rawQueries.map(q => ({ ...q, ...generateEmptyQuery() }));
-    dispatch({
-      type: ActionTypes.SetQueries,
-      payload: {
-        exploreId,
-        queries,
-      },
-    });
+    const queries = getState().explore[exploreId].queries;
+    const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
+    dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     dispatch(runQueries(exploreId));
   };
 }
@@ -744,9 +638,9 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
 /**
  * Close the split view and save URL state.
  */
-export function splitClose(): ThunkResult<void> {
+export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return dispatch => {
-    dispatch({ type: ActionTypes.SplitClose });
+    dispatch(splitCloseAction({ itemId }));
     dispatch(stateSave());
   };
 }
@@ -759,52 +653,76 @@ export function splitClose(): ThunkResult<void> {
 export function splitOpen(): ThunkResult<void> {
   return (dispatch, getState) => {
     // Clone left state to become the right state
-    const leftState = getState().explore.left;
+    const leftState = getState().explore[ExploreId.left];
+    const queryState = getState().location.query[ExploreId.left] as string;
+    const urlState = parseUrlState(queryState);
+    const queryTransactions: QueryTransaction[] = [];
     const itemState = {
       ...leftState,
-      queryTransactions: [],
-      initialQueries: leftState.modifiedQueries.slice(),
+      queryTransactions,
+      queries: leftState.queries.slice(),
+      exploreId: ExploreId.right,
+      urlState,
     };
-    dispatch({ type: ActionTypes.SplitOpen, payload: { itemState } });
+    dispatch(splitOpenAction({ itemState }));
     dispatch(stateSave());
   };
 }
+
+const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+  let from = range.raw.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString(10);
+  }
+
+  let to = range.raw.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString(10);
+  }
+
+  return {
+    from,
+    to,
+  };
+};
 
 /**
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
  */
-export function stateSave() {
+export function stateSave(replaceUrl = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
     const urlStates: { [index: string]: string } = {};
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
-      queries: left.modifiedQueries.map(clearQueryKeys),
-      range: left.range,
+      queries: left.queries.map(clearQueryKeys),
+      range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: left.showingLogs,
         showingTable: left.showingTable,
+        dedupStrategy: left.dedupStrategy,
       },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
         datasource: right.datasourceInstance.name,
-        queries: right.modifiedQueries.map(clearQueryKeys),
-        range: right.range,
+        queries: right.queries.map(clearQueryKeys),
+        range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: right.showingLogs,
           showingTable: right.showingTable,
+          dedupStrategy: right.dedupStrategy,
         },
       };
 
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
 
-    dispatch(updateLocation({ query: urlStates }));
+    dispatch(updateLocation({ query: urlStates, replace: replaceUrl }));
   };
 }
 
@@ -812,25 +730,30 @@ export function stateSave() {
  * Creates action to collapse graph/logs/table panel. When panel is collapsed,
  * queries won't be run
  */
-const togglePanelActionCreator = (type: ActionTypes.ToggleGraph | ActionTypes.ToggleTable | ActionTypes.ToggleLogs) => (
-  exploreId: ExploreId
-) => {
-  return (dispatch, getState) => {
-    let shouldRunQueries;
-    dispatch({ type, payload: { exploreId } });
-    dispatch(stateSave());
+const togglePanelActionCreator = (
+  actionCreator:
+    | ActionCreator<ToggleGraphPayload>
+    | ActionCreator<ToggleLogsPayload>
+    | ActionCreator<ToggleTablePayload>
+) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
+  return dispatch => {
+    let uiFragmentStateUpdate: Partial<ExploreUIState>;
+    const shouldRunQueries = !isPanelVisible;
 
-    switch (type) {
-      case ActionTypes.ToggleGraph:
-        shouldRunQueries = getState().explore[exploreId].showingGraph;
+    switch (actionCreator.type) {
+      case toggleGraphAction.type:
+        uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
         break;
-      case ActionTypes.ToggleLogs:
-        shouldRunQueries = getState().explore[exploreId].showingLogs;
+      case toggleLogsAction.type:
+        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
-      case ActionTypes.ToggleTable:
-        shouldRunQueries = getState().explore[exploreId].showingTable;
+      case toggleTableAction.type:
+        uiFragmentStateUpdate = { showingTable: !isPanelVisible };
         break;
     }
+
+    dispatch(actionCreator({ exploreId }));
+    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate));
 
     if (shouldRunQueries) {
       dispatch(runQueries(exploreId));
@@ -841,23 +764,68 @@ const togglePanelActionCreator = (type: ActionTypes.ToggleGraph | ActionTypes.To
 /**
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
-export const toggleGraph = togglePanelActionCreator(ActionTypes.ToggleGraph);
+export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
 
 /**
  * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
  */
-export const toggleLogs = togglePanelActionCreator(ActionTypes.ToggleLogs);
+export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
  */
-export const toggleTable = togglePanelActionCreator(ActionTypes.ToggleTable);
+export const toggleTable = togglePanelActionCreator(toggleTableAction);
 
 /**
- * Resets state for explore.
+ * Change logs deduplication strategy and update URL.
  */
-export function resetExplore(): ThunkResult<void> {
+export const changeDedupStrategy = (exploreId: ExploreId, dedupStrategy: LogsDedupStrategy): ThunkResult<void> => {
   return dispatch => {
-    dispatch({ type: ActionTypes.ResetExplore, payload: {} });
+    dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
+  };
+};
+
+export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const itemState = getState().explore[exploreId];
+    if (!itemState.initialized) {
+      return;
+    }
+
+    const { urlState, update, containerWidth, eventBridge } = itemState;
+    const { datasource, queries, range: urlRange, ui } = urlState;
+    const refreshQueries: DataQuery[] = [];
+    for (let index = 0; index < queries.length; index++) {
+      const query = queries[index];
+      refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
+    }
+    const timeZone = getTimeZone(getState().user);
+    const range = getTimeRangeFromUrl(urlRange, timeZone);
+
+    // need to refresh datasource
+    if (update.datasource) {
+      const initialQueries = ensureQueries(queries);
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui));
+      return;
+    }
+
+    if (update.range) {
+      dispatch(changeTimeAction({ exploreId, range }));
+    }
+
+    // need to refresh ui state
+    if (update.ui) {
+      dispatch(updateUIStateAction({ ...ui, exploreId }));
+    }
+
+    // need to refresh queries
+    if (update.queries) {
+      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    // always run queries when refresh is needed
+    if (update.queries || update.ui || update.range) {
+      dispatch(runQueries(exploreId));
+    }
   };
 }

@@ -2,16 +2,19 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
+// Components
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
+
 // Types
-import { PanelProps } from '@grafana/ui';
-import { PanelPlugin } from 'app/types';
+import { AppNotificationSeverity } from 'app/types';
+import { PanelProps, PanelPlugin, PluginType } from '@grafana/ui';
 
 interface Props {
   pluginId: string;
 }
 
 class PanelPluginNotFound extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 
@@ -19,15 +22,13 @@ class PanelPluginNotFound extends PureComponent<Props> {
     const style = {
       display: 'flex',
       alignItems: 'center',
-      textAlign: 'center' as 'center',
+      justifyContent: 'center',
       height: '100%',
     };
 
     return (
       <div style={style}>
-        <div className="alert alert-error" style={{ margin: '0 auto' }}>
-          Panel plugin with id {this.props.pluginId} could not be found
-        </div>
+        <AlertBox severity={AppNotificationSeverity.Error} title={`Panel plugin not found: ${this.props.pluginId}`} />
       </div>
     );
   }
@@ -40,10 +41,12 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
     }
   };
 
-  return {
+  const plugin = new PanelPlugin(NotFound);
+  plugin.meta = {
     id: id,
     name: id,
     sort: 100,
+    type: PluginType.panel,
     module: '',
     baseUrl: '',
     info: {
@@ -60,9 +63,6 @@ export function getPanelPluginNotFound(id: string): PanelPlugin {
       updated: '',
       version: '',
     },
-
-    exports: {
-      Panel: NotFound,
-    },
   };
+  return plugin;
 }

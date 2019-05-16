@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -35,7 +36,7 @@ type EmailNotifier struct {
 	log       log.Logger
 }
 
-func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 
 	if addressesString == "" {
@@ -72,21 +73,21 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		error = evalContext.Error.Error()
 	}
 
-	cmd := &m.SendEmailCommandSync{
-		SendEmailCommand: m.SendEmailCommand{
+	cmd := &models.SendEmailCommandSync{
+		SendEmailCommand: models.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
 			Data: map[string]interface{}{
-				"Title":        evalContext.GetNotificationTitle(),
-				"State":        evalContext.Rule.State,
-				"Name":         evalContext.Rule.Name,
-				"StateModel":   evalContext.GetStateModel(),
-				"Message":      evalContext.Rule.Message,
-				"Error":        error,
-				"RuleUrl":      ruleUrl,
-				"ImageLink":    "",
-				"EmbededImage": "",
-				"AlertPageUrl": setting.AppUrl + "alerting",
-				"EvalMatches":  evalContext.EvalMatches,
+				"Title":         evalContext.GetNotificationTitle(),
+				"State":         evalContext.Rule.State,
+				"Name":          evalContext.Rule.Name,
+				"StateModel":    evalContext.GetStateModel(),
+				"Message":       evalContext.Rule.Message,
+				"Error":         error,
+				"RuleUrl":       ruleUrl,
+				"ImageLink":     "",
+				"EmbeddedImage": "",
+				"AlertPageUrl":  setting.AppUrl + "alerting",
+				"EvalMatches":   evalContext.EvalMatches,
 			},
 			To:           this.Addresses,
 			Template:     "alert_notification.html",
@@ -100,7 +101,7 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		file, err := os.Stat(evalContext.ImageOnDiskPath)
 		if err == nil {
 			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
-			cmd.Data["EmbededImage"] = file.Name()
+			cmd.Data["EmbeddedImage"] = file.Name()
 		}
 	}
 

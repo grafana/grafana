@@ -160,6 +160,13 @@ The path to the directory where the front end files (HTML, JS, and CSS
 files). Default to `public` which is why the Grafana binary needs to be
 executed with working directory set to the installation path.
 
+### enable_gzip
+
+Set this option to `true` to enable HTTP compression, this can improve
+transfer speed and bandwidth utilization. It is recommended that most
+users set it to `true`. By default it is set to `false` for compatibility
+reasons.
+
 ### cert_file
 
 Path to the certificate file (if `protocol` is set to `https`).
@@ -172,7 +179,6 @@ Path to the certificate key file (if `protocol` is set to `https`).
 
 Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
 to grafana log.
-<hr />
 
 <hr />
 
@@ -255,6 +261,19 @@ Set to `true` to log the sql calls and execution times.
 For "sqlite3" only. [Shared cache](https://www.sqlite.org/sharedcache.html) setting used for connecting to the database. (private, shared)
 Defaults to private.
 
+<hr />
+
+## [remote_cache]
+
+### type
+
+Either `redis`, `memcached` or `database` default is `database`
+
+### connstr
+
+The remote cache connection string. Leave empty when using `database` since it will use the primary database.
+Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+Memcache example: `127.0.0.1:11211`
 
 <hr />
 
@@ -286,6 +305,20 @@ Default is `false`.
 ### data_source_proxy_whitelist
 
 Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
+### cookie_secure
+
+Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### cookie_samesite
+
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+
+### allow_embedding
+
+When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
+browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
+mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
 
 <hr />
 
@@ -327,6 +360,19 @@ options are `Admin` and `Editor`. e.g. :
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
 
+### editors_can_admin
+
+Editors can administrate dashboards, folders and teams they create.
+Defaults to `false`.
+
+### login_hint
+
+Text used as placeholder text on login page for login/username input.
+
+### password_hint
+
+Text used as placeholder text on login page for password input.
+
 <hr>
 
 ## [auth]
@@ -343,36 +389,19 @@ below.
 - [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
 - [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
 
-## [session]
+## [dataproxy]
 
-### provider
+### logging
 
-Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
+This enables data proxy logging, default is false.
 
-### provider_config
+### timeout
 
-This option should be configured differently depending on what type of
-session provider you have configured.
+How long the data proxy should wait before timing out default is 30 (seconds)
 
-- **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
-- **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+### send_user_header
 
-Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
-
-### cookie_name
-
-The name of the Grafana session cookie.
-
-### cookie_secure
-
-Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
-
-### session_life_time
-
-How long sessions lasts in seconds. Defaults to `86400` (24 hours).
+If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request, default is false.
 
 <hr />
 
@@ -393,9 +422,7 @@ Analytics ID here. By default this feature is disabled.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of Grafana and installed plugins. Check is used
-in some UI views to notify that a Grafana or plugin update exists. This option does not cause any auto updates, nor
-send any sensitive information.
+Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
 
 <hr />
 
@@ -550,9 +577,9 @@ basic auth password
 Path to JSON key file associated with a Google service account to authenticate and authorize.
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
-### bucket name
+### bucket
 Bucket Name on Google Cloud Storage.
 
 ### path
@@ -588,7 +615,7 @@ Default setting for new alert rules. Defaults to categorize error and timeouts a
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
 
-# concurrent_render_limit
+### concurrent_render_limit
 
 > Available in 5.3  and above
 
@@ -596,13 +623,67 @@ Alert notifications can include images, but rendering many images at the same ti
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
 
+
+### evaluation_timeout_seconds
+
+Default setting for alert calculation timeout. Default value is `30`
+
+### notification_timeout_seconds
+
+Default setting for alert notification timeout. Default value is `30`
+
+### max_attempts
+
+Default setting for max attempts to sending alert notifications. Default value is `3`
+
+
 ## [panels]
 
-### enable_alpha
-Set to true if you want to test panels that are not yet ready for general usage.
-
 ### disable_sanitize_html
+
 If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
 is false. This settings was introduced in Grafana v6.0.
 
+## [plugins]
+
+### enable_alpha
+
+Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+<hr />
+
+# Removed options
+Please note that these options have been removed.
+
+## [session]
+**Removed starting from Grafana v6.2. Please use [remote_cache](#remote-cache) option instead.**
+
+### provider
+
+Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
+
+### provider_config
+
+This option should be configured differently depending on what type of
+session provider you have configured.
+
+- **file:** session file path, e.g. `data/sessions`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex:  `127.0.0.1:11211`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
+
+### cookie_name
+
+The name of the Grafana session cookie.
+
+### cookie_secure
+
+Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
+
+### session_life_time
+
+How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 

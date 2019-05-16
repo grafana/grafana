@@ -1,18 +1,19 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { Props, ApiKeysPage } from './ApiKeysPage';
-import { NavModel, ApiKey } from 'app/types';
+import { ApiKey } from 'app/types';
 import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
+import { NavModel } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {
       main: {
-        text: 'Configuration'
+        text: 'Configuration',
       },
       node: {
-        text: 'Api Keys'
-      }
+        text: 'Api Keys',
+      },
     } as NavModel,
     apiKeys: [] as ApiKey[],
     searchQuery: '',
@@ -78,9 +79,8 @@ describe('Functions', () => {
   describe('on search query change', () => {
     it('should call setSearchQuery', () => {
       const { instance } = setup();
-      const mockEvent = { target: { value: 'test' } };
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('test');
 
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('test');
     });

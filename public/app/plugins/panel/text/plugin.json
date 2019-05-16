@@ -3,16 +3,16 @@
   "name": "Text",
   "id": "text",
 
+  "skipDataQuery": true,
+
   "info": {
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
-},
+    },
     "logos": {
       "small": "img/icn-text-panel.svg",
       "large": "img/icn-text-panel.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }
-

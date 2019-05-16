@@ -17,16 +17,17 @@
 			<span class="gf-form-label width-7">User</span>
 			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
 		</div>
-		<div class="gf-form max-width-15" ng-if="!ctrl.current.secureJsonFields.password">
-			<span class="gf-form-label width-7">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>
-    </div>
-    <div class="gf-form max-width-19" ng-if="ctrl.current.secureJsonFields.password">
-      <span class="gf-form-label width-7">Password</span>
-      <input type="text" class="gf-form-input" disabled="disabled" value="configured">
-      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.password = false">reset</a>
+    <div class="gf-form">
+      <secret-form-field
+        isConfigured="ctrl.current.secureJsonFields.password"
+        value="ctrl.current.secureJsonData.password"
+        on-reset="ctrl.onPasswordReset"
+        on-change="ctrl.onPasswordChange"
+        inputWidth="9"
+      />
     </div>
 	</div>
+
 	<div class="gf-form">
 		<label class="gf-form-label width-7">SSL Mode</label>
 		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
@@ -43,7 +44,7 @@
 <div class="gf-form-group">
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max open</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxOpenConns" placeholder="unlimited"></input>
 		<info-popover mode="right-absolute">
 			The maximum number of open connections to the database. If <i>Max idle connections</i> is greater than 0 and the
 			<i>Max open connections</i> is less than <i>Max idle connections</i>, then <i>Max idle connections</i> will be
@@ -53,7 +54,7 @@
 	</div>
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max idle</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.maxIdleConns" placeholder="2"></input>
 		<info-popover mode="right-absolute">
 			The maximum number of connections in the idle connection pool. If <i>Max open connections</i> is greater than 0 but
 			less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced to match the
@@ -62,7 +63,7 @@
 	</div>
 	<div class="gf-form max-width-15">
 		<span class="gf-form-label width-7">Max lifetime</span>
-		<input type="number" min="0" class="gf-form-input" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
+		<input type="number" min="0" class="gf-form-input gf-form-input--has-help-icon" ng-model="ctrl.current.jsonData.connMaxLifetime" placeholder="14400"></input>
 		<info-popover mode="right-absolute">
 			The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.
 		</info-popover>
@@ -95,7 +96,14 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-9">Min time interval</span>
-			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="1m"></input>
+			<input
+        type="text"
+        class="gf-form-input width-6 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.timeInterval"
+        spellcheck='false'
+        placeholder="1m"
+        ng-pattern="/^\d+[Mwdhmsy]$/"
+      ></input>
 			<info-popover mode="right-absolute">
 				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 				for example <code>1m</code> if your data is written every minute.

@@ -26,7 +26,7 @@ export default class Table extends PureComponent<TableProps> {
         if (e.target) {
           const link = e.target as HTMLElement;
           if (link.className === 'link') {
-            const columnKey = column.Header;
+            const columnKey = column.Header().props.title;
             const rowValue = rowInfo.row[columnKey];
             this.props.onClickCell(columnKey, rowValue);
           }
@@ -40,11 +40,15 @@ export default class Table extends PureComponent<TableProps> {
     const tableModel = data || EMPTY_TABLE;
     const columnNames = tableModel.columns.map(({ text }) => text);
     const columns = tableModel.columns.map(({ filterable, text }) => ({
-      Header: text,
+      Header: () => <span title={text}>{text}</span>,
       accessor: text,
       className: VALUE_REGEX.test(text) ? 'text-right' : '',
       show: text !== 'Time',
-      Cell: row => <span className={filterable ? 'link' : ''}>{row.value}</span>,
+      Cell: row => (
+        <span className={filterable ? 'link' : ''} title={text + ': ' + row.value}>
+          {row.value}
+        </span>
+      ),
     }));
     const noDataText = data ? 'The queries returned no data for a table.' : '';
 

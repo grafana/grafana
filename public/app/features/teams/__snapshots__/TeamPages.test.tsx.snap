@@ -17,11 +17,7 @@ exports[`Render should render group sync page 1`] = `
   <PageContents
     isLoading={true}
   >
-    <div
-      className="page-container page-body"
-    >
-      <Connect(TeamGroupSync) />
-    </div>
+    <Connect(TeamGroupSync) />
   </PageContents>
 </Page>
 `;
@@ -33,13 +29,10 @@ exports[`Render should render member page if team not empty 1`] = `
   <PageContents
     isLoading={true}
   >
-    <div
-      className="page-container page-body"
-    >
-      <Connect(TeamMembers)
-        syncEnabled={true}
-      />
-    </div>
+    <Connect(TeamMembers)
+      members={Array []}
+      syncEnabled={true}
+    />
   </PageContents>
 </Page>
 `;
@@ -51,11 +44,29 @@ exports[`Render should render settings and preferences page 1`] = `
   <PageContents
     isLoading={true}
   >
-    <div
-      className="page-container page-body"
-    >
-      <Connect(TeamSettings) />
-    </div>
+    <Connect(TeamSettings) />
+  </PageContents>
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should not render settings page if user is team member 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  />
+</Page>
+`;
+
+exports[`Render when feature toggle editorsCanAdmin is turned on should render settings page if user is team admin 1`] = `
+<Page
+  navModel={Object {}}
+>
+  <PageContents
+    isLoading={true}
+  >
+    <Connect(TeamSettings) />
   </PageContents>
 </Page>
 `;

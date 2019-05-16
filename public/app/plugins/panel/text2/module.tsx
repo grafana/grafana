@@ -1,14 +1,15 @@
-import React, { PureComponent } from 'react';
-import { PanelProps } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/ui';
 
-export class Text2 extends PureComponent<PanelProps> {
-  constructor(props) {
-    super(props);
-  }
+import { TextPanelEditor } from './TextPanelEditor';
+import { TextPanel } from './TextPanel';
+import { TextOptions, defaults } from './types';
 
-  render() {
-    return <h2>Text Panel!</h2>;
-  }
-}
-
-export { Text2 as Panel };
+export const plugin = new PanelPlugin<TextOptions>(TextPanel)
+  .setDefaults(defaults)
+  .setEditor(TextPanelEditor)
+  .setPanelChangeHandler((options: TextOptions, prevPluginId: string, prevOptions: any) => {
+    if (prevPluginId === 'text') {
+      return prevOptions as TextOptions;
+    }
+    return options;
+  });

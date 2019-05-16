@@ -2,10 +2,13 @@ import { stackdriverUnitMappings } from './constants';
 import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 import StackdriverMetricFindQuery from './StackdriverMetricFindQuery';
-import { MetricDescriptor } from './types';
+import { StackdriverQuery, MetricDescriptor, StackdriverOptions } from './types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export default class StackdriverDatasource {
-  id: number;
+export default class StackdriverDatasource extends DataSourceApi<StackdriverQuery, StackdriverOptions> {
   url: string;
   baseUrl: string;
   projectName: string;
@@ -14,10 +17,15 @@ export default class StackdriverDatasource {
   metricTypes: any[];
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<StackdriverOptions>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
+    super(instanceSettings);
     this.baseUrl = `/stackdriver/`;
     this.url = instanceSettings.url;
-    this.id = instanceSettings.id;
     this.projectName = instanceSettings.jsonData.defaultProject || '';
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.metricTypes = [];
@@ -39,9 +47,7 @@ export default class StackdriverDatasource {
           alignmentPeriod: this.templateSrv.replace(t.alignmentPeriod, options.scopedVars || {}),
           groupBys: this.interpolateGroupBys(t.groupBys, options.scopedVars),
           view: t.view || 'FULL',
-          filters: (t.filters || []).map(f => {
-            return this.templateSrv.replace(f, options.scopedVars || {});
-          }),
+          filters: this.interpolateFilters(t.filters, options.scopedVars),
           aliasBy: this.templateSrv.replace(t.aliasBy, options.scopedVars || {}),
           type: 'timeSeriesQuery',
         };
@@ -63,7 +69,13 @@ export default class StackdriverDatasource {
     }
   }
 
-  async getLabels(metricType, refId) {
+  interpolateFilters(filters: string[], scopedVars: ScopedVars) {
+    return (filters || []).map(f => {
+      return this.templateSrv.replace(f, scopedVars || {}, 'regex');
+    });
+  }
+
+  async getLabels(metricType: string, refId: string) {
     const response = await this.getTimeSeries({
       targets: [
         {
@@ -103,16 +115,16 @@ export default class StackdriverDatasource {
     return unit;
   }
 
-  async query(options) {
+  async query(options: DataQueryRequest<StackdriverQuery>) {
     const result = [];
     const data = await this.getTimeSeries(options);
     if (data.results) {
-      Object['values'](data.results).forEach(queryRes => {
+      Object['values'](data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
           return;
         }
         const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach(series => {
+        queryRes.series.forEach((series: any) => {
           let timeSerie: any = {
             target: series.name,
             datapoints: series.points,

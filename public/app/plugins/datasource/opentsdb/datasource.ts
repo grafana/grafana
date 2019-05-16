@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 export default class OpenTsDatasource {
   type: any;
@@ -33,8 +33,8 @@ export default class OpenTsDatasource {
 
   // Called once per panel (graph)
   query(options) {
-    const start = this.convertToTSDBTime(options.rangeRaw.from, false);
-    const end = this.convertToTSDBTime(options.rangeRaw.to, true);
+    const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
+    const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs = [];
 
     _.each(options.targets, target => {
@@ -72,7 +72,7 @@ export default class OpenTsDatasource {
 
     return this.performTimeSeriesQuery(queries, start, end).then(response => {
       const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
-      const result = _.map(response.data, (metricData, index) => {
+      const result = _.map(response.data, (metricData: any, index: number) => {
         index = metricToTargetMapping[index];
         if (index === -1) {
           index = 0;
@@ -86,8 +86,8 @@ export default class OpenTsDatasource {
   }
 
   annotationQuery(options) {
-    const start = this.convertToTSDBTime(options.rangeRaw.from, false);
-    const end = this.convertToTSDBTime(options.rangeRaw.to, true);
+    const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
+    const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs = [];
     const eventList = [];
 
@@ -347,7 +347,7 @@ export default class OpenTsDatasource {
 
     // TSDB returns datapoints has a hash of ts => value.
     // Can't use _.pairs(invert()) because it stringifies keys/values
-    _.each(md.dps, (v, k) => {
+    _.each(md.dps, (v: any, k: number) => {
       if (tsdbResolution === 2) {
         dps.push([v, k * 1]);
       } else {
@@ -466,7 +466,7 @@ export default class OpenTsDatasource {
       if (tsdbVersion === 3) {
         return metricData.query.index;
       } else {
-        return _.findIndex(options.targets, target => {
+        return _.findIndex(options.targets as any[], target => {
           if (target.filters && target.filters.length > 0) {
             return target.metric === metricData.metric;
           } else {
@@ -484,12 +484,12 @@ export default class OpenTsDatasource {
     });
   }
 
-  convertToTSDBTime(date, roundUp) {
+  convertToTSDBTime(date, roundUp, timezone) {
     if (date === 'now') {
       return null;
     }
 
-    date = dateMath.parse(date, roundUp);
+    date = dateMath.parse(date, roundUp, timezone);
     return date.valueOf();
   }
 }

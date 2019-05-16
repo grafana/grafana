@@ -1,27 +1,25 @@
-<div class="navbar-buttons">
-  <button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(-1)' ng-if="ctrl.isAbsolute">
-		<i class="fa fa-chevron-left"></i>
-	</button>
+<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(-1)' ng-if="ctrl.isAbsolute">
+  <i class="fa fa-chevron-left"></i>
+</button>
 
-	<button bs-tooltip="ctrl.tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()" class="btn navbar-button gf-timepicker-nav-btn">
-		<i class="fa fa-clock-o"></i>
-		<span ng-bind="ctrl.rangeString"></span>
-		<span ng-show="ctrl.isUtc" class="gf-timepicker-utc">UTC</span>
-		<span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span>
-	</button>
+<button bs-tooltip="ctrl.tooltip" data-placement="bottom" ng-click="ctrl.openDropdown()" class="btn navbar-button gf-timepicker-nav-btn">
+  <i class="fa fa-clock-o"></i>
+  <span ng-bind="ctrl.rangeString"></span>
+  <span ng-show="ctrl.isUtc" class="gf-timepicker-utc">UTC</span>
+  <!-- <span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span> -->
+</button>
 
-  <button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)' ng-if="ctrl.isAbsolute">
-		<i class="fa fa-chevron-right"></i>
-	</button>
+<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)' ng-if="ctrl.isAbsolute">
+  <i class="fa fa-chevron-right"></i>
+</button>
 
-  <button class="btn navbar-button navbar-button--zoom" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
-		<i class="fa fa-search-minus"></i>
-	</button>
+<button class="btn navbar-button navbar-button--zoom" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
+  <i class="fa fa-search-minus"></i>
+</button>
 
-  <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
-		<i class="fa fa-refresh"></i>
-	</button>
-</div>
+<!-- <button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
+  <i class="fa fa-refresh"></i>
+</button> -->
 
 <div ng-if="ctrl.isOpen" class="gf-timepicker-dropdown">
   <div class="popover-box">
@@ -41,14 +39,14 @@
     <div class="popover-box__header">
       <span class="popover-box__title">Custom range</span>
     </div>
-    <form name="timeForm" class="popover-box__body gf-timepicker-absolute-section">
+    <form name="timeForm" class="popover-box__body gf-timepicker-absolute-section max-width-28">
       <label class="small">From:</label>
       <div class="gf-form-inline">
         <div class="gf-form max-width-28">
           <input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.from" input-datetime>
         </div>
         <div class="gf-form">
-          <button class="btn gf-form-btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
+          <button class="btn gf-form-btn btn-secondary" type="button" ng-click="openFromPicker=!openFromPicker">
             <i class="fa fa-calendar"></i>
           </button>
         </div>
@@ -65,7 +63,7 @@
           <input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.to" input-datetime>
         </div>
         <div class="gf-form">
-          <button class="btn gf-form-btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
+          <button class="btn gf-form-btn btn-secondary" type="button" ng-click="openToPicker=!openToPicker">
             <i class="fa fa-calendar"></i>
           </button>
         </div>
@@ -75,13 +73,9 @@
         <datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" starting-day="ctrl.firstDayOfWeek" ng-change="ctrl.absoluteToChanged()"></datepicker>
       </div>
 
-      <label class="small">Refreshing every:</label>
-      <div class="gf-form-inline">
-        <div class="gf-form max-width-28">
-          <select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
-        </div>
+      <div class="gf-form gf-form--flex-end m-t-1">
         <div class="gf-form">
-          <button type="submit" class="btn gf-form-btn btn-secondary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
+          <button type="submit" class="btn gf-form-btn btn-primary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">Apply</button>
         </div>
       </div>
     </form>

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/log"
+	_ "github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -26,6 +26,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
+				Url:   m.GetDashboardUrl(item.Uid, item.Slug),
 				Order: dashboardIDOrder[item.Id],
 			})
 		}
@@ -51,8 +52,10 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 			for _, item := range searchQuery.Result {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.Id,
+					Slug:  item.Slug,
 					Title: item.Title,
 					Uri:   item.Uri,
+					Url:   item.Url,
 					Order: dashboardTagOrder[tag],
 				})
 			}

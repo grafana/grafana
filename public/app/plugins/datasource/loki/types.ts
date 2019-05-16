@@ -1,9 +1,29 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery, Labels, DataSourceJsonData } from '@grafana/ui/src/types';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
-  resultFormat?: LokiQueryResultFormats;
 }
 
-export type LokiQueryResultFormats = 'time_series' | 'logs';
+export interface LokiOptions extends DataSourceJsonData {
+  maxLines?: string;
+}
 
+export interface LokiLogsStream {
+  labels: string;
+  entries: LokiLogsStreamEntry[];
+  search?: string;
+  parsedLabels?: Labels;
+  uniqueLabels?: Labels;
+}
+
+export interface LokiLogsStreamEntry {
+  line: string;
+  ts: string;
+  // Legacy, was renamed to ts
+  timestamp?: string;
+}
+
+export interface LokiExpression {
+  regexp: string;
+  query: string;
+}

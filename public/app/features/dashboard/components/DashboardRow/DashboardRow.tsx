@@ -18,16 +18,16 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    appEvents.on('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.on('template-variable-value-updated', this.onVariableUpdated);
   }
 
   componentWillUnmount() {
-    appEvents.off('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.off('template-variable-value-updated', this.onVariableUpdated);
   }
 
   onVariableUpdated = () => {
     this.forceUpdate();
-  }
+  };
 
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
@@ -35,12 +35,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.setState(prevState => {
       return { collapsed: !prevState.collapsed };
     });
-  }
+  };
 
   onUpdate = () => {
     this.props.dashboard.processRepeats();
     this.forceUpdate();
-  }
+  };
 
   onOpenSettings = () => {
     appEvents.emit('show-modal', {
@@ -51,7 +51,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         onUpdated: this.onUpdate,
       },
     });
-  }
+  };
 
   onDelete = () => {
     appEvents.emit('confirm-modal', {
@@ -66,7 +66,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         this.props.dashboard.removeRow(this.props.panel, false);
       },
     });
-  }
+  };
 
   render() {
     const classes = classNames({
@@ -96,7 +96,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         {canEdit && (
           <div className="dashboard-row__actions">
             <a className="pointer" onClick={this.onOpenSettings}>
-              <i className="fa fa-cog" />
+              <i className="gicon gicon-cog" />
             </a>
             <a className="pointer" onClick={this.onDelete}>
               <i className="fa fa-trash" />

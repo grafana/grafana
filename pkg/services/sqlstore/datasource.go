@@ -3,11 +3,13 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/go-xorm/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -95,6 +97,10 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			return m.ErrDataSourceNameExists
 		}
 
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -142,6 +148,10 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+
 		ds := &m.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
@@ -168,6 +178,10 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
+		// plain text fields to SecureJsonData.
+		sess.MustCols("password")
+		sess.MustCols("basic_auth_password")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

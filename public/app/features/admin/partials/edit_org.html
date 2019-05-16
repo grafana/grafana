@@ -1,7 +1,7 @@
 <page-header model="navModel"></page-header>
 
 <div class="page-container page-body">
-	<h2 class="page-sub-heading">Edit Organization</h2>
+	<h3 class="page-sub-heading">Edit Organization</h3>
 
 	<form name="orgDetailsForm" class="gf-form-group">
 		<div class="gf-form">
@@ -10,7 +10,7 @@
 		</div>
 
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+			<button type="submit" class="btn btn-primary" ng-click="update()" ng-show="!createMode">Update</button>
 		</div>
 	</form>
 
@@ -35,7 +35,7 @@
         </div>
 			</td>
 			<td style="width: 1%">
-				<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-mini">
+				<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-small">
 					<i class="fa fa-remove"></i>
 				</a>
 			</td>

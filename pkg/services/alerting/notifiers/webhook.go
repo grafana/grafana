@@ -3,8 +3,8 @@ package notifiers
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -40,7 +40,7 @@ func init() {
 
 }
 
-func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -90,7 +90,7 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:        this.Url,
 		User:       this.User,
 		Password:   this.Password,

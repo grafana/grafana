@@ -36,7 +36,7 @@ func makeCert(config DatabaseConfig) (*tls.Config, error) {
 	}
 	// Return more meaningful error before it is too late
 	if config.ServerCertName == "" && !tlsConfig.InsecureSkipVerify {
-		return nil, fmt.Errorf("server_cert_name is missing. Consider using ssl_mode = skip-verify.")
+		return nil, fmt.Errorf("server_cert_name is missing. Consider using ssl_mode = skip-verify")
 	}
 	return tlsConfig, nil
 }

@@ -5,7 +5,14 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-8">Scrape interval</span>
-      <input type="text" class="gf-form-input width-8" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="15s"></input>
+      <input
+        type="text"
+        class="gf-form-input width-8 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.timeInterval"
+        spellcheck='false'
+        placeholder="15s"
+        ng-pattern="/^\d+[Mwdhmsy]$/"
+      ></input>
       <info-popover mode="right-absolute">
         Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for the
         Prometheus step query parameter.
@@ -16,7 +23,14 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-8">Query timeout</span>
-      <input type="text" class="gf-form-input width-8" ng-model="ctrl.current.jsonData.queryTimeout" spellcheck='false' placeholder="60s"></input>
+      <input
+        type="text"
+        class="gf-form-input width-8 gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.queryTimeout"
+        spellcheck="false"
+        placeholder="60s"
+        ng-pattern="/^\d+[Mwdhmsy]$/"
+      ></input>
       <info-popover mode="right-absolute">
         Set the Prometheus query timeout.
       </info-popover>

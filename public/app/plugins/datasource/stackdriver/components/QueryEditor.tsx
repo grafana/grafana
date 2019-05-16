@@ -10,22 +10,22 @@ import { Alignments } from './Alignments';
 import { AlignmentPeriods } from './AlignmentPeriods';
 import { AliasBy } from './AliasBy';
 import { Help } from './Help';
-import { Target, MetricDescriptor } from '../types';
+import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { SelectOptionItem } from '@grafana/ui';
 
 export interface Props {
-  onQueryChange: (target: Target) => void;
+  onQueryChange: (target: StackdriverQuery) => void;
   onExecuteQuery: () => void;
-  target: Target;
+  target: StackdriverQuery;
   events: any;
   datasource: StackdriverDatasource;
   templateSrv: TemplateSrv;
 }
 
-interface State extends Target {
-  alignOptions: SelectOptionItem[];
+interface State extends StackdriverQuery {
+  alignOptions: Array<SelectOptionItem<string>>;
   lastQuery: string;
   lastQueryError: string;
   [key: string]: any;

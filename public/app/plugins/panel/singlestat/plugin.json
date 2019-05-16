@@ -8,12 +8,10 @@
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
-},
+    },
     "logos": {
       "small": "img/icn-singlestat-panel.svg",
       "large": "img/icn-singlestat-panel.svg"
-    },
-    "version": "5.0.0"
+    }
   }
 }
-

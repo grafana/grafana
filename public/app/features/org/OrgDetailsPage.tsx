@@ -5,8 +5,9 @@ import Page from 'app/core/components/Page/Page';
 import OrgProfile from './OrgProfile';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
-import { NavModel, Organization, StoreState } from 'app/types';
+import { Organization, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { NavModel } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -36,18 +37,16 @@ export class OrgDetailsPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-            <div className="page-container page-body">
-              {!isLoading && (
-                <div>
-                  <OrgProfile
-                    onOrgNameChange={name => this.onOrgNameChange(name)}
-                    onSubmit={this.onUpdateOrganization}
-                    orgName={organization.name}
-                  />
-                  <SharedPreferences resourceUri="org" />
-                </div>
-              )}
+          {!isLoading && (
+            <div>
+              <OrgProfile
+                onOrgNameChange={name => this.onOrgNameChange(name)}
+                onSubmit={this.onUpdateOrganization}
+                orgName={organization.name}
+              />
+              <SharedPreferences resourceUri="org" />
             </div>
+          )}
         </Page.Contents>
       </Page>
     );
@@ -67,4 +66,9 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(OrgDetailsPage)
+);

@@ -1,29 +1,22 @@
 import _ from 'lodash';
+import ansicolor from 'vendor/ansicolor/ansicolor';
 
-import { colors, TimeSeries } from '@grafana/ui';
+import {
+  colors,
+  TimeSeries,
+  Labels,
+  LogLevel,
+  SeriesData,
+  findCommonLabels,
+  findUniqueLabels,
+  getLogLevel,
+  toLegacyResponseData,
+  FieldCache,
+  FieldType,
+} from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-
-/**
- * Mapping of log level abbreviation to canonical log level.
- * Supported levels are reduce to limit color variation.
- */
-export enum LogLevel {
-  emerg = 'critical',
-  alert = 'critical',
-  crit = 'critical',
-  critical = 'critical',
-  warn = 'warning',
-  warning = 'warning',
-  err = 'error',
-  eror = 'error',
-  error = 'error',
-  info = 'info',
-  notice = 'info',
-  dbug = 'debug',
-  debug = 'debug',
-  trace = 'trace',
-  unkown = 'unkown',
-}
+import { hasAnsiCodes } from 'app/core/utils/text';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -32,7 +25,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unkown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
 export interface LogSearchMatch {
@@ -44,15 +37,16 @@ export interface LogSearchMatch {
 export interface LogRowModel {
   duplicates?: number;
   entry: string;
-  key: string; // timestamp + labels
-  labels: LogsStreamLabels;
+  hasAnsi: boolean;
+  labels: Labels;
   logLevel: LogLevel;
+  raw: string;
   searchWords?: string[];
   timestamp: string; // ISO with nanosec precision
   timeFromNow: string;
   timeEpochMs: number;
   timeLocal: string;
-  uniqueLabels?: LogsStreamLabels;
+  uniqueLabels?: Labels;
 }
 
 export interface LogLabelStatsModel {
@@ -70,34 +64,15 @@ export enum LogsMetaKind {
 
 export interface LogsMetaItem {
   label: string;
-  value: string | number | LogsStreamLabels;
+  value: string | number | Labels;
   kind: LogsMetaKind;
 }
 
 export interface LogsModel {
-  id: string; // Identify one logs result from another
+  hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: TimeSeries[];
-}
-
-export interface LogsStream {
-  labels: string;
-  entries: LogsStreamEntry[];
-  search?: string;
-  parsedLabels?: LogsStreamLabels;
-  uniqueLabels?: LogsStreamLabels;
-}
-
-export interface LogsStreamEntry {
-  line: string;
-  ts: string;
-  // Legacy, was renamed to ts
-  timestamp?: string;
-}
-
-export interface LogsStreamLabels {
-  [key: string]: string;
 }
 
 export enum LogsDedupDescription {
@@ -148,7 +123,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       try {
         const parsed = JSON.parse(line);
         _.map(parsed, (value, key) => {
@@ -174,7 +149,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   logfmt: {
     buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
         fields.push(substring.trim());
         return '';
@@ -243,12 +218,13 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
   }
 
   const dedupedRows = logs.rows.reduce((result: LogRowModel[], row: LogRowModel, index, list) => {
+    const rowCopy = { ...row };
     const previous = result[result.length - 1];
     if (index > 0 && isDuplicateRow(row, previous, strategy)) {
       previous.duplicates++;
     } else {
-      row.duplicates = 0;
-      result.push(row);
+      rowCopy.duplicates = 0;
+      result.push(rowCopy);
     }
     return result;
   }, []);
@@ -297,9 +273,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   // intervalMs = intervalMs * 10;
 
   // Graph time series by log level
-  const seriesByLevel = {};
+  const seriesByLevel: any = {};
   const bucketSize = intervalMs * 10;
-  const seriesList = [];
+  const seriesList: any[] = [];
 
   for (const row of rows) {
     let series = seriesByLevel[row.logLevel];
@@ -336,10 +312,153 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   }
 
   return seriesList.map(series => {
-    series.datapoints.sort((a, b) => {
+    series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
 
-    return { datapoints: series.datapoints, target: series.alias, color: series.color };
+    return {
+      datapoints: series.datapoints,
+      target: series.alias,
+      alias: series.alias,
+      color: series.color,
+    };
   });
+}
+
+function isLogsData(series: SeriesData) {
+  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+}
+
+export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
+  const metricSeries: SeriesData[] = [];
+  const logSeries: SeriesData[] = [];
+
+  for (const series of seriesData) {
+    if (isLogsData(series)) {
+      logSeries.push(series);
+      continue;
+    }
+
+    metricSeries.push(series);
+  }
+
+  const logsModel = logSeriesToLogsModel(logSeries);
+  if (logsModel) {
+    if (metricSeries.length === 0) {
+      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
+    } else {
+      logsModel.series = [];
+      for (const series of metricSeries) {
+        logsModel.series.push(toLegacyResponseData(series) as TimeSeries);
+      }
+    }
+
+    return logsModel;
+  }
+
+  return {
+    hasUniqueLabels: false,
+    rows: [],
+    meta: [],
+    series: [],
+  };
+}
+
+export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
+  if (logSeries.length === 0) {
+    return undefined;
+  }
+
+  const allLabels: Labels[] = [];
+  for (let n = 0; n < logSeries.length; n++) {
+    const series = logSeries[n];
+    if (series.labels) {
+      allLabels.push(series.labels);
+    }
+  }
+
+  let commonLabels: Labels = {};
+  if (allLabels.length > 0) {
+    commonLabels = findCommonLabels(allLabels);
+  }
+
+  const rows: LogRowModel[] = [];
+  let hasUniqueLabels = false;
+
+  for (let i = 0; i < logSeries.length; i++) {
+    const series = logSeries[i];
+    const fieldCache = new FieldCache(series.fields);
+    const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
+    if (Object.keys(uniqueLabels).length > 0) {
+      hasUniqueLabels = true;
+    }
+
+    for (let j = 0; j < series.rows.length; j++) {
+      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
+    }
+  }
+
+  const sortedRows = rows.sort((a, b) => {
+    return a.timestamp > b.timestamp ? -1 : 1;
+  });
+
+  // Meta data to display in status
+  const meta: LogsMetaItem[] = [];
+  if (_.size(commonLabels) > 0) {
+    meta.push({
+      label: 'Common labels',
+      value: commonLabels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+  }
+
+  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+
+  if (limits.length > 0) {
+    meta.push({
+      label: 'Limit',
+      value: `${limits[0].meta.limit} (${sortedRows.length} returned)`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
+  return {
+    hasUniqueLabels,
+    meta,
+    rows: sortedRows,
+  };
+}
+
+export function processLogSeriesRow(
+  series: SeriesData,
+  fieldCache: FieldCache,
+  rowIndex: number,
+  uniqueLabels: Labels
+): LogRowModel {
+  const row = series.rows[rowIndex];
+  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
+  const ts = row[timeFieldIndex];
+  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
+  const message = row[stringFieldIndex];
+  const time = dateTime(ts);
+  const timeEpochMs = time.valueOf();
+  const timeFromNow = time.fromNow();
+  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+  const logLevel = getLogLevel(message);
+  const hasAnsi = hasAnsiCodes(message);
+  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+
+  return {
+    logLevel,
+    timeFromNow,
+    timeEpochMs,
+    timeLocal,
+    uniqueLabels,
+    hasAnsi,
+    searchWords,
+    entry: hasAnsi ? ansicolor.strip(message) : message,
+    raw: message,
+    labels: series.labels,
+    timestamp: ts,
+  };
 }

@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames';
 import { AlertRule } from '../../types';
@@ -29,7 +30,7 @@ class AlertRuleItem extends PureComponent<Props> {
       'fa-pause': rule.state !== 'paused',
     });
 
-    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen=true&edit=true&tab=alert`;
+    const ruleUrl = `${rule.url}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
       <li className="alert-rule-item">
@@ -58,7 +59,7 @@ class AlertRuleItem extends PureComponent<Props> {
             <i className={iconClassName} />
           </button>
           <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
-            <i className="icon-gf icon-gf-settings" />
+            <i className="gicon gicon-cog" />
           </a>
         </div>
       </li>

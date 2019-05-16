@@ -44,7 +44,7 @@ export class GeneralTab extends PureComponent<Props> {
 
   render() {
     return (
-      <EditorTabBody heading="Panel Options" toolbarItems={[]}>
+      <EditorTabBody heading="General" toolbarItems={[]}>
         <div ref={element => (this.element = element)} />
       </EditorTabBody>
     );

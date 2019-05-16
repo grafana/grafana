@@ -10,7 +10,7 @@ import (
 	plugin "github.com/hashicorp/go-plugin"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -105,9 +105,8 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 
 	if rs.renderAction != nil {
 		return rs.renderAction(ctx, opts)
-	} else {
-		return nil, fmt.Errorf("No renderer found")
 	}
+	return nil, fmt.Errorf("No renderer found")
 }
 
 func (rs *RenderingService) getFilePathForNewImage() string {

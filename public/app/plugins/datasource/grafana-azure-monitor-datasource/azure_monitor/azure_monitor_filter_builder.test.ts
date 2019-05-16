@@ -19,7 +19,7 @@ jest.mock('app/core/utils/kbn', () => {
 });
 
 import AzureMonitorFilterBuilder from './azure_monitor_filter_builder';
-import moment from 'moment';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('AzureMonitorFilterBuilder', () => {
   let builder: AzureMonitorFilterBuilder;
@@ -30,8 +30,8 @@ describe('AzureMonitorFilterBuilder', () => {
   beforeEach(() => {
     builder = new AzureMonitorFilterBuilder(
       'Percentage CPU',
-      moment.utc('2017-08-22 06:00'),
-      moment.utc('2017-08-22 07:00'),
+      toUtc('2017-08-22 06:00'),
+      toUtc('2017-08-22 07:00'),
       'PT1H',
       '3m'
     );

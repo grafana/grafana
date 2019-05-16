@@ -1,11 +1,8 @@
 import React, { PureComponent } from 'react';
 import LokiCheatSheet from './LokiCheatSheet';
+import { ExploreStartPageProps } from '@grafana/ui';
 
-interface Props {
-  onClickExample: () => void;
-}
-
-export default class LokiStartPage extends PureComponent<Props> {
+export default class LokiStartPage extends PureComponent<ExploreStartPageProps> {
   render() {
     return (
       <div className="grafana-info-box grafana-info-box--max-lg">

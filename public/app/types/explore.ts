@@ -1,9 +1,26 @@
+import { ComponentClass } from 'react';
 import { Value } from 'slate';
-import { RawTimeRange, TimeRange, DataQuery, DataSourceSelectItem, DataSourceApi, QueryHint } from '@grafana/ui';
+import {
+  RawTimeRange,
+  DataQuery,
+  DataQueryResponseData,
+  DataSourceSelectItem,
+  DataSourceApi,
+  QueryHint,
+  ExploreStartPageProps,
+  LogLevel,
+  TimeRange,
+  DataQueryError,
+} from '@grafana/ui';
 
-import { Emitter } from 'app/core/core';
-import { LogsModel } from 'app/core/logs_model';
+import { Emitter, TimeSeries } from 'app/core/core';
+import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
+
+export enum ExploreMode {
+  Metrics = 'Metrics',
+  Logs = 'Logs',
+}
 
 export interface CompletionItem {
   /**
@@ -102,7 +119,7 @@ export interface ExploreItemState {
   /**
    * React component to be shown when no queries have been run yet, e.g., for a query language cheat sheet.
    */
-  StartPage?: any;
+  StartPage?: ComponentClass<ExploreStartPageProps>;
   /**
    * Width used for calculating the graph interval (can't have more datapoints than pixels)
    */
@@ -144,10 +161,10 @@ export interface ExploreItemState {
    */
   history: HistoryItem[];
   /**
-   * Initial queries for this Explore, e.g., set via URL. Each query will be
-   * converted to a query row. Query edits should be tracked in `modifiedQueries` though.
+   * Queries for this Explore, e.g., set via URL. Each query will be
+   * converted to a query row.
    */
-  initialQueries: DataQuery[];
+  queries: DataQuery[];
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.
@@ -163,28 +180,14 @@ export interface ExploreItemState {
    */
   logsResult?: LogsModel;
   /**
-   * Copy of `initialQueries` that tracks user edits.
-   * Don't connect this property to a react component as it is updated on every query change.
-   * Used when running queries. Needs to be reset to `initialQueries` when those are reset as well.
-   */
-  modifiedQueries: DataQuery[];
-  /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
    */
   queryIntervals: QueryIntervals;
   /**
-   * List of query transaction to track query duration and query result.
-   * Graph/Logs/Table results are calculated on the fly from the transaction,
-   * based on the transaction's result types. Transaction also holds the row index
-   * so that results can be dropped and re-computed without running queries again
-   * when query rows are removed.
-   */
-  queryTransactions: QueryTransaction[];
-  /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
-  range: TimeRange | RawTimeRange;
+  range: TimeRange;
   /**
    * Scanner function that calculates a new range, triggers a query run, and returns the new range.
    */
@@ -225,16 +228,57 @@ export interface ExploreItemState {
    * True if `datasourceInstance` supports table queries.
    */
   supportsTable: boolean | null;
+
+  graphIsLoading: boolean;
+  logIsLoading: boolean;
+  tableIsLoading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
   tableResult?: TableModel;
+
+  /**
+   * React keys for rendering of QueryRows
+   */
+  queryKeys: string[];
+
+  /**
+   * Current logs deduplication strategy
+   */
+  dedupStrategy?: LogsDedupStrategy;
+
+  /**
+   * Currently hidden log series
+   */
+  hiddenLogLevels?: LogLevel[];
+
+  /**
+   * How often query should be refreshed
+   */
+  refreshInterval?: string;
+
+  urlState: ExploreUrlState;
+
+  update: ExploreUpdateState;
+
+  queryErrors: DataQueryError[];
+  latency: number;
+  supportedModes: ExploreMode[];
+  mode: ExploreMode;
+}
+
+export interface ExploreUpdateState {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+  ui: boolean;
 }
 
 export interface ExploreUIState {
   showingTable: boolean;
   showingGraph: boolean;
   showingLogs: boolean;
+  dedupStrategy?: LogsDedupStrategy;
 }
 
 export interface ExploreUrlState {
@@ -285,6 +329,7 @@ export interface QueryOptions {
   hinting?: boolean;
   instant?: boolean;
   valueWithRefId?: boolean;
+  maxDataPoints?: number;
 }
 
 export interface QueryTransaction {
@@ -294,14 +339,19 @@ export interface QueryTransaction {
   hints?: QueryHint[];
   latency: number;
   options: any;
-  query: DataQuery;
+  queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
-  rowIndex: number;
   scanning?: boolean;
 }
 
 export type RangeScanner = () => RawTimeRange;
+
+export type ResultGetter = (
+  result: DataQueryResponseData,
+  transaction: QueryTransaction,
+  allTransactions: QueryTransaction[]
+) => TimeSeries;
 
 export interface TextMatch {
   text: string;

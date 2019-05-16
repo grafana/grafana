@@ -21,7 +21,7 @@ interface TableContainerProps {
 
 export class TableContainer extends PureComponent<TableContainerProps> {
   onClickTableButton = () => {
-    this.props.toggleTable(this.props.exploreId);
+    this.props.toggleTable(this.props.exploreId, this.props.showingTable);
   };
 
   render() {
@@ -42,8 +42,8 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { queryTransactions, showingTable, tableResult } = item;
-  const loading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
+  const { tableIsLoading, showingTable, tableResult } = item;
+  const loading = tableIsLoading;
   return { loading, showingTable, tableResult };
 }
 
@@ -51,4 +51,9 @@ const mapDispatchToProps = {
   toggleTable,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(TableContainer)
+);

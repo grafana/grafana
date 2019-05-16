@@ -32,8 +32,7 @@ var netTransport = &http.Transport{
 	},
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		DualStack: true,
+		Timeout: 30 * time.Second,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }

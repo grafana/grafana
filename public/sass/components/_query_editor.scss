@@ -42,7 +42,7 @@
 }
 
 input[type='text'].tight-form-func-param {
-  font-size: 0.875rem;
+  font-size: $font-size-sm;
   background: transparent;
   border: none;
   margin: 0;
@@ -50,7 +50,6 @@ input[type='text'].tight-form-func-param {
 }
 
 .tight-form-func-controls {
-  display: none;
   text-align: center;
 
   .fa-arrow-left {
@@ -88,7 +87,7 @@ input[type='text'].tight-form-func-param {
 
 .rst-unknown.rst-directive {
   font-family: monospace;
-  margin-bottom: 1rem;
+  margin-bottom: $space-md;
 }
 
 .rst-interpreted_text {
@@ -97,8 +96,8 @@ input[type='text'].tight-form-func-param {
 }
 
 .rst-bullet-list {
-  padding-left: 1.5rem;
-  margin-bottom: 1rem;
+  padding-left: $space-lg;
+  margin-bottom: $space-md;
 }
 
 .rst-paragraph:last-child {
@@ -106,7 +105,7 @@ input[type='text'].tight-form-func-param {
 }
 
 .drop-element.drop-popover.drop-function-def .drop-content {
-  max-width: 30rem;
+  max-width: 416px;
 }
 
 .rst-literal-block .rst-text {
@@ -124,10 +123,9 @@ input[type='text'].tight-form-func-param {
 
   &--disabled {
     .query-keyword {
-      color: darken($blue, 20%);
+      color: $text-color-weak;
     }
   }
-
 }
 
 .query-editor-row__header {
@@ -138,7 +136,6 @@ input[type='text'].tight-form-func-param {
   background: $page-bg;
   flex-wrap: nowrap;
   align-items: center;
-
 }
 .query-editor-row__ref-id {
   font-weight: $font-weight-semi-bold;
@@ -206,4 +203,3 @@ input[type='text'].tight-form-func-param {
   color: $text-muted;
   padding-left: 10px;
 }
-

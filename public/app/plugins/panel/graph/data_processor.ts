@@ -1,72 +1,92 @@
 import _ from 'lodash';
-import { colors, GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/ui';
+import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, SeriesData } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
+
+type Options = {
+  dataList: SeriesData[];
+  range?: TimeRange;
+};
 
 export class DataProcessor {
   constructor(private panel) {}
 
-  getSeriesList(options) {
-    if (!options.dataList || options.dataList.length === 0) {
-      return [];
+  getSeriesList(options: Options): TimeSeries[] {
+    const list: TimeSeries[] = [];
+    const { dataList, range } = options;
+
+    if (!dataList || !dataList.length) {
+      return list;
     }
 
-    // auto detect xaxis mode
-    let firstItem;
-    if (options.dataList && options.dataList.length > 0) {
-      firstItem = options.dataList[0];
-      const autoDetectMode = this.getAutoDetectXAxisMode(firstItem);
-      if (this.panel.xaxis.mode !== autoDetectMode) {
-        this.panel.xaxis.mode = autoDetectMode;
-        this.setPanelDefaultsForNewXAxisMode();
-      }
-    }
+    for (const series of dataList) {
+      const { fields } = series;
+      const cache = new FieldCache(fields);
+      const time = cache.getFirstFieldOfType(FieldType.time);
 
-    switch (this.panel.xaxis.mode) {
-      case 'series':
-      case 'time': {
-        return options.dataList.map((item, index) => {
-          return this.timeSeriesHandler(item, index, options);
-        });
+      if (!time) {
+        continue;
       }
-      case 'histogram': {
-        let histogramDataList;
-        if (this.panel.stack) {
-          histogramDataList = options.dataList;
-        } else {
-          histogramDataList = [
-            {
-              target: 'count',
-              datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints'))),
-            },
-          ];
+
+      const seriesName = series.name ? series.name : series.refId;
+
+      for (let i = 0; i < fields.length; i++) {
+        if (fields[i].type !== FieldType.number) {
+          continue;
         }
-        return histogramDataList.map((item, index) => {
-          return this.timeSeriesHandler(item, index, options);
-        });
-      }
-      case 'field': {
-        return this.customHandler(firstItem);
+
+        const field = fields[i];
+        let name = field.title;
+
+        if (!field.title) {
+          name = field.name;
+        }
+
+        if (seriesName && dataList.length > 0 && name !== seriesName) {
+          name = seriesName + ' ' + name;
+        }
+
+        const datapoints = [];
+        for (const row of series.rows) {
+          datapoints.push([row[i], row[time.index]]);
+        }
+
+        list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
       }
     }
+
+    // Merge all the rows if we want to show a histogram
+    if (this.panel.xaxis.mode === 'histogram' && !this.panel.stack && list.length > 1) {
+      const first = list[0];
+      first.alias = first.aliasEscaped = 'Count';
+      for (let i = 1; i < list.length; i++) {
+        first.datapoints = first.datapoints.concat(list[i].datapoints);
+      }
+      return [first];
+    }
+    return list;
   }
 
-  getAutoDetectXAxisMode(firstItem) {
-    switch (firstItem.type) {
-      case 'docs':
-        return 'field';
-      case 'table':
-        return 'field';
-      default: {
-        if (this.panel.xaxis.mode === 'series') {
-          return 'series';
-        }
-        if (this.panel.xaxis.mode === 'histogram') {
-          return 'histogram';
-        }
-        return 'time';
+  private toTimeSeries(field: Field, alias: string, datapoints: any[][], index: number, range?: TimeRange) {
+    const colorIndex = index % colors.length;
+    const color = this.panel.aliasColors[alias] || colors[colorIndex];
+
+    const series = new TimeSeries({
+      datapoints: datapoints || [],
+      alias: alias,
+      color: getColorFromHexRgbOrName(color, config.theme.type),
+      unit: field.unit,
+    });
+
+    if (datapoints && datapoints.length > 0 && range) {
+      const last = datapoints[datapoints.length - 1][1];
+      const from = range.from;
+
+      if (last - from.valueOf() < -10000) {
+        series.isOutsideRange = true;
       }
     }
+    return series;
   }
 
   setPanelDefaultsForNewXAxisMode() {
@@ -102,42 +122,6 @@ export class DataProcessor {
     }
   }
 
-  timeSeriesHandler(seriesData, index, options) {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-
-    const colorIndex = index % colors.length;
-
-    const color = this.panel.aliasColors[alias] || colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaTheme.Light : GrafanaTheme.Dark),
-      unit: seriesData.unit,
-    });
-
-    if (datapoints && datapoints.length > 0) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = options.range.from;
-      if (last - from < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
-
-    return series;
-  }
-
-  customHandler(dataItem) {
-    const nameField = this.panel.xaxis.name;
-    if (!nameField) {
-      throw {
-        message: 'No field name specified to use for x-axis, check your axes settings',
-      };
-    }
-    return [];
-  }
-
   validateXAxisSeriesValue() {
     switch (this.panel.xaxis.mode) {
       case 'series': {
@@ -147,47 +131,13 @@ export class DataProcessor {
         }
 
         const validOptions = this.getXAxisValueOptions({});
-        const found = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const found: any = _.find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }
         return;
       }
     }
-  }
-
-  getDataFieldNames(dataList, onlyNumbers) {
-    if (dataList.length === 0) {
-      return [];
-    }
-
-    const fields = [];
-    const firstItem = dataList[0];
-    const fieldParts = [];
-
-    function getPropertiesRecursive(obj) {
-      _.forEach(obj, (value, key) => {
-        if (_.isObject(value)) {
-          fieldParts.push(key);
-          getPropertiesRecursive(value);
-        } else {
-          if (!onlyNumbers || _.isNumber(value)) {
-            const field = fieldParts.concat(key).join('.');
-            fields.push(field);
-          }
-        }
-      });
-      fieldParts.pop();
-    }
-
-    if (firstItem.type === 'docs') {
-      if (firstItem.datapoints.length === 0) {
-        return [];
-      }
-      getPropertiesRecursive(firstItem.datapoints[0]);
-    }
-
-    return fields;
   }
 
   getXAxisValueOptions(options) {

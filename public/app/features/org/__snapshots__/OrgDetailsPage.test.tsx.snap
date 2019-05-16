@@ -15,11 +15,7 @@ exports[`Render should render component 1`] = `
 >
   <PageContents
     isLoading={true}
-  >
-    <div
-      className="page-container page-body"
-    />
-  </PageContents>
+  />
 </Page>
 `;
 
@@ -39,19 +35,15 @@ exports[`Render should render organization and preferences 1`] = `
   <PageContents
     isLoading={false}
   >
-    <div
-      className="page-container page-body"
-    >
-      <div>
-        <OrgProfile
-          onOrgNameChange={[Function]}
-          onSubmit={[Function]}
-          orgName="Cool org"
-        />
-        <SharedPreferences
-          resourceUri="org"
-        />
-      </div>
+    <div>
+      <OrgProfile
+        onOrgNameChange={[Function]}
+        onSubmit={[Function]}
+        orgName="Cool org"
+      />
+      <SharedPreferences
+        resourceUri="org"
+      />
     </div>
   </PageContents>
 </Page>

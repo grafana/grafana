@@ -1,27 +1,29 @@
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import React, { Component } from 'react';
+import isNil from 'lodash/isNil';
+import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
+import { cx, css } from 'emotion';
 
 interface Props {
-  customClassName?: string;
+  className?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHideDuration?: number;
   autoHeightMax?: string;
   hideTracksWhenNotNeeded?: boolean;
-  renderTrackHorizontal?: React.FunctionComponent<any>;
-  renderTrackVertical?: React.FunctionComponent<any>;
+  hideHorizontalTrack?: boolean;
+  hideVerticalTrack?: boolean;
   scrollTop?: number;
   setScrollTop: (event: any) => void;
   autoHeightMin?: number | string;
+  updateAfterMountMs?: number;
 }
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export class CustomScrollbar extends PureComponent<Props> {
+export class CustomScrollbar extends Component<Props> {
   static defaultProps: Partial<Props> = {
-    customClassName: 'custom-scrollbars',
     autoHide: false,
     autoHideTimeout: 200,
     autoHideDuration: 200,
@@ -40,27 +42,76 @@ export class CustomScrollbar extends PureComponent<Props> {
 
   updateScroll() {
     const ref = this.ref.current;
+    const { scrollTop } = this.props;
 
-    if (ref && !_.isNil(this.props.scrollTop)) {
-      if (this.props.scrollTop > 10000) {
-        ref.scrollToBottom();
-      } else {
-        ref.scrollTop(this.props.scrollTop);
-      }
+    if (ref && !isNil(scrollTop)) {
+      ref.scrollTop(scrollTop);
     }
   }
 
   componentDidMount() {
     this.updateScroll();
+
+    // this logic is to make scrollbar visible when content is added body after mount
+    if (this.props.updateAfterMountMs) {
+      setTimeout(() => this.updateAfterMount(), this.props.updateAfterMountMs);
+    }
+  }
+
+  updateAfterMount() {
+    if (this.ref && this.ref.current) {
+      const scrollbar = this.ref.current as any;
+      if (scrollbar.update) {
+        scrollbar.update();
+      }
+    }
   }
 
   componentDidUpdate() {
     this.updateScroll();
   }
 
+  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => {
+    return (
+      <div
+        {...passedProps}
+        className={cx(
+          css`
+            visibility: ${hideTrack ? 'none' : 'visible'};
+          `,
+          track
+        )}
+      />
+    );
+  };
+
+  renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical', passedProps: any) => {
+    return <div {...passedProps} className={thumb} />;
+  };
+
+  renderTrackHorizontal = (passedProps: any) => {
+    return this.renderTrack('track-horizontal', this.props.hideHorizontalTrack, passedProps);
+  };
+
+  renderTrackVertical = (passedProps: any) => {
+    return this.renderTrack('track-vertical', this.props.hideVerticalTrack, passedProps);
+  };
+
+  renderThumbHorizontal = (passedProps: any) => {
+    return this.renderThumb('thumb-horizontal', passedProps);
+  };
+
+  renderThumbVertical = (passedProps: any) => {
+    return this.renderThumb('thumb-vertical', passedProps);
+  };
+
+  renderView = (passedProps: any) => {
+    return <div {...passedProps} className="view" />;
+  };
+
   render() {
     const {
-      customClassName,
+      className,
       children,
       autoHeightMax,
       autoHeightMin,
@@ -68,14 +119,12 @@ export class CustomScrollbar extends PureComponent<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
-      renderTrackHorizontal,
-      renderTrackVertical,
     } = this.props;
 
     return (
       <Scrollbars
         ref={this.ref}
-        className={customClassName}
+        className={classNames('custom-scrollbar', className)}
         onScroll={setScrollTop}
         autoHeight={true}
         autoHide={autoHide}
@@ -85,11 +134,11 @@ export class CustomScrollbar extends PureComponent<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={renderTrackHorizontal || (props => <div {...props} className="track-horizontal" />)}
-        renderTrackVertical={renderTrackVertical || (props => <div {...props} className="track-vertical" />)}
-        renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
-        renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
-        renderView={props => <div {...props} className="view" />}
+        renderTrackHorizontal={this.renderTrackHorizontal}
+        renderTrackVertical={this.renderTrackVertical}
+        renderThumbHorizontal={this.renderThumbHorizontal}
+        renderThumbVertical={this.renderThumbVertical}
+        renderView={this.renderView}
       >
         {children}
       </Scrollbars>

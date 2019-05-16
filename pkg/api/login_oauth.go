@@ -16,12 +16,12 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/social"
 )
 
 var (
@@ -165,6 +165,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
+		OAuthToken: token,
 		AuthId:     userInfo.Id,
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
@@ -214,7 +215,8 @@ func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value stri
 		Value:    value,
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
-		Secure:   hs.Cfg.SecurityHTTPSCookies,
+		Secure:   hs.Cfg.CookieSecure,
+		SameSite: hs.Cfg.CookieSameSite,
 	})
 }
 

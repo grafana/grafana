@@ -22,6 +22,14 @@ type UpdateAnnotationsCmd struct {
 	TimeEnd  int64    `json:"timeEnd"`
 }
 
+type PatchAnnotationsCmd struct {
+	Id      int64    `json:"id"`
+	Time    int64    `json:"time"`
+	Text    string   `json:"text"`
+	Tags    []string `json:"tags"`
+	TimeEnd int64    `json:"timeEnd"`
+}
+
 type DeleteAnnotationsCmd struct {
 	AlertId      int64 `json:"alertId"`
 	DashboardId  int64 `json:"dashboardId"`

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Tooltip } from '@grafana/ui';
-import SlideDown from 'app/core/components/Animations/SlideDown';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 import {
@@ -76,8 +76,8 @@ export class DashboardPermissions extends PureComponent<Props, State> {
               </div>
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-              <i className="fa fa-plus" /> Add Permission
+            <button className="btn btn-primary pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+              Add Permission
             </button>
           </div>
         </div>

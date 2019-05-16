@@ -1,18 +1,25 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { TeamMembers, Props, State } from './TeamMembers';
-import { TeamMember } from '../../types';
-import { getMockTeamMember, getMockTeamMembers } from './__mocks__/teamMocks';
+import { TeamMember, OrgRole } from '../../types';
+import { getMockTeamMembers } from './__mocks__/teamMocks';
+import { User } from 'app/core/services/context_srv';
+
+const signedInUserId = 1;
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     members: [] as TeamMember[],
     searchMemberQuery: '',
     setSearchMemberQuery: jest.fn(),
-    loadTeamMembers: jest.fn(),
     addTeamMember: jest.fn(),
-    removeTeamMember: jest.fn(),
     syncEnabled: false,
+    editorsCanAdmin: false,
+    signedInUser: {
+      id: signedInUserId,
+      isGrafanaAdmin: false,
+      orgRole: OrgRole.Viewer,
+    } as User,
   };
 
   Object.assign(props, propOverrides);
@@ -28,24 +35,13 @@ const setup = (propOverrides?: object) => {
 
 describe('Render', () => {
   it('should render component', () => {
-    const { wrapper } = setup();
+    const { wrapper } = setup({});
 
     expect(wrapper).toMatchSnapshot();
   });
 
   it('should render team members', () => {
-    const { wrapper } = setup({
-      members: getMockTeamMembers(5),
-    });
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('should render team members when sync enabled', () => {
-    const { wrapper } = setup({
-      members: getMockTeamMembers(5),
-      syncEnabled: true,
-    });
+    const { wrapper } = setup({ members: getMockTeamMembers(5, 5) });
 
     expect(wrapper).toMatchSnapshot();
   });
@@ -54,26 +50,16 @@ describe('Render', () => {
 describe('Functions', () => {
   describe('on search member query change', () => {
     it('it should call setSearchMemberQuery', () => {
-      const { instance } = setup();
-      const mockEvent = { target: { value: 'member' } };
+      const { instance } = setup({});
 
-      instance.onSearchQueryChange(mockEvent);
+      instance.onSearchQueryChange('member');
 
       expect(instance.props.setSearchMemberQuery).toHaveBeenCalledWith('member');
     });
   });
 
-  describe('on remove member', () => {
-    const { instance } = setup();
-    const mockTeamMember = getMockTeamMember();
-
-    instance.onRemoveMember(mockTeamMember);
-
-    expect(instance.props.removeTeamMember).toHaveBeenCalledWith(1);
-  });
-
   describe('on add user to team', () => {
-    const { wrapper, instance } = setup();
+    const { wrapper, instance } = setup({});
     const state = wrapper.state() as State;
 
     state.newTeamMember = {

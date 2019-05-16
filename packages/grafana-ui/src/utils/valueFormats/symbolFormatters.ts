@@ -1,9 +1,10 @@
 import { scaledUnits } from './valueFormats';
+import { DecimalCount } from '../../types';
 
 export function currency(symbol: string) {
   const units = ['', 'K', 'M', 'B', 'T'];
   const scaler = scaledUnits(1000, units);
-  return (size: number, decimals: number, scaledDecimals: number) => {
+  return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
     if (size === null) {
       return '';
     }

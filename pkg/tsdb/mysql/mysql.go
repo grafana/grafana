@@ -3,13 +3,14 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -27,12 +28,26 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	}
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 		datasource.User,
-		datasource.Password,
+		datasource.DecryptedPassword(),
 		protocol,
 		datasource.Url,
 		datasource.Database,
 	)
-	logger.Debug("getEngine", "connection", cnnstr)
+
+	tlsConfig, err := datasource.GetTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
+		tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
+		mysql.RegisterTLSConfig(tlsConfigString, tlsConfig)
+		cnnstr += "&tls=" + tlsConfigString
+	}
+
+	if setting.Env == setting.DEV {
+		logger.Debug("getEngine", "connection", cnnstr)
+	}
 
 	config := tsdb.SqlQueryEndpointConfiguration{
 		DriverName:        "mysql",

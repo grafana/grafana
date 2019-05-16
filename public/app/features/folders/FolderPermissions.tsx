@@ -2,10 +2,10 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
-import { Tooltip } from '@grafana/ui';
-import SlideDown from 'app/core/components/Animations/SlideDown';
+import { Tooltip, NavModel } from '@grafana/ui';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel, StoreState, FolderState } from 'app/types';
+import { StoreState, FolderState } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 import {
   getFolderByUid,
@@ -73,7 +73,13 @@ export class FolderPermissions extends PureComponent<Props, State> {
     const { isAdding } = this.state;
 
     if (folder.id === 0) {
-      return <Page navModel={navModel}><Page.Contents isLoading={true}><span></span></Page.Contents></Page>;
+      return (
+        <Page navModel={navModel}>
+          <Page.Contents isLoading={true}>
+            <span />
+          </Page.Contents>
+        </Page>
+      );
     }
 
     const folderInfo = { title: folder.title, url: folder.url, id: folder.id };
@@ -89,8 +95,8 @@ export class FolderPermissions extends PureComponent<Props, State> {
               </div>
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-success pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-              <i className="fa fa-plus" /> Add Permission
+            <button className="btn btn-primary pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+              Add Permission
             </button>
           </div>
           <SlideDown in={isAdding}>
@@ -126,4 +132,9 @@ const mapDispatchToProps = {
   addFolderPermission,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(FolderPermissions));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(FolderPermissions)
+);

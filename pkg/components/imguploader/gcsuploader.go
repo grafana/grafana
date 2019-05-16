@@ -8,13 +8,13 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 )
 
 const (
-	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write"
+	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
 	uploadUrl string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s&predefinedAcl=publicRead"
 )
 

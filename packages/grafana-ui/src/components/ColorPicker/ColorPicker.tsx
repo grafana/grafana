@@ -1,44 +1,37 @@
 import React, { Component, createRef } from 'react';
-import PopperController from '../Tooltip/PopperController';
-import Popper, { RenderPopperArrowFn } from '../Tooltip/Popper';
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { Themeable, GrafanaTheme } from '../../types';
+import { omit } from 'lodash';
+import { PopperController } from '../Tooltip/PopperController';
+import { Popper } from '../Tooltip/Popper';
+import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-import propDeprecationWarning from '../../utils/propDeprecationWarning';
 
-type ColorPickerChangeHandler = (color: string) => void;
+import { withTheme } from '../../themes/ThemeContext';
+import { ColorPickerTrigger } from './ColorPickerTrigger';
 
-export interface ColorPickerProps extends Themeable {
-  color: string;
-  onChange: ColorPickerChangeHandler;
-
-  /**
-   * @deprecated Use onChange instead
-   */
-  onColorChange?: ColorPickerChangeHandler;
-  enableNamedColors?: boolean;
-  withArrow?: boolean;
-  children?: JSX.Element;
-}
-
-export const warnAboutColorPickerPropsDeprecation = (componentName: string, props: ColorPickerProps) => {
-  const { onColorChange } = props;
-  if (onColorChange) {
-    propDeprecationWarning(componentName, 'onColorChange', 'onChange');
-  }
-};
+/**
+ * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
+ * as a child. You will get show/hide function which you can map to desired interaction (like onClick or onMouseLeave)
+ * and a ref which needs to be passed to an HTMLElement for correct positioning. If you want to use class or functional
+ * component as a custom trigger you will need to forward the reference to first HTMLElement child.
+ */
+type ColorPickerTriggerRenderer = (props: {
+  // This should be a React.RefObject<HTMLElement> but due to how object refs are defined you cannot downcast from that
+  // to a specific type like React.RefObject<HTMLDivElement> even though it would be fine in runtime.
+  ref: React.RefObject<any>;
+  showColorPicker: () => void;
+  hideColorPicker: () => void;
+}) => React.ReactNode;
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
   popover: React.ComponentType<T>,
-  displayName = 'ColorPicker',
-  renderPopoverArrowFunction?: RenderPopperArrowFn
+  displayName = 'ColorPicker'
 ) => {
-  return class ColorPicker extends Component<T, any> {
+  return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }, any> {
     static displayName = displayName;
-    pickerTriggerRef = createRef<HTMLDivElement>();
+    pickerTriggerRef = createRef<any>();
 
-    handleColorChange = (color: string) => {
+    onColorChange = (color: string) => {
       const { onColorChange, onChange } = this.props;
       const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
 
@@ -46,21 +39,11 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     };
 
     render() {
+      const { theme, children } = this.props;
       const popoverElement = React.createElement(popover, {
-        ...this.props,
-        onChange: this.handleColorChange,
+        ...omit(this.props, 'children'),
+        onChange: this.onColorChange,
       });
-      const { theme, withArrow, children } = this.props;
-
-      const renderArrow: RenderPopperArrowFn = ({ arrowProps, placement }) => {
-        return (
-          <div
-            {...arrowProps}
-            data-placement={placement}
-            className={`ColorPicker__arrow ColorPicker__arrow--${theme === GrafanaTheme.Light ? 'light' : 'dark'}`}
-          />
-        );
-      };
 
       return (
         <PopperController content={popoverElement} hideAfter={300}>
@@ -72,34 +55,27 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     {...popperProps}
                     referenceElement={this.pickerTriggerRef.current}
                     wrapperClassName="ColorPicker"
-                    renderArrow={withArrow && (renderPopoverArrowFunction || renderArrow)}
                     onMouseLeave={hidePopper}
                     onMouseEnter={showPopper}
                   />
                 )}
 
                 {children ? (
-                  React.cloneElement(children as JSX.Element, {
+                  // Children have a bit weird type due to intersection used in the definition so we need to cast here,
+                  // but the definition is correct and should not allow to pass a children that does not conform to
+                  // ColorPickerTriggerRenderer type.
+                  (children as ColorPickerTriggerRenderer)({
                     ref: this.pickerTriggerRef,
-                    onClick: showPopper,
-                    onMouseLeave: hidePopper,
+                    showColorPicker: showPopper,
+                    hideColorPicker: hidePopper,
                   })
                 ) : (
-                  <div
+                  <ColorPickerTrigger
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    className="sp-replacer sp-light"
-                  >
-                    <div className="sp-preview">
-                      <div
-                        className="sp-preview-inner"
-                        style={{
-                          backgroundColor: getColorFromHexRgbOrName(this.props.color || '#000000', theme),
-                        }}
-                      />
-                    </div>
-                  </div>
+                    color={getColorFromHexRgbOrName(this.props.color || '#000000', theme.type)}
+                  />
                 )}
               </>
             );
@@ -110,5 +86,5 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
   };
 };
 
-export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
-export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');
+export const ColorPicker = withTheme(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));

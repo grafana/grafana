@@ -6,7 +6,7 @@ import baron from 'baron';
 const module = angular.module('grafana.directives');
 
 const panelTemplate = `
-  <div class="panel-container">
+  <div class="panel-container" ng-class="{'panel-container--no-title': !ctrl.panel.title.length}">
       <div class="panel-header" ng-class="{'grid-drag-handle': !ctrl.panel.fullscreen}">
         <span class="panel-info-corner">
           <i class="fa"></i>
@@ -17,7 +17,7 @@ const panelTemplate = `
           <i class="fa fa-spinner fa-spin"></i>
         </span>
 
-        <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
+        <panel-header class="panel-title-container" panel-ctrl="ctrl" aria-label="Panel Title"></panel-header>
       </div>
 
       <div class="panel-content">
@@ -33,7 +33,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     template: panelTemplate,
     transclude: true,
     scope: { ctrl: '=' },
-    link: (scope, elem) => {
+    link: (scope: any, elem) => {
       const panelContainer = elem.find('.panel-container');
       const panelContent = elem.find('.panel-content');
       const cornerInfoElem = elem.find('.panel-info-corner');
@@ -67,7 +67,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass('panel-transparent', true);
+        panelContainer.addClass('panel-transparent');
       }
 
       // update scrollbar after mounting

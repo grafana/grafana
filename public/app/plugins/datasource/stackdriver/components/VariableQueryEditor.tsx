@@ -34,7 +34,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors).map(m => ({
+    const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m: any) => ({
       value: m.service,
       name: m.serviceShortName,
     }));
@@ -58,7 +58,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       metricTypes,
       selectedMetricType,
       metricDescriptors,
-      ...await this.getLabels(selectedMetricType),
+      ...(await this.getLabels(selectedMetricType)),
     };
     this.setState(state);
   }
@@ -66,7 +66,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
   async onQueryTypeChange(event) {
     const state: any = {
       selectedQueryType: event.target.value,
-      ...await this.getLabels(this.state.selectedMetricType, event.target.value),
+      ...(await this.getLabels(this.state.selectedMetricType, event.target.value)),
     };
     this.setState(state);
   }
@@ -82,13 +82,13 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
       selectedService: event.target.value,
       metricTypes,
       selectedMetricType,
-      ...await this.getLabels(selectedMetricType),
+      ...(await this.getLabels(selectedMetricType)),
     };
     this.setState(state);
   }
 
   async onMetricTypeChange(event) {
-    const state: any = { selectedMetricType: event.target.value, ...await this.getLabels(event.target.value) };
+    const state: any = { selectedMetricType: event.target.value, ...(await this.getLabels(event.target.value)) };
     this.setState(state);
   }
 

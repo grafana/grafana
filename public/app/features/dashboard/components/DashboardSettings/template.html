@@ -1,25 +1,15 @@
 <aside class="dashboard-settings__aside">
-	<h2 class="dashboard-settings__aside-header">
-		<i class="fa fa-cog"></i>
-		Settings
-	</h2>
-
 	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
     <i class="{{::section.icon}}"></i>
 		{{::section.title}}
 	</a>
 
 	<div class="dashboard-settings__aside-actions">
-    <button class="btn btn-success" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave">
-			<i class="fa fa-save"></i> Save
+    <button class="btn btn-primary" ng-click="ctrl.saveDashboard()" ng-show="ctrl.canSave">
+			Save
 		</button>
 		<button class="btn btn-inverse" ng-click="ctrl.openSaveAsModal()" ng-show="ctrl.canSaveAs">
-			<i class="fa fa-copy"></i>
 			Save As...
-		</button>
-		<button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
-			<i class="fa fa-trash"></i>
-			Delete
 		</button>
 	</div>
 </aside>
@@ -72,6 +62,11 @@
 			<select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
 		</div>
 	</div>
+	<div class="gf-form-button-row">
+	  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-show="ctrl.canDelete">
+		  Delete Dashboard
+	  </button>
+  </div>
 </div>
 
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">
@@ -100,8 +95,8 @@
 	</div>
 
   <div class="gf-form-button-row">
-    <button class="btn btn-success" ng-click="ctrl.saveDashboardJson()" ng-show="ctrl.canSave">
-      <i class="fa fa-save"></i> Save Changes
+    <button class="btn btn-primary" ng-click="ctrl.saveDashboardJson()" ng-show="ctrl.canSave">
+      Save Changes
     </button>
   </div>
 </div>
@@ -128,7 +123,7 @@
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'make_editable'">
   <h3 class="dashboard-settings__header">Make Editable</h3>
 
-  <button class="btn btn-success" ng-click="ctrl.makeEditable()">
+  <button class="btn btn-primary" ng-click="ctrl.makeEditable()">
     Make Editable
   </button>
 </div>

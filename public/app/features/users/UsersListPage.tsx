@@ -6,11 +6,12 @@ import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
 import InviteesTable from './InviteesTable';
-import { Invitee, NavModel, OrgUser } from 'app/types';
+import { Invitee, OrgUser } from 'app/types';
 import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
+import { NavModel } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -107,11 +108,11 @@ export class UsersListPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-          <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-          {externalUserMngInfoHtml && (
-            <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-          )}
-          {hasFetched && this.renderTable()}
+            <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
+            {externalUserMngInfoHtml && (
+              <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+            )}
+            {hasFetched && this.renderTable()}
           </>
         </Page.Contents>
       </Page>
@@ -138,4 +139,9 @@ const mapDispatchToProps = {
   removeUser,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UsersListPage)
+);

@@ -6,7 +6,7 @@ jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({}, {});
@@ -27,7 +27,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when getting next panel id', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -69,7 +69,7 @@ describe('DashboardModel', () => {
   });
 
   describe('row and panel manipulation', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({});
@@ -112,7 +112,7 @@ describe('DashboardModel', () => {
   });
 
   describe('Given editable false dashboard', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({ editable: false });
@@ -130,8 +130,8 @@ describe('DashboardModel', () => {
   });
 
   describe('when loading dashboard with old influxdb query schema', () => {
-    let model;
-    let target;
+    let model: DashboardModel;
+    let target: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -197,7 +197,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when creating dashboard model with missing list for annoations or templating', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -222,7 +222,7 @@ describe('DashboardModel', () => {
   });
 
   describe('Formatting epoch timestamp when timezone is set as utc', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({ timezone: 'utc' });
@@ -242,7 +242,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with empty lists', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
@@ -255,7 +255,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with annotation', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -272,7 +272,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with template var', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -289,7 +289,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with hidden template var', () => {
-    let model;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -306,7 +306,7 @@ describe('DashboardModel', () => {
   });
 
   describe('updateSubmenuVisibility with hidden annotation toggle', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -323,7 +323,7 @@ describe('DashboardModel', () => {
   });
 
   describe('When collapsing row', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -365,7 +365,7 @@ describe('DashboardModel', () => {
   });
 
   describe('When expanding row', () => {
-    let dashboard;
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
       dashboard = new DashboardModel({
@@ -633,6 +633,34 @@ describe('DashboardModel', () => {
       const saveModel = model.getSaveModelClone(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
+    });
+  });
+
+  describe('Given a dashboard with one panel legend on and two off', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      const data = {
+        panels: [
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
+        ],
+      };
+      model = new DashboardModel(data);
+    });
+
+    it('toggleLegendsForAll should toggle all legends on on first execution', () => {
+      model.toggleLegendsForAll();
+      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      expect(legendsOn.length).toBe(3);
+    });
+
+    it('toggleLegendsForAll should toggle all legends off on second execution', () => {
+      model.toggleLegendsForAll();
+      model.toggleLegendsForAll();
+      const legendsOn = model.panels.filter(panel => panel.legend.show === true);
+      expect(legendsOn.length).toBe(0);
     });
   });
 });

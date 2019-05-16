@@ -30,10 +30,18 @@ scrape_configs:
         port: 3000
         refresh_interval: 10s
 
-  # - job_name: 'mysql'
-  #   dns_sd_configs:
-  #     - names:
-  #       - 'mysqld-exporter'
-  #       type: 'A'
-  #       port: 9104
-  #       refresh_interval: 10s
+  - job_name: 'mysql'
+    dns_sd_configs:
+      - names:
+        - 'mysqld-exporter'
+        type: 'A'
+        port: 9104
+        refresh_interval: 10s
+
+  - job_name: 'loki'
+    dns_sd_configs:
+      - names:
+        - 'loki'
+        type: 'A'
+        port: 3100
+        refresh_interval: 10s

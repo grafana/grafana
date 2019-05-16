@@ -1,17 +1,23 @@
-import config from 'app/core/config';
+// Libraries
 import _ from 'lodash';
 import $ from 'jquery';
 import Drop from 'tether-drop';
-import { colors } from '@grafana/ui';
 
+// Utils and servies
+import { colors } from '@grafana/ui';
+import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import { BackendSrv, setBackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv, setDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
+
+// Types
+import { KioskUrlValue } from 'app/types';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -25,6 +31,7 @@ export class GrafanaCtrl {
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     datasourceSrv: DatasourceSrv,
+    keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
@@ -32,6 +39,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDatasourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setKeybindingSrv(keybindingSrv);
     configureStore();
 
     $scope.init = () => {
@@ -45,11 +53,6 @@ export class GrafanaCtrl {
     };
 
     $rootScope.colors = colors;
-
-    $scope.initDashboard = (dashboardData, viewScope) => {
-      $scope.appEvent('dashboard-fetch-end', dashboardData);
-      $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
-    };
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
       const unbind = $rootScope.$on(name, callback);
@@ -72,26 +75,21 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body, mode, sidemenuOpen: boolean) {
+function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
   body.removeClass('view-mode--tv');
   body.removeClass('view-mode--kiosk');
   body.removeClass('view-mode--inactive');
 
   switch (mode) {
     case 'tv': {
-      body.removeClass('sidemenu-open');
       body.addClass('view-mode--tv');
       break;
     }
     // 1 & true for legacy states
     case '1':
     case true: {
-      body.removeClass('sidemenu-open');
       body.addClass('view-mode--kiosk');
       break;
-    }
-    default: {
-      body.toggleClass('sidemenu-open', sidemenuOpen);
     }
   }
 }
@@ -102,21 +100,12 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      let sidemenuOpen;
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
 
       $('.preloader').remove();
-
-      sidemenuOpen = scope.contextSrv.sidemenu;
-      body.toggleClass('sidemenu-open', sidemenuOpen);
-
-      appEvents.on('toggle-sidemenu', () => {
-        sidemenuOpen = scope.contextSrv.sidemenu;
-        body.toggleClass('sidemenu-open');
-      });
 
       appEvents.on('toggle-sidemenu-mobile', () => {
         body.toggleClass('sidemenu-open--xs');
@@ -126,12 +115,13 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         body.toggleClass('sidemenu-hidden');
       });
 
-      scope.$watch(
-        () => playlistSrv.isPlaying,
-        newValue => {
-          elem.toggleClass('view-mode--playlist', newValue === true);
-        }
-      );
+      appEvents.on('playlist-started', () => {
+        elem.toggleClass('view-mode--playlist', true);
+      });
+
+      appEvents.on('playlist-stopped', () => {
+        elem.toggleClass('view-mode--playlist', false);
+      });
 
       // check if we are in server side render
       if (document.cookie.indexOf('renderKey') !== -1) {
@@ -159,17 +149,19 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
-        setViewModeBodyClass(body, data.params.kiosk, sidemenuOpen);
+        setViewModeBodyClass(body, data.params.kiosk);
 
         // close all drops
         for (const drop of Drop.drops) {
           drop.destroy();
         }
+
+        appEvents.emit('hide-dash-search');
       });
 
       // handle kiosk mode
-      appEvents.on('toggle-kiosk-mode', options => {
-        const search = $location.search();
+      appEvents.on('toggle-kiosk-mode', (options: { exit?: boolean }) => {
+        const search: { kiosk?: KioskUrlValue } = $location.search();
 
         if (options && options.exit) {
           search.kiosk = '1';
@@ -191,8 +183,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }
         }
 
-        $location.search(search);
-        setViewModeBodyClass(body, search.kiosk, sidemenuOpen);
+        $timeout(() => $location.search(search));
+        setViewModeBodyClass(body, search.kiosk);
       });
 
       // handle in active view state class
@@ -212,7 +204,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('view-mode--inactive');
-          body.removeClass('sidemenu-open');
         }
       }
 
@@ -221,7 +212,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         if (!activeUser) {
           activeUser = true;
           body.removeClass('view-mode--inactive');
-          body.toggleClass('sidemenu-open', sidemenuOpen);
         }
       }
 
@@ -262,10 +252,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }, 100);
         }
 
-        if (target.parents('.navbar-buttons--playlist').length === 0) {
-          playlistSrv.stop();
-        }
-
         // hide search
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
@@ -279,6 +265,28 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
+        }
+
+        // hide time picker
+        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
+        if (timePickerDropDownIsOpen) {
+          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
+          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
+          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
+          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
+
+          if (
+            targetIsInTimePickerNav ||
+            targetIsInTimePickerDropDown ||
+            targetIsDatePickerRowBtn ||
+            targetIsDatePickerHeaderBtn
+          ) {
+            return;
+          }
+
+          scope.$apply(() => {
+            scope.appEvent('closeTimepicker');
+          });
         }
       });
     },

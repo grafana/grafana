@@ -27,6 +27,7 @@ export class HelpCtrl {
         { keys: ['d', 'C'], description: 'Collapse all rows' },
         { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
         { keys: ['mod+o'], description: 'Toggle shared graph crosshair' },
+        { keys: ['d', 'l'], description: 'Toggle all panel legends' },
       ],
       'Focused Panel': [
         { keys: ['e'], description: 'Toggle panel edit view' },

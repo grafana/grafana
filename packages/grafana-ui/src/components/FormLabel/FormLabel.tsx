@@ -1,6 +1,7 @@
 import React, { FunctionComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { PopperContent } from '../Tooltip/PopperController';
 
 interface Props {
   children: ReactNode;
@@ -8,7 +9,7 @@ interface Props {
   htmlFor?: string;
   isFocused?: boolean;
   isInvalid?: boolean;
-  tooltip?: string;
+  tooltip?: PopperContent<any>;
   width?: number;
 }
 
@@ -31,7 +32,7 @@ export const FormLabel: FunctionComponent<Props> = ({
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
       {tooltip && (
-        <Tooltip placement="top" content={tooltip} theme={"info"}>
+        <Tooltip placement="top" content={tooltip} theme={'info'}>
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
             <i className="fa fa-info-circle" />
           </div>
