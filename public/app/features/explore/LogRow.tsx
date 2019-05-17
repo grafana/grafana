@@ -18,7 +18,6 @@ interface Props {
   showUtc: boolean;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
-  parsingEnabled: boolean;
 }
 
 interface State {
@@ -90,10 +89,10 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   onMouseOverMessage = () => {
-    const { parsingEnabled } = this.props;
-    if (!parsingEnabled) {
+    if (this.isTextSelected()) {
       return;
     }
+
     // Don't parse right away, user might move along
     this.mouseMessageTimer = setTimeout(this.parseMessage, 500);
   };
@@ -114,6 +113,20 @@ export class LogRow extends PureComponent<Props, State> {
       }
     }
   };
+
+  isTextSelected() {
+    if (!window.getSelection) {
+      return false;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection) {
+      return false;
+    }
+
+    return selection.anchorNode !== null && selection.isCollapsed === false;
+  }
 
   render() {
     const {
