@@ -1,5 +1,5 @@
 import { PureComponent } from 'react';
-import { interval, Subscription, empty, Subject, of } from 'rxjs';
+import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 import _ from 'lodash';
 
@@ -29,7 +29,7 @@ export class SetInterval extends PureComponent<Props> {
           if (isLive(props.interval)) {
             return of({});
           }
-          return props.loading ? empty() : interval(stringToMs(props.interval));
+          return props.loading ? NEVER : interval(stringToMs(props.interval));
         }),
         tap(() => this.props.func())
       )

@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
-import { EMPTY, of } from 'rxjs';
-import { takeUntil, mergeMap, tap, filter, concatMap, delay, bufferTime, bufferCount, map } from 'rxjs/operators';
+import { NEVER } from 'rxjs';
+import { takeUntil, mergeMap, tap, filter, map, throttleTime } from 'rxjs/operators';
 
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
@@ -70,11 +70,11 @@ export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSta
       const { datasourceInstance, queries, refreshInterval } = state$.value.explore[exploreId];
 
       if (!datasourceInstance || !datasourceInstance.convertToStreamTargets) {
-        return EMPTY; //do nothing if datasource does not support streaming
+        return NEVER; //do nothing if datasource does not support streaming
       }
 
       if (!refreshInterval || !isLive(refreshInterval)) {
-        return EMPTY; //do nothing if refresh interval is not 'LIVE'
+        return NEVER; //do nothing if refresh interval is not 'LIVE'
       }
 
       const request: any = { targets: queries };
@@ -150,11 +150,7 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
 
 export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = action$ => {
   return action$.ofType(limitMessageRatePayloadAction.type).pipe(
-    bufferTime(100),
-    mergeMap(action => action),
-    bufferCount(1),
-    mergeMap(action => action),
-    concatMap(data => of(data).pipe(delay(250))),
+    throttleTime(5),
     map((action: ActionOf<LimitMessageRatePayload>) => {
       const { exploreId, data, dataReceivedActionCreator } = action.payload;
       return dataReceivedActionCreator({ exploreId, data });
