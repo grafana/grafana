@@ -15,9 +15,7 @@ type ruleReader interface {
 
 type defaultRuleReader struct {
 	sync.RWMutex
-	serverPosition int
-	clusterSize    int
-	log            log.Logger
+	log log.Logger
 }
 
 func newRuleReader() *defaultRuleReader {
