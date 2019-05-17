@@ -35,7 +35,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
-    const target = { datasource: datasource.name, ...initialQuery };
+    const target = { ...initialQuery };
     const scopeProps = {
       ctrl: {
         datasource,
@@ -60,6 +60,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     this.component = loader.load(this.element, scopeProps, template);
     setTimeout(() => {
       this.props.onQueryChange(target);
+      this.props.onExecuteQuery();
     }, 1);
   }
 
