@@ -14,10 +14,10 @@ interface GraphLegendProps extends LegendProps {
   displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
-  onSeriesColorChange: SeriesColorChangeHandler;
+  onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
-  onToggleSort: (sortBy: string) => void;
-  onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onToggleSort?: (sortBy: string) => void;
+  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
@@ -116,3 +116,5 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
     />
   );
 };
+
+GraphLegend.displayName = 'GraphLegend';

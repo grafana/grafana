@@ -21,7 +21,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -94,6 +94,7 @@ var (
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
+	AllowEmbedding                   bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -721,6 +722,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CookieSameSite = http.SameSiteLaxMode
 		cfg.CookieSameSite = CookieSameSite
 	}
+
+	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
@@ -26,9 +26,9 @@ type Rule struct {
 	Message             string
 	LastStateChange     time.Time
 	For                 time.Duration
-	NoDataState         m.NoDataOption
-	ExecutionErrorState m.ExecutionErrorOption
-	State               m.AlertStateType
+	NoDataState         models.NoDataOption
+	ExecutionErrorState models.ExecutionErrorOption
+	State               models.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
 
@@ -103,7 +103,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	return int64(value * multiplier), nil
 }
 
-func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
+func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model := &Rule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
@@ -114,8 +114,8 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
 	model.For = ruleDef.For
-	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
-	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
+	model.NoDataState = models.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = models.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
 
 	model.Frequency = ruleDef.Frequency

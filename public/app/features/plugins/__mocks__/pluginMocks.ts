@@ -1,4 +1,4 @@
-import { PanelPluginMeta, PluginMeta, PluginType, PanelDataFormat, PanelPlugin, PanelProps } from '@grafana/ui';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/ui';
 import { ComponentType } from 'enzyme';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
@@ -46,7 +46,6 @@ export const getPanelPlugin = (
     type: PluginType.panel,
     name: options.id,
     sort: options.sort || 1,
-    dataFormats: [PanelDataFormat.TimeSeries],
     info: {
       author: {
         name: options.id + 'name',

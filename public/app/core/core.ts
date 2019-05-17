@@ -20,7 +20,6 @@ import { colors } from '@grafana/ui/';
 
 import { searchDirective } from './components/search/search';
 import { infoPopover } from './components/info_popover';
-import { navbarDirective } from './components/navbar/navbar';
 import { arrayJoin } from './directives/array_join';
 import { liveSrv } from './live/live_srv';
 import { Emitter } from './utils/emitter';
@@ -56,7 +55,6 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  navbarDirective,
   searchDirective,
   liveSrv,
   layoutSelector,

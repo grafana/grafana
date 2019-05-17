@@ -1,6 +1,6 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
-import moment from 'moment';
 import { LegendDisplayMode } from '../Legend/Legend';
+import { dateTime } from '../../utils/moment_wrapper';
 // import { LegendList } from '../Legend/LegendList';
 
 export const mockGraphWithLegendData = ({
@@ -3287,8 +3287,8 @@ export const mockGraphWithLegendData = ({
     },
   ],
   timeRange: {
-    from: moment('2019-04-09T07:01:14.247Z'),
-    to: moment('2019-04-09T13:01:14.247Z'),
+    from: dateTime('2019-04-09T07:01:14.247Z'),
+    to: dateTime('2019-04-09T13:01:14.247Z'),
     raw: {
       from: 'now-6h',
       to: 'now',

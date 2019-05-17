@@ -19,34 +19,6 @@
 }
 
 // Search
-.search-field-wrapper {
-  width: 100%;
-  height: $navbarHeight;
-  display: flex;
-  background-color: $navbarBackground;
-  position: relative;
-
-  & > input {
-    max-width: 653px;
-    padding: $space-md $space-md $space-sm $space-md;
-    height: 51px;
-    box-sizing: border-box;
-    outline: none;
-    background: $side-menu-bg;
-    background-color: $navbarButtonBackground;
-    flex-grow: 10;
-  }
-}
-
-.search-field-spacer {
-  flex-grow: 1;
-}
-
-.search-field-icon {
-  font-size: $font-size-lg;
-  padding: $space-md $space-md $space-sm $space-md;
-}
-
 .search-dropdown {
   display: flex;
   flex-direction: column;
@@ -59,6 +31,7 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  height: 100%; // Chrome 74 needs this to make the element scrollable
 
   .search-item--indent {
     margin-left: 14px;
@@ -284,10 +257,6 @@
     max-width: 700px;
     height: 260px;
     align-items: flex-start;
-  }
-
-  .search-dropdown__col_1 {
-    height: 100%;
   }
 
   .search-filter-box {

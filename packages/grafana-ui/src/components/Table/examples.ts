@@ -1,7 +1,6 @@
 import { SeriesData } from '../../types/data';
 import { ColumnStyle } from './TableCellBuilder';
-
-import { getColorDefinitionByName } from '@grafana/ui';
+import { getColorDefinitionByName } from '../../utils/namedColorsPalette';
 
 const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
 

@@ -11,7 +11,7 @@
   "explore": false,
 
   "info": {
-    "description": "User Input Data Source for Grafana",
+    "description": "Data source that supports manual table & CSV input",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

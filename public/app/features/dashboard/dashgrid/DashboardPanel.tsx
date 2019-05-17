@@ -23,11 +23,13 @@ export interface Props {
   dashboard: DashboardModel;
   isEditing: boolean;
   isFullscreen: boolean;
+  isInView: boolean;
 }
 
 export interface State {
   plugin: PanelPlugin;
   angularPanel: AngularComponent;
+  isLazy: boolean;
 }
 
 export class DashboardPanel extends PureComponent<Props, State> {
@@ -40,6 +42,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.state = {
       plugin: null,
       angularPanel: null,
+      isLazy: !props.isInView,
     };
 
     this.specialPanels['row'] = this.renderRow.bind(this);
@@ -90,7 +93,11 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.loadPlugin(this.props.panel.type);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (this.state.isLazy && this.props.isInView) {
+      this.setState({ isLazy: false });
+    }
+
     if (!this.element || this.state.angularPanel) {
       return;
     }
@@ -122,9 +129,13 @@ export class DashboardPanel extends PureComponent<Props, State> {
     this.props.dashboard.setPanelFocus(0);
   };
 
-  renderReactPanel() {
-    const { dashboard, panel, isFullscreen } = this.props;
+  renderPanel() {
+    const { dashboard, panel, isFullscreen, isInView } = this.props;
     const { plugin } = this.state;
+
+    if (plugin.angularPanelCtrl) {
+      return <div ref={element => (this.element = element)} className="panel-height-helper" />;
+    }
 
     return (
       <AutoSizer>
@@ -132,12 +143,14 @@ export class DashboardPanel extends PureComponent<Props, State> {
           if (width === 0) {
             return null;
           }
+
           return (
             <PanelChrome
               plugin={plugin}
               panel={panel}
               dashboard={dashboard}
               isFullscreen={isFullscreen}
+              isInView={isInView}
               width={width}
               height={height}
             />
@@ -147,13 +160,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
     );
   }
 
-  renderAngularPanel() {
-    return <div ref={element => (this.element = element)} className="panel-height-helper" />;
-  }
-
   render() {
     const { panel, dashboard, isFullscreen, isEditing } = this.props;
-    const { plugin, angularPanel } = this.state;
+    const { plugin, angularPanel, isLazy } = this.state;
 
     if (this.isSpecial(panel.type)) {
       return this.specialPanels[panel.type]();
@@ -164,7 +173,16 @@ export class DashboardPanel extends PureComponent<Props, State> {
       return null;
     }
 
-    const containerClass = classNames({ 'panel-editor-container': isEditing, 'panel-height-helper': !isEditing });
+    // If we are lazy state don't render anything
+    if (isLazy) {
+      return null;
+    }
+
+    const editorContainerClasses = classNames({
+      'panel-editor-container': isEditing,
+      'panel-height-helper': !isEditing,
+    });
+
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
       'panel-wrapper--edit': isEditing,
@@ -172,7 +190,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={containerClass}>
+      <div className={editorContainerClasses}>
         <PanelResizer
           isEditing={isEditing}
           panel={panel}
@@ -183,7 +201,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
               onMouseLeave={this.onMouseLeave}
               style={styles}
             >
-              {plugin.angularPanelCtrl ? this.renderAngularPanel() : this.renderReactPanel()}
+              {this.renderPanel()}
             </div>
           )}
         />

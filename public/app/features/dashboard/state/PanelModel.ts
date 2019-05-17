@@ -6,7 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, Threshold, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -23,6 +23,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
   isEditing: true,
+  isInView: true,
   hasRefreshed: true,
   cachedPluginOptions: true,
   plugin: true,
@@ -33,7 +34,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
 // To make sure the change happens without strange bugs happening when panels use same
 // named property with different type / value expectations
 // This is not required for react panels
-
 const mustKeepProps: { [str: string]: boolean } = {
   id: true,
   gridPos: true,
@@ -63,6 +63,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
+  queryRunner: true,
 };
 
 const defaults: any = {
@@ -111,6 +112,7 @@ export class PanelModel {
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
+  isInView: boolean;
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -129,9 +131,9 @@ export class PanelModel {
 
     // defaults
     _.defaultsDeep(this, _.cloneDeep(defaults));
+
     // queries must have refId
     this.ensureQueryIds();
-
     this.restoreInfintyForThresholds();
   }
 
@@ -146,15 +148,12 @@ export class PanelModel {
   }
 
   restoreInfintyForThresholds() {
-    if (this.options && this.options.thresholds) {
-      this.options.thresholds = this.options.thresholds.map((threshold: Threshold) => {
-        // JSON serialization of -Infinity is 'null' so lets convert it back to -Infinity
-        if (threshold.index === 0 && threshold.value === null) {
-          return { ...threshold, value: -Infinity };
+    if (this.options && this.options.fieldOptions) {
+      for (const threshold of this.options.fieldOptions.thresholds) {
+        if (threshold.value === null) {
+          threshold.value = -Infinity;
         }
-
-        return threshold;
-      });
+      }
     }
   }
 
@@ -324,12 +323,17 @@ export class PanelModel {
     return this.queryRunner;
   }
 
+  hasTitle() {
+    return this.title && this.title.length > 0;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
 
     if (this.queryRunner) {
       this.queryRunner.destroy();
+      this.queryRunner = null;
     }
   }
 }

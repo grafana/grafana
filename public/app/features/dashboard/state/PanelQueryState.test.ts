@@ -34,14 +34,22 @@ describe('PanelQueryState', () => {
     expect(empty.series.length).toBe(0);
     expect(hasRun).toBeFalsy();
 
-    empty = await state.execute(
-      ds,
-      getQueryOptions({ targets: [{ hide: true, refId: 'X' }, { hide: true, refId: 'Y' }, { hide: true, refId: 'Z' }] })
-    );
+    const query = getQueryOptions({
+      targets: [{ hide: true, refId: 'X' }, { hide: true, refId: 'Y' }, { hide: true, refId: 'Z' }],
+    });
+
+    empty = await state.execute(ds, query);
     // should not run any hidden queries'
     expect(state.getActiveRunner()).toBeFalsy();
     expect(empty.series.length).toBe(0);
     expect(hasRun).toBeFalsy();
+
+    // Check for the same query
+    expect(state.isSameQuery(ds, query)).toBeTruthy();
+
+    // Check for differnet queries
+    expect(state.isSameQuery(new MockDataSourceApi('test'), query)).toBeFalsy();
+    expect(state.isSameQuery(ds, getQueryOptions({ targets: [{ refId: 'differnet' }] }))).toBeFalsy();
   });
 });
 
