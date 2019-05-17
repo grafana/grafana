@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
-import { EMPTY } from 'rxjs';
-import { takeUntil, mergeMap, tap, filter } from 'rxjs/operators';
+import { EMPTY, of } from 'rxjs';
+import { takeUntil, mergeMap, tap, filter, concatMap, delay, bufferTime, bufferCount, map } from 'rxjs/operators';
 
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
@@ -51,6 +51,16 @@ export interface SubscriptionDataReceivedPayload {
 
 export const subscriptionDataReceivedAction = actionCreatorFactory<SubscriptionDataReceivedPayload>(
   'explore/SUBSCRIPTION_DATA_RECEIVED'
+).create();
+
+export interface LimitMessageRatePayload {
+  data: SeriesData;
+  exploreId: ExploreId;
+  dataReceivedActionCreator: ActionCreator<SubscriptionDataReceivedPayload>;
+}
+
+export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRatePayload>(
+  'explore/LIMIT_MESSAGE_RATE_PAYLOAD'
 ).create();
 
 export const startSubscriptionsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
@@ -130,10 +140,24 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
 
           return datasourceInstance
             .resultToSeriesData(result, refId)
-            .map(data => dataReceivedActionCreator({ data, exploreId }));
+            .map(data => limitMessageRatePayloadAction({ exploreId, data, dataReceivedActionCreator }));
         }),
         filter(action => action !== null)
       );
+    })
+  );
+};
+
+export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = action$ => {
+  return action$.ofType(limitMessageRatePayloadAction.type).pipe(
+    bufferTime(100),
+    mergeMap(action => action),
+    bufferCount(1),
+    mergeMap(action => action),
+    concatMap(data => of(data).pipe(delay(250))),
+    map((action: ActionOf<LimitMessageRatePayload>) => {
+      const { exploreId, data, dataReceivedActionCreator } = action.payload;
+      return dataReceivedActionCreator({ exploreId, data });
     })
   );
 };

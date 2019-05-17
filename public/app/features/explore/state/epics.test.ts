@@ -9,6 +9,7 @@ import {
   SubscriptionDataReceivedPayload,
   startSubscriptionAction,
   startSubscriptionEpic,
+  limitMessageRatePayloadAction,
 } from './epics';
 import { makeExploreItemState } from './reducers';
 import { epicTester } from 'test/core/redux/epicTester';
@@ -110,11 +111,25 @@ describe('startSubscriptionEpic', () => {
           )
           .thenNoActionsWhereDispatched()
           .whenWebSocketReceivesData({ data: [1, 2, 3] })
-          .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+          .thenResultingActionsEqual(
+            limitMessageRatePayloadAction({
+              exploreId,
+              data: { data: [1, 2, 3] } as any,
+              dataReceivedActionCreator,
+            })
+          )
           .whenWebSocketReceivesData({ data: [4, 5, 6] })
           .thenResultingActionsEqual(
-            dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-            dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+            limitMessageRatePayloadAction({
+              exploreId,
+              data: { data: [1, 2, 3] } as any,
+              dataReceivedActionCreator,
+            }),
+            limitMessageRatePayloadAction({
+              exploreId,
+              data: { data: [4, 5, 6] } as any,
+              dataReceivedActionCreator,
+            })
           );
       });
     });
@@ -145,10 +160,22 @@ describe('startSubscriptionEpic', () => {
           )
           .thenNoActionsWhereDispatched()
           .whenWebSocketReceivesData({ data: [1, 2, 3] })
-          .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+          .thenResultingActionsEqual(
+            limitMessageRatePayloadAction({
+              exploreId,
+              data: { data: [1, 2, 3] } as any,
+              dataReceivedActionCreator,
+            })
+          )
           .whenActionIsDispatched(resetExploreAction())
           .whenWebSocketReceivesData({ data: [4, 5, 6] })
-          .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }));
+          .thenResultingActionsEqual(
+            limitMessageRatePayloadAction({
+              exploreId,
+              data: { data: [1, 2, 3] } as any,
+              dataReceivedActionCreator,
+            })
+          );
       });
     });
 
@@ -168,10 +195,22 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId, datasourceInstance: null }))
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }));
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            );
         });
       });
 
@@ -190,14 +229,28 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(
               updateDatasourceInstanceAction({ exploreId: ExploreId.right, datasourceInstance: null })
             )
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
             .thenResultingActionsEqual(
-              dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-              dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              }),
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [4, 5, 6] } as any,
+                dataReceivedActionCreator,
+              })
             );
         });
       });
@@ -220,10 +273,22 @@ describe('startSubscriptionEpic', () => {
               )
               .thenNoActionsWhereDispatched()
               .whenWebSocketReceivesData({ data: [1, 2, 3] })
-              .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+              .thenResultingActionsEqual(
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                })
+              )
               .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId, refreshInterval: '10s' }))
               .whenWebSocketReceivesData({ data: [4, 5, 6] })
-              .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }));
+              .thenResultingActionsEqual(
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                })
+              );
           });
         });
 
@@ -242,12 +307,26 @@ describe('startSubscriptionEpic', () => {
               )
               .thenNoActionsWhereDispatched()
               .whenWebSocketReceivesData({ data: [1, 2, 3] })
-              .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+              .thenResultingActionsEqual(
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                })
+              )
               .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId, refreshInterval: liveOption.value }))
               .whenWebSocketReceivesData({ data: [4, 5, 6] })
               .thenResultingActionsEqual(
-                dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-                dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                }),
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [4, 5, 6] } as any,
+                  dataReceivedActionCreator,
+                })
               );
           });
         });
@@ -268,12 +347,26 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.right, refreshInterval: '10s' }))
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
             .thenResultingActionsEqual(
-              dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-              dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              }),
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [4, 5, 6] } as any,
+                dataReceivedActionCreator,
+              })
             );
         });
       });
@@ -295,10 +388,22 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(clearQueriesAction({ exploreId }))
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }));
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            );
         });
       });
 
@@ -317,12 +422,26 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(clearQueriesAction({ exploreId: ExploreId.right }))
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
             .thenResultingActionsEqual(
-              dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-              dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              }),
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [4, 5, 6] } as any,
+                dataReceivedActionCreator,
+              })
             );
         });
       });
@@ -344,7 +463,13 @@ describe('startSubscriptionEpic', () => {
             )
             .thenNoActionsWhereDispatched()
             .whenWebSocketReceivesData({ data: [1, 2, 3] })
-            .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+            .thenResultingActionsEqual(
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              })
+            )
             .whenActionIsDispatched(
               startSubscriptionAction({
                 url: webSocketUrl,
@@ -355,8 +480,16 @@ describe('startSubscriptionEpic', () => {
             )
             .whenWebSocketReceivesData({ data: [4, 5, 6] })
             .thenResultingActionsEqual(
-              dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-              dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [1, 2, 3] } as any,
+                dataReceivedActionCreator,
+              }),
+              limitMessageRatePayloadAction({
+                exploreId,
+                data: { data: [4, 5, 6] } as any,
+                dataReceivedActionCreator,
+              })
               // This looks like we haven't stopped the subscription but we actually started the same again
             );
         });
@@ -376,7 +509,13 @@ describe('startSubscriptionEpic', () => {
               )
               .thenNoActionsWhereDispatched()
               .whenWebSocketReceivesData({ data: [1, 2, 3] })
-              .thenResultingActionsEqual(dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }))
+              .thenResultingActionsEqual(
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                })
+              )
               .whenActionIsDispatched(
                 startSubscriptionAction({
                   url: webSocketUrl,
@@ -387,9 +526,21 @@ describe('startSubscriptionEpic', () => {
               )
               .whenWebSocketReceivesData({ data: [4, 5, 6] })
               .thenResultingActionsEqual(
-                dataReceivedActionCreator({ exploreId, data: { data: [1, 2, 3] } as any }),
-                dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any }),
-                dataReceivedActionCreator({ exploreId, data: { data: [4, 5, 6] } as any })
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [1, 2, 3] } as any,
+                  dataReceivedActionCreator,
+                }),
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [4, 5, 6] } as any,
+                  dataReceivedActionCreator,
+                }),
+                limitMessageRatePayloadAction({
+                  exploreId,
+                  data: { data: [4, 5, 6] } as any,
+                  dataReceivedActionCreator,
+                })
               );
           });
         });
