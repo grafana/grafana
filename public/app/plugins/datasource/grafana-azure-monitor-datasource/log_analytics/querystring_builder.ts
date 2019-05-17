@@ -44,7 +44,10 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getUntil(options) {
     if (options.rangeRaw.to === 'now') {
-      return 'now()';
+      const now = Date.now();
+      return `datetime(${dateTime(now)
+        .startOf('minute')
+        .toISOString()})`;
     } else {
       const until = options.range.to;
       return `datetime(${dateTime(until)
