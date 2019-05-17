@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	IoHelper       m.IoUtil = IoUtilImp{}
-	HttpClient     http.Client
-	grafanaVersion string
-	NotFoundError  = errors.New("404 not found error")
+	IoHelper         m.IoUtil = IoUtilImp{}
+	HttpClient       http.Client
+	grafanaVersion   string
+	ErrNotFoundError = errors.New("404 not found error")
 )
 
 func Init(version string, skipTLSVerify bool) {
@@ -32,7 +32,6 @@ func Init(version string, skipTLSVerify bool) {
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
@@ -132,7 +131,7 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 
 	if err != nil {
 		logger.Info("Failed to send request: ", err)
-		if err == NotFoundError {
+		if err == ErrNotFoundError {
 			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
 		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
@@ -175,7 +174,7 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	}
 
 	if res.StatusCode == 404 {
-		return []byte{}, NotFoundError
+		return []byte{}, ErrNotFoundError
 	}
 	if res.StatusCode/100 != 2 {
 		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)

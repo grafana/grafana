@@ -21,7 +21,7 @@ export interface QueryResultMeta {
   requestId?: string;
 
   // Used in Explore for highlighting
-  search?: string;
+  searchWords?: string[];
 
   // Used in Explore to show limit applied to search result
   limit?: number;
@@ -47,7 +47,6 @@ export interface Field {
   unit?: string;
   dateFormat?: string; // Source data format
   decimals?: number | null; // Significant digits (for display)
-  color?: string;
   min?: number | null;
   max?: number | null;
 }
@@ -70,6 +69,7 @@ export interface Column {
 }
 
 export interface TableData extends QueryResultBase {
+  name?: string;
   columns: Column[];
   rows: any[][];
 }

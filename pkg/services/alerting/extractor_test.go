@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -21,17 +21,17 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		// mock data
-		defaultDs := &m.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
-		graphite2Ds := &m.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
-		influxDBDs := &m.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
-		prom := &m.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
+		defaultDs := &models.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true}
+		graphite2Ds := &models.DataSource{Id: 15, OrgId: 1, Name: "graphite2"}
+		influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
+		prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
-		bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
-			query.Result = []*m.DataSource{defaultDs, graphite2Ds}
+		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+			query.Result = []*models.DataSource{defaultDs, graphite2Ds}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDataSourceByNameQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceByNameQuery) error {
 			if query.Name == defaultDs.Name {
 				query.Result = defaultDs
 			}
@@ -55,7 +55,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJson)
 
 			getTarget := func(j *simplejson.Json) string {
 				rowObj := j.Get("rows").MustArray()[0]
@@ -84,7 +84,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
@@ -152,7 +152,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 			dashJson, err := simplejson.NewJson(panelWithoutId)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
@@ -168,7 +168,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 			dashJson, err := simplejson.NewJson(panelWithIdZero)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
@@ -184,7 +184,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
-			dash := m.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
@@ -200,10 +200,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		Convey("Alert notifications are in DB", func() {
 			sqlstore.InitTestDB(t)
-			firstNotification := m.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+			firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
 			So(err, ShouldBeNil)
-			secondNotification := m.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
 			So(err, ShouldBeNil)
 
@@ -213,7 +213,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 				dashJson, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
-				dash := m.NewDashboardFromJson(dashJson)
+				dash := models.NewDashboardFromJson(dashJson)
 				extractor := NewDashAlertExtractor(dash, 1, nil)
 
 				alerts, err := extractor.GetAlerts()
@@ -243,7 +243,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				dashJson, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
 
-				dash := m.NewDashboardFromJson(dashJson)
+				dash := models.NewDashboardFromJson(dashJson)
 				extractor := NewDashAlertExtractor(dash, 1, nil)
 
 				alerts, err := extractor.GetAlerts()
@@ -263,7 +263,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
-				dash := m.NewDashboardFromJson(dashJSON)
+				dash := models.NewDashboardFromJson(dashJSON)
 				extractor := NewDashAlertExtractor(dash, 1, nil)
 
 				err = extractor.ValidateAlerts()
