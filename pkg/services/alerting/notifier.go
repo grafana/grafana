@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// NotifierPlugin holds meta information about a notifier
+// NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
 	Name            string          `json:"name"`
@@ -21,10 +21,6 @@ type NotifierPlugin struct {
 	OptionsTemplate string          `json:"optionsTemplate"`
 	Factory         NotifierFactory `json:"-"`
 }
-
-// type notificationService interface {
-// 	SendIfNeeded(context *EvalContext) error
-// }
 
 func newNotificationService(renderService rendering.Service) *notificationService {
 	return &notificationService{
@@ -195,7 +191,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 	return result, nil
 }
 
-// InitNotifier instantiate a new notifier based on the model
+// InitNotifier instantiate a new notifier based on the model.
 func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
@@ -205,7 +201,7 @@ func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	return notifierPlugin.Factory(model)
 }
 
-// NotifierFactory is a signature for creating notifiers
+// NotifierFactory is a signature for creating notifiers.
 type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
@@ -215,7 +211,7 @@ func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }
 
-// GetNotifiers returns a list of metadata about available notifiers
+// GetNotifiers returns a list of metadata about available notifiers.
 func GetNotifiers() []*NotifierPlugin {
 	list := make([]*NotifierPlugin, 0)
 

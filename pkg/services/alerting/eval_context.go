@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// EvalContext is the context object for a signel alert evaluation
+// EvalContext is the context object for a signel alert evaluation.
 type EvalContext struct {
 	Firing         bool
 	IsTestRun      bool
@@ -34,7 +34,7 @@ type EvalContext struct {
 	Ctx context.Context
 }
 
-// NewEvalContext is the EvalContext constructor
+// NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	return &EvalContext{
 		Ctx:            alertCtx,
@@ -47,14 +47,14 @@ func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	}
 }
 
-// StateDescription contains visual information about the alert state
+// StateDescription contains visual information about the alert state.
 type StateDescription struct {
 	Color string
 	Text  string
 	Data  string
 }
 
-// GetStateModel returns the `StateDescription` based on current state
+// GetStateModel returns the `StateDescription` based on current state.
 func (c *EvalContext) GetStateModel() *StateDescription {
 	switch c.Rule.State {
 	case models.AlertStateOK:
@@ -86,17 +86,17 @@ func (c *EvalContext) shouldUpdateAlertState() bool {
 	return c.Rule.State != c.PrevAlertState
 }
 
-// GetDurationMs returns the duration of the alert evaluation
+// GetDurationMs returns the duration of the alert evaluation.
 func (c *EvalContext) GetDurationMs() float64 {
 	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
 }
 
-// GetNotificationTitle returns the title of the alert rule including alert state
+// GetNotificationTitle returns the title of the alert rule including alert state.
 func (c *EvalContext) GetNotificationTitle() string {
 	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
-// GetDashboardUID returns the dashboard uid for the alert rule
+// GetDashboardUID returns the dashboard uid for the alert rule.
 func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
@@ -113,7 +113,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 
 const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
-// GetRuleUrl returns the url to the dashboard containing the alert
+// GetRuleUrl returns the url to the dashboard containing the alert.
 func (c *EvalContext) GetRuleUrl() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
@@ -126,7 +126,7 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
 }
 
-// GetNewState returns the new state from the alert rule evaluation
+// GetNewState returns the new state from the alert rule evaluation.
 func (c *EvalContext) GetNewState() models.AlertStateType {
 	ns := getNewStateInternal(c)
 	if ns != models.AlertStateAlerting || c.Rule.For == 0 {

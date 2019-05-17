@@ -12,13 +12,13 @@ type Job struct {
 	Rule       *Rule
 }
 
-// ResultLogEntry represents log data for the alert evaluation
+// ResultLogEntry represents log data for the alert evaluation.
 type ResultLogEntry struct {
 	Message string
 	Data    interface{}
 }
 
-// EvalMatch represents the serie violating the threshold
+// EvalMatch represents the serie violating the threshold.
 type EvalMatch struct {
 	Value  null.Float        `json:"value"`
 	Metric string            `json:"metric"`

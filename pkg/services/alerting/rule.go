@@ -19,7 +19,7 @@ var (
 	ErrFrequencyCouldNotBeParsed = errors.New(`"evaluate every" field could not be parsed`)
 )
 
-// Rule is the inmemory version of an alert rule
+// Rule is the inmemory version of an alert rule.
 type Rule struct {
 	Id                  int64
 	OrgId               int64
@@ -40,7 +40,7 @@ type Rule struct {
 }
 
 // ValidationError is a typed error with meta data
-// about the validation error
+// about the validation error.
 type ValidationError struct {
 	Reason      string
 	Err         error
@@ -110,7 +110,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 }
 
 // NewRuleFromDBAlert mappes an db version of
-// alert to an inmemory version
+// alert to an inmemory version.
 func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model := &Rule{}
 	model.Id = ruleDef.Id
@@ -167,12 +167,12 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	return model, nil
 }
 
-// ConditionFactory is the signature for creating Conditions
+// ConditionFactory is the signature for creating Conditions.
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
 var conditionFactories = make(map[string]ConditionFactory)
 
-// RegisterCondition adds support for alerting conditions
+// RegisterCondition adds support for alerting conditions.
 func RegisterCondition(typeName string, factory ConditionFactory) {
 	conditionFactories[typeName] = factory
 }

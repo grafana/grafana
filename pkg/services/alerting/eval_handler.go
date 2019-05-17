@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
-// DefaultEvalHandler evaluates the alert rule
+// DefaultEvalHandler evaluates the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
 }
 
-// NewEvalHandler is the `DefaultEvalHandler` constructor
+// NewEvalHandler is the `DefaultEvalHandler` constructor.
 func NewEvalHandler() *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
@@ -23,7 +23,7 @@ func NewEvalHandler() *DefaultEvalHandler {
 	}
 }
 
-// Eval evaluated the alert rule
+// Eval evaluated the alert rule.
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	firing := true
 	noDataFound := true

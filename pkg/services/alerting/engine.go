@@ -36,12 +36,12 @@ func init() {
 	registry.RegisterService(&AlertingService{})
 }
 
-// IsDisabled returns true if the alerting service is disable for this instance
+// IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertingService) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
-// Init initalizes the AlertingService
+// Init initalizes the AlertingService.
 func (e *AlertingService) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
 	e.execQueue = make(chan *Job, 1000)
@@ -53,7 +53,7 @@ func (e *AlertingService) Init() error {
 	return nil
 }
 
-// Run starts the alerting service background process
+// Run starts the alerting service background process.
 func (e *AlertingService) Run(ctx context.Context) error {
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })

@@ -10,7 +10,7 @@ import (
 )
 
 // AlertTestCommand initiates an test evaluation
-// of an alert rule
+// of an alert rule.
 type AlertTestCommand struct {
 	Dashboard *simplejson.Json
 	PanelId   int64
