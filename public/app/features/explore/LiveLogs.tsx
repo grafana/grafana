@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant } from '@grafana/ui';
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton } from '@grafana/ui';
 
 import { LogsModel, LogRowModel } from 'app/core/logs_model';
 import ElapsedTime from './ElapsedTime';
+import { ButtonSize, ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
@@ -27,12 +28,15 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.size.md};
-    padding: ${theme.spacing.gutter} 0;
+    padding: ${theme.spacing.sm} 0;
+    display: flex;
+    align-items: center;
   `,
 });
 
 export interface Props extends Themeable {
   logsResult?: LogsModel;
+  stopLive: () => void;
 }
 
 export interface State {
@@ -86,10 +90,18 @@ class LiveLogs extends PureComponent<Props, State> {
           })}
           <div ref={element => (this.liveEndDiv = element)} />
         </div>
-        <div className="logs-rows-indicator">
+        <div className={cx([styles.logsRowsIndicator])}>
           <span>
             Last line received: <ElapsedTime renderCount={renderCount} humanize={true} /> ago
           </span>
+          <LinkButton
+            onClick={this.props.stopLive}
+            size={ButtonSize.Medium}
+            variant={ButtonVariant.Transparent}
+            icon="fa fa-square"
+          >
+            Stop Live
+          </LinkButton>
         </div>
       </>
     );

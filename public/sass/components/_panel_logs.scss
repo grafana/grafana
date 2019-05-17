@@ -323,28 +323,3 @@ $column-horizontal-spacing: 10px;
     background: $blue;
   }
 }
-
-.logs-rows.live {
-  display: flex;
-  flex-flow: column nowrap;
-  height: 75vh;
-  overflow-y: auto;
-}
-
-.logs-rows.live > :first-child {
-  margin-top: auto !important;
-}
-
-.logs-row.fresh {
-  color: $text-color;
-  background-color: $blue-light, 20%;
-}
-
-.logs-row.old {
-  opacity: 0.8;
-}
-
-.logs-rows-indicator {
-  font-size: $font-size-md;
-  padding: $space-sm 0;
-}
