@@ -21,7 +21,7 @@ export function parseQuery(input: string): LokiExpression {
     }
   }
 
-  return { regexp, query }; // extend to reqrn search expr +
+  return { regexp, query };
 }
 
 export function formatQuery(selector: string, search: string): string {
