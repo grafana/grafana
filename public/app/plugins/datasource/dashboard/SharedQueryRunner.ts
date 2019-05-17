@@ -30,7 +30,7 @@ export class SharedQueryRunner {
   constructor(private runner: PanelQueryRunner) {
     this.containerPanel = getDashboardSrv()
       .getCurrent()
-      .getPanelById(runner.panelId);
+      .getPanelById(runner.getPanelId());
   }
 
   process(options: QueryRunnerOptions): Promise<PanelData> {

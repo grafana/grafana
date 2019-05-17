@@ -52,8 +52,6 @@ function getNextRequestId() {
 }
 
 export class PanelQueryRunner {
-  panelId: number; // set by the constructor
-
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
@@ -61,9 +59,12 @@ export class PanelQueryRunner {
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
 
-  constructor(panelId: number) {
-    this.panelId = panelId;
+  constructor(private panelId: number) {
     this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+  }
+
+  getPanelId() {
+    return this.panelId;
   }
 
   /**
