@@ -5,8 +5,6 @@ import { Themeable, withTheme, GrafanaTheme, selectThemeVariant } from '@grafana
 import { LogsModel, LogRowModel } from 'app/core/logs_model';
 import ElapsedTime from './ElapsedTime';
 
-const rowSorter = (a: LogRowModel, b: LogRowModel) => a.timeEpochMs - b.timeEpochMs;
-
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
@@ -38,7 +36,6 @@ export interface Props extends Themeable {
 }
 
 export interface State {
-  prevRows: LogRowModel[];
   renderCount: number;
 }
 
@@ -47,7 +44,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { prevRows: props.logsResult ? props.logsResult.rows : [], renderCount: 0 };
+    this.state = { renderCount: 0 };
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -56,7 +53,6 @@ class LiveLogs extends PureComponent<Props, State> {
 
     if (prevRows !== rows) {
       this.setState({
-        prevRows,
         renderCount: this.state.renderCount + 1,
       });
     }
@@ -68,15 +64,9 @@ class LiveLogs extends PureComponent<Props, State> {
 
   render() {
     const { theme } = this.props;
-    const { prevRows, renderCount } = this.state;
+    const { renderCount } = this.state;
     const styles = getStyles(theme);
-    const rows: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
-    const freshRows = rows
-      .filter(row => !prevRows.includes(row))
-      .map(row => ({ ...row, fresh: true }))
-      .sort(rowSorter);
-    const oldRows = prevRows.filter(row => rows.includes(row)).sort(rowSorter);
-    const rowsToRender = oldRows.concat(freshRows);
+    const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
 
     return (
       <>

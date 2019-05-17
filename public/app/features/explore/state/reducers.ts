@@ -57,7 +57,7 @@ import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { subscriptionDataReceivedAction } from './epics';
-import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
+import { LogsModel, seriesDataToLogsModel, LogRowModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -66,6 +66,18 @@ export const DEFAULT_RANGE = {
 
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
+
+const rowSorter = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return 1;
+  }
+
+  return 0;
+};
 
 export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
@@ -410,10 +422,20 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queryIntervals } = state;
       const { data } = action.payload;
       const newResults = seriesDataToLogsModel([data], queryIntervals.intervalMs);
-      const logsResult: LogsModel = state.logsResult
-        ? { ...state.logsResult, rows: newResults.rows.concat(state.logsResult.rows) }
-        : { hasUniqueLabels: false, rows: newResults.rows };
-      logsResult.rows = logsResult.rows.slice(0, 999);
+      const rowsInState = state.logsResult ? state.logsResult.rows : [];
+      rowsInState.sort(rowSorter);
+
+      const processedRows = [];
+      for (const row of rowsInState) {
+        processedRows.push({ ...row, fresh: false });
+      }
+      for (const row of newResults.rows) {
+        processedRows.push({ ...row, fresh: true });
+      }
+
+      const rows = processedRows.slice(processedRows.length - 1000, 1000);
+
+      const logsResult: LogsModel = state.logsResult ? { ...state.logsResult, rows } : { hasUniqueLabels: false, rows };
 
       return {
         ...state,
