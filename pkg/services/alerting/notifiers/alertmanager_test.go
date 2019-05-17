@@ -4,13 +4,34 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "foobar",
+			expected: "foobar",
+		},
+		{
+			input:    `foo.,\][!?#="~*^&+|<>\'bar09_09`,
+			expected: "foo____________________bar09_09",
+		},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, replaceIllegalCharsInLabelname(c.input), c.expected)
+	}
+}
 
 func TestWhenAlertManagerShouldNotify(t *testing.T) {
 	tcs := []struct {
@@ -43,7 +64,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 
 	for _, tc := range tcs {
 		am := &AlertmanagerNotifier{log: log.New("test.logger")}
-		evalContext := alerting.NewEvalContext(context.TODO(), &alerting.Rule{
+		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
 		})
 
@@ -88,7 +109,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				So(err, ShouldBeNil)
-				So(alertmanagerNotifier.Url, ShouldEqual, "http://127.0.0.1:9093/")
+				So(alertmanagerNotifier.URL, ShouldEqual, "http://127.0.0.1:9093/")
 			})
 		})
 	})

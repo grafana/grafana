@@ -46,22 +46,20 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
     const graphHeight = showingGraph && showingTable ? 200 : 400;
     const timeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    if (!graphResult) {
-      return null;
-    }
-
     return (
-      <Panel label="Graph" isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
-        <Graph
-          data={graphResult}
-          height={graphHeight}
-          id={`explore-graph-${exploreId}`}
-          onChangeTime={this.onChangeTime}
-          range={timeRange}
-          timeZone={timeZone}
-          split={split}
-          width={width}
-        />
+      <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
+        {graphResult && (
+          <Graph
+            data={graphResult}
+            height={graphHeight}
+            id={`explore-graph-${exploreId}`}
+            onChangeTime={this.onChangeTime}
+            range={timeRange}
+            timeZone={timeZone}
+            split={split}
+            width={width}
+          />
+        )}
       </Panel>
     );
   }

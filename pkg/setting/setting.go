@@ -805,6 +805,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+
 	AuthProxyHeaderName, err = valueAsString(authProxy, "header_name", "")
 	if err != nil {
 		return err
