@@ -99,7 +99,7 @@ func TestMiddlewareContext(t *testing.T) {
 				getLDAPConfig = func() (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{
-							&ldap.ServerConfig{
+							{
 								SearchBaseDNs: []string{"BaseDNHere"},
 							},
 						},
