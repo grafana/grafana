@@ -3,7 +3,6 @@ import { TimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
-import { LogRowModel } from 'app/core/logs_model';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -176,7 +175,7 @@ export abstract class DataSourceApi<
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext?(row: LogRowModel, limit?: number): Promise<LogRowContextQueryResponse>;
+  getLogRowContext?(row: any, limit?: number): Promise<LogRowContextQueryResponse>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
