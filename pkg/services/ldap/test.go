@@ -12,15 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type mockLdapConn struct {
-	result                      *ldap.SearchResult
-	searchCalled                bool
-	searchAttributes            []string
+type mockConnection struct {
+	searchResult     *ldap.SearchResult
+	searchCalled     bool
+	searchAttributes []string
+
+	addParams *ldap.AddRequest
+	addCalled bool
+
+	delParams *ldap.DelRequest
+	delCalled bool
+
 	bindProvider                func(username, password string) error
 	unauthenticatedBindProvider func(username string) error
 }
 
-func (c *mockLdapConn) Bind(username, password string) error {
+func (c *mockConnection) Bind(username, password string) error {
 	if c.bindProvider != nil {
 		return c.bindProvider(username, password)
 	}
@@ -28,7 +35,7 @@ func (c *mockLdapConn) Bind(username, password string) error {
 	return nil
 }
 
-func (c *mockLdapConn) UnauthenticatedBind(username string) error {
+func (c *mockConnection) UnauthenticatedBind(username string) error {
 	if c.unauthenticatedBindProvider != nil {
 		return c.unauthenticatedBindProvider(username)
 	}
@@ -36,23 +43,35 @@ func (c *mockLdapConn) UnauthenticatedBind(username string) error {
 	return nil
 }
 
-func (c *mockLdapConn) Close() {}
+func (c *mockConnection) Close() {}
 
-func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
-	c.result = result
+func (c *mockConnection) setSearchResult(result *ldap.SearchResult) {
+	c.searchResult = result
 }
 
-func (c *mockLdapConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+func (c *mockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
 	c.searchAttributes = sr.Attributes
-	return c.result, nil
+	return c.searchResult, nil
 }
 
-func (c *mockLdapConn) StartTLS(*tls.Config) error {
+func (c *mockConnection) Add(request *ldap.AddRequest) error {
+	c.addCalled = true
+	c.addParams = request
 	return nil
 }
 
-func AuthScenario(desc string, fn scenarioFunc) {
+func (c *mockConnection) Del(request *ldap.DelRequest) error {
+	c.delCalled = true
+	c.delParams = request
+	return nil
+}
+
+func (c *mockConnection) StartTLS(*tls.Config) error {
+	return nil
+}
+
+func authScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -62,10 +81,6 @@ func AuthScenario(desc string, fn scenarioFunc) {
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
-		}
-
-		hookDial = func(auth *Auth) error {
-			return nil
 		}
 
 		loginService := &login.LoginService{
