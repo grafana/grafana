@@ -288,7 +288,7 @@ export interface DataQueryResponse {
 }
 
 export interface LogRowContextQueryResponse {
-  data: string[][];
+  data: Array<Array<string | DataQueryError>>;
 }
 
 export interface DataQuery {

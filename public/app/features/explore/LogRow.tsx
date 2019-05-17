@@ -9,7 +9,12 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css } from 'emotion';
-import { LogRowContextProvider, LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
+import {
+  LogRowContextProvider,
+  LogRowContextRows,
+  HasMoreContextRows,
+  LogRowContextQueryErrors,
+} from './LogRowContextProvider';
 import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
@@ -161,7 +166,12 @@ export class LogRow extends PureComponent<Props, State> {
     });
   };
 
-  renderLogRow(context?: LogRowContextRows, hasMoreContextRows?: HasMoreContextRows, updateLimit?: () => void) {
+  renderLogRow(
+    context?: LogRowContextRows,
+    errors?: LogRowContextQueryErrors,
+    hasMoreContextRows?: HasMoreContextRows,
+    updateLimit?: () => void
+  ) {
     const {
       getRows,
       highlighterExpressions,
@@ -229,6 +239,7 @@ export class LogRow extends PureComponent<Props, State> {
                     <LogRowContext
                       row={row}
                       context={context}
+                      errors={errors}
                       hasMoreContextRows={hasMoreContextRows}
                       onOutsideClick={this.toggleContext}
                       onLoadMoreContext={() => {
@@ -308,8 +319,8 @@ export class LogRow extends PureComponent<Props, State> {
       return (
         <>
           <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
-            {({ result, hasMoreContextRows, updateLimit }) => {
-              return <>{this.renderLogRow(result, hasMoreContextRows, updateLimit)}</>;
+            {({ result, errors, hasMoreContextRows, updateLimit }) => {
+              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
             }}
           </LogRowContextProvider>
         </>

@@ -225,7 +225,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     return Promise.all(
       targets.map(target => {
-        return this._request('/api/prom/query', target);
+        return this._request('/api/prom/query', target).catch(e => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: e.status,
+            statusText: e.statusText,
+          };
+          return error;
+        });
       })
     ).then((results: any[]) => {
       const series: Array<Array<SeriesData | DataQueryError>> = [];
@@ -240,9 +247,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         if (result.data) {
           for (const stream of result.data.streams || []) {
             const seriesData = logStreamToSeriesData(stream);
-
             series[i].push(seriesData);
           }
+        } else {
+          series[i].push(result);
         }
       }
 

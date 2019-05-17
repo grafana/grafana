@@ -6,14 +6,17 @@ import {
   selectThemeVariant,
   ClickOutsideWrapper,
   CustomScrollbar,
+  DataQueryError,
 } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import { LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
+import { LogRowContextRows, HasMoreContextRows, LogRowContextQueryErrors } from './LogRowContextProvider';
 import { LogRowModel } from 'app/core/logs_model';
+import { Alert } from './Error';
 
 interface LogRowContextProps {
   row: LogRowModel;
   context: LogRowContextRows;
+  errors?: LogRowContextQueryErrors;
   hasMoreContextRows: HasMoreContextRows;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
@@ -80,14 +83,15 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
 
 interface LogRowContextGroupHeaderProps {
   row: LogRowModel;
-  rows: string[];
+  rows: Array<string | DataQueryError>;
   onLoadMoreContext: () => void;
   shouldScrollToBottom?: boolean;
   canLoadMoreRows?: boolean;
 }
 interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
-  rows: string[];
+  rows: Array<string | DataQueryError>;
   className: string;
+  error?: string;
 }
 
 const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
@@ -135,6 +139,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
 const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
+  error,
   className,
   shouldScrollToBottom,
   canLoadMoreRows,
@@ -161,29 +166,32 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   return (
     <div className={cx(className, commonStyles)}>
       {/* When displaying "after" context */}
-      {shouldScrollToBottom && <LogRowContextGroupHeader {...headerProps} />}
+      {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
       <div className={logs}>
         <CustomScrollbar autoHide scrollTop={scrollTop}>
           <div ref={listContainerRef}>
-            <List
-              items={rows}
-              renderItem={item => {
-                return (
-                  <div
-                    className={css`
-                      padding: 5px 0;
-                    `}
-                  >
-                    {item}
-                  </div>
-                );
-              }}
-            />
+            {!error && (
+              <List
+                items={rows}
+                renderItem={item => {
+                  return (
+                    <div
+                      className={css`
+                        padding: 5px 0;
+                      `}
+                    >
+                      {item}
+                    </div>
+                  );
+                }}
+              />
+            )}
+            {error && <Alert message={error} />}
           </div>
         </CustomScrollbar>
       </div>
       {/* When displaying "before" context */}
-      {!shouldScrollToBottom && <LogRowContextGroupHeader {...headerProps} />}
+      {!shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
     </div>
   );
 };
@@ -191,6 +199,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
 export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   row,
   context,
+  errors,
   onOutsideClick,
   onLoadMoreContext,
   hasMoreContextRows,
@@ -198,9 +207,10 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
       <div>
-        {context.after && context.after.length > 0 && (
+        {context.after && (
           <LogRowContextGroup
             rows={context.after}
+            error={errors && errors.after}
             row={row}
             className={css`
               top: -250px;
@@ -211,12 +221,13 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
           />
         )}
 
-        {context.before && context.before.length > 0 && (
+        {context.before && (
           <LogRowContextGroup
             onLoadMoreContext={onLoadMoreContext}
             canLoadMoreRows={hasMoreContextRows.before}
             row={row}
             rows={context.before}
+            error={errors && errors.before}
             className={css`
               top: 100%;
             `}
