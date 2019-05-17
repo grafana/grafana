@@ -1,4 +1,4 @@
-import InputDatasource from './InputDatasource';
+import InputDatasource, { describeSeriesData } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
@@ -30,5 +30,19 @@ describe('InputDatasource', () => {
         expect(series.rows).toEqual(data[0].rows);
       });
     });
+  });
+
+  test('SeriesData descriptions', () => {
+    expect(describeSeriesData([])).toEqual('');
+    expect(describeSeriesData(null)).toEqual('');
+    expect(
+      describeSeriesData([
+        {
+          name: 'x',
+          fields: [{ name: 'a' }],
+          rows: [],
+        },
+      ])
+    ).toEqual('1 Fields, 0 Rows');
   });
 });
