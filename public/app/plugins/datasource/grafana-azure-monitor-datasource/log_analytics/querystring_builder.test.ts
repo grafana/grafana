@@ -99,7 +99,7 @@ describe('LogAnalyticsDatasource', () => {
       const query = builder.generate().uriString;
 
       expect(query).toContain('where%20myTime%20%3E%3D%20datetime(');
-      expect(query).toContain('myTime%20%3C%3D%20now()');
+      expect(query).toContain('myTime%20%3C%3D%20datetime(');
     });
   });
 
