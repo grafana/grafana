@@ -175,7 +175,7 @@ export abstract class DataSourceApi<
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext?(row: any, limit?: number): Promise<LogRowContextQueryResponse>;
+  getLogRowContext?(row: any, limit?: number): Promise<DataQueryResponse>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around

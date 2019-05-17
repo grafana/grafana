@@ -194,8 +194,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return `${label}="${row.labels[label]}"`;
       })
       .join(',');
-    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1000000; // 2h buffer
-    const timeEpochNs = row.timeEpochMs * 1000000;
+    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1e6; // 2h buffer
+    const timeEpochNs = row.timeEpochMs * 1e6;
 
     const commontTargetOptons = {
       limit,
@@ -212,7 +212,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       // Target for "after" context
       {
         ...commontTargetOptons,
-        start: timeEpochNs + 1, // +1 not to include the log row of interest
+        start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
         end: timeEpochNs + contextTimeBuffer,
         direction: 'FORWARD',
       },
@@ -228,26 +228,32 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return this._request('/api/prom/query', target);
       })
     ).then((results: any[]) => {
-      const logs: string[][] = []; // array of preceeding and following logs for a given row
+      const series: Array<Array<SeriesData | DataQueryError>> = [];
+      const emptySeries = {
+        fields: [],
+        rows: [],
+      } as SeriesData;
+
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
+        series[i] = [];
         if (result.data) {
-          logs[i] = [];
           for (const stream of result.data.streams || []) {
-            if (stream.entries) {
-              const logsModel = stream.entries.map(entry => entry.line);
-              logs[i] = logs[i].concat(logsModel);
-            }
+            const seriesData = logStreamToSeriesData(stream);
+
+            series[i].push(seriesData);
           }
         }
       }
 
       // Following context logs are requested in "forward" direction.
-      //This means, that we need to reverse those to make them sorted
+      // This means, that we need to reverse those to make them sorted
       // in descending order (by timestamp)
-      logs[1].reverse();
+      if (series[1][0] && (series[1][0] as SeriesData).rows) {
+        (series[1][0] as SeriesData).rows.reverse();
+      }
 
-      return { data: logs };
+      return { data: [series[0][0] || emptySeries, series[1][0] || emptySeries] };
     });
   };
 
