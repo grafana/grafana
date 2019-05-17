@@ -95,7 +95,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   scanning: false,
   scanRange: null,
   showingGraph: true,
-  showingLogs: true,
   showingTable: true,
   graphIsLoading: false,
   logIsLoading: false,
@@ -351,7 +350,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         logsResult: resultType === 'Logs' ? null : state.logsResult,
         latency: 0,
         queryErrors,
-        showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
@@ -371,7 +369,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
-        showingStartPage: false,
         update: makeInitialUpdateState(),
       };
     },
@@ -392,7 +389,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: false,
         logIsLoading: false,
         tableIsLoading: false,
-        showingStartPage: false,
         update: makeInitialUpdateState(),
       };
     },
@@ -543,6 +539,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queryIntervals,
+        showingStartPage: false,
       };
     },
   })
