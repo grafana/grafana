@@ -9,8 +9,10 @@ import {
 } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
+import { LogRowModel } from 'app/core/logs_model';
 
 interface LogRowContextProps {
+  row: LogRowModel;
   context: LogRowContextRows;
   hasMoreContextRows: HasMoreContextRows;
   onOutsideClick: () => void;
@@ -77,6 +79,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme) => {
 };
 
 interface LogRowContextGroupHeaderProps {
+  row: LogRowModel;
   rows: string[];
   onLoadMoreContext: () => void;
   shouldScrollToBottom?: boolean;
@@ -88,12 +91,20 @@ interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
 }
 
 const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeaderProps> = ({
+  row,
   rows,
   onLoadMoreContext,
   canLoadMoreRows,
 }) => {
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
+
+  // Filtering out the original row from the context.
+  // Loki requires a rowTimestamp+1ns for the following logs to be queried.
+  // We don't to ns-precision calculations in Loki log row context retrieval, hence the filtering here
+  // Also see: https://github.com/grafana/loki/issues/597
+  const logRowsToRender = rows.filter(contextRow => contextRow !== row.raw);
+
   return (
     <div className={header}>
       <span
@@ -101,7 +112,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
           opacity: 0.6;
         `}
       >
-        Found {rows.length} rows.
+        Found {logRowsToRender.length} rows.
       </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
         <span
@@ -122,6 +133,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
 };
 
 const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+  row,
   rows,
   className,
   shouldScrollToBottom,
@@ -140,6 +152,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   });
 
   const headerProps = {
+    row,
     rows,
     onLoadMoreContext,
     canLoadMoreRows,
@@ -176,6 +189,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
 };
 
 export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
+  row,
   context,
   onOutsideClick,
   onLoadMoreContext,
@@ -187,6 +201,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         {context.after && context.after.length > 0 && (
           <LogRowContextGroup
             rows={context.after}
+            row={row}
             className={css`
               top: -250px;
             `}
@@ -200,6 +215,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
           <LogRowContextGroup
             onLoadMoreContext={onLoadMoreContext}
             canLoadMoreRows={hasMoreContextRows.before}
+            row={row}
             rows={context.before}
             className={css`
               top: 100%;

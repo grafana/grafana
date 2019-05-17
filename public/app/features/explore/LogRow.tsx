@@ -10,7 +10,7 @@ import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css } from 'emotion';
 import { LogRowContextProvider, LogRowContextRows, HasMoreContextRows } from './LogRowContextProvider';
-import { LogRowContextQueryResponse, ThemeContext, selectThemeVariant, GrafanaTheme } from '@grafana/ui';
+import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
 
@@ -24,7 +24,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<LogRowContextQueryResponse>;
+  getRowContext?: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
   className?: string;
 }
 
@@ -227,6 +227,7 @@ export class LogRow extends PureComponent<Props, State> {
                 >
                   {showContext && context && (
                     <LogRowContext
+                      row={row}
                       context={context}
                       hasMoreContextRows={hasMoreContextRows}
                       onOutsideClick={this.toggleContext}

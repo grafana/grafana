@@ -1,5 +1,5 @@
 import { LogRowModel } from 'app/core/logs_model';
-import { LogRowContextQueryResponse } from '@grafana/ui';
+import { LogRowContextQueryResponse, SeriesData, DataQueryResponse } from '@grafana/ui';
 import { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -15,7 +15,7 @@ export interface HasMoreContextRows {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  getRowContext: (row: LogRowModel, limit?: number) => Promise<LogRowContextQueryResponse>;
+  getRowContext: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     hasMoreContextRows: HasMoreContextRows;
@@ -36,7 +36,15 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   });
 
   const { value } = useAsync(async () => {
-    return getRowContext(row, limit);
+    const context = await getRowContext(row, limit);
+    return {
+      data: context.data.map(series => {
+        if ((series as SeriesData).rows) {
+          return (series as SeriesData).rows.map(row => row[1]);
+        }
+        return [];
+      }),
+    };
   }, [limit]);
 
   useEffect(() => {
