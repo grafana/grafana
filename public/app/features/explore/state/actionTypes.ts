@@ -18,6 +18,7 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
+  ExploreMode,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -47,6 +48,11 @@ export interface AddQueryRowPayload {
   exploreId: ExploreId;
   index: number;
   query: DataQuery;
+}
+
+export interface ChangeModePayload {
+  exploreId: ExploreId;
+  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -244,6 +250,11 @@ export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explo
  * Loads a new datasource identified by the given name.
  */
 export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
+
+/**
+ * Change the mode of Explore.
+ */
+export const changeModeAction = actionCreatorFactory<ChangeModePayload>('explore/CHANGE_MODE').create();
 
 /**
  * Query change handler for the query row with the given index.
