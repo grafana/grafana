@@ -7,23 +7,94 @@ import (
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestLdapLogin(t *testing.T) {
-	Convey("Login using ldap", t, func() {
-		AuthScenario("When login with invalid credentials", func(scenario *scenarioContext) {
-			conn := &mockLdapConn{}
+func TestLDAPLogin(t *testing.T) {
+	Convey("Login()", t, func() {
+		authScenario("When user is log in and updated", func(sc *scenarioContext) {
+			// arrange
+			mockConnection := &mockConnection{}
+
+			auth := &Server{
+				config: &ServerConfig{
+					Host:       "",
+					RootCACert: "",
+					Groups: []*GroupToOrgRole{
+						{GroupDN: "*", OrgRole: "Admin"},
+					},
+					Attr: AttributeMap{
+						Username: "username",
+						Surname:  "surname",
+						Email:    "email",
+						Name:     "name",
+						MemberOf: "memberof",
+					},
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: mockConnection,
+				log:        log.New("test-logger"),
+			}
+
+			entry := ldap.Entry{
+				DN: "dn", Attributes: []*ldap.EntryAttribute{
+					{Name: "username", Values: []string{"roelgerrits"}},
+					{Name: "surname", Values: []string{"Gerrits"}},
+					{Name: "email", Values: []string{"roel@test.com"}},
+					{Name: "name", Values: []string{"Roel"}},
+					{Name: "memberof", Values: []string{"admins"}},
+				}}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			mockConnection.setSearchResult(&result)
+
+			query := &models.LoginUserQuery{
+				Username: "roelgerrits",
+			}
+
+			sc.userQueryReturns(&models.User{
+				Id:    1,
+				Email: "roel@test.net",
+				Name:  "Roel Gerrits",
+				Login: "roelgerrits",
+			})
+			sc.userOrgsQueryReturns([]*models.UserOrgDTO{})
+
+			// act
+			extUser, _ := auth.Login(query)
+			userInfo, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			// assert
+
+			// Check absence of the error
+			So(err, ShouldBeNil)
+
+			// User should be searched in ldap
+			So(mockConnection.searchCalled, ShouldBeTrue)
+
+			// Info should be updated (email differs)
+			So(userInfo.Email, ShouldEqual, "roel@test.com")
+
+			// User should have admin privileges
+			So(sc.addOrgUserCmd.Role, ShouldEqual, "Admin")
+		})
+
+		authScenario("When login with invalid credentials", func(scenario *scenarioContext) {
+			connection := &mockConnection{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			conn.setSearchResult(&result)
+			connection.setSearchResult(&result)
 
-			conn.bindProvider = func(username, password string) error {
+			connection.bindProvider = func(username, password string) error {
 				return &ldap.Error{
 					ResultCode: 49,
 				}
 			}
-			auth := &Auth{
-				server: &ServerConfig{
+			auth := &Server{
+				config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -31,19 +102,19 @@ func TestLdapLogin(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				conn: conn,
-				log:  log.New("test-logger"),
+				connection: connection,
+				log:        log.New("test-logger"),
 			}
 
-			err := auth.Login(scenario.loginUserQuery)
+			_, err := auth.Login(scenario.loginUserQuery)
 
 			Convey("it should return invalid credentials error", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
 			})
 		})
 
-		AuthScenario("When login with valid credentials", func(scenario *scenarioContext) {
-			conn := &mockLdapConn{}
+		authScenario("When login with valid credentials", func(scenario *scenarioContext) {
+			connection := &mockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
 					{Name: "username", Values: []string{"markelog"}},
@@ -54,13 +125,13 @@ func TestLdapLogin(t *testing.T) {
 				},
 			}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			conn.setSearchResult(&result)
+			connection.setSearchResult(&result)
 
-			conn.bindProvider = func(username, password string) error {
+			connection.bindProvider = func(username, password string) error {
 				return nil
 			}
-			auth := &Auth{
-				server: &ServerConfig{
+			auth := &Server{
+				config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -68,19 +139,14 @@ func TestLdapLogin(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				conn: conn,
-				log:  log.New("test-logger"),
+				connection: connection,
+				log:        log.New("test-logger"),
 			}
 
-			err := auth.Login(scenario.loginUserQuery)
+			resp, err := auth.Login(scenario.loginUserQuery)
 
-			Convey("it should not return error", func() {
-				So(err, ShouldBeNil)
-			})
-
-			Convey("it should get user", func() {
-				So(scenario.loginUserQuery.User.Login, ShouldEqual, "markelog")
-			})
+			So(err, ShouldBeNil)
+			So(resp.Login, ShouldEqual, "markelog")
 		})
 	})
 }
