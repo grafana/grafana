@@ -84,6 +84,11 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+
+  /**
+   * By default, hidden queries are not passed to the datasource
+   */
+  processHiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
