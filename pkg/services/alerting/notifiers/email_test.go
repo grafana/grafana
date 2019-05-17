@@ -22,7 +22,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newEmailNotifier(model)
+				_, err := NewEmailNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,7 +39,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newEmailNotifier(model)
+				not, err := NewEmailNotifier(model)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)
@@ -63,7 +63,7 @@ func TestEmailNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newEmailNotifier(model)
+				not, err := NewEmailNotifier(model)
 				emailNotifier := not.(*EmailNotifier)
 
 				So(err, ShouldBeNil)

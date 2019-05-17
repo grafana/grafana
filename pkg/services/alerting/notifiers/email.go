@@ -17,7 +17,7 @@ func init() {
 		Type:        "email",
 		Name:        "Email",
 		Description: "Sends notifications using Grafana server configured SMTP settings",
-		Factory:     newEmailNotifier,
+		Factory:     NewEmailNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Email addresses</h3>
       <div class="gf-form">
@@ -38,7 +38,9 @@ type EmailNotifier struct {
 	log       log.Logger
 }
 
-func newEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+// NewEmailNotifier is the constructor function
+// for the EmailNotifier.
+func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 
 	if addressesString == "" {

@@ -40,8 +40,7 @@ func TestDingDingNotifier(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(notifier.Name, ShouldEqual, "dingding_testing")
 			So(notifier.Type, ShouldEqual, "dingding")
-			So(notifier.Url, ShouldEqual, "https://www.google.com")
+			So(notifier.URL, ShouldEqual, "https://www.google.com")
 		})
-
 	})
 }
