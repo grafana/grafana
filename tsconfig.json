@@ -32,7 +32,8 @@
       "app": ["app"],
       "sass": ["sass"]
     },
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "preserveSymlinks": true
   },
   "include": [
     "public/app/**/*.ts",

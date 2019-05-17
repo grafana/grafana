@@ -17,6 +17,11 @@ import { Emitter, TimeSeries } from 'app/core/core';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
+export enum ExploreMode {
+  Metrics = 'Metrics',
+  Logs = 'Logs',
+}
+
 export interface CompletionItem {
   /**
    * The label of this completion item. By default
@@ -200,10 +205,6 @@ export interface ExploreItemState {
    */
   showingGraph: boolean;
   /**
-   * True if logs result viewer is expanded. Query runs will contain logs queries.
-   */
-  showingLogs: boolean;
-  /**
    * True StartPage needs to be shown. Typically set to `false` once queries have been run.
    */
   showingStartPage?: boolean;
@@ -258,6 +259,8 @@ export interface ExploreItemState {
 
   queryErrors: DataQueryError[];
   latency: number;
+  supportedModes: ExploreMode[];
+  mode: ExploreMode;
 }
 
 export interface ExploreUpdateState {
