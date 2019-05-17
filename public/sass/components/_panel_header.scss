@@ -167,6 +167,15 @@ $panel-header-no-title-zindex: 1;
   }
 }
 
+.panel-info-content {
+  a {
+    color: $white;
+    &:hover {
+      color: darken($white, 10%);
+    }
+  }
+}
+
 .panel-time-info {
   font-weight: $font-weight-semi-bold;
   float: right;
