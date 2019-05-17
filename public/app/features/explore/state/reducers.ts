@@ -8,7 +8,7 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState } from 'app/types/explore';
+import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 import {
   HigherOrderAction,
@@ -22,6 +22,7 @@ import {
   runQueriesAction,
   historyUpdatedAction,
   resetQueryErrorAction,
+  changeModeAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -107,6 +108,8 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   queryErrors: [],
   latency: 0,
+  supportedModes: [],
+  mode: null,
 });
 
 /**
@@ -163,6 +166,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const containerWidth = action.payload.width;
       return { ...state, containerWidth };
+    },
+  })
+  .addMapper({
+    filter: changeModeAction,
+    mapper: (state, action): ExploreItemState => {
+      const mode = action.payload.mode;
+      return { ...state, mode };
     },
   })
   .addMapper({
@@ -226,6 +236,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsLogs = datasourceInstance.meta.logs;
       const supportsTable = datasourceInstance.meta.tables;
 
+      let mode = ExploreMode.Metrics;
+      const supportedModes: ExploreMode[] = [];
+
+      if (supportsGraph) {
+        supportedModes.push(ExploreMode.Metrics);
+      }
+
+      if (supportsLogs) {
+        supportedModes.push(ExploreMode.Logs);
+      }
+
+      if (supportedModes.length === 1) {
+        mode = supportedModes[0];
+      }
+
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
 
@@ -243,6 +268,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         StartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: getQueryKeys(state.queries, datasourceInstance),
+        supportedModes,
+        mode,
       };
     },
   })
