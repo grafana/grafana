@@ -188,6 +188,28 @@ describe('Explore item reducer', () => {
       });
     });
   });
+
+  describe('run queries', () => {
+    describe('when runQueriesAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        const initalState: Partial<ExploreItemState> = {
+          showingStartPage: true,
+        };
+        const expectedState = {
+          queryIntervals: {
+            interval: '1s',
+            intervalMs: 1000,
+          },
+          showingStartPage: false,
+        };
+
+        reducerTester()
+          .givenReducer(itemReducer, initalState)
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual(expectedState);
+      });
+    });
+  });
 });
 
 export const setup = (urlStateOverrides?: any) => {
