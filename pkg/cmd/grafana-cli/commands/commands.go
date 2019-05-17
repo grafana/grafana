@@ -16,7 +16,7 @@ import (
 
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
-		cmd := &utils.ContextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 
 		cfg := setting.NewCfg()
 		cfg.Load(&setting.CommandLineArgs{
@@ -45,7 +45,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 
-		cmd := &utils.ContextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
