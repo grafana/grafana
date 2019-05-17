@@ -20,6 +20,7 @@ import (
 type TestMultiLDAP struct {
 	multildap.MultiLDAP
 	ID          int64
+	userCalled  bool
 	loginCalled bool
 }
 
@@ -27,6 +28,17 @@ func (stub *TestMultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 	stub.loginCalled = true
+	result := &models.ExternalUserInfo{
+		UserId: stub.ID,
+	}
+	return result, nil
+}
+
+func (stub *TestMultiLDAP) User(login string) (
+	*models.ExternalUserInfo,
+	error,
+) {
+	stub.userCalled = true
 	result := &models.ExternalUserInfo{
 		UserId: stub.ID,
 	}
@@ -80,17 +92,19 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
+				stub := &TestMultiLDAP{
+					ID: 42,
+				}
+
 				getLDAPConfig = func() (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{
-							{},
+							&ldap.ServerConfig{
+								SearchBaseDNs: []string{"BaseDNHere"},
+							},
 						},
 					}
 					return config, nil
-				}
-
-				stub := &TestMultiLDAP{
-					ID: 42,
 				}
 
 				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
@@ -105,17 +119,17 @@ func TestMiddlewareContext(t *testing.T) {
 
 				store := remotecache.NewFakeStore(t)
 
-				auth := New(&Options{
+				server := New(&Options{
 					Store: store,
 					Ctx:   ctx,
 					OrgID: 4,
 				})
 
-				id, err := auth.Login()
+				id, err := server.Login()
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
-				So(stub.loginCalled, ShouldEqual, true)
+				So(stub.userCalled, ShouldEqual, true)
 			})
 
 			Convey("gets nice error if ldap is enabled but not configured", func() {
@@ -152,7 +166,7 @@ func TestMiddlewareContext(t *testing.T) {
 				id, err := auth.Login()
 
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "Failed to sync user")
+				So(err.Error(), ShouldContainSubstring, "Failed to get the user")
 				So(id, ShouldNotEqual, 42)
 				So(stub.loginCalled, ShouldEqual, false)
 			})

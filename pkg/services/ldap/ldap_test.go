@@ -116,7 +116,7 @@ func TestAuth(t *testing.T) {
 
 	Convey("Users()", t, func() {
 		Convey("find one user", func() {
-			mockConnectionection := &mockConnection{}
+			mockConnection := &mockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
 					{Name: "username", Values: []string{"roelgerrits"}},
@@ -126,7 +126,7 @@ func TestAuth(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				}}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			mockConnectionection.setSearchResult(&result)
+			mockConnection.setSearchResult(&result)
 
 			// Set up attribute map without surname and email
 			server := &Server{
@@ -138,7 +138,7 @@ func TestAuth(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				connection: mockConnectionection,
+				connection: mockConnection,
 				log:        log.New("test-logger"),
 			}
 
@@ -148,10 +148,10 @@ func TestAuth(t *testing.T) {
 			So(searchResult, ShouldNotBeNil)
 
 			// User should be searched in ldap
-			So(mockConnectionection.searchCalled, ShouldBeTrue)
+			So(mockConnection.searchCalled, ShouldBeTrue)
 
 			// No empty attributes should be added to the search request
-			So(len(mockConnectionection.searchAttributes), ShouldEqual, 3)
+			So(len(mockConnection.searchAttributes), ShouldEqual, 3)
 		})
 	})
 }

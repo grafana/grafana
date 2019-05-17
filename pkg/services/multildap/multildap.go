@@ -46,9 +46,9 @@ type MultiLDAP struct {
 }
 
 // New creates the new LDAP auth
-func New(LDAPs []*ldap.ServerConfig) IMultiLDAP {
+func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	return &MultiLDAP{
-		configs: LDAPs,
+		configs: configs,
 	}
 }
 
@@ -145,12 +145,12 @@ func (multiples *MultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
 	error,
 ) {
-	search := []string{login}
 
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
 
+	search := []string{login}
 	for _, config := range multiples.configs {
 		server := ldap.New(config)
 

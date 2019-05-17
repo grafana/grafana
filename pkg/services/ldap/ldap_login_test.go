@@ -15,7 +15,7 @@ func TestLDAPLogin(t *testing.T) {
 	Convey("Login()", t, func() {
 		authScenario("When user is log in and updated", func(sc *scenarioContext) {
 			// arrange
-			mockConnectionection := &mockConnection{}
+			mockConnection := &mockConnection{}
 
 			auth := &Server{
 				config: &ServerConfig{
@@ -33,7 +33,7 @@ func TestLDAPLogin(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				connection: mockConnectionection,
+				connection: mockConnection,
 				log:        log.New("test-logger"),
 			}
 
@@ -46,7 +46,7 @@ func TestLDAPLogin(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				}}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-			mockConnectionection.setSearchResult(&result)
+			mockConnection.setSearchResult(&result)
 
 			query := &models.LoginUserQuery{
 				Username: "roelgerrits",
@@ -73,7 +73,7 @@ func TestLDAPLogin(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			// User should be searched in ldap
-			So(mockConnectionection.searchCalled, ShouldBeTrue)
+			So(mockConnection.searchCalled, ShouldBeTrue)
 
 			// Info should be updated (email differs)
 			So(userInfo.Email, ShouldEqual, "roel@test.com")
@@ -145,13 +145,8 @@ func TestLDAPLogin(t *testing.T) {
 
 			resp, err := auth.Login(scenario.loginUserQuery)
 
-			Convey("it should not return error", func() {
-				So(err, ShouldBeNil)
-			})
-
-			Convey("it should get user", func() {
-				So(resp.Login, ShouldEqual, "markelog")
-			})
+			So(err, ShouldBeNil)
+			So(resp.Login, ShouldEqual, "markelog")
 		})
 	})
 }
