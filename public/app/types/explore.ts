@@ -10,11 +10,17 @@ import {
   ExploreStartPageProps,
   LogLevel,
   TimeRange,
+  DataQueryError,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
 import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
+
+export enum ExploreMode {
+  Metrics = 'Metrics',
+  Logs = 'Logs',
+}
 
 export interface CompletionItem {
   /**
@@ -179,14 +185,6 @@ export interface ExploreItemState {
    */
   queryIntervals: QueryIntervals;
   /**
-   * List of query transaction to track query duration and query result.
-   * Graph/Logs/Table results are calculated on the fly from the transaction,
-   * based on the transaction's result types. Transaction also holds the row index
-   * so that results can be dropped and re-computed without running queries again
-   * when query rows are removed.
-   */
-  queryTransactions: QueryTransaction[];
-  /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
@@ -230,6 +228,10 @@ export interface ExploreItemState {
    * True if `datasourceInstance` supports table queries.
    */
   supportsTable: boolean | null;
+
+  graphIsLoading: boolean;
+  logIsLoading: boolean;
+  tableIsLoading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -258,6 +260,11 @@ export interface ExploreItemState {
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
+
+  queryErrors: DataQueryError[];
+  latency: number;
+  supportedModes: ExploreMode[];
+  mode: ExploreMode;
 }
 
 export interface ExploreUpdateState {
@@ -332,10 +339,9 @@ export interface QueryTransaction {
   hints?: QueryHint[];
   latency: number;
   options: any;
-  query: DataQuery;
+  queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   resultType: ResultType;
-  rowIndex: number;
   scanning?: boolean;
 }
 

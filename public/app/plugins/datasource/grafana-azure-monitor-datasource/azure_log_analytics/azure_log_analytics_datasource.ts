@@ -1,8 +1,10 @@
 import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
-import { AzureMonitorQuery } from '../types';
-import { DataQueryRequest } from '@grafana/ui/src/types';
+import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class AzureLogAnalyticsDatasource {
   id: number;
@@ -14,7 +16,12 @@ export default class AzureLogAnalyticsDatasource {
   subscriptionId: string;
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv, private $q) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private $q
+  ) {
     this.id = instanceSettings.id;
     this.baseUrl = this.instanceSettings.jsonData.azureLogAnalyticsSameAs
       ? '/sameasloganalyticsazure'

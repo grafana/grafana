@@ -18,7 +18,7 @@ describe('Process simple display values', () => {
     getDisplayProcessor(),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessor({ field: { color: '#FFF' } }),
+    getDisplayProcessor({ field: { min: 0, max: 100 } }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessor({ field: { unit: 'locale' } }),

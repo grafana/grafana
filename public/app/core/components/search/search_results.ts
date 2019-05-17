@@ -10,15 +10,15 @@ export class SearchResultsCtrl {
   editable: boolean;
 
   /** @ngInject */
-  constructor(private $location) {}
+  constructor(private $location: any) {}
 
-  toggleFolderExpand(section) {
+  toggleFolderExpand(section: any) {
     if (section.toggle) {
       if (!section.expanded && this.onFolderExpanding) {
         this.onFolderExpanding();
       }
 
-      section.toggle(section).then(f => {
+      section.toggle(section).then((f: any) => {
         if (this.editable && f.expanded) {
           if (f.items) {
             _.each(f.items, i => {
@@ -34,7 +34,7 @@ export class SearchResultsCtrl {
     }
   }
 
-  navigateToFolder(section, evt) {
+  navigateToFolder(section: any, evt: any) {
     this.$location.path(section.url);
 
     if (evt) {
@@ -43,7 +43,7 @@ export class SearchResultsCtrl {
     }
   }
 
-  toggleSelection(item, evt) {
+  toggleSelection(item: any, evt: any) {
     item.checked = !item.checked;
 
     if (item.items) {
@@ -62,14 +62,14 @@ export class SearchResultsCtrl {
     }
   }
 
-  onItemClick(item) {
+  onItemClick(item: any) {
     //Check if one string can be found in the other
     if (this.$location.path().indexOf(item.url) > -1 || item.url.indexOf(this.$location.path()) > -1) {
       appEvents.emit('hide-dash-search');
     }
   }
 
-  selectTag(tag, evt) {
+  selectTag(tag: any, evt: any) {
     if (this.onTagSelected) {
       this.onTagSelected({ $tag: tag });
     }

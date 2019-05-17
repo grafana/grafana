@@ -12,7 +12,7 @@ export interface Props {
 }
 
 export interface State {
-  id: any;
+  id: string;
 }
 
 export class Switch extends PureComponent<Props, State> {

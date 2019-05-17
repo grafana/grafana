@@ -4,8 +4,10 @@ import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMonitorQuery } from '../types';
-import { DataQueryRequest } from '@grafana/ui/src/types';
+import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -20,7 +22,11 @@ export default class AzureMonitorDatasource {
   supportedMetricNamespaces: any[] = [];
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv, private templateSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
     this.id = instanceSettings.id;
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';

@@ -24,17 +24,17 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
-import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const ctx = {} as any;
 let ctrl;
 const scope = {
   ctrl: {},
   range: {
-    from: moment([2015, 1, 1]),
-    to: moment([2015, 11, 20]),
+    from: dateTime([2015, 1, 1]),
+    to: dateTime([2015, 11, 20]),
   },
   $on: () => {},
 };
@@ -85,8 +85,8 @@ describe('grafanaGraph', () => {
         getTimezone: () => 'browser',
       },
       range: {
-        from: moment([2015, 1, 1, 10]),
-        to: moment([2015, 1, 1, 22]),
+        from: dateTime([2015, 1, 1, 10]),
+        to: dateTime([2015, 1, 1, 22]),
       },
     } as any;
 
@@ -167,8 +167,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. min descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'min';
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
@@ -210,8 +213,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. current descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'current';
+        const sortKey = 'current';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
@@ -219,6 +225,23 @@ describe('grafanaGraph', () => {
     it('highest last value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
       expect(ctx.plotData[1].alias).toBe('series1');
+    });
+  });
+
+  describe('stacked series should not sort if legend is not as table or sort key column is not visible', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = false;
+        ctrl.panel.legend[sortKey] = false;
+        ctrl.panel.stack = true;
+      });
+    });
+    it('highest value should be first', () => {
+      expect(ctx.plotData[0].alias).toBe('series1');
+      expect(ctx.plotData[1].alias).toBe('series2');
     });
   });
 
@@ -443,8 +466,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than 24 hours', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1, 10]);
-          ctrl.range.to = moment([2015, 1, 1, 22]);
+          ctrl.range.from = dateTime([2015, 1, 1, 10]);
+          ctrl.range.to = dateTime([2015, 1, 1, 22]);
         });
       });
 
@@ -457,8 +480,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than one year', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1]);
-          ctrl.range.to = moment([2015, 11, 20]);
+          ctrl.range.from = dateTime([2015, 1, 1]);
+          ctrl.range.to = dateTime([2015, 11, 20]);
         });
       });
 

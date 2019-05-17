@@ -10,7 +10,6 @@ import './jquery.flot.events';
 
 import $ from 'jquery';
 import _ from 'lodash';
-import moment from 'moment';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
@@ -27,6 +26,7 @@ import { Legend, GraphLegendProps } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -164,8 +164,8 @@ class GraphElement {
     } else {
       this.scope.$apply(() => {
         this.timeSrv.setTime({
-          from: moment.utc(ranges.xaxis.from),
-          to: moment.utc(ranges.xaxis.to),
+          from: toUtc(ranges.xaxis.from),
+          to: toUtc(ranges.xaxis.to),
         });
       });
     }
@@ -461,9 +461,9 @@ class GraphElement {
   sortSeries(series, panel) {
     const sortBy = panel.legend.sort;
     const sortOrder = panel.legend.sortDesc;
-    const haveSortBy = sortBy !== null && sortBy !== undefined;
+    const haveSortBy = sortBy !== null && sortBy !== undefined && panel.legend[sortBy];
     const haveSortOrder = sortOrder !== null && sortOrder !== undefined;
-    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder && panel.legend.alignAsTable;
     const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {

@@ -81,16 +81,21 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={panel.links}
-          error={error}
-        />
         <div className={panelHeaderClass}>
-          <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
+          <PanelHeaderCorner
+            panel={panel}
+            title={panel.title}
+            description={panel.description}
+            scopedVars={panel.scopedVars}
+            links={panel.links}
+            error={error}
+          />
+          <div
+            className="panel-title-container"
+            onClick={this.onMenuToggle}
+            onMouseDown={this.onMouseDown}
+            aria-label="Panel Title"
+          >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">

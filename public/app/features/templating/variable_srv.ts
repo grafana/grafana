@@ -214,7 +214,14 @@ export class VariableSrv {
     }
   }
 
-  setOptionFromUrl(variable, urlValue) {
+  /**
+   * Sets the current selected option (or options) based on the query params in the url. It is possible for values
+   * in the url to not match current options of the variable. In that case the variables current value will be still set
+   * to that value.
+   * @param variable Instance of Variable
+   * @param urlValue Value of the query parameter
+   */
+  setOptionFromUrl(variable: any, urlValue: string | string[]): Promise<any> {
     let promise = this.$q.when();
 
     if (variable.refresh) {
@@ -222,28 +229,41 @@ export class VariableSrv {
     }
 
     return promise.then(() => {
+      // Simple case. Value in url matches existing options text or value.
       let option: any = _.find(variable.options, op => {
         return op.text === urlValue || op.value === urlValue;
       });
 
-      let defaultText = urlValue;
-      const defaultValue = urlValue;
+      // No luck either it is array or value does not exist in the variables options.
+      if (!option) {
+        let defaultText = urlValue;
+        const defaultValue = urlValue;
 
-      if (!option && _.isArray(urlValue)) {
-        defaultText = [];
+        if (_.isArray(urlValue)) {
+          // Multiple values in the url. We construct text as a list of texts from all matched options.
+          defaultText = urlValue.reduce((acc, item) => {
+            const t: any = _.find(variable.options, { value: item });
+            if (t) {
+              acc.push(t.text);
+            } else {
+              acc.push(item);
+            }
 
-        for (let n = 0; n < urlValue.length; n++) {
-          const t: any = _.find(variable.options, op => {
-            return op.value === urlValue[n];
-          });
-
-          if (t) {
-            defaultText.push(t.text);
-          }
+            return acc;
+          }, []);
         }
+
+        // It is possible that we did not match the value to any existing option. In that case the url value will be
+        // used anyway for both text and value.
+        option = { text: defaultText, value: defaultValue };
       }
 
-      option = option || { text: defaultText, value: defaultValue };
+      if (variable.multi) {
+        // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
+        // the option directly, which will return even single value in an array.
+        option = { ...option, value: _.castArray(option.value) };
+      }
+
       return variable.setValue(option);
     });
   }

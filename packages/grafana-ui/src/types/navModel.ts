@@ -7,11 +7,13 @@ export interface NavModelItem {
   id?: string;
   active?: boolean;
   hideFromTabs?: boolean;
+  hideFromMenu?: boolean;
   divider?: boolean;
   children?: NavModelItem[];
   breadcrumbs?: NavModelBreadcrumb[];
   target?: string;
   parentItem?: NavModelItem;
+  showOrgSwitcher?: boolean;
 }
 
 export interface NavModel {
