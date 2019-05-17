@@ -150,7 +150,7 @@ export const startSubscriptionEpic: Epic<ActionOf<any>, ActionOf<any>, StoreStat
 
 export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = action$ => {
   return action$.ofType(limitMessageRatePayloadAction.type).pipe(
-    throttleTime(5),
+    throttleTime(1),
     map((action: ActionOf<LimitMessageRatePayload>) => {
       const { exploreId, data, dataReceivedActionCreator } = action.payload;
       return dataReceivedActionCreator({ exploreId, data });
