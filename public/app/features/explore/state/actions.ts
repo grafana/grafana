@@ -72,10 +72,8 @@ import {
   splitOpenAction,
   addQueryRowAction,
   toggleGraphAction,
-  toggleLogsAction,
   toggleTableAction,
   ToggleGraphPayload,
-  ToggleLogsPayload,
   ToggleTablePayload,
   updateUIStateAction,
   runQueriesAction,
@@ -517,7 +515,6 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
     const {
       datasourceInstance,
       queries,
-      showingLogs,
       showingGraph,
       showingTable,
       datasourceError,
@@ -562,7 +559,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
         })
       );
     }
-    if ((ignoreUIState || showingLogs) && mode === ExploreMode.Logs) {
+    if (mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
@@ -700,7 +697,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
       range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
-        showingLogs: left.showingLogs,
+        showingLogs: true,
         showingTable: left.showingTable,
         dedupStrategy: left.dedupStrategy,
       },
@@ -713,7 +710,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
         range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
-          showingLogs: right.showingLogs,
+          showingLogs: true,
           showingTable: right.showingTable,
           dedupStrategy: right.dedupStrategy,
         },
@@ -731,10 +728,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
  * queries won't be run
  */
 const togglePanelActionCreator = (
-  actionCreator:
-    | ActionCreator<ToggleGraphPayload>
-    | ActionCreator<ToggleLogsPayload>
-    | ActionCreator<ToggleTablePayload>
+  actionCreator: ActionCreator<ToggleGraphPayload> | ActionCreator<ToggleTablePayload>
 ) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
@@ -743,9 +737,6 @@ const togglePanelActionCreator = (
     switch (actionCreator.type) {
       case toggleGraphAction.type:
         uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
-        break;
-      case toggleLogsAction.type:
-        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
       case toggleTableAction.type:
         uiFragmentStateUpdate = { showingTable: !isPanelVisible };
@@ -765,11 +756,6 @@ const togglePanelActionCreator = (
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
 export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
-
-/**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.

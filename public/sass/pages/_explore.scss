@@ -164,7 +164,7 @@
 .explore-panel__header {
   padding: $space-sm $space-md 0 $space-md;
   display: flex;
-  cursor: pointer;
+  cursor: inherit;
   transition: all 0.1s linear;
 }
 
@@ -176,9 +176,20 @@
 }
 
 .explore-panel__header-buttons {
-  margin-right: $space-sm;
-  font-size: $font-size-lg;
-  line-height: $font-size-h6;
+  display: none;
+}
+
+.explore-panel--collapsible {
+  .explore-panel__header {
+    cursor: pointer;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $space-sm;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
+    display: inherit;
+  }
 }
 
 .time-series-disclaimer {
