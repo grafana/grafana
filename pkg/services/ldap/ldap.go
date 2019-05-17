@@ -122,7 +122,7 @@ func (server *Server) Close() {
 	server.connection.Close()
 }
 
-// Login initialBinds the user, search it and then serialize it
+// Log in user by searching and serializing it
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
