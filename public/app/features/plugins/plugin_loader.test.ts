@@ -3,10 +3,11 @@ import { importAppPlugin } from './plugin_loader';
 
 class MyCustomApp extends AppPlugin {
   initWasCalled = false;
+  calledTwice = false;
 
-  init() {
+  init(meta: AppPluginMeta) {
     this.initWasCalled = true;
-    return this;
+    this.calledTwice = this.meta === meta;
   }
 }
 const app = new MyCustomApp();
@@ -35,7 +36,13 @@ describe('Load App', () => {
     // expect(v.plugin).toBe(app);
 
     const loaded = await importAppPlugin(meta);
-    expect(loaded.meta).toBe(meta);
+    expect(loaded).toBe(app);
+    expect(app.meta).toBe(meta);
     expect(app.initWasCalled).toBeTruthy();
+    expect(app.calledTwice).toBeFalsy();
+
+    const again = await importAppPlugin(meta);
+    expect(again).toBe(app);
+    expect(app.calledTwice).toBeTruthy();
   });
 });

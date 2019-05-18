@@ -29,10 +29,9 @@ export class AppPlugin extends GrafanaPlugin<AppPluginMeta> {
   /**
    * Called after the module has loaded, and before the app is used.
    * This function may be called multiple times on the same instance.
+   * The first time, `this.meta` will be undefined
    */
-  init(meta: AppPluginMeta) {
-    this.meta = meta;
-  }
+  init(meta: AppPluginMeta) {}
 
   /**
    * Set the component displayed under:
