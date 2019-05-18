@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -280,7 +279,14 @@ func (ss *SqlStore) readConfig() {
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 }
 
-func InitTestDB(t *testing.T) *SqlStore {
+// Interface of arguments for testing db
+type ITestDB interface {
+	Helper()
+	Fatalf(format string, args ...interface{})
+}
+
+// InitTestDB initiliaze test DB
+func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true

@@ -205,10 +205,6 @@ export interface ExploreItemState {
    */
   showingGraph: boolean;
   /**
-   * True if logs result viewer is expanded. Query runs will contain logs queries.
-   */
-  showingLogs: boolean;
-  /**
    * True StartPage needs to be shown. Typically set to `false` once queries have been run.
    */
   showingStartPage?: boolean;
