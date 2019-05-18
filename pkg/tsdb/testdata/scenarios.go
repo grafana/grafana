@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -222,6 +222,15 @@ func init() {
 			queryRes.Series = append(queryRes.Series, series)
 
 			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "streaming_client",
+		Name: "Streaming Client",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			// Real work is in javascript client
+			return tsdb.NewQueryResult()
 		},
 	})
 

@@ -1,7 +1,7 @@
 import AzureMonitorDatasource from '../datasource';
 import Q from 'q';
-import moment from 'moment';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('AppInsightsDatasource', () => {
   const ctx: any = {
@@ -65,7 +65,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = () => {
           return ctx.$q.reject(error);
         };
       });
@@ -93,7 +93,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = () => {
           return ctx.$q.reject(error);
         };
       });
@@ -110,8 +110,8 @@ describe('AppInsightsDatasource', () => {
   describe('When performing query', () => {
     const options = {
       range: {
-        from: moment.utc('2017-08-22T20:00:00Z'),
-        to: moment.utc('2017-08-22T23:59:00Z'),
+        from: toUtc('2017-08-22T20:00:00Z'),
+        to: toUtc('2017-08-22T23:59:00Z'),
       },
       targets: [
         {
@@ -142,7 +142,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/exceptions/server');
           return ctx.$q.when({ data: response, status: 200 });
         };
@@ -188,7 +188,7 @@ describe('AppInsightsDatasource', () => {
         options.targets[0].appInsights.timeGrainType = 'specific';
         options.targets[0].appInsights.timeGrain = '30';
         options.targets[0].appInsights.timeGrainUnit = 'minute';
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/exceptions/server');
           expect(options.url).toContain('interval=PT30M');
           return ctx.$q.when({ data: response, status: 200 });
@@ -259,7 +259,7 @@ describe('AppInsightsDatasource', () => {
         beforeEach(() => {
           options.targets[0].appInsights.groupBy = 'client/city';
 
-          ctx.backendSrv.datasourceRequest = options => {
+          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('/metrics/exceptions/server');
             expect(options.url).toContain('segment=client/city');
             return ctx.$q.when({ data: response, status: 200 });
@@ -284,7 +284,7 @@ describe('AppInsightsDatasource', () => {
           options.targets[0].appInsights.groupBy = 'client/city';
           options.targets[0].appInsights.alias = '{{metric}} + {{groupbyname}} + {{groupbyvalue}}';
 
-          ctx.backendSrv.datasourceRequest = options => {
+          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             expect(options.url).toContain('/metrics/exceptions/server');
             expect(options.url).toContain('segment=client/city');
             return ctx.$q.when({ data: response, status: 200 });
@@ -316,7 +316,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
           return ctx.$q.when({ data: response, status: 200 });
         };
@@ -354,7 +354,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
           expect(options.url).toContain('/metrics/metadata');
           return ctx.$q.when({ data: response, status: 200 });
         };
@@ -382,7 +382,7 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
         return ctx.$q.when({ data: response, status: 200 });
       };
@@ -420,7 +420,7 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
         expect(options.url).toContain('/metrics/metadata');
         return ctx.$q.when({ data: response, status: 200 });
       };

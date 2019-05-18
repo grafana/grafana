@@ -34,7 +34,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
 
   async componentDidMount() {
     const metricDescriptors = await this.props.datasource.getMetricTypes(this.props.datasource.projectName);
-    const services = extractServicesFromMetricDescriptors(metricDescriptors).map(m => ({
+    const services = extractServicesFromMetricDescriptors(metricDescriptors).map((m: any) => ({
       value: m.service,
       name: m.serviceShortName,
     }));

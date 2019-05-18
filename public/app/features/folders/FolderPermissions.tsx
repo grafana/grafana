@@ -2,10 +2,10 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip, NavModel } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel, StoreState, FolderState } from 'app/types';
+import { StoreState, FolderState } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 import {
   getFolderByUid,

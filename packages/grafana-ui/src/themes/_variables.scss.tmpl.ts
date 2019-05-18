@@ -87,6 +87,12 @@ $container-max-widths: (
 $grid-columns: 12 !default;
 $grid-gutter-width: ${theme.spacing.gutter} !default;
 
+// Component heights
+// -------------------------
+$height-sm: ${theme.height.sm};
+$height-md: ${theme.height.md};
+$height-lg: ${theme.height.lg};
+
 // Typography
 // -------------------------
 
@@ -165,6 +171,7 @@ $zindex-tooltip: ${theme.zIndex.tooltip};
 $zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
 $zindex-modal: ${theme.zIndex.modal};
 $zindex-typeahead: ${theme.zIndex.typeahead};
+$zindex-timepicker-popover: 1070;
 
 // Buttons
 //
@@ -190,7 +197,9 @@ $side-menu-width: 60px;
 
 // dashboard
 $dashboard-padding: $space-md;
-$panel-padding: 0 $space-md $space-sm $space-md;
+$panel-padding: ${theme.panelPadding}px;
+$panel-header-height: ${theme.panelHeaderHeight}px;
+$panel-header-z-index: 10;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

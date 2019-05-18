@@ -48,7 +48,7 @@ ButtonStories.add('with icon', () => {
       Plus: 'fa fa-plus',
       User: 'fa fa-user',
       Gear: 'fa fa-gear',
-      Annotation: 'gicon gicon-add-annotation',
+      Annotation: 'gicon gicon-annotation',
     },
     'fa fa-plus'
   );

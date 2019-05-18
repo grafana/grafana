@@ -1,10 +1,11 @@
 package datasources
 
 import (
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -146,8 +147,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 1", func() {
-			cfgProvider := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvider.readConfig(allProperties)
+			_ = os.Setenv("TEST_VAR", "name")
+			cfgProvifer := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvifer.readConfig(allProperties)
+			_ = os.Unsetenv("TEST_VAR")
+
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}

@@ -1,6 +1,7 @@
 import coreModule from 'app/core/core_module';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from 'app/core/config';
+import { BackendSrv } from '../services/backend_srv';
 
 const template = `
 <div class="modal-body">
@@ -29,10 +30,10 @@ const template = `
 					<td>{{org.name}}</td>
 					<td>{{org.role}}</td>
 					<td class="text-right">
-						<span class="btn btn-primary btn-mini" ng-show="org.orgId === ctrl.currentOrgId">
+						<span class="btn btn-primary btn-small" ng-show="org.orgId === ctrl.currentOrgId">
 							Current
 						</span>
-						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== ctrl.currentOrgId">
+						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-small" ng-show="org.orgId !== ctrl.currentOrgId">
 							Switch to
 						</a>
 					</td>
@@ -47,18 +48,18 @@ export class OrgSwitchCtrl {
   currentOrgId: any;
 
   /** @ngInject */
-  constructor(private backendSrv) {
+  constructor(private backendSrv: BackendSrv) {
     this.currentOrgId = contextSrv.user.orgId;
     this.getUserOrgs();
   }
 
   getUserOrgs() {
-    this.backendSrv.get('/api/user/orgs').then(orgs => {
+    this.backendSrv.get('/api/user/orgs').then((orgs: any) => {
       this.orgs = orgs;
     });
   }
 
-  setUsingOrg(org) {
+  setUsingOrg(org: any) {
     return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       this.setWindowLocation(config.appSubUrl + (config.appSubUrl.endsWith('/') ? '' : '/') + '?orgId=' + org.orgId);
     });

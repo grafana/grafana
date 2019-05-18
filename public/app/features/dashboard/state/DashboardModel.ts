@@ -1,5 +1,4 @@
 // Libaries
-import moment from 'moment';
 import _ from 'lodash';
 
 // Constants
@@ -12,10 +11,17 @@ import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 // Types
-import { PanelModel } from './PanelModel';
+import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import { TimeRange } from '@grafana/ui/src';
 import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+
+export interface CloneOptions {
+  saveVariables?: boolean;
+  saveTimerange?: boolean;
+  message?: string;
+}
 
 export class DashboardModel {
   id: any;
@@ -31,9 +37,9 @@ export class DashboardModel {
   time: any;
   private originalTime: any;
   timepicker: any;
-  templating: any;
+  templating: { list: any[] };
   private originalTemplating: any;
-  annotations: any;
+  annotations: { list: any[] };
   refresh: any;
   snapshot: any;
   schemaVersion: number;
@@ -61,7 +67,7 @@ export class DashboardModel {
     originalTemplating: true,
   };
 
-  constructor(data, meta?) {
+  constructor(data: any, meta?: DashboardMeta) {
     if (!data) {
       data = {};
     }
@@ -88,7 +94,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
+    this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
 
     this.resetOriginalVariables();
     this.resetOriginalTime();
@@ -124,7 +130,7 @@ export class DashboardModel {
     });
   }
 
-  private initMeta(meta) {
+  private initMeta(meta: DashboardMeta) {
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -146,7 +152,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(options?) {
+  getSaveModelClone(options?: CloneOptions) {
     const defaults = _.defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
@@ -164,13 +170,15 @@ export class DashboardModel {
 
     // get variable save models
     copy.templating = {
-      list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
+      list: _.map(this.templating.list, (variable: any) =>
+        variable.getSaveModel ? variable.getSaveModel() : variable
+      ),
     };
 
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         const current = copy.templating.list[i];
-        const original = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -190,8 +198,8 @@ export class DashboardModel {
 
     // get panel save models
     copy.panels = _.chain(this.panels)
-      .filter(panel => panel.type !== 'add-panel')
-      .map(panel => panel.getSaveModel())
+      .filter((panel: PanelModel) => panel.type !== 'add-panel')
+      .map((panel: PanelModel) => panel.getSaveModel())
       .value();
 
     //  sort by keys
@@ -243,7 +251,7 @@ export class DashboardModel {
     return this.meta.fullscreen && !panel.fullscreen;
   }
 
-  private ensureListExist(data) {
+  private ensureListExist(data: any) {
     if (!data) {
       data = {};
     }
@@ -273,13 +281,13 @@ export class DashboardModel {
     return max + 1;
   }
 
-  forEachPanel(callback) {
+  forEachPanel(callback: (panel: PanelModel, index: number) => void) {
     for (let i = 0; i < this.panels.length; i++) {
       callback(this.panels[i], i);
     }
   }
 
-  getPanelById(id): PanelModel {
+  getPanelById(id: number): PanelModel {
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
@@ -288,7 +296,7 @@ export class DashboardModel {
     return null;
   }
 
-  addPanel(panelData) {
+  addPanel(panelData: any) {
     panelData.id = this.getNextPanelId();
 
     const panel = new PanelModel(panelData);
@@ -357,7 +365,7 @@ export class DashboardModel {
     this.events.emit('repeats-processed');
   }
 
-  cleanUpRowRepeats(rowPanels) {
+  cleanUpRowRepeats(rowPanels: PanelModel[]) {
     const panelsToRemove = [];
     for (let i = 0; i < rowPanels.length; i++) {
       const panel = rowPanels[i];
@@ -376,7 +384,7 @@ export class DashboardModel {
 
     let rowPanels = row.panels;
     if (!row.collapsed) {
-      const rowPanelIndex = _.findIndex(this.panels, p => p.id === row.id);
+      const rowPanelIndex = _.findIndex(this.panels, (p: PanelModel) => p.id === row.id);
       rowPanels = this.getRowPanels(rowPanelIndex);
     }
 
@@ -385,13 +393,13 @@ export class DashboardModel {
     for (let i = 0; i < rowPanels.length; i++) {
       const panel = rowPanels[i];
       if (panel.repeat) {
-        const panelIndex = _.findIndex(this.panels, p => p.id === panel.id);
+        const panelIndex = _.findIndex(this.panels, (p: PanelModel) => p.id === panel.id);
         this.repeatPanel(panel, panelIndex);
       }
     }
   }
 
-  getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
+  getPanelRepeatClone(sourcePanel: PanelModel, valueIndex: number, sourcePanelIndex: number) {
     // if first clone return source
     if (valueIndex === 0) {
       return sourcePanel;
@@ -409,7 +417,7 @@ export class DashboardModel {
     return clone;
   }
 
-  getRowRepeatClone(sourceRowPanel, valueIndex, sourcePanelIndex) {
+  getRowRepeatClone(sourceRowPanel: PanelModel, valueIndex: number, sourcePanelIndex: number) {
     // if first clone return source
     if (valueIndex === 0) {
       if (!sourceRowPanel.collapsed) {
@@ -421,7 +429,7 @@ export class DashboardModel {
 
     const clone = new PanelModel(sourceRowPanel.getSaveModel());
     // for row clones we need to figure out panels under row to clone and where to insert clone
-    let rowPanels, insertPos;
+    let rowPanels: PanelModel[], insertPos: number;
     if (sourceRowPanel.collapsed) {
       rowPanels = _.cloneDeep(sourceRowPanel.panels);
       clone.panels = rowPanels;
@@ -429,7 +437,7 @@ export class DashboardModel {
       insertPos = sourcePanelIndex + valueIndex;
     } else {
       rowPanels = this.getRowPanels(sourcePanelIndex);
-      clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
+      clone.panels = _.map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
       // insert copied row after preceding row's panels
       insertPos = sourcePanelIndex + (rowPanels.length + 1) * valueIndex;
     }
@@ -440,7 +448,7 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    const variable = _.find(this.templating.list, { name: panel.repeat });
+    const variable: any = _.find(this.templating.list, { name: panel.repeat } as any);
     if (!variable) {
       return;
     }
@@ -495,11 +503,11 @@ export class DashboardModel {
     }
   }
 
-  repeatRow(panel: PanelModel, panelIndex: number, variable) {
+  repeatRow(panel: PanelModel, panelIndex: number, variable: any) {
     const selectedOptions = this.getSelectedVariableOptions(variable);
     let yPos = panel.gridPos.y;
 
-    function setScopedVars(panel, variableOption) {
+    function setScopedVars(panel: PanelModel, variableOption: any) {
       panel.scopedVars = panel.scopedVars || {};
       panel.scopedVars[variable.name] = variableOption;
     }
@@ -515,7 +523,7 @@ export class DashboardModel {
 
       if (panel.collapsed) {
         // For collapsed row just copy its panels and set scoped vars and proper IDs
-        _.each(rowPanels, (rowPanel, i) => {
+        _.each(rowPanels, (rowPanel: PanelModel, i: number) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
             this.updateRepeatedPanelIds(rowPanel, true);
@@ -527,7 +535,7 @@ export class DashboardModel {
       } else {
         // insert after 'row' panel
         const insertPos = panelIndex + (rowPanels.length + 1) * optionIndex + 1;
-        _.each(rowPanels, (rowPanel, i) => {
+        _.each(rowPanels, (rowPanel: PanelModel, i: number) => {
           setScopedVars(rowPanel, option);
           if (optionIndex > 0) {
             const cloneRowPanel = new PanelModel(rowPanel);
@@ -562,8 +570,8 @@ export class DashboardModel {
     return panel;
   }
 
-  getSelectedVariableOptions(variable) {
-    let selectedOptions;
+  getSelectedVariableOptions(variable: any) {
+    let selectedOptions: any[];
     if (variable.current.text === 'All') {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
@@ -578,7 +586,7 @@ export class DashboardModel {
     }
     const rowYPos = rowPanel.gridPos.y;
     const positions = _.map(rowPanel.panels, 'gridPos');
-    const maxPos = _.maxBy(positions, pos => {
+    const maxPos = _.maxBy(positions, (pos: GridPos) => {
       return pos.y + pos.h;
     });
     return maxPos.y + maxPos.h - rowYPos;
@@ -628,7 +636,7 @@ export class DashboardModel {
     }
   }
 
-  setPanelFocus(id) {
+  setPanelFocus(id: number) {
     this.meta.focusPanelId = id;
   }
 
@@ -638,12 +646,12 @@ export class DashboardModel {
         return true;
       }
 
-      const visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      const visibleVars = _.filter(this.templating.list, (variable: any) => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
       }
 
-      const visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      const visibleAnnotations = _.filter(this.annotations.list, (annotation: any) => annotation.hide !== true);
       if (visibleAnnotations.length > 0) {
         return true;
       }
@@ -652,7 +660,7 @@ export class DashboardModel {
     })();
   }
 
-  getPanelInfoById(panelId) {
+  getPanelInfoById(panelId: number) {
     for (let i = 0; i < this.panels.length; i++) {
       if (this.panels[i].id === panelId) {
         return {
@@ -665,7 +673,7 @@ export class DashboardModel {
     return null;
   }
 
-  duplicatePanel(panel) {
+  duplicatePanel(panel: PanelModel) {
     const newPanel = panel.getSaveModel();
     newPanel.id = this.getNextPanelId();
 
@@ -690,12 +698,12 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date, format?) {
-    date = moment.isMoment(date) ? date : moment(date);
+  formatDate(date: DateTimeInput, format?: string) {
+    date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
-    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
+    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
   }
 
   destroy() {
@@ -710,7 +718,7 @@ export class DashboardModel {
 
     if (row.collapsed) {
       row.collapsed = false;
-      const hasRepeat = _.some(row.panels, p => p.repeat);
+      const hasRepeat = _.some(row.panels as PanelModel[], (p: PanelModel) => p.repeat);
 
       if (row.panels.length > 0) {
         // Use first panel to figure out if it was moved or pushed
@@ -761,7 +769,7 @@ export class DashboardModel {
     // remove panels
     _.pull(this.panels, ...rowPanels);
     // save panel models inside row panel
-    row.panels = _.map(rowPanels, panel => panel.getSaveModel());
+    row.panels = _.map(rowPanels, (panel: PanelModel) => panel.getSaveModel());
     row.collapsed = true;
 
     // emit change event
@@ -789,11 +797,11 @@ export class DashboardModel {
     return rowPanels;
   }
 
-  on(eventName, callback) {
+  on(eventName: string, callback: Function) {
     this.events.on(eventName, callback);
   }
 
-  off(eventName, callback?) {
+  off(eventName: string, callback?: Function) {
     this.events.off(eventName, callback);
   }
 
@@ -809,10 +817,10 @@ export class DashboardModel {
     return this.graphTooltip === 1;
   }
 
-  getRelativeTime(date) {
-    date = moment.isMoment(date) ? date : moment(date);
+  getRelativeTime(date: DateTimeInput) {
+    date = isDateTime(date) ? date : dateTime(date);
 
-    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
   }
 
   isTimezoneUtc() {
@@ -827,7 +835,7 @@ export class DashboardModel {
     return this.timezone ? this.timezone : contextSrv.user.timezone;
   }
 
-  private updateSchema(old) {
+  private updateSchema(old: any) {
     const migrator = new DashboardMigrator(this);
     migrator.updateSchema(old);
   }
@@ -841,7 +849,7 @@ export class DashboardModel {
   }
 
   resetOriginalVariables() {
-    this.originalTemplating = _.map(this.templating.list, variable => {
+    this.originalTemplating = _.map(this.templating.list, (variable: any) => {
       return {
         name: variable.name,
         type: variable.type,
@@ -856,7 +864,7 @@ export class DashboardModel {
       return false;
     }
 
-    const updated = _.map(this.templating.list, variable => {
+    const updated = _.map(this.templating.list, (variable: any) => {
       return {
         name: variable.name,
         type: variable.type,

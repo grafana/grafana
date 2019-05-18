@@ -1,12 +1,13 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
 import { SeriesData } from '../../types/data';
-import { AutoSizer } from 'react-virtualized';
 import { CSVConfig, readCSV } from '../../utils/csv';
 
 interface Props {
   config?: CSVConfig;
   text: string;
+  width: string | number;
+  height: string | number;
   onSeriesParsed: (data: SeriesData[], text: string) => void;
 }
 
@@ -18,7 +19,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-class TableInputCSV extends React.PureComponent<Props, State> {
+export class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -58,28 +59,30 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   };
 
   render() {
+    const { width, height } = this.props;
     const { data } = this.state;
-
     return (
-      <AutoSizer>
-        {({ height, width }) => (
-          <div className="gf-table-input-csv" style={{ width, height }}>
-            <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
-            {data && (
-              <footer>
-                {data.map((series, index) => {
-                  return (
-                    <span key={index}>
-                      Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
-                      <i className="fa fa-check-circle" />
-                    </span>
-                  );
-                })}
-              </footer>
-            )}
-          </div>
+      <div className="gf-table-input-csv">
+        <textarea
+          style={{ width, height }}
+          placeholder="Enter CSV here..."
+          value={this.state.text}
+          onChange={this.onTextChange}
+          className="gf-form-input"
+        />
+        {data && (
+          <footer>
+            {data.map((series, index) => {
+              return (
+                <span key={index}>
+                  Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
+                  <i className="fa fa-check-circle" />
+                </span>
+              );
+            })}
+          </footer>
         )}
-      </AutoSizer>
+      </div>
     );
   }
 }

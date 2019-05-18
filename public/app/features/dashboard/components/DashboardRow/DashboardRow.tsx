@@ -96,7 +96,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         {canEdit && (
           <div className="dashboard-row__actions">
             <a className="pointer" onClick={this.onOpenSettings}>
-              <i className="fa fa-cog" />
+              <i className="gicon gicon-cog" />
             </a>
             <a className="pointer" onClick={this.onDelete}>
               <i className="fa fa-trash" />

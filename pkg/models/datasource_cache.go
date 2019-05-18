@@ -22,12 +22,12 @@ type proxyTransportCache struct {
 type cachedTransport struct {
 	updated time.Time
 
-	transport *transportWrapper
+	*dsTransport
 }
 
-type transportWrapper struct {
-	base                 *http.Transport
-	enrichedRoundTripper http.RoundTripper
+type dsTransport struct {
+	enrichedRT    http.RoundTripper
+	baseTransport *http.Transport
 }
 
 var ptc = proxyTransportCache{
@@ -47,12 +47,12 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
-func (ds *DataSource) GetHttpTransport() (*transportWrapper, error) {
+func (ds *DataSource) GetHttpTransport() (*dsTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
 	if t, present := ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
-		return t.transport, nil
+		return t.dsTransport, nil
 	}
 
 	tlsConfig, err := ds.GetTLSConfig()
@@ -62,13 +62,12 @@ func (ds *DataSource) GetHttpTransport() (*transportWrapper, error) {
 
 	tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
 
-	baseTransport := &http.Transport{
+	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).Dial,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
@@ -76,11 +75,11 @@ func (ds *DataSource) GetHttpTransport() (*transportWrapper, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
-	var rt http.RoundTripper = baseTransport
+	var rt http.RoundTripper = transport
 	if ds.BasicAuth {
 		rt = util.NewBasicAuthRoundTripper(
 			ds.BasicAuthUser,
-			ds.BasicAuthPassword,
+			ds.DecryptedBasicAuthPassword(),
 			ds.JsonData.MustString("basicAuthPasswordFile"),
 			rt,
 		)
@@ -92,17 +91,17 @@ func (ds *DataSource) GetHttpTransport() (*transportWrapper, error) {
 		}
 	}
 
-	wrappedTransport := &transportWrapper{
-		base:                 baseTransport,
-		enrichedRoundTripper: rt,
+	dsTransport := &dsTransport{
+		enrichedRT:    rt,
+		baseTransport: transport,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
-		transport: wrappedTransport,
-		updated:   ds.Updated,
+		dsTransport: dsTransport,
+		updated:     ds.Updated,
 	}
 
-	return wrappedTransport, nil
+	return dsTransport, nil
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
@@ -172,6 +171,6 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 }
 
 // RoundTrip implements http.RoundTripper.
-func (tw *transportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
-	return tw.enrichedRoundTripper.RoundTrip(req)
+func (ds *dsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return ds.enrichedRT.RoundTrip(req)
 }

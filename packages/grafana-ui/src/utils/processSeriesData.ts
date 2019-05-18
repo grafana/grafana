@@ -2,10 +2,10 @@
 import isNumber from 'lodash/isNumber';
 import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
-import moment from 'moment';
 
 // Types
 import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
+import { isDateTime } from './moment_wrapper';
 
 function convertTableToSeriesData(table: TableData): SeriesData {
   return {
@@ -17,6 +17,9 @@ function convertTableToSeriesData(table: TableData): SeriesData {
       return f;
     }),
     rows: table.rows,
+    refId: table.refId,
+    meta: table.meta,
+    name: table.name,
   };
 }
 
@@ -36,18 +39,10 @@ function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
     ],
     rows: timeSeries.datapoints,
     labels: timeSeries.tags,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
   };
 }
-
-export const getFirstTimeField = (series: SeriesData): number => {
-  const { fields } = series;
-  for (let i = 0; i < fields.length; i++) {
-    if (fields[i].type === FieldType.time) {
-      return i;
-    }
-  }
-  return -1;
-};
 
 // PapaParse Dynamic Typing regex:
 // https://github.com/mholt/PapaParse/blob/master/papaparse.js#L998
@@ -79,7 +74,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
     return FieldType.boolean;
   }
 
-  if (v instanceof Date || v instanceof moment) {
+  if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
 
@@ -168,6 +163,8 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
         target: fields[0].name || series.name,
         datapoints: rows,
         unit: fields[0].unit,
+        refId: series.refId,
+        meta: series.meta,
       } as TimeSeries;
     }
   }
@@ -178,6 +175,8 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
         text: f.name,
         filterable: f.filterable,
         unit: f.unit,
+        refId: series.refId,
+        meta: series.meta,
       };
     }),
     rows,

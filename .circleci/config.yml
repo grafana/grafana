@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -58,7 +58,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -69,6 +69,28 @@ jobs:
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
+
+  end-to-end-test:
+      docker:
+        - image: circleci/node:8-browsers
+        - image: grafana/grafana:master
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
 
   codespell:
     docker:
@@ -81,14 +103,14 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
   backend-lint:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -120,7 +142,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.4
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -130,7 +152,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -174,7 +196,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -184,6 +206,117 @@ jobs:
       - run:
           name: build and package grafana
           command: './scripts/build/build.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
+  build-fast-backend:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin/*
+
+  build-fast-frontend:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: .
+          paths:
+            - public/build/*
+            - tools/phantomjs/*
+
+  build-fast-package:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: /go/src/github.com/grafana/grafana
+          paths:
+            - dist/*
+
+  build-fast-save:
+    docker:
+     - image: grafana/build-container:1.2.6
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: debug cache
+          command: 'ls -al /go/src/github.com/grafana/grafana/node_modules'
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - /go/src/github.com/grafana/grafana/node_modules
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -224,7 +357,7 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
+      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
 
   grafana-docker-release:
     machine:
@@ -243,7 +376,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -275,7 +408,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.4
+    - image: grafana/build-container:1.2.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -322,7 +455,7 @@ jobs:
 
   deploy-enterprise-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.1
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - attach_workspace:
           at: .
@@ -347,7 +480,7 @@ jobs:
 
   deploy-enterprise-release:
     docker:
-    - image: grafana/grafana-ci-deploy:1.2.1
+    - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - checkout
       - attach_workspace:
@@ -380,7 +513,7 @@ jobs:
 
   deploy-master:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.1
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - attach_workspace:
           at: .
@@ -411,7 +544,7 @@ jobs:
 
   deploy-release:
     docker:
-      - image: grafana/grafana-ci-deploy:1.2.1
+      - image: grafana/grafana-ci-deploy:1.2.2
     steps:
       - checkout
       - attach_workspace:
@@ -440,6 +573,21 @@ jobs:
       - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
+
+  build-oss-msi:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build OSS MSI
+          command: './scripts/build/ci-msi-build/ci-msi-build-oss.sh'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana-*.msi
 
   store-build-artifacts:
     docker:
@@ -479,6 +627,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
@@ -501,6 +650,16 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
+          filters: *filter-only-master
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
           filters: *filter-only-master
 
   release:
@@ -530,6 +689,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-release
       - deploy-enterprise-release:
           requires:
@@ -553,11 +713,28 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - backend-lint
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
 
   build-branches-and-prs:
       jobs:
-        - build:
+        - build-fast-backend:
             filters: *filter-not-release-or-master
+        - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-fast-package:
+            filters: *filter-not-release-or-master
+            requires:
+              - build-fast-backend
+              - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
         - backend-lint:
@@ -574,7 +751,7 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
@@ -585,7 +762,7 @@ workflows:
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell

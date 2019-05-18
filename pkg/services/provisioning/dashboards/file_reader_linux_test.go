@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var (
@@ -33,7 +33,7 @@ func TestProvsionedSymlinkedFolder(t *testing.T) {
 		t.Errorf("expected err to be nil")
 	}
 
-	resolvedPath := reader.resolvePath(reader.Path)
+	resolvedPath := reader.resolvedPath()
 	if resolvedPath != want {
 		t.Errorf("got %s want %s", resolvedPath, want)
 	}

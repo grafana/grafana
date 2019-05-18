@@ -1,8 +1,8 @@
-export type TaskRunner<T> = (options: T) => Promise<void>;
+export type TaskRunner<T> = (options: T) => Promise<any>;
 
 export class Task<TOptions> {
   name: string;
-  runner: (options: TOptions) => Promise<void>;
+  runner: (options: TOptions) => Promise<any>;
   options: TOptions;
 
   setName = name => {

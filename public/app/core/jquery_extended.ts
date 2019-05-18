@@ -9,7 +9,7 @@ $.fn.place_tt = (() => {
     offset: 5,
   };
 
-  return function(this: any, x, y, opts) {
+  return function(this: any, x: number, y: number, opts: any) {
     opts = $.extend(true, {}, defaults, opts);
 
     return this.each(() => {
