@@ -1,3 +1,4 @@
+/* tslint:disable:import-blacklist */
 import System from 'systemjs/dist/system.js';
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
@@ -18,8 +19,8 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, ReactPanelPlugin, AngularPanelPlugin, PluginMeta } from '@grafana/ui/src/types';
-import * as datemath from 'app/core/utils/datemath';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui/src/types';
+import * as datemath from '@grafana/ui/src/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -160,15 +161,18 @@ export function importPluginModule(path: string): Promise<any> {
   return System.import(path);
 }
 
-export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin<any>> {
-  return importPluginModule(path).then(pluginExports => {
+export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<DataSourcePlugin<any>> {
+  return importPluginModule(meta.module).then(pluginExports => {
     if (pluginExports.plugin) {
-      return pluginExports.plugin as DataSourcePlugin<any>;
+      const dsPlugin = pluginExports.plugin as DataSourcePlugin<any>;
+      dsPlugin.meta = meta;
+      return dsPlugin;
     }
 
     if (pluginExports.Datasource) {
       const dsPlugin = new DataSourcePlugin(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
+      dsPlugin.meta = meta;
       return dsPlugin;
     }
 
@@ -178,18 +182,50 @@ export function importDataSourcePlugin(path: string): Promise<DataSourcePlugin<a
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
-    return new AppPlugin(meta, pluginExports);
+    const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
+    plugin.meta = meta;
+    plugin.setComponentsFromLegacyExports(pluginExports);
+    return plugin;
   });
 }
 
-export function importPanelPlugin(path: string): Promise<AngularPanelPlugin | ReactPanelPlugin> {
-  return importPluginModule(path).then(pluginExports => {
-    if (pluginExports.reactPanel) {
-      return pluginExports.reactPanel as ReactPanelPlugin;
-    } else {
-      return new AngularPanelPlugin(pluginExports.PanelCtrl);
-    }
-  });
+import { getPanelPluginNotFound } from '../dashboard/dashgrid/PanelPluginNotFound';
+
+interface PanelCache {
+  [key: string]: PanelPlugin;
+}
+const panelCache: PanelCache = {};
+
+export function importPanelPlugin(id: string): Promise<PanelPlugin> {
+  const loaded = panelCache[id];
+  if (loaded) {
+    return Promise.resolve(loaded);
+  }
+  const meta = config.panels[id];
+  if (!meta) {
+    return Promise.resolve(getPanelPluginNotFound(id));
+  }
+
+  return importPluginModule(meta.module)
+    .then(pluginExports => {
+      if (pluginExports.plugin) {
+        return pluginExports.plugin as PanelPlugin;
+      } else if (pluginExports.PanelCtrl) {
+        const plugin = new PanelPlugin(null);
+        plugin.angularPanelCtrl = pluginExports.PanelCtrl;
+        return plugin;
+      }
+      throw new Error('missing export: plugin or PanelCtrl');
+    })
+    .then(plugin => {
+      plugin.meta = meta;
+      return (panelCache[meta.id] = plugin);
+    })
+    .catch(err => {
+      // TODO, maybe a different error plugin
+      console.log('Error loading panel plugin', err);
+      return getPanelPluginNotFound(id);
+    });
 }
 
 export function loadPluginCss(options) {

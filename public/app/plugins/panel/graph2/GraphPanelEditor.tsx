@@ -3,7 +3,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelEditorProps, Switch, LegendOptions, StatID } from '@grafana/ui';
+import { PanelEditorProps, Switch, LegendOptions } from '@grafana/ui';
 import { Options, GraphOptions } from './types';
 import { GraphLegendEditor } from './GraphLegendEditor';
 
@@ -47,11 +47,7 @@ export class GraphPanelEditor extends PureComponent<PanelEditorProps<Options>> {
           <Switch label="Bars" labelClass="width-5" checked={showBars} onChange={this.onToggleBars} />
           <Switch label="Points" labelClass="width-5" checked={showPoints} onChange={this.onTogglePoints} />
         </div>
-        <GraphLegendEditor
-          stats={[StatID.min, StatID.max, StatID.mean, StatID.last, StatID.sum]}
-          options={this.props.options.legend}
-          onChange={this.onLegendOptionsChange}
-        />
+        <GraphLegendEditor options={this.props.options.legend} onChange={this.onLegendOptionsChange} />
       </>
     );
   }

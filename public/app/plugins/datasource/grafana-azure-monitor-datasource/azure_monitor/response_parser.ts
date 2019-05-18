@@ -1,6 +1,6 @@
-import moment from 'moment';
 import _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -95,8 +95,8 @@ export default class ResponseParser {
     return dataPoints;
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 
   static getKeyForAggregationField(dataObj): string {
@@ -180,5 +180,21 @@ export default class ResponseParser {
       });
     }
     return dimensions;
+  }
+
+  static parseSubscriptions(result: any) {
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    const list: Array<{ text: string; value: string }> = [];
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
+        list.push({
+          text: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
+          value: _.get(result.data.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
   }
 }

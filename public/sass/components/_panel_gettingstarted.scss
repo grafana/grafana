@@ -13,17 +13,21 @@ $marker-size-half: ($marker-size / 2);
 $path-height: 2px !default;
 $path-position: $marker-size-half - ($path-height / 2);
 
-.dashlist-cta-close-btn {
+.progress-tracker-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.progress-tracker-close-btn {
   color: $text-color-weak;
-  float: right;
-  padding: 0;
-  margin: 0 2px 0 0;
+  position: absolute;
+  z-index: $panel-header-z-index;
+  top: 8px;
+  right: 8px;
+  font-size: $font-size-lg;
   background-color: transparent;
   border: none;
-
-  i {
-    font-size: 80%;
-  }
 
   &:hover {
     color: $white;
@@ -33,9 +37,9 @@ $path-position: $marker-size-half - ($path-height / 2);
 // Container element
 .progress-tracker {
   display: flex;
-  margin: 0 auto;
+  width: 100%;
   padding: 0;
-  list-style: none;
+  align-items: center;
 }
 
 // Step container that creates lines between steps
@@ -46,6 +50,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   margin: 0;
   padding: 0;
   color: $text-color-weak;
+  height: 84px;
 
   // For a flexbox bug in firefox that wont allow the text overflow on the text
   min-width: $marker-size;
@@ -54,7 +59,7 @@ $path-position: $marker-size-half - ($path-height / 2);
     content: '';
     display: block;
     position: absolute;
-    z-index: 1;
+    z-index: 0;
     top: $path-position;
     bottom: $path-position;
     right: -$marker-size-half;
@@ -134,11 +139,10 @@ $path-position: $marker-size-half - ($path-height / 2);
   width: $marker-size;
   height: $marker-size;
   padding-bottom: 2px; // To align text within the marker
-  z-index: 20;
+  z-index: 1;
   background-color: $panel-bg;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: $spacer;
   color: $text-color-weak;
   font-size: 35px;
   vertical-align: sub;

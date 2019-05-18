@@ -3,16 +3,14 @@ package alerting
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
-
-	m "github.com/grafana/grafana/pkg/models"
 )
 
 type NotifierPlugin struct {
@@ -74,7 +72,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		return nil
 	}
 
-	cmd := &m.SetAlertNotificationStateToCompleteCommand{
+	cmd := &models.SetAlertNotificationStateToCompleteCommand{
 		Id:      notifierState.state.Id,
 		Version: notifierState.state.Version,
 	}
@@ -84,14 +82,14 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
-		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
+		setPendingCmd := &models.SetAlertNotificationStateToPendingCommand{
 			Id:                           notifierState.state.Id,
 			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
 		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
-		if err == m.ErrAlertNotificationStateVersionConflict {
+		if err == models.ErrAlertNotificationStateVersionConflict {
 			return nil
 		}
 
@@ -127,9 +125,9 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
-		Timeout:         time.Duration(setting.AlertingEvaluationTimeout.Seconds() * 0.9),
+		Timeout:         setting.AlertingEvaluationTimeout,
 		OrgId:           context.Rule.OrgId,
-		OrgRole:         m.ROLE_ADMIN,
+		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
@@ -159,7 +157,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 }
 
 func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &m.GetAlertNotificationsWithUidToSendQuery{OrgId: orgId, Uids: notificationUids}
+	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgId, Uids: notificationUids}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
@@ -173,7 +171,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids [
 			continue
 		}
 
-		query := &m.GetOrCreateNotificationStateQuery{
+		query := &models.GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
 			AlertId:    evalContext.Rule.Id,
 			OrgId:      evalContext.Rule.OrgId,
@@ -197,7 +195,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids [
 }
 
 // InitNotifier instantiate a new notifier based on the model
-func InitNotifier(model *m.AlertNotification) (Notifier, error) {
+func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
@@ -206,7 +204,7 @@ func InitNotifier(model *m.AlertNotification) (Notifier, error) {
 	return notifierPlugin.Factory(model)
 }
 
-type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
+type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 

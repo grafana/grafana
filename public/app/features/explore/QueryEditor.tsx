@@ -7,17 +7,18 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { RawTimeRange, DataQuery } from '@grafana/ui';
+import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface QueryEditorProps {
+  error?: any;
   datasource: any;
-  error?: string | JSX.Element;
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;
   exploreEvents: Emitter;
-  range: RawTimeRange;
+  range: TimeRange;
 }
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
@@ -40,11 +41,15 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
         datasource,
         target,
         refresh: () => {
-          this.props.onQueryChange(target);
-          this.props.onExecuteQuery();
+          setTimeout(() => {
+            this.props.onQueryChange(target);
+            this.props.onExecuteQuery();
+          }, 1);
         },
         onQueryChange: () => {
-          this.props.onQueryChange(target);
+          setTimeout(() => {
+            this.props.onQueryChange(target);
+          }, 1);
         },
         events: exploreEvents,
         panel: { datasource, targets: [target] },
@@ -53,7 +58,18 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     };
 
     this.component = loader.load(this.element, scopeProps, template);
-    this.props.onQueryChange(target);
+    setTimeout(() => {
+      this.props.onQueryChange(target);
+      this.props.onExecuteQuery();
+    }, 1);
+  }
+
+  componentDidUpdate(prevProps: QueryEditorProps) {
+    if (prevProps.error !== this.props.error && this.component) {
+      // Some query controllers listen to data error events and need a digest
+      // for some reason this needs to be done in next tick
+      setTimeout(this.component.digest);
+    }
   }
 
   componentWillUnmount() {
@@ -62,10 +78,13 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     }
   }
 
-  initTimeSrv(range) {
+  initTimeSrv(range: TimeRange) {
     const timeSrv = getTimeSrv();
     timeSrv.init({
-      time: range,
+      time: {
+        from: dateTime(range.from),
+        to: dateTime(range.to),
+      },
       refresh: false,
       getTimezone: () => 'utc',
       timeRangeUpdated: () => console.log('refreshDashboard!'),

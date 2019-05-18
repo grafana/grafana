@@ -31,8 +31,10 @@
   "iteration": 1554310839317,
   "links": [
     {
+      "asDropdown": true,
       "icon": "external link",
-      "tags": ["gdev", "elasticsearch"],
+      "tags": ["gdev", "elasticsearch", "datasource-test"],
+      "title": "Dashboards",
       "type": "dashboards"
     }
   ],

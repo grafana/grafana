@@ -5,8 +5,9 @@ import Page from 'app/core/components/Page/Page';
 import OrgProfile from './OrgProfile';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
-import { NavModel, Organization, StoreState } from 'app/types';
+import { Organization, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { NavModel } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;

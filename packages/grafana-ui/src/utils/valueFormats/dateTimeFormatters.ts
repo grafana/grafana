@@ -1,6 +1,6 @@
 import { toFixed, toFixedScaled } from './valueFormats';
 import { DecimalCount } from '../../types';
-import moment from 'moment';
+import { toUtc, toDuration as duration, dateTime } from '../moment_wrapper';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -237,7 +237,7 @@ export function toClock(size: number, decimals?: DecimalCount) {
 
   // < 1 second
   if (size < 1000) {
-    return moment.utc(size).format('SSS\\m\\s');
+    return toUtc(size).format('SSS\\m\\s');
   }
 
   // < 1 minute
@@ -246,7 +246,7 @@ export function toClock(size: number, decimals?: DecimalCount) {
     if (decimals === 0) {
       format = 'ss\\s';
     }
-    return moment.utc(size).format(format);
+    return toUtc(size).format(format);
   }
 
   // < 1 hour
@@ -257,12 +257,12 @@ export function toClock(size: number, decimals?: DecimalCount) {
     } else if (decimals === 1) {
       format = 'mm\\m:ss\\s';
     }
-    return moment.utc(size).format(format);
+    return toUtc(size).format(format);
   }
 
   let format = 'mm\\m:ss\\s:SSS\\m\\s';
 
-  const hours = `${('0' + Math.floor(moment.duration(size, 'milliseconds').asHours())).slice(-2)}h`;
+  const hours = `${('0' + Math.floor(duration(size, 'milliseconds').asHours())).slice(-2)}h`;
 
   if (decimals === 0) {
     format = '';
@@ -272,7 +272,7 @@ export function toClock(size: number, decimals?: DecimalCount) {
     format = 'mm\\m:ss\\s';
   }
 
-  return format ? `${hours}:${moment.utc(size).format(format)}` : hours;
+  return format ? `${hours}:${toUtc(size).format(format)}` : hours;
 }
 
 export function toDurationInMilliseconds(size: number, decimals: DecimalCount) {
@@ -307,24 +307,24 @@ export function toClockSeconds(size: number, decimals: DecimalCount) {
 }
 
 export function dateTimeAsIso(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? moment.utc(value) : moment(value);
+  const time = isUtc ? toUtc(value) : dateTime(value);
 
-  if (moment().isSame(value, 'day')) {
+  if (dateTime().isSame(value, 'day')) {
     return time.format('HH:mm:ss');
   }
   return time.format('YYYY-MM-DD HH:mm:ss');
 }
 
 export function dateTimeAsUS(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? moment.utc(value) : moment(value);
+  const time = isUtc ? toUtc(value) : dateTime(value);
 
-  if (moment().isSame(value, 'day')) {
+  if (dateTime().isSame(value, 'day')) {
     return time.format('h:mm:ss a');
   }
   return time.format('MM/DD/YYYY h:mm:ss a');
 }
 
 export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) {
-  const time = isUtc ? moment.utc(value) : moment(value);
+  const time = isUtc ? toUtc(value) : dateTime(value);
   return time.fromNow();
 }

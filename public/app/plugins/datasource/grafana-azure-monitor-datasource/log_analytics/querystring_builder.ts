@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class LogAnalyticsQuerystringBuilder {
   constructor(public rawQueryString, public options, public defaultTimeField) {}
@@ -37,7 +37,7 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getFrom(options) {
     const from = options.range.from;
-    return `datetime(${moment(from)
+    return `datetime(${dateTime(from)
       .startOf('minute')
       .toISOString()})`;
   }
@@ -47,7 +47,7 @@ export default class LogAnalyticsQuerystringBuilder {
       return 'now()';
     } else {
       const until = options.range.to;
-      return `datetime(${moment(until)
+      return `datetime(${dateTime(until)
         .startOf('minute')
         .toISOString()})`;
     }

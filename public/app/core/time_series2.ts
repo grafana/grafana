@@ -1,8 +1,8 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat, stringToJsRegex } from '@grafana/ui';
+import { getValueFormat, stringToJsRegex, ValueFormatter, DecimalCount } from '@grafana/ui';
 
-function matchSeriesOverride(aliasOrRegex, seriesAlias) {
+function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
     return false;
   }
@@ -15,7 +15,7 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   return aliasOrRegex === seriesAlias;
 }
 
-function translateFillOption(fill) {
+function translateFillOption(fill: number) {
   return fill === 0 ? 0.001 : fill / 10;
 }
 
@@ -25,7 +25,7 @@ function translateFillOption(fill) {
  * @param panel
  * @param height
  */
-export function updateLegendValues(data: TimeSeries[], panel, height) {
+export function updateLegendValues(data: TimeSeries[], panel: any, height: number) {
   for (let i = 0; i < data.length; i++) {
     const series = data[i];
     const yaxes = panel.yaxes;
@@ -97,7 +97,7 @@ export default class TimeSeries {
   flotpairs: any;
   unit: any;
 
-  constructor(opts) {
+  constructor(opts: any) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
     this.id = opts.alias;
@@ -112,7 +112,7 @@ export default class TimeSeries {
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
-  applySeriesOverrides(overrides) {
+  applySeriesOverrides(overrides: any[]) {
     this.lines = {};
     this.dashes = {
       dashLength: [],
@@ -192,7 +192,7 @@ export default class TimeSeries {
     }
   }
 
-  getFlotPairs(fillStyle) {
+  getFlotPairs(fillStyle: string) {
     const result = [];
 
     this.stats.total = 0;
@@ -314,13 +314,13 @@ export default class TimeSeries {
     return result;
   }
 
-  updateLegendValues(formater, decimals, scaledDecimals) {
+  updateLegendValues(formater: ValueFormatter, decimals: DecimalCount, scaledDecimals: DecimalCount) {
     this.valueFormater = formater;
     this.decimals = decimals;
     this.scaledDecimals = scaledDecimals;
   }
 
-  formatValue(value) {
+  formatValue(value: number) {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }
@@ -339,7 +339,7 @@ export default class TimeSeries {
     return false;
   }
 
-  hideFromLegend(options) {
+  hideFromLegend(options: any) {
     if (options.hideEmpty && this.allIsNull) {
       return true;
     }

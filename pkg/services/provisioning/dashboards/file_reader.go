@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -51,36 +51,26 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}, nil
 }
 
-func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	if err := fr.startWalkingDisk(); err != nil {
-		fr.log.Error("failed to search for dashboards", "error", err)
-	}
-
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
-
-	running := false
-
+// pollChanges periodically runs startWalkingDisk based on interval specified in the config.
+func (fr *fileReader) pollChanges(ctx context.Context) {
+	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
-		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
-				running = true
-				go func() {
-					if err := fr.startWalkingDisk(); err != nil {
-						fr.log.Error("failed to search for dashboards", "error", err)
-					}
-					running = false
-				}()
+		case <-ticker:
+			if err := fr.startWalkingDisk(); err != nil {
+				fr.log.Error("failed to search for dashboards", "error", err)
 			}
 		case <-ctx.Done():
-			return nil
+			return
 		}
 	}
 }
 
-// startWalkingDisk finds and saves dashboards on disk.
+// startWalkingDisk traverses the file system for defined path, reads dashboard definition files and applies any change
+// to the database.
 func (fr *fileReader) startWalkingDisk() error {
-	resolvedPath := fr.resolvePath(fr.Path)
+	fr.log.Debug("Start walking disk", "path", fr.Path)
+	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
 		if os.IsNotExist(err) {
 			return err
@@ -339,24 +329,23 @@ func (fr *fileReader) readDashboardFromFile(path string, lastModified time.Time,
 	}, nil
 }
 
-func (fr *fileReader) resolvePath(path string) string {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func (fr *fileReader) resolvedPath() string {
+	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}
 
-	copy := path
-	path, err := filepath.Abs(path)
+	path, err := filepath.Abs(fr.Path)
 	if err != nil {
-		fr.log.Error("Could not create absolute path", "path", copy, "error", err)
+		fr.log.Error("Could not create absolute path", "path", fr.Path, "error", err)
 	}
 
 	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path", "path", copy, "error", err)
+		fr.log.Error("Failed to read content of symlinked path", "path", fr.Path, "error", err)
 	}
 
 	if path == "" {
-		path = copy
+		path = fr.Path
 		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
 	}
 	return path
