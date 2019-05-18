@@ -22,6 +22,8 @@ type SocialGenericOAuth struct {
 	allowSignup          bool
 	emailAttributeName   string
 	teamIds              []int
+	roleAttributeName    string
+	role 								 string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -205,12 +207,15 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
+	role := s.extractRole(&data)
+
 	login := s.extractLogin(&data, email)
 
 	userInfo := &BasicUserInfo{
 		Name:  name,
 		Login: login,
 		Email: email,
+		Role: role,
 	}
 
 	if !s.IsTeamMember(client) {
@@ -275,6 +280,16 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		if emailErr == nil {
 			return emailAddr.Address
 		}
+	}
+
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) string {
+
+	roles, ok := data.Attributes[s.roleAttributeName]
+	if ok && len(roles) != 0 {
+		return roles[0]
 	}
 
 	return ""
