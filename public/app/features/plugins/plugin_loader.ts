@@ -183,7 +183,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
     plugin.meta = meta;
     plugin.setComponentsFromLegacyExports(pluginExports);
-    return plugin;
+    return plugin.init();
   });
 }
 

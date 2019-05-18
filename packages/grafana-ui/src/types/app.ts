@@ -27,6 +27,16 @@ export class AppPlugin extends GrafanaPlugin<AppPluginMeta> {
   angularPages?: { [component: string]: any };
 
   /**
+   * Called after the module has loaded, meta has been set
+   * and before the app is used.
+   *
+   * This can modify any existing settings and/or force a singleton instance
+   */
+  init(): AppPlugin {
+    return this;
+  }
+
+  /**
    * Set the component displayed under:
    *   /a/${plugin-id}/*
    */
