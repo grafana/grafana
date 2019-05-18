@@ -75,6 +75,10 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+exposeToPlugin('rxjs', {
+  Subject: Subject,
+  Observable: Observable,
+});
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
