@@ -23,7 +23,7 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	teamIds              []int
 	roleAttributeName    string
-	role 								 string
+	role                 string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -215,7 +215,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		Name:  name,
 		Login: login,
 		Email: email,
-		Role: role,
+		Role:  role,
 	}
 
 	if !s.IsTeamMember(client) {
