@@ -1,3 +1,6 @@
+/* tslint:disable:import-blacklist */
+import System from 'systemjs/dist/system.js';
+
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/ui';
 import { importAppPlugin } from './plugin_loader';
 
@@ -10,17 +13,19 @@ class MyCustomApp extends AppPlugin {
     this.calledTwice = this.meta === meta;
   }
 }
-const app = new MyCustomApp();
-
-// Need to import a path that has a real export
-const modulePath = 'app/plugins/app/example-app/module';
-jest.mock(modulePath, () => {
-  return {
-    plugin: app,
-  };
-});
 
 describe('Load App', () => {
+  const app = new MyCustomApp();
+  const modulePath = 'my/custom/plugin/module';
+
+  beforeAll(() => {
+    System.set(modulePath, System.newModule({ plugin: app }));
+  });
+
+  afterAll(() => {
+    System.delete(modulePath);
+  });
+
   it('should call init and set meta', async () => {
     const meta: AppPluginMeta = {
       id: 'test-app',
@@ -31,9 +36,9 @@ describe('Load App', () => {
       name: 'test',
     };
 
-    // // Check that we mocked the import OK
-    // const v = await System.import(modulePath);
-    // expect(v.plugin).toBe(app);
+    // Check that we mocked the import OK
+    const m = await System.import(modulePath);
+    expect(m.plugin).toBe(app);
 
     const loaded = await importAppPlugin(meta);
     expect(loaded).toBe(app);
