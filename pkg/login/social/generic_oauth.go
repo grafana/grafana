@@ -23,7 +23,6 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	teamIds              []int
 	roleAttributeName    string
-	role                 string
 }
 
 func (s *SocialGenericOAuth) Type() int {
