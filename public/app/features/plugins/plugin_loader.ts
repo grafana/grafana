@@ -75,6 +75,10 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+exposeToPlugin('rxjs', {
+  Subject: Subject,
+  Observable: Observable,
+});
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
@@ -83,12 +87,6 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
-
-// backward compatible path
-exposeToPlugin('vendor/npm/rxjs/Rx', {
-  Subject: Subject,
-  Observable: Observable,
-});
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
