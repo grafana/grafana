@@ -32,7 +32,7 @@ type AzureMonitorDatasource struct {
 
 var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
-	allowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
+	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
 )
 
 // executeTimeSeriesQuery does the following:
@@ -99,11 +99,29 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 		azureURL := ub.Build()
 
-		alias := fmt.Sprintf("%v", azureMonitorTarget["alias"])
+		alias := ""
+		if val, ok := azureMonitorTarget["alias"]; ok {
+			alias = fmt.Sprintf("%v", val)
+		}
 
 		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
+
+		allowedTimeGrains := []int64{}
+		tgs, ok := azureMonitorTarget["timeGrains"].([]interface{})
+		if ok {
+			for _, v := range tgs {
+				jsonNumber, ok := v.(json.Number)
+				if ok {
+					tg, err := jsonNumber.Int64()
+					if err == nil {
+						allowedTimeGrains = append(allowedTimeGrains, tg)
+					}
+				}
+			}
+		}
+
 		if timeGrain == "auto" {
-			autoInterval := e.findClosestAllowedIntervalMS(query.IntervalMs)
+			autoInterval := e.findClosestAllowedIntervalMS(query.IntervalMs, allowedTimeGrains)
 			tg := &TimeGrain{}
 			timeGrain, err = tg.createISO8601DurationFromIntervalMS(autoInterval)
 			if err != nil {
@@ -120,7 +138,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
-		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 {
+		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		}
 
@@ -257,7 +275,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 			metadataName = series.Metadatavalues[0].Name.LocalizedValue
 			metadataValue = series.Metadatavalues[0].Value
 		}
-		defaultMetricName := formatLegendKey(query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue)
+		metricName := formatLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID)
 
 		for _, point := range series.Data {
 			var value float64
@@ -279,10 +297,11 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 		}
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   defaultMetricName,
+			Name:   metricName,
 			Points: points,
 		})
 	}
+	queryRes.Meta.Set("unit", data.Value[0].Unit)
 
 	return nil
 }
@@ -290,13 +309,21 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 // findClosestAllowedIntervalMs is used for the auto time grain setting.
 // It finds the closest time grain from the list of allowed time grains for Azure Monitor
 // using the Grafana interval in milliseconds
-func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64) int64 {
-	closest := allowedIntervalsMS[0]
+// Some metrics only allow a limited list of time grains. The allowedTimeGrains parameter
+// allows overriding the default list of allowed time grains.
+func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64, allowedTimeGrains []int64) int64 {
+	allowedIntervals := defaultAllowedIntervalsMS
 
-	for i, allowed := range allowedIntervalsMS {
+	if len(allowedTimeGrains) > 0 {
+		allowedIntervals = allowedTimeGrains
+	}
+
+	closest := allowedIntervals[0]
+
+	for i, allowed := range allowedIntervals {
 		if intervalMs > allowed {
-			if i+1 < len(allowedIntervalsMS) {
-				closest = allowedIntervalsMS[i+1]
+			if i+1 < len(allowedIntervals) {
+				closest = allowedIntervals[i+1]
 			} else {
 				closest = allowed
 			}
@@ -306,9 +333,49 @@ func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64) 
 }
 
 // formatLegendKey builds the legend key or timeseries name
-func formatLegendKey(resourceName string, metricName string, metadataName string, metadataValue string) string {
-	if len(metadataName) > 0 {
-		return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
+func formatLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
+	if alias == "" {
+		if len(metadataName) > 0 {
+			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
+		}
+		return fmt.Sprintf("%s.%s", resourceName, metricName)
 	}
-	return fmt.Sprintf("%s.%s", resourceName, metricName)
+
+	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
+	endIndex := strings.Index(seriesID, "/providers")
+	resourceGroup := seriesID[startIndex:endIndex]
+
+	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
+		metaPartName := strings.Replace(string(in), "{{", "", 1)
+		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
+		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
+
+		if metaPartName == "resourcegroup" {
+			return []byte(resourceGroup)
+		}
+
+		if metaPartName == "namespace" {
+			return []byte(namespace)
+		}
+
+		if metaPartName == "resourcename" {
+			return []byte(resourceName)
+		}
+
+		if metaPartName == "metric" {
+			return []byte(metricName)
+		}
+
+		if metaPartName == "dimensionname" {
+			return []byte(metadataName)
+		}
+
+		if metaPartName == "dimensionvalue" {
+			return []byte(metadataValue)
+		}
+
+		return in
+	})
+
+	return string(result)
 }

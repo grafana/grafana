@@ -89,6 +89,29 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 
 			})
+
+			Convey("and has a dimension filter set to None", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"azureMonitor": map[string]interface{}{
+						"timeGrain":        "PT1M",
+						"aggregation":      "Average",
+						"resourceGroup":    "grafanastaging",
+						"resourceName":     "grafana",
+						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricName":       "Percentage CPU",
+						"alias":            "testalias",
+						"queryType":        "Azure Monitor",
+						"dimension":        "None",
+						"dimensionFilter":  "*",
+					},
+				})
+
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+
+			})
 		})
 
 		Convey("Parse AzureMonitor API response in the time series format", func() {
@@ -235,6 +258,48 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(res.Series[2].Name, ShouldEqual, "grafana{blobtype=Azure Data Lake Storage}.Blob Count")
 				So(res.Series[2].Points[0][0].Float64, ShouldEqual, 0)
 			})
+
+			Convey("when data from query has alias patterns", func() {
+				data, err := loadTestFile("./test-data/2-azure-monitor-response-total.json")
+				So(err, ShouldBeNil)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &AzureMonitorQuery{
+					Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+					UrlComponents: map[string]string{
+						"resourceName": "grafana",
+					},
+					Params: url.Values{
+						"aggregation": {"Total"},
+					},
+				}
+				err = datasource.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(res.Series[0].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU")
+			})
+
+			Convey("when data has dimension filters and alias patterns", func() {
+				data, err := loadTestFile("./test-data/6-azure-monitor-response-multi-dimension.json")
+				So(err, ShouldBeNil)
+
+				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+				query := &AzureMonitorQuery{
+					Alias: "{{dimensionname}}={{DimensionValue}}",
+					UrlComponents: map[string]string{
+						"resourceName": "grafana",
+					},
+					Params: url.Values{
+						"aggregation": {"Average"},
+					},
+				}
+				err = datasource.parseResponse(res, data, query)
+				So(err, ShouldBeNil)
+
+				So(res.Series[0].Name, ShouldEqual, "blobtype=PageBlob")
+				So(res.Series[1].Name, ShouldEqual, "blobtype=BlockBlob")
+				So(res.Series[2].Name, ShouldEqual, "blobtype=Azure Data Lake Storage")
+			})
 		})
 
 		Convey("Find closest allowed interval for auto time grain", func() {
@@ -247,13 +312,16 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				"2d":  172800000,
 			}
 
-			closest := datasource.findClosestAllowedIntervalMS(intervals["3m"])
+			closest := datasource.findClosestAllowedIntervalMS(intervals["3m"], []int64{})
 			So(closest, ShouldEqual, intervals["5m"])
 
-			closest = datasource.findClosestAllowedIntervalMS(intervals["10m"])
+			closest = datasource.findClosestAllowedIntervalMS(intervals["10m"], []int64{})
 			So(closest, ShouldEqual, intervals["15m"])
 
-			closest = datasource.findClosestAllowedIntervalMS(intervals["2d"])
+			closest = datasource.findClosestAllowedIntervalMS(intervals["2d"], []int64{})
+			So(closest, ShouldEqual, intervals["1d"])
+
+			closest = datasource.findClosestAllowedIntervalMS(intervals["3m"], []int64{intervals["1d"]})
 			So(closest, ShouldEqual, intervals["1d"])
 		})
 	})
