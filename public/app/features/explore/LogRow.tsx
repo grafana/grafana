@@ -8,7 +8,7 @@ import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import {
   LogRowContextProvider,
   LogRowContextRows,
@@ -58,7 +58,13 @@ const FieldHighlight = onClick => props => {
   );
 };
 
-const getLogRowStyles = (theme: GrafanaTheme, state: State) => {
+const logRowStyles = css`
+  position: relative;
+  /* z-index: 0; */
+  /* outline: none; */
+`;
+
+const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
   const outlineColor = selectThemeVariant(
     {
       light: theme.colors.white,
@@ -69,13 +75,11 @@ const getLogRowStyles = (theme: GrafanaTheme, state: State) => {
 
   return {
     row: css`
-      position: relative;
-      z-index: ${state.showContext ? 1 : 0};
-      outline: ${state.showContext
-        ? `9999px solid ${tinycolor(outlineColor)
-            .setAlpha(0.7)
-            .toRgbString()}`
-        : 'none'};
+      z-index: 1;
+      outline: 9999px solid
+        ${tinycolor(outlineColor)
+          .setAlpha(0.7)
+          .toRgbString()};
     `,
   };
 };
@@ -103,7 +107,6 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    console.log('will unmoint');
     clearTimeout(this.mouseMessageTimer);
   }
 
@@ -166,6 +169,11 @@ export class LogRow extends PureComponent<Props, State> {
     });
   };
 
+  onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    e.stopPropagation();
+    this.toggleContext();
+  };
+
   renderLogRow(
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
@@ -203,7 +211,10 @@ export class LogRow extends PureComponent<Props, State> {
     return (
       <ThemeContext.Consumer>
         {theme => {
-          const styles = getLogRowStyles(theme, this.state);
+          const styles = this.state.showContext
+            ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
+            : logRowStyles;
+          console.log(styles);
           return (
             <div className={`logs-row ${this.props.className}`}>
               {showDuplicates && (
@@ -249,7 +260,7 @@ export class LogRow extends PureComponent<Props, State> {
                       }}
                     />
                   )}
-                  <span className={styles.row}>
+                  <span className={styles}>
                     {parsed && (
                       <Highlighter
                         autoEscape
@@ -283,10 +294,7 @@ export class LogRow extends PureComponent<Props, State> {
                   </span>
                   {row.searchWords && row.searchWords.length > 0 && (
                     <span
-                      onClick={e => {
-                        e.stopPropagation();
-                        this.toggleContext();
-                      }}
+                      onClick={this.onContextToggle}
                       className={css`
                         visibility: hidden;
                         white-space: nowrap;

@@ -453,11 +453,3 @@ export type HigherOrderAction =
   | SplitOpenAction
   | ResetExploreAction
   | ActionOf<any>;
-
-// export interface LoadLogRowContextPayload {
-//   logEntry: string;
-// }
-
-// export const loadLogRowContext = actionCreatorFactory<LoadLogRowContextPayload>(
-//   'explore/LOAD_LOG_ROW_CONTEXT'
-// ).create();
