@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import AzureMonitorFilterBuilder from './azure_monitor_filter_builder';
 import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
@@ -8,6 +7,7 @@ import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import kbn from 'app/core/utils/kbn';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -56,6 +56,7 @@ export default class AzureMonitorDatasource {
     }).map(target => {
       const item = target.azureMonitor;
 
+      // fix for timeGrainUnit which is a deprecated/removed field name
       if (item.timeGrainUnit && item.timeGrain !== 'auto') {
         item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
       }
@@ -65,48 +66,36 @@ export default class AzureMonitorDatasource {
       const resourceName = this.templateSrv.replace(item.resourceName, options.scopedVars);
       const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
+      const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
 
-      const filterBuilder = new AzureMonitorFilterBuilder(
-        item.metricName,
-        options.range.from,
-        options.range.to,
-        timeGrain,
-        options.interval
-      );
-
-      if (item.timeGrains) {
-        filterBuilder.setAllowedTimeGrains(item.timeGrains);
-      }
-
-      if (item.aggregation) {
-        filterBuilder.setAggregation(item.aggregation);
-      }
-
-      if (item.dimension && item.dimension !== 'None') {
-        filterBuilder.setDimensionFilter(item.dimension, item.dimensionFilter);
-      }
-
-      const filter = this.templateSrv.replace(filterBuilder.generateFilter(), options.scopedVars);
-
-      const url = UrlBuilder.buildAzureMonitorQueryUrl(
-        this.baseUrl,
-        subscriptionId,
-        resourceGroup,
-        metricDefinition,
-        resourceName,
-        this.apiVersion,
-        filter
-      );
+      const allowedTimeGrains: string[] = [];
+      (item.timeGrains || []).forEach((tg: any) => {
+        if (tg.value !== 'auto') {
+          allowedTimeGrains.push(kbn.interval_to_ms(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
+        }
+      });
 
       return {
         refId: target.refId,
         intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        url: url,
-        format: target.format,
-        alias: item.alias,
+        subscription: subscriptionId,
+        queryType: 'Azure Monitor',
+        type: 'timeSeriesQuery',
         raw: false,
+        azureMonitor: {
+          resourceGroup: resourceGroup,
+          resourceName: resourceName,
+          metricDefinition: metricDefinition,
+          timeGrain: timeGrain,
+          timeGrains: allowedTimeGrains,
+          metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
+          aggregation: aggregation,
+          dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
+          dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
+          alias: item.alias,
+          format: target.format,
+        },
       };
     });
 
@@ -114,29 +103,36 @@ export default class AzureMonitorDatasource {
       return [];
     }
 
-    const promises = this.doQueries(queries);
-
-    return Promise.all(promises).then(results => {
-      return new ResponseParser(results).parseQueryResult();
+    const { data } = await this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries,
+      },
     });
-  }
 
-  doQueries(queries) {
-    return _.map(queries, query => {
-      return this.doRequest(query.url)
-        .then(result => {
-          return {
-            result: result,
-            query: query,
+    const result = [];
+    if (data.results) {
+      Object['values'](data.results).forEach((queryRes: any) => {
+        if (!queryRes.series) {
+          return;
+        }
+        queryRes.series.forEach((series: any) => {
+          const timeSerie: any = {
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
           };
-        })
-        .catch(err => {
-          throw {
-            error: err,
-            query: query,
-          };
+          result.push(timeSerie);
         });
-    });
+      });
+      return result;
+    }
+
+    return [];
   }
 
   annotationQuery(options) {}
