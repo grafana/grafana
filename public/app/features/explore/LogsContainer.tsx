@@ -1,13 +1,22 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime } from '@grafana/ui';
+import {
+  RawTimeRange,
+  TimeRange,
+  LogLevel,
+  TimeZone,
+  AbsoluteTimeRange,
+  toUtc,
+  dateTime,
+  DataSourceApi,
+} from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
-import { toggleLogs, changeDedupStrategy, changeTime } from './state/actions';
+import { changeDedupStrategy, changeTime } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
@@ -15,6 +24,7 @@ import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/featur
 import { getTimeZone } from '../profile/state/selectors';
 
 interface LogsContainerProps {
+  datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
   logsHighlighterExpressions?: string[];
@@ -27,8 +37,6 @@ interface LogsContainerProps {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  showingLogs: boolean;
-  toggleLogs: typeof toggleLogs;
   toggleLogLevelAction: typeof toggleLogLevelAction;
   changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
@@ -48,10 +56,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     changeTime(exploreId, range);
   };
 
-  onClickLogsButton = () => {
-    this.props.toggleLogs(this.props.exploreId, this.props.showingLogs);
-  };
-
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
     this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
@@ -64,9 +68,20 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
+  getLogRowContext = async (row: LogRowModel, limit: number) => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance) {
+      return datasourceInstance.getLogRowContext(row, limit);
+    }
+
+    return [];
+  };
+
   render() {
     const {
       exploreId,
+
       loading,
       logsHighlighterExpressions,
       logsResult,
@@ -76,7 +91,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       onStopScanning,
       range,
       timeZone,
-      showingLogs,
       scanning,
       scanRange,
       width,
@@ -84,7 +98,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     } = this.props;
 
     return (
-      <Panel label="Logs" loading={loading} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
+      <Panel label="Logs" loading={loading} isOpen>
         <Logs
           dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
           data={logsResult}
@@ -104,6 +118,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           scanRange={scanRange}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
+          getRowContext={this.getLogRowContext}
         />
       </Panel>
     );
@@ -113,9 +128,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range } = item;
+  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range, datasourceInstance } = item;
   const loading = logIsLoading;
-  const { showingLogs, dedupStrategy } = exploreItemUIStateSelector(item);
+  const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);
   const timeZone = getTimeZone(state.user);
@@ -126,17 +141,16 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsResult,
     scanning,
     scanRange,
-    showingLogs,
     range,
     timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
+    datasourceInstance,
   };
 }
 
 const mapDispatchToProps = {
-  toggleLogs,
   changeDedupStrategy,
   toggleLogLevelAction,
   changeTime,

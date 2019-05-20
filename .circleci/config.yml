@@ -69,7 +69,7 @@ jobs:
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
-  
+
   end-to-end-test:
       docker:
         - image: circleci/node:8-browsers
@@ -103,7 +103,7 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'

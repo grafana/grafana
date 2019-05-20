@@ -173,6 +173,11 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext?(row: any, limit?: number): Promise<DataQueryResponse>;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -280,6 +285,10 @@ export interface DataStreamState {
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+}
+
+export interface LogRowContextQueryResponse {
+  data: Array<Array<string | DataQueryError>>;
 }
 
 export interface DataQuery {

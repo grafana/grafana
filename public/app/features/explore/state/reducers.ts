@@ -8,7 +8,7 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
 } from 'app/core/utils/explore';
-import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState } from 'app/types/explore';
+import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
 import {
   HigherOrderAction,
@@ -22,6 +22,7 @@ import {
   runQueriesAction,
   historyUpdatedAction,
   resetQueryErrorAction,
+  changeModeAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -94,7 +95,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   scanning: false,
   scanRange: null,
   showingGraph: true,
-  showingLogs: true,
   showingTable: true,
   graphIsLoading: false,
   logIsLoading: false,
@@ -107,6 +107,8 @@ export const makeExploreItemState = (): ExploreItemState => ({
   update: makeInitialUpdateState(),
   queryErrors: [],
   latency: 0,
+  supportedModes: [],
+  mode: null,
 });
 
 /**
@@ -163,6 +165,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const containerWidth = action.payload.width;
       return { ...state, containerWidth };
+    },
+  })
+  .addMapper({
+    filter: changeModeAction,
+    mapper: (state, action): ExploreItemState => {
+      const mode = action.payload.mode;
+      return { ...state, mode };
     },
   })
   .addMapper({
@@ -226,6 +235,21 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsLogs = datasourceInstance.meta.logs;
       const supportsTable = datasourceInstance.meta.tables;
 
+      let mode = ExploreMode.Metrics;
+      const supportedModes: ExploreMode[] = [];
+
+      if (supportsGraph) {
+        supportedModes.push(ExploreMode.Metrics);
+      }
+
+      if (supportsLogs) {
+        supportedModes.push(ExploreMode.Logs);
+      }
+
+      if (supportedModes.length === 1) {
+        mode = supportedModes[0];
+      }
+
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
 
@@ -243,6 +267,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         StartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: getQueryKeys(state.queries, datasourceInstance),
+        supportedModes,
+        mode,
       };
     },
   })
@@ -324,7 +350,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         logsResult: resultType === 'Logs' ? null : state.logsResult,
         latency: 0,
         queryErrors,
-        showingStartPage: false,
         graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
@@ -344,7 +369,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
         logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
         tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
-        showingStartPage: false,
         update: makeInitialUpdateState(),
       };
     },
@@ -355,7 +379,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { queryIntervals } = state;
       const { result, resultType, latency } = action.payload;
       const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
-
       return {
         ...state,
         graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
@@ -365,7 +388,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: false,
         logIsLoading: false,
         tableIsLoading: false,
-        showingStartPage: false,
         update: makeInitialUpdateState(),
       };
     },
@@ -516,6 +538,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queryIntervals,
+        showingStartPage: false,
       };
     },
   })
