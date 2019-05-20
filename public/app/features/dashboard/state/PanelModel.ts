@@ -158,10 +158,7 @@ export class PanelModel {
     }
   }
 
-  getOptions(applyDefaults = false) {
-    if (applyDefaults && this.plugin) {
-      return _.defaultsDeep({}, this.options, this.plugin.defaults);
-    }
+  getOptions() {
     return this.options;
   }
 
