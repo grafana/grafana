@@ -13,7 +13,7 @@ export enum PluginType {
 
 export type KeyValue<T = any> = { [s: string]: T };
 
-export interface PluginMeta<T = KeyValue> {
+export interface PluginMeta<T extends {} = KeyValue> {
   id: string;
   name: string;
   type: PluginType;
