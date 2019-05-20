@@ -85,6 +85,7 @@ revive: scripts/go/bin/revive
 		$(GO_FILES)
 
 # create docker-compose file with provided sources and start them
+# example: make env sources=postgres,openldap
 env: env-down
 	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
 
