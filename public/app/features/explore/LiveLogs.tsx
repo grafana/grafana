@@ -11,7 +11,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: logs-rows-live;
     display: flex;
     flex-flow: column nowrap;
-    height: 70vh;
+    height: 65vh;
     overflow-y: auto;
     :first-child {
       margin-top: auto !important;
@@ -88,7 +88,14 @@ class LiveLogs extends PureComponent<Props, State> {
               </div>
             );
           })}
-          <div ref={element => (this.liveEndDiv = element)} />
+          <div
+            ref={element => {
+              this.liveEndDiv = element;
+              if (this.liveEndDiv) {
+                this.liveEndDiv.scrollIntoView(false);
+              }
+            }}
+          />
         </div>
         <div className={cx([styles.logsRowsIndicator])}>
           <span>

@@ -7,6 +7,7 @@ import {
   parseUrlState,
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
+  sortLogsResult,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
@@ -57,7 +58,7 @@ import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
-import { LogsModel, seriesDataToLogsModel, LogRowModel } from 'app/core/logs_model';
+import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -66,18 +67,6 @@ export const DEFAULT_RANGE = {
 
 // Millies step for helper bar charts
 const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
-
-const rowSorter = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return 1;
-  }
-
-  return 0;
-};
 
 export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
@@ -201,6 +190,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
       const live = isLive(refreshInterval);
+      const logsResult = sortLogsResult(state.logsResult, refreshInterval);
+
       return {
         ...state,
         refreshInterval: refreshInterval,
@@ -208,6 +199,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         tableIsLoading: live ? true : false,
         logIsLoading: live ? true : false,
         isLive: live,
+        logsResult,
       };
     },
   })
@@ -410,7 +402,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
         tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
-        logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
+        logsResult:
+          resultType === 'Logs'
+            ? sortLogsResult(results.logsResult, refreshInterval)
+            : sortLogsResult(state.logsResult, refreshInterval),
         latency,
         graphIsLoading: live ? true : false,
         logIsLoading: live ? true : false,
@@ -423,9 +418,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: startSubscriptionAction,
     mapper: (state): ExploreItemState => {
-      const rows = state.logsResult ? state.logsResult.rows : [];
-      rows.sort(rowSorter);
-      const logsResult: LogsModel = state.logsResult ? { ...state.logsResult, rows } : { hasUniqueLabels: false, rows };
+      const logsResult = sortLogsResult(state.logsResult, state.refreshInterval);
 
       return {
         ...state,
@@ -441,11 +434,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: subscriptionDataReceivedAction,
     mapper: (state, action): ExploreItemState => {
-      const { queryIntervals } = state;
+      const { queryIntervals, refreshInterval } = state;
       const { data } = action.payload;
+      const live = isLive(refreshInterval);
+
+      if (live) {
+        return state;
+      }
+
       const newResults = seriesDataToLogsModel([data], queryIntervals.intervalMs);
-      const rowsInState = state.logsResult ? state.logsResult.rows : [];
-      rowsInState.sort(rowSorter);
+      const rowsInState = sortLogsResult(state.logsResult, state.refreshInterval).rows;
 
       const processedRows = [];
       for (const row of rowsInState) {
