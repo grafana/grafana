@@ -24,6 +24,7 @@ import {
   historyUpdatedAction,
   resetQueryErrorAction,
   changeModeAction,
+  setUrlReplacedAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -114,6 +115,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportedModes: [],
   mode: null,
   isLive: false,
+  urlReplaced: false,
 });
 
 /**
@@ -637,6 +639,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queryErrors,
+      };
+    },
+  })
+  .addMapper({
+    filter: setUrlReplacedAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        urlReplaced: true,
       };
     },
   })

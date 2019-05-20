@@ -237,6 +237,10 @@ export interface ResetQueryErrorPayload {
   refIds: string[];
 }
 
+export interface SetUrlReplacedPayload {
+  exploreId: ExploreId;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -438,6 +442,8 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
 
 export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
+
+export const setUrlReplacedAction = actionCreatorFactory<SetUrlReplacedPayload>('explore/SET_URL_REPLACED').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

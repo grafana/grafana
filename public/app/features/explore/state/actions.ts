@@ -86,6 +86,7 @@ import {
   historyUpdatedAction,
   resetQueryErrorAction,
   changeModeAction,
+  setUrlReplacedAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -118,7 +119,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasource: string, replaceUrl = false): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi = null;
 
@@ -136,7 +137,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string, repla
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance));
-    dispatch(runQueries(exploreId, false, replaceUrl));
+    dispatch(runQueries(exploreId, false));
   };
 }
 
@@ -242,7 +243,7 @@ export function loadExploreDatasourcesAndSetDatasource(
     dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
 
     if (exploreDatasources.length >= 1) {
-      dispatch(changeDatasource(exploreId, datasourceName, true));
+      dispatch(changeDatasource(exploreId, datasourceName));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
@@ -511,7 +512,7 @@ export function processQueryResults(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceUrl = false): ThunkResult<void> {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
@@ -530,7 +531,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave(replaceUrl)); // Remember to save to state and update location
+      dispatch(stateSave()); // Remember to save to state and update location
       return;
     }
 
@@ -564,7 +565,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
-    dispatch(stateSave(replaceUrl));
+    dispatch(stateSave());
   };
 }
 
@@ -698,9 +699,10 @@ const toRawTimeRange = (range: TimeRange): RawTimeRange => {
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
  */
-export function stateSave(replaceUrl = false): ThunkResult<void> {
+export function stateSave(): ThunkResult<void> {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
+    const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = {};
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance.name,
@@ -730,7 +732,10 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
 
-    dispatch(updateLocation({ query: urlStates, replace: replaceUrl }));
+    dispatch(updateLocation({ query: urlStates, replace }));
+    if (replace) {
+      dispatch(setUrlReplacedAction({ exploreId: ExploreId.left }));
+    }
   };
 }
 
