@@ -130,7 +130,7 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   onMouseOverMessage = () => {
-    if (this.state.showContext) {
+    if (this.state.showContext || this.isTextSelected()) {
       // When showing context we don't want to the LogRow rerender as it will mess up state of context block
       // making the "after" context to be scrolled to the top, what is desired only on open
       // The log row message needs to be refactored to separate component that encapsulates parsing and parsed message state
@@ -160,6 +160,20 @@ export class LogRow extends PureComponent<Props, State> {
       }
     }
   };
+
+  isTextSelected() {
+    if (!window.getSelection) {
+      return false;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection) {
+      return false;
+    }
+
+    return selection.anchorNode !== null && selection.isCollapsed === false;
+  }
 
   toggleContext = () => {
     this.setState(state => {
