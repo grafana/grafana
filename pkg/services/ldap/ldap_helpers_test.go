@@ -75,6 +75,71 @@ func TestLDAPHelpers(t *testing.T) {
 		})
 	})
 
+	Convey("initialBind", t, func() {
+		Convey("Given bind dn and password configured", func() {
+			connection := &mockConnection{}
+			var actualUsername, actualPassword string
+			connection.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			server := &Server{
+				connection: connection,
+				config: &ServerConfig{
+					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
+					BindPassword: "bindpwd",
+				},
+			}
+			err := server.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(server.requireSecondBind, ShouldBeTrue)
+			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "bindpwd")
+		})
+
+		Convey("Given bind dn configured", func() {
+			connection := &mockConnection{}
+			var actualUsername, actualPassword string
+			connection.bindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+			server := &Server{
+				connection: connection,
+				config: &ServerConfig{
+					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
+				},
+			}
+			err := server.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(server.requireSecondBind, ShouldBeFalse)
+			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualPassword, ShouldEqual, "pwd")
+		})
+
+		Convey("Given empty bind dn and password", func() {
+			connection := &mockConnection{}
+			unauthenticatedBindWasCalled := false
+			var actualUsername string
+			connection.unauthenticatedBindProvider = func(username string) error {
+				unauthenticatedBindWasCalled = true
+				actualUsername = username
+				return nil
+			}
+			server := &Server{
+				connection: connection,
+				config:     &ServerConfig{},
+			}
+			err := server.initialBind("user", "pwd")
+			So(err, ShouldBeNil)
+			So(server.requireSecondBind, ShouldBeTrue)
+			So(unauthenticatedBindWasCalled, ShouldBeTrue)
+			So(actualUsername, ShouldBeEmpty)
+		})
+	})
+
 	Convey("serverBind()", t, func() {
 		Convey("Given bind dn and password configured", func() {
 			connection := &mockConnection{}

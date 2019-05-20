@@ -179,6 +179,7 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel;
+
   /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
@@ -258,9 +259,12 @@ export interface ExploreItemState {
   update: ExploreUpdateState;
 
   queryErrors: DataQueryError[];
+
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
+
+  isLive: boolean;
 }
 
 export interface ExploreUpdateState {

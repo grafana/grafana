@@ -52,10 +52,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Extractor should not modify the original json", func() {
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := models.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 
 			getTarget := func(j *simplejson.Json) string {
 				rowObj := j.Get("rows").MustArray()[0]
@@ -68,23 +68,23 @@ func TestAlertRuleExtraction(t *testing.T) {
 			}
 
 			Convey("Dashboard json rows.panels.alert.query.model.target should be empty", func() {
-				So(getTarget(dashJson), ShouldEqual, "")
+				So(getTarget(dashJSON), ShouldEqual, "")
 			})
 
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 			_, _ = extractor.GetAlerts()
 
 			Convey("Dashboard json should not be updated after extracting rules", func() {
-				So(getTarget(dashJson), ShouldEqual, "")
+				So(getTarget(dashJSON), ShouldEqual, "")
 			})
 		})
 
 		Convey("Parsing and validating dashboard containing graphite alerts", func() {
 
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 
-			dash := models.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
@@ -147,12 +147,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panels missing id should return error", func() {
-			panelWithoutId, err := ioutil.ReadFile("./testdata/panels-missing-id.json")
+			panelWithoutID, err := ioutil.ReadFile("./testdata/panels-missing-id.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(panelWithoutId)
+			dashJSON, err := simplejson.NewJson(panelWithoutID)
 			So(err, ShouldBeNil)
-			dash := models.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
@@ -163,12 +163,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panel with id set to zero should return error", func() {
-			panelWithIdZero, err := ioutil.ReadFile("./testdata/panel-with-id-0.json")
+			panelWithIDZero, err := ioutil.ReadFile("./testdata/panel-with-id-0.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(panelWithIdZero)
+			dashJSON, err := simplejson.NewJson(panelWithIDZero)
 			So(err, ShouldBeNil)
-			dash := models.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			_, err = extractor.GetAlerts()
@@ -182,9 +182,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 			json, err := ioutil.ReadFile("./testdata/v5-dashboard.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(json)
+			dashJSON, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
-			dash := models.NewDashboardFromJson(dashJson)
+			dash := models.NewDashboardFromJson(dashJSON)
 			extractor := NewDashAlertExtractor(dash, 1, nil)
 
 			alerts, err := extractor.GetAlerts()
@@ -211,9 +211,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 				json, err := ioutil.ReadFile("./testdata/influxdb-alert.json")
 				So(err, ShouldBeNil)
 
-				dashJson, err := simplejson.NewJson(json)
+				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
-				dash := models.NewDashboardFromJson(dashJson)
+				dash := models.NewDashboardFromJson(dashJSON)
 				extractor := NewDashAlertExtractor(dash, 1, nil)
 
 				alerts, err := extractor.GetAlerts()
@@ -240,10 +240,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 				json, err := ioutil.ReadFile("./testdata/collapsed-panels.json")
 				So(err, ShouldBeNil)
 
-				dashJson, err := simplejson.NewJson(json)
+				dashJSON, err := simplejson.NewJson(json)
 				So(err, ShouldBeNil)
 
-				dash := models.NewDashboardFromJson(dashJson)
+				dash := models.NewDashboardFromJson(dashJSON)
 				extractor := NewDashAlertExtractor(dash, 1, nil)
 
 				alerts, err := extractor.GetAlerts()
