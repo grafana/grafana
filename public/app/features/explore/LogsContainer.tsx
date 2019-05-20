@@ -13,7 +13,7 @@ import {
 } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, changeTime } from './state/actions';
@@ -90,7 +90,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       exploreId,
-
       loading,
       logsHighlighterExpressions,
       logsResult,
@@ -109,7 +108,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
     if (isLive) {
       return (
-        <Panel label="Logs" loading={false} isOpen={showingLogs} onToggle={this.onClickLogsButton}>
+        <Panel label="Logs" loading={false} isOpen>
           <LiveLogsWithTheme logsResult={logsResult} stopLive={this.onStopLive} />
         </Panel>
       );
@@ -146,7 +145,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range, datasourceInstance, isLive } = item;
+  const {
+    logsHighlighterExpressions,
+    logsResult,
+    logIsLoading,
+    scanning,
+    scanRange,
+    range,
+    datasourceInstance,
+    isLive,
+  } = item;
   const loading = logIsLoading;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
