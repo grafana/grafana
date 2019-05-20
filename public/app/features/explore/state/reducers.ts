@@ -56,7 +56,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { subscriptionDataReceivedAction } from './epics';
+import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
 import { LogsModel, seriesDataToLogsModel, LogRowModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
@@ -402,6 +402,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
       const live = isLive(refreshInterval);
 
+      if (live) {
+        return state;
+      }
+
       return {
         ...state,
         graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
@@ -411,6 +415,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: live ? true : false,
         logIsLoading: live ? true : false,
         tableIsLoading: live ? true : false,
+        showingStartPage: false,
+        update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: startSubscriptionAction,
+    mapper: (state): ExploreItemState => {
+      const rows = state.logsResult ? state.logsResult.rows : [];
+      rows.sort(rowSorter);
+      const logsResult: LogsModel = state.logsResult ? { ...state.logsResult, rows } : { hasUniqueLabels: false, rows };
+
+      return {
+        ...state,
+        logsResult,
+        graphIsLoading: true,
+        logIsLoading: true,
+        tableIsLoading: true,
         showingStartPage: false,
         update: makeInitialUpdateState(),
       };
@@ -440,11 +462,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         logsResult,
-        graphIsLoading: true,
-        logIsLoading: true,
-        tableIsLoading: true,
-        showingStartPage: false,
-        update: makeInitialUpdateState(),
       };
     },
   })

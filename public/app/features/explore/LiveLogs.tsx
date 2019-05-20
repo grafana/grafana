@@ -11,7 +11,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: logs-rows-live;
     display: flex;
     flex-flow: column nowrap;
-    height: 75vh;
+    height: 70vh;
     overflow-y: auto;
     :first-child {
       margin-top: auto !important;
@@ -98,7 +98,7 @@ class LiveLogs extends PureComponent<Props, State> {
             onClick={this.props.stopLive}
             size={ButtonSize.Medium}
             variant={ButtonVariant.Transparent}
-            icon="fa fa-square"
+            style={{ color: theme.colors.orange }}
           >
             Stop Live
           </LinkButton>
