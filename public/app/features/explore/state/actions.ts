@@ -7,14 +7,12 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/core';
 import {
   LAST_USED_DATASOURCE_KEY,
-  clearQueryKeys,
   ensureQueries,
   generateEmptyQuery,
   hasNonEmptyQuery,
   makeTimeSeriesList,
   updateHistory,
   buildQueryTransaction,
-  serializeStateToUrlParam,
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
@@ -23,23 +21,19 @@ import {
   getRefIds,
 } from 'app/core/utils/explore';
 
-// Actions
-import { updateLocation } from 'app/core/actions';
-
 // Types
 import { ThunkResult } from 'app/types';
+import { RawTimeRange, DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction } from '@grafana/ui/src/types';
 import {
   RawTimeRange,
   DataSourceApi,
   DataQuery,
   DataSourceSelectItem,
   QueryFixAction,
-  TimeRange,
   LogsDedupStrategy,
 } from '@grafana/ui';
 import {
   ExploreId,
-  ExploreUrlState,
   RangeScanner,
   ResultType,
   QueryOptions,
@@ -86,13 +80,12 @@ import {
   historyUpdatedAction,
   resetQueryErrorAction,
   changeModeAction,
-  setUrlReplacedAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/features/explore/state/epics';
+import { stateSaveAction } from './stateSaveEpic';
 
 /**
  * Updates UI state and save it to the URL
@@ -100,7 +93,7 @@ import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/fe
 const updateExploreUIState = (exploreId: ExploreId, uiStateFragment: Partial<ExploreUIState>): ThunkResult<void> => {
   return dispatch => {
     dispatch(updateUIStateAction({ exploreId, ...uiStateFragment }));
-    dispatch(stateSave());
+    dispatch(stateSaveAction());
   };
 };
 
@@ -216,7 +209,7 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   return dispatch => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(clearQueriesAction({ exploreId }));
-    dispatch(stateSave());
+    dispatch(stateSaveAction());
   };
 }
 
@@ -531,7 +524,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
+      dispatch(stateSaveAction()); // Remember to save to state and update location
       return;
     }
 
@@ -565,7 +558,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
-    dispatch(stateSave());
+    dispatch(stateSaveAction());
   };
 }
 
@@ -650,7 +643,7 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
 export function splitClose(itemId: ExploreId): ThunkResult<void> {
   return dispatch => {
     dispatch(splitCloseAction({ itemId }));
-    dispatch(stateSave());
+    dispatch(stateSaveAction());
   };
 }
 
@@ -674,68 +667,7 @@ export function splitOpen(): ThunkResult<void> {
       urlState,
     };
     dispatch(splitOpenAction({ itemState }));
-    dispatch(stateSave());
-  };
-}
-
-const toRawTimeRange = (range: TimeRange): RawTimeRange => {
-  let from = range.raw.from;
-  if (isDateTime(from)) {
-    from = from.valueOf().toString(10);
-  }
-
-  let to = range.raw.to;
-  if (isDateTime(to)) {
-    to = to.valueOf().toString(10);
-  }
-
-  return {
-    from,
-    to,
-  };
-};
-
-/**
- * Saves Explore state to URL using the `left` and `right` parameters.
- * If split view is not active, `right` will not be set.
- */
-export function stateSave(): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const { left, right, split } = getState().explore;
-    const replace = left && left.urlReplaced === false;
-    const urlStates: { [index: string]: string } = {};
-    const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance.name,
-      queries: left.queries.map(clearQueryKeys),
-      range: toRawTimeRange(left.range),
-      ui: {
-        showingGraph: left.showingGraph,
-        showingLogs: true,
-        showingTable: left.showingTable,
-        dedupStrategy: left.dedupStrategy,
-      },
-    };
-    urlStates.left = serializeStateToUrlParam(leftUrlState, true);
-    if (split) {
-      const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance.name,
-        queries: right.queries.map(clearQueryKeys),
-        range: toRawTimeRange(right.range),
-        ui: {
-          showingGraph: right.showingGraph,
-          showingLogs: true,
-          showingTable: right.showingTable,
-          dedupStrategy: right.dedupStrategy,
-        },
-      };
-
-      urlStates.right = serializeStateToUrlParam(rightUrlState, true);
-    }
-
-    dispatch(updateLocation({ query: urlStates, replace }));
-    if (replace) {
-      dispatch(setUrlReplacedAction({ exploreId: ExploreId.left }));
-    }
+    dispatch(stateSaveAction());
   };
 }
 

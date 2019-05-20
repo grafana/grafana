@@ -17,6 +17,7 @@ import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
 import { startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic } from 'app/features/explore/state/epics';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
+import { stateSaveEpic } from 'app/features/explore/state/stateSaveEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -37,7 +38,12 @@ export function addRootReducer(reducers) {
   Object.assign(rootReducers, ...reducers);
 }
 
-export const rootEpic: any = combineEpics(startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic);
+export const rootEpic: any = combineEpics(
+  startSubscriptionsEpic,
+  startSubscriptionEpic,
+  limitMessageRateEpic,
+  stateSaveEpic
+);
 
 export interface EpicDependencies {
   getWebSocket: <T>(urlConfigOrSource: string) => WebSocketSubject<T>;
