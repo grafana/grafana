@@ -10,6 +10,7 @@ import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@graf
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
+import _default from 'calculate-size';
 
 export interface GridPos {
   x: number;
@@ -157,8 +158,11 @@ export class PanelModel {
     }
   }
 
-  getOptions(panelDefaults: any) {
-    return _.defaultsDeep(this.options || {}, panelDefaults);
+  getOptions(applyDefaults = false) {
+    if (applyDefaults && this.plugin) {
+      return _.defaultsDeep({}, this.options, this.plugin.defaults);
+    }
+    return this.options;
   }
 
   updateOptions(options: object) {
@@ -177,9 +181,12 @@ export class PanelModel {
         continue;
       }
 
-      model[property] = _.cloneDeep(this[property]);
+      if (property === 'options' && this.plugin) {
+        model[property] = _.defaultsDeep({}, this[property], this.plugin.defaults);
+      } else {
+        model[property] = _.cloneDeep(this[property]);
+      }
     }
-
     return model;
   }
 
@@ -247,8 +254,20 @@ export class PanelModel {
     });
   }
 
+  private applyPluginOptionDefaults(plugin: PanelPlugin) {
+    this.options = _.defaultsDeep({}, this.options, plugin.defaults);
+  }
+
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+    const hasPersistedOptions = !!this.options;
+    const defaultOptions = plugin.defaults;
+
+    if (hasPersistedOptions) {
+      this.applyPluginOptionDefaults(this.plugin);
+    } else {
+      this.options = _.defaultsDeep({}, defaultOptions);
+    }
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
@@ -284,7 +303,7 @@ export class PanelModel {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
-
+    this.applyPluginOptionDefaults(newPlugin);
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
       this.options = this.options || {};
