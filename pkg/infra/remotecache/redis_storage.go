@@ -40,10 +40,6 @@ func (s *redisStorage) Get(key string) (interface{}, error) {
 	item := &cachedItem{}
 	err := decodeGob([]byte(v.Val()), item)
 
-	if err == nil {
-		return item.Val, nil
-	}
-
 	if err.Error() == "EOF" {
 		return nil, ErrCacheItemNotFound
 	}
