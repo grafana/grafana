@@ -236,9 +236,9 @@ func adminDisableUserScenario(desc string, action string, url string, routePatte
 
 			if action == "enable" {
 				return AdminEnableUser(c)
-			} else {
-				return hs.AdminDisableUser(c)
 			}
+
+			return hs.AdminDisableUser(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
