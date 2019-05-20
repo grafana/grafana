@@ -11,7 +11,9 @@ export enum PluginType {
   app = 'app',
 }
 
-export interface PluginMeta {
+export type KeyValue = { [s: string]: any };
+
+export interface PluginMeta<T = KeyValue> {
   id: string;
   name: string;
   type: PluginType;
@@ -27,7 +29,7 @@ export interface PluginMeta {
   dependencies?: PluginDependencies;
 
   // Filled in by the backend
-  jsonData?: { [str: string]: any };
+  jsonData?: T;
   secureJsonData?: { [str: string]: any };
   enabled?: boolean;
   defaultNavUrl?: string;
@@ -93,7 +95,7 @@ export interface PluginMetaInfo {
 
 export interface PluginConfigPageProps<T extends GrafanaPlugin> {
   plugin: T;
-  query: { [s: string]: any }; // The URL query parameters
+  query: KeyValue; // The URL query parameters
 }
 
 export interface PluginConfigPage<T extends GrafanaPlugin> {
