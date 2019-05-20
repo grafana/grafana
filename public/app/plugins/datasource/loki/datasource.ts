@@ -21,6 +21,7 @@ import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { LogRowModel } from 'app/core/logs_model';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -186,6 +187,83 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
     return Math.ceil(date.valueOf() * 1e6);
   }
+
+  prepareLogRowContextQueryTargets = (row: LogRowModel, limit: number) => {
+    const query = Object.keys(row.labels)
+      .map(label => {
+        return `${label}="${row.labels[label]}"`;
+      })
+      .join(',');
+    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1e6; // 2h buffer
+    const timeEpochNs = row.timeEpochMs * 1e6;
+
+    const commontTargetOptons = {
+      limit,
+      query: `{${query}}`,
+    };
+    return [
+      // Target for "before" context
+      {
+        ...commontTargetOptons,
+        start: timeEpochNs - contextTimeBuffer,
+        end: timeEpochNs,
+        direction: 'BACKWARD',
+      },
+      // Target for "after" context
+      {
+        ...commontTargetOptons,
+        start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
+        end: timeEpochNs + contextTimeBuffer,
+        direction: 'FORWARD',
+      },
+    ];
+  };
+
+  getLogRowContext = (row: LogRowModel, limit?: number) => {
+    // Preparing two targets, for preceeding and following log queries
+    const targets = this.prepareLogRowContextQueryTargets(row, limit || 10);
+
+    return Promise.all(
+      targets.map(target => {
+        return this._request('/api/prom/query', target).catch(e => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: e.status,
+            statusText: e.statusText,
+          };
+          return error;
+        });
+      })
+    ).then((results: any[]) => {
+      const series: Array<Array<SeriesData | DataQueryError>> = [];
+      const emptySeries = {
+        fields: [],
+        rows: [],
+      } as SeriesData;
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        series[i] = [];
+        if (result.data) {
+          for (const stream of result.data.streams || []) {
+            const seriesData = logStreamToSeriesData(stream);
+            series[i].push(seriesData);
+          }
+        } else {
+          series[i].push(result);
+        }
+      }
+
+      // Following context logs are requested in "forward" direction.
+      // This means, that we need to reverse those to make them sorted
+      // in descending order (by timestamp)
+      if (series[1][0] && (series[1][0] as SeriesData).rows) {
+        (series[1][0] as SeriesData).rows.reverse();
+      }
+
+      return { data: [series[0][0] || emptySeries, series[1][0] || emptySeries] };
+    });
+  };
 
   testDatasource() {
     return this._request('/api/prom/label')
