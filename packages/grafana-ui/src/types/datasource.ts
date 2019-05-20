@@ -85,7 +85,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
   supportsStreaming?: boolean;
-  
+
   /**
    * By default, hidden queries are not passed to the datasource
    */
