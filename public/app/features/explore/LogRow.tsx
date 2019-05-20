@@ -228,7 +228,6 @@ export class LogRow extends PureComponent<Props, State> {
           const styles = this.state.showContext
             ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
             : logRowStyles;
-          console.log(styles);
           return (
             <div className={`logs-row ${this.props.className}`}>
               {showDuplicates && (

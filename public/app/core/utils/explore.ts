@@ -33,8 +33,9 @@ import {
   QueryOptions,
   ResultGetter,
 } from 'app/types/explore';
-import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
+import { LogsDedupStrategy, seriesDataToLogsModel, LogsModel, LogRowModel } from 'app/core/logs_model';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -528,4 +529,37 @@ export const getRefIds = (value: any): string[] => {
   }
 
   return _.uniq(_.flatten(refIds));
+};
+
+const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return 1;
+  }
+
+  return 0;
+};
+
+const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  return 0;
+};
+
+export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+  const rows = logsResult ? logsResult.rows : [];
+  const live = isLive(refreshInterval);
+  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
+
+  return result;
 };

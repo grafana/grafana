@@ -84,6 +84,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+  supportsStreaming?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -156,6 +157,10 @@ export abstract class DataSourceApi<
    * Main metrics / data query action
    */
   abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+
+  convertToStreamTargets?(options: DataQueryRequest<TQuery>): Array<{ url: string; refId: string }>;
+
+  resultToSeriesData?(data: any, refId: string): SeriesData[];
 
   /**
    * Test & verify datasource settings & connection details
