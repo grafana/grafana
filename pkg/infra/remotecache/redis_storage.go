@@ -40,15 +40,13 @@ func (s *redisStorage) Get(key string) (interface{}, error) {
 	item := &cachedItem{}
 	err := decodeGob([]byte(v.Val()), item)
 
+	if err == nil {
+		return item.Val, nil
+	}
 	if err.Error() == "EOF" {
 		return nil, ErrCacheItemNotFound
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return item.Val, nil
+	return nil, err
 }
 
 // Delete delete a key from session.
