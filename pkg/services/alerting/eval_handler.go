@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
-// DefaultEvalHandler evaluates the alert rule.
+// DefaultEvalHandler is responsible for evaluating the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration

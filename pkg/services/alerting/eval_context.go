@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// EvalContext is the context object for a signel alert evaluation.
+// EvalContext is the context object for an alert evaluation.
 type EvalContext struct {
 	Firing         bool
 	IsTestRun      bool

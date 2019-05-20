@@ -19,7 +19,7 @@ var (
 	ErrFrequencyCouldNotBeParsed = errors.New(`"evaluate every" field could not be parsed`)
 )
 
-// Rule is the inmemory version of an alert rule.
+// Rule is the in-memory version of an alert rule.
 type Rule struct {
 	Id                  int64
 	OrgId               int64
@@ -110,7 +110,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 }
 
 // NewRuleFromDBAlert mappes an db version of
-// alert to an inmemory version.
+// alert to an in-memory version.
 func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model := &Rule{}
 	model.Id = ruleDef.Id
@@ -167,7 +167,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	return model, nil
 }
 
-// ConditionFactory is the signature for creating Conditions.
+// ConditionFactory is the function signature for creating `Conditions`.
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
 var conditionFactories = make(map[string]ConditionFactory)
