@@ -8,6 +8,12 @@ import { setDataSourceName, setIsDefault } from '../state/actions';
 
 const pluginMock = new DataSourcePlugin({} as DataSourceConstructor<any>);
 
+jest.mock('app/features/plugins/plugin_loader', () => {
+  return {
+    importDataSourcePlugin: () => Promise.resolve(pluginMock),
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     navModel: {} as NavModel,
