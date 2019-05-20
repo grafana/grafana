@@ -13,23 +13,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-type ResultHandler interface {
-	Handle(evalContext *EvalContext) error
+type resultHandler interface {
+	handle(evalContext *EvalContext) error
 }
 
-type DefaultResultHandler struct {
-	notifier NotificationService
+type defaultResultHandler struct {
+	notifier *notificationService
 	log      log.Logger
 }
 
-func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
-	return &DefaultResultHandler{
+func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewNotificationService(renderService),
+		notifier: newNotificationService(renderService),
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
@@ -45,7 +45,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
-	if evalContext.ShouldUpdateAlertState() {
+	if evalContext.shouldUpdateAlertState() {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{

@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// NotificationTestCommand initiates an test
+// execution of an alert notification.
 type NotificationTestCommand struct {
 	State    models.AlertStateType
 	Name     string
@@ -27,7 +29,7 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := NewNotificationService(nil).(*notificationService)
+	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{
 		Name:     cmd.Name,
