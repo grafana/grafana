@@ -204,10 +204,6 @@ export interface ToggleGraphPayload {
   exploreId: ExploreId;
 }
 
-export interface ToggleLogsPayload {
-  exploreId: ExploreId;
-}
-
 export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
   exploreId: ExploreId;
 }
@@ -411,11 +407,6 @@ export const toggleTableAction = actionCreatorFactory<ToggleTablePayload>('explo
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
 export const toggleGraphAction = actionCreatorFactory<ToggleGraphPayload>('explore/TOGGLE_GRAPH').create();
-
-/**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogsAction = actionCreatorFactory<ToggleLogsPayload>('explore/TOGGLE_LOGS').create();
 
 /**
  * Updates datasource instance before datasouce loading has started

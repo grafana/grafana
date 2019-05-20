@@ -224,6 +224,7 @@
     "react-sizeme": "2.5.2",
     "react-table": "6.9.2",
     "react-transition-group": "2.6.1",
+    "react-use": "9.0.0",
     "react-virtualized": "9.21.0",
     "react-window": "1.7.1",
     "redux": "4.0.1",

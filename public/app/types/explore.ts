@@ -179,6 +179,7 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel;
+
   /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
@@ -204,10 +205,6 @@ export interface ExploreItemState {
    * True if graph result viewer is expanded. Query runs will contain graph queries.
    */
   showingGraph: boolean;
-  /**
-   * True if logs result viewer is expanded. Query runs will contain logs queries.
-   */
-  showingLogs: boolean;
   /**
    * True StartPage needs to be shown. Typically set to `false` once queries have been run.
    */
