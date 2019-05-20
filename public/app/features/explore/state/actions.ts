@@ -91,6 +91,7 @@ import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
+import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/features/explore/state/epics';
 
 /**
  * Updates UI state and save it to the URL
@@ -583,6 +584,16 @@ function runQueriesForType(
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning, history } = getState().explore[
       exploreId
     ];
+
+    if (resultType === 'Logs' && datasourceInstance.convertToStreamTargets) {
+      dispatch(
+        startSubscriptionsAction({
+          exploreId,
+          dataReceivedActionCreator: subscriptionDataReceivedAction,
+        })
+      );
+    }
+
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
     dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
