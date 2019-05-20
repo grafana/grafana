@@ -10,7 +10,6 @@ import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@graf
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
-import _default from 'calculate-size';
 
 export interface GridPos {
   x: number;
