@@ -11,7 +11,7 @@ export enum PluginType {
   app = 'app',
 }
 
-export type KeyValue = { [s: string]: any };
+export type KeyValue<T = any> = { [s: string]: T };
 
 export interface PluginMeta<T = KeyValue> {
   id: string;
@@ -30,7 +30,7 @@ export interface PluginMeta<T = KeyValue> {
 
   // Filled in by the backend
   jsonData?: T;
-  secureJsonData?: { [str: string]: any };
+  secureJsonData?: KeyValue;
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
