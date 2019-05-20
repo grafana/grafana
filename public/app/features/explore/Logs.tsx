@@ -5,7 +5,7 @@ import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
+import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind, LogRowModel } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
@@ -60,6 +60,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
+  getRowContext?: (row: LogRowModel, limit: number) => Promise<any>;
 }
 
 interface State {
@@ -252,6 +253,7 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={index}
                 getRows={getRows}
+                getRowContext={this.props.getRowContext}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -268,6 +270,7 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={PREVIEW_LIMIT + index}
                 getRows={getRows}
+                getRowContext={this.props.getRowContext}
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
