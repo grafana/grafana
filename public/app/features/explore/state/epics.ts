@@ -16,7 +16,7 @@ import { SeriesData } from '@grafana/ui/src/types/data';
 import { EpicDependencies } from 'app/store/configureStore';
 
 const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https' ? 'wss://' : 'ws://';
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
   if (backend.endsWith('/')) {
     backend = backend.slice(0, backend.length - 1);
