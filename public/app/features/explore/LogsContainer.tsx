@@ -1,10 +1,19 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime } from '@grafana/ui';
+import {
+  RawTimeRange,
+  TimeRange,
+  LogLevel,
+  TimeZone,
+  AbsoluteTimeRange,
+  toUtc,
+  dateTime,
+  DataSourceApi,
+} from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, changeTime } from './state/actions';
@@ -15,6 +24,7 @@ import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/featur
 import { getTimeZone } from '../profile/state/selectors';
 
 interface LogsContainerProps {
+  datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
   logsHighlighterExpressions?: string[];
@@ -58,9 +68,20 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
+  getLogRowContext = async (row: LogRowModel, limit: number) => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance) {
+      return datasourceInstance.getLogRowContext(row, limit);
+    }
+
+    return [];
+  };
+
   render() {
     const {
       exploreId,
+
       loading,
       logsHighlighterExpressions,
       logsResult,
@@ -97,6 +118,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           scanRange={scanRange}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
+          getRowContext={this.getLogRowContext}
         />
       </Panel>
     );
@@ -106,7 +128,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range } = item;
+  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range, datasourceInstance } = item;
   const loading = logIsLoading;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
@@ -124,6 +146,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
+    datasourceInstance,
   };
 }
 
