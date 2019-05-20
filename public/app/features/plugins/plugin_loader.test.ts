@@ -1,3 +1,18 @@
+// Use the real plugin_loader (stubbed by default)
+jest.unmock('app/features/plugins/plugin_loader');
+
+(global as any).ace = {
+  define: jest.fn(),
+};
+
+jest.mock('app/core/core', () => {
+  return {
+    coreModule: {
+      directive: jest.fn(),
+    },
+  };
+});
+
 /* tslint:disable:import-blacklist */
 import System from 'systemjs/dist/system.js';
 
