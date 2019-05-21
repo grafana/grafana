@@ -94,7 +94,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     if (options.tags && options.tags.length) {
       params.tags = options.tags;
-      //timeInfo += ' ' + this.queryTagValue;
     }
 
     if (queryTags.length) {
@@ -262,30 +261,33 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { loaded, timeInfo, annotations, queryUser, queryTags } = this.state;
+    const { loaded, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
       return <div>loading...</div>;
     }
 
+    // Previously we showed inidication that it covered all time
+    // { timeInfo && (
+    //   <span className="panel-time-info">
+    //     <i className="fa fa-clock-o" /> {timeInfo}
+    //   </span>
+    // )}
+
+    const hasFilter = queryUser || queryTags.length > 0;
+
     return (
       <div>
-        <div>
-          {timeInfo && (
-            <span className="panel-time-info">
-              <i className="fa fa-clock-o" /> {timeInfo}
-            </span>
-          )}
-
+        {hasFilter && (
           <div>
+            <b>Filter: &nbsp; </b>
             {queryUser && (
               <span onClick={this.onClearUser} className="pointer">
                 {queryUser.email}
               </span>
             )}
-
             {queryTags.length > 0 && this.renderTags(queryTags, true)}
           </div>
-        </div>
+        )}
 
         {annotations.length < 1 && <div className="panel-alert-list__no-alerts">No Annotations Found</div>}
 
