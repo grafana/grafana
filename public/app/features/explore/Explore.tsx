@@ -55,7 +55,7 @@ import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { scanStopAction } from './state/processQueryResultsEpic';
+import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;

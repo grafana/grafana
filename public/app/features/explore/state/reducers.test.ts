@@ -23,6 +23,8 @@ import {
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
+  scanStopAction,
+  runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -30,8 +32,6 @@ import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy } from '@grafana/ui';
-import { runQueriesAction } from './runQueriesEpic';
-import { scanStopAction } from './processQueryResultsEpic';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {

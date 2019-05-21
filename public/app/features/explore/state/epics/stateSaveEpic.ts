@@ -3,12 +3,12 @@ import { mergeMap } from 'rxjs/operators';
 import { RawTimeRange, TimeRange } from '@grafana/ui/src/types/time';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
-import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
 import { ExploreUrlState, ExploreId } from 'app/types/explore';
 import { clearQueryKeys, serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from 'app/core/actions/location';
-import { setUrlReplacedAction } from './actionTypes';
+import { setUrlReplacedAction, stateSaveAction } from '../actionTypes';
 
 const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
@@ -26,8 +26,6 @@ const toRawTimeRange = (range: TimeRange): RawTimeRange => {
     to,
   };
 };
-
-export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
 
 export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(stateSaveAction.type).pipe(

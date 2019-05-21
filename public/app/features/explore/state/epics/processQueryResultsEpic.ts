@@ -2,58 +2,18 @@ import _ from 'lodash';
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
 import { NEVER } from 'rxjs';
-import { RawTimeRange } from '@grafana/ui/src/types/time';
 
-import { ActionOf, actionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
-import { ExploreId } from 'app/types/explore';
 import { getRefIds } from 'app/core/utils/explore';
-
-export interface ProcessQueryResultsPayload {
-  exploreId: ExploreId;
-  response: any;
-  latency: number;
-  datasourceId: string;
-}
-
-export interface QuerySuccessPayload {
-  exploreId: ExploreId;
-  result: any;
-  latency: number;
-}
-
-export interface ScanRangePayload {
-  exploreId: ExploreId;
-  range: RawTimeRange;
-}
-
-export interface ScanStopPayload {
-  exploreId: ExploreId;
-}
-
-export interface ResetQueryErrorPayload {
-  exploreId: ExploreId;
-  refIds: string[];
-}
-
-export const processQueryResultsAction = actionCreatorFactory<ProcessQueryResultsPayload>(
-  'explore/PROCESS_QUERY_RESULTS'
-).create();
-
-/**
- * Complete a query transaction, mark the transaction as `done` and store query state in URL.
- * If the transaction was started by a scanner, it keeps on scanning for more results.
- */
-export const querySuccessAction = actionCreatorFactory<QuerySuccessPayload>('explore/QUERY_SUCCESS').create();
-
-export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
-
-/**
- * Stop any scanning for more results.
- */
-export const scanStopAction = actionCreatorFactory<ScanStopPayload>('explore/SCAN_STOP').create();
-
-export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
+import {
+  processQueryResultsAction,
+  ProcessQueryResultsPayload,
+  querySuccessAction,
+  scanRangeAction,
+  resetQueryErrorAction,
+  scanStopAction,
+} from '../actionTypes';
 
 export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(processQueryResultsAction.type).pipe(

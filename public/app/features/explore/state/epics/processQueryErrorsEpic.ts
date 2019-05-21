@@ -1,30 +1,12 @@
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
 import { NEVER, of } from 'rxjs';
-import { DataQueryError } from '@grafana/ui/src/types/datasource';
 
-import { ActionOf, actionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
-import { ExploreId } from 'app/types/explore';
 import { instanceOfDataQueryError } from 'app/core/utils/explore';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
-
-export interface ProcessQueryErrorsPayload {
-  exploreId: ExploreId;
-  response: any;
-  datasourceId: string;
-}
-
-export interface QueryFailurePayload {
-  exploreId: ExploreId;
-  response: DataQueryError;
-}
-
-export const processQueryErrorsAction = actionCreatorFactory<ProcessQueryErrorsPayload>(
-  'explore/PROCESS_QUERY_ERRORS'
-).create();
-
-export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
+import { processQueryErrorsAction, ProcessQueryErrorsPayload, queryFailureAction } from '../actionTypes';
 
 export const processQueryErrorsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(processQueryErrorsAction.type).pipe(

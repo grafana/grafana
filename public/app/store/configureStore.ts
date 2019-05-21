@@ -15,12 +15,13 @@ import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
-import { startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic } from 'app/features/explore/state/epics';
+import { limitMessageRateEpic } from 'app/features/explore/state/epics/limitMessageRateEpic';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
-import { stateSaveEpic } from 'app/features/explore/state/stateSaveEpic';
-import { processQueryResultsEpic } from 'app/features/explore/state/processQueryResultsEpic';
-import { processQueryErrorsEpic } from 'app/features/explore/state/processQueryErrorsEpic';
-import { runQueriesEpic, runQueriesBatchEpic } from 'app/features/explore/state/runQueriesEpic';
+import { stateSaveEpic } from 'app/features/explore/state/epics/stateSaveEpic';
+import { processQueryResultsEpic } from 'app/features/explore/state/epics/processQueryResultsEpic';
+import { processQueryErrorsEpic } from 'app/features/explore/state/epics/processQueryErrorsEpic';
+import { runQueriesEpic } from 'app/features/explore/state/epics/runQueriesEpic';
+import { runQueriesBatchEpic } from 'app/features/explore/state/epics/runQueriesBatchEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -42,8 +43,6 @@ export function addRootReducer(reducers) {
 }
 
 export const rootEpic: any = combineEpics(
-  startSubscriptionsEpic,
-  startSubscriptionEpic,
   limitMessageRateEpic,
   stateSaveEpic,
   runQueriesEpic,

@@ -351,5 +351,3 @@ export interface TextMatch {
   length: number;
   end: number;
 }
-
-export type ResultType = 'Graph' | 'Logs' | 'Table';

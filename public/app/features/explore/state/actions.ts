@@ -59,12 +59,13 @@ import {
   testDataSourceFailureAction,
   loadExploreDatasources,
   changeModeAction,
+  scanStopAction,
+  scanRangeAction,
+  runQueriesAction,
+  stateSaveAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { stateSaveAction } from './stateSaveEpic';
-import { runQueriesAction } from './runQueriesEpic';
-import { scanStopAction, scanRangeAction } from './processQueryResultsEpic';
 
 /**
  * Updates UI state and save it to the URL

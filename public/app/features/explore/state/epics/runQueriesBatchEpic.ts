@@ -1,73 +1,25 @@
 import { Epic } from 'redux-observable';
-import { NEVER, from, Observable, Subject } from 'rxjs';
+import { from, Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 
-import { ActionOf, actionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
-import { ExploreId, QueryOptions } from 'app/types/explore';
-import { hasNonEmptyQuery, buildQueryTransaction, updateHistory } from 'app/core/utils/explore';
+import { buildQueryTransaction, updateHistory } from 'app/core/utils/explore';
 import {
   clearQueriesAction,
   historyUpdatedAction,
   resetExploreAction,
   updateDatasourceInstanceAction,
   changeRefreshIntervalAction,
-} from './actionTypes';
-import { stateSaveAction } from './stateSaveEpic';
-import { processQueryResultsAction } from './processQueryResultsEpic';
-import { processQueryErrorsAction } from './processQueryErrorsEpic';
+  processQueryErrorsAction,
+  processQueryResultsAction,
+  runQueriesBatchAction,
+  RunQueriesBatchPayload,
+  queryStartAction,
+  limitMessageRatePayloadAction,
+} from '../actionTypes';
 import { DataStreamState, LoadingState } from '@grafana/ui';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { limitMessageRatePayloadAction, subscriptionDataReceivedAction } from './epics';
-
-export interface RunQueriesPayload {
-  exploreId: ExploreId;
-}
-
-export interface RunQueriesBatchPayload {
-  exploreId: ExploreId;
-  queryOptions: QueryOptions;
-}
-
-export interface QueryStartPayload {
-  exploreId: ExploreId;
-}
-
-export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
-
-export const runQueriesBatchAction = actionCreatorFactory<RunQueriesBatchPayload>('explore/RUN_QUERIES_BATCH').create();
-
-export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
-
-export const runQueriesEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
-  return action$.ofType(runQueriesAction.type).pipe(
-    mergeMap((action: ActionOf<RunQueriesPayload>) => {
-      const { exploreId } = action.payload;
-      const { datasourceInstance, queries, datasourceError, containerWidth, refreshInterval } = state$.value.explore[
-        exploreId
-      ];
-
-      if (datasourceError) {
-        // let's not run any queries if data source is in a faulty state
-        return NEVER;
-      }
-
-      if (!hasNonEmptyQuery(queries)) {
-        return [clearQueriesAction({ exploreId }), stateSaveAction()]; // Remember to save to state and update location
-      }
-
-      // Some datasource's query builders allow per-query interval limits,
-      // but we're using the datasource interval limit for now
-      const interval = datasourceInstance.interval;
-      const live = datasourceInstance && datasourceInstance.supportsStreaming && isLive(refreshInterval) ? true : false;
-
-      return [
-        runQueriesBatchAction({ exploreId, queryOptions: { interval, maxDataPoints: containerWidth, live } }),
-        stateSaveAction(),
-      ];
-    })
-  );
-};
 
 export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(runQueriesBatchAction.type).pipe(
@@ -83,6 +35,10 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         history,
       } = state$.value.explore[exploreId];
 
+      // Create an observable per runqueries
+      // Within the observable create two subscriptions
+      // First subscription: 'querySubscription' subscribes to the call to query method on datasourceinstance
+      // Second subscription: 'streamSubscription' subscribes to events from the query methods observer callback
       const observable: Observable<ActionOf<any>> = Observable.create((outerObservable: Subject<any>) => {
         const datasourceId = datasourceInstance.meta.id;
         const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
@@ -102,16 +58,25 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
             }
 
             if (state === LoadingState.Streaming) {
-              eventBridge.emit('data-received', series || []);
               series.forEach(data => {
                 outerObservable.next(
                   limitMessageRatePayloadAction({
                     exploreId,
                     data,
-                    dataReceivedActionCreator: subscriptionDataReceivedAction,
                   })
                 );
               });
+            }
+
+            if (state === LoadingState.Done) {
+              eventBridge.emit('data-received', series || []);
+              const latency = Date.now() - now;
+              // Side-effect: Saving history in localstorage
+              const nextHistory = updateHistory(history, datasourceId, queries);
+              outerObservable.next(historyUpdatedAction({ exploreId, history: nextHistory }));
+              outerObservable.next(
+                processQueryResultsAction({ exploreId, response: { data: series }, latency, datasourceId })
+              );
             }
           },
         });
