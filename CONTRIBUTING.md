@@ -31,6 +31,8 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 * Add tests relevant to the fixed bug or new feature.
 
+* Follow [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
+
 ### Pull requests with new features
 Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
 
@@ -38,18 +40,20 @@ Make sure to include `Closes #<issue number>` or `Fixes #<issue number>` in the 
 
 ### Pull requests with bug fixes
 Please make all changes in one commit if possible. Include `Closes #<issue number>` in bottom of the commit message.
-A commit message for a bug fix should look something like this.
+A commit message for a bug fix should look something like this:
 
 ```
-avoid infinite loop in the dashboard provisioner
+Dashboard: Avoid infinite loop in the dashboard provisioner
 
-if one dashboard with an uid is refered to by two
+If one dashboard with an uid is refered to by two
 provsioners each provisioner overwrite each other.
 filling up dashboard_versions quite fast if using
 default settings.
 
 Closes #12864
 ```
+
+For more details about PR naming and commit messages please see [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
 
 If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged.
 
@@ -80,3 +84,22 @@ GO111MODULE=on go mod vendor
 ```
 
 You have to commit the changes to `go.mod`, `go.sum` and the `vendor/` directory before submitting the pull request.
+
+## PR and commit messages guidelines
+PR title and squash commit messages should follow guidelines below:
+
+```
+Area of changes: Message
+
+Detailed description
+```
+
+The `Area of changes` is related either to functional domain (i.e. Build, Release) or feature domain (i.e. Explore, Plugins, BarGaugePanel).
+
+
+`Message` should be concise, written in present tense and start with capitalised verb. Detailed description should be provided as commit message body, by entering a blank line between commit title and the description.
+
+### Examples of good PR titles/commit messages:
+- `Explore: Adds Live option for supported datasources`
+- `GraphPanel: Don't sort series when legend table & sort column is not visible`
+- `Build: Support publishing MSI to grafana.com`
