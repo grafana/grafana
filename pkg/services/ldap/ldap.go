@@ -122,13 +122,13 @@ func (server *Server) Close() {
 	server.connection.Close()
 }
 
-// Login intialBinds the user, search it and then serialize it
+// Log in user by searching and serializing it
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 
 	// Perform initial authentication
-	err := server.intialBind(query.Username, query.Password)
+	err := server.initialBind(query.Username, query.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 
 // Add adds stuff to LDAP
 func (server *Server) Add(dn string, values map[string][]string) error {
-	err := server.intialBind(
+	err := server.initialBind(
 		server.config.BindDN,
 		server.config.BindPassword,
 	)
@@ -190,7 +190,7 @@ func (server *Server) Add(dn string, values map[string][]string) error {
 
 // Remove removes stuff from LDAP
 func (server *Server) Remove(dn string) error {
-	err := server.intialBind(
+	err := server.initialBind(
 		server.config.BindDN,
 		server.config.BindPassword,
 	)
@@ -381,7 +381,7 @@ func (server *Server) secondBind(
 	return nil
 }
 
-func (server *Server) intialBind(username, userPassword string) error {
+func (server *Server) initialBind(username, userPassword string) error {
 	if server.config.BindPassword != "" || server.config.BindDN == "" {
 		userPassword = server.config.BindPassword
 		server.requireSecondBind = true

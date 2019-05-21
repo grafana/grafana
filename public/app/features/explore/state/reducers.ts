@@ -7,6 +7,7 @@ import {
   parseUrlState,
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
+  sortLogsResult,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { DataQuery } from '@grafana/ui/src/types';
@@ -55,6 +56,9 @@ import {
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
+import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -109,6 +113,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   latency: 0,
   supportedModes: [],
   mode: null,
+  isLive: false,
 });
 
 /**
@@ -184,9 +189,17 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
+      const live = isLive(refreshInterval);
+      const logsResult = sortLogsResult(state.logsResult, refreshInterval);
+
       return {
         ...state,
         refreshInterval: refreshInterval,
+        graphIsLoading: live ? true : false,
+        tableIsLoading: live ? true : false,
+        logIsLoading: live ? true : false,
+        isLive: live,
+        logsResult,
       };
     },
   })
@@ -376,19 +389,77 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { queryIntervals } = state;
+      const { queryIntervals, refreshInterval } = state;
       const { result, resultType, latency } = action.payload;
       const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
+      const live = isLive(refreshInterval);
+
+      if (live) {
+        return state;
+      }
+
       return {
         ...state,
         graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
         tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
-        logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
+        logsResult:
+          resultType === 'Logs'
+            ? sortLogsResult(results.logsResult, refreshInterval)
+            : sortLogsResult(state.logsResult, refreshInterval),
         latency,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
+        graphIsLoading: live ? true : false,
+        logIsLoading: live ? true : false,
+        tableIsLoading: live ? true : false,
+        showingStartPage: false,
         update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: startSubscriptionAction,
+    mapper: (state): ExploreItemState => {
+      const logsResult = sortLogsResult(state.logsResult, state.refreshInterval);
+
+      return {
+        ...state,
+        logsResult,
+        graphIsLoading: true,
+        logIsLoading: true,
+        tableIsLoading: true,
+        showingStartPage: false,
+        update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: subscriptionDataReceivedAction,
+    mapper: (state, action): ExploreItemState => {
+      const { queryIntervals, refreshInterval } = state;
+      const { data } = action.payload;
+      const live = isLive(refreshInterval);
+
+      if (live) {
+        return state;
+      }
+
+      const newResults = seriesDataToLogsModel([data], queryIntervals.intervalMs);
+      const rowsInState = sortLogsResult(state.logsResult, state.refreshInterval).rows;
+
+      const processedRows = [];
+      for (const row of rowsInState) {
+        processedRows.push({ ...row, fresh: false });
+      }
+      for (const row of newResults.rows) {
+        processedRows.push({ ...row, fresh: true });
+      }
+
+      const rows = processedRows.slice(processedRows.length - 1000, 1000);
+
+      const logsResult: LogsModel = state.logsResult ? { ...state.logsResult, rows } : { hasUniqueLabels: false, rows };
+
+      return {
+        ...state,
+        logsResult,
       };
     },
   })

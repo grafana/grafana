@@ -19,9 +19,11 @@ import { StoreState } from 'app/types';
 import { changeDedupStrategy, changeTime } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
+import { toggleLogLevelAction, changeRefreshIntervalAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
+import { LiveLogsWithTheme } from './LiveLogs';
+import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -43,6 +45,8 @@ interface LogsContainerProps {
   hiddenLogLevels: Set<LogLevel>;
   width: number;
   changeTime: typeof changeTime;
+  isLive: boolean;
+  stopLive: typeof changeRefreshIntervalAction;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -54,6 +58,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     };
 
     changeTime(exploreId, range);
+  };
+
+  onStopLive = () => {
+    const { exploreId } = this.props;
+    this.props.stopLive({ exploreId, refreshInterval: offOption.value });
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
@@ -81,7 +90,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   render() {
     const {
       exploreId,
-
       loading,
       logsHighlighterExpressions,
       logsResult,
@@ -95,7 +103,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       scanRange,
       width,
       hiddenLogLevels,
+      isLive,
     } = this.props;
+
+    if (isLive) {
+      return (
+        <Panel label="Logs" loading={false} isOpen>
+          <LiveLogsWithTheme logsResult={logsResult} stopLive={this.onStopLive} />
+        </Panel>
+      );
+    }
 
     return (
       <Panel label="Logs" loading={loading} isOpen>
@@ -128,7 +145,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range, datasourceInstance } = item;
+  const {
+    logsHighlighterExpressions,
+    logsResult,
+    logIsLoading,
+    scanning,
+    scanRange,
+    range,
+    datasourceInstance,
+    isLive,
+  } = item;
   const loading = logIsLoading;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
@@ -147,6 +173,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     hiddenLogLevels,
     dedupedResult,
     datasourceInstance,
+    isLive,
   };
 }
 
@@ -154,6 +181,7 @@ const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
   changeTime,
+  stopLive: changeRefreshIntervalAction,
 };
 
 export default hot(module)(

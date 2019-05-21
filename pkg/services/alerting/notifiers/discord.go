@@ -171,7 +171,7 @@ func (this *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath s
 
 	w.Close()
 
-	cmd.Body = string(b.Bytes())
+	cmd.Body = b.String()
 	cmd.ContentType = w.FormDataContentType()
 
 	return nil
