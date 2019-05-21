@@ -25,8 +25,8 @@ export default class LogAnalyticsQuerystringBuilder {
         return match;
       });
       queryString = queryString.replace(/\$__interval/gi, this.options.interval);
-      queryString = queryString.replace(/\$__from_az/gi, this.getFrom(this.options));
-      queryString = queryString.replace(/\$__to_az/gi, this.getUntil(this.options));
+      queryString = queryString.replace(/\$__timeFrom/gi, this.getFrom(this.options));
+      queryString = queryString.replace(/\$__timeTo/gi, this.getUntil(this.options));
     }
     const rawQuery = queryString;
     queryString = encodeURIComponent(queryString);
