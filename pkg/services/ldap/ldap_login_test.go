@@ -148,5 +148,102 @@ func TestLDAPLogin(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.Login, ShouldEqual, "markelog")
 		})
+
+		authScenario("When user not found in LDAP, but exist in Grafana", func(scenario *scenarioContext) {
+			connection := &mockConnection{}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+			connection.setSearchResult(&result)
+
+			externalUser := &models.ExternalUserInfo{UserId: 42, IsDisabled: false}
+			scenario.getExternalUserInfoByLoginQueryReturns(externalUser)
+
+			connection.bindProvider = func(username, password string) error {
+				return nil
+			}
+			auth := &Server{
+				config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := auth.Login(scenario.loginUserQuery)
+
+			Convey("it should disable user", func() {
+				So(scenario.disableExternalUserCalled, ShouldBeTrue)
+				So(scenario.disableUserCmd.IsDisabled, ShouldBeTrue)
+				So(scenario.disableUserCmd.UserId, ShouldEqual, 42)
+			})
+
+			Convey("it should return invalid credentials error", func() {
+				So(err, ShouldEqual, ErrInvalidCredentials)
+			})
+		})
+
+		authScenario("When user not found in LDAP, and disabled in Grafana already", func(scenario *scenarioContext) {
+			connection := &mockConnection{}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+			connection.setSearchResult(&result)
+
+			externalUser := &models.ExternalUserInfo{UserId: 42, IsDisabled: true}
+			scenario.getExternalUserInfoByLoginQueryReturns(externalUser)
+
+			connection.bindProvider = func(username, password string) error {
+				return nil
+			}
+			auth := &Server{
+				config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := auth.Login(scenario.loginUserQuery)
+
+			Convey("it should't call disable function", func() {
+				So(scenario.disableExternalUserCalled, ShouldBeFalse)
+			})
+
+			Convey("it should return invalid credentials error", func() {
+				So(err, ShouldEqual, ErrInvalidCredentials)
+			})
+		})
+
+		authScenario("When user found in LDAP, and disabled in Grafana", func(scenario *scenarioContext) {
+			connection := &mockConnection{}
+			entry := ldap.Entry{}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			connection.setSearchResult(&result)
+			scenario.userQueryReturns(&models.User{Id: 42, IsDisabled: true})
+
+			connection.bindProvider = func(username, password string) error {
+				return nil
+			}
+			auth := &Server{
+				config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			extUser, _ := auth.Login(scenario.loginUserQuery)
+			_, err := user.Upsert(&user.UpsertArgs{
+				SignupAllowed: true,
+				ExternalUser:  extUser,
+			})
+
+			Convey("it should re-enable user", func() {
+				So(scenario.disableExternalUserCalled, ShouldBeTrue)
+				So(scenario.disableUserCmd.IsDisabled, ShouldBeFalse)
+				So(scenario.disableUserCmd.UserId, ShouldEqual, 42)
+			})
+
+			Convey("it should not return error", func() {
+				So(err, ShouldBeNil)
+			})
+		})
 	})
 }

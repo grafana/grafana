@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/ldap.v3"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -48,6 +49,7 @@ var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrLDAPUserNotFound   = errors.New("LDAP user not found")
 )
 
 var dial = func(network, addr string) (IConnection, error) {
@@ -142,6 +144,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	// If we couldn't find the user -
 	// we should show incorrect credentials err
 	if len(users) == 0 {
+		server.disableExternalUser(query.Username)
 		return nil, ErrInvalidCredentials
 	}
 
@@ -263,6 +266,34 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	return nil
 }
 
+// disableExternalUser marks external user as disabled in Grafana db
+func (server *Server) disableExternalUser(username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := bus.Dispatch(userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if !userInfo.IsDisabled {
+		server.log.Debug("Disabling external user", "user", userQuery.Result.Login)
+		// Mark user as disabled in grafana db
+		disableUserCmd := &models.DisableUserCommand{
+			UserId:     userQuery.Result.UserId,
+			IsDisabled: true,
+		}
+
+		if err := bus.Dispatch(disableUserCmd); err != nil {
+			server.log.Debug("Error disabling external user", "user", userQuery.Result.Login, "message", err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
 // getSearchRequest returns LDAP search request for users
 func (server *Server) getSearchRequest(
 	base string,
@@ -305,7 +336,7 @@ func (server *Server) getSearchRequest(
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
 func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
 	extUser := &models.ExternalUserInfo{
-		AuthModule: "ldap",
+		AuthModule: models.AuthModuleLDAP,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
