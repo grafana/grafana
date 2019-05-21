@@ -18,6 +18,9 @@ import { setStore } from './store';
 import { startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic } from 'app/features/explore/state/epics';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { stateSaveEpic } from 'app/features/explore/state/stateSaveEpic';
+import { processQueryResultsEpic } from 'app/features/explore/state/processQueryResultsEpic';
+import { processQueryErrorsEpic } from 'app/features/explore/state/processQueryErrorsEpic';
+import { runQueriesEpic, runQueriesForTypeEpic } from 'app/features/explore/state/runQueriesEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -42,7 +45,11 @@ export const rootEpic: any = combineEpics(
   startSubscriptionsEpic,
   startSubscriptionEpic,
   limitMessageRateEpic,
-  stateSaveEpic
+  stateSaveEpic,
+  runQueriesEpic,
+  runQueriesForTypeEpic,
+  processQueryResultsEpic,
+  processQueryErrorsEpic
 );
 
 export interface EpicDependencies {

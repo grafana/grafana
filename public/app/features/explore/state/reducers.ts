@@ -20,9 +20,7 @@ import {
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
-  runQueriesAction,
   historyUpdatedAction,
-  resetQueryErrorAction,
   changeModeAction,
   setUrlReplacedAction,
 } from './actionTypes';
@@ -41,13 +39,9 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  queryFailureAction,
   queryStartAction,
-  querySuccessAction,
   removeQueryRowAction,
-  scanRangeAction,
   scanStartAction,
-  scanStopAction,
   setQueriesAction,
   toggleTableAction,
   queriesImportedAction,
@@ -59,7 +53,10 @@ import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
-import { seriesDataToLogsModel } from 'app/core/logs_model';
+import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
+import { runQueriesAction } from './runQueriesEpic';
+import { queryFailureAction } from './processQueryErrorsEpic';
+import { querySuccessAction, scanRangeAction, scanStopAction, resetQueryErrorAction } from './processQueryResultsEpic';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

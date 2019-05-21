@@ -1,14 +1,12 @@
 // Types
 import { Emitter } from 'app/core/core';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
   LogLevel,
   TimeRange,
-  DataQueryError,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -139,24 +137,11 @@ export interface ModifyQueriesPayload {
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 
-export interface QueryFailurePayload {
-  exploreId: ExploreId;
-  response: DataQueryError;
-  resultType: ResultType;
-}
-
 export interface QueryStartPayload {
   exploreId: ExploreId;
   resultType: ResultType;
   rowIndex: number;
   transaction: QueryTransaction;
-}
-
-export interface QuerySuccessPayload {
-  exploreId: ExploreId;
-  result: any;
-  resultType: ResultType;
-  latency: number;
 }
 
 export interface HistoryUpdatedPayload {
@@ -172,15 +157,6 @@ export interface RemoveQueryRowPayload {
 export interface ScanStartPayload {
   exploreId: ExploreId;
   scanner: RangeScanner;
-}
-
-export interface ScanRangePayload {
-  exploreId: ExploreId;
-  range: RawTimeRange;
-}
-
-export interface ScanStopPayload {
-  exploreId: ExploreId;
 }
 
 export interface SetQueriesPayload {
@@ -226,15 +202,6 @@ export interface QueriesImportedPayload {
 export interface LoadExploreDataSourcesPayload {
   exploreId: ExploreId;
   exploreDatasources: DataSourceSelectItem[];
-}
-
-export interface RunQueriesPayload {
-  exploreId: ExploreId;
-}
-
-export interface ResetQueryErrorPayload {
-  exploreId: ExploreId;
-  refIds: string[];
 }
 
 export interface SetUrlReplacedPayload {
@@ -331,12 +298,6 @@ export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceRead
 export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('explore/MODIFY_QUERIES').create();
 
 /**
- * Mark a query transaction as failed with an error extracted from the query response.
- * The transaction will be marked as `done`.
- */
-export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
-
-/**
  * Start a query transaction for the given result type.
  * @param exploreId Explore area
  * @param transaction Query options and `done` status.
@@ -346,24 +307,9 @@ export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('exp
 export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
 /**
- * Complete a query transaction, mark the transaction as `done` and store query state in URL.
- * If the transaction was started by a scanner, it keeps on scanning for more results.
- * Side-effect: the query is stored in localStorage.
- * @param exploreId Explore area
- * @param transactionId ID
- * @param result Response from `datasourceInstance.query()`
- * @param latency Duration between request and response
- * @param queries Queries from all query rows
- * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
- */
-export const querySuccessAction = actionCreatorFactory<QuerySuccessPayload>('explore/QUERY_SUCCESS').create();
-
-/**
  * Remove query row of the given index, as well as associated query results.
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
-
-export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
 
 /**
  * Start a scan for more results using the given scanner.
@@ -371,12 +317,6 @@ export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
 export const scanStartAction = actionCreatorFactory<ScanStartPayload>('explore/SCAN_START').create();
-export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
-
-/**
- * Stop any scanning for more results.
- */
-export const scanStopAction = actionCreatorFactory<ScanStopPayload>('explore/SCAN_STOP').create();
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -439,8 +379,6 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
 ).create();
 
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
-
-export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
 
 export const setUrlReplacedAction = actionCreatorFactory<SetUrlReplacedPayload>('explore/SET_URL_REPLACED').create();
 
