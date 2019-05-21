@@ -159,7 +159,7 @@ transformers['table'] = {
       return;
     }
     const noTableIndex = _.findIndex(data, d => 'columns' in d && 'rows' in d);
-    if (noTableIndex > -1) {
+    if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
           65 + noTableIndex
