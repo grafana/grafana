@@ -80,6 +80,13 @@ export interface DataSourcePluginMeta extends PluginMeta {
   mixed?: boolean;
   hasQueryHelp?: boolean;
   queryOptions?: PluginMetaQueryOptions;
+  sort?: number;
+  /**
+   * By default, hidden queries are not passed to the datasource
+   * Set this to true in plugin.json to have hidden queries passed to the
+   * DataSource query method
+   */
+  hiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
