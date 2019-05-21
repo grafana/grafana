@@ -17,11 +17,19 @@ import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
 import { cx, css } from 'emotion';
 
+interface UserInfo {
+  id: number;
+  login: string;
+  email: string;
+}
+
 interface Props extends PanelProps<AnnoOptions> {}
 interface State {
   annotations: Annotation[];
   timeInfo: string;
   loaded: boolean;
+  queryUser?: UserInfo;
+  queryTags: string[];
 }
 
 export class AnnoListPanel extends PureComponent<Props, State> {
@@ -32,6 +40,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       annotations: [],
       timeInfo: '',
       loaded: false,
+      queryTags: [],
     };
   }
 
@@ -39,9 +48,15 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     this.doSearch();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     const { options, timeRange } = this.props;
-    if (options !== prevProps.options || timeRange !== prevProps.timeRange) {
+    const needsQuery =
+      options !== prevProps.options ||
+      this.state.queryTags !== prevState.queryTags ||
+      this.state.queryUser !== prevState.queryUser ||
+      timeRange !== prevProps.timeRange;
+
+    if (needsQuery) {
       this.doSearch();
     }
   }
@@ -52,6 +67,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // https://github.com/grafana/grafana/blob/master/public/app/features/annotations/annotations_srv.ts
 
     const { options } = this.props;
+    const { queryUser, queryTags } = this.state;
 
     const params: any = {
       tags: options.tags,
@@ -60,7 +76,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.onlyFromThisDashboard) {
-      //params.dashboardId = this.dashboard.id;
+      params.dashboardId = getDashboardSrv().getCurrent().id;
     }
 
     let timeInfo = '';
@@ -72,14 +88,17 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       timeInfo = 'All Time';
     }
 
-    // if (this.queryUserId !== undefined) {
-    //   params.userId = this.queryUserId;
-    //   timeInfo += ' ' + this.queryUser;
-    // }
+    if (queryUser) {
+      params.userId = queryUser.id;
+    }
 
     if (options.tags && options.tags.length) {
       params.tags = options.tags;
       //timeInfo += ' ' + this.queryTagValue;
+    }
+
+    if (queryTags.length) {
+      params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
     }
 
     const annotations = await getBackendSrv().get('/api/annotations', params);
@@ -133,17 +152,31 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       });
   };
 
-  onTagClick = (e: React.SyntheticEvent, tag: string) => {
+  onTagClick = (e: React.SyntheticEvent, tag: string, remove: boolean) => {
     e.stopPropagation();
-    console.log('Clicked Tag:', tag);
+    const queryTags = remove ? this.state.queryTags.filter(item => item !== tag) : [...this.state.queryTags, tag];
+
+    this.setState({ queryTags });
   };
 
   onUserClick = (e: React.SyntheticEvent, anno: Annotation) => {
     e.stopPropagation();
-    console.log('Clicked User:', anno.login);
+    this.setState({
+      queryUser: {
+        id: anno.userId,
+        login: anno.login,
+        email: anno.email,
+      },
+    });
   };
 
-  renderTags = (tags: string[]): JSX.Element => {
+  onClearUser = () => {
+    this.setState({
+      queryUser: undefined,
+    });
+  };
+
+  renderTags = (tags: string[], remove: boolean): JSX.Element => {
     if (!tags || !tags.length) {
       return null;
     }
@@ -151,8 +184,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       <>
         {tags.map(tag => {
           return (
-            <span key={tag} onClick={e => this.onTagClick(e, tag)}>
-              <TagBadge label={tag} removeIcon={false} count={0} />
+            <span key={tag} onClick={e => this.onTagClick(e, tag, remove)} className="pointer">
+              <TagBadge label={tag} removeIcon={remove} count={0} />
             </span>
           );
         })}
@@ -203,7 +236,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
                 </Tooltip>
               </span>
             )}
-            {showTags && this.renderTags(anno.tags)}
+            {showTags && this.renderTags(anno.tags, false)}
           </span>
 
           <span className="pluginlist-version">{showTime && <span>{dashboard.formatDate(anno.time)}</span>}</span>
@@ -213,7 +246,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { loaded, timeInfo, annotations } = this.state;
+    const { loaded, timeInfo, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
       return <div>loading...</div>;
     }
@@ -229,11 +262,22 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     return (
       <div style={style}>
-        {timeInfo && (
-          <span className="panel-time-info">
-            <i className="fa fa-clock-o" /> {timeInfo}
-          </span>
-        )}
+        <div>
+          {timeInfo && (
+            <span className="panel-time-info">
+              <i className="fa fa-clock-o" /> {timeInfo}
+            </span>
+          )}
+
+          {queryUser && (
+            <span onClick={this.onClearUser} className="pointer">
+              {queryUser.email}
+            </span>
+          )}
+
+          {queryTags.length && this.renderTags(queryTags, true)}
+        </div>
+
         <AbstractList
           items={annotations}
           renderItem={this.renderItem}
