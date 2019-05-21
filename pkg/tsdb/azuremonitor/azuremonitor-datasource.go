@@ -105,7 +105,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 
 		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
-		timeGrains := azureMonitorTarget["timeGrains"]
+		timeGrains := azureMonitorTarget["allowedTimeGrainsMs"]
 		if timeGrain == "auto" {
 			timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {

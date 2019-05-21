@@ -7,7 +7,6 @@ import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import kbn from 'app/core/utils/kbn';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
@@ -68,13 +67,6 @@ export default class AzureMonitorDatasource {
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
       const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
 
-      const allowedTimeGrains: string[] = [];
-      (item.timeGrains || []).forEach((tg: any) => {
-        if (tg.value !== 'auto') {
-          allowedTimeGrains.push(kbn.interval_to_ms(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
-        }
-      });
-
       return {
         refId: target.refId,
         intervalMs: options.intervalMs,
@@ -88,7 +80,7 @@ export default class AzureMonitorDatasource {
           resourceName: resourceName,
           metricDefinition: metricDefinition,
           timeGrain: timeGrain,
-          timeGrains: allowedTimeGrains,
+          allowedTimeGrainsMs: item.allowedTimeGrainsMs,
           metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
