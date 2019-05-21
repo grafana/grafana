@@ -35,6 +35,7 @@ export interface AzureMetricQuery {
   timeGrainUnit: string;
   timeGrain: string;
   timeGrains: string[];
+  allowedTimeGrainsMs: number[];
   aggregation: string;
   dimension: string;
   dimensionFilter: string;
