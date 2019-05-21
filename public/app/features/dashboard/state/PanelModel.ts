@@ -177,11 +177,7 @@ export class PanelModel {
         continue;
       }
 
-      if (property === 'options' && this.plugin) {
-        model[property] = _.defaultsDeep({}, this[property], this.plugin.defaults);
-      } else {
-        model[property] = _.cloneDeep(this[property]);
-      }
+      model[property] = _.cloneDeep(this[property]);
     }
     return model;
   }
@@ -251,19 +247,16 @@ export class PanelModel {
   }
 
   private applyPluginOptionDefaults(plugin: PanelPlugin) {
-    this.options = _.defaultsDeep({}, this.options, plugin.defaults);
+    if (plugin.angularConfigCtrl) {
+      return;
+    }
+    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
   }
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
-    const hasPersistedOptions = !!this.options;
-    const defaultOptions = plugin.defaults;
 
-    if (hasPersistedOptions) {
-      this.applyPluginOptionDefaults(this.plugin);
-    } else {
-      this.options = _.defaultsDeep({}, defaultOptions);
-    }
+    this.applyPluginOptionDefaults(plugin);
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
