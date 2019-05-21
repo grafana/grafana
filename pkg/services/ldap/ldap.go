@@ -454,9 +454,9 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 	for _, groupSearchBase := range server.config.GroupSearchBaseDNs {
 		var filterReplace string
 		if server.config.GroupSearchFilterUserAttribute == "" {
-			filterReplace = getLdapAttr(server.config.Attr.Username, searchResult)
+			filterReplace = getLDAPAttr(server.config.Attr.Username, searchResult)
 		} else {
-			filterReplace = getLdapAttr(server.config.GroupSearchFilterUserAttribute, searchResult)
+			filterReplace = getLDAPAttr(server.config.GroupSearchFilterUserAttribute, searchResult)
 		}
 
 		filter := strings.Replace(
@@ -489,7 +489,7 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 
 		if len(groupSearchResult.Entries) > 0 {
 			for i := range groupSearchResult.Entries {
-				memberOf = append(memberOf, getLdapAttrN(groupIDAttribute, groupSearchResult, i))
+				memberOf = append(memberOf, getLDAPAttrN(groupIDAttribute, groupSearchResult, i))
 			}
 			break
 		}
@@ -512,27 +512,27 @@ func (server *Server) serializeUsers(
 		}
 
 		userInfo := &UserInfo{
-			DN: getLdapAttrN(
+			DN: getLDAPAttrN(
 				"dn",
 				users,
 				index,
 			),
-			LastName: getLdapAttrN(
+			LastName: getLDAPAttrN(
 				server.config.Attr.Surname,
 				users,
 				index,
 			),
-			FirstName: getLdapAttrN(
+			FirstName: getLDAPAttrN(
 				server.config.Attr.Name,
 				users,
 				index,
 			),
-			Username: getLdapAttrN(
+			Username: getLDAPAttrN(
 				server.config.Attr.Username,
 				users,
 				index,
 			),
-			Email: getLdapAttrN(
+			Email: getLDAPAttrN(
 				server.config.Attr.Email,
 				users,
 				index,
@@ -554,7 +554,7 @@ func (server *Server) getMemberOf(search *ldap.SearchResult) (
 	[]string, error,
 ) {
 	if server.config.GroupSearchFilter == "" {
-		memberOf := getLdapAttrArray(server.config.Attr.MemberOf, search)
+		memberOf := getLDAPAttrArray(server.config.Attr.MemberOf, search)
 
 		return memberOf, nil
 	}
@@ -576,11 +576,11 @@ func appendIfNotEmpty(slice []string, values ...string) []string {
 	return slice
 }
 
-func getLdapAttr(name string, result *ldap.SearchResult) string {
-	return getLdapAttrN(name, result, 0)
+func getLDAPAttr(name string, result *ldap.SearchResult) string {
+	return getLDAPAttrN(name, result, 0)
 }
 
-func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
+func getLDAPAttrN(name string, result *ldap.SearchResult, n int) string {
 	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
@@ -594,11 +594,11 @@ func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
 	return ""
 }
 
-func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
-	return getLdapAttrArrayN(name, result, 0)
+func getLDAPAttrArray(name string, result *ldap.SearchResult) []string {
+	return getLDAPAttrArrayN(name, result, 0)
 }
 
-func getLdapAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
+func getLDAPAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
 	for _, attr := range result.Entries[n].Attributes {
 		if attr.Name == name {
 			return attr.Values
