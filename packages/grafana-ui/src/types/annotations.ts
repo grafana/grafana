@@ -1,5 +1,3 @@
-import { DateTime } from '../utils/index';
-
 export interface Annotation {
   id: number;
   alertId: number; // will be zero for non-alert
@@ -9,9 +7,9 @@ export interface Annotation {
   userId: number;
   newState: string;
   prevState: string;
-  created: DateTime;
-  updated: DateTime;
-  time: DateTime;
+  created: number;
+  updated: number;
+  time: number;
   text: string;
   regionId: number;
   tags: string[];

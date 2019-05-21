@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 
 // /* tslint:disable:import-blacklist ban ban-types */
 // import moment from 'moment';
@@ -10,6 +10,12 @@ import { PanelProps, Annotation, Tooltip } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import appEvents from 'app/core/app_events';
+
+import { updateLocation } from 'app/core/actions';
+import { store } from 'app/store/store';
+import { cx, css } from 'emotion';
 
 interface Props extends PanelProps<AnnoOptions> {}
 interface State {
@@ -84,31 +90,47 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   }
 
-  // <div className="" ng-repeat="plugin in category.list">
-  //       <a className="pluginlist-link pluginlist-link-{{plugin.state}} pointer" href="{{plugin.defaultNavUrl}}">
-  //         <span>
-  //           <img ng-src="{{plugin.info.logos.small}}" className="pluginlist-image">
-  //           <span className="pluginlist-title">{{plugin.name}}</span>
-  //           <span className="pluginlist-version">v{{plugin.info.version}}</span>
-  //         </span>
-  //         <span className="pluginlist-message pluginlist-message--update"
-  //ng-show="plugin.hasUpdate"
-  //ng-click="ctrl.updateAvailable(plugin, $event)"
-  //bs-tooltip="'New version: ' + plugin.latestVersion">
-  //           Update available!
-  //         </span>
-  //         <span className="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
-  //           Enable now
-  //         </span>
-  //         <span className="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
-  //           Up to date
-  //         </span>
-  //       </a>
-  //     </div>
-
   onAnnoClick = (e: React.SyntheticEvent, anno: Annotation) => {
     e.stopPropagation();
-    console.log('Clicked:', anno);
+    const { options } = this.props;
+    const dashboardSrv = getDashboardSrv();
+    const current = dashboardSrv.getCurrent();
+
+    const params: any = {
+      from: anno.time - 1000,
+      to: anno.time + 1000,
+    };
+
+    if (options.navigateToPanel) {
+      params.panelId = anno.panelId;
+      params.fullscreen = true;
+    }
+
+    if (current.id === anno.dashboardId) {
+      store.dispatch(
+        updateLocation({
+          query: params,
+          partial: true,
+        })
+      );
+      return;
+    }
+
+    getBackendSrv()
+      .get('/api/search', { dashboardIds: anno.dashboardId })
+      .then((res: any[]) => {
+        if (res && res.length && res[0].id === anno.dashboardId) {
+          const dash = res[0];
+          store.dispatch(
+            updateLocation({
+              query: params,
+              path: dash.url,
+            })
+          );
+          return;
+        }
+        appEvents.emit('alert-warning', ['Unknown Dashboard: ' + anno.dashboardId]);
+      });
   };
 
   onTagClick = (e: React.SyntheticEvent, tag: string) => {
@@ -141,13 +163,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   renderItem = (anno: Annotation, index: number): JSX.Element => {
     const { options } = this.props;
     const { showUser, showTags, showTime } = options;
-
-    const userTooltip = (
-      <span>
-        Created by:
-        <br /> {anno.email}
-      </span>
-    );
+    const dashboard = getDashboardSrv().getCurrent();
 
     return (
       <div className="dashlist-item">
@@ -157,12 +173,30 @@ export class AnnoListPanel extends PureComponent<Props, State> {
             this.onAnnoClick(e, anno);
           }}
         >
-          <span className="dashlist-title">{anno.text}</span>
+          <span
+            className={cx([
+              'dashlist-title',
+              css`
+                margin-right: 8px;
+              `,
+            ])}
+          >
+            {anno.text}
+          </span>
 
           <span className="pluginlist-message">
             {anno.login && showUser && (
               <span className="graph-annotation">
-                <Tooltip content={userTooltip} theme="info" placement="top">
+                <Tooltip
+                  content={
+                    <span>
+                      Created by:
+                      <br /> {anno.email}
+                    </span>
+                  }
+                  theme="info"
+                  placement="top"
+                >
                   <span onClick={e => this.onUserClick(e, anno)} className="graph-annotation__user">
                     <img src={anno.avatarUrl} />
                   </span>
@@ -172,7 +206,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
             {showTags && this.renderTags(anno.tags)}
           </span>
 
-          <span className="pluginlist-version">{showTime && <span>{anno.time}</span>}</span>
+          <span className="pluginlist-version">{showTime && <span>{dashboard.formatDate(anno.time)}</span>}</span>
         </span>
       </div>
     );
@@ -186,9 +220,15 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     if (!annotations.length) {
       return <div>No annotations found</div>;
     }
+    const { width, height } = this.props;
+    const style: CSSProperties = {
+      width,
+      height,
+      border: '2px solid red',
+    };
 
     return (
-      <div>
+      <div style={style}>
         {timeInfo && (
           <span className="panel-time-info">
             <i className="fa fa-clock-o" /> {timeInfo}
