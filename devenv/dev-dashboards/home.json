@@ -48,28 +48,6 @@
         "y": 0
       },
       "headings": false,
-      "id": 8,
-      "limit": 1000,
-      "links": [],
-      "query": "",
-      "recent": false,
-      "search": true,
-      "starred": false,
-      "tags": ["panel-demo"],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "tag: panel-demo",
-      "type": "dashlist"
-    },
-    {
-      "folderId": null,
-      "gridPos": {
-        "h": 13,
-        "w": 6,
-        "x": 12,
-        "y": 0
-      },
-      "headings": false,
       "id": 2,
       "limit": 1000,
       "links": [],
@@ -81,6 +59,28 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "tag: panel-tests",
+      "type": "dashlist"
+    },
+    {
+      "folderId": null,
+      "gridPos": {
+        "h": 26,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "headings": false,
+      "id": 3,
+      "limit": 1000,
+      "links": [],
+      "query": "",
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["gdev", "demo"],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "tag: dashboard-demo",
       "type": "dashlist"
     },
     {
@@ -114,28 +114,6 @@
         "y": 13
       },
       "headings": false,
-      "id": 3,
-      "limit": 1000,
-      "links": [],
-      "query": "",
-      "recent": false,
-      "search": true,
-      "starred": false,
-      "tags": ["gdev", "demo"],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "tag: dashboard-demo",
-      "type": "dashlist"
-    },
-    {
-      "folderId": null,
-      "gridPos": {
-        "h": 13,
-        "w": 6,
-        "x": 12,
-        "y": 13
-      },
-      "headings": false,
       "id": 4,
       "limit": 1000,
       "links": [],
@@ -146,7 +124,7 @@
       "tags": ["templating", "gdev"],
       "timeFrom": null,
       "timeShift": null,
-      "title": "tag: templating",
+      "title": "tag: templating ",
       "type": "dashlist"
     }
   ],
@@ -167,5 +145,5 @@
   "timezone": "",
   "title": "Grafana Dev Overview & Home",
   "uid": "j6T00KRZz",
-  "version": 1
+  "version": 2
 }
