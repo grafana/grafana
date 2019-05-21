@@ -15,26 +15,27 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 7501,
   "links": [],
   "panels": [
     {
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 7,
-        "w": 18,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 7,
+      "id": 2,
       "links": [],
       "options": {
-        "displayMode": "gradient",
+        "displayMode": "lcd",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
-            "decimals": null,
             "max": 100,
             "min": 0,
-            "unit": "watt"
+            "unit": "decgbytes"
           },
           "mappings": [],
           "override": {},
@@ -47,7 +48,7 @@
             {
               "color": "orange",
               "index": 1,
-              "value": 40
+              "value": 60
             },
             {
               "color": "red",
@@ -59,95 +60,188 @@
         },
         "orientation": "vertical"
       },
-      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
+          "alias": "sda1",
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda2",
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda3",
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda4",
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda5",
           "refId": "E",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "10003,33333"
+          "scenarioId": "random_walk"
         },
         {
+          "alias": "sda6",
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda7",
           "refId": "G",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda8",
           "refId": "H",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "100,100,100"
+          "scenarioId": "random_walk"
         },
         {
+          "alias": "sda9",
           "refId": "I",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda10",
           "refId": "J",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda11",
           "refId": "K",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda12",
           "refId": "L",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda13",
           "refId": "M",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda14",
           "refId": "N",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda15",
           "refId": "O",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda16",
           "refId": "P",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "Q",
           "scenarioId": "random_walk"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Usage",
+      "title": "",
+      "transparent": true,
       "type": "bargauge"
     },
     {
+      "datasource": "gdev-testdata",
       "gridPos": {
-        "h": 22,
-        "w": 6,
-        "x": 18,
-        "y": 0
+        "h": 10,
+        "w": 16,
+        "x": 0,
+        "y": 7
       },
-      "id": 8,
+      "id": 4,
       "links": [],
       "options": {
         "displayMode": "gradient",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "decimals": null,
+            "max": 100,
+            "min": 0,
+            "unit": "celsius"
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "blue",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "green",
+              "index": 1,
+              "value": 20
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 40
+            },
+            {
+              "color": "red",
+              "index": 3,
+              "value": 80
+            }
+          ],
+          "values": false
+        },
+        "orientation": "horizontal"
+      },
+      "pluginVersion": "6.2.0-pre",
+      "targets": [
+        {
+          "alias": "Inside",
+          "refId": "H",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "100,100,100"
+        },
+        {
+          "alias": "Outhouse",
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Area B",
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Basement",
+          "refId": "C",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "Garage",
+          "refId": "D",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Gradient mode",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 10,
+        "w": 6,
+        "x": 16,
+        "y": 7
+      },
+      "id": 6,
+      "links": [],
+      "options": {
+        "displayMode": "basic",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
@@ -160,19 +254,24 @@
           "override": {},
           "thresholds": [
             {
-              "color": "green",
+              "color": "blue",
               "index": 0,
               "value": null
             },
             {
-              "color": "orange",
+              "color": "green",
               "index": 1,
-              "value": 55
+              "value": 42.5
+            },
+            {
+              "color": "orange",
+              "index": 2,
+              "value": 80
             },
             {
               "color": "red",
-              "index": 2,
-              "value": 95
+              "index": 3,
+              "value": 90
             }
           ],
           "values": false
@@ -182,32 +281,12 @@
       "pluginVersion": "6.2.0-pre",
       "targets": [
         {
-          "refId": "E",
-          "scenarioId": "random_walk"
-        },
-        {
           "refId": "H",
           "scenarioId": "csv_metric_values",
           "stringInput": "100,100,100"
         },
         {
           "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "I",
           "scenarioId": "random_walk"
         },
         {
@@ -241,47 +320,78 @@
         {
           "refId": "Q",
           "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Basic",
+      "type": "bargauge"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "gridPos": {
+        "h": 22,
+        "w": 2,
+        "x": 22,
+        "y": 7
+      },
+      "id": 8,
+      "links": [],
+      "options": {
+        "displayMode": "lcd",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "max": 100,
+            "min": 0
+          },
+          "mappings": [],
+          "override": {},
+          "thresholds": [
+            {
+              "color": "red",
+              "index": 0,
+              "value": null
+            },
+            {
+              "color": "red",
+              "index": 1,
+              "value": 90
+            }
+          ],
+          "values": false
         },
+        "orientation": "vertical"
+      },
+      "targets": [
         {
-          "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "R",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "S",
+          "refId": "A",
           "scenarioId": "random_walk"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Usage",
+      "title": "Completion",
       "type": "bargauge"
     },
     {
+      "datasource": "gdev-testdata",
       "gridPos": {
-        "h": 15,
-        "w": 11,
+        "h": 12,
+        "w": 22,
         "x": 0,
-        "y": 7
+        "y": 17
       },
-      "id": 6,
+      "id": 10,
       "links": [],
       "options": {
         "displayMode": "gradient",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
-            "decimals": null,
             "max": 100,
             "min": 0,
-            "unit": "celsius"
+            "unit": "decgbytes"
           },
           "mappings": [],
           "override": {},
@@ -294,12 +404,12 @@
             {
               "color": "green",
               "index": 1,
-              "value": 20
+              "value": 30
             },
             {
               "color": "orange",
               "index": 2,
-              "value": 40
+              "value": 60
             },
             {
               "color": "red",
@@ -309,69 +419,113 @@
           ],
           "values": false
         },
-        "orientation": "horizontal"
+        "orientation": "vertical"
       },
-      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
-          "alias": "Inside",
-          "refId": "H",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "100,100,100"
-        },
-        {
-          "alias": "Outhouse",
+          "alias": "sda1",
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Area B",
+          "alias": "sda2",
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Basement",
+          "alias": "sda3",
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Garage",
+          "alias": "sda4",
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Attic",
+          "alias": "sda5",
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda6",
           "refId": "F",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda7",
+          "refId": "G",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda8",
+          "refId": "H",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda9",
+          "refId": "I",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda10",
+          "refId": "J",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda11",
+          "refId": "K",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda12",
+          "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda13",
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda14",
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda15",
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda16",
+          "refId": "P",
           "scenarioId": "random_walk"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Temperature",
+      "title": "",
       "type": "bargauge"
     },
     {
+      "datasource": "gdev-testdata",
       "gridPos": {
-        "h": 15,
-        "w": 7,
-        "x": 11,
-        "y": 7
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 29
       },
-      "id": 9,
+      "id": 11,
       "links": [],
       "options": {
         "displayMode": "basic",
         "fieldOptions": {
           "calcs": ["mean"],
           "defaults": {
-            "decimals": null,
             "max": 100,
             "min": 0,
-            "unit": "celsius"
+            "unit": "decgbytes"
           },
           "mappings": [],
           "override": {},
@@ -384,12 +538,12 @@
             {
               "color": "green",
               "index": 1,
-              "value": 20
+              "value": 30
             },
             {
               "color": "orange",
               "index": 2,
-              "value": 40
+              "value": 60
             },
             {
               "color": "red",
@@ -399,89 +553,113 @@
           ],
           "values": false
         },
-        "orientation": "horizontal"
+        "orientation": "vertical"
       },
-      "pluginVersion": "6.2.0-pre",
       "targets": [
         {
-          "alias": "Inside",
-          "refId": "H",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "100,100,100"
-        },
-        {
-          "alias": "Outhouse",
+          "alias": "sda1",
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Area B",
+          "alias": "sda2",
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Basement",
+          "alias": "sda3",
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Garage",
+          "alias": "sda4",
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
-          "alias": "Attic",
+          "alias": "sda5",
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda6",
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda7",
           "refId": "G",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda8",
+          "refId": "H",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda9",
           "refId": "I",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda10",
           "refId": "J",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda11",
           "refId": "K",
           "scenarioId": "random_walk"
         },
         {
+          "alias": "sda12",
           "refId": "L",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda13",
+          "refId": "M",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda14",
+          "refId": "N",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda15",
+          "refId": "O",
+          "scenarioId": "random_walk"
+        },
+        {
+          "alias": "sda16",
+          "refId": "P",
           "scenarioId": "random_walk"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Temperature",
+      "title": "",
       "type": "bargauge"
     }
   ],
-  "refresh": false,
+  "refresh": "10s",
   "schemaVersion": 18,
   "style": "dark",
-  "tags": ["gdev", "bargauge", "panel-demo"],
+  "tags": ["gdev", "demo"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["1s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "refresh_intervals": ["2s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
     "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
-  "title": "Bar Gauge Animated Demo",
-  "uid": "k5IUwQeikaa",
-  "version": 1
+  "title": "Bar Gauge Demo",
+  "uid": "vmie2cmWz",
+  "version": 3
 }
