@@ -175,7 +175,7 @@ export default class Logs extends PureComponent<Props, State> {
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const meta = [...data.meta];
+    const meta = data.meta ? [...data.meta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -193,7 +193,9 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series.map(series => new TimeSeries(series));
+    const timeSeries = data.series
+      ? data.series.map(series => new TimeSeries(series))
+      : [new TimeSeries({ datapoints: [] })];
     const absRange = {
       from: range.from.valueOf(),
       to: range.to.valueOf(),
