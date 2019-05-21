@@ -108,7 +108,7 @@ func TestAuthenticateUser(t *testing.T) {
 			err := AuthenticateUser(sc.loginUserQuery)
 
 			Convey("it should result in", func() {
-				So(err, ShouldEqual, ldap.ErrInvalidCredentials)
+				So(err, ShouldEqual, ErrInvalidCredentials)
 				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
@@ -160,7 +160,7 @@ func TestAuthenticateUser(t *testing.T) {
 			err := AuthenticateUser(sc.loginUserQuery)
 
 			Convey("it should result in", func() {
-				So(err, ShouldEqual, ldap.ErrInvalidCredentials)
+				So(err, ShouldEqual, ErrInvalidCredentials)
 				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)

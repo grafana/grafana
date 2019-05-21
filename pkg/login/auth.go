@@ -19,6 +19,7 @@ var (
 	ErrPasswordEmpty         = errors.New("No password provided")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
+	ErrUserDisabled          = errors.New("User is disabled")
 )
 
 func Init() {
@@ -36,7 +37,7 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	err := loginUsingGrafanaDB(query)
-	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials) {
+	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
 		return err
 	}
 
@@ -46,11 +47,14 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 			return ldapErr
 		}
 
-		err = ldapErr
+		if err != ErrUserDisabled || ldapErr != ldap.ErrInvalidCredentials {
+			err = ldapErr
+		}
 	}
 
 	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
 		saveInvalidLoginAttempt(query)
+		return ErrInvalidCredentials
 	}
 
 	if err == models.ErrUserNotFound {
@@ -59,6 +63,7 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 
 	return err
 }
+
 func validatePasswordSet(password string) error {
 	if len(password) == 0 {
 		return ErrPasswordEmpty

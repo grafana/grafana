@@ -161,7 +161,7 @@ export class BarGauge extends PureComponent<Props> {
     const cells: JSX.Element[] = [];
 
     for (let i = 0; i < cellCount; i++) {
-      const currentValue = (valueRange / cellCount) * i;
+      const currentValue = minValue + (valueRange / cellCount) * i;
       const cellColor = this.getCellColor(currentValue);
       const cellStyles: CSSProperties = {
         borderRadius: '2px',
@@ -345,11 +345,6 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
     }
   }
 
-  // console.log('titleDim', titleDim);
-  // console.log('valueWidth', valueWidth);
-  // console.log('width', width);
-  // console.log('total', titleDim.width + maxBarWidth + valueWidth);
-
   return {
     valueWidth,
     valueHeight,
@@ -360,6 +355,10 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   };
 }
 
+export function getValuePercent(value: number, minValue: number, maxValue: number): number {
+  return Math.min((value - minValue) / (maxValue - minValue), 1);
+}
+
 /**
  * Only exported to for unit test
  */
@@ -367,7 +366,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const { displayMode, maxValue, minValue, value } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valuePercent = Math.min(value.numeric / (maxValue - minValue), 1);
+  const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const valueColor = getValueColor(props);
   const valueStyles = getValueStyles(value.text, valueColor, valueWidth, valueHeight);
   const isBasic = displayMode === 'basic';
@@ -450,7 +449,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   for (let i = 0; i < thresholds.length; i++) {
     const threshold = thresholds[i];
     const color = getColorFromHexRgbOrName(threshold.color);
-    const valuePercent = Math.min(threshold.value / (maxValue - minValue), 1);
+    const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
     const pos = valuePercent * maxSize;
     const offset = Math.round(pos - (pos - lastpos) / 2);
 
@@ -499,30 +498,3 @@ function getValueStyles(value: string, color: string, width: number, height: num
     fontSize: fontSize.toFixed(2) + 'px',
   };
 }
-
-// let canvasElement: HTMLCanvasElement | null = null;
-//
-// interface TextDimensions {
-//   width: number;
-//   height: number;
-// }
-//
-// /**
-//  * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
-//  *
-//  * @param {String} text The text to be rendered.
-//  * @param {String} font The css font descriptor that text is to be rendered with (e.g. "bold 14px verdana").
-//  *
-//  * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
-//  */
-// function getTextWidth(text: string): number {
-//   // re-use canvas object for better performance
-//   canvasElement = canvasElement || document.createElement('canvas');
-//   const context = canvasElement.getContext('2d');
-//   if (context) {
-//     context.font = 'normal 16px Roboto';
-//     const metrics = context.measureText(text);
-//     return metrics.width;
-//   }
-//   return 16;
-// }

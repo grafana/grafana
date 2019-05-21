@@ -279,9 +279,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onResourceGroupChange() {
-    this.target.azureMonitor.metricDefinition = this.defaultDropdownValue;
-    this.target.azureMonitor.resourceName = this.defaultDropdownValue;
-    this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
   }
@@ -294,7 +291,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onResourceNameChange() {
-    this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
   }
@@ -306,6 +302,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     return this.datasource
       .getMetricMetadata(
+        this.replace(this.target.subscription),
         this.replace(this.target.azureMonitor.resourceGroup),
         this.replace(this.target.azureMonitor.metricDefinition),
         this.replace(this.target.azureMonitor.resourceName),

@@ -381,6 +381,8 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
 		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		adminRoute.Delete("/users/:id", AdminDeleteUser)
+		adminRoute.Post("/users/:id/disable", AdminDisableUser)
+		adminRoute.Post("/users/:id/enable", AdminEnableUser)
 		adminRoute.Get("/users/:id/quotas", Wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
