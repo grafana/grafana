@@ -37,7 +37,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   className?: string;
 }
 

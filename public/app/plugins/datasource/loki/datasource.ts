@@ -41,6 +41,11 @@ function serializeParams(data: any) {
     .join('&');
 }
 
+interface LokiContextQueryOptions {
+  direction?: 'BACKWARD' | 'FORWARD';
+  limit?: number;
+}
+
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   languageProvider: LanguageProvider;
   maxLines: number;
@@ -224,7 +229,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  prepareLogRowContextQueryTargets = (row: LogRowModel, limit: number) => {
+  prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
     const query = Object.keys(row.labels)
       .map(label => {
         return `${label}="${row.labels[label]}"`;
@@ -236,69 +241,121 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const commontTargetOptons = {
       limit,
       query: `{${query}}`,
+      direction,
     };
-    return [
-      // Target for "before" context
-      {
+
+    if (direction === 'BACKWARD') {
+      return {
         ...commontTargetOptons,
         start: timeEpochNs - contextTimeBuffer,
         end: timeEpochNs,
-        direction: 'BACKWARD',
-      },
-      // Target for "after" context
-      {
+        direction,
+      };
+    } else {
+      return {
         ...commontTargetOptons,
         start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
         end: timeEpochNs + contextTimeBuffer,
-        direction: 'FORWARD',
-      },
-    ];
+      };
+    }
+    // return [
+    //   // Target for "before" context
+    //   {
+    //     ...commontTargetOptons,
+    //     start: timeEpochNs - contextTimeBuffer,
+    //     end: timeEpochNs,
+    //     direction: 'BACKWARD',
+    //   },
+    //   // Target for "after" context
+    //   {
+    //     ...commontTargetOptons,
+    //     start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
+    //     end: timeEpochNs + contextTimeBuffer,
+    //     direction: 'FORARD',
+    //   },
+    // ];
   };
 
-  getLogRowContext = (row: LogRowModel, limit?: number) => {
+  getLogRowContext = async (row: LogRowModel, options?: LokiContextQueryOptions) => {
     // Preparing two targets, for preceeding and following log queries
-    const targets = this.prepareLogRowContextQueryTargets(row, limit || 10);
+    const target = this.prepareLogRowContextQueryTarget(
+      row,
+      (options && options.limit) || 10,
+      (options && options.direction) || 'BACKWARD'
+    );
+    // const results = await Promise.all(promises.map(p => p.catch(e => e)));
+    // const validResults = results.filter(result => !(result instanceof Error));
+    const series: SeriesData[] = [];
 
-    return Promise.all(
-      targets.map(target => {
-        return this._request('/api/prom/query', target).catch(e => {
-          const error: DataQueryError = {
-            message: 'Error during context query. Please check JS console logs.',
-            status: e.status,
-            statusText: e.statusText,
-          };
-          return error;
-        });
-      })
-    ).then((results: any[]) => {
-      const series: Array<Array<SeriesData | DataQueryError>> = [];
-      const emptySeries = {
-        fields: [],
-        rows: [],
-      } as SeriesData;
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        series[i] = [];
-        if (result.data) {
-          for (const stream of result.data.streams || []) {
-            const seriesData = logStreamToSeriesData(stream);
-            series[i].push(seriesData);
-          }
-        } else {
-          series[i].push(result);
+    try {
+      const result = await this._request('/api/prom/query', target);
+      if (result.data) {
+        for (const stream of result.data.streams || []) {
+          const seriesData = logStreamToSeriesData(stream);
+          series.push(seriesData);
+        }
+      }
+      if (options && options.direction === 'FORWARD') {
+        if (series[0] && series[0].rows) {
+          series[0].rows.reverse();
         }
       }
 
-      // Following context logs are requested in "forward" direction.
-      // This means, that we need to reverse those to make them sorted
-      // in descending order (by timestamp)
-      if (series[1][0] && (series[1][0] as SeriesData).rows) {
-        (series[1][0] as SeriesData).rows.reverse();
-      }
+      return {
+        data: series,
+      };
+    } catch (e) {
+      const error: DataQueryError = {
+        message: 'Error during context query. Please check JS console logs.',
+        status: e.status,
+        statusText: e.statusText,
+      };
+      throw error;
+    }
 
-      return { data: [series[0][0] || emptySeries, series[1][0] || emptySeries] };
-    });
+    // }).catch(e => {
+    //   const error: DataQueryError = {
+    //     message: 'Error during context query. Please check JS console logs.',
+    //     status: e.status,
+    //     statusText: e.statusText,
+    //   };
+    //   throw error;
+    // });
+
+    // const results =  await Promise.all(promises.map(p => p.catch(e => e)))
+
+    // results.map((result, i) => {
+    // if()
+    // })
+    // .then((results: any[]) => {
+    //   const series: Array<Array<SeriesData | DataQueryError>> = [];
+    //   const emptySeries = {
+    //     fields: [],
+    //     rows: [],
+    //   } as SeriesData;
+
+    //   for (let i = 0; i < results.length; i++) {
+    //     const result = results[i];
+    //     series[i] = [];
+    //     if (result.data) {
+    //       for (const stream of result.data.streams || []) {
+    //         const seriesData = logStreamToSeriesData(stream);
+    //         series[i].push(seriesData);
+    //       }
+    //     } else {
+    //       series[i].push(result);
+    //     }
+    //   }
+
+    //   // Following context logs are requested in "forward" direction.
+    //   // This means, that we need to reverse those to make them sorted
+    //   // in descending order (by timestamp)
+    //   if (series[1][0] && (series[1][0] as SeriesData).rows) {
+    //     (series[1][0] as SeriesData).rows.reverse();
+    //   }
+
+    //   return { data: [series[0][0] || emptySeries, series[1][0] || emptySeries] };
+    // });
   };
 
   testDatasource() {

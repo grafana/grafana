@@ -70,7 +70,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
 
 interface State {

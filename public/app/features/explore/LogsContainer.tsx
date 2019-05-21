@@ -31,6 +31,7 @@ interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
+
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   dedupedResult?: LogsModel;
@@ -79,11 +80,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
-  getLogRowContext = async (row: LogRowModel, limit: number) => {
+  getLogRowContext = async (row: LogRowModel, options?: any) => {
     const { datasourceInstance } = this.props;
 
     if (datasourceInstance) {
-      return datasourceInstance.getLogRowContext(row, limit);
+      return datasourceInstance.getLogRowContext(row, options);
     }
 
     return [];
