@@ -588,6 +588,7 @@ jobs:
           root: .
           paths:
             - dist/grafana-*.msi
+            - dist/grafana-*.msi.sha256
 
   store-build-artifacts:
     docker:
