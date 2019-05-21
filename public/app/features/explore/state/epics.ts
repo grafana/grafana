@@ -4,7 +4,6 @@ import { takeUntil, mergeMap, tap, filter, map, throttleTime } from 'rxjs/operat
 
 import { StoreState, ExploreId } from 'app/types';
 import { ActionOf, ActionCreator, actionCreatorFactory } from '../../../core/redux/actionCreatorFactory';
-import { config } from '../../../core/config';
 import {
   updateDatasourceInstanceAction,
   resetExploreAction,
@@ -14,15 +13,7 @@ import {
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { SeriesData } from '@grafana/ui/src/types/data';
 import { EpicDependencies } from 'app/store/configureStore';
-
-const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
-  if (backend.endsWith('/')) {
-    backend = backend.slice(0, backend.length - 1);
-  }
-  return `${backend}${url}`;
-};
+import { convertToWebSocketUrl } from 'app/core/utils/explore';
 
 export interface StartSubscriptionsPayload {
   exploreId: ExploreId;

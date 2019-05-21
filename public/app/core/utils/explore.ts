@@ -40,6 +40,7 @@ import {
 import { seriesDataToLogsModel } from 'app/core/logs_model';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { config } from '../config';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -569,4 +570,13 @@ export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) =
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 
   return result;
+};
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, backend.length - 1);
+  }
+  return `${backend}${url}`;
 };

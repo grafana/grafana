@@ -18,6 +18,7 @@ import { processQueryResultsAction } from './processQueryResultsEpic';
 import { processQueryErrorsAction } from './processQueryErrorsEpic';
 import { DataStreamState, LoadingState } from '@grafana/ui';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { limitMessageRatePayloadAction, subscriptionDataReceivedAction } from './epics';
 
 export interface RunQueriesPayload {
   exploreId: ExploreId;
@@ -100,11 +101,17 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
               outerObservable.next(processQueryErrorsAction({ exploreId, response: error, datasourceId }));
             }
 
-            if (state === LoadingState.Done) {
+            if (state === LoadingState.Streaming) {
               eventBridge.emit('data-received', series || []);
-              outerObservable.next(
-                processQueryResultsAction({ exploreId, response: series, latency: 0, datasourceId })
-              );
+              series.forEach(data => {
+                outerObservable.next(
+                  limitMessageRatePayloadAction({
+                    exploreId,
+                    data,
+                    dataReceivedActionCreator: subscriptionDataReceivedAction,
+                  })
+                );
+              });
             }
           },
         });
@@ -112,7 +119,10 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         const querySubscription = from(
           datasourceInstance.query(transaction.options, event => {
             datasourceUnsubscribe = event.unsubscribe;
-            streamHandler.next(event);
+            if (!streamHandler.closed) {
+              // their might be a race condition when unsubscribing
+              streamHandler.next(event);
+            }
           })
         )
           .pipe(
@@ -136,14 +146,13 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
           .subscribe({ next: action => outerObservable.next(action) });
 
         const unsubscribe = () => {
-          console.log('Stopping Subscription', exploreId);
-          querySubscription.unsubscribe();
-          streamHandler.unsubscribe();
-          streamSubscription.unsubscribe();
-          outerObservable.unsubscribe();
           if (datasourceUnsubscribe) {
             datasourceUnsubscribe();
           }
+          querySubscription.unsubscribe();
+          streamSubscription.unsubscribe();
+          streamHandler.unsubscribe();
+          outerObservable.unsubscribe();
         };
 
         return unsubscribe;
