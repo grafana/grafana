@@ -10,7 +10,7 @@ const TAB_ID_A = 'A';
 const TAB_ID_B = 'B';
 const TAB_ID_C = 'C';
 
-export class ExampleRootPage extends PureComponent<Props> {
+export class ExampleRootPage<ExampleAppSettings> extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }
@@ -79,7 +79,7 @@ export class ExampleRootPage extends PureComponent<Props> {
   }
 
   render() {
-    const { path, query } = this.props;
+    const { path, query, meta } = this.props;
 
     return (
       <div>
@@ -96,6 +96,7 @@ export class ExampleRootPage extends PureComponent<Props> {
             <a href={path + '?x=1&y=2&y=3'}>ZZZ</a>
           </li>
         </ul>
+        <pre>{JSON.stringify(meta.jsonData)}</pre>
       </div>
     );
   }
