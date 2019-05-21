@@ -75,6 +75,12 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       iconDistance = theme.spacing.xs;
       height = theme.height.sm;
       break;
+    case ButtonSize.Medium:
+      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      fontSize = theme.typography.size.md;
+      iconDistance = theme.spacing.sm;
+      height = theme.height.md;
+      break;
     case ButtonSize.Large:
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
