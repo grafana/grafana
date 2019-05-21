@@ -1,4 +1,17 @@
-# 6.2.0 (unreleased)
+# 6.2.0 (2019-05-22)
+
+  ### Bug Fixes
+  * **BarGauge**: Fix for negative min values. [#17192](https://github.com/grafana/grafana/pull/17192), [@torkelo](https://github.com/torkelo)
+  * **Gauge/BarGauge**: Fix for issues editing min & max options. [#17174](https://github.com/grafana/grafana/pull/17174)
+
+  ### Breaking Changes
+  * **Plugins**: Data source plugins that process hidden queries need to add a "hiddenQueries: true" attribute in plugin.json. [#17124](https://github.com/grafana/grafana/pull/17124), [@ryantxu](https://github.com/ryantxu)
+
+  ### Removal of old deprecated package repository
+
+  5 months ago we deprecated our old package cloud repository and [replaced
+  it](https://github.com/grafana/grafana/issues/17199) with our own. We will remove this repo early next week so make
+  sure you have updated to the new package repository. The new package repository has all our old releases.
 
 # 6.2.0-beta2 (2019-05-15)
 
