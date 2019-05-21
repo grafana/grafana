@@ -132,7 +132,7 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      if (ds.meta && !ds.meta.supportsHiddenQueries) {
+      if (ds.meta && !ds.meta.hiddenQueries) {
         request.targets = request.targets.filter(q => !q.hide);
       }
 
