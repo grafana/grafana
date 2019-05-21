@@ -10,7 +10,7 @@ import {
   sortLogsResult,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery, LogsModel } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -58,7 +58,7 @@ import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
-import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
+import { seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

@@ -35,7 +35,8 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
-} from '@grafana/ui/src/types';
+  LogsDedupStrategy,
+} from '@grafana/ui';
 import {
   ExploreId,
   ExploreUrlState,
@@ -87,7 +88,6 @@ import {
   changeModeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
-import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';

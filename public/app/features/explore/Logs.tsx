@@ -2,16 +2,26 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
+import {
+  RawTimeRange,
+  Switch,
+  LogLevel,
+  TimeZone,
+  TimeRange,
+  AbsoluteTimeRange,
+  LogsMetaKind,
+  LogsModel,
+  LogsDedupStrategy,
+  LogRowModel,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
-
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind, LogRowModel } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
+import { LogsDedupDescription } from 'app/core/logs_model';
 
 const PREVIEW_LIMIT = 100;
 

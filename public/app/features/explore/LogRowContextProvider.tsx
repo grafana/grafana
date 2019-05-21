@@ -1,5 +1,4 @@
-import { LogRowModel } from 'app/core/logs_model';
-import { LogRowContextQueryResponse, SeriesData, DataQueryResponse, DataQueryError } from '@grafana/ui';
+import { LogRowContextQueryResponse, SeriesData, DataQueryResponse, DataQueryError, LogRowModel } from '@grafana/ui';
 import { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 

@@ -1,8 +1,15 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton } from '@grafana/ui';
+import {
+  Themeable,
+  withTheme,
+  GrafanaTheme,
+  selectThemeVariant,
+  LinkButton,
+  LogsModel,
+  LogRowModel,
+} from '@grafana/ui';
 
-import { LogsModel, LogRowModel } from 'app/core/logs_model';
 import ElapsedTime from './ElapsedTime';
 import { ButtonSize, ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 

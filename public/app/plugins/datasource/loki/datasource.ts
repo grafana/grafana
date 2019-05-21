@@ -16,12 +16,12 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-} from '@grafana/ui/src/types';
+  LogRowModel,
+} from '@grafana/ui';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { LogRowModel } from 'app/core/logs_model';
 
 export const DEFAULT_MAX_LINES = 1000;
 

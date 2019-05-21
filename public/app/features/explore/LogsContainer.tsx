@@ -10,10 +10,12 @@ import {
   toUtc,
   dateTime,
   DataSourceApi,
+  LogsModel,
+  LogRowModel,
+  LogsDedupStrategy,
 } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, changeTime } from './state/actions';
