@@ -31,12 +31,39 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
   // Navigate
   //-----------
 
+  onNavigateBeforeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onOptionsChange({ ...this.props.options, navigateBefore: event.target.value });
+  };
+
+  onNavigateAfterChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onOptionsChange({ ...this.props.options, navigateAfter: event.target.value });
+  };
+
+  onToggleNavigateToPanel = () =>
+    this.props.onOptionsChange({ ...this.props.options, navigateToPanel: !this.props.options.navigateToPanel });
+
   // Search
   //-----------
   onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
     const v = toIntegerOrUndefined(event.target.value);
     this.props.onOptionsChange({ ...this.props.options, limit: v });
   };
+
+  onTagsChange = (tags: string[]) => {
+    this.props.onOptionsChange({ ...this.props.options, tags });
+  };
+
+  onToggleOnlyFromThisDashboard = () =>
+    this.props.onOptionsChange({
+      ...this.props.options,
+      onlyFromThisDashboard: !this.props.options.onlyFromThisDashboard,
+    });
+
+  onToggleOnlyInTimeRange = () =>
+    this.props.onOptionsChange({ ...this.props.options, onlyInTimeRange: !this.props.options.onlyInTimeRange });
+
+  // RENDER
+  //-----------
 
   render() {
     const { options } = this.props;
@@ -65,13 +92,23 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
           />
         </PanelOptionsGroup>
         <PanelOptionsGroup title="Navigate">
-          <div>TODO... Before</div>
-          <div>TODO... After</div>
+          <FormField
+            label="Before"
+            labelWidth={labelWidth}
+            onChange={this.onNavigateBeforeChange}
+            value={options.navigateBefore}
+          />
+          <FormField
+            label="After"
+            labelWidth={labelWidth}
+            onChange={this.onNavigateAfterChange}
+            value={options.navigateAfter}
+          />
           <Switch
             label="To Panel"
             labelClass={`width-${labelWidth}`}
             checked={options.navigateToPanel}
-            onChange={this.onToggleShowTags}
+            onChange={this.onToggleNavigateToPanel}
           />
         </PanelOptionsGroup>
         <PanelOptionsGroup title="Search">
@@ -79,17 +116,17 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
             label="Only This Dashboard"
             labelClass={`width-12`}
             checked={options.onlyFromThisDashboard}
-            onChange={this.onToggleShowTags}
+            onChange={this.onToggleOnlyFromThisDashboard}
           />
           <Switch
             label="Within Time Range"
             labelClass={`width-12`}
             checked={options.onlyInTimeRange}
-            onChange={this.onToggleShowTags}
+            onChange={this.onToggleOnlyInTimeRange}
           />
-          <div>TODO: Tags input</div>
+          <div>TODO: Tags input:</div>
           <FormField
-            label="Min"
+            label="Limit"
             labelWidth={labelWidth}
             onChange={this.onLimitChange}
             value={toNumberString(options.limit)}

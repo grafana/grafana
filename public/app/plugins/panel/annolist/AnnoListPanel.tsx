@@ -1,12 +1,12 @@
 // Libraries
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent } from 'react';
 
 // /* tslint:disable:import-blacklist ban ban-types */
 // import moment from 'moment';
 
 // Types
 import { AnnoOptions } from './types';
-import { PanelProps, Annotation, Tooltip } from '@grafana/ui';
+import { PanelProps, Annotation, Tooltip, dateTime, DurationUnit } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -116,8 +116,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const current = dashboardSrv.getCurrent();
 
     const params: any = {
-      from: anno.time - 1000,
-      to: anno.time + 1000,
+      from: this._timeOffset(anno.time, options.navigateBefore, true),
+      to: this._timeOffset(anno.time, options.navigateAfter, false),
     };
 
     if (options.navigateToPanel) {
@@ -151,6 +151,22 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         appEvents.emit('alert-warning', ['Unknown Dashboard: ' + anno.dashboardId]);
       });
   };
+
+  _timeOffset(time: number, offset: string, subtract = false): number {
+    let incr = 5;
+    let unit = 'm';
+    const parts = /^(\d+)(\w)/.exec(offset);
+    if (parts && parts.length === 3) {
+      incr = parseInt(parts[1], 10);
+      unit = parts[2];
+    }
+
+    const t = dateTime(time);
+    if (subtract) {
+      incr *= -1;
+    }
+    return t.add(incr, unit as DurationUnit).valueOf();
+  }
 
   onTagClick = (e: React.SyntheticEvent, tag: string, remove: boolean) => {
     e.stopPropagation();
@@ -250,18 +266,9 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     if (!loaded) {
       return <div>loading...</div>;
     }
-    if (!annotations.length) {
-      return <div>No annotations found</div>;
-    }
-    const { width, height } = this.props;
-    const style: CSSProperties = {
-      width,
-      height,
-      border: '2px solid red',
-    };
 
     return (
-      <div style={style}>
+      <div>
         <div>
           {timeInfo && (
             <span className="panel-time-info">
@@ -269,14 +276,18 @@ export class AnnoListPanel extends PureComponent<Props, State> {
             </span>
           )}
 
-          {queryUser && (
-            <span onClick={this.onClearUser} className="pointer">
-              {queryUser.email}
-            </span>
-          )}
+          <div>
+            {queryUser && (
+              <span onClick={this.onClearUser} className="pointer">
+                {queryUser.email}
+              </span>
+            )}
 
-          {queryTags.length && this.renderTags(queryTags, true)}
+            {queryTags.length > 0 && this.renderTags(queryTags, true)}
+          </div>
         </div>
+
+        {annotations.length < 1 && <div className="panel-alert-list__no-alerts">No Annotations Found</div>}
 
         <AbstractList
           items={annotations}
