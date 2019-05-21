@@ -34,7 +34,8 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	assert.Nil(t, err)
 
 	//run migration
-	EncryptDatasourcePaswords(&commandstest.FakeCommandLine{}, sqlstore)
+	err = EncryptDatasourcePaswords(&commandstest.FakeCommandLine{}, sqlstore)
+	assert.Nil(t, err)
 
 	//verify that no datasources still have password or basic_auth
 	var dss []*models.DataSource
@@ -49,14 +50,14 @@ func TestPasswordMigrationCommand(t *testing.T) {
 			assert.Equal(t, ds.Password, "")
 			v, exist := sj["password"]
 			assert.True(t, exist)
-			assert.Equal(t, v, "foobar")
+			assert.Equal(t, v, "foobar", "expected password to be moved to securejson")
 		}
 
 		if ds.Name == "graphite" {
 			assert.Equal(t, ds.BasicAuthPassword, "")
 			v, exist := sj["basicAuthPassword"]
 			assert.True(t, exist)
-			assert.Equal(t, v, "foobar")
+			assert.Equal(t, v, "foobar", "expected basic_auth_password to be moved to securejson")
 		}
 
 		if ds.Name == "prometheus" {

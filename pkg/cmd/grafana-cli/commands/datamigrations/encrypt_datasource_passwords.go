@@ -3,7 +3,9 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+
+	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -12,9 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
-	var passwordRows []map[string]string
-	datasourceTypes := []string{
+var (
+	datasourceTypes = []string{
 		"mysql",
 		"influxdb",
 		"elasticsearch",
@@ -22,79 +23,104 @@ func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore)
 		"prometheus",
 		"opentsdb",
 	}
-	return sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sess.Cols("id", "password", "secure_json_data")
-		sess.Table("data_source")
-		sess.In("type", datasourceTypes)
-		sess.Where("password IS NOT NULL AND password != ''")
-		err := sess.Find(&passwordRows)
+)
 
+// EncryptDatasourcePaswords migrates un-encrypted secrets on datasources
+// to the secureJson Column.
+func EncryptDatasourcePaswords(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		passwordsUpdated, err := migrateColumn(session, "password")
 		if err != nil {
-			return errutil.Wrap("failed to select password", err)
+			return err
 		}
 
-		if err := updateRows(sess, passwordRows, "password"); err != nil {
-			return errutil.Wrap("failed to password updates failed", err)
-		}
-
-		var basicAuthRows []map[string]string
-		sess.Cols("id", "basic_auth_password", "secure_json_data")
-		sess.Table("data_source")
-		sess.In("type", datasourceTypes)
-		sess.Where("basic_auth_password IS NOT NULL AND basic_auth_password != ''")
-		err = sess.Find(&basicAuthRows)
+		basicAuthUpdated, err := migrateColumn(session, "basic_auth_password")
 		if err != nil {
-			return errutil.Wrap("basic_auth_password select failed", err)
+			return err
 		}
 
-		if err := updateRows(sess, basicAuthRows, "basic_auth_password"); err != nil {
-			return errutil.Wrap("basic_auth_password updates failed", err)
+		logger.Info("\n")
+		if passwordsUpdated > 0 {
+			logger.Infof("%s Encrypted password field for %d datasources \n", color.GreenString("✔"), passwordsUpdated)
 		}
 
-		fmt.Println("Warning: Datasource provisioning files need to be manually changed to prevent overwriting of " +
+		if basicAuthUpdated > 0 {
+			logger.Infof("%s Encrypted basic_auth_password field for %d datasources \n", color.GreenString("✔"), basicAuthUpdated)
+		}
+
+		if passwordsUpdated == 0 && basicAuthUpdated == 0 {
+			logger.Infof("%s All datasources secrets are allready encrypted\n", color.GreenString("✔"))
+		}
+
+		logger.Info("\n")
+
+		logger.Warn("Warning: Datasource provisioning files need to be manually changed to prevent overwriting of " +
 			"the data during provisioning. See https://grafana.com/docs/installation/upgrading/#upgrading-to-v6-2 for " +
 			"details")
 		return nil
 	})
 }
 
-func updateRows(session *sqlstore.DBSession, rows []map[string]string, passwordFieldName string) error {
+func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
+	var rows []map[string]string
+
+	session.Cols("id", column, "secure_json_data")
+	session.Table("data_source")
+	session.In("type", datasourceTypes)
+	session.Where(column + " IS NOT NULL AND " + column + " != ''")
+	err := session.Find(&rows)
+
+	if err != nil {
+		return 0, errutil.Wrapf(err, "failed to select %s", column)
+	}
+
+	rowsUpdated, err := updateRows(session, rows, column)
+	return rowsUpdated, errutil.Wrapf(err, "failed to %s updates failed", column)
+}
+
+func updateRows(session *sqlstore.DBSession, rows []map[string]string, passwordFieldName string) (int, error) {
+	var rowsUpdated int
+
 	for _, row := range rows {
-		newSecureJsonData, err := getUpdatedSecureJsonData(row, passwordFieldName)
+		newSecureJSONData, err := getUpdatedSecureJSONData(row, passwordFieldName)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
-		data, err := json.Marshal(newSecureJsonData)
+		data, err := json.Marshal(newSecureJSONData)
 		if err != nil {
-			return errutil.Wrap("marshaling newSecureJsonData failed", err)
+			return 0, errutil.Wrap("marshaling newSecureJsonData failed", err)
 		}
+
 		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}
 		session.Table("data_source")
 		session.Where("id = ?", row["id"])
 		// Setting both columns while having value only for secure_json_data should clear the [passwordFieldName] column
 		session.Cols("secure_json_data", passwordFieldName)
+
 		_, err = session.Update(newRow)
 		if err != nil {
-			return err
+			return 0, err
 		}
+
+		rowsUpdated++
 	}
-	return nil
+	return rowsUpdated, nil
 }
 
-func getUpdatedSecureJsonData(row map[string]string, passwordFieldName string) (map[string]interface{}, error) {
+func getUpdatedSecureJSONData(row map[string]string, passwordFieldName string) (map[string]interface{}, error) {
 	encryptedPassword, err := util.Encrypt([]byte(row[passwordFieldName]), setting.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var secureJsonData map[string]interface{}
+	var secureJSONData map[string]interface{}
 
-	if err := json.Unmarshal([]byte(row["secure_json_data"]), &secureJsonData); err != nil {
+	if err := json.Unmarshal([]byte(row["secure_json_data"]), &secureJSONData); err != nil {
 		return nil, err
 	}
 
 	jsonFieldName := util.ToCamelCase(passwordFieldName)
-	secureJsonData[jsonFieldName] = encryptedPassword
-	return secureJsonData, nil
+	secureJSONData[jsonFieldName] = encryptedPassword
+	return secureJSONData, nil
 }
