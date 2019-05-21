@@ -105,25 +105,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 
 		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
-
-		allowedTimeGrains := []int64{}
-		tgs, ok := azureMonitorTarget["timeGrains"].([]interface{})
-		if ok {
-			for _, v := range tgs {
-				jsonNumber, ok := v.(json.Number)
-				if ok {
-					tg, err := jsonNumber.Int64()
-					if err == nil {
-						allowedTimeGrains = append(allowedTimeGrains, tg)
-					}
-				}
-			}
-		}
-
+		timeGrains := azureMonitorTarget["timeGrains"]
 		if timeGrain == "auto" {
-			autoInterval := e.findClosestAllowedIntervalMS(query.IntervalMs, allowedTimeGrains)
-			tg := &TimeGrain{}
-			timeGrain, err = tg.createISO8601DurationFromIntervalMS(autoInterval)
+			timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -159,6 +143,35 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 	}
 
 	return azureMonitorQueries, nil
+}
+
+// setAutoTimeGrain tries to find the closest interval to the query's intervalMs value
+// if the metric has a limited set of possible intervals/time grains then use those
+// instead of the default list of intervals
+func (e *AzureMonitorDatasource) setAutoTimeGrain(intervalMs int64, timeGrains interface{}) (string, error) {
+	// parses array of numbers from the timeGrains json field
+	allowedTimeGrains := []int64{}
+	tgs, ok := timeGrains.([]interface{})
+	if ok {
+		for _, v := range tgs {
+			jsonNumber, ok := v.(json.Number)
+			if ok {
+				tg, err := jsonNumber.Int64()
+				if err == nil {
+					allowedTimeGrains = append(allowedTimeGrains, tg)
+				}
+			}
+		}
+	}
+
+	autoInterval := e.findClosestAllowedIntervalMS(intervalMs, allowedTimeGrains)
+	tg := &TimeGrain{}
+	autoTimeGrain, err := tg.createISO8601DurationFromIntervalMS(autoInterval)
+	if err != nil {
+		return "", err
+	}
+
+	return autoTimeGrain, nil
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) (*tsdb.QueryResult, AzureMonitorResponse, error) {
@@ -333,6 +346,7 @@ func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64, 
 }
 
 // formatLegendKey builds the legend key or timeseries name
+// Alias patterns like {{resourcename}} are replaced with the appropriate data values.
 func formatLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
 	if alias == "" {
 		if len(metadataName) > 0 {
