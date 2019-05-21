@@ -18,8 +18,8 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	defer session.Close()
 
 	datasources := []*models.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "password"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "password"},
+		{Type: "influxdb", Name: "influxdb", Password: "foobar"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar"},
 		{Type: "prometheus", Name: "prometheus", SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{})},
 	}
 
@@ -37,7 +37,6 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	EncryptDatasourcePaswords(&commandstest.FakeCommandLine{}, sqlstore)
 
 	//verify that no datasources still have password or basic_auth
-
 	var dss []*models.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
 	assert.Nil(t, err)
@@ -50,14 +49,14 @@ func TestPasswordMigrationCommand(t *testing.T) {
 			assert.Equal(t, ds.Password, "")
 			v, exist := sj["password"]
 			assert.True(t, exist)
-			assert.Equal(t, v, "password")
+			assert.Equal(t, v, "foobar")
 		}
 
 		if ds.Name == "graphite" {
 			assert.Equal(t, ds.BasicAuthPassword, "")
 			v, exist := sj["basicAuthPassword"]
 			assert.True(t, exist)
-			assert.Equal(t, v, "password")
+			assert.Equal(t, v, "foobar")
 		}
 
 		if ds.Name == "prometheus" {
