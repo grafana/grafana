@@ -158,8 +158,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return;
     }
-
-    const noTableIndex = _.findIndex(data, d => d.type !== 'table');
+    const noTableIndex = _.findIndex(data, d => 'columns' in d && 'rows' in d);
     if (noTableIndex > -1) {
       throw {
         message: `Result of query #${String.fromCharCode(
