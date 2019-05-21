@@ -52,7 +52,7 @@ The datasource can access metrics from four different services. You can configur
    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
    - Client Secret ( Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
 
-6. If you are are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
+6. If you are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
 
    - Application ID
    - API Key
