@@ -31,6 +31,8 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 * Add tests relevant to the fixed bug or new feature.
 
+* Follow [PR and commit messages convention](#PR-and-commit-messages-convention)
+
 ### Pull requests with new features
 Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
 
@@ -80,3 +82,19 @@ GO111MODULE=on go mod vendor
 ```
 
 You have to commit the changes to `go.mod`, `go.sum` and the `vendor/` directory before submitting the pull request.
+
+## PR and commit messages convention
+PR title and squash commit messages should follow convention below:
+
+```
+Area of changes: Message
+
+Detailed description
+```
+
+The `Area of changes` is related either to functional domain (i.e. Build, Release) or feature domain (i.e. Explore, Plugins, BarGaugePanel). `Message` should be concise, written in present tense and start with capitalised verb. Detailed description should be provided as commit message body, by entering a blank line between commit title and the description.
+
+Examples of good PR titles/commit messages:
+- `Explore: Adds Live option for supported datasources`
+- `GraphPanel: Don't sort series when legend table & sort column is not visible`
+- `Build: Support publishing MSI to grafana.com`
