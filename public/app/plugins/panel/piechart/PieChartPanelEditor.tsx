@@ -46,7 +46,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
             title="Field (default)"
             showMinMax={true}
             onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
+            value={fieldOptions.defaults}
           />
 
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
