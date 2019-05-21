@@ -8,16 +8,7 @@ import {
   LogLevel,
   TimeRange,
 } from '@grafana/ui/src/types';
-import {
-  ExploreId,
-  ExploreItemState,
-  HistoryItem,
-  RangeScanner,
-  ResultType,
-  QueryTransaction,
-  ExploreUIState,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, HistoryItem, RangeScanner, ExploreUIState, ExploreMode } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
 /**  Higher order actions
@@ -135,13 +126,6 @@ export interface ModifyQueriesPayload {
   modification: QueryFixAction;
   index: number;
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
-}
-
-export interface QueryStartPayload {
-  exploreId: ExploreId;
-  resultType: ResultType;
-  rowIndex: number;
-  transaction: QueryTransaction;
 }
 
 export interface HistoryUpdatedPayload {
@@ -296,15 +280,6 @@ export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceRead
  * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
  */
 export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('explore/MODIFY_QUERIES').create();
-
-/**
- * Start a query transaction for the given result type.
- * @param exploreId Explore area
- * @param transaction Query options and `done` status.
- * @param resultType Associate the transaction with a result viewer, e.g., Graph
- * @param rowIndex Index is used to associate latency for this transaction with a query row
- */
-export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
 /**
  * Remove query row of the given index, as well as associated query results.

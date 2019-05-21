@@ -155,6 +155,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
+      if (target.container === 'explore') {
+        target.format = 'time_series';
+        target.instant = false;
+        const instantTarget: any = _.cloneDeep(target);
+        instantTarget.format = 'table';
+        instantTarget.instant = true;
+        instantTarget.valueWithRefId = true;
+        delete instantTarget.maxDataPoints;
+        instantTarget.requestId += '_instant';
+        instantTarget.refId += '_instant';
+        activeTargets.push(instantTarget);
+        queries.push(this.createQuery(instantTarget, options, start, end));
+      }
+
       activeTargets.push(target);
       queries.push(this.createQuery(target, options, start, end));
     }
@@ -165,10 +179,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     const allQueryPromise = _.map(queries, query => {
-      if (!query.instant) {
-        return this.performTimeSeriesQuery(query, query.start, query.end);
-      } else {
+      if (query.instant) {
         return this.performInstantQuery(query, end);
+      } else {
+        return this.performTimeSeriesQuery(query, query.start, query.end);
       }
     });
 
@@ -176,23 +190,25 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       let result = [];
 
       _.each(responseList, (response, index) => {
+        const target = activeTargets[index];
         if (response.cancelled) {
           return;
         }
 
         // Keeping original start/end for transformers
         const transformerOptions = {
-          format: activeTargets[index].format,
+          format: target.format,
           step: queries[index].step,
-          legendFormat: activeTargets[index].legendFormat,
+          legendFormat: target.legendFormat,
           start: queries[index].start,
           end: queries[index].end,
           query: queries[index].expr,
           responseListLength: responseList.length,
-          refId: activeTargets[index].refId,
-          valueWithRefId: activeTargets[index].valueWithRefId,
+          refId: target.refId,
+          valueWithRefId: target.valueWithRefId,
         };
         const series = this.resultTransformer.transform(response, transformerOptions);
+
         result = [...result, ...series];
       });
 
@@ -202,10 +218,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return allPromise as Promise<{ data: any }>;
   }
 
-  createQuery(target, options, start, end) {
-    const query: any = {
+  createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
+    const query = {
       hinting: target.hinting,
       instant: target.instant,
+      step: 0,
+      expr: '',
+      requestId: '',
+      refId: '',
+      start: 0,
+      end: 0,
     };
     const range = Math.ceil(end - start);
 
@@ -398,7 +420,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
     // Unsetting min interval for accurate event resolution
     const minStep = '1s';
-    const query = this.createQuery({ expr, interval: minStep }, queryOptions, start, end);
+    const query = this.createQuery({ expr, interval: minStep, refId: 'X' }, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {

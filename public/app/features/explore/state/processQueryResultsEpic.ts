@@ -6,21 +6,19 @@ import { RawTimeRange } from '@grafana/ui/src/types/time';
 
 import { ActionOf, actionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
-import { ExploreId, ResultType } from 'app/types/explore';
-import { getRefIds, makeTimeSeriesList } from 'app/core/utils/explore';
+import { ExploreId } from 'app/types/explore';
+import { getRefIds } from 'app/core/utils/explore';
 
 export interface ProcessQueryResultsPayload {
   exploreId: ExploreId;
   response: any;
   latency: number;
-  resultType: ResultType;
   datasourceId: string;
 }
 
 export interface QuerySuccessPayload {
   exploreId: ExploreId;
   result: any;
-  resultType: ResultType;
   latency: number;
 }
 
@@ -60,7 +58,7 @@ export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload
 export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(processQueryResultsAction.type).pipe(
     mergeMap((action: ActionOf<ProcessQueryResultsPayload>) => {
-      const { exploreId, datasourceId, response, latency, resultType } = action.payload;
+      const { exploreId, datasourceId, response, latency } = action.payload;
       const { datasourceInstance, scanning, scanner } = state$.value.explore[exploreId];
 
       // If datasource already changed, results do not matter
@@ -80,15 +78,12 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
         })
       );
 
-      const resultGetter =
-        resultType === 'Graph' ? makeTimeSeriesList : resultType === 'Table' ? (data: any[]) => data : null;
-      const result = resultGetter ? resultGetter(series, null, []) : series;
+      const result = series || [];
 
       actions.push(
         querySuccessAction({
           exploreId,
           result,
-          resultType,
           latency,
         })
       );

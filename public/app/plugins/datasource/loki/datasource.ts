@@ -17,6 +17,8 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
   LogRowModel,
+  DataStreamObserver,
+  LoadingState,
 } from '@grafana/ui';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -49,6 +51,7 @@ interface LokiContextQueryOptions {
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   languageProvider: LanguageProvider;
   maxLines: number;
+  supportsStreaming: boolean;
 
   /** @ngInject */
   constructor(
@@ -60,6 +63,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
+    this.supportsStreaming = true;
   }
 
   _request(apiUrl: string, data?, options?: any) {
@@ -126,7 +130,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
   }
 
-  async query(options: DataQueryRequest<LokiQuery>) {
+  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
     const queryTargets = options.targets
       .filter(target => target.expr && !target.hide)
       .map(target => this.prepareQueryTarget(target, options));
@@ -135,6 +139,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return Promise.resolve({ data: [] });
     }
 
+    if (observer) {
+      observer({
+        key: 'loki',
+        request: options,
+        state: LoadingState.Loading,
+        unsubscribe: () => {
+          console.log('unsubscribe LoadingState.Loading');
+        },
+      });
+    }
     const queries = queryTargets.map(target =>
       this._request('/api/prom/query', target).catch((err: any) => {
         if (err.cancelled) {
@@ -161,12 +175,24 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         error.status = err.status;
         error.statusText = err.statusText;
 
+        if (observer) {
+          observer({
+            key: 'loki',
+            request: options,
+            state: LoadingState.Error,
+            unsubscribe: () => {
+              console.log('unsubscribe LoadingState.Error');
+            },
+            error,
+          });
+        }
+
         throw error;
       })
     );
 
     return Promise.all(queries).then((results: any[]) => {
-      const series: Array<SeriesData | DataQueryError> = [];
+      const series: SeriesData[] = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
@@ -184,6 +210,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             series.push(seriesData);
           }
         }
+      }
+
+      if (observer) {
+        observer({
+          key: 'loki',
+          request: options,
+          state: LoadingState.Done,
+          unsubscribe: () => {
+            console.log('unsubscribe LoadingState.Done');
+          },
+          series,
+        });
       }
 
       return { data: series };

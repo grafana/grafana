@@ -3,7 +3,6 @@ import { Value } from 'slate';
 import {
   RawTimeRange,
   DataQuery,
-  DataQueryResponseData,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
@@ -15,7 +14,8 @@ import {
   LogsDedupStrategy,
 } from '@grafana/ui';
 
-import { Emitter, TimeSeries } from 'app/core/core';
+import { Emitter } from 'app/core/core';
+import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
@@ -327,11 +327,8 @@ export interface QueryIntervals {
 
 export interface QueryOptions {
   interval: string;
-  format: string;
-  hinting?: boolean;
-  instant?: boolean;
-  valueWithRefId?: boolean;
   maxDataPoints?: number;
+  live?: boolean;
 }
 
 export interface QueryTransaction {
@@ -343,17 +340,10 @@ export interface QueryTransaction {
   options: any;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
-  resultType: ResultType;
   scanning?: boolean;
 }
 
 export type RangeScanner = () => RawTimeRange;
-
-export type ResultGetter = (
-  result: DataQueryResponseData,
-  transaction: QueryTransaction,
-  allTransactions: QueryTransaction[]
-) => TimeSeries;
 
 export interface TextMatch {
   text: string;

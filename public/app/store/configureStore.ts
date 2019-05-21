@@ -20,7 +20,7 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { stateSaveEpic } from 'app/features/explore/state/stateSaveEpic';
 import { processQueryResultsEpic } from 'app/features/explore/state/processQueryResultsEpic';
 import { processQueryErrorsEpic } from 'app/features/explore/state/processQueryErrorsEpic';
-import { runQueriesEpic, runQueriesForTypeEpic } from 'app/features/explore/state/runQueriesEpic';
+import { runQueriesEpic, runQueriesBatchEpic } from 'app/features/explore/state/runQueriesEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -47,7 +47,7 @@ export const rootEpic: any = combineEpics(
   limitMessageRateEpic,
   stateSaveEpic,
   runQueriesEpic,
-  runQueriesForTypeEpic,
+  runQueriesBatchEpic,
   processQueryResultsEpic,
   processQueryErrorsEpic
 );

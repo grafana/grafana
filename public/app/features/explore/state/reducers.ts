@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import {
-  calculateResultsFromQueryTransactions,
+  calculateResultsFromQueryBatch,
   getIntervals,
   ensureQueries,
   getQueryKeys,
@@ -39,7 +39,6 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  queryStartAction,
   removeQueryRowAction,
   scanStartAction,
   setQueriesAction,
@@ -54,7 +53,7 @@ import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { subscriptionDataReceivedAction, startSubscriptionAction } from './epics';
 import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
-import { runQueriesAction } from './runQueriesEpic';
+import { runQueriesAction, queryStartAction } from './runQueriesEpic';
 import { queryFailureAction } from './processQueryErrorsEpic';
 import { querySuccessAction, scanRangeAction, scanStopAction, resetQueryErrorAction } from './processQueryResultsEpic';
 
@@ -352,35 +351,33 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: queryFailureAction,
     mapper: (state, action): ExploreItemState => {
-      const { resultType, response } = action.payload;
+      const { response } = action.payload;
       const queryErrors = state.queryErrors.concat(response);
 
       return {
         ...state,
-        graphResult: resultType === 'Graph' ? null : state.graphResult,
-        tableResult: resultType === 'Table' ? null : state.tableResult,
-        logsResult: resultType === 'Logs' ? null : state.logsResult,
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         latency: 0,
         queryErrors,
-        graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
-        logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
-        tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
+        graphIsLoading: false,
+        logIsLoading: false,
+        tableIsLoading: false,
         update: makeInitialUpdateState(),
       };
     },
   })
   .addMapper({
     filter: queryStartAction,
-    mapper: (state, action): ExploreItemState => {
-      const { resultType } = action.payload;
-
+    mapper: (state): ExploreItemState => {
       return {
         ...state,
         queryErrors: [],
         latency: 0,
-        graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
-        logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
-        tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
+        graphIsLoading: true,
+        logIsLoading: true,
+        tableIsLoading: true,
         update: makeInitialUpdateState(),
       };
     },
@@ -388,9 +385,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { queryIntervals, refreshInterval } = state;
-      const { result, resultType, latency } = action.payload;
-      const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
+      const { queryIntervals, refreshInterval, mode } = state;
+      const { result, latency } = action.payload;
+      const results = calculateResultsFromQueryBatch(result, mode, queryIntervals.intervalMs);
       const live = isLive(refreshInterval);
 
       if (live) {
@@ -399,12 +396,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
-        graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
-        tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
-        logsResult:
-          resultType === 'Logs'
-            ? sortLogsResult(results.logsResult, refreshInterval)
-            : sortLogsResult(state.logsResult, refreshInterval),
+        graphResult: results.graphResult,
+        tableResult: results.tableResult,
+        logsResult: sortLogsResult(results.logsResult, refreshInterval),
         latency,
         graphIsLoading: live ? true : false,
         logIsLoading: live ? true : false,

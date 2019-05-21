@@ -25,16 +25,17 @@ import {
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  isTableData,
+  DataQueryResponseData,
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
   HistoryItem,
   QueryTransaction,
-  ResultType,
   QueryIntervals,
   QueryOptions,
-  ResultGetter,
+  ExploreMode,
 } from 'app/types/explore';
 import { seriesDataToLogsModel } from 'app/core/logs_model';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
@@ -116,7 +117,6 @@ export async function getExploreUrl(
 
 export function buildQueryTransaction(
   queries: DataQuery[],
-  resultType: ResultType,
   queryOptions: QueryOptions,
   range: TimeRange,
   queryIntervals: QueryIntervals,
@@ -137,7 +137,7 @@ export function buildQueryTransaction(
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
-  const panelId = `${queryOptions.format}-${key}`;
+  const panelId = `${key}`;
 
   const options = {
     interval,
@@ -156,7 +156,6 @@ export function buildQueryTransaction(
   return {
     queries,
     options,
-    resultType,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -328,24 +327,35 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
+export function calculateResultsFromQueryBatch(result: any[], mode: ExploreMode, graphInterval: number) {
   const flattenedResult: any[] = _.flatten(result);
-  const graphResult = resultType === 'Graph' && result ? result : null;
-  const tableResult =
-    resultType === 'Table' && result
-      ? mergeTablesIntoModel(
-          new TableModel(),
-          ...flattenedResult.filter((r: any) => r.columns && r.rows).map((r: any) => r as TableModel)
-        )
-      : mergeTablesIntoModel(new TableModel());
-  const logsResult =
-    resultType === 'Logs' && result
-      ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
-      : null;
+  if (mode === ExploreMode.Metrics) {
+    const metrics: DataQueryResponseData[] = [];
+    const tables: DataQueryResponseData[] = [];
+
+    for (let index = 0; index < flattenedResult.length; index++) {
+      const res = flattenedResult[index];
+      if (isTableData(res)) {
+        tables.push(res);
+      } else {
+        metrics.push(res);
+      }
+    }
+
+    return {
+      graphResult: makeTimeSeriesList(metrics),
+      tableResult: mergeTablesIntoModel(new TableModel(), ...tables),
+      logsResult: { hasUniqueLabels: false, rows: [] },
+    };
+  }
+
+  const logsResult = result
+    ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
+    : null;
 
   return {
-    graphResult,
-    tableResult,
+    graphResult: [],
+    tableResult: new TableModel(),
     logsResult,
   };
 }
@@ -358,35 +368,29 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
 
-export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
+export const makeTimeSeriesList = (seriesData: DataQueryResponseData[]) => {
+  const result: TimeSeries[] = [];
   // Prevent multiple Graph transactions to have the same colors
   let colorIndexOffset = 0;
-  for (const other of allTransactions) {
-    // Only need to consider transactions that came before the current one
-    if (other === transaction) {
-      break;
-    }
-    // Count timeseries of previous query results
-    if (other.resultType === 'Graph' && other.done) {
-      colorIndexOffset += other.result.length;
-    }
-  }
-
-  return dataList.map((seriesData, index: number) => {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-    const colorIndex = (colorIndexOffset + index) % colors.length;
+  for (let n = 0; n < seriesData.length; n++) {
+    const series = seriesData[n];
+    const datapoints = series.datapoints || [];
+    const alias = series.target;
+    const colorIndex = colorIndexOffset % colors.length;
     const color = colors[colorIndex];
 
-    const series = new TimeSeries({
-      datapoints,
-      alias,
-      color,
-      unit: seriesData.unit,
-    });
+    result.push(
+      new TimeSeries({
+        datapoints,
+        alias,
+        color,
+        unit: series.unit,
+      })
+    );
+    colorIndexOffset++;
+  }
 
-    return series;
-  });
+  return result;
 };
 
 /**
