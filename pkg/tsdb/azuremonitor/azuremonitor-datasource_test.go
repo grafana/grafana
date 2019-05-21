@@ -67,6 +67,49 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(queries[0].Alias, ShouldEqual, "testalias")
 			})
 
+			Convey("and has a time grain set to auto", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"azureMonitor": map[string]interface{}{
+						"timeGrain":        "auto",
+						"aggregation":      "Average",
+						"resourceGroup":    "grafanastaging",
+						"resourceName":     "grafana",
+						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricName":       "Percentage CPU",
+						"alias":            "testalias",
+						"queryType":        "Azure Monitor",
+					},
+				})
+				tsdbQuery.Queries[0].IntervalMs = 400000
+
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
+			})
+
+			Convey("and has a time grain set to auto and the metric has a limited list of allowed time grains", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"azureMonitor": map[string]interface{}{
+						"timeGrain":        "auto",
+						"aggregation":      "Average",
+						"resourceGroup":    "grafanastaging",
+						"resourceName":     "grafana",
+						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricName":       "Percentage CPU",
+						"alias":            "testalias",
+						"queryType":        "Azure Monitor",
+						"timeGrains":       []interface{}{"auto", json.Number("60000"), json.Number("300000")},
+					},
+				})
+				tsdbQuery.Queries[0].IntervalMs = 400000
+
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
+			})
+
 			Convey("and has a dimension filter", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"azureMonitor": map[string]interface{}{

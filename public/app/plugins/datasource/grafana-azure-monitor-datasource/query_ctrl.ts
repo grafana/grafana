@@ -281,6 +281,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   onResourceGroupChange() {
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
+    this.refresh();
   }
 
   onMetricDefinitionChange() {
@@ -293,6 +294,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   onResourceNameChange() {
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
+    this.refresh();
   }
 
   onMetricNameChange() {
