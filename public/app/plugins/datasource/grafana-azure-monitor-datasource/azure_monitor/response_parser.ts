@@ -1,8 +1,17 @@
 import _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
 export default class ResponseParser {
-  static parseResponseValues(result: any, textFieldName: string, valueFieldName: string) {
-    const list: any[] = [];
+  static parseResponseValues(
+    result: any,
+    textFieldName: string,
+    valueFieldName: string
+  ): Array<{ text: string; value: string }> {
+    const list: Array<{ text: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
     for (let i = 0; i < result.data.value.length; i++) {
       if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
         list.push({
@@ -14,8 +23,13 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseResourceNames(result: any, metricDefinition: string) {
-    const list: any[] = [];
+  static parseResourceNames(result: any, metricDefinition: string): Array<{ text: string; value: string }> {
+    const list: Array<{ text: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
     for (let i = 0; i < result.data.value.length; i++) {
       if (result.data.value[i].type === metricDefinition) {
         list.push({
@@ -29,11 +43,20 @@ export default class ResponseParser {
   }
 
   static parseMetadata(result: any, metricName: string) {
+    const defaultAggTypes = ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'];
+
+    if (!result) {
+      return {
+        primaryAggType: '',
+        supportedAggTypes: defaultAggTypes,
+        supportedTimeGrains: [],
+        dimensions: [],
+      };
+    }
+
     const metricData: any = _.find(result.data.value, o => {
       return _.get(o, 'name.value') === metricName;
     });
-
-    const defaultAggTypes = ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'];
 
     return {
       primaryAggType: metricData.primaryAggregationType,
@@ -43,8 +66,12 @@ export default class ResponseParser {
     };
   }
 
-  static parseTimeGrains(metricAvailabilities) {
+  static parseTimeGrains(metricAvailabilities: any[]): Array<{ text: string; value: string }> {
     const timeGrains: any[] = [];
+    if (!metricAvailabilities) {
+      return timeGrains;
+    }
+
     metricAvailabilities.forEach(avail => {
       if (avail.timeGrain) {
         timeGrains.push({
@@ -56,8 +83,8 @@ export default class ResponseParser {
     return timeGrains;
   }
 
-  static parseDimensions(metricData: any) {
-    const dimensions: any[] = [];
+  static parseDimensions(metricData: any): Array<{ text: string; value: string }> {
+    const dimensions: Array<{ text: string; value: string }> = [];
     if (!metricData.dimensions || metricData.dimensions.length === 0) {
       return dimensions;
     }
@@ -75,10 +102,15 @@ export default class ResponseParser {
     return dimensions;
   }
 
-  static parseSubscriptions(result: any) {
+  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
+    const list: Array<{ text: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
-    const list: Array<{ text: string; value: string }> = [];
     for (let i = 0; i < result.data.value.length; i++) {
       if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
         list.push({

@@ -48,6 +48,24 @@ export interface AzureLogsQuery {
   workspace: string;
 }
 
+// Azure Monitor API Types
+
+export interface AzureMonitorMetricDefinitionsResponse {
+  data: {
+    value: Array<{ name: string; type: string; location?: string }>;
+  };
+  status: number;
+  statusText: string;
+}
+
+export interface AzureMonitorResourceGroupsResponse {
+  data: {
+    value: Array<{ name: string }>;
+  };
+  status: number;
+  statusText: string;
+}
+
 // Azure Log Analytics types
 export interface KustoSchema {
   Databases: { [key: string]: KustoDatabase };

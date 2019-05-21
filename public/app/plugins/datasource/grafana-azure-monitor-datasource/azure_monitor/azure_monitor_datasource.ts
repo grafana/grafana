@@ -3,7 +3,12 @@ import UrlBuilder from './url_builder';
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
+import {
+  AzureMonitorQuery,
+  AzureDataSourceJsonData,
+  AzureMonitorMetricDefinitionsResponse,
+  AzureMonitorResourceGroupsResponse,
+} from '../types';
 import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -105,7 +110,7 @@ export default class AzureMonitorDatasource {
       },
     });
 
-    const result = [];
+    const result: any[] = [];
     if (data.results) {
       Object['values'](data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
@@ -205,14 +210,14 @@ export default class AzureMonitorDatasource {
 
   getSubscriptions(route?: string) {
     const url = `/${route || this.cloudName}/subscriptions?api-version=2019-03-01`;
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
 
   getResourceGroups(subscriptionId: string) {
     const url = `${this.baseUrl}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`;
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
   }
@@ -222,7 +227,7 @@ export default class AzureMonitorDatasource {
       this.apiVersion
     }`;
     return this.doRequest(url)
-      .then(result => {
+      .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
       .then(result => {
