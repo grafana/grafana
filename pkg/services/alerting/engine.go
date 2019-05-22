@@ -17,10 +17,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// AlertingService is the background process that
+// Service is the background process that
 // schedules alert evaluations and makes sure notifications
 // are sent.
-type AlertingService struct {
+type Service struct {
 	RenderService rendering.Service `inject:""`
 
 	execQueue     chan *Job
@@ -33,16 +33,16 @@ type AlertingService struct {
 }
 
 func init() {
-	registry.RegisterService(&AlertingService{})
+	registry.RegisterService(&Service{})
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
-func (e *AlertingService) IsDisabled() bool {
+func (e *Service) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
 // Init initalizes the AlertingService.
-func (e *AlertingService) Init() error {
+func (e *Service) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -54,7 +54,7 @@ func (e *AlertingService) Init() error {
 }
 
 // Run starts the alerting service background process.
-func (e *AlertingService) Run(ctx context.Context) error {
+func (e *Service) Run(ctx context.Context) error {
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
@@ -63,7 +63,7 @@ func (e *AlertingService) Run(ctx context.Context) error {
 	return err
 }
 
-func (e *AlertingService) alertingTicker(grafanaCtx context.Context) error {
+func (e *Service) alertingTicker(grafanaCtx context.Context) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Scheduler Panic: stopping alertingTicker", "error", err, "stack", log.Stack(1))
@@ -88,7 +88,7 @@ func (e *AlertingService) alertingTicker(grafanaCtx context.Context) error {
 	}
 }
 
-func (e *AlertingService) runJobDispatcher(grafanaCtx context.Context) error {
+func (e *Service) runJobDispatcher(grafanaCtx context.Context) error {
 	dispatcherGroup, alertCtx := errgroup.WithContext(grafanaCtx)
 
 	for {
@@ -105,7 +105,7 @@ var (
 	unfinishedWorkTimeout = time.Second * 5
 )
 
-func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
+func (e *Service) processJobWithRetry(grafanaCtx context.Context, job *Job) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
@@ -140,7 +140,7 @@ func (e *AlertingService) processJobWithRetry(grafanaCtx context.Context, job *J
 	}
 }
 
-func (e *AlertingService) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
+func (e *Service) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
 	job.Running = false
 	close(cancelChan)
 	for cancelFn := range cancelChan {
@@ -149,7 +149,7 @@ func (e *AlertingService) endJob(err error, cancelChan chan context.CancelFunc, 
 	return err
 }
 
-func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancelChan chan context.CancelFunc, job *Job) {
+func (e *Service) processJob(attemptID int, attemptChan chan int, cancelChan chan context.CancelFunc, job *Job) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
