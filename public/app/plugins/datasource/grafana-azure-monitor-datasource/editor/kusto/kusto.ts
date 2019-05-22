@@ -652,12 +652,12 @@ export const grafanaMacros = [
   {
     text: '$__timeTo',
     display: '$__timeTo()',
-    hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+    hint: 'Returns the From datetime from the Grafana picker. Example: datetime(2018-06-05T20:09:58.907Z).',
   },
   {
     text: '$__timeFrom',
     display: '$__timeFrom()',
-    hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+    hint: 'Returns the From datetime from the Grafana picker. Example: datetime(2018-06-05T18:09:58.907Z).',
   },
   {
     text: '$__escapeMulti',
