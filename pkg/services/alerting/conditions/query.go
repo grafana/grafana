@@ -24,7 +24,7 @@ func init() {
 type QueryCondition struct {
 	Index         int
 	Query         AlertQuery
-	Reducer       QueryReducer
+	Reducer       *queryReducer
 	Evaluator     AlertEvaluator
 	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
@@ -176,7 +176,7 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Query.DatasourceId = queryJson.Get("datasourceId").MustInt64()
 
 	reducerJson := model.Get("reducer")
-	condition.Reducer = NewSimpleReducer(reducerJson.Get("type").MustString())
+	condition.Reducer = newSimpleReducer(reducerJson.Get("type").MustString())
 
 	evaluatorJson := model.Get("evaluator")
 	evaluator, err := NewAlertEvaluator(evaluatorJson)

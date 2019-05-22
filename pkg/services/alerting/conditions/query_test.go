@@ -30,8 +30,7 @@ func TestQueryCondition(t *testing.T) {
 				So(ctx.condition.Query.DatasourceId, ShouldEqual, 1)
 
 				Convey("Can read query reducer", func() {
-					reducer, ok := ctx.condition.Reducer.(*SimpleReducer)
-					So(ok, ShouldBeTrue)
+					reducer := ctx.condition.Reducer
 					So(reducer.Type, ShouldEqual, "avg")
 				})
 
