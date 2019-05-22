@@ -68,7 +68,7 @@ func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	ln.log.Info("Creating Line notify", "ruleId", evalContext.Rule.Id, "notification", ln.Name)
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		ln.log.Error("Failed get rule link", "error", err)
 		return err
@@ -78,9 +78,9 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
-	if evalContext.ImagePublicUrl != "" {
-		form.Add("imageThumbnail", evalContext.ImagePublicUrl)
-		form.Add("imageFullsize", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		form.Add("imageThumbnail", evalContext.ImagePublicURL)
+		form.Add("imageFullsize", evalContext.ImagePublicURL)
 	}
 
 	cmd := &models.SendWebhookSync{

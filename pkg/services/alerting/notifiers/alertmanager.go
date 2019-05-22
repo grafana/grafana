@@ -89,8 +89,8 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 	if description != "" {
 		alertJSON.SetPath([]string{"annotations", "description"}, description)
 	}
-	if evalContext.ImagePublicUrl != "" {
-		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicURL)
 	}
 
 	// Labels (from metrics tags + mandatory alertname).
@@ -113,7 +113,7 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
 	am.log.Info("Sending Alertmanager alert", "ruleId", evalContext.Rule.Id, "notification", am.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		am.log.Error("Failed get rule link", "error", err)
 		return err

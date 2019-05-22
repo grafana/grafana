@@ -92,7 +92,7 @@ func (on *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	on.log.Info("Creating OpsGenie alert", "ruleId", evalContext.Rule.Id, "notification", on.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		on.log.Error("Failed get rule link", "error", err)
 		return err
@@ -111,8 +111,8 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	details := simplejson.New()
 	details.Set("url", ruleURL)
-	if evalContext.ImagePublicUrl != "" {
-		details.Set("image", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		details.Set("image", evalContext.ImagePublicURL)
 	}
 
 	bodyJSON.Set("details", details)

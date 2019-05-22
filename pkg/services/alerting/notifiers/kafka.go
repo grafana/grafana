@@ -80,18 +80,18 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("details", customData)
 	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		kn.log.Error("Failed get rule link", "error", err)
 		return err
 	}
 	bodyJSON.Set("client_url", ruleURL)
 
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		contexts := make([]interface{}, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("type", "image")
-		imageJSON.Set("src", evalContext.ImagePublicUrl)
+		imageJSON.Set("src", evalContext.ImagePublicURL)
 		contexts[0] = imageJSON
 		bodyJSON.Set("contexts", contexts)
 	}

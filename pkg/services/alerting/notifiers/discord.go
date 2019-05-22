@@ -68,7 +68,7 @@ type DiscordNotifier struct {
 func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "webhook_url", this.WebhookURL)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleUrl, err := evalContext.GetRuleURL()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return err
@@ -112,9 +112,9 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var image map[string]interface{}
 	var embeddedImage = false
 
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		image = map[string]interface{}{
-			"url": evalContext.ImagePublicUrl,
+			"url": evalContext.ImagePublicURL,
 		}
 		embed.Set("image", image)
 	} else {

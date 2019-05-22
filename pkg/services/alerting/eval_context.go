@@ -26,7 +26,7 @@ type EvalContext struct {
 
 	dashboardRef *models.DashboardRef
 
-	ImagePublicUrl  string
+	ImagePublicURL  string
 	ImageOnDiskPath string
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
@@ -113,8 +113,8 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 
 const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
-// GetRuleUrl returns the url to the dashboard containing the alert.
-func (c *EvalContext) GetRuleUrl() (string, error) {
+// GetRuleURL returns the url to the dashboard containing the alert.
+func (c *EvalContext) GetRuleURL() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
 	}

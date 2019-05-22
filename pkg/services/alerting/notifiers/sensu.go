@@ -106,13 +106,13 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("handler", sn.Handler)
 	}
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
 		bodyJSON.Set("ruleUrl", ruleURL)
 	}
 
-	if evalContext.ImagePublicUrl != "" {
-		bodyJSON.Set("imageUrl", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		bodyJSON.Set("imageUrl", evalContext.ImagePublicURL)
 	}
 
 	if evalContext.Rule.Message != "" {

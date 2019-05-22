@@ -141,13 +141,13 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	context.ImageOnDiskPath = result.FilePath
-	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
+	context.ImagePublicURL, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}
 
-	if context.ImagePublicUrl != "" {
-		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicUrl)
+	if context.ImagePublicURL != "" {
+		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicURL)
 	}
 
 	return nil
