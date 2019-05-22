@@ -438,7 +438,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { data } = action.payload;
       const live = isLive(refreshInterval);
 
-      if (live) {
+      if (!live) {
         return state;
       }
 

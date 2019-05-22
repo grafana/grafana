@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/ldap.v3"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -48,6 +49,7 @@ var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrLDAPUserNotFound   = errors.New("LDAP user not found")
 )
 
 var dial = func(network, addr string) (IConnection, error) {
@@ -142,6 +144,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	// If we couldn't find the user -
 	// we should show incorrect credentials err
 	if len(users) == 0 {
+		server.disableExternalUser(query.Username)
 		return nil, ErrInvalidCredentials
 	}
 
@@ -263,6 +266,34 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	return nil
 }
 
+// disableExternalUser marks external user as disabled in Grafana db
+func (server *Server) disableExternalUser(username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := bus.Dispatch(userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if !userInfo.IsDisabled {
+		server.log.Debug("Disabling external user", "user", userQuery.Result.Login)
+		// Mark user as disabled in grafana db
+		disableUserCmd := &models.DisableUserCommand{
+			UserId:     userQuery.Result.UserId,
+			IsDisabled: true,
+		}
+
+		if err := bus.Dispatch(disableUserCmd); err != nil {
+			server.log.Debug("Error disabling external user", "user", userQuery.Result.Login, "message", err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
 // getSearchRequest returns LDAP search request for users
 func (server *Server) getSearchRequest(
 	base string,
@@ -305,7 +336,7 @@ func (server *Server) getSearchRequest(
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
 func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
 	extUser := &models.ExternalUserInfo{
-		AuthModule: "ldap",
+		AuthModule: models.AuthModuleLDAP,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
@@ -423,9 +454,9 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 	for _, groupSearchBase := range server.config.GroupSearchBaseDNs {
 		var filterReplace string
 		if server.config.GroupSearchFilterUserAttribute == "" {
-			filterReplace = getLdapAttr(server.config.Attr.Username, searchResult)
+			filterReplace = getLDAPAttr(server.config.Attr.Username, searchResult)
 		} else {
-			filterReplace = getLdapAttr(server.config.GroupSearchFilterUserAttribute, searchResult)
+			filterReplace = getLDAPAttr(server.config.GroupSearchFilterUserAttribute, searchResult)
 		}
 
 		filter := strings.Replace(
@@ -458,7 +489,7 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 
 		if len(groupSearchResult.Entries) > 0 {
 			for i := range groupSearchResult.Entries {
-				memberOf = append(memberOf, getLdapAttrN(groupIDAttribute, groupSearchResult, i))
+				memberOf = append(memberOf, getLDAPAttrN(groupIDAttribute, groupSearchResult, i))
 			}
 			break
 		}
@@ -481,27 +512,27 @@ func (server *Server) serializeUsers(
 		}
 
 		userInfo := &UserInfo{
-			DN: getLdapAttrN(
+			DN: getLDAPAttrN(
 				"dn",
 				users,
 				index,
 			),
-			LastName: getLdapAttrN(
+			LastName: getLDAPAttrN(
 				server.config.Attr.Surname,
 				users,
 				index,
 			),
-			FirstName: getLdapAttrN(
+			FirstName: getLDAPAttrN(
 				server.config.Attr.Name,
 				users,
 				index,
 			),
-			Username: getLdapAttrN(
+			Username: getLDAPAttrN(
 				server.config.Attr.Username,
 				users,
 				index,
 			),
-			Email: getLdapAttrN(
+			Email: getLDAPAttrN(
 				server.config.Attr.Email,
 				users,
 				index,
@@ -523,7 +554,7 @@ func (server *Server) getMemberOf(search *ldap.SearchResult) (
 	[]string, error,
 ) {
 	if server.config.GroupSearchFilter == "" {
-		memberOf := getLdapAttrArray(server.config.Attr.MemberOf, search)
+		memberOf := getLDAPAttrArray(server.config.Attr.MemberOf, search)
 
 		return memberOf, nil
 	}
@@ -545,11 +576,11 @@ func appendIfNotEmpty(slice []string, values ...string) []string {
 	return slice
 }
 
-func getLdapAttr(name string, result *ldap.SearchResult) string {
-	return getLdapAttrN(name, result, 0)
+func getLDAPAttr(name string, result *ldap.SearchResult) string {
+	return getLDAPAttrN(name, result, 0)
 }
 
-func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
+func getLDAPAttrN(name string, result *ldap.SearchResult, n int) string {
 	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
@@ -563,11 +594,11 @@ func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
 	return ""
 }
 
-func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
-	return getLdapAttrArrayN(name, result, 0)
+func getLDAPAttrArray(name string, result *ldap.SearchResult) []string {
+	return getLDAPAttrArrayN(name, result, 0)
 }
 
-func getLdapAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
+func getLDAPAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
 	for _, attr := range result.Entries[n].Attributes {
 		if attr.Name == name {
 			return attr.Values

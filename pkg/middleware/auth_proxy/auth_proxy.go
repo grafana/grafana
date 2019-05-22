@@ -40,7 +40,7 @@ type AuthProxy struct {
 	header string
 
 	enabled             bool
-	LdapAllowSignup     bool
+	LDAPAllowSignup     bool
 	AuthProxyAutoSignUp bool
 	whitelistIP         string
 	headerType          string
@@ -64,7 +64,7 @@ func newError(message string, err error) *Error {
 
 // Error returns a Error error string
 func (err *Error) Error() string {
-	return fmt.Sprintf("%s", err.Message)
+	return err.Message
 }
 
 // Options for the AuthProxy
@@ -88,8 +88,8 @@ func New(options *Options) *AuthProxy {
 		headerType:          setting.AuthProxyHeaderProperty,
 		headers:             setting.AuthProxyHeaders,
 		whitelistIP:         setting.AuthProxyWhitelist,
-		cacheTTL:            setting.AuthProxyLdapSyncTtl,
-		LdapAllowSignup:     setting.LdapAllowSignup,
+		cacheTTL:            setting.AuthProxyLDAPSyncTtl,
+		LDAPAllowSignup:     setting.LDAPAllowSignup,
 		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
 	}
 }
@@ -98,20 +98,12 @@ func New(options *Options) *AuthProxy {
 func (auth *AuthProxy) IsEnabled() bool {
 
 	// Bail if the setting is not enabled
-	if !auth.enabled {
-		return false
-	}
-
-	return true
+	return auth.enabled
 }
 
 // HasHeader checks if the we have specified header
 func (auth *AuthProxy) HasHeader() bool {
-	if len(auth.header) == 0 {
-		return false
-	}
-
-	return true
+	return len(auth.header) != 0
 }
 
 // IsAllowedIP compares presented IP with the whitelist one
@@ -221,7 +213,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	// Have to sync grafana and LDAP user during log in
 	user, err := user.Upsert(&user.UpsertArgs{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LdapAllowSignup,
+		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	})
 	if err != nil {

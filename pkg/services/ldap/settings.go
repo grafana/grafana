@@ -65,7 +65,7 @@ var loadingMutex = &sync.Mutex{}
 
 // IsEnabled checks if ldap is enabled
 func IsEnabled() bool {
-	return setting.LdapEnabled
+	return setting.LDAPEnabled
 }
 
 // ReloadConfig reads the config from the disc and caches it.
@@ -78,7 +78,7 @@ func ReloadConfig() error {
 	defer loadingMutex.Unlock()
 
 	var err error
-	config, err = readConfig(setting.LdapConfigFile)
+	config, err = readConfig(setting.LDAPConfigFile)
 	return err
 }
 
@@ -98,7 +98,7 @@ func GetConfig() (*Config, error) {
 	defer loadingMutex.Unlock()
 
 	var err error
-	config, err = readConfig(setting.LdapConfigFile)
+	config, err = readConfig(setting.LDAPConfigFile)
 
 	return config, err
 }
@@ -106,7 +106,7 @@ func GetConfig() (*Config, error) {
 func readConfig(configFile string) (*Config, error) {
 	result := &Config{}
 
-	logger.Info("Ldap enabled, reading config file", "file", configFile)
+	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
