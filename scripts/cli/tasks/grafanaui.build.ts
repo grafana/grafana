@@ -7,7 +7,7 @@ import { Task, TaskRunner } from './task';
 
 let distDir, cwd;
 
-const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
+export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
 
 const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
