@@ -32,6 +32,10 @@ class SearchQueryParser {
   }
 }
 
+interface OpenSearchParams {
+  query?: string;
+}
+
 export class SearchCtrl {
   isOpen: boolean;
   query: SearchQuery;
@@ -88,7 +92,7 @@ export class SearchCtrl {
     appEvents.emit('search-query');
   }
 
-  openSearch(evt, payload) {
+  openSearch(payload: OpenSearchParams = {}) {
     if (this.isOpen) {
       this.closeSearch();
       return;
@@ -99,18 +103,15 @@ export class SearchCtrl {
     this.selectedIndex = -1;
     this.results = [];
     this.query = {
-      query: evt ? `${evt.query} ` : '',
-      parsedQuery: this.queryParser.parse(evt && evt.query),
+      query: payload.query ? `${payload.query} ` : '',
+      parsedQuery: this.queryParser.parse(payload.query),
       tags: [],
       starred: false,
     };
+
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
-
-    if (payload && payload.starred) {
-      this.query.starred = true;
-    }
 
     this.$timeout(() => {
       this.ignoreClose = false;
