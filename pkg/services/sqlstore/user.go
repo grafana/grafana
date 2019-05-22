@@ -497,26 +497,15 @@ func BatchDisableUsers(cmd *m.BatchDisableUsersCommand) error {
 
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
 		disableSQL := "UPDATE " + dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
-		revokeTokenSQL := "DELETE from user_auth_token WHERE user_id IN (?" + user_id_params + ")"
 
 		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
-		revokeTokenParams := []interface{}{revokeTokenSQL}
 		for _, v := range userIds {
 			disableParams = append(disableParams, v)
-			revokeTokenParams = append(revokeTokenParams, v)
 		}
 
 		_, err := sess.Exec(disableParams...)
 		if err != nil {
 			return err
-		}
-
-		// Revoke user token when disable
-		if cmd.IsDisabled {
-			_, err := sess.Exec(revokeTokenParams...)
-			if err != nil {
-				return err
-			}
 		}
 
 		return nil
