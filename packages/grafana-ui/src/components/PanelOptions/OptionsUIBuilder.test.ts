@@ -14,23 +14,16 @@ describe('OptionsUIBuilder', () => {
     const schema = builder
       .addGroup({})
       .addBooleanEditor('showThresholdLabels')
-      .addBooleanEditor('showThresholdMarkers')
       .addNestedOptionsGroup('fieldOptions', {})
       .addThresholdsEditor('thresholds')
-      .addNestedOptionsGroup('override', {})
-      .addOptionEditor('max', {
-        component: IntegerOption,
-        properties: { label: 'whatever' },
-      })
-      .endGroup()
+      .endGroup() // How to return parent group ctx type here?
       .endGroup()
       .addGroup({})
-      // .addOptionEditor('orientation', {
-      //   component: BooleanOption as any,
-      // })
+      // We are in the context of fieldOptions option still... unfortunately
+      .addFieldPropertiesEditor('')
       .endGroup()
       .getUIModel();
-    debugger;
+
     console.log(schema);
   });
 });
