@@ -316,6 +316,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
+	defer file.Close()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
