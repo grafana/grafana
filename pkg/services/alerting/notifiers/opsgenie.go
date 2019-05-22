@@ -90,7 +90,7 @@ func (on *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error {
-	on.log.Info("Creating OpsGenie alert", "ruleId", evalContext.Rule.Id, "notification", on.Name)
+	on.log.Info("Creating OpsGenie alert", "ruleId", evalContext.Rule.ID, "notification", on.Name)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
@@ -106,7 +106,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("message", evalContext.Rule.Name)
 	bodyJSON.Set("source", "Grafana")
-	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
 	bodyJSON.Set("description", fmt.Sprintf("%s - %s\n%s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message, customData))
 
 	details := simplejson.New()
@@ -136,14 +136,14 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 }
 
 func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error {
-	on.log.Info("Closing OpsGenie alert", "ruleId", evalContext.Rule.Id, "notification", on.Name)
+	on.log.Info("Closing OpsGenie alert", "ruleId", evalContext.Rule.ID, "notification", on.Name)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("source", "Grafana")
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", on.APIUrl, evalContext.Rule.Id),
+		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", on.APIUrl, evalContext.Rule.ID),
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

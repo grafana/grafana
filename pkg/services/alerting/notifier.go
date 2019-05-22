@@ -35,7 +35,7 @@ type notificationService struct {
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		Width:           1000,
 		Height:          500,
 		Timeout:         setting.AlertingEvaluationTimeout,
-		OrgId:           context.Rule.OrgId,
+		OrgId:           context.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
@@ -133,7 +133,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgId, context.Rule.PanelId)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgID, context.Rule.PanelID)
 
 	result, err := n.renderService.Render(context.Ctx, renderOpts)
 	if err != nil {
@@ -170,8 +170,8 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 
 		query := &models.GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
-			AlertId:    evalContext.Rule.Id,
-			OrgId:      evalContext.Rule.OrgId,
+			AlertId:    evalContext.Rule.ID,
+			OrgId:      evalContext.Rule.OrgID,
 		}
 
 		err = bus.DispatchCtx(evalContext.Ctx, query)

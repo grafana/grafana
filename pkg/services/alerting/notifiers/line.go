@@ -56,7 +56,7 @@ type LineNotifier struct {
 
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
-	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", ln.Name)
+	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
 
 	var err error
 	switch evalContext.Rule.State {
@@ -67,7 +67,7 @@ func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
-	ln.log.Info("Creating Line notify", "ruleId", evalContext.Rule.Id, "notification", ln.Name)
+	ln.log.Info("Creating Line notify", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		ln.log.Error("Failed get rule link", "error", err)

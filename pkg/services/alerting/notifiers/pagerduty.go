@@ -100,7 +100,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
-	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
 	bodyJSON.Set("payload", payloadJSON)
 
 	ruleURL, err := evalContext.GetRuleURL()

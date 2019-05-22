@@ -145,7 +145,7 @@ type SlackNotifier struct {
 
 // Notify send alert notification to Slack.
 func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
-	sn.log.Info("Executing slack notification", "ruleId", evalContext.Rule.Id, "notification", sn.Name)
+	sn.log.Info("Executing slack notification", "ruleId", evalContext.Rule.ID, "notification", sn.Name)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {

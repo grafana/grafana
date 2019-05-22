@@ -49,8 +49,8 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	testRule := &Rule{
-		DashboardId: 1,
-		PanelId:     1,
+		DashboardID: 1,
+		PanelID:     1,
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
 		State:       models.AlertStateAlerting,

@@ -107,7 +107,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &models.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceID,
-		OrgId: context.Rule.OrgId,
+		OrgId: context.Rule.OrgID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {

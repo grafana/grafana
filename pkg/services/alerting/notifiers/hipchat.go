@@ -81,7 +81,7 @@ type HipChatNotifier struct {
 
 // Notify sends an alert notification to HipChat
 func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
-	hc.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.Id, "notification", hc.Name)
+	hc.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.ID, "notification", hc.Name)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {

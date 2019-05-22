@@ -180,8 +180,8 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 
 		e.evalHandler.Eval(evalContext)
 
-		span.SetTag("alertId", evalContext.Rule.Id)
-		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
+		span.SetTag("alertId", evalContext.Rule.ID)
+		span.SetTag("dashboardId", evalContext.Rule.DashboardID)
 		span.SetTag("firing", evalContext.Firing)
 		span.SetTag("nodatapoints", evalContext.NoDataFound)
 		span.SetTag("attemptID", attemptID)
@@ -194,7 +194,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 			)
 			if attemptID < setting.AlertingMaxAttempts {
 				span.Finish()
-				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
+				e.log.Debug("Job Execution attempt triggered retry", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 				attemptChan <- (attemptID + 1)
 				return
 			}
@@ -212,7 +212,7 @@ func (e *AlertingService) processJob(attemptID int, attemptChan chan int, cancel
 		evalContext.Rule.State = evalContext.GetNewState()
 		e.resultHandler.handle(evalContext)
 		span.Finish()
-		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
+		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.ID, "name", evalContext.Rule.Name, "firing", evalContext.Firing, "attemptID", attemptID)
 		close(attemptChan)
 	}()
 }

@@ -78,7 +78,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", customData)
-	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {

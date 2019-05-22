@@ -70,7 +70,7 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", vn.Name)
+	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {

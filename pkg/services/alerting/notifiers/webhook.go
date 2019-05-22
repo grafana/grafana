@@ -76,7 +76,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("title", evalContext.GetNotificationTitle())
-	bodyJSON.Set("ruleId", evalContext.Rule.Id)
+	bodyJSON.Set("ruleId", evalContext.Rule.ID)
 	bodyJSON.Set("ruleName", evalContext.Rule.Name)
 	bodyJSON.Set("state", evalContext.Rule.State)
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)

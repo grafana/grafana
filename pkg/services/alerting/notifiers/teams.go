@@ -50,7 +50,7 @@ type TeamsNotifier struct {
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.Id, "notification", tn.Name)
+	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.ID, "notification", tn.Name)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
