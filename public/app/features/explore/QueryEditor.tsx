@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import moment from 'moment';
 
 // Services
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
@@ -7,7 +8,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
-import { RawTimeRange, DataQuery } from '@grafana/ui';
+import { DataQuery, TimeRange } from '@grafana/ui';
 import 'app/features/plugins/plugin_loader';
 
 interface QueryEditorProps {
@@ -17,7 +18,7 @@ interface QueryEditorProps {
   onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;
   exploreEvents: Emitter;
-  range: RawTimeRange;
+  range: TimeRange;
 }
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
@@ -62,10 +63,13 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     }
   }
 
-  initTimeSrv(range) {
+  initTimeSrv(range: TimeRange) {
     const timeSrv = getTimeSrv();
     timeSrv.init({
-      time: range,
+      time: {
+        from: moment(range.from),
+        to: moment(range.to),
+      },
       refresh: false,
       getTimezone: () => 'utc',
       timeRangeUpdated: () => console.log('refreshDashboard!'),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -47,7 +48,7 @@ func dashboardGuardianResponse(err error) Response {
 	return Error(403, "Access denied to this dashboard", nil)
 }
 
-func GetDashboard(c *m.ReqContext) Response {
+func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
@@ -106,14 +107,22 @@ func GetDashboard(c *m.ReqContext) Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	isDashboardProvisioned := &m.IsDashboardProvisionedQuery{DashboardId: dash.Id}
-	err = bus.Dispatch(isDashboardProvisioned)
+	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardId(dash.Id)
 	if err != nil {
 		return Error(500, "Error while checking if dashboard is provisioned", err)
 	}
 
-	if isDashboardProvisioned.Result {
+	if provisioningData != nil {
 		meta.Provisioned = true
+		meta.ProvisionedExternalId, err = filepath.Rel(
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+			provisioningData.ExternalId,
+		)
+		if err != nil {
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
+		}
 	}
 
 	// make sure db version is in sync with json model version
@@ -153,7 +162,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 	return query.Result, nil
 }
 
-func DeleteDashboard(c *m.ReqContext) Response {
+func DeleteDashboardBySlug(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -164,29 +173,15 @@ func DeleteDashboard(c *m.ReqContext) Response {
 		return JSON(412, util.DynMap{"status": "multiple-slugs-exists", "message": m.ErrDashboardsWithSameSlugExists.Error()})
 	}
 
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
-		return dashboardGuardianResponse(err)
-	}
-
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to delete dashboard", err)
-	}
-
-	return JSON(200, util.DynMap{
-		"title":   dash.Title,
-		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
-	})
+	return deleteDashboard(c)
 }
 
 func DeleteDashboardByUID(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", 0, c.Params(":uid"))
+	return deleteDashboard(c)
+}
+
+func deleteDashboard(c *m.ReqContext) Response {
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -196,8 +191,10 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.DeleteDashboardCommand{OrgId: c.OrgId, Id: dash.Id}
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	if err == m.ErrDashboardCannotDeleteProvisionedDashboard {
+		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
+	} else if err != nil {
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
@@ -419,8 +416,15 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 	}
 
 	dashVersionMeta := &m.DashboardVersionMeta{
-		DashboardVersion: *query.Result,
-		CreatedBy:        creator,
+		Id:            query.Result.Id,
+		DashboardId:   query.Result.DashboardId,
+		Data:          query.Result.Data,
+		ParentVersion: query.Result.ParentVersion,
+		RestoredFrom:  query.Result.RestoredFrom,
+		Version:       query.Result.Version,
+		Created:       query.Result.Created,
+		Message:       query.Result.Message,
+		CreatedBy:     creator,
 	}
 
 	return JSON(200, dashVersionMeta)

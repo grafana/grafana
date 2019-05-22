@@ -23,7 +23,7 @@ describe('PrometheusDatasource', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {},
+    jsonData: {} as any,
   };
 
   ctx.backendSrvMock = {};
@@ -945,6 +945,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -984,6 +985,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1024,6 +1026,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '10s',
@@ -1070,6 +1073,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1110,6 +1114,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1155,6 +1160,7 @@ describe('PrometheusDatasource', () => {
       expect(res.method).toBe('GET');
       expect(res.url).toBe(urlExpected);
 
+      // @ts-ignore
       expect(templateSrv.replace.mock.calls[0][1]).toEqual({
         __interval: {
           text: '5s',
@@ -1224,6 +1230,29 @@ describe('PrometheusDatasource for POST', () => {
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('test{job="testjob"}');
+    });
+  });
+
+  describe('When querying prometheus via check headers X-Dashboard-Id and X-Panel-Id', () => {
+    const options = { dashboardId: 1, panelId: 2 };
+
+    const httpOptions = {
+      headers: {},
+    };
+
+    it('with proxy access tracing headers should be added', () => {
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds._addTracingHeaders(httpOptions, options);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(2);
+    });
+
+    it('with direct access tracing headers should not be added', () => {
+      instanceSettings.url = 'http://127.0.0.1:8000';
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds._addTracingHeaders(httpOptions, options);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
     });
   });
 });

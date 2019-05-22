@@ -15,9 +15,13 @@ describe('AzureMonitorQueryCtrl', () => {
       panel: { scopedVars: [], targets: [] },
     };
     AzureMonitorQueryCtrl.prototype.target = {} as any;
+    AzureMonitorQueryCtrl.prototype.datasource = {
+      $q: Q,
+      appInsightsDatasource: { isConfigured: () => false },
+      azureMonitorDatasource: { isConfigured: () => false },
+    };
 
     queryCtrl = new AzureMonitorQueryCtrl({}, {}, new TemplateSrv());
-    queryCtrl.datasource = { $q: Q, appInsightsDatasource: { isConfigured: () => false } };
   });
 
   describe('init query_ctrl variables', () => {
@@ -68,8 +72,10 @@ describe('AzureMonitorQueryCtrl', () => {
         ];
 
         beforeEach(() => {
+          queryCtrl.target.subscription = 'sub1';
           queryCtrl.target.azureMonitor.resourceGroup = 'test';
-          queryCtrl.datasource.getMetricDefinitions = function(query) {
+          queryCtrl.datasource.getMetricDefinitions = function(subscriptionId, query) {
+            expect(subscriptionId).toBe('sub1');
             expect(query).toBe('test');
             return this.$q.when(response);
           };
@@ -99,9 +105,11 @@ describe('AzureMonitorQueryCtrl', () => {
         const response = [{ text: 'test1', value: 'test1' }, { text: 'test2', value: 'test2' }];
 
         beforeEach(() => {
+          queryCtrl.target.subscription = 'sub1';
           queryCtrl.target.azureMonitor.resourceGroup = 'test';
           queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
-          queryCtrl.datasource.getResourceNames = function(resourceGroup, metricDefinition) {
+          queryCtrl.datasource.getResourceNames = function(subscriptionId, resourceGroup, metricDefinition) {
+            expect(subscriptionId).toBe('sub1');
             expect(resourceGroup).toBe('test');
             expect(metricDefinition).toBe('Microsoft.Compute/virtualMachines');
             return this.$q.when(response);
@@ -133,10 +141,17 @@ describe('AzureMonitorQueryCtrl', () => {
         const response = [{ text: 'metric1', value: 'metric1' }, { text: 'metric2', value: 'metric2' }];
 
         beforeEach(() => {
+          queryCtrl.target.subscription = 'sub1';
           queryCtrl.target.azureMonitor.resourceGroup = 'test';
           queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
           queryCtrl.target.azureMonitor.resourceName = 'test';
-          queryCtrl.datasource.getMetricNames = function(resourceGroup, metricDefinition, resourceName) {
+          queryCtrl.datasource.getMetricNames = function(
+            subscriptionId,
+            resourceGroup,
+            metricDefinition,
+            resourceName
+          ) {
+            expect(subscriptionId).toBe('sub1');
             expect(resourceGroup).toBe('test');
             expect(metricDefinition).toBe('Microsoft.Compute/virtualMachines');
             expect(resourceName).toBe('test');
@@ -174,11 +189,19 @@ describe('AzureMonitorQueryCtrl', () => {
       };
 
       beforeEach(() => {
+        queryCtrl.target.subscription = 'sub1';
         queryCtrl.target.azureMonitor.resourceGroup = 'test';
         queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
         queryCtrl.target.azureMonitor.resourceName = 'test';
         queryCtrl.target.azureMonitor.metricName = 'Percentage CPU';
-        queryCtrl.datasource.getMetricMetadata = function(resourceGroup, metricDefinition, resourceName, metricName) {
+        queryCtrl.datasource.getMetricMetadata = function(
+          subscription,
+          resourceGroup,
+          metricDefinition,
+          resourceName,
+          metricName
+        ) {
+          expect(subscription).toBe('sub1');
           expect(resourceGroup).toBe('test');
           expect(metricDefinition).toBe('Microsoft.Compute/virtualMachines');
           expect(resourceName).toBe('test');

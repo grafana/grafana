@@ -3,6 +3,7 @@
   "name": "CloudWatch",
   "id": "cloudwatch",
 
+  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,

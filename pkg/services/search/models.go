@@ -48,7 +48,8 @@ type Query struct {
 	Tags         []string
 	OrgId        int64
 	SignedInUser *models.SignedInUser
-	Limit        int
+	Limit        int64
+	Page         int64
 	IsStarred    bool
 	Type         string
 	DashboardIds []int64
@@ -67,7 +68,8 @@ type FindPersistedDashboardsQuery struct {
 	Type         string
 	FolderIds    []int64
 	Tags         []string
-	Limit        int
+	Limit        int64
+	Page         int64
 	Permission   models.PermissionType
 
 	Result HitList

@@ -109,7 +109,7 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "breakpoints": Object {
                               "lg": "992px",
-                              "md": "768px",
+                              "md": "769px",
                               "sm": "544px",
                               "xl": "1200px",
                               "xs": "0",
@@ -176,14 +176,18 @@ exports[`Render should render with base threshold 1`] = `
                               "white": "#ffffff",
                               "yellow": "#ecbb13",
                             },
-                            "name": "Grafana Dark",
-                            "panelPadding": Object {
-                              "horizontal": 16,
-                              "vertical": 8,
+                            "height": Object {
+                              "lg": "48px",
+                              "md": "32px",
+                              "sm": "24px",
                             },
+                            "name": "Grafana Dark",
+                            "panelHeaderHeight": 28,
+                            "panelPadding": 8,
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
+                              "insetSquishMd": "4px 8px",
                               "lg": "24px",
                               "md": "16px",
                               "sm": "8px",
@@ -266,7 +270,7 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "breakpoints": Object {
                                     "lg": "992px",
-                                    "md": "768px",
+                                    "md": "769px",
                                     "sm": "544px",
                                     "xl": "1200px",
                                     "xs": "0",
@@ -333,14 +337,18 @@ exports[`Render should render with base threshold 1`] = `
                                     "white": "#ffffff",
                                     "yellow": "#ecbb13",
                                   },
-                                  "name": "Grafana Dark",
-                                  "panelPadding": Object {
-                                    "horizontal": 16,
-                                    "vertical": 8,
+                                  "height": Object {
+                                    "lg": "48px",
+                                    "md": "32px",
+                                    "sm": "24px",
                                   },
+                                  "name": "Grafana Dark",
+                                  "panelHeaderHeight": 28,
+                                  "panelPadding": 8,
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",
+                                    "insetSquishMd": "4px 8px",
                                     "lg": "24px",
                                     "md": "16px",
                                     "sm": "8px",

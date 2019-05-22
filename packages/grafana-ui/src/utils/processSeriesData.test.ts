@@ -1,25 +1,13 @@
-import { parseCSV, toSeriesData, guessFieldTypes, guessFieldTypeFromValue } from './processSeriesData';
-import { FieldType } from '../types/data';
+import {
+  isSeriesData,
+  toLegacyResponseData,
+  isTableData,
+  toSeriesData,
+  guessFieldTypes,
+  guessFieldTypeFromValue,
+} from './processSeriesData';
+import { FieldType, TimeSeries } from '../types/data';
 import moment from 'moment';
-
-describe('processSeriesData', () => {
-  describe('basic processing', () => {
-    it('should read header and two rows', () => {
-      const text = 'a,b,c\n1,2,3\n4,5,6';
-      expect(parseCSV(text)).toMatchSnapshot();
-    });
-
-    it('should generate a header and fix widths', () => {
-      const text = '1\n2,3,4\n5,6';
-      const series = parseCSV(text, {
-        headerIsFirstLine: false,
-      });
-      expect(series.rows.length).toBe(3);
-
-      expect(series).toMatchSnapshot();
-    });
-  });
-});
 
 describe('toSeriesData', () => {
   it('converts timeseries to series', () => {
@@ -80,5 +68,35 @@ describe('toSeriesData', () => {
     expect(norm.fields[1].type).toBe(FieldType.string);
     expect(norm.fields[2].type).toBeUndefined();
     expect(norm.fields[3].type).toBe(FieldType.time); // based on name
+  });
+});
+
+describe('SerisData backwards compatibility', () => {
+  it('converts TimeSeries to series and back again', () => {
+    const timeseries = {
+      target: 'Field Name',
+      datapoints: [[100, 1], [200, 2]],
+    };
+    const series = toSeriesData(timeseries);
+    expect(isSeriesData(timeseries)).toBeFalsy();
+    expect(isSeriesData(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isSeriesData(roundtrip)).toBeFalsy();
+    expect(roundtrip.target).toBe(timeseries.target);
+  });
+
+  it('converts TableData to series and back again', () => {
+    const table = {
+      columns: [{ text: 'a', unit: 'ms' }, { text: 'b', unit: 'zz' }, { text: 'c', unit: 'yy' }],
+      rows: [[100, 1, 'a'], [200, 2, 'a']],
+    };
+    const series = toSeriesData(table);
+    expect(isTableData(table)).toBeTruthy();
+    expect(isSeriesData(series)).toBeTruthy();
+
+    const roundtrip = toLegacyResponseData(series) as TimeSeries;
+    expect(isTableData(roundtrip)).toBeTruthy();
+    expect(roundtrip).toMatchObject(table);
   });
 });

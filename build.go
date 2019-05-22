@@ -270,7 +270,7 @@ func createDebPackages() {
 		defaultFileSrc: "packaging/deb/default/grafana-server",
 		systemdFileSrc: "packaging/deb/systemd/grafana-server.service",
 
-		depends: []string{"adduser", "libfontconfig"},
+		depends: []string{"adduser", "libfontconfig1"},
 	})
 }
 
@@ -449,7 +449,6 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "get", "-v", "github.com/golang/dep")
 	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
 }
 

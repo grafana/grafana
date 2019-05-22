@@ -4,7 +4,7 @@ import $ from 'jquery';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -15,7 +15,7 @@ import { expandRecordingRules } from './language_utils';
 
 // Types
 import { PromQuery } from './types';
-import { DataQueryOptions, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
+import { DataQueryRequest, DataSourceApi, AnnotationEvent } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 
 export class PrometheusDatasource implements DataSourceApi<PromQuery> {
@@ -55,10 +55,24 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     this.loadRules();
   }
 
+  getQueryDisplayText(query: PromQuery) {
+    return query.expr;
+  }
+
+  _addTracingHeaders(httpOptions: any, options: any) {
+    httpOptions.headers = options.headers || {};
+    const proxyMode = !this.url.match(/^http/);
+    if (proxyMode) {
+      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Panel-Id'] = options.panelId;
+    }
+  }
+
   _request(url, data?, options?: any) {
     options = _.defaults(options || {}, {
       url: this.url + url,
       method: this.httpMethod,
+      headers: {},
     });
 
     if (options.method === 'GET') {
@@ -71,9 +85,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
           }).join('&');
       }
     } else {
-      options.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+      options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       options.transformRequest = data => {
         return $.param(data);
       };
@@ -85,9 +97,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     }
 
     if (this.basicAuth) {
-      options.headers = {
-        Authorization: this.basicAuth,
-      };
+      options.headers.Authorization = this.basicAuth;
     }
 
     return this.backendSrv.datasourceRequest(options);
@@ -116,7 +126,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     return this.templateSrv.variableExists(target.expr);
   }
 
-  query(options: DataQueryOptions<PromQuery>) {
+  query(options: DataQueryRequest<PromQuery>) {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
 
@@ -229,6 +239,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     const adjusted = alignRange(start, end, query.step);
     query.start = adjusted.start;
     query.end = adjusted.end;
+    this._addTracingHeaders(query, options);
 
     return query;
   }
@@ -257,7 +268,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
   }
 
   performInstantQuery(query, time) {
@@ -269,7 +280,7 @@ export class PrometheusDatasource implements DataSourceApi<PromQuery> {
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId });
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers });
   }
 
   performSuggestQuery(query, cache = false) {

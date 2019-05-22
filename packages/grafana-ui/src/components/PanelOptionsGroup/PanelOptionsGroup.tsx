@@ -4,7 +4,7 @@ import React, { FunctionComponent } from 'react';
 interface Props {
   title?: string;
   onClose?: () => void;
-  children: JSX.Element | JSX.Element[] | boolean;
+  children: React.ReactNode;
   onAdd?: () => void;
 }
 

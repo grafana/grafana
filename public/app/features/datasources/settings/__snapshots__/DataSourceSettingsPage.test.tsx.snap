@@ -12,9 +12,20 @@ exports[`Render should render alpha info text 1`] = `
         onSubmit={[Function]}
       >
         <div
-          className="grafana-info-box"
+          className="gf-form"
         >
-          This plugin is marked as being in alpha state, which means it is in early development phase and updates will include breaking changes.
+          <label
+            className="gf-form-label width-10"
+          >
+            Plugin state
+          </label>
+          <label
+            className="gf-form-label gf-form-label--transparent"
+          >
+            <PluginStateinfo
+              state="alpha"
+            />
+          </label>
         </div>
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
@@ -49,6 +60,7 @@ exports[`Render should render alpha info text 1`] = `
           }
           dataSourceMeta={
             Object {
+              "baseUrl": "path/to/plugin",
               "defaultNavUrl": "some/url",
               "enabled": false,
               "hasUpdate": false,
@@ -78,14 +90,20 @@ exports[`Render should render alpha info text 1`] = `
                 "version": "1",
               },
               "latestVersion": "1",
-              "module": Object {},
+              "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
               "state": "alpha",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -114,9 +132,20 @@ exports[`Render should render beta info text 1`] = `
         onSubmit={[Function]}
       >
         <div
-          className="grafana-info-box"
+          className="gf-form"
         >
-          This plugin is marked as being in a beta development state. This means it is in currently in active development and could be missing important features.
+          <label
+            className="gf-form-label width-10"
+          >
+            Plugin state
+          </label>
+          <label
+            className="gf-form-label gf-form-label--transparent"
+          >
+            <PluginStateinfo
+              state="beta"
+            />
+          </label>
         </div>
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
@@ -151,6 +180,7 @@ exports[`Render should render beta info text 1`] = `
           }
           dataSourceMeta={
             Object {
+              "baseUrl": "path/to/plugin",
               "defaultNavUrl": "some/url",
               "enabled": false,
               "hasUpdate": false,
@@ -180,14 +210,20 @@ exports[`Render should render beta info text 1`] = `
                 "version": "1",
               },
               "latestVersion": "1",
-              "module": Object {},
+              "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
               "state": "beta",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -248,6 +284,7 @@ exports[`Render should render component 1`] = `
           }
           dataSourceMeta={
             Object {
+              "baseUrl": "path/to/plugin",
               "defaultNavUrl": "some/url",
               "enabled": false,
               "hasUpdate": false,
@@ -277,14 +314,19 @@ exports[`Render should render component 1`] = `
                 "version": "1",
               },
               "latestVersion": "1",
-              "module": Object {},
+              "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
-              "state": "",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
@@ -350,6 +392,7 @@ exports[`Render should render is ready only message 1`] = `
           }
           dataSourceMeta={
             Object {
+              "baseUrl": "path/to/plugin",
               "defaultNavUrl": "some/url",
               "enabled": false,
               "hasUpdate": false,
@@ -379,14 +422,19 @@ exports[`Render should render is ready only message 1`] = `
                 "version": "1",
               },
               "latestVersion": "1",
-              "module": Object {},
+              "module": "path/to/module",
               "name": "pretty cool plugin 1",
               "pinned": false,
-              "state": "",
-              "type": "",
+              "type": "panel",
             }
           }
           onModelChange={[Function]}
+          plugin={
+            DataSourcePlugin {
+              "DataSourceClass": Object {},
+              "components": Object {},
+            }
+          }
         />
         <div
           className="gf-form-group"
