@@ -54,8 +54,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   getReactPanelOptions = () => {
-    const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.defaults);
+    const { panel } = this.props;
+    return panel.getOptions();
   };
 
   renderPanelOptions() {

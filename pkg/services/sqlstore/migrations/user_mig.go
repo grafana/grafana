@@ -116,6 +116,12 @@ func addUserMigrations(mg *Migrator) {
 
 	// Adds salt & rands for old users who used ldap or oauth
 	mg.AddMigration("Add missing user data", &AddMissingUserSaltAndRandsMigration{})
+
+	// is_disabled indicates whether user disabled or not. Disabled user should not be able to log in.
+	// This field used in couple with LDAP auth to disable users removed from LDAP rather than delete it immediately.
+	mg.AddMigration("Add is_disabled column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_disabled", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }
 
 type AddMissingUserSaltAndRandsMigration struct {

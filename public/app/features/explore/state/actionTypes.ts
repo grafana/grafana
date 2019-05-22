@@ -18,6 +18,7 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
+  ExploreMode,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -47,6 +48,11 @@ export interface AddQueryRowPayload {
   exploreId: ExploreId;
   index: number;
   query: DataQuery;
+}
+
+export interface ChangeModePayload {
+  exploreId: ExploreId;
+  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -198,10 +204,6 @@ export interface ToggleGraphPayload {
   exploreId: ExploreId;
 }
 
-export interface ToggleLogsPayload {
-  exploreId: ExploreId;
-}
-
 export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
   exploreId: ExploreId;
 }
@@ -244,6 +246,11 @@ export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explo
  * Loads a new datasource identified by the given name.
  */
 export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
+
+/**
+ * Change the mode of Explore.
+ */
+export const changeModeAction = actionCreatorFactory<ChangeModePayload>('explore/CHANGE_MODE').create();
 
 /**
  * Query change handler for the query row with the given index.
@@ -400,11 +407,6 @@ export const toggleTableAction = actionCreatorFactory<ToggleTablePayload>('explo
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
 export const toggleGraphAction = actionCreatorFactory<ToggleGraphPayload>('explore/TOGGLE_GRAPH').create();
-
-/**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogsAction = actionCreatorFactory<ToggleLogsPayload>('explore/TOGGLE_LOGS').create();
 
 /**
  * Updates datasource instance before datasouce loading has started
