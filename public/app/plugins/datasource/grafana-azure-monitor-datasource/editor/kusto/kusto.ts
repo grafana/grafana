@@ -650,6 +650,16 @@ export const grafanaMacros = [
     hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
   },
   {
+    text: '$__timeTo',
+    display: '$__timeTo()',
+    hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+  },
+  {
+    text: '$__timeFrom',
+    display: '$__timeFrom()',
+    hint: 'Macro that uses the selected timerange in Grafana to filter the query.',
+  },
+  {
     text: '$__escapeMulti',
     display: '$__escapeMulti()',
     hint: 'Macro to escape multi-value template variables that contain illegal characters.',

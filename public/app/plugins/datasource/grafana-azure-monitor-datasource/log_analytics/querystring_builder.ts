@@ -21,12 +21,18 @@ export default class LogAnalyticsQuerystringBuilder {
         if (p1 === 'timeFilter') {
           return this.getTimeFilter(p2, this.options);
         }
+        if (p1 === 'timeFrom') {
+          return this.getFrom(this.options);
+        }
+        if (p1 === 'timeTo') {
+          return this.getUntil(this.options);
+        }
 
         return match;
       });
       queryString = queryString.replace(/\$__interval/gi, this.options.interval);
-      queryString = queryString.replace(/\$__timeFrom/gi, this.getFrom(this.options));
-      queryString = queryString.replace(/\$__timeTo/gi, this.getUntil(this.options));
+      // queryString = queryString.replace(/\$__timeFrom/gi, this.getFrom(this.options));
+      // queryString = queryString.replace(/\$__timeTo/gi, this.getUntil(this.options));
     }
     const rawQuery = queryString;
     queryString = encodeURIComponent(queryString);

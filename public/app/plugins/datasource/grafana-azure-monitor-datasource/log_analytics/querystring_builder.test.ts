@@ -92,7 +92,7 @@ describe('LogAnalyticsDatasource', () => {
 
   describe('when using $__timeFrom and $__timeTo is in the query and range is until now', () => {
     beforeEach(() => {
-      builder.rawQueryString = 'query=Tablename | where myTime >= $__timeFrom and myTime <= $__timeTo';
+      builder.rawQueryString = 'query=Tablename | where myTime >= $__timeFrom() and myTime <= $__timeTo()';
     });
 
     it('should replace $__timeFrom and $__timeTo with a datetime and the now() function', () => {
@@ -105,7 +105,7 @@ describe('LogAnalyticsDatasource', () => {
 
   describe('when using $__timeFrom and $__timeTo is in the query and range is a specific interval', () => {
     beforeEach(() => {
-      builder.rawQueryString = 'query=Tablename | where myTime >= $__timeFrom and myTime <= $__timeTo';
+      builder.rawQueryString = 'query=Tablename | where myTime >= $__timeFrom() and myTime <= $__timeTo()';
       builder.options.range.to = dateTime().subtract(1, 'hour');
       builder.options.rangeRaw.to = 'now-1h';
     });
