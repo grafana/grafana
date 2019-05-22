@@ -6,14 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
+// AlertTestCommand initiates an test evaluation
+// of an alert rule.
 type AlertTestCommand struct {
 	Dashboard *simplejson.Json
 	PanelId   int64
 	OrgId     int64
-	User      *m.SignedInUser
+	User      *models.SignedInUser
 
 	Result *EvalContext
 }
@@ -24,7 +26,7 @@ func init() {
 
 func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
-	dash := m.NewDashboardFromJson(cmd.Dashboard)
+	dash := models.NewDashboardFromJson(cmd.Dashboard)
 
 	extractor := NewDashAlertExtractor(dash, cmd.OrgId, cmd.User)
 	alerts, err := extractor.GetAlerts()

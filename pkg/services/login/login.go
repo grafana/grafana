@@ -2,8 +2,8 @@ package login
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
@@ -27,10 +27,10 @@ func (ls *LoginService) Init() error {
 	return nil
 }
 
-func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
+func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	userQuery := &m.GetUserByAuthInfoQuery{
+	userQuery := &models.GetUserByAuthInfoQuery{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     extUser.UserId,
@@ -39,7 +39,7 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	}
 
 	err := bus.Dispatch(userQuery)
-	if err != m.ErrUserNotFound && err != nil {
+	if err != models.ErrUserNotFound && err != nil {
 		return err
 	}
 
@@ -64,7 +64,7 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 		}
 
 		if extUser.AuthModule != "" {
-			cmd2 := &m.SetAuthInfoCommand{
+			cmd2 := &models.SetAuthInfoCommand{
 				UserId:     cmd.Result.Id,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
@@ -90,6 +90,13 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 				return err
 			}
 		}
+
+		if extUser.AuthModule == models.AuthModuleLDAP && userQuery.Result.IsDisabled {
+			// Re-enable user when it found in LDAP
+			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+				return err
+			}
+		}
 	}
 
 	err = syncOrgRoles(cmd.Result, extUser)
@@ -100,12 +107,12 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := ls.Bus.Dispatch(&m.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+		if err := ls.Bus.Dispatch(&models.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
 			return err
 		}
 	}
 
-	err = ls.Bus.Dispatch(&m.SyncTeamsCommand{
+	err = ls.Bus.Dispatch(&models.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})
@@ -117,8 +124,8 @@ func (ls *LoginService) UpsertUser(cmd *m.UpsertUserCommand) error {
 	return err
 }
 
-func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
-	cmd := &m.CreateUserCommand{
+func createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
+	cmd := &models.CreateUserCommand{
 		Login:        extUser.Login,
 		Email:        extUser.Email,
 		Name:         extUser.Name,
@@ -132,9 +139,9 @@ func createUser(extUser *m.ExternalUserInfo) (*m.User, error) {
 	return &cmd.Result, nil
 }
 
-func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
+func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
 	// sync user info
-	updateCmd := &m.UpdateUserCommand{
+	updateCmd := &models.UpdateUserCommand{
 		UserId: user.Id,
 	}
 
@@ -165,8 +172,8 @@ func updateUser(user *m.User, extUser *m.ExternalUserInfo) error {
 	return bus.Dispatch(updateCmd)
 }
 
-func updateUserAuth(user *m.User, extUser *m.ExternalUserInfo) error {
-	updateCmd := &m.UpdateAuthInfoCommand{
+func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
+	updateCmd := &models.UpdateAuthInfoCommand{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     user.Id,
@@ -177,13 +184,13 @@ func updateUserAuth(user *m.User, extUser *m.ExternalUserInfo) error {
 	return bus.Dispatch(updateCmd)
 }
 
-func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
+func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	// don't sync org roles if none are specified
 	if len(extUser.OrgRoles) == 0 {
 		return nil
 	}
 
-	orgsQuery := &m.GetUserOrgListQuery{UserId: user.Id}
+	orgsQuery := &models.GetUserOrgListQuery{UserId: user.Id}
 	if err := bus.Dispatch(orgsQuery); err != nil {
 		return err
 	}
@@ -199,7 +206,7 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 			deleteOrgIds = append(deleteOrgIds, org.OrgId)
 		} else if extUser.OrgRoles[org.OrgId] != org.Role {
 			// update role
-			cmd := &m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extUser.OrgRoles[org.OrgId]}
+			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extUser.OrgRoles[org.OrgId]}
 			if err := bus.Dispatch(cmd); err != nil {
 				return err
 			}
@@ -213,16 +220,16 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 		}
 
 		// add role
-		cmd := &m.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
+		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
 		err := bus.Dispatch(cmd)
-		if err != nil && err != m.ErrOrgNotFound {
+		if err != nil && err != models.ErrOrgNotFound {
 			return err
 		}
 	}
 
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
-		cmd := &m.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
+		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
 		if err := bus.Dispatch(cmd); err != nil {
 			return err
 		}
@@ -235,7 +242,7 @@ func syncOrgRoles(user *m.User, extUser *m.ExternalUserInfo) error {
 			break
 		}
 
-		return bus.Dispatch(&m.SetUsingOrgCommand{
+		return bus.Dispatch(&models.SetUsingOrgCommand{
 			UserId: user.Id,
 			OrgId:  user.OrgId,
 		})

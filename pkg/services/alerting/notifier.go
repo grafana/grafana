@@ -6,14 +6,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
-
-	m "github.com/grafana/grafana/pkg/models"
 )
 
+// NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
 	Name            string          `json:"name"`
@@ -22,11 +22,7 @@ type NotifierPlugin struct {
 	Factory         NotifierFactory `json:"-"`
 }
 
-type NotificationService interface {
-	SendIfNeeded(context *EvalContext) error
-}
-
-func NewNotificationService(renderService rendering.Service) NotificationService {
+func newNotificationService(renderService rendering.Service) *notificationService {
 	return &notificationService{
 		log:           log.New("alerting.notifier"),
 		renderService: renderService,
@@ -73,7 +69,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		return nil
 	}
 
-	cmd := &m.SetAlertNotificationStateToCompleteCommand{
+	cmd := &models.SetAlertNotificationStateToCompleteCommand{
 		Id:      notifierState.state.Id,
 		Version: notifierState.state.Version,
 	}
@@ -83,14 +79,14 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
-		setPendingCmd := &m.SetAlertNotificationStateToPendingCommand{
+		setPendingCmd := &models.SetAlertNotificationStateToPendingCommand{
 			Id:                           notifierState.state.Id,
 			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
 
 		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
-		if err == m.ErrAlertNotificationStateVersionConflict {
+		if err == models.ErrAlertNotificationStateVersionConflict {
 			return nil
 		}
 
@@ -128,7 +124,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		Height:          500,
 		Timeout:         setting.AlertingEvaluationTimeout,
 		OrgId:           context.Rule.OrgId,
-		OrgRole:         m.ROLE_ADMIN,
+		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
@@ -157,8 +153,8 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &m.GetAlertNotificationsWithUidToSendQuery{OrgId: orgId, Uids: notificationUids}
+func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
+	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
@@ -172,7 +168,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids [
 			continue
 		}
 
-		query := &m.GetOrCreateNotificationStateQuery{
+		query := &models.GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
 			AlertId:    evalContext.Rule.Id,
 			OrgId:      evalContext.Rule.OrgId,
@@ -195,8 +191,8 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids [
 	return result, nil
 }
 
-// InitNotifier instantiate a new notifier based on the model
-func InitNotifier(model *m.AlertNotification) (Notifier, error) {
+// InitNotifier instantiate a new notifier based on the model.
+func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
@@ -205,7 +201,8 @@ func InitNotifier(model *m.AlertNotification) (Notifier, error) {
 	return notifierPlugin.Factory(model)
 }
 
-type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
+// NotifierFactory is a signature for creating notifiers.
+type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 
@@ -214,6 +211,7 @@ func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }
 
+// GetNotifiers returns a list of metadata about available notifiers.
 func GetNotifiers() []*NotifierPlugin {
 	list := make([]*NotifierPlugin, 0)
 

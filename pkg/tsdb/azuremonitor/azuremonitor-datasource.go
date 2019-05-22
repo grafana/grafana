@@ -85,14 +85,17 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
 		urlComponents := map[string]string{}
+		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
 		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
 		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
 		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
 
 		ub := urlBuilder{
-			ResourceGroup:    urlComponents["resourceGroup"],
-			MetricDefinition: urlComponents["metricDefinition"],
-			ResourceName:     urlComponents["resourceName"],
+			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
+			Subscription:        urlComponents["subscription"],
+			ResourceGroup:       urlComponents["resourceGroup"],
+			MetricDefinition:    urlComponents["metricDefinition"],
+			ResourceName:        urlComponents["resourceName"],
 		}
 		azureURL := ub.Build()
 
@@ -199,8 +202,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	}
 
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	subscriptionID := dsInfo.JsonData.Get("subscriptionId").MustString()
-	proxyPass := fmt.Sprintf("%s/subscriptions/%s", cloudName, subscriptionID)
+	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")

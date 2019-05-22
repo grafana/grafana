@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -32,7 +32,7 @@ func init() {
 	})
 }
 
-func NewDiscordNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+func NewDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
@@ -111,7 +111,7 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	json, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhookSync{
+	cmd := &models.SendWebhookSync{
 		Url:         this.WebhookURL,
 		HttpMethod:  "POST",
 		ContentType: "application/json",
@@ -135,7 +135,7 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	return nil
 }
 
-func (this *DiscordNotifier) embedImage(cmd *m.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
+func (this *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
 	f, err := os.Open(imagePath)
 	defer f.Close()
 	if err != nil {
@@ -171,7 +171,7 @@ func (this *DiscordNotifier) embedImage(cmd *m.SendWebhookSync, imagePath string
 
 	w.Close()
 
-	cmd.Body = string(b.Bytes())
+	cmd.Body = b.String()
 	cmd.ContentType = w.FormDataContentType()
 
 	return nil

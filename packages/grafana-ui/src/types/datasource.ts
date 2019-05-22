@@ -78,11 +78,20 @@ export interface DataSourcePluginMeta extends PluginMeta {
   logs?: boolean;
   explore?: boolean;
   annotations?: boolean;
+  alerting?: boolean;
   mixed?: boolean;
   hasQueryHelp?: boolean;
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+  supportsStreaming?: boolean;
+
+  /**
+   * By default, hidden queries are not passed to the datasource
+   * Set this to true in plugin.json to have hidden queries passed to the
+   * DataSource query method
+   */
+  hiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -156,6 +165,10 @@ export abstract class DataSourceApi<
    */
   abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
+  convertToStreamTargets?(options: DataQueryRequest<TQuery>): Array<{ url: string; refId: string }>;
+
+  resultToSeriesData?(data: any, refId: string): SeriesData[];
+
   /**
    * Test & verify datasource settings & connection details
    */
@@ -172,6 +185,11 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext?(row: any, limit?: number): Promise<DataQueryResponse>;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -181,6 +199,11 @@ export abstract class DataSourceApi<
    * static information about the datasource
    */
   meta?: DataSourcePluginMeta;
+
+  /**
+   * Used by alerting to check if query contains template variables
+   */
+  targetContainsTemplate?(query: TQuery): boolean;
 }
 
 export abstract class ExploreDataSourceApi<
@@ -188,7 +211,7 @@ export abstract class ExploreDataSourceApi<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-  getHighlighterExpression?(query: TQuery): string;
+  getHighlighterExpression?(query: TQuery): string[];
   languageProvider?: any;
 }
 
@@ -274,6 +297,10 @@ export interface DataStreamState {
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
+}
+
+export interface LogRowContextQueryResponse {
+  data: Array<Array<string | DataQueryError>>;
 }
 
 export interface DataQuery {
