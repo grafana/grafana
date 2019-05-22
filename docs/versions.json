@@ -1,5 +1,6 @@
 [
-  { "version": "v6.1", "path": "/", "archived": false, "current": true },
+  { "version": "v6.2", "path": "/", "archived": false, "current": true },
+  { "version": "v6.1", "path": "/v6.1", "archived": true },
   { "version": "v6.0", "path": "/v6.0", "archived": true },
   { "version": "v5.4", "path": "/v5.4", "archived": true },
   { "version": "v5.3", "path": "/v5.3", "archived": true },

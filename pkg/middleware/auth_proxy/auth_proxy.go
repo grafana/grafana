@@ -40,7 +40,7 @@ type AuthProxy struct {
 	header string
 
 	enabled             bool
-	LdapAllowSignup     bool
+	LDAPAllowSignup     bool
 	AuthProxyAutoSignUp bool
 	whitelistIP         string
 	headerType          string
@@ -88,8 +88,8 @@ func New(options *Options) *AuthProxy {
 		headerType:          setting.AuthProxyHeaderProperty,
 		headers:             setting.AuthProxyHeaders,
 		whitelistIP:         setting.AuthProxyWhitelist,
-		cacheTTL:            setting.AuthProxyLdapSyncTtl,
-		LdapAllowSignup:     setting.LdapAllowSignup,
+		cacheTTL:            setting.AuthProxyLDAPSyncTtl,
+		LDAPAllowSignup:     setting.LDAPAllowSignup,
 		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
 	}
 }
@@ -213,7 +213,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	// Have to sync grafana and LDAP user during log in
 	user, err := user.Upsert(&user.UpsertArgs{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LdapAllowSignup,
+		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	})
 	if err != nil {

@@ -395,7 +395,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
-		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLdapCfg))
+		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
 	}, reqGrafanaAdmin)
 
 	// rendering
