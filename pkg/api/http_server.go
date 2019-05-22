@@ -227,7 +227,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.AddDefaultResponseHeaders())
 
-	if !setting.UseProxySetup && setting.AppSubUrl != "" {
+	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
 		m.SetURLPrefix(setting.AppSubUrl)
 	}
 

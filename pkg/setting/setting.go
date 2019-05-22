@@ -47,11 +47,11 @@ var (
 
 var (
 	// App settings.
-	Env           = DEV
-	AppUrl        string
-	AppSubUrl     string
-	UseProxySetup bool
-	InstanceName  string
+	Env              = DEV
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
+	InstanceName     string
 
 	// build
 	BuildVersion    string
@@ -206,9 +206,9 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl        string
-	AppSubUrl     string
-	UseProxySetup bool
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
 
 	// Paths
 	ProvisioningPath string
@@ -612,11 +612,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	UseProxySetup = server.Key("use_proxy_setup").MustBool(true)
+	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
 	cfg.AppUrl = AppUrl
 	cfg.AppSubUrl = AppSubUrl
-	cfg.UseProxySetup = UseProxySetup
+	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
 	protocolStr, err := valueAsString(server, "protocol", "http")
