@@ -723,7 +723,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
-          filters: *filter-only-master
+          filters: *filter-only-release
 
   build-branches-and-prs:
       jobs:
