@@ -29,7 +29,7 @@ func TestDiscordNotifier(t *testing.T) {
 			Convey("settings should trigger incident", func() {
 				json := `
 				{
-					"mention": "@everyone",
+					"content": "@everyone Please check this notification",
 					"url": "https://web.hook/"
 				}`
 
@@ -46,7 +46,7 @@ func TestDiscordNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(discordNotifier.Name, ShouldEqual, "discord_testing")
 				So(discordNotifier.Type, ShouldEqual, "discord")
-				So(discordNotifier.Mention, ShouldEqual, "@everyone")
+				So(discordNotifier.Content, ShouldEqual, "@everyone Please check this notification")
 				So(discordNotifier.WebhookURL, ShouldEqual, "https://web.hook/")
 			})
 		})
