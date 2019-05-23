@@ -19,9 +19,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
     const addDefaultThreshold = this.props.value === null || (this.props.value && this.props.value.length === 0);
 
-    const thresholds = addDefaultThreshold
-      ? [{ index: 0, value: -Infinity, color: colors[0] }]
-      : props.value;
+    const thresholds = addDefaultThreshold ? [{ index: 0, value: -Infinity, color: colors[0] }] : props.value;
 
     this.state = { thresholds: thresholds as Threshold[] };
 

@@ -10,7 +10,7 @@ export interface BooleanOptionProps extends OptionInputAPI<boolean> {
 export const BooleanOption: React.FunctionComponent<BooleanOptionProps> = ({ label, value, onChange }) => {
   return (
     <Switch
-      label={label ||  ''}
+      label={label || ''}
       checked={!!value}
       onChange={event => {
         if (event) {

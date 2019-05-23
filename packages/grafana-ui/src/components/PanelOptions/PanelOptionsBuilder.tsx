@@ -40,7 +40,7 @@ interface OptionEditorProps<TOptions extends {}, TKey extends keyof TOptions>
 }
 
 const OptionEditor = ({ editor, value, onChange, optionsSchema }: OptionEditorProps<any, any>) => {
-  const {component} = editor;
+  const { component } = editor;
   if (!component) {
     // TODO: handle default editors based on option schema
     return null;
@@ -48,7 +48,7 @@ const OptionEditor = ({ editor, value, onChange, optionsSchema }: OptionEditorPr
   return React.createElement(component, {
     value,
     onChange,
-    ...editor.props
+    ...editor.props,
     // properties: {
     //   required: isOptionRequired(propertyPath, optionsSchema),
     //   label: editor.label,

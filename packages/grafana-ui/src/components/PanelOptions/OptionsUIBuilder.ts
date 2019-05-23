@@ -83,7 +83,12 @@ export class OptionsGroupUIBuilder<
     property: T,
     { component, ...rest }: GroupConfig<any>
   ): OptionsGroupUIBuilder<TOptions[T], TOptions, TContext extends null | undefined ? TOptions : TContext> => {
-    const group = new OptionsGroupUIBuilder<TOptions[T], TOptions, TContext>(this as any, rest, component, property as string);
+    const group = new OptionsGroupUIBuilder<TOptions[T], TOptions, TContext>(
+      this as any,
+      rest,
+      component,
+      property as string
+    );
     this.groupContent.push(group);
     return group as any;
   };
@@ -110,24 +115,22 @@ export class OptionsGroupUIBuilder<
   };
 
   addPanelOptionsGrid = (cols?: number) => {
-    return this.addGroup<{cols?: number}>({
+    return this.addGroup<{ cols?: number }>({
       component: PanelOptionsGrid,
       cols,
     });
-  }
+  };
 
   addPanelOptionsGroup = (title?: string) => {
     return this.addGroup<{
-      title?: string,
+      title?: string;
     }>({
       component: PanelOptionsGroup,
       title,
     });
-  }
+  };
 
-  addThresholdsEditor = <T extends keyof TOptions>(
-    property: KeysMatching<TOptions, Threshold[]>
-  ) => {
+  addThresholdsEditor = <T extends keyof TOptions>(property: KeysMatching<TOptions, Threshold[]>) => {
     return this.addOptionEditor(property, ThresholdsEditor as any);
   };
 

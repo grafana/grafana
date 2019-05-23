@@ -13,8 +13,8 @@ interface OptionInputConfig {
 
 export interface OptionInputAPI<T> {
   properties?: OptionInputConfig;
-  value?: T | null;
-  onChange: (value?: T | null, event?: React.SyntheticEvent<HTMLElement>) => void;
+  value: T | null;
+  onChange: (value: T | null, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export interface OptionsRowModel<TOptions> {

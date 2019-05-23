@@ -63,29 +63,29 @@ const GaugeOptionsSchema: yup.ObjectSchema<GaugeOptions> = yup.object({
 
 const schema = new OptionsGroupUIBuilder<GaugeOptions>()
   .addPanelOptionsGrid()
-    .addPanelOptionsGroup('Display')
-      .addBooleanEditor('showThresholdLabels', {
-        label: 'Labels',
-      })
-      .addBooleanEditor('showThresholdMarkers', {
-        label: 'Markers',
-      })
-      .addOptionEditor('fieldOptions', FieldDisplayEditor, {
-        labelWidth: 6,
-      })
-      .endGroup()
-    .addPanelOptionsGroup('Field')
-      .addScopedOptions('fieldOptions', {})
-        .addOptionEditor('defaults', FieldPropertiesEditor, {
-          showMinMax: true,
-        })
-      .endGroup()
-    .endGroup()
-    .addPanelOptionsGroup('Thresholds')
-      .addScopedOptions('fieldOptions', {})
-        .addThresholdsEditor('thresholds')
-      .endGroup()
-    .endGroup()
+  .addPanelOptionsGroup('Display')
+  .addBooleanEditor('showThresholdLabels', {
+    label: 'Labels',
+  })
+  .addBooleanEditor('showThresholdMarkers', {
+    label: 'Markers',
+  })
+  .addOptionEditor('fieldOptions', FieldDisplayEditor, {
+    labelWidth: 6,
+  })
+  .endGroup()
+  .addPanelOptionsGroup('Field')
+  .addScopedOptions('fieldOptions', {})
+  .addOptionEditor('defaults', FieldPropertiesEditor, {
+    showMinMax: true,
+  })
+  .endGroup()
+  .endGroup()
+  .addPanelOptionsGroup('Thresholds')
+  .addScopedOptions('fieldOptions', {})
+  .addThresholdsEditor('thresholds')
+  .endGroup()
+  .endGroup()
   .endGroup()
   .getUIModel();
 

@@ -73,7 +73,9 @@ export class StatsPicker extends PureComponent<Props> {
       };
     });
 
-    const currentValue: Array<SelectOptionItem<string>> = options.filter(option => value.find(stat => option.value === stat));
+    const currentValue: Array<SelectOptionItem<string>> = options.filter(option =>
+      value.find(stat => option.value === stat)
+    );
 
     return (
       <Select
