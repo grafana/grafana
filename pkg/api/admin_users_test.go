@@ -222,16 +222,23 @@ func adminDisableUserScenario(desc string, action string, url string, routePatte
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
+		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+
+		hs := HTTPServer{
+			Bus:              bus.GetBus(),
+			AuthTokenService: fakeAuthTokenService,
+		}
+
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) {
+		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 
 			if action == "enable" {
-				AdminEnableUser(c)
-			} else {
-				AdminDisableUser(c)
+				return AdminEnableUser(c)
 			}
+
+			return hs.AdminDisableUser(c)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
