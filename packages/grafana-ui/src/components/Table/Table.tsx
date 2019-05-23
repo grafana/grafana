@@ -282,14 +282,15 @@ export class Table extends Component<Props, State> {
       this.scrollToTop = false;
     }
 
+    // Force MultiGrid to rerender if these options change
+    const refreshKeys = {
+      d0: data,
+      d1: this.props.data,
+      s0: this.props.styles,
+    };
     return (
       <MultiGrid
-        {
-          ...this.state /** Force MultiGrid to update when data changes */
-        }
-        {
-          ...this.props /** Force MultiGrid to update when data changes */
-        }
+        {...refreshKeys}
         scrollToRow={scrollToRow}
         columnCount={columnCount}
         scrollToColumn={scrollToColumn}
