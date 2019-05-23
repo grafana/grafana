@@ -231,7 +231,7 @@ jobs:
           command: '/tmp/bootstrap.sh'
       - run:
           name: build grafana backend
-          command: './scripts/build/build.sh --backend-only'
+          command: './scripts/build/build.sh --fast --backend-only'
       - persist_to_workspace:
           root: .
           paths:
@@ -276,7 +276,7 @@ jobs:
           command: '/tmp/bootstrap.sh'
       - run:
           name: package grafana
-          command: './scripts/build/build.sh --package-only'
+          command: './scripts/build/build.sh --fast --package-only'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -357,7 +357,7 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
+      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
 
   grafana-docker-release:
     machine:
