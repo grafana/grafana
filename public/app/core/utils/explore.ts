@@ -1,5 +1,8 @@
 // Libraries
 import _ from 'lodash';
+import { from } from 'rxjs';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
 import * as dateMath from '@grafana/ui/src/utils/datemath';
@@ -27,6 +30,9 @@ import {
   LogsDedupStrategy,
   isTableData,
   DataQueryResponseData,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
@@ -38,8 +44,7 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { seriesDataToLogsModel } from 'app/core/logs_model';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
-import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { LogsDedupStrategy, seriesDataToLogsModel, LogsModel, LogRowModel } from 'app/core/logs_model';
 import { config } from '../config';
 
 export const DEFAULT_RANGE = {
@@ -579,4 +584,12 @@ export const convertToWebSocketUrl = (url: string) => {
     backend = backend.slice(0, backend.length - 1);
   }
   return `${backend}${url}`;
+};
+
+export const getQueryResponse = (
+  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
+  options: DataQueryRequest<DataQuery>,
+  observer?: DataStreamObserver
+) => {
+  return from(datasourceInstance.query(options, observer));
 };

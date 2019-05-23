@@ -187,6 +187,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   processResult = (data: any, target: any): SeriesData[] => {
     const series: SeriesData[] = [];
 
+    if (Object.keys(data).length === 0) {
+      return series;
+    }
+
     if (!data.streams) {
       return [{ ...logStreamToSeriesData(data), refId: target.refId }];
     }

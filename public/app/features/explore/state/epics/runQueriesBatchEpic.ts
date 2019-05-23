@@ -1,6 +1,8 @@
 import { Epic } from 'redux-observable';
-import { from, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { DataStreamState, LoadingState, DataQueryResponse } from '@grafana/ui';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -18,10 +20,12 @@ import {
   queryStartAction,
   limitMessageRatePayloadAction,
 } from '../actionTypes';
-import { DataStreamState, LoadingState } from '@grafana/ui';
-import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
-export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
+export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
+  action$,
+  state$,
+  { getQueryResponse }
+) => {
   return action$.ofType(runQueriesBatchAction.type).pipe(
     mergeMap((action: ActionOf<RunQueriesBatchPayload>) => {
       const { exploreId, queryOptions } = action.payload;
@@ -46,8 +50,15 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
 
         const actions: Array<ActionOf<any>> = [];
         const now = Date.now();
-        const streamHandler = new Subject<DataStreamState>();
         let datasourceUnsubscribe: Function = null;
+        const streamHandler = new Subject<DataStreamState>();
+        const observer = (event: DataStreamState) => {
+          datasourceUnsubscribe = event.unsubscribe;
+          if (!streamHandler.closed) {
+            // their might be a race condition when unsubscribing
+            streamHandler.next(event);
+          }
+        };
 
         const streamSubscription = streamHandler.subscribe({
           next: event => {
@@ -81,17 +92,9 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
           },
         });
 
-        const querySubscription = from(
-          datasourceInstance.query(transaction.options, event => {
-            datasourceUnsubscribe = event.unsubscribe;
-            if (!streamHandler.closed) {
-              // their might be a race condition when unsubscribing
-              streamHandler.next(event);
-            }
-          })
-        )
+        const querySubscription = getQueryResponse(datasourceInstance, transaction.options, observer)
           .pipe(
-            mergeMap(response => {
+            mergeMap((response: DataQueryResponse) => {
               eventBridge.emit('data-received', response.data || []);
               const latency = Date.now() - now;
               // Side-effect: Saving history in localstorage
