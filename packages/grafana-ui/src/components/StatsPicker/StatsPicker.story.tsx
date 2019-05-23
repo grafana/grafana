@@ -51,7 +51,7 @@ export class WrapperWithState extends PureComponent<any, State> {
         placeholder={placeholder}
         defaultStat={defaultStat}
         allowMultiple={allowMultiple}
-        stats={stats}
+        value={stats}
         onChange={(stats: string[]) => {
           action('Picked:')(stats);
           this.setState({ stats });

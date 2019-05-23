@@ -66,5 +66,6 @@ export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 
 export { PanelOptionsUIBuilder } from './PanelOptions/PanelOptionsBuilder';
+export { OptionsGroupUIBuilder } from './PanelOptions/OptionsUIBuilder';
 export { BooleanOption } from './PanelOptions/BooleanOption';
 export { FloatOption, IntegerOption } from './PanelOptions/NumericInputOption';

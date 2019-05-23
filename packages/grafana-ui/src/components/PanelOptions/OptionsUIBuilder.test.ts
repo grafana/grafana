@@ -1,6 +1,5 @@
 import { OptionsGroupUIBuilder } from './OptionsUIBuilder';
 import { SingleStatBaseOptions } from '../SingleStatShared/SingleStatBaseOptions';
-import { BooleanOption } from './BooleanOption';
 import { IntegerOption } from './NumericInputOption';
 interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;
@@ -14,16 +13,21 @@ describe('OptionsUIBuilder', () => {
     const schema = builder
       .addGroup({})
       .addBooleanEditor('showThresholdLabels')
-      .addNestedOptionsGroup('fieldOptions', {})
+      .addBooleanEditor('showThresholdMarkers')
+      .addScopedOptions('fieldOptions', {})
       .addThresholdsEditor('thresholds')
-      .endGroup() // How to return parent group ctx type here?
+      .addScopedOptions('override', {})
+      .addOptionEditor('max', IntegerOption, {
+        label: 'whatever',
+      })
+      .endGroup()
+      .endGroup()
       .endGroup()
       .addGroup({})
-      // We are in the context of fieldOptions option still... unfortunately
-      .addFieldPropertiesEditor('')
+      .addScopedOptions('fieldOptions', {})
+
       .endGroup()
       .getUIModel();
-
     console.log(schema);
   });
 });

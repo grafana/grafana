@@ -17,11 +17,13 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const addDefaultThreshold = this.props.value.length === 0;
-    const thresholds: Threshold[] = addDefaultThreshold
+    const addDefaultThreshold = this.props.value === null || (this.props.value && this.props.value.length === 0);
+
+    const thresholds = addDefaultThreshold
       ? [{ index: 0, value: -Infinity, color: colors[0] }]
       : props.value;
-    this.state = { thresholds };
+
+    this.state = { thresholds: thresholds as Threshold[] };
 
     if (addDefaultThreshold) {
       this.onChange();

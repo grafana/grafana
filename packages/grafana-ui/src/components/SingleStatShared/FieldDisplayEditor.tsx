@@ -86,7 +86,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
               placeholder="Choose Stat"
               defaultStat={ReducerID.mean}
               allowMultiple={false}
-              stats={calcs}
+              value={calcs}
               onChange={this.onCalcsChange}
             />
           </div>

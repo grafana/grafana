@@ -2,14 +2,6 @@ import {
   PanelPlugin,
   sharedSingleStatMigrationCheck,
   sharedSingleStatOptionsCheck,
-  OptionType,
-  ThresholdsEditor,
-  OptionsUIType,
-  OptionsUIModel,
-  PanelOptionsGroup,
-  OptionEditor,
-  OptionsPanelGroup,
-  OptionsGrid,
   VizOrientation,
   ValueMapping,
   MappingType,
@@ -19,82 +11,12 @@ import {
   Field,
   FieldType,
   FieldPropertiesEditor,
-  BooleanOption,
+  OptionsGroupUIBuilder,
 } from '@grafana/ui';
 
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
 import * as yup from 'yup';
-
-const optionsModel: OptionsUIModel<GaugeOptions> = {
-  model: {
-    type: OptionsUIType.Layout,
-    config: {
-      columns: 1,
-    },
-    content: [
-      {
-        type: OptionsUIType.Layout,
-        config: { columns: 3 },
-        content: [
-          {
-            type: OptionsUIType.Group,
-            config: { title: 'Display' },
-            component: PanelOptionsGroup,
-            content: [
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Object,
-                  component: FieldDisplayEditor,
-                  property: 'fieldOptions',
-                },
-              } as OptionEditor<GaugeOptions, 'fieldOptions'>,
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Boolean,
-                  component: BooleanOption,
-                  property: 'showThresholdLabels',
-                },
-              } as OptionEditor<GaugeOptions, 'showThresholdLabels'>,
-            ],
-          } as OptionsPanelGroup,
-          {
-            type: OptionsUIType.Group,
-            config: { title: 'Field' },
-            component: PanelOptionsGroup,
-            content: [
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Object,
-                  component: FieldPropertiesEditor,
-                  property: 'fieldOptions.defaults',
-                },
-              } as OptionEditor<FieldDisplayOptions, 'defaults'>,
-            ],
-          } as OptionsPanelGroup,
-          {
-            type: OptionsUIType.Group,
-            config: { title: 'Thresholds' },
-            component: PanelOptionsGroup,
-            content: [
-              {
-                type: OptionsUIType.Editor,
-                editor: {
-                  optionType: OptionType.Object,
-                  component: ThresholdsEditor,
-                  property: 'fieldOptions.thresholds',
-                },
-              } as OptionEditor<FieldDisplayOptions, 'thresholds'>,
-            ],
-          } as OptionsPanelGroup,
-        ],
-      } as OptionsGrid,
-    ],
-  } as OptionsGrid,
-};
 
 const valueMappingSchema: yup.ObjectSchema<ValueMapping> = yup.object({
   from: yup.string(),
@@ -139,9 +61,37 @@ const GaugeOptionsSchema: yup.ObjectSchema<GaugeOptions> = yup.object({
   fieldOptions: fieldOptionsSchema,
 });
 
+const schema = new OptionsGroupUIBuilder<GaugeOptions>()
+  .addPanelOptionsGrid()
+    .addPanelOptionsGroup('Display')
+      .addBooleanEditor('showThresholdLabels', {
+        label: 'Labels',
+      })
+      .addBooleanEditor('showThresholdMarkers', {
+        label: 'Markers',
+      })
+      .addOptionEditor('fieldOptions', FieldDisplayEditor, {
+        labelWidth: 6,
+      })
+      .endGroup()
+    .addPanelOptionsGroup('Field')
+      .addScopedOptions('fieldOptions', {})
+        .addOptionEditor('defaults', FieldPropertiesEditor, {
+          showMinMax: true,
+        })
+      .endGroup()
+    .endGroup()
+    .addPanelOptionsGroup('Thresholds')
+      .addScopedOptions('fieldOptions', {})
+        .addThresholdsEditor('thresholds')
+      .endGroup()
+    .endGroup()
+  .endGroup()
+  .getUIModel();
+
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
-  .setEditor(optionsModel)
+  .setEditor({ model: schema })
   .setOptionsSchema(GaugeOptionsSchema)
   .setPanelChangeHandler(sharedSingleStatOptionsCheck)
   .setMigrationHandler(sharedSingleStatMigrationCheck);

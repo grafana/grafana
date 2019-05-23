@@ -72,7 +72,7 @@ export const GraphLegendEditor: React.FunctionComponent<GraphLegendEditorProps> 
         <div className="gf-form">
           <StatsPicker
             allowMultiple={true}
-            stats={options.stats ? options.stats : []}
+            value={options.stats ? options.stats : []}
             onChange={onStatsChanged}
             placeholder={'Pick Values'}
           />

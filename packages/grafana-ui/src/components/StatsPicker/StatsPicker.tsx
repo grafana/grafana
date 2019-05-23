@@ -11,7 +11,7 @@ import { SelectOptionItem } from '../Select/Select';
 interface Props {
   placeholder?: string;
   onChange: (stats: string[]) => void;
-  stats: string[];
+  value: string[];
   width?: number;
   allowMultiple?: boolean;
   defaultStat?: string;
@@ -32,24 +32,24 @@ export class StatsPicker extends PureComponent<Props> {
   }
 
   checkInput = () => {
-    const { stats, allowMultiple, defaultStat, onChange } = this.props;
+    const { value, allowMultiple, defaultStat, onChange } = this.props;
 
-    const current = getFieldReducers(stats);
-    if (current.length !== stats.length) {
+    const current = getFieldReducers(value);
+    if (current.length !== value.length) {
       const found = current.map(v => v.id);
-      const notFound = difference(stats, found);
-      console.warn('Unknown stats', notFound, stats);
+      const notFound = difference(value, found);
+      console.warn('Unknown stats', notFound, value);
       onChange(current.map(stat => stat.id));
     }
 
     // Make sure there is only one
-    if (!allowMultiple && stats.length > 1) {
-      console.warn('Removing extra stat', stats);
-      onChange([stats[0]]);
+    if (!allowMultiple && value.length > 1) {
+      console.warn('Removing extra stat', value);
+      onChange([value[0]]);
     }
 
     // Set the reducer from callback
-    if (defaultStat && stats.length < 1) {
+    if (defaultStat && value.length < 1) {
       onChange([defaultStat]);
     }
   };
@@ -64,7 +64,7 @@ export class StatsPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
+    const { width, value, allowMultiple, defaultStat, placeholder } = this.props;
     const options = getFieldReducers().map(s => {
       return {
         value: s.id,
@@ -73,12 +73,12 @@ export class StatsPicker extends PureComponent<Props> {
       };
     });
 
-    const value: Array<SelectOptionItem<string>> = options.filter(option => stats.find(stat => option.value === stat));
+    const currentValue: Array<SelectOptionItem<string>> = options.filter(option => value.find(stat => option.value === stat));
 
     return (
       <Select
         width={width}
-        value={value}
+        value={currentValue}
         isClearable={!defaultStat}
         isMulti={allowMultiple}
         isSearchable={true}

@@ -1,4 +1,5 @@
 import { SelectOptionItem } from '../components/Select/Select';
+import { Subtract } from './utils';
 
 /**
  * Option editors, i.e. BooleanOption have to comply to OptionInputAPI.
@@ -30,21 +31,15 @@ export enum OptionsUIType {
 export interface OptionsUI<T> {
   type: T;
 }
-export interface OptionsGrid extends OptionsUI<OptionsUIType.Layout> {
-  config: {
-    columns: number;
-  };
-  content: Array<OptionsGrid | OptionsGroup<any> | OptionEditor<any, any>>; // Not allowing nested grids for now
-}
 
-// tmp type
+// tmp typex
 export interface OptionsPanelGroup extends OptionsGroup<{ title: string }> {}
 export interface OptionsFieldsetGroup extends OptionsGroup<{ legend: string }> {}
 
 export interface OptionsGroup<TConfig> extends OptionsUI<OptionsUIType.Group> {
   config: TConfig;
   component?: React.ComponentType<TConfig>;
-  content: Array<OptionEditor<any, any> | OptionsGroup<any>>; // For matter of simpliocity I'm not allowing nesting layuts, groups
+  content: Array<OptionEditor<any, any> | OptionsGroup<any>>;
 }
 
 export interface OptionEditor<TOptions, TKey extends keyof TOptions> extends OptionsUI<OptionsUIType.Editor> {
@@ -52,7 +47,7 @@ export interface OptionEditor<TOptions, TKey extends keyof TOptions> extends Opt
 }
 
 export interface OptionsUIModel<TOptions> {
-  model: OptionsGrid | OptionsGroup<any> | OptionEditor<TOptions, any>;
+  model: OptionsGroup<any> | OptionEditor<TOptions, any>;
 }
 
 export enum OptionType {
@@ -78,27 +73,28 @@ export interface SelectOptionUIComponentProps<T> extends OptionInputAPI<SelectOp
   options: Array<SelectOptionItem<T>>;
 }
 
-export interface AbstractOptionUIModel<ComponentProps, P> {
+export interface AbstractOptionUIModel<ComponentProps extends OptionInputAPI<any>, P> {
   optionType: OptionType;
   /**
-   * Name of the options object property
+   * Path of the options object property
    * i.e. for GaugeOptions type:
    * export const defaults: GaugeOptions = {
    *   minValue: 0,
    *   maxValue: 100,
+   *   fieldOptions: {
+   *     thresholds: [...]
+   *   }
    *   ...
    * }
-   * it could be 'minValue'
-   * Question: Should we name it option instead of path?
+   * it could be 'minValue' or 'fieldOptions.thresholds'
    */
-  property: P | string; // string tmporarily
+  propertyPath: P | string; // string tmporarily
   /**
    * Keeping component as optional on purpose to enable default components for simple types,
    * i.e. number
    */
   component?: React.ComponentType<ComponentProps>;
-  label?: string;
-  placeholder?: string;
+  props?: Subtract<ComponentProps, OptionInputAPI<any>>;
 }
 
 export interface OptionUIModel<TOptions, TKey extends keyof TOptions>
@@ -179,7 +175,7 @@ export function isGroupUIModel(model: any): model is OptionsGroup<any> {
 export function isOptionModel(
   option: OptionUIModel<any, any> | GroupLayoutUIModel<any>
 ): option is OptionUIModel<any, any> {
-  return (option as OptionUIModel<any, any>).property !== undefined;
+  return (option as OptionUIModel<any, any>).propertyPath !== undefined;
 }
 
 export function isOptionsPanelModel(ui: PanelUIModel | FieldsetUIModel): ui is PanelUIModel {
