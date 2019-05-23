@@ -145,6 +145,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			usersRoute.Get("/", Wrap(SearchUsers))
 			usersRoute.Get("/search", Wrap(SearchUsersWithPaging))
+			usersRoute.Get("/ext", Wrap(SearchUsersExtWithPaging))
 			usersRoute.Get("/:id", Wrap(GetUserByID))
 			usersRoute.Get("/:id/teams", Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", Wrap(GetUserOrgList))
