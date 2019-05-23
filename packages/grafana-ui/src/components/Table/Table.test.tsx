@@ -38,10 +38,10 @@ const setup = (propOverrides?: object) => {
 describe('Table', () => {
   it('ignore invalid properties', () => {
     const { tree, instance } = setup();
-    expect(tree).toEqual(
+    expect(tree.toJSON() + '').toEqual(
       setup({
         id: 3, // Don't pass invalid parameters to MultiGrid
-      }).tree
+      }).tree.toJSON() + ''
     );
     expect(instance.measurer.has(0, 0)).toBeTruthy();
   });
