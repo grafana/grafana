@@ -1,6 +1,6 @@
 {
   "name": "@grafana/ui",
-  "version": "6.2.0-alpha.0",
+  "version": "6.3.0-alpha.0",
   "description": "Grafana Components Library",
   "keywords": [
     "typescript",
