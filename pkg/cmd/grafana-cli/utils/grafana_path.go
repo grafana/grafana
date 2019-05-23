@@ -2,35 +2,40 @@ package utils
 
 import (
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
-	//currentOS := runtime.GOOS
-
-	if currentOS == "windows" {
-		return returnOsDefault(currentOS)
-	}
-
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		logger.Error("Could not get current path. using default")
-		return returnOsDefault(currentOS)
-	}
-
-	if isDevenvironment(pwd) {
+	if isDevEnvironment() {
 		return "../data/plugins"
 	}
 
 	return returnOsDefault(currentOS)
 }
 
-func isDevenvironment(pwd string) bool {
+func isDevEnvironment() bool {
 	// if ../conf/defaults.ini exists, grafana is not installed as package
 	// that its in development environment.
-	_, err := os.Stat("../conf/defaults.ini")
+	ex, err := os.Executable()
+	if err != nil {
+		logger.Error("Could not get executable path. Assuming non dev environment.")
+		return false
+	}
+	exPath := filepath.Dir(ex)
+	_, last := path.Split(exPath)
+	if last == "bin" {
+		// In dev env the executable for current platform is created in 'bin/' dir
+		defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
+		_, err = os.Stat(defaultsPath)
+		return err == nil
+	}
+
+	// But at the same time there are per platform directories that contain the binaries and can also be used.
+	defaultsPath := filepath.Join(exPath, "../../conf/defaults.ini")
+	_, err = os.Stat(defaultsPath)
 	return err == nil
 }
 

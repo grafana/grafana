@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
 	Type            string          `json:"type"`
 	Name            string          `json:"name"`
@@ -21,11 +22,7 @@ type NotifierPlugin struct {
 	Factory         NotifierFactory `json:"-"`
 }
 
-type NotificationService interface {
-	SendIfNeeded(context *EvalContext) error
-}
-
-func NewNotificationService(renderService rendering.Service) NotificationService {
+func newNotificationService(renderService rendering.Service) *notificationService {
 	return &notificationService{
 		log:           log.New("alerting.notifier"),
 		renderService: renderService,
@@ -156,8 +153,8 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgId, Uids: notificationUids}
+func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
+	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
@@ -194,7 +191,7 @@ func (n *notificationService) getNeededNotifiers(orgId int64, notificationUids [
 	return result, nil
 }
 
-// InitNotifier instantiate a new notifier based on the model
+// InitNotifier instantiate a new notifier based on the model.
 func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
@@ -204,6 +201,7 @@ func InitNotifier(model *models.AlertNotification) (Notifier, error) {
 	return notifierPlugin.Factory(model)
 }
 
+// NotifierFactory is a signature for creating notifiers.
 type NotifierFactory func(notification *models.AlertNotification) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
@@ -213,6 +211,7 @@ func RegisterNotifier(plugin *NotifierPlugin) {
 	notifierFactories[plugin.Type] = plugin
 }
 
+// GetNotifiers returns a list of metadata about available notifiers.
 func GetNotifiers() []*NotifierPlugin {
 	list := make([]*NotifierPlugin, 0)
 

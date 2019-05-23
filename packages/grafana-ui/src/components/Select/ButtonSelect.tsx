@@ -74,7 +74,7 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
         isSearchable={false}
         options={options}
         onChange={this.onChange}
-        defaultValue={value}
+        value={value}
         maxMenuHeight={maxMenuHeight}
         components={combinedComponents}
         className="gf-form-select-box-button-select"
