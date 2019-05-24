@@ -1,10 +1,15 @@
+// Libraries
 import React, { PureComponent } from 'react';
 
+// Components
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
-
-import { PanelModel } from '../state/PanelModel';
+import { PanelLinksEditor } from '../../panel/PanelLinksEditor/PanelLinksEditor';
 import './../../panel/GeneralTabCtrl';
+
+// Types
+import { PanelModel } from '../state/PanelModel';
+import { PanelDrillDownLink } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -42,10 +47,21 @@ export class GeneralTab extends PureComponent<Props> {
     }
   }
 
+  onPanelDrillDownLinksChanged = (links: PanelDrillDownLink[]) => {
+    this.props.panel.links = links;
+    this.props.panel.render();
+    this.forceUpdate();
+  };
+
   render() {
+    const { panel } = this.props;
+
     return (
       <EditorTabBody heading="General" toolbarItems={[]}>
-        <div ref={element => (this.element = element)} />
+        <>
+          <div ref={element => (this.element = element)} />
+          <PanelLinksEditor value={panel.links} onChange={this.onPanelDrillDownLinksChanged} />
+        </>
       </EditorTabBody>
     );
   }
