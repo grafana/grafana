@@ -283,8 +283,9 @@ export class Table extends Component<Props, State> {
     }
 
     // Force MultiGrid to rerender if these options change
+    // See: https://github.com/bvaughn/react-virtualized#pass-thru-props
     const refreshKeys = {
-      d0: data,
+      ...this.state, // Includes data and sort parameters
       d1: this.props.data,
       s0: this.props.styles,
     };
