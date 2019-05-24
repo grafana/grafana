@@ -48,6 +48,7 @@ panels as well in a future release.
 ### Name & Evaluation interval
 
 Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+Note: A minimum interval can be specified in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations.
 
 ### For
 
