@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type schedulerImpl struct {
@@ -61,7 +62,13 @@ func (s *schedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 			continue
 		}
 
-		if now%job.Rule.Frequency == 0 {
+		// Check the job frequency against the minimum interval required
+		interval := job.Rule.Frequency
+		if interval < setting.AlertingMinInterval {
+			interval = setting.AlertingMinInterval
+		}
+
+		if now%interval == 0 {
 			if job.Offset > 0 {
 				job.OffsetWait = true
 			} else {
