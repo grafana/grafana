@@ -10,7 +10,7 @@ import {
   sortLogsResult,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { DataQuery, LogsModel } from '@grafana/ui';
+import { DataQuery } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,

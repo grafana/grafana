@@ -44,7 +44,6 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { seriesDataToLogsModel } from 'app/core/logs_model';
-import { LogsDedupStrategy, seriesDataToLogsModel, LogsModel, LogRowModel } from 'app/core/logs_model';
 import { config } from '../config';
 
 export const DEFAULT_RANGE = {

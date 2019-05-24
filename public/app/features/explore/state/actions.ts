@@ -18,7 +18,6 @@ import {
 
 // Types
 import { ThunkResult } from 'app/types';
-import { RawTimeRange, DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction } from '@grafana/ui/src/types';
 import {
   RawTimeRange,
   DataSourceApi,

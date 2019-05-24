@@ -15,7 +15,6 @@ import {
 } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
