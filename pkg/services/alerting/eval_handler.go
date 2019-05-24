@@ -62,6 +62,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		}
 
 		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
+		context.EvalNotMatches = append(context.EvalNotMatches, cr.EvalNotMatches...)
 	}
 
 	context.ConditionEvals = conditionEvals + " = " + strconv.FormatBool(firing)

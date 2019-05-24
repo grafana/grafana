@@ -80,6 +80,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("ruleName", evalContext.Rule.Name)
 	bodyJSON.Set("state", evalContext.Rule.State)
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
+	bodyJSON.Set("evalNotMatches", evalContext.EvalNotMatches)
 
 	ruleURL, err := evalContext.GetRuleUrl()
 	if err == nil {

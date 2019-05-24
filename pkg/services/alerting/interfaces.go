@@ -51,10 +51,11 @@ func (notifiers notifierStateSlice) ShouldUploadImage() bool {
 
 // ConditionResult is the result of a condition evaluation.
 type ConditionResult struct {
-	Firing      bool
-	NoDataFound bool
-	Operator    string
-	EvalMatches []*EvalMatch
+	Firing         bool
+	NoDataFound    bool
+	Operator       string
+	EvalMatches    []*EvalMatch
+	EvalNotMatches []*EvalNotMatch
 }
 
 // Condition is responsible for evaluating an alert condition.
