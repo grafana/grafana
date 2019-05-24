@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 
 export class LinkSrv {
   /** @ngInject */
@@ -20,48 +21,7 @@ export class LinkSrv {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return this.addParamsToUrl(url, params);
-  }
-
-  addParamsToUrl(url, params) {
-    const paramsArray = [];
-
-    _.each(params, (value, key) => {
-      if (value === null) {
-        return;
-      }
-      if (value === true) {
-        paramsArray.push(key);
-      } else if (_.isArray(value)) {
-        _.each(value, instance => {
-          paramsArray.push(key + '=' + encodeURIComponent(instance));
-        });
-      } else {
-        paramsArray.push(key + '=' + encodeURIComponent(value));
-      }
-    });
-
-    if (paramsArray.length === 0) {
-      return url;
-    }
-
-    return this.appendToQueryString(url, paramsArray.join('&'));
-  }
-
-  appendToQueryString(url, stringToAppend) {
-    if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
-      const pos = url.indexOf('?');
-      if (pos !== -1) {
-        if (url.length - pos > 1) {
-          url += '&';
-        }
-      } else {
-        url += '?';
-      }
-      url += stringToAppend;
-    }
-
-    return url;
+    return appendQueryToUrl(url, toUrlParams(params));
   }
 
   getAnchorInfo(link) {
@@ -102,10 +62,10 @@ export class LinkSrv {
       this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
     }
 
-    info.href = this.addParamsToUrl(info.href, params);
+    info.href = appendQueryToUrl(info.href, toUrlParams(params));
 
     if (link.params) {
-      info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
+      info.href = appendQueryToUrl(info.href, this.templateSrv.replace(link.params, scopedVars));
     }
 
     return info;

@@ -150,7 +150,7 @@ export interface RangeMap extends BaseMap {
 export interface PanelDrillDownLink {
   url: string;
   title: string;
-  openInNew?: boolean;
+  targetBlank?: boolean;
 }
 
 export enum VizOrientation {

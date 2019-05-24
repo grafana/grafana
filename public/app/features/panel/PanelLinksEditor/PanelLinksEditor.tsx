@@ -2,7 +2,7 @@
 import React, { FC, ChangeEvent, useState } from 'react';
 
 // Components
-import { PanelOptionsGroup, PanelDrillDownLink, FormField } from '@grafana/ui';
+import { PanelOptionsGroup, PanelDrillDownLink, FormField, Switch } from '@grafana/ui';
 
 export interface Props {
   value: PanelDrillDownLink[];
@@ -69,6 +69,10 @@ export const LinkEditor: FC<LinkEditor> = React.memo(({ index, value, onChange, 
     onRemove(value);
   };
 
+  const onOpenInNewTabChanged = () => {
+    onChange(index, { ...value, targetBlank: !value.targetBlank });
+  };
+
   return (
     <div className="gf-form-inline">
       <FormField
@@ -92,6 +96,7 @@ export const LinkEditor: FC<LinkEditor> = React.memo(({ index, value, onChange, 
           onBlur={onUrlBlur}
         />
       </div>
+      <Switch label="Open in new tab" checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
       <div className="gf-form">
         <button className="gf-form-label gf-form-label--btn" onClick={onRemoveClick}>
           <i className="fa fa-times" />

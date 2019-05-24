@@ -1,4 +1,16 @@
+// Libraries
 import _ from 'lodash';
+
+// Utils
+import getFactors from 'app/core/utils/factors';
+import { appendQueryToUrl } from 'app/core/utils/url';
+
+// Types
+import { PanelModel } from './PanelModel';
+import { DashboardModel } from './DashboardModel';
+import { PanelDrillDownLink } from '@grafana/ui/src/types/panel';
+
+// Constants
 import {
   GRID_COLUMN_COUNT,
   GRID_CELL_HEIGHT,
@@ -7,9 +19,6 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { PanelModel } from './PanelModel';
-import { DashboardModel } from './DashboardModel';
-import getFactors from 'app/core/utils/factors';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -22,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 18;
+    this.dashboard.schemaVersion = 19;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -417,6 +426,15 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 19) {
+      // migrate change to gauge options
+      panelUpgrades.push(panel => {
+        if (panel.links && _.isArray(panel.links)) {
+          panel.links = panel.links.map(upgradePanelLink);
+        }
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -611,4 +629,26 @@ class RowArea {
 
     return place;
   }
+}
+
+function upgradePanelLink(link: any): PanelDrillDownLink {
+  let url = link.url;
+
+  if (link.keepTime) {
+    url = appendQueryToUrl(url, '$__urlTimeRange');
+  }
+
+  if (link.includeVars) {
+    url = appendQueryToUrl(url, '$__allVariables');
+  }
+
+  if (link.params) {
+    url = appendQueryToUrl(url, link.params);
+  }
+
+  return {
+    url: url,
+    title: link.title,
+    targetBlank: link.targetBlank,
+  };
 }
