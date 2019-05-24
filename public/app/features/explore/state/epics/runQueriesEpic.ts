@@ -33,10 +33,7 @@ export const runQueriesEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (a
       const interval = datasourceInstance.interval;
       const live = datasourceInstance && datasourceInstance.supportsStreaming && isLive ? true : false;
 
-      return [
-        runQueriesBatchAction({ exploreId, queryOptions: { interval, maxDataPoints: containerWidth, live } }),
-        stateSaveAction(),
-      ];
+      return [runQueriesBatchAction({ exploreId, queryOptions: { interval, maxDataPoints: containerWidth, live } })];
     })
   );
 };

@@ -95,7 +95,6 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi = null;
-    const exploreItemState = getState().explore[exploreId];
 
     if (!datasource) {
       newDataSourceInstance = await getDatasourceSrv().get();
@@ -103,14 +102,14 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
       newDataSourceInstance = await getDatasourceSrv().get(datasource);
     }
 
-    const currentDataSourceInstance = exploreItemState.datasourceInstance;
-    const queries = exploreItemState.queries;
+    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
+    const queries = getState().explore[exploreId].queries;
 
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
-    if (exploreItemState.isLive && !newDataSourceInstance.supportsStreaming) {
+    if (getState().explore[exploreId].isLive && !newDataSourceInstance.supportsStreaming) {
       dispatch(changeRefreshInterval(exploreId, offOption.value));
     }
 

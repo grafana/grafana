@@ -12,6 +12,7 @@ import {
   updateDatasourceInstanceAction,
   changeRefreshIntervalAction,
   clearQueriesAction,
+  stateSaveAction,
 } from '../actionTypes';
 import { LoadingState, DataQueryRequest } from '@grafana/ui';
 
@@ -47,7 +48,8 @@ describe('runQueriesBatchEpic', () => {
                 latency: 0,
                 datasourceId,
                 replacePreviousResults: true,
-              })
+              }),
+              stateSaveAction()
             );
 
           expect(eventBridge.emit).toBeCalledTimes(1);
@@ -183,7 +185,8 @@ describe('runQueriesBatchEpic', () => {
                 latency: 0,
                 datasourceId,
                 replacePreviousResults: false,
-              })
+              }),
+              stateSaveAction()
             );
 
           expect(eventBridge.emit).toBeCalledTimes(1);
@@ -224,10 +227,12 @@ describe('runQueriesBatchEpic', () => {
             queryStartAction({ exploreId }), // output from first observable
             historyUpdatedAction({ exploreId, history }), // output from first observable
             processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction(),
             // output from first observable
             queryStartAction({ exploreId }), // output from second observable
             historyUpdatedAction({ exploreId, history }), // output from second observable
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction()
             // output from second observable
           );
 
@@ -259,7 +264,8 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction()
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -290,7 +296,8 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction()
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -321,7 +328,8 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction()
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -352,7 +360,8 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            stateSaveAction()
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);

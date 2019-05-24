@@ -19,6 +19,7 @@ import {
   RunQueriesBatchPayload,
   queryStartAction,
   limitMessageRatePayloadAction,
+  stateSaveAction,
 } from '../actionTypes';
 import { ExploreId, ExploreItemState } from 'app/types';
 
@@ -61,6 +62,7 @@ const processResponse = (config: ProcessResponseConfig) => {
       replacePreviousResults,
     })
   );
+  actions.push(stateSaveAction());
 
   return actions;
 };

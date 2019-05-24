@@ -247,7 +247,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
-    if (observer) {
+    if (
+      observer &&
+      options.targets.filter(target => target.container === 'explore').length === options.targets.length
+    ) {
       // using observer to make the instant query return immediately
       this.runObserverQueries(options, observer, queries, activeTargets, end);
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;

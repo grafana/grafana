@@ -18,8 +18,7 @@ describe('runQueriesEpic', () => {
                 runQueriesBatchAction({
                   exploreId,
                   queryOptions: { interval: datasourceInterval, maxDataPoints: containerWidth, live: false },
-                }),
-                stateSaveAction()
+                })
               );
           });
         });
@@ -39,8 +38,7 @@ describe('runQueriesEpic', () => {
                 runQueriesBatchAction({
                   exploreId,
                   queryOptions: { interval: datasourceInterval, maxDataPoints: containerWidth, live: true },
-                }),
-                stateSaveAction()
+                })
               );
           });
         });
