@@ -110,6 +110,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     this.migrateTimeGrains();
 
+    this.migrateToFromTimes();
+
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
@@ -169,6 +171,14 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       delete this.target.azureMonitor.timeGrainUnit;
       this.onMetricNameChange();
     }
+  }
+
+  migrateToFromTimes() {
+    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(
+      /\$__timeFrom\s/gi,
+      '$__timeFrom() '
+    );
+    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__timeTo\s/gi, '$__timeTo() ');
   }
 
   replace(variable: string) {
