@@ -23,15 +23,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
-import { GraphCtrl } from './module';
+import { GraphCtrl, GraphContextMenuCtrl } from './module';
 import { getValueFormat } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { ContextMenuItem } from './GraphContextMenu';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
+  contextMenu: GraphContextMenuCtrl;
   tooltip: any;
   dashboard: any;
   annotations: object[];
@@ -47,6 +49,7 @@ class GraphElement {
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
+    this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
     this.annotations = [];
@@ -68,6 +71,12 @@ class GraphElement {
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
+    this.elem.bind('click', event => {
+      // To make sure the event is not picked up by React we need to stop propagating it here.
+      // This is important especially from context menu pointof view, which uses ClickOutsideWrapper.
+      // If the event propagation wasn't stopped here, the context menu would close as soon as it rendered
+      event.stopPropagation();
+    });
 
     // get graph legend element
     if (this.elem && this.elem.parent) {
@@ -171,7 +180,30 @@ class GraphElement {
     }
   }
 
+  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: any): ContextMenuItem[] => {
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Add annotation',
+        icon: 'gicon gicon-annotation',
+        onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+      },
+    ];
+
+    return item
+      ? [
+          ...items,
+          // TODO: generate drilldown links URLs
+          {
+            label: 'Some drilldown link',
+            icon: 'gicon gicon-link',
+            onClick: () => {},
+          },
+        ]
+      : items;
+  };
+
   onPlotClick(event, pos, item) {
+    this.tooltip.clear(this.plot);
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;
@@ -179,12 +211,21 @@ class GraphElement {
 
     if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Skip if range selected (added in "plotselected" event handler)
-      const isRangeSelection = pos.x !== pos.x1;
-      if (!isRangeSelection) {
-        setTimeout(() => {
-          this.eventManager.updateTime({ from: pos.x, to: null });
-        }, 100);
+      if (pos.x !== pos.x1) {
+        return;
       }
+
+      this.scope.$apply(() => {
+        if (!item) {
+          this.contextMenu.setItem(null);
+        } else {
+          // WIP item will be needed for series name and datapoint ts interpolation
+          this.contextMenu.setItem(item);
+        }
+
+        this.contextMenu.setMenuItems(this.getContextMenuItems(pos, item));
+        this.contextMenu.toggleMenu(pos);
+      });
     }
   }
 
@@ -446,6 +487,7 @@ class GraphElement {
         color: gridColor,
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
+        mouseActiveRadius: 30,
       },
       selection: {
         mode: 'x',

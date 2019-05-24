@@ -11,6 +11,7 @@ import AppNotificationList from './components/AppNotifications/AppNotificationLi
 import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
+import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -71,5 +72,11 @@ export function registerAngularDirectives() {
     'labelWidth',
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('graphContextMenu', GraphContextMenu, [
+    'x',
+    'y',
+    'items',
+    ['onClose', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }
