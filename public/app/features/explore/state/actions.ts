@@ -66,6 +66,7 @@ import {
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 /**
  * Updates UI state and save it to the URL
@@ -95,6 +96,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi = null;
+    const exploreItemState = getState().explore[exploreId];
 
     if (!datasource) {
       newDataSourceInstance = await getDatasourceSrv().get();
@@ -102,12 +104,16 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
       newDataSourceInstance = await getDatasourceSrv().get(datasource);
     }
 
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
-    const queries = getState().explore[exploreId].queries;
+    const currentDataSourceInstance = exploreItemState.datasourceInstance;
+    const queries = exploreItemState.queries;
 
     await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+
+    if (exploreItemState.isLive && !newDataSourceInstance.supportsStreaming) {
+      dispatch(changeRefreshInterval(exploreId, offOption.value));
+    }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance));
     dispatch(runQueries(exploreId, false));

@@ -26,11 +26,13 @@ const testContext = () => {
   const series = [serieA, serieB];
   const latency = 0;
   const response = { data: series };
+  const replacePreviousResults = true;
 
   return {
     latency,
     response,
     series,
+    replacePreviousResults,
   };
 };
 
@@ -40,13 +42,15 @@ describe('processQueryResultsEpic', () => {
       describe('and explore is not scanning', () => {
         it('then resetQueryErrorAction and querySuccessAction are dispatched', () => {
           const { datasourceId, exploreId, state } = mockExploreState();
-          const { latency, response, series } = testContext();
+          const { latency, response, series, replacePreviousResults } = testContext();
 
           epicTester(processQueryResultsEpic, state)
-            .whenActionIsDispatched(processQueryResultsAction({ exploreId, datasourceId, response, latency }))
+            .whenActionIsDispatched(
+              processQueryResultsAction({ exploreId, datasourceId, response, latency, replacePreviousResults })
+            )
             .thenResultingActionsEqual(
               resetQueryErrorAction({ exploreId, refIds: ['A', 'B'] }),
-              querySuccessAction({ exploreId, result: series, latency })
+              querySuccessAction({ exploreId, result: series, latency, replacePreviousResults })
             );
         });
       });
@@ -55,13 +59,15 @@ describe('processQueryResultsEpic', () => {
         describe('and we have a result', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
-            const { latency, response, series } = testContext();
+            const { latency, response, series, replacePreviousResults } = testContext();
 
             epicTester(processQueryResultsEpic, state)
-              .whenActionIsDispatched(processQueryResultsAction({ exploreId, datasourceId, response, latency }))
+              .whenActionIsDispatched(
+                processQueryResultsAction({ exploreId, datasourceId, response, latency, replacePreviousResults })
+              )
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: ['A', 'B'] }),
-                querySuccessAction({ exploreId, result: series, latency }),
+                querySuccessAction({ exploreId, result: series, latency, replacePreviousResults }),
                 scanStopAction({ exploreId })
               );
           });
@@ -70,15 +76,21 @@ describe('processQueryResultsEpic', () => {
         describe('and we do not have a result', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state, scanner } = mockExploreState({ scanning: true });
-            const { latency } = testContext();
+            const { latency, replacePreviousResults } = testContext();
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(
-                processQueryResultsAction({ exploreId, datasourceId, response: { data: [] }, latency })
+                processQueryResultsAction({
+                  exploreId,
+                  datasourceId,
+                  response: { data: [] },
+                  latency,
+                  replacePreviousResults,
+                })
               )
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: [] }),
-                querySuccessAction({ exploreId, result: [], latency }),
+                querySuccessAction({ exploreId, result: [], latency, replacePreviousResults }),
                 scanRangeAction({ exploreId, range: scanner() })
               );
           });

@@ -41,7 +41,13 @@ describe('runQueriesBatchEpic', () => {
             .thenResultingActionsEqual(
               queryStartAction({ exploreId }),
               historyUpdatedAction({ exploreId, history }),
-              processQueryResultsAction({ exploreId, response, latency: 0, datasourceId })
+              processQueryResultsAction({
+                exploreId,
+                response,
+                latency: 0,
+                datasourceId,
+                replacePreviousResults: true,
+              })
             );
 
           expect(eventBridge.emit).toBeCalledTimes(1);
@@ -75,7 +81,7 @@ describe('runQueriesBatchEpic', () => {
     describe('and query targets are live', () => {
       describe('and state equals Streaming', () => {
         it('then correct actions are dispatched', () => {
-          const { exploreId, state } = mockExploreState();
+          const { exploreId, state, datasourceId } = mockExploreState();
           const unsubscribe = jest.fn();
           const serieA = {
             fields: [],
@@ -108,8 +114,8 @@ describe('runQueriesBatchEpic', () => {
             })
             .thenResultingActionsEqual(
               queryStartAction({ exploreId }),
-              limitMessageRatePayloadAction({ exploreId, data: serieA }),
-              limitMessageRatePayloadAction({ exploreId, data: serieB })
+              limitMessageRatePayloadAction({ exploreId, series: [serieA], datasourceId }),
+              limitMessageRatePayloadAction({ exploreId, series: [serieB], datasourceId })
             );
         });
       });
@@ -171,7 +177,13 @@ describe('runQueriesBatchEpic', () => {
             .thenResultingActionsEqual(
               queryStartAction({ exploreId }),
               historyUpdatedAction({ exploreId, history }),
-              processQueryResultsAction({ exploreId, response: { data: series }, latency: 0, datasourceId })
+              processQueryResultsAction({
+                exploreId,
+                response: { data: series },
+                latency: 0,
+                datasourceId,
+                replacePreviousResults: false,
+              })
             );
 
           expect(eventBridge.emit).toBeCalledTimes(1);
@@ -194,8 +206,7 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .whenActionIsDispatched(
@@ -206,17 +217,18 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }), // output from first observable
             historyUpdatedAction({ exploreId, history }), // output from first observable
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId }), // output from first observable
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            // output from first observable
             queryStartAction({ exploreId }), // output from second observable
             historyUpdatedAction({ exploreId, history }), // output from second observable
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId }) // output from second observable
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
+            // output from second observable
           );
 
         expect(eventBridge.emit).toBeCalledTimes(2);
@@ -239,8 +251,7 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .whenActionIsDispatched(resetExploreAction()) // unsubscribes the observable
@@ -248,7 +259,7 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -271,8 +282,7 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId, datasourceInstance })) // unsubscribes the observable
@@ -280,7 +290,7 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -303,8 +313,7 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId, refreshInterval: '' })) // unsubscribes the observable
@@ -312,7 +321,7 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);
@@ -335,8 +344,7 @@ describe('runQueriesBatchEpic', () => {
           .whenQueryObserverReceivesEvent({
             key: 'some key',
             request: {} as DataQueryRequest,
-            state: LoadingState.Streaming,
-            series: [],
+            state: LoadingState.Loading, // fake just to setup and test unsubscribe
             unsubscribe,
           })
           .whenActionIsDispatched(clearQueriesAction({ exploreId })) // unsubscribes the observable
@@ -344,7 +352,7 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId })
+            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true })
           );
 
         expect(eventBridge.emit).toBeCalledTimes(1);

@@ -2,7 +2,6 @@ import { mockExploreState } from 'test/mocks/mockExploreState';
 import { epicTester } from 'test/core/redux/epicTester';
 import { runQueriesAction, stateSaveAction, runQueriesBatchAction, clearQueriesAction } from '../actionTypes';
 import { runQueriesEpic } from './runQueriesEpic';
-import { liveOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 describe('runQueriesEpic', () => {
   describe('when runQueriesAction is dispatched', () => {
@@ -30,7 +29,7 @@ describe('runQueriesEpic', () => {
             const queries = [{ refId: 'A', key: '123456', expr: '{__filename__="some.log"}' }];
             const { exploreId, state, datasourceInterval, containerWidth } = mockExploreState({
               queries,
-              refreshInterval: liveOption.value,
+              isLive: true,
               datasourceSupportsStreaming: true,
             });
 

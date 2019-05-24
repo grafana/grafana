@@ -18,7 +18,7 @@ import {
 export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(processQueryResultsAction.type).pipe(
     mergeMap((action: ActionOf<ProcessQueryResultsPayload>) => {
-      const { exploreId, datasourceId, response, latency } = action.payload;
+      const { exploreId, datasourceId, response, latency, replacePreviousResults } = action.payload;
       const { datasourceInstance, scanning, scanner } = state$.value.explore[exploreId];
 
       // If datasource already changed, results do not matter
@@ -45,6 +45,7 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
           exploreId,
           result,
           latency,
+          replacePreviousResults,
         })
       );
 

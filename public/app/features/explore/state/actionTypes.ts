@@ -152,6 +152,7 @@ export interface QuerySuccessPayload {
   exploreId: ExploreId;
   result: any;
   latency: number;
+  replacePreviousResults: boolean;
 }
 
 export interface HistoryUpdatedPayload {
@@ -247,13 +248,7 @@ export interface ProcessQueryResultsPayload {
   response: any;
   latency: number;
   datasourceId: string;
-}
-
-export interface ProcessQueryResultsPayload {
-  exploreId: ExploreId;
-  response: any;
-  latency: number;
-  datasourceId: string;
+  replacePreviousResults: boolean;
 }
 
 export interface RunQueriesBatchPayload {
@@ -261,14 +256,10 @@ export interface RunQueriesBatchPayload {
   queryOptions: QueryOptions;
 }
 
-export interface SubscriptionDataReceivedPayload {
-  data: SeriesData;
-  exploreId: ExploreId;
-}
-
 export interface LimitMessageRatePayload {
-  data: SeriesData;
+  series: SeriesData[];
   exploreId: ExploreId;
+  datasourceId: string;
 }
 
 /**
@@ -478,10 +469,6 @@ export const processQueryResultsAction = actionCreatorFactory<ProcessQueryResult
 ).create();
 
 export const runQueriesBatchAction = actionCreatorFactory<RunQueriesBatchPayload>('explore/RUN_QUERIES_BATCH').create();
-
-export const subscriptionDataReceivedAction = actionCreatorFactory<SubscriptionDataReceivedPayload>(
-  'explore/SUBSCRIPTION_DATA_RECEIVED'
-).create();
 
 export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRatePayload>(
   'explore/LIMIT_MESSAGE_RATE_PAYLOAD'

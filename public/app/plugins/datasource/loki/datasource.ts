@@ -84,42 +84,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  convertToStreamTargets = (options: DataQueryRequest<LokiQuery>): Array<{ url: string; refId: string }> => {
-    return options.targets
-      .filter(target => target.expr && !target.hide)
-      .map(target => {
-        const interpolated = this.templateSrv.replace(target.expr);
-        const { query, regexp } = parseQuery(interpolated);
-        const refId = target.refId;
-        const baseUrl = this.instanceSettings.url;
-        const params = serializeParams({ query, regexp });
-        const url = `${baseUrl}/api/prom/tail?${params}`;
-
-        return {
-          url,
-          refId,
-        };
-      });
-  };
-
-  resultToSeriesData = (data: any, refId: string): SeriesData[] => {
-    const toSeriesData = (stream: any, refId: string) => ({
-      ...logStreamToSeriesData(stream),
-      refId,
-    });
-
-    if (data.streams) {
-      // new Loki API purposed in https://github.com/grafana/loki/pull/590
-      const series: SeriesData[] = [];
-      for (const stream of data.streams || []) {
-        series.push(toSeriesData(stream, refId));
-      }
-      return series;
-    }
-
-    return [toSeriesData(data, refId)];
-  };
-
   prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
     const { query, regexp } = parseQuery(interpolated);
@@ -208,7 +172,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
-  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
+  runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
     const liveTargets = options.targets
       .filter(target => target.expr && !target.hide && target.live)
       .map(target => this.prepareLiveTarget(target, options));
@@ -247,7 +211,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
       this.subscriptions[liveTarget.refId] = subscription;
     });
+  };
 
+  runQueries = async (options: DataQueryRequest<LokiQuery>) => {
     const queryTargets = options.targets
       .filter(target => target.expr && !target.hide && !target.live)
       .map(target => this.prepareQueryTarget(target, options));
@@ -279,6 +245,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
       return { data: series };
     });
+  };
+
+  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
+    this.runLiveQueries(options, observer);
+
+    return this.runQueries(options);
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {

@@ -12,7 +12,6 @@ import {
   ExploreState,
   RangeScanner,
   ExploreMode,
-  QueryIntervals,
 } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
@@ -26,15 +25,13 @@ import {
   changeModeAction,
   scanStopAction,
   runQueriesAction,
-  subscriptionDataReceivedAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogLevel, SeriesData, FieldType } from '@grafana/ui';
-import { liveOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { DataSourceApi, DataQuery } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -209,167 +206,6 @@ describe('Explore item reducer', () => {
           .givenReducer(itemReducer, initalState)
           .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(expectedState);
-      });
-    });
-  });
-
-  describe('subscription data', () => {
-    describe('when subscriptionDataReceivedAction is dispatched', () => {
-      describe('and explore is live', () => {
-        it('then it should set correct state', () => {
-          const initalState: Partial<ExploreItemState> = {
-            refreshInterval: liveOption.value,
-            queryIntervals: {} as QueryIntervals,
-            logsResult: {
-              hasUniqueLabels: true,
-              rows: [
-                {
-                  logLevel: LogLevel.info,
-                  uniqueLabels: {},
-                  timeFromNow: '18 years ago',
-                  timeEpochMs: 978346800000,
-                  timeLocal: '2001-01-01 13:00:00',
-                  hasAnsi: false,
-                  searchWords: [],
-                  entry: 'state entry',
-                  raw: 'state raw',
-                  labels: {},
-                  timestamp: '2001-01-01T12:00:00.000000000Z',
-                },
-              ],
-            },
-          };
-
-          const data: SeriesData = {
-            labels: {},
-            fields: [
-              {
-                name: 'ts',
-                type: FieldType.time,
-              },
-              {
-                name: 'line',
-                type: FieldType.string,
-              },
-            ],
-            rows: [
-              [
-                '2001-01-01 12:00:01.00000000Z',
-                't=2001-01-01T12:00:01+0000 lvl=info msg="Alert Rule returned no data"\n',
-              ],
-            ],
-            refId: 'A',
-            meta: {
-              searchWords: [],
-              limit: 1000,
-            },
-          };
-
-          const expectedState = {
-            refreshInterval: liveOption.value,
-            queryIntervals: {} as QueryIntervals,
-            graphIsLoading: true,
-            logIsLoading: true,
-            tableIsLoading: true,
-            showingStartPage: false,
-            update: makeInitialUpdateState(),
-            logsResult: {
-              hasUniqueLabels: true,
-              rows: [
-                {
-                  logLevel: LogLevel.info,
-                  uniqueLabels: {},
-                  timeFromNow: '18 years ago',
-                  timeEpochMs: 978346800000,
-                  timeLocal: '2001-01-01 13:00:00',
-                  hasAnsi: false,
-                  searchWords: [],
-                  entry: 'state entry',
-                  raw: 'state raw',
-                  labels: {},
-                  timestamp: '2001-01-01T12:00:00.000000000Z',
-                  fresh: false,
-                },
-                {
-                  logLevel: LogLevel.critical,
-                  uniqueLabels: {},
-                  timeFromNow: '18 years ago',
-                  timeEpochMs: 978350401000,
-                  timeLocal: '2001-01-01 13:00:01',
-                  hasAnsi: false,
-                  searchWords: [],
-                  entry: 't=2001-01-01T12:00:01+0000 lvl=info msg="Alert Rule returned no data"\n',
-                  raw: 't=2001-01-01T12:00:01+0000 lvl=info msg="Alert Rule returned no data"\n',
-                  labels: {},
-                  timestamp: '2001-01-01 12:00:01.00000000Z',
-                  fresh: true,
-                },
-              ],
-            },
-          };
-
-          reducerTester()
-            .givenReducer(itemReducer, initalState)
-            .whenActionIsDispatched(subscriptionDataReceivedAction({ exploreId: ExploreId.left, data }))
-            .thenStateShouldEqual(expectedState);
-        });
-      });
-
-      describe('and explore is not live', () => {
-        it('then it should set correct state', () => {
-          const row = {
-            logLevel: LogLevel.info,
-            uniqueLabels: {},
-            timeFromNow: '18 years ago',
-            timeEpochMs: 978346800000,
-            timeLocal: '2001-01-01 13:00:00',
-            hasAnsi: false,
-            searchWords: [],
-            entry: 'state entry',
-            raw: 'state raw',
-            labels: {},
-            timestamp: '2001-01-01T12:00:00.000000000Z',
-          };
-
-          const initalState: Partial<ExploreItemState> = {
-            refreshInterval: '',
-            queryIntervals: {} as QueryIntervals,
-            logsResult: {
-              hasUniqueLabels: true,
-              rows: [row],
-            },
-          };
-
-          const data: SeriesData = {
-            labels: {},
-            fields: [
-              {
-                name: 'ts',
-                type: FieldType.time,
-              },
-              {
-                name: 'line',
-                type: FieldType.string,
-              },
-            ],
-            rows: [
-              [
-                '2001-01-01 12:00:01.00000000Z',
-                't=2001-01-01T12:00:01+0000 lvl=info msg="Alert Rule returned no data"\n',
-              ],
-            ],
-            refId: 'A',
-            meta: {
-              searchWords: [],
-              limit: 1000,
-            },
-          };
-
-          reducerTester()
-            .givenReducer(itemReducer, initalState)
-            .whenActionIsDispatched(subscriptionDataReceivedAction({ exploreId: ExploreId.left, data }))
-            .thenStateShouldEqual(initalState);
-        });
       });
     });
   });

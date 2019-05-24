@@ -5,6 +5,7 @@ import { makeExploreItemState } from 'app/features/explore/state/reducers';
 import { StoreState } from 'app/types';
 
 export const mockExploreState = (options: any = {}) => {
+  const isLive = options.isLive || false;
   const history = [];
   const eventBridge = {
     emit: jest.fn(),
@@ -38,6 +39,7 @@ export const mockExploreState = (options: any = {}) => {
     datasourceInstance,
     eventBridge,
     history,
+    isLive,
     queries,
     refreshInterval,
     scanner,
@@ -51,6 +53,7 @@ export const mockExploreState = (options: any = {}) => {
     datasourceInstance,
     eventBridge,
     history,
+    isLive,
     queries,
     refreshInterval,
     scanner,

@@ -30,7 +30,6 @@ import {
   resetQueryErrorAction,
   queryStartAction,
   runQueriesAction,
-  subscriptionDataReceivedAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -59,7 +58,6 @@ import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from 'app/types';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { LogsModel, seriesDataToLogsModel } from 'app/core/logs_model';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -389,61 +387,29 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { queryIntervals, refreshInterval, mode } = state;
-      const { result, latency } = action.payload;
-      const results = calculateResultsFromQueryBatch(result, mode, queryIntervals.intervalMs);
+      const { queryIntervals, refreshInterval, mode, graphResult, tableResult, logsResult } = state;
+      const { result, latency, replacePreviousResults } = action.payload;
+      const results = calculateResultsFromQueryBatch(
+        result,
+        mode,
+        queryIntervals.intervalMs,
+        replacePreviousResults,
+        graphResult,
+        tableResult,
+        logsResult,
+        refreshInterval
+      );
       const live = isLive(refreshInterval);
-
-      if (live) {
-        return state;
-      }
 
       return {
         ...state,
         graphResult: results.graphResult,
         tableResult: results.tableResult,
-        logsResult: sortLogsResult(results.logsResult, refreshInterval),
+        logsResult: results.logsResult,
         latency,
         graphIsLoading: live ? true : false,
         logIsLoading: live ? true : false,
         tableIsLoading: live ? true : false,
-        showingStartPage: false,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
-  .addMapper({
-    filter: subscriptionDataReceivedAction,
-    mapper: (state, action): ExploreItemState => {
-      const { queryIntervals, refreshInterval } = state;
-      const { data } = action.payload;
-      const live = isLive(refreshInterval);
-
-      if (!live) {
-        return state;
-      }
-
-      const newResults = seriesDataToLogsModel([data], queryIntervals.intervalMs);
-      const rowsInState = sortLogsResult(state.logsResult, state.refreshInterval).rows;
-
-      const processedRows = [];
-      for (const row of rowsInState) {
-        processedRows.push({ ...row, fresh: false });
-      }
-      for (const row of newResults.rows) {
-        processedRows.push({ ...row, fresh: true });
-      }
-
-      const rows = processedRows.slice(processedRows.length - 1000, 1000);
-
-      const logsResult: LogsModel = state.logsResult ? { ...state.logsResult, rows } : { hasUniqueLabels: false, rows };
-
-      return {
-        ...state,
-        logsResult,
-        graphIsLoading: true,
-        logIsLoading: true,
-        tableIsLoading: true,
         showingStartPage: false,
         update: makeInitialUpdateState(),
       };

@@ -3,15 +3,21 @@ import { map, throttleTime } from 'rxjs/operators';
 
 import { StoreState } from 'app/types';
 import { ActionOf } from '../../../../core/redux/actionCreatorFactory';
-import { limitMessageRatePayloadAction, LimitMessageRatePayload, subscriptionDataReceivedAction } from '../actionTypes';
+import { limitMessageRatePayloadAction, LimitMessageRatePayload, processQueryResultsAction } from '../actionTypes';
 import { EpicDependencies } from 'app/store/configureStore';
 
 export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = action$ => {
   return action$.ofType(limitMessageRatePayloadAction.type).pipe(
     throttleTime(1),
     map((action: ActionOf<LimitMessageRatePayload>) => {
-      const { exploreId, data } = action.payload;
-      return subscriptionDataReceivedAction({ exploreId, data });
+      const { exploreId, series, datasourceId } = action.payload;
+      return processQueryResultsAction({
+        exploreId,
+        response: { data: series },
+        latency: 0,
+        datasourceId,
+        replacePreviousResults: false,
+      });
     })
   );
 };

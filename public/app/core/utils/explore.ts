@@ -333,10 +333,20 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryBatch(result: any[], mode: ExploreMode, graphInterval: number) {
+export function calculateResultsFromQueryBatch(
+  result: any[],
+  mode: ExploreMode,
+  graphInterval: number,
+  replacePreviousResults: boolean,
+  prevGraphResult: any[],
+  prevTableResult: TableModel,
+  prevLogsResult: LogsModel,
+  refreshInterval: string
+) {
   const flattenedResult: any[] = _.flatten(result);
+
   if (mode === ExploreMode.Metrics) {
-    const metrics: DataQueryResponseData[] = [];
+    const metrics: DataQueryResponseData[] = replacePreviousResults ? [] : prevGraphResult || [];
     const tables: DataQueryResponseData[] = [];
 
     for (let index = 0; index < flattenedResult.length; index++) {
@@ -348,16 +358,31 @@ export function calculateResultsFromQueryBatch(result: any[], mode: ExploreMode,
       }
     }
 
+    const tablesToMerge = replacePreviousResults ? tables : [].concat(prevTableResult || [], tables);
+
     return {
       graphResult: makeTimeSeriesList(metrics),
-      tableResult: mergeTablesIntoModel(new TableModel(), ...tables),
+      tableResult: mergeTablesIntoModel(new TableModel(), ...tablesToMerge),
       logsResult: { hasUniqueLabels: false, rows: [] },
     };
   }
 
-  const logsResult = result
+  const rowsInState = sortLogsResult(prevLogsResult, refreshInterval).rows;
+  const newResults = result
     ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
     : null;
+
+  const processedRows = [];
+  for (const row of rowsInState) {
+    processedRows.push({ ...row, fresh: false });
+  }
+  for (const row of newResults.rows) {
+    processedRows.push({ ...row, fresh: true });
+  }
+
+  const rows = processedRows.slice(processedRows.length - 1000, 1000);
+
+  const logsResult: LogsModel = { ...newResults, rows };
 
   return {
     graphResult: [],
