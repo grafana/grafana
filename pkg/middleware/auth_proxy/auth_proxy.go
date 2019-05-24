@@ -298,21 +298,18 @@ func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember() *Error {
+func (auth *AuthProxy) Remember(id int64) *Error {
+	key := auth.getKey()
 
-	// Make sure we do not rewrite the expiration time
-	if auth.InCache() {
+	// Check if user already in cache
+	userID, _ := auth.store.Get(key)
+	if userID != nil {
 		return nil
 	}
 
-	var (
-		key        = auth.getKey()
-		value, _   = auth.GetUserIDViaCache()
-		expiration = time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(-auth.cacheTTL) * time.Minute
 
-		err = auth.store.Set(key, value, expiration)
-	)
-
+	err := auth.store.Set(key, id, expiration)
 	if err != nil {
 		return newError(err.Error(), nil)
 	}
