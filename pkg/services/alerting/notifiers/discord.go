@@ -24,15 +24,27 @@ func init() {
 		Factory:     NewDiscordNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Discord settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Webhook URL</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-10">Message Content</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.content"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Mention a group using @ or a user using <@ID> when notifying in a channel
+        </info-popover>
+      </div>
+      <div class="gf-form  max-width-30">
+        <span class="gf-form-label width-10">Webhook URL</span>
+        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
       </div>
     `,
 	})
 }
 
 func NewDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	content := model.Settings.Get("content").MustString()
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find webhook url property in settings"}
@@ -40,6 +52,7 @@ func NewDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	return &DiscordNotifier{
 		NotifierBase: NewNotifierBase(model),
+		Content:      content,
 		WebhookURL:   url,
 		log:          log.New("alerting.notifier.discord"),
 	}, nil
@@ -47,6 +60,7 @@ func NewDiscordNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 type DiscordNotifier struct {
 	NotifierBase
+	Content    string
 	WebhookURL string
 	log        log.Logger
 }
@@ -62,6 +76,10 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("username", "Grafana")
+
+	if this.Content != "" {
+		bodyJSON.Set("content", this.Content)
+	}
 
 	fields := make([]map[string]interface{}, 0)
 

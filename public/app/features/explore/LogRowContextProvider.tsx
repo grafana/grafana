@@ -1,11 +1,11 @@
-import { LogRowModel } from 'app/core/logs_model';
-import { LogRowContextQueryResponse, SeriesData, DataQueryResponse, DataQueryError } from '@grafana/ui';
+import { DataQueryResponse, DataQueryError, LogRowModel } from '@grafana/ui';
 import { useState, useEffect } from 'react';
+import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
 
 export interface LogRowContextRows {
-  before?: Array<string | DataQueryError>;
-  after?: Array<string | DataQueryError>;
+  before?: string[];
+  after?: string[];
 }
 export interface LogRowContextQueryErrors {
   before?: string;
@@ -19,7 +19,7 @@ export interface HasMoreContextRows {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  getRowContext: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
     errors: LogRowContextQueryErrors;
@@ -34,23 +34,44 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   children,
 }) => {
   const [limit, setLimit] = useState(10);
-  const [result, setResult] = useState<LogRowContextQueryResponse>(null);
-  const [errors, setErrors] = useState<LogRowContextQueryErrors>(null);
+  const [result, setResult] = useState<{
+    data: string[][];
+    errors: string[];
+  }>(null);
   const [hasMoreContextRows, setHasMoreContextRows] = useState({
     before: true,
     after: true,
   });
 
   const { value } = useAsync(async () => {
-    const context = await getRowContext(row, limit);
+    const promises = [
+      getRowContext(row, {
+        limit,
+      }),
+      getRowContext(row, {
+        limit,
+        direction: 'FORWARD',
+      }),
+    ];
+
+    const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map(p => p.catch(e => e)));
+
     return {
-      data: context.data.map(series => {
-        if ((series as SeriesData).rows) {
-          return (series as SeriesData).rows.map(row => row[1]);
+      data: results.map(result => {
+        if ((result as DataQueryResponse).data) {
+          return (result as DataQueryResponse).data.map(series => {
+            return series.rows.map(row => row[1]);
+          });
         } else {
-          return [series];
+          return [];
         }
-        return [];
+      }),
+      errors: results.map(result => {
+        if ((result as DataQueryError).message) {
+          return (result as DataQueryError).message;
+        } else {
+          return null;
+        }
       }),
     };
   }, [limit]);
@@ -60,7 +81,6 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       setResult(currentResult => {
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
-        let beforeContextError, afterContextError;
 
         if (currentResult && currentResult.data[0].length === value.data[0].length) {
           hasMoreLogsBefore = false;
@@ -70,21 +90,9 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
           hasMoreLogsAfter = false;
         }
 
-        if (value.data[0] && value.data[0].length > 0 && value.data[0][0].message) {
-          beforeContextError = value.data[0][0].message;
-        }
-        if (value.data[1] && value.data[1].length > 0 && value.data[1][0].message) {
-          afterContextError = value.data[1][0].message;
-        }
-
         setHasMoreContextRows({
           before: hasMoreLogsBefore,
           after: hasMoreLogsAfter,
-        });
-
-        setErrors({
-          before: beforeContextError,
-          after: afterContextError,
         });
 
         return value;
@@ -94,10 +102,13 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
 
   return children({
     result: {
-      before: result ? result.data[0] : [],
-      after: result ? result.data[1] : [],
+      before: result ? flatten(result.data[0]) : [],
+      after: result ? flatten(result.data[1]) : [],
     },
-    errors,
+    errors: {
+      before: result ? result.errors[0] : null,
+      after: result ? result.errors[1] : null,
+    },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),
   });

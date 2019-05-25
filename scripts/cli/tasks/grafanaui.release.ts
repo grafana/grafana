@@ -1,11 +1,11 @@
 import execa from 'execa';
 import { execTask } from '../utils/execTask';
-import { changeCwdToGrafanaUiDist, changeCwdToGrafanaUi } from '../utils/cwd';
+import { changeCwdToGrafanaUiDist, changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
 import semver from 'semver';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
-import { savePackage, buildTask } from './grafanaui.build';
+import { savePackage, buildTask, clean } from './grafanaui.build';
 import { TaskRunner, Task } from './task';
 
 type VersionBumpType = 'prerelease' | 'patch' | 'minor' | 'major';
@@ -81,12 +81,6 @@ const bumpVersion = (version: string) =>
 const publishPackage = (name: string, version: string) =>
   useSpinner<void>(`Publishing ${name} @ ${version} to npm registry...`, async () => {
     changeCwdToGrafanaUiDist();
-    console.log(chalk.yellowBright.bold(`\nReview dist package.json before proceeding!\n`));
-    const { confirmed } = await promptConfirm('Are you ready to publish to npm?');
-
-    if (!confirmed) {
-      process.exit();
-    }
     await execa('npm', ['publish', '--access', 'public']);
   })();
 
@@ -111,12 +105,17 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
   usePackageJsonVersion,
   createVersionCommit,
 }) => {
-  await runChecksAndTests();
+  changeCwdToGrafanaUi();
+  await clean(); // Clean previous build if exists
+  restoreCwd();
+
   if (publishToNpm) {
     // TODO: Ensure release branch
     // When need to update this when we star keeping @grafana/ui releases in sync with core
     await ensureMasterBranch();
   }
+
+  runChecksAndTests();
 
   await execTask(buildTask)();
 
@@ -169,6 +168,13 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
   }
 
   if (publishToNpm) {
+    console.log(chalk.yellowBright.bold(`\nReview dist package.json before proceeding!\n`));
+    const { confirmed } = await promptConfirm('Are you ready to publish to npm?');
+
+    if (!confirmed) {
+      process.exit();
+    }
+
     await publishPackage(pkg.name, nextVersion);
     console.log(chalk.green(`\nVersion ${nextVersion} of ${pkg.name} succesfully released!`));
     console.log(chalk.yellow(`\nUpdated @grafana/ui/package.json with version bump created.`));

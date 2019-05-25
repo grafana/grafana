@@ -22,6 +22,9 @@ import {
   guessFieldTypes,
   TimeFragment,
   DataQueryError,
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import {
@@ -33,7 +36,7 @@ import {
   QueryOptions,
   ResultGetter,
 } from 'app/types/explore';
-import { LogsDedupStrategy, seriesDataToLogsModel, LogsModel, LogRowModel } from 'app/core/logs_model';
+import { seriesDataToLogsModel } from 'app/core/logs_model';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 

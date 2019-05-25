@@ -51,7 +51,7 @@ Content-Type: application/json
 ]
 ```
 
-## Get a single data sources by Id
+## Get a single data source by Id
 
 `GET /api/datasources/:datasourceId`
 
@@ -149,7 +149,7 @@ Content-Type: application/json
 }
 ```
 
-## Create data source
+## Create a data source
 
 `POST /api/datasources`
 

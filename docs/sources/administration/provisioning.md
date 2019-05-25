@@ -274,7 +274,7 @@ notifiers:
     # or
     org_name: Main Org.
     is_default: true
-    send_reminders: true
+    send_reminder: true
     frequency: 1h
     disable_resolve_message: false
     # See `Supported Settings` section for settings supporter for each

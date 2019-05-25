@@ -41,7 +41,7 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLdap(query)
+	ldapEnabled, ldapErr := loginUsingLDAP(query)
 	if ldapEnabled {
 		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
 			return ldapErr

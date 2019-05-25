@@ -46,10 +46,11 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	blob := NewStorageClient(az.account_name, az.account_key)
 
 	file, err := os.Open(imageDiskPath)
-
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
+
 	randomFileName := util.GetRandomString(30) + ".png"
 	// upload image
 	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)

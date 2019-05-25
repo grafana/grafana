@@ -402,10 +402,10 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 
 	for _, groupSearchBase := range server.Config.GroupSearchBaseDNs {
 		var filterReplace string
-		if server.Config.GroupSearchFilterUserAttribute == "" {
-			filterReplace = getLdapAttr(server.Config.Attr.Username, searchResult)
+		if server.config.GroupSearchFilterUserAttribute == "" {
+			filterReplace = getLDAPAttr(server.config.Attr.Username, searchResult)
 		} else {
-			filterReplace = getLdapAttr(server.Config.GroupSearchFilterUserAttribute, searchResult)
+			filterReplace = getLDAPAttr(server.config.GroupSearchFilterUserAttribute, searchResult)
 		}
 
 		filter := strings.Replace(
@@ -438,7 +438,7 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 
 		if len(groupSearchResult.Entries) > 0 {
 			for i := range groupSearchResult.Entries {
-				memberOf = append(memberOf, getLdapAttrN(groupIDAttribute, groupSearchResult, i))
+				memberOf = append(memberOf, getLDAPAttrN(groupIDAttribute, groupSearchResult, i))
 			}
 			break
 		}
@@ -461,28 +461,28 @@ func (server *Server) serializeUsers(
 		}
 
 		userInfo := &UserInfo{
-			DN: getLdapAttrN(
+			DN: getLDAPAttrN(
 				"dn",
 				users,
 				index,
 			),
-			LastName: getLdapAttrN(
-				server.Config.Attr.Surname,
+			LastName: getLDAPAttrN(
+				server.config.Attr.Surname,
 				users,
 				index,
 			),
-			FirstName: getLdapAttrN(
-				server.Config.Attr.Name,
+			FirstName: getLDAPAttrN(
+				server.config.Attr.Name,
 				users,
 				index,
 			),
-			Username: getLdapAttrN(
-				server.Config.Attr.Username,
+			Username: getLDAPAttrN(
+				server.config.Attr.Username,
 				users,
 				index,
 			),
-			Email: getLdapAttrN(
-				server.Config.Attr.Email,
+			Email: getLDAPAttrN(
+				server.config.Attr.Email,
 				users,
 				index,
 			),
@@ -502,8 +502,8 @@ func (server *Server) serializeUsers(
 func (server *Server) getMemberOf(search *ldap.SearchResult) (
 	[]string, error,
 ) {
-	if server.Config.GroupSearchFilter == "" {
-		memberOf := getLdapAttrArray(server.Config.Attr.MemberOf, search)
+	if server.config.GroupSearchFilter == "" {
+		memberOf := getLDAPAttrArray(server.config.Attr.MemberOf, search)
 
 		return memberOf, nil
 	}
@@ -525,11 +525,11 @@ func appendIfNotEmpty(slice []string, values ...string) []string {
 	return slice
 }
 
-func getLdapAttr(name string, result *ldap.SearchResult) string {
-	return getLdapAttrN(name, result, 0)
+func getLDAPAttr(name string, result *ldap.SearchResult) string {
+	return getLDAPAttrN(name, result, 0)
 }
 
-func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
+func getLDAPAttrN(name string, result *ldap.SearchResult, n int) string {
 	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
@@ -543,11 +543,11 @@ func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
 	return ""
 }
 
-func getLdapAttrArray(name string, result *ldap.SearchResult) []string {
-	return getLdapAttrArrayN(name, result, 0)
+func getLDAPAttrArray(name string, result *ldap.SearchResult) []string {
+	return getLDAPAttrArrayN(name, result, 0)
 }
 
-func getLdapAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
+func getLDAPAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
 	for _, attr := range result.Entries[n].Attributes {
 		if attr.Name == name {
 			return attr.Values
