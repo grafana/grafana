@@ -450,7 +450,7 @@ describe('AzureMonitorDatasource', () => {
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01'
+              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
           return ctx.$q.when(response);
         };
@@ -459,7 +459,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return a list of metric names', () => {
         return ctx.ds
           .metricFindQuery(
-            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn)'
+            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
           )
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(2);
