@@ -1,6 +1,6 @@
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive devenv devenv-down
 
 GO := GO111MODULE=on go
 GO_FILES := ./pkg/...
@@ -83,6 +83,19 @@ revive: scripts/go/bin/revive
 		-formatter stylish \
 		-config ./scripts/go/configs/revive.toml \
 		$(GO_FILES)
+
+# create docker-compose file with provided sources and start them
+# example: make devenv sources=postgres,openldap
+devenv: devenv-down
+	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
+
+	@cd devenv; \
+	./create_docker_compose.sh $(targets); \
+	docker-compose up -d
+
+# drop down the envs
+devenv-down:
+	@cd devenv; docker-compose down;
 
 # TODO recheck the rules and leave only necessary exclusions
 gosec: scripts/go/bin/gosec
