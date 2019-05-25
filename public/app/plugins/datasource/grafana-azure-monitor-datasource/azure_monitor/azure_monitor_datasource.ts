@@ -17,6 +17,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class AzureMonitorDatasource {
   apiVersion = '2018-01-01';
+  apiPreviewVersion = '2017-12-01-preview';
   id: number;
   subscriptionId: string;
   baseUrl: string;
@@ -56,6 +57,8 @@ export default class AzureMonitorDatasource {
         item.azureMonitor.resourceName !== this.defaultDropdownValue &&
         item.azureMonitor.metricDefinition &&
         item.azureMonitor.metricDefinition !== this.defaultDropdownValue &&
+        item.azureMonitor.metricNamespace &&
+        item.azureMonitor.metricNamespace !== this.defaultDropdownValue &&
         item.azureMonitor.metricName &&
         item.azureMonitor.metricName !== this.defaultDropdownValue
       );
@@ -70,6 +73,7 @@ export default class AzureMonitorDatasource {
       const subscriptionId = this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars);
       const resourceGroup = this.templateSrv.replace(item.resourceGroup, options.scopedVars);
       const resourceName = this.templateSrv.replace(item.resourceName, options.scopedVars);
+      const metricNamespace = this.templateSrv.replace(item.metricNamespace, options.scopedVars);
       const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
       const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
       const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
@@ -89,6 +93,7 @@ export default class AzureMonitorDatasource {
           timeGrain: timeGrain,
           allowedTimeGrainsMs: item.allowedTimeGrainsMs,
           metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
+          metricNamespace: metricNamespace,
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
           dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
@@ -182,25 +187,36 @@ export default class AzureMonitorDatasource {
       return this.getResourceNames(subscription, resourceGroup, metricDefinition);
     }
 
-    const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+    const metricNamespaceQuery = query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+    if (metricNamespaceQuery) {
+      const resourceGroup = this.toVariable(metricNamespaceQuery[1]);
+      const metricDefinition = this.toVariable(metricNamespaceQuery[2]);
+      const resourceName = this.toVariable(metricNamespaceQuery[3]);
+      return this.getMetricNamespaces(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+    }
 
+    const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
     if (metricNamesQuery) {
       if (metricNamesQuery[3].indexOf(',') === -1) {
         const resourceGroup = this.toVariable(metricNamesQuery[1]);
         const metricDefinition = this.toVariable(metricNamesQuery[2]);
         const resourceName = this.toVariable(metricNamesQuery[3]);
-        return this.getMetricNames(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+        const metricNamespace = this.toVariable(metricNamesQuery[4]);
+        return this.getMetricNames(this.subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace);
       }
     }
 
-    const metricNamesQueryWithSub = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+    const metricNamesQueryWithSub = query.match(
+      /^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?(.+?)\)/i
+    );
 
     if (metricNamesQueryWithSub) {
       const subscription = this.toVariable(metricNamesQueryWithSub[1]);
       const resourceGroup = this.toVariable(metricNamesQueryWithSub[2]);
       const metricDefinition = this.toVariable(metricNamesQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamesQueryWithSub[4]);
-      return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName);
+      const metricNamespace = this.toVariable(metricNamesQuery[5]);
+      return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
     }
 
     return undefined;
@@ -295,13 +311,35 @@ export default class AzureMonitorDatasource {
     });
   }
 
-  getMetricNames(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+    const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+      this.baseUrl,
+      subscriptionId,
+      resourceGroup,
+      metricDefinition,
+      resourceName,
+      this.apiPreviewVersion
+    );
+
+    return this.doRequest(url).then(result => {
+      return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
+    });
+  }
+
+  getMetricNames(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricDefinition: string,
+    resourceName: string,
+    metricNamespace: string
+  ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.baseUrl,
       subscriptionId,
       resourceGroup,
       metricDefinition,
       resourceName,
+      metricNamespace,
       this.apiVersion
     );
 
@@ -315,6 +353,7 @@ export default class AzureMonitorDatasource {
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
+    metricNamespace: string,
     metricName: string
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
@@ -323,6 +362,7 @@ export default class AzureMonitorDatasource {
       resourceGroup,
       metricDefinition,
       resourceName,
+      metricNamespace,
       this.apiVersion
     );
 

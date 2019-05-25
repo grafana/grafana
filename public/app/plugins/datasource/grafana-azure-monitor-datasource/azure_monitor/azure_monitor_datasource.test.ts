@@ -92,6 +92,7 @@ describe('AzureMonitorDatasource', () => {
             resourceGroup: 'testRG',
             resourceName: 'testRN',
             metricDefinition: 'Microsoft.Compute/virtualMachines',
+            metricNamespace: 'default',
             metricName: 'Percentage CPU',
             timeGrain: 'PT1H',
             alias: '{{metric}}',
@@ -400,7 +401,7 @@ describe('AzureMonitorDatasource', () => {
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01'
+              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
           return ctx.$q.when(response);
         };
@@ -408,7 +409,7 @@ describe('AzureMonitorDatasource', () => {
 
       it('should return a list of metric names', () => {
         return ctx.ds
-          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn)')
+          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn, default)')
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(2);
             expect(results[0].text).toEqual('Percentage CPU');
@@ -733,7 +734,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -741,7 +742,13 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return list of Metric Definitions', () => {
       return ctx.ds
-        .getMetricNames('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodeapp', 'microsoft.insights/components', 'resource1')
+        .getMetricNames(
+          '9935389e-9122-4ef9-95f9-1513dd24753f',
+          'nodeapp',
+          'microsoft.insights/components',
+          'resource1',
+          'default'
+        )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
           expect(results[0].text).toEqual('Used capacity');
@@ -799,7 +806,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -812,6 +819,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'UsedCapacity'
         )
         .then((results: any) => {
@@ -872,7 +880,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -885,6 +893,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'Transactions'
         )
         .then((results: any) => {
@@ -903,6 +912,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'FreeCapacity'
         )
         .then((results: any) => {
