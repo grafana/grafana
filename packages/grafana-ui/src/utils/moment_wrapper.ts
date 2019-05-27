@@ -43,10 +43,14 @@ export interface DateTimeLocale {
 
 export interface DateTimeDuration {
   asHours: () => number;
+  hours: () => number;
+  minutes: () => number;
+  seconds: () => number;
 }
 
 export interface DateTime extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
+  diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
   endOf: (unitOfTime: DurationUnit) => DateTime;
   format: (formatInput?: FormatInput) => string;
   fromNow: (withoutSuffix?: boolean) => string;

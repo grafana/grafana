@@ -8,14 +8,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
+	// ErrFrequencyCannotBeZeroOrLess frequency cannot be below zero
 	ErrFrequencyCannotBeZeroOrLess = errors.New(`"evaluate every" cannot be zero or below`)
-	ErrFrequencyCouldNotBeParsed   = errors.New(`"evaluate every" field could not be parsed`)
+
+	// ErrFrequencyCouldNotBeParsed frequency cannot be parsed
+	ErrFrequencyCouldNotBeParsed = errors.New(`"evaluate every" field could not be parsed`)
 )
 
+// Rule is the in-memory version of an alert rule.
 type Rule struct {
 	Id                  int64
 	OrgId               int64
@@ -26,15 +30,17 @@ type Rule struct {
 	Message             string
 	LastStateChange     time.Time
 	For                 time.Duration
-	NoDataState         m.NoDataOption
-	ExecutionErrorState m.ExecutionErrorOption
-	State               m.AlertStateType
+	NoDataState         models.NoDataOption
+	ExecutionErrorState models.ExecutionErrorOption
+	State               models.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
 
 	StateChanges int64
 }
 
+// ValidationError is a typed error with meta data
+// about the validation error.
 type ValidationError struct {
 	Reason      string
 	Err         error
@@ -65,8 +71,8 @@ func (e ValidationError) Error() string {
 }
 
 var (
-	ValueFormatRegex = regexp.MustCompile(`^\d+`)
-	UnitFormatRegex  = regexp.MustCompile(`\w{1}$`)
+	valueFormatRegex = regexp.MustCompile(`^\d+`)
+	unitFormatRegex  = regexp.MustCompile(`\w{1}$`)
 )
 
 var unitMultiplier = map[string]int{
@@ -79,7 +85,7 @@ var unitMultiplier = map[string]int{
 func getTimeDurationStringToSeconds(str string) (int64, error) {
 	multiplier := 1
 
-	matches := ValueFormatRegex.FindAllString(str, 1)
+	matches := valueFormatRegex.FindAllString(str, 1)
 
 	if len(matches) <= 0 {
 		return 0, ErrFrequencyCouldNotBeParsed
@@ -94,7 +100,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 		return 0, ErrFrequencyCannotBeZeroOrLess
 	}
 
-	unit := UnitFormatRegex.FindAllString(str, 1)[0]
+	unit := unitFormatRegex.FindAllString(str, 1)[0]
 
 	if val, ok := unitMultiplier[unit]; ok {
 		multiplier = val
@@ -103,7 +109,9 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	return int64(value * multiplier), nil
 }
 
-func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
+// NewRuleFromDBAlert mappes an db version of
+// alert to an in-memory version.
+func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model := &Rule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
@@ -114,8 +122,8 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
 	model.For = ruleDef.For
-	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
-	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
+	model.NoDataState = models.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = models.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
 
 	model.Frequency = ruleDef.Frequency
@@ -159,10 +167,12 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	return model, nil
 }
 
+// ConditionFactory is the function signature for creating `Conditions`.
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
 var conditionFactories = make(map[string]ConditionFactory)
 
+// RegisterCondition adds support for alerting conditions.
 func RegisterCondition(typeName string, factory ConditionFactory) {
 	conditionFactories[typeName] = factory
 }

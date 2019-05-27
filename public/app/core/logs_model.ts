@@ -13,6 +13,13 @@ import {
   toLegacyResponseData,
   FieldCache,
   FieldType,
+  LogRowModel,
+  LogsModel,
+  LogsMetaItem,
+  LogsMetaKind,
+  LogsParser,
+  LogLabelStatsModel,
+  LogsDedupStrategy,
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -28,102 +35,19 @@ export const LogLevelColor = {
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
-export interface LogSearchMatch {
-  start: number;
-  length: number;
-  text: string;
-}
-
-export interface LogRowModel {
-  duplicates?: number;
-  entry: string;
-  hasAnsi: boolean;
-  labels: Labels;
-  logLevel: LogLevel;
-  raw: string;
-  searchWords?: string[];
-  timestamp: string; // ISO with nanosec precision
-  timeFromNow: string;
-  timeEpochMs: number;
-  timeLocal: string;
-  uniqueLabels?: Labels;
-}
-
-export interface LogLabelStatsModel {
-  active?: boolean;
-  count: number;
-  proportion: number;
-  value: string;
-}
-
-export enum LogsMetaKind {
-  Number,
-  String,
-  LabelsMap,
-}
-
-export interface LogsMetaItem {
-  label: string;
-  value: string | number | Labels;
-  kind: LogsMetaKind;
-}
-
-export interface LogsModel {
-  hasUniqueLabels: boolean;
-  meta?: LogsMetaItem[];
-  rows: LogRowModel[];
-  series?: TimeSeries[];
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
-
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
-}
-
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line unless it returns undefined.
-   */
-  test: (line: string) => any;
-}
-
 const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
 
 export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       try {
         const parsed = JSON.parse(line);
         _.map(parsed, (value, key) => {
@@ -149,7 +73,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   logfmt: {
     buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
     getFields: line => {
-      const fields = [];
+      const fields: string[] = [];
       line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
         fields.push(substring.trim());
         return '';
@@ -273,9 +197,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   // intervalMs = intervalMs * 10;
 
   // Graph time series by log level
-  const seriesByLevel = {};
+  const seriesByLevel: any = {};
   const bucketSize = intervalMs * 10;
-  const seriesList = [];
+  const seriesList: any[] = [];
 
   for (const row of rows) {
     let series = seriesByLevel[row.logLevel];
@@ -312,7 +236,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   }
 
   return seriesList.map(series => {
-    series.datapoints.sort((a, b) => {
+    series.datapoints.sort((a: number[], b: number[]) => {
       return a[1] - b[1];
     });
 
@@ -356,7 +280,12 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
     return logsModel;
   }
 
-  return undefined;
+  return {
+    hasUniqueLabels: false,
+    rows: [],
+    meta: [],
+    series: [],
+  };
 }
 
 export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
@@ -441,7 +370,7 @@ export function processLogSeriesRow(
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
   const logLevel = getLogLevel(message);
   const hasAnsi = hasAnsiCodes(message);
-  const search = series.meta && series.meta.search ? series.meta.search : '';
+  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
   return {
     logLevel,
@@ -450,10 +379,10 @@ export function processLogSeriesRow(
     timeLocal,
     uniqueLabels,
     hasAnsi,
+    searchWords,
     entry: hasAnsi ? ansicolor.strip(message) : message,
     raw: message,
     labels: series.labels,
-    searchWords: search ? [search] : [],
     timestamp: ts,
   };
 }

@@ -3,10 +3,11 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -86,11 +87,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			defaultDatasource = ds.Name
 		}
 
-		if ds.JsonData != nil {
-			dsMap["jsonData"] = ds.JsonData
-		} else {
-			dsMap["jsonData"] = make(map[string]string)
+		jsonData := ds.JsonData
+		if jsonData == nil {
+			jsonData = simplejson.New()
 		}
+
+		dsMap["jsonData"] = jsonData
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
@@ -123,7 +125,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			dsMap["directUrl"] = ds.Url
+			jsonData.Set("directUrl", ds.Url)
 		}
 
 		datasources[ds.Name] = dsMap
@@ -174,7 +176,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                setting.LdapEnabled,
+		"ldapEnabled":                setting.LDAPEnabled,
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,

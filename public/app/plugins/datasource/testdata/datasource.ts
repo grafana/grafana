@@ -17,13 +17,12 @@ export interface TestDataRegistry {
   [key: string]: TestData[];
 }
 
-export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
-  id: number;
+export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
   streams = new StreamHandler();
 
   /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings) {
-    this.id = instanceSettings.id;
+    super(instanceSettings);
   }
 
   query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
@@ -33,10 +32,11 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
         scenarioId: item.scenarioId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
+        datasourceId: this.id,
         stringInput: item.stringInput,
         points: item.points,
         alias: item.alias,
-        datasourceId: this.id,
+        ...item,
       };
     });
 

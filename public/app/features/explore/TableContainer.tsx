@@ -27,13 +27,9 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   render() {
     const { loading, onClickCell, showingTable, tableResult } = this.props;
 
-    if (!tableResult) {
-      return null;
-    }
-
     return (
-      <Panel label="Table" loading={loading} isOpen={showingTable} onToggle={this.onClickTableButton}>
-        <Table data={tableResult} loading={loading} onClickCell={onClickCell} />
+      <Panel label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
+        {tableResult && <Table data={tableResult} loading={loading} onClickCell={onClickCell} />}
       </Panel>
     );
   }
@@ -42,8 +38,8 @@ export class TableContainer extends PureComponent<TableContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { queryTransactions, showingTable, tableResult } = item;
-  const loading = queryTransactions.some(qt => qt.resultType === 'Table' && !qt.done);
+  const { tableIsLoading, showingTable, tableResult } = item;
+  const loading = tableIsLoading;
   return { loading, showingTable, tableResult };
 }
 

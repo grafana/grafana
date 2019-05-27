@@ -61,12 +61,14 @@ export class DatasourceSrv {
           return;
         }
 
-        const instance: DataSourceApi = this.$injector.instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings: dsConfig,
-        });
+        // If there is only one constructor argument it is instanceSettings
+        const useAngular = dsPlugin.DataSourceClass.length !== 1;
+        const instance: DataSourceApi = useAngular
+          ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
+              instanceSettings: dsConfig,
+            })
+          : new dsPlugin.DataSourceClass(dsConfig);
 
-        instance.id = dsConfig.id;
-        instance.name = name;
         instance.components = dsPlugin.components;
         instance.meta = dsConfig.meta;
 

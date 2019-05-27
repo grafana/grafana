@@ -1,8 +1,10 @@
 import { PureComponent } from 'react';
-import { interval, Subscription, empty, Subject } from 'rxjs';
+import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
+import _ from 'lodash';
 
 import { stringToMs } from '../../utils/string';
+import { isLive } from '../RefreshPicker/RefreshPicker';
 
 interface Props {
   func: () => any; // TODO
@@ -24,7 +26,10 @@ export class SetInterval extends PureComponent<Props> {
     this.subscription = this.propsSubject
       .pipe(
         switchMap(props => {
-          return props.loading ? empty() : interval(stringToMs(props.interval));
+          if (isLive(props.interval)) {
+            return of({});
+          }
+          return props.loading ? NEVER : interval(stringToMs(props.interval));
         }),
         tap(() => this.props.func())
       )
@@ -32,7 +37,11 @@ export class SetInterval extends PureComponent<Props> {
     this.propsSubject.next(this.props);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
+    if (_.isEqual(prevProps, this.props)) {
+      return;
+    }
+
     this.propsSubject.next(this.props);
   }
 

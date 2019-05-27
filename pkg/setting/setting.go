@@ -20,7 +20,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -138,7 +138,7 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
-	AuthProxyLdapSyncTtl    int
+	AuthProxyLDAPSyncTtl    int
 	AuthProxyWhitelist      string
 	AuthProxyHeaders        map[string]string
 
@@ -165,11 +165,11 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled           bool
-	LdapConfigFile        string
-	LdapSyncCron          string
-	LdapAllowSignup       bool
-	LdapActiveSyncEnabled bool
+	LDAPEnabled           bool
+	LDAPConfigFile        string
+	LDAPSyncCron          string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -805,6 +805,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+
 	AuthProxyHeaderName, err = valueAsString(authProxy, "header_name", "")
 	if err != nil {
 		return err
@@ -814,7 +815,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
 		return err
@@ -977,11 +978,11 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LdapConfigFile = ldapSec.Key("config_file").String()
-	LdapSyncCron = ldapSec.Key("sync_cron").String()
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	LDAPConfigFile = ldapSec.Key("config_file").String()
+	LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) readSessionConfig() {

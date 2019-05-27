@@ -152,11 +152,11 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
           <i className="fa fa-remove" />
         </button>
         <div className="progress-tracker">
-          {this.steps.map(step => {
+          {this.steps.map((step, index) => {
             return (
-              <div className={step.done ? 'progress-step completed' : 'progress-step active'}>
+              <div key={index} className={step.done ? 'progress-step completed' : 'progress-step active'}>
                 <a className="progress-link" href={step.href} target={step.target} title={step.note}>
-                  <span className="progress-marker" ng-className="step.cssClass">
+                  <span className="progress-marker">
                     <i className={step.icon} />
                   </span>
                   <span className="progress-text">{step.title}</span>

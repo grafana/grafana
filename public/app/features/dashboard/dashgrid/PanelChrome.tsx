@@ -234,7 +234,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     // image rendering (phantomjs/headless chrome) to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
-      profiler.renderingCompleted(panel.id);
+      profiler.renderingCompleted();
     }
 
     // do not render component until we have first data
@@ -253,7 +253,8 @@ export class PanelChrome extends PureComponent<Props, State> {
             id={panel.id}
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
-            options={panel.getOptions(plugin.defaults)}
+            options={panel.getOptions()}
+            transparent={panel.transparent}
             width={width - theme.panelPadding * 2}
             height={innerPanelHeight}
             renderCounter={renderCounter}

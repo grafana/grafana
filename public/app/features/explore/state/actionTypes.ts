@@ -8,6 +8,7 @@ import {
   QueryFixAction,
   LogLevel,
   TimeRange,
+  DataQueryError,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -17,6 +18,7 @@ import {
   ResultType,
   QueryTransaction,
   ExploreUIState,
+  ExploreMode,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
@@ -46,6 +48,11 @@ export interface AddQueryRowPayload {
   exploreId: ExploreId;
   index: number;
   query: DataQuery;
+}
+
+export interface ChangeModePayload {
+  exploreId: ExploreId;
+  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -132,22 +139,29 @@ export interface ModifyQueriesPayload {
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 
-export interface QueryTransactionFailurePayload {
+export interface QueryFailurePayload {
   exploreId: ExploreId;
-  queryTransactions: QueryTransaction[];
+  response: DataQueryError;
+  resultType: ResultType;
 }
 
-export interface QueryTransactionStartPayload {
+export interface QueryStartPayload {
   exploreId: ExploreId;
   resultType: ResultType;
   rowIndex: number;
   transaction: QueryTransaction;
 }
 
-export interface QueryTransactionSuccessPayload {
+export interface QuerySuccessPayload {
+  exploreId: ExploreId;
+  result: any;
+  resultType: ResultType;
+  latency: number;
+}
+
+export interface HistoryUpdatedPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
-  queryTransactions: QueryTransaction[];
 }
 
 export interface RemoveQueryRowPayload {
@@ -190,10 +204,6 @@ export interface ToggleGraphPayload {
   exploreId: ExploreId;
 }
 
-export interface ToggleLogsPayload {
-  exploreId: ExploreId;
-}
-
 export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
   exploreId: ExploreId;
 }
@@ -222,6 +232,11 @@ export interface RunQueriesPayload {
   exploreId: ExploreId;
 }
 
+export interface ResetQueryErrorPayload {
+  exploreId: ExploreId;
+  refIds: string[];
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -231,6 +246,11 @@ export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explo
  * Loads a new datasource identified by the given name.
  */
 export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
+
+/**
+ * Change the mode of Explore.
+ */
+export const changeModeAction = actionCreatorFactory<ChangeModePayload>('explore/CHANGE_MODE').create();
 
 /**
  * Query change handler for the query row with the given index.
@@ -310,9 +330,7 @@ export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('e
  * Mark a query transaction as failed with an error extracted from the query response.
  * The transaction will be marked as `done`.
  */
-export const queryTransactionFailureAction = actionCreatorFactory<QueryTransactionFailurePayload>(
-  'explore/QUERY_TRANSACTION_FAILURE'
-).create();
+export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
 
 /**
  * Start a query transaction for the given result type.
@@ -321,9 +339,7 @@ export const queryTransactionFailureAction = actionCreatorFactory<QueryTransacti
  * @param resultType Associate the transaction with a result viewer, e.g., Graph
  * @param rowIndex Index is used to associate latency for this transaction with a query row
  */
-export const queryTransactionStartAction = actionCreatorFactory<QueryTransactionStartPayload>(
-  'explore/QUERY_TRANSACTION_START'
-).create();
+export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
 /**
  * Complete a query transaction, mark the transaction as `done` and store query state in URL.
@@ -336,9 +352,7 @@ export const queryTransactionStartAction = actionCreatorFactory<QueryTransaction
  * @param queries Queries from all query rows
  * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
  */
-export const queryTransactionSuccessAction = actionCreatorFactory<QueryTransactionSuccessPayload>(
-  'explore/QUERY_TRANSACTION_SUCCESS'
-).create();
+export const querySuccessAction = actionCreatorFactory<QuerySuccessPayload>('explore/QUERY_SUCCESS').create();
 
 /**
  * Remove query row of the given index, as well as associated query results.
@@ -395,11 +409,6 @@ export const toggleTableAction = actionCreatorFactory<ToggleTablePayload>('explo
 export const toggleGraphAction = actionCreatorFactory<ToggleGraphPayload>('explore/TOGGLE_GRAPH').create();
 
 /**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogsAction = actionCreatorFactory<ToggleLogsPayload>('explore/TOGGLE_LOGS').create();
-
-/**
  * Updates datasource instance before datasouce loading has started
  */
 export const updateDatasourceInstanceAction = actionCreatorFactory<UpdateDatasourceInstancePayload>(
@@ -425,6 +434,10 @@ export const testDataSourceFailureAction = actionCreatorFactory<TestDatasourceFa
 export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSourcesPayload>(
   'explore/LOAD_EXPLORE_DATASOURCES'
 ).create();
+
+export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
+
+export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
