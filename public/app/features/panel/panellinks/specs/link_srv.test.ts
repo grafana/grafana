@@ -1,5 +1,8 @@
 import { LinkSrv } from '../link_srv';
 import _ from 'lodash';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+// import { ContextSrvStub } from 'test/specs/helpers';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -7,41 +10,84 @@ jest.mock('angular', () => {
 });
 
 describe('linkSrv', () => {
-  let linkSrv;
-  const templateSrvMock = {};
-  const timeSrvMock = {};
+  let linkSrv: LinkSrv;
 
+  function initLinkSrv() {
+    const rootScope = {
+      $on: jest.fn(),
+      onAppEvent: jest.fn(),
+      appEvent: jest.fn(),
+    };
+
+    const timer = {
+      register: jest.fn(),
+      cancel: jest.fn(),
+      cancelAll: jest.fn(),
+    };
+
+    const location = {
+      search: jest.fn(() => ({})),
+    };
+
+    const _dashboard: any = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+    };
+
+    const timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, {} as any);
+    timeSrv.init(_dashboard);
+    timeSrv.setTime({ from: 'now-1', to: 'now' });
+    _dashboard.refresh = false;
+
+    const _templateSrv = new TemplateSrv();
+    _templateSrv.init([
+      {
+        type: 'query',
+        name: 'test1',
+        current: { value: 'val1' },
+        getValueForUrl: function() {
+          return this.current.value;
+        },
+      },
+      {
+        type: 'query',
+        name: 'test2',
+        current: { value: 'val2' },
+        getValueForUrl: function() {
+          return this.current.value;
+        },
+      },
+    ]);
+
+    linkSrv = new LinkSrv(_templateSrv, timeSrv);
+  }
   beforeEach(() => {
-    linkSrv = new LinkSrv(templateSrvMock, timeSrvMock);
+    initLinkSrv();
   });
 
-  describe('when appending query strings', () => {
-    it('add ? to URL if not present', () => {
-      const url = linkSrv.appendToQueryString('http://example.com', 'foo=bar');
-      expect(url).toBe('http://example.com?foo=bar');
+  describe('built in variables', () => {
+    it('should add time range to url if $__urlTimeRange variable present', () => {
+      expect(
+        linkSrv.getPanelLinkAnchorInfo(
+          {
+            title: 'Any title',
+            url: '/d/1?$__urlTimeRange',
+          },
+          {}
+        ).href
+      ).toEqual('/d/1?from=now-1&to=now');
     });
 
-    it('do not add & to URL if ? is present but query string is empty', () => {
-      const url = linkSrv.appendToQueryString('http://example.com?', 'foo=bar');
-      expect(url).toBe('http://example.com?foo=bar');
-    });
-
-    it('add & to URL if query string is present', () => {
-      const url = linkSrv.appendToQueryString('http://example.com?foo=bar', 'hello=world');
-      expect(url).toBe('http://example.com?foo=bar&hello=world');
-    });
-
-    it('do not change the URL if there is nothing to append', () => {
-      _.each(['', undefined, null], toAppend => {
-        const url1 = linkSrv.appendToQueryString('http://example.com', toAppend);
-        expect(url1).toBe('http://example.com');
-
-        const url2 = linkSrv.appendToQueryString('http://example.com?', toAppend);
-        expect(url2).toBe('http://example.com?');
-
-        const url3 = linkSrv.appendToQueryString('http://example.com?foo=bar', toAppend);
-        expect(url3).toBe('http://example.com?foo=bar');
-      });
+    it('should add all variables to url if $__allVariables variable present', () => {
+      expect(
+        linkSrv.getPanelLinkAnchorInfo(
+          {
+            title: 'Any title',
+            url: '/d/1?$__allVariables',
+          },
+          {}
+        ).href
+      ).toEqual('/d/1?var-test1=val1&var-test2=val2');
     });
   });
 });

@@ -1,8 +1,12 @@
 import angular from 'angular';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { PanelDrillDownLink, KeyValue } from '@grafana/ui';
 
+const DrilldownLinkBuiltInVars = {
+  keepTime: '__urlTimeRange',
+  includeVars: '__allVariables',
+};
 export class LinkSrv {
   /** @ngInject */
   constructor(private templateSrv, private timeSrv) {}
@@ -31,42 +35,30 @@ export class LinkSrv {
     return info;
   }
 
-  getPanelLinkAnchorInfo(link, scopedVars) {
+  getPanelLinkAnchorInfo(link: PanelDrillDownLink, scopedVars) {
     const info: any = {};
+    const params: KeyValue = {};
     info.target = link.targetBlank ? '_blank' : '';
-    if (link.type === 'absolute') {
-      info.target = link.targetBlank ? '_blank' : '_self';
-      info.href = this.templateSrv.replace(link.url || '', scopedVars);
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.url) {
-      info.href = link.url;
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.dashUri) {
-      info.href = 'dashboard/' + link.dashUri + '?';
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else {
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      const slug = kbn.slugifyForUrl(link.dashboard || '');
-      info.href = 'dashboard/db/' + slug + '?';
-    }
 
-    const params = {};
+    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
-      params['from'] = range.from;
-      params['to'] = range.to;
-    }
+    info.href = link.url;
+    info.title = this.templateSrv.replace(link.title || '', scopedVars);
+    info.target = link.targetBlank ? '_blank' : '_self';
+    this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
+    const variablesQuery = toUrlParams(params);
 
-    if (link.includeVars) {
-      this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
-    }
-
-    info.href = appendQueryToUrl(info.href, toUrlParams(params));
-
-    if (link.params) {
-      info.href = appendQueryToUrl(info.href, this.templateSrv.replace(link.params, scopedVars));
-    }
+    info.href = this.templateSrv.replace(link.url, {
+      ...scopedVars,
+      [DrilldownLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DrilldownLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    });
 
     return info;
   }
