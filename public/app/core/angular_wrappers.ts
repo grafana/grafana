@@ -8,10 +8,9 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, ContextMenu } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
-import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -73,7 +72,7 @@ export function registerAngularDirectives() {
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('graphContextMenu', GraphContextMenu, [
+  react2AngularDirective('contextMenu', ContextMenu, [
     'x',
     'y',
     'items',

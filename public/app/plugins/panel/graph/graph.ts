@@ -24,10 +24,9 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl, GraphContextMenuCtrl } from './module';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
-import { ContextMenuItem } from './GraphContextMenu';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
