@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import setting from 'setting';
 import kbn from 'app/core/utils/kbn';
 import { Variable, assignModelProperties, variableTypes } from './variable';
 
@@ -24,7 +25,7 @@ export class IntervalVariable implements Variable {
     query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
     auto: false,
     auto_min: '10s',
-    auto_count: 30,
+    auto_count: setting.DashboardAutoCount,
     skipUrlSync: false,
   };
 

@@ -709,6 +709,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	DashboardAutoCount = dashboards.Key("auto_count").MustInt(30)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
