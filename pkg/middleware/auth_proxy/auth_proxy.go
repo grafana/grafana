@@ -298,23 +298,24 @@ func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember() *Error {
+func (auth *AuthProxy) Remember(id int64) *Error {
+	key := auth.getKey()
 
-	// Make sure we do not rewrite the expiration time
-	if auth.InCache() {
+	// Check if user already in cache
+	userID, err := auth.store.Get(key)
+	if err != nil && err != remotecache.ErrCacheItemNotFound {
+		return newError("failed to lookup user in cache", err)
+	}
+
+	if userID != nil {
 		return nil
 	}
 
-	var (
-		key        = auth.getKey()
-		value, _   = auth.GetUserIDViaCache()
-		expiration = time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(-auth.cacheTTL) * time.Minute
 
-		err = auth.store.Set(key, value, expiration)
-	)
-
+	err = auth.store.Set(key, id, expiration)
 	if err != nil {
-		return newError(err.Error(), nil)
+		return newError("failed to store user in cache", err)
 	}
 
 	return nil
