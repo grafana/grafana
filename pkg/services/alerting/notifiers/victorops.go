@@ -92,7 +92,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageType = alertStateRecovery
 	}
 
-	fields := make(map[string]interface{}, 0)
+	fields := make(map[string]interface{})
 	fieldLimitCount := 4
 	for index, evt := range evalContext.EvalMatches {
 		fields[evt.Metric] = evt.Value

@@ -1,15 +1,12 @@
+import { SeriesData, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/ui';
 import {
+  dedupLogRows,
   calculateFieldStats,
   calculateLogsLabelStats,
-  dedupLogRows,
   getParser,
-  LogsDedupStrategy,
-  LogsModel,
   LogsParsers,
   seriesDataToLogsModel,
-  LogsMetaKind,
 } from '../logs_model';
-import { SeriesData, FieldType, LogLevel } from '@grafana/ui';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {

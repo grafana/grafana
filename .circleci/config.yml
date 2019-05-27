@@ -73,7 +73,7 @@ jobs:
   end-to-end-test:
       docker:
         - image: circleci/node:8-browsers
-        - image: grafana/grafana:master
+        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
@@ -588,6 +588,7 @@ jobs:
           root: .
           paths:
             - dist/grafana-*.msi
+            - dist/grafana-*.msi.sha256
 
   store-build-artifacts:
     docker:
@@ -628,7 +629,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-          filters: *filter-only-master
+          filters: *filter-only-master 
       - grafana-docker-master:
           requires:
             - build-all
@@ -661,7 +662,6 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
-
   release:
     jobs:
       - build-all:
@@ -722,7 +722,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
-          filters: *filter-only-master
+          filters: *filter-only-release
 
   build-branches-and-prs:
       jobs:
