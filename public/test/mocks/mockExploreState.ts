@@ -10,7 +10,7 @@ export const mockExploreState = (options: any = {}) => {
   const eventBridge = {
     emit: jest.fn(),
   };
-  const sockets = options.sockets || undefined;
+  const streaming = options.streaming || undefined;
   const datasourceInterval = options.datasourceInterval || '';
   const refreshInterval = options.refreshInterval || '';
   const containerWidth = options.containerWidth || 1980;
@@ -27,7 +27,7 @@ export const mockExploreState = (options: any = {}) => {
     testDatasource: jest.fn(),
     meta: {
       id: datasourceId,
-      sockets,
+      streaming,
     },
     interval: datasourceInterval,
   };

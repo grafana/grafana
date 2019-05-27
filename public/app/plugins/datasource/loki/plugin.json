@@ -10,7 +10,7 @@
   "logs": true,
   "explore": true,
   "tables": false,
-  "sockets": true,
+  "streaming": true,
 
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",

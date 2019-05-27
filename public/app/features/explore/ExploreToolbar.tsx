@@ -272,7 +272,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
   const loading = graphIsLoading || logIsLoading || tableIsLoading;
-  const hasLiveOption = datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.sockets ? true : false;
+  const hasLiveOption =
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
   const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
   let selectedModeOption = null;
