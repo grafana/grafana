@@ -104,7 +104,7 @@ endif
 devenv-down:
 	@cd devenv; \
 	docker-compose down; \
-	rm -f devenv/docker-compose.yaml
+	rm -f docker-compose.yaml
 
 # TODO recheck the rules and leave only necessary exclusions
 gosec: scripts/go/bin/gosec
