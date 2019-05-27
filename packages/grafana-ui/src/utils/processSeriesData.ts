@@ -7,7 +7,7 @@ import isBoolean from 'lodash/isBoolean';
 import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 
-export function convertTableToSeriesData(table: TableData): SeriesData {
+function convertTableToSeriesData(table: TableData): SeriesData {
   return {
     // rename the 'text' to 'name' field
     fields: table.columns.map(c => {
@@ -23,7 +23,7 @@ export function convertTableToSeriesData(table: TableData): SeriesData {
   };
 }
 
-export function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
+function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
   return {
     name: timeSeries.target,
     fields: [

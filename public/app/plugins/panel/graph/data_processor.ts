@@ -1,7 +1,6 @@
 import _ from 'lodash';
-import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, SeriesData } from '@grafana/ui';
+import { TimeRange, SeriesData } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
-import config from 'app/core/config';
 
 type Options = {
   dataList: SeriesData[];
@@ -12,48 +11,8 @@ export class DataProcessor {
   constructor(private panel) {}
 
   getSeriesList(options: Options): TimeSeries[] {
-    const list: TimeSeries[] = [];
     const { dataList, range } = options;
-
-    if (!dataList || !dataList.length) {
-      return list;
-    }
-
-    for (const series of dataList) {
-      const { fields } = series;
-      const cache = new FieldCache(fields);
-      const time = cache.getFirstFieldOfType(FieldType.time);
-
-      if (!time) {
-        continue;
-      }
-
-      const seriesName = series.name ? series.name : series.refId;
-
-      for (let i = 0; i < fields.length; i++) {
-        if (fields[i].type !== FieldType.number) {
-          continue;
-        }
-
-        const field = fields[i];
-        let name = field.title;
-
-        if (!field.title) {
-          name = field.name;
-        }
-
-        if (seriesName && dataList.length > 0 && name !== seriesName) {
-          name = seriesName + ' ' + name;
-        }
-
-        const datapoints = [];
-        for (const row of series.rows) {
-          datapoints.push([row[i], row[time.index]]);
-        }
-
-        list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
-      }
-    }
+    const list: TimeSeries[] = TimeSeries.fromSeriesData(dataList, range, this.panel.aliasColors);
 
     // Merge all the rows if we want to show a histogram
     if (this.panel.xaxis.mode === 'histogram' && !this.panel.stack && list.length > 1) {
@@ -65,28 +24,6 @@ export class DataProcessor {
       return [first];
     }
     return list;
-  }
-
-  private toTimeSeries(field: Field, alias: string, datapoints: any[][], index: number, range?: TimeRange) {
-    const colorIndex = index % colors.length;
-    const color = this.panel.aliasColors[alias] || colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints: datapoints || [],
-      alias: alias,
-      color: getColorFromHexRgbOrName(color, config.theme.type),
-      unit: field.unit,
-    });
-
-    if (datapoints && datapoints.length > 0 && range) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = range.from;
-
-      if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
-    return series;
   }
 
   setPanelDefaultsForNewXAxisMode() {

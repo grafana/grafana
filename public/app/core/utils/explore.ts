@@ -14,7 +14,6 @@ import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  colors,
   TimeRange,
   RawTimeRange,
   TimeZone,
@@ -34,7 +33,6 @@ import {
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
-import TimeSeries from 'app/core/time_series2';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -45,6 +43,8 @@ import {
 } from 'app/types/explore';
 import { seriesDataToLogsModel } from 'app/core/logs_model';
 import { config } from '../config';
+import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { TimeSeries } from '../core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -399,28 +399,9 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 }
 
 export const makeTimeSeriesList = (seriesData: DataQueryResponseData[]) => {
-  const result: TimeSeries[] = [];
-  // Prevent multiple Graph transactions to have the same colors
-  let colorIndexOffset = 0;
-  for (let n = 0; n < seriesData.length; n++) {
-    const series = seriesData[n];
-    const datapoints = series.datapoints || [];
-    const alias = series.target;
-    const colorIndex = colorIndexOffset % colors.length;
-    const color = colors[colorIndex];
+  const series = getProcessedSeriesData(seriesData);
 
-    result.push(
-      new TimeSeries({
-        datapoints,
-        alias,
-        color,
-        unit: series.unit,
-      })
-    );
-    colorIndexOffset++;
-  }
-
-  return result;
+  return TimeSeries.fromSeriesData(series);
 };
 
 /**
