@@ -27,7 +27,9 @@ interface FlotItem {
 
 export class GraphContextMenuCtrl {
   private item?: FlotItem;
+  private scope?: any;
   menuItems: ContextMenuItem[];
+  scrollContextElement: HTMLElement;
   position: {
     x: number;
     y: number;
@@ -35,13 +37,28 @@ export class GraphContextMenuCtrl {
 
   isVisible: boolean;
 
-  constructor() {
+  constructor($scope) {
     this.isVisible = false;
     this.menuItems = [];
+    this.scope = $scope;
   }
+
+  onClose = () => {
+    if (this.scrollContextElement) {
+      this.scrollContextElement.removeEventListener('scroll', this.onClose);
+    }
+
+    this.scope.$apply(() => {
+      this.isVisible = false;
+    });
+  };
 
   toggleMenu = (event?: { pageX: number; pageY: number }) => {
     this.isVisible = !this.isVisible;
+    if (this.isVisible && this.scrollContextElement) {
+      this.scrollContextElement.addEventListener('scroll', this.onClose);
+    }
+
     if (this.item) {
       this.position = {
         x: this.item.pageX,
@@ -53,6 +70,12 @@ export class GraphContextMenuCtrl {
         y: event ? event.pageY : 0,
       };
     }
+  };
+
+  // Sets element which is considered as a scroll context of given context menu.
+  // Having access to this element allows scroll event attachement for menu to be closed when user scrolls
+  setScrollContextElement = (el: HTMLElement) => {
+    this.scrollContextElement = el;
   };
 
   setItem = (item: FlotItem | null) => {
@@ -185,7 +208,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel);
-    this.contextMenuCtrl = new GraphContextMenuCtrl();
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
