@@ -302,16 +302,20 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 	key := auth.getKey()
 
 	// Check if user already in cache
-	userID, _ := auth.store.Get(key)
+	userID, err := auth.store.Get(key)
+	if err != nil && err != remotecache.ErrCacheItemNotFound {
+		return newError("failed to lookup user in cache", err)
+	}
+
 	if userID != nil {
 		return nil
 	}
 
 	expiration := time.Duration(-auth.cacheTTL) * time.Minute
 
-	err := auth.store.Set(key, id, expiration)
+	err = auth.store.Set(key, id, expiration)
 	if err != nil {
-		return newError(err.Error(), nil)
+		return newError("failed to store user in cache", err)
 	}
 
 	return nil
