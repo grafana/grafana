@@ -16,6 +16,9 @@ import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
+import { updateLocation } from 'app/core/actions';
+import { store } from 'app/store/store';
+
 // Types
 import { KioskUrlValue } from 'app/types';
 
@@ -50,6 +53,16 @@ export class GrafanaCtrl {
       profiler.init(config, $rootScope);
       utilSrv.init();
       bridgeSrv.init();
+    };
+
+    // Export services to plugins via window
+    (window as any).grafanaRuntime = {
+      angularLoader,
+      backendSrv,
+      datasourceSrv,
+      timeSrv,
+      store,
+      updateLocation,
     };
 
     $rootScope.colors = colors;
