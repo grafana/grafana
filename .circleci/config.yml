@@ -662,10 +662,6 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
-      - end-to-end-test:
-          requires:
-            - grafana-docker-master
-          filters: *filter-only-master
   release:
     jobs:
       - build-all:
