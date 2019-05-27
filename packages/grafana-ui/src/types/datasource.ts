@@ -85,6 +85,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+  sockets?: boolean;
 
   /**
    * By default, hidden queries are not passed to the datasource
@@ -203,8 +204,6 @@ export abstract class DataSourceApi<
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
-
-  supportsStreaming?: boolean;
 }
 
 export abstract class ExploreDataSourceApi<

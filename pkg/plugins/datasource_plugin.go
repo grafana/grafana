@@ -29,6 +29,7 @@ type DataSourcePlugin struct {
 	BuiltIn       bool              `json:"builtIn,omitempty"`
 	Mixed         bool              `json:"mixed,omitempty"`
 	Routes        []*AppPluginRoute `json:"routes"`
+	Sockets       bool              `json:"sockets"`
 
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`

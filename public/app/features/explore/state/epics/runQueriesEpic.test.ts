@@ -29,7 +29,7 @@ describe('runQueriesEpic', () => {
             const { exploreId, state, datasourceInterval, containerWidth } = mockExploreState({
               queries,
               isLive: true,
-              datasourceSupportsStreaming: true,
+              sockets: true,
             });
 
             epicTester(runQueriesEpic, state)

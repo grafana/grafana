@@ -109,7 +109,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
-    if (getState().explore[exploreId].isLive && !newDataSourceInstance.supportsStreaming) {
+    if (getState().explore[exploreId].isLive) {
       dispatch(changeRefreshInterval(exploreId, offOption.value));
     }
 

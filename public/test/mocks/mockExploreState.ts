@@ -10,7 +10,7 @@ export const mockExploreState = (options: any = {}) => {
   const eventBridge = {
     emit: jest.fn(),
   };
-  const datasourceSupportsStreaming = options.datasourceSupportsStreaming || undefined;
+  const sockets = options.sockets || undefined;
   const datasourceInterval = options.datasourceInterval || '';
   const refreshInterval = options.refreshInterval || '';
   const containerWidth = options.containerWidth || 1980;
@@ -27,9 +27,9 @@ export const mockExploreState = (options: any = {}) => {
     testDatasource: jest.fn(),
     meta: {
       id: datasourceId,
+      sockets,
     },
     interval: datasourceInterval,
-    supportsStreaming: datasourceSupportsStreaming,
   };
   const urlReplaced = options.urlReplaced || false;
   const left: ExploreItemState = options.left || {

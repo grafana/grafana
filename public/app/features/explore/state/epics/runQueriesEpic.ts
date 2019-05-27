@@ -31,7 +31,7 @@ export const runQueriesEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (a
       // Some datasource's query builders allow per-query interval limits,
       // but we're using the datasource interval limit for now
       const interval = datasourceInstance.interval;
-      const live = datasourceInstance && datasourceInstance.supportsStreaming && isLive ? true : false;
+      const live = isLive;
 
       return [runQueriesBatchAction({ exploreId, queryOptions: { interval, maxDataPoints: containerWidth, live } })];
     })
