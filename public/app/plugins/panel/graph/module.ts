@@ -11,10 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, ContextMenuItem } from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
-import { ContextMenuItem } from './GraphContextMenu';
 
 interface FlotItem {
   dataIndex: number;

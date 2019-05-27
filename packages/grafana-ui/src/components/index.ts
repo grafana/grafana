@@ -64,3 +64,4 @@ export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
+export { ContextMenu, ContextMenuItem } from './ContextMenu/ContextMenu';
