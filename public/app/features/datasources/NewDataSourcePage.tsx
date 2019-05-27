@@ -178,7 +178,7 @@ interface DataSourceTypeCardProps {
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const { plugin, onLearnMoreClick } = props;
-  const canSelect = plugin.id !== 'grafana-cloud';
+  const canSelect = plugin.id !== 'gcloud';
   const onClick = canSelect ? props.onClick : () => {};
 
   // find first plugin info link
@@ -216,7 +216,7 @@ function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
     module: '',
     baseUrl: '',
     info: {
-      description: 'Prometheus and Graphite compatible monitoring services & more',
+      description: 'Hosted Graphite, Prometheus and Loki',
       logos: { small: 'public/img/grafana_icon.svg', large: 'asd' },
       author: { name: 'Grafana Labs' },
       links: [
