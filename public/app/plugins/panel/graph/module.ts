@@ -25,7 +25,7 @@ interface FlotItem {
 }
 
 export class GraphContextMenuCtrl {
-  private item?: FlotItem;
+  private source?: FlotItem | null;
   private scope?: any;
   menuItems: ContextMenuItem[];
   scrollContextElement: HTMLElement;
@@ -58,10 +58,10 @@ export class GraphContextMenuCtrl {
       this.scrollContextElement.addEventListener('scroll', this.onClose);
     }
 
-    if (this.item) {
+    if (this.source) {
       this.position = {
-        x: this.item.pageX,
-        y: this.item.pageY,
+        x: this.source.pageX,
+        y: this.source.pageY,
       };
     } else {
       this.position = {
@@ -77,8 +77,8 @@ export class GraphContextMenuCtrl {
     this.scrollContextElement = el;
   };
 
-  setItem = (item: FlotItem | null) => {
-    this.item = item;
+  setSource = (source: FlotItem | null) => {
+    this.source = source;
   };
 
   setMenuItems = (items: ContextMenuItem[]) => {

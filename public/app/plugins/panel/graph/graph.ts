@@ -70,12 +70,6 @@ class GraphElement {
     appEvents.on('graph-hover-clear', this.onGraphHoverClear.bind(this), scope);
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
-    this.elem.bind('click', event => {
-      // To make sure the event is not picked up by React we need to stop propagating it here.
-      // This is important especially from context menu pointof view, which uses ClickOutsideWrapper.
-      // If the event propagation wasn't stopped here, the context menu would close as soon as it rendered
-      event.stopPropagation();
-    });
 
     // get graph legend element
     if (this.elem && this.elem.parent) {
@@ -202,7 +196,9 @@ class GraphElement {
   };
 
   onPlotClick(event, pos, item) {
-    this.tooltip.clear(this.plot);
+    const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
+    const contextMenuSourceItem = item;
+    let contextMenuItems;
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;
@@ -213,20 +209,18 @@ class GraphElement {
       if (pos.x !== pos.x1) {
         return;
       }
-
+      setTimeout(() => {
+        this.eventManager.updateTime({ from: pos.x, to: null });
+      }, 100);
+      return;
+    } else {
+      this.tooltip.clear(this.plot);
+      contextMenuItems = this.getContextMenuItems(pos, item);
       this.scope.$apply(() => {
         // Setting nearest CustomScrollbar element as a scroll context for graph context menu
-        this.contextMenu.setScrollContextElement(
-          this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null
-        );
-        if (!item) {
-          this.contextMenu.setItem(null);
-        } else {
-          // WIP item will be needed for series name and datapoint ts interpolation
-          this.contextMenu.setItem(item);
-        }
-
-        this.contextMenu.setMenuItems(this.getContextMenuItems(pos, item));
+        this.contextMenu.setScrollContextElement(scrollContextElement);
+        this.contextMenu.setSource(contextMenuSourceItem);
+        this.contextMenu.setMenuItems(contextMenuItems);
         this.contextMenu.toggleMenu(pos);
       });
     }
