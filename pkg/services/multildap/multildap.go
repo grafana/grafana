@@ -35,9 +35,6 @@ type IMultiLDAP interface {
 	User(login string) (
 		*models.ExternalUserInfo, error,
 	)
-
-	Add(dn string, values map[string][]string) error
-	Remove(dn string) error
 }
 
 // MultiLDAP is basic struct of LDAP authorization
@@ -50,55 +47,6 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
 	}
-}
-
-// Add adds user to the *first* defined LDAP
-func (multiples *MultiLDAP) Add(
-	dn string,
-	values map[string][]string,
-) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Add(dn, values)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Remove removes user from the *first* defined LDAP
-func (multiples *MultiLDAP) Remove(dn string) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Remove(dn)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Login tries to log in the user in multiples LDAP
