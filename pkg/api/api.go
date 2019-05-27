@@ -291,6 +291,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/db/:slug", Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/db/:slug", Wrap(DeleteDashboardBySlug))
 
+			dashboardRoute.Get("/id/:id", Wrap(hs.GetDashboard))
+			dashboardRoute.Delete("/id/:id", Wrap(DeleteDashboardByID))
+
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), Wrap(hs.PostDashboard))

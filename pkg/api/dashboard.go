@@ -49,7 +49,7 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), c.ParamsInt64(":id"), c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -180,8 +180,12 @@ func DeleteDashboardByUID(c *m.ReqContext) Response {
 	return deleteDashboard(c)
 }
 
+func DeleteDashboardByID(c *m.ReqContext) Response {
+	return deleteDashboard(c)
+}
+
 func deleteDashboard(c *m.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), c.ParamsInt64(":id"), c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
