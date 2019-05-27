@@ -158,9 +158,12 @@ callback URL to be correct).
 
 ### serve_from_sub_path
 
-Set this flag to `true` for serving Grafana directly at subpath supplied in
-above `root_url` setting. So, if set to `true` no reverse proxy is required.
-For backward compatibility reasons, defaults to `false`.
+Serve Grafana from subpath specified in `root_url` setting. By
+default it is set to `false` for compatibility reasons.
+
+By enabling this setting and using a subpath in `root_url` above, e.g.
+`root_url = http://localhost:3000/grafana`, Grafana will be accessible on
+`http://localhost:3000/grafana`.
 
 ### static_root_path
 
