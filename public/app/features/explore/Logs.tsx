@@ -2,16 +2,26 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
+import {
+  RawTimeRange,
+  Switch,
+  LogLevel,
+  TimeZone,
+  TimeRange,
+  AbsoluteTimeRange,
+  LogsMetaKind,
+  LogsModel,
+  LogsDedupStrategy,
+  LogRowModel,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
-
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind, LogRowModel } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
+import { LogsDedupDescription } from 'app/core/logs_model';
 
 const PREVIEW_LIMIT = 100;
 
@@ -60,7 +70,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
 
 interface State {
@@ -175,7 +185,7 @@ export default class Logs extends PureComponent<Props, State> {
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const meta = [...data.meta];
+    const meta = data.meta ? [...data.meta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -193,7 +203,9 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series.map(series => new TimeSeries(series));
+    const timeSeries = data.series
+      ? data.series.map(series => new TimeSeries(series))
+      : [new TimeSeries({ datapoints: [] })];
     const absRange = {
       from: range.from.valueOf(),
       to: range.to.valueOf(),

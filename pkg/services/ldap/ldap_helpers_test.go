@@ -13,7 +13,7 @@ func TestLDAPHelpers(t *testing.T) {
 	Convey("serializeUsers()", t, func() {
 		Convey("simple case", func() {
 			server := &Server{
-				config: &ServerConfig{
+				Config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -22,7 +22,7 @@ func TestLDAPHelpers(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				connection: &mockConnection{},
+				Connection: &MockConnection{},
 				log:        log.New("test-logger"),
 			}
 
@@ -46,7 +46,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 		Convey("without lastname", func() {
 			server := &Server{
-				config: &ServerConfig{
+				Config: &ServerConfig{
 					Attr: AttributeMap{
 						Username: "username",
 						Name:     "name",
@@ -55,7 +55,7 @@ func TestLDAPHelpers(t *testing.T) {
 					},
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
-				connection: &mockConnection{},
+				Connection: &MockConnection{},
 				log:        log.New("test-logger"),
 			}
 
@@ -77,7 +77,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 	Convey("serverBind()", t, func() {
 		Convey("Given bind dn and password configured", func() {
-			connection := &mockConnection{}
+			connection := &MockConnection{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
 				actualUsername = username
@@ -85,8 +85,8 @@ func TestLDAPHelpers(t *testing.T) {
 				return nil
 			}
 			server := &Server{
-				connection: connection,
-				config: &ServerConfig{
+				Connection: connection,
+				Config: &ServerConfig{
 					BindDN:       "o=users,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
@@ -98,7 +98,7 @@ func TestLDAPHelpers(t *testing.T) {
 		})
 
 		Convey("Given bind dn configured", func() {
-			connection := &mockConnection{}
+			connection := &MockConnection{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -107,8 +107,8 @@ func TestLDAPHelpers(t *testing.T) {
 				return nil
 			}
 			server := &Server{
-				connection: connection,
-				config: &ServerConfig{
+				Connection: connection,
+				Config: &ServerConfig{
 					BindDN: "o=users,dc=grafana,dc=org",
 				},
 			}
@@ -119,7 +119,7 @@ func TestLDAPHelpers(t *testing.T) {
 		})
 
 		Convey("Given empty bind dn and password", func() {
-			connection := &mockConnection{}
+			connection := &MockConnection{}
 			unauthenticatedBindWasCalled := false
 			var actualUsername string
 			connection.unauthenticatedBindProvider = func(username string) error {
@@ -128,8 +128,8 @@ func TestLDAPHelpers(t *testing.T) {
 				return nil
 			}
 			server := &Server{
-				connection: connection,
-				config:     &ServerConfig{},
+				Connection: connection,
+				Config:     &ServerConfig{},
 			}
 			err := server.serverBind()
 			So(err, ShouldBeNil)

@@ -87,6 +87,7 @@ interface ExploreProps {
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
   mode: ExploreMode;
+  isLive: boolean;
 }
 
 /**
@@ -315,6 +316,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     update,
     queryErrors,
     mode,
+    isLive,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -340,6 +342,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialUI,
     queryErrors,
     mode,
+    isLive,
   };
 }
 

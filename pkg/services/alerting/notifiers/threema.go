@@ -68,6 +68,8 @@ func init() {
 
 }
 
+// ThreemaNotifier is responsible for sending
+// alert notifications to Threema.
 type ThreemaNotifier struct {
 	NotifierBase
 	GatewayID   string
@@ -76,6 +78,7 @@ type ThreemaNotifier struct {
 	log         log.Logger
 }
 
+// NewThreemaNotifier is the constructor for the Threema notifer
 func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
@@ -114,6 +117,7 @@ func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	}, nil
 }
 
+// Notify send an alert notification to Threema
 func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	notifier.log.Info("Sending alert notification from", "threema_id", notifier.GatewayID)
 	notifier.log.Info("Sending alert notification to", "threema_id", notifier.RecipientID)

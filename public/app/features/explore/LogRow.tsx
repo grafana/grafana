@@ -3,7 +3,7 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
+import { calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
@@ -15,7 +15,15 @@ import {
   HasMoreContextRows,
   LogRowContextQueryErrors,
 } from './LogRowContextProvider';
-import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
+import {
+  ThemeContext,
+  selectThemeVariant,
+  GrafanaTheme,
+  DataQueryResponse,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+} from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
 
@@ -29,7 +37,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   className?: string;
 }
 
@@ -130,7 +138,7 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   onMouseOverMessage = () => {
-    if (this.state.showContext) {
+    if (this.state.showContext || this.isTextSelected()) {
       // When showing context we don't want to the LogRow rerender as it will mess up state of context block
       // making the "after" context to be scrolled to the top, what is desired only on open
       // The log row message needs to be refactored to separate component that encapsulates parsing and parsed message state
@@ -160,6 +168,20 @@ export class LogRow extends PureComponent<Props, State> {
       }
     }
   };
+
+  isTextSelected() {
+    if (!window.getSelection) {
+      return false;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection) {
+      return false;
+    }
+
+    return selection.anchorNode !== null && selection.isCollapsed === false;
+  }
 
   toggleContext = () => {
     this.setState(state => {
@@ -214,7 +236,6 @@ export class LogRow extends PureComponent<Props, State> {
           const styles = this.state.showContext
             ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
             : logRowStyles;
-          console.log(styles);
           return (
             <div className={`logs-row ${this.props.className}`}>
               {showDuplicates && (

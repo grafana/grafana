@@ -3,6 +3,7 @@ import { TimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
+import { LogRowModel } from './logs';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -84,6 +85,14 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+  supportsStreaming?: boolean;
+
+  /**
+   * By default, hidden queries are not passed to the datasource
+   * Set this to true in plugin.json to have hidden queries passed to the
+   * DataSource query method
+   */
+  hiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -157,6 +166,10 @@ export abstract class DataSourceApi<
    */
   abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
+  convertToStreamTargets?(options: DataQueryRequest<TQuery>): Array<{ url: string; refId: string }>;
+
+  resultToSeriesData?(data: any, refId: string): SeriesData[];
+
   /**
    * Test & verify datasource settings & connection details
    */
@@ -175,7 +188,10 @@ export abstract class DataSourceApi<
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext?(row: any, limit?: number): Promise<DataQueryResponse>;
+  getLogRowContext?: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -285,10 +301,6 @@ export interface DataStreamState {
 
 export interface DataQueryResponse {
   data: DataQueryResponseData[];
-}
-
-export interface LogRowContextQueryResponse {
-  data: Array<Array<string | DataQueryError>>;
 }
 
 export interface DataQuery {

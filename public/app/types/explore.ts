@@ -11,10 +11,11 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
+  LogsModel,
+  LogsDedupStrategy,
 } from '@grafana/ui';
 
 import { Emitter, TimeSeries } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
@@ -259,9 +260,12 @@ export interface ExploreItemState {
   update: ExploreUpdateState;
 
   queryErrors: DataQueryError[];
+
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
+
+  isLive: boolean;
 }
 
 export interface ExploreUpdateState {
