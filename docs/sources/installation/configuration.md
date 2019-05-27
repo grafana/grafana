@@ -153,8 +153,6 @@ callback URL to be correct).
 > **Note** This setting is also important if you have a reverse proxy
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
-> Also, below `serve_from_sub_path` setting lets to serve Grafana directly
-> at subpath without needing to setup a reverse proxy.
 
 ### serve_from_sub_path
 
