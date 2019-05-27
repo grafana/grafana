@@ -216,6 +216,10 @@ class GraphElement {
       }
 
       this.scope.$apply(() => {
+        // Setting nearest CustomScrollbar element as a scroll context for graph context menu
+        this.contextMenu.setScrollContextElement(
+          this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null
+        );
         if (!item) {
           this.contextMenu.setItem(null);
         } else {

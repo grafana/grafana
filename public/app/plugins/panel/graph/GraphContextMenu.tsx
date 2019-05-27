@@ -75,7 +75,7 @@ const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, ite
       <div
         ref={menuRef}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           left: x - 5,
           top: y + 5,
         }}
@@ -102,4 +102,5 @@ const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, ite
   );
 });
 
+ContextMenu.displayName = 'ContextMenu';
 export const GraphContextMenu = ContextMenu;
