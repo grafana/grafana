@@ -174,11 +174,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   migrateToFromTimes() {
-    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(
-      /\$__timeFrom\s/gi,
-      '$__timeFrom() '
-    );
-    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__timeTo\s/gi, '$__timeTo() ');
+    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__from\s/gi, '$__timeFrom() ');
+    this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__to\s/gi, '$__timeTo() ');
   }
 
   replace(variable: string) {
