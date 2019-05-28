@@ -133,7 +133,7 @@ kbn.secondsToHms = seconds => {
 };
 
 kbn.secondsToHhmmss = seconds => {
-  const strings = [];
+  const strings: string[] = [];
   const numhours = Math.floor(seconds / 3600);
   const numminutes = Math.floor((seconds % 3600) / 60);
   const numseconds = Math.floor((seconds % 3600) % 60);
