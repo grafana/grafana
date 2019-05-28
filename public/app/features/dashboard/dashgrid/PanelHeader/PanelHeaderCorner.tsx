@@ -53,10 +53,10 @@ export class PanelHeaderCorner extends Component<Props> {
         {panel.links && panel.links.length > 0 && (
           <ul className="text-left">
             {panel.links.map((link, idx) => {
-              const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
+              const info = linkSrv.getDrilldownLinkUIModel(link, panel.scopedVars);
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.href} target={info.target}>
+                  <a className="panel-menu-link" href={info.url} target={info.target}>
                     {info.title}
                   </a>
                 </li>

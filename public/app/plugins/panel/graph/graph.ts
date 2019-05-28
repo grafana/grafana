@@ -16,6 +16,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
+import { LinkService } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -23,8 +24,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
-import { GraphCtrl, GraphContextMenuCtrl } from './module';
-import { getValueFormat, ContextMenuItem } from '@grafana/ui';
+import { GraphCtrl, GraphContextMenuCtrl, FlotDataPoint } from './module';
+import { getValueFormat, ContextMenuItem, PanelDrillDownLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
@@ -46,7 +47,8 @@ class GraphElement {
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
-  constructor(private scope, private elem, private timeSrv) {
+  // @ts-ignore
+  constructor(private scope, private elem, private timeSrv, private linkSrv: LinkService) {
     this.ctrl = scope.ctrl;
     this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
@@ -173,7 +175,9 @@ class GraphElement {
     }
   }
 
-  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: any): ContextMenuItem[] => {
+  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuItem[] => {
+    const drilldownLinks: PanelDrillDownLink[] = this.panel.links || [];
+
     const items: ContextMenuItem[] = [
       {
         label: 'Add annotation',
@@ -185,12 +189,17 @@ class GraphElement {
     return item
       ? [
           ...items,
-          // TODO: generate drilldown links URLs
-          {
-            label: 'Some drilldown link',
-            icon: 'gicon gicon-link',
-            onClick: () => {},
-          },
+          ...drilldownLinks.map<ContextMenuItem>(link => {
+            const linkUiModel = this.linkSrv.getDrilldownLinkUIModel(link, this.panel.scopedVariables, {
+              seriesLabel: item.series.alias,
+              datapoint: item.datapoint,
+            });
+            return {
+              label: linkUiModel.title,
+              url: linkUiModel.url,
+              target: linkUiModel.target,
+            };
+          }),
         ]
       : items;
   };
@@ -815,12 +824,12 @@ class GraphElement {
 }
 
 /** @ngInject */
-function graphDirective(timeSrv, popoverSrv, contextSrv) {
+function graphDirective(timeSrv, popoverSrv, contextSrv, linkSrv) {
   return {
     restrict: 'A',
     template: '',
     link: (scope, elem) => {
-      return new GraphElement(scope, elem, timeSrv);
+      return new GraphElement(scope, elem, timeSrv, linkSrv);
     },
   };
 }

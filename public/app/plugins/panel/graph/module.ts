@@ -11,13 +11,19 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, ContextMenuItem } from '@grafana/ui';
+import {
+  getColorFromHexRgbOrName,
+  LegacyResponseData,
+  SeriesData,
+  ContextMenuItem,
+  TimeSeriesValue,
+} from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 
-interface FlotItem {
+export interface FlotDataPoint {
   dataIndex: number;
-  datapoint: number[];
+  datapoint: TimeSeriesValue[];
   pageX: number;
   pageY: number;
   series: any;
@@ -25,7 +31,7 @@ interface FlotItem {
 }
 
 export class GraphContextMenuCtrl {
-  private source?: FlotItem | null;
+  private source?: FlotDataPoint | null;
   private scope?: any;
   menuItems: ContextMenuItem[];
   scrollContextElement: HTMLElement;
@@ -77,7 +83,7 @@ export class GraphContextMenuCtrl {
     this.scrollContextElement = el;
   };
 
-  setSource = (source: FlotItem | null) => {
+  setSource = (source: FlotDataPoint | null) => {
     this.source = source;
   };
 

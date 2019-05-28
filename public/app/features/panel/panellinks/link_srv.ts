@@ -1,15 +1,42 @@
-import angular from 'angular';
 import _ from 'lodash';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { PanelDrillDownLink, KeyValue } from '@grafana/ui';
+import { PanelDrillDownLink, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
+import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
 
 const DrilldownLinkBuiltInVars = {
   keepTime: '__urlTimeRange',
   includeVars: '__allVariables',
+  seriesName: '__seriesName',
+  dataPointTs: '__dataPointTs',
 };
-export class LinkSrv {
+
+// Represents factor by which the original time range will be narrowed down when
+// using drilldown link
+const DrilldownLinkDataPointRangeFactor = 0.5;
+
+type LinkTarget = '_blank' | '_self';
+
+interface LinkModel {
+  url: string;
+  title: string;
+  target: LinkTarget;
+}
+
+interface LinkDataPoint {
+  datapoint: TimeSeriesValue[];
+  seriesLabel: string;
+}
+export interface LinkService {
+  getDrilldownLinkUIModel: (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
+  getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
+}
+
+export class LinkSrv implements LinkService {
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {}
+  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
   getLinkUrl(link) {
     const url = this.templateSrv.replace(link.url || '');
@@ -35,20 +62,47 @@ export class LinkSrv {
     return info;
   }
 
-  getPanelLinkAnchorInfo(link: PanelDrillDownLink, scopedVars) {
-    const info: any = {};
+  getDataPointVars = (seriesName: string, dataPointTs: DateTime) => {
+    const timeRange = this.timeSrv.timeRange();
+    const targetAbsoluteTimeRange = transformAbsoluteTimeRange(timeRange, DrilldownLinkDataPointRangeFactor);
+    const dataPointRangeQuery = toUrlParams({
+      from: dateTime(dataPointTs)
+        .subtract(targetAbsoluteTimeRange)
+        .valueOf(),
+      to: dateTime(dataPointTs)
+        .add(targetAbsoluteTimeRange)
+        .valueOf(),
+    });
+
+    const seriesQuery = toUrlParams({
+      series: seriesName,
+    });
+
+    return {
+      [DrilldownLinkBuiltInVars.dataPointTs]: {
+        text: dataPointRangeQuery,
+        value: dataPointRangeQuery,
+      },
+      [DrilldownLinkBuiltInVars.seriesName]: {
+        text: seriesQuery,
+        value: seriesQuery,
+      },
+    };
+  };
+
+  getDrilldownLinkUIModel = (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
     const params: KeyValue = {};
-    info.target = link.targetBlank ? '_blank' : '';
-
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
-
-    info.href = link.url;
-    info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    info.target = link.targetBlank ? '_blank' : '_self';
+    const info: LinkModel = {
+      url: link.url,
+      title: this.templateSrv.replace(link.title || '', scopedVars),
+      target: link.targetBlank ? '_blank' : '_self',
+    };
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
+
     const variablesQuery = toUrlParams(params);
 
-    info.href = this.templateSrv.replace(link.url, {
+    info.url = this.templateSrv.replace(link.url, {
       ...scopedVars,
       [DrilldownLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,
@@ -60,8 +114,23 @@ export class LinkSrv {
       },
     });
 
-    return info;
-  }
+    return dataPoint
+      ? {
+          ...info,
+          url: this.templateSrv.replace(info.url, this.getDataPointVars(dataPoint.seriesLabel, dateTime(dataPoint[0]))),
+        }
+      : info;
+  };
 }
 
-angular.module('grafana.services').service('linkSrv', LinkSrv);
+let singleton: LinkService;
+
+export function setLinkSrv(srv: LinkService) {
+  singleton = srv;
+}
+
+export function getLinkSrv(): LinkService {
+  return singleton;
+}
+
+coreModule.service('linkSrv', LinkSrv);

@@ -7,7 +7,8 @@ import { Portal, List } from '../index';
 export interface ContextMenuItem {
   label: string;
   icon?: string;
-  onClick: (event?: React.SyntheticEvent<HTMLElement>) => void;
+  url?: string;
+  onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 interface ContextMenuProps {
@@ -85,15 +86,18 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
           items={items || []}
           renderItem={item => {
             return (
-              <div
+              <a
+                href={item.url}
                 className={styles.link}
                 onClick={e => {
-                  item.onClick(e);
+                  if (item.onClick) {
+                    item.onClick(e);
+                  }
                   onClose();
                 }}
               >
                 {item.icon && <i className={cx(`${item.icon}`, styles.icon)} />} {item.label}
-              </div>
+              </a>
             );
           }}
         />
