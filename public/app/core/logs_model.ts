@@ -13,6 +13,7 @@ import {
   toLegacyResponseData,
   FieldCache,
   FieldType,
+  getLogLevelFromKey,
   LogRowModel,
   LogsModel,
   LogsMetaItem,
@@ -368,7 +369,17 @@ export function processLogSeriesRow(
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const logLevel = getLogLevel(message);
+
+  let logLevel = LogLevel.unknown;
+  const logLevelField = fieldCache.getFieldByName('level');
+
+  if (logLevelField) {
+    logLevel = getLogLevelFromKey(row[logLevelField.index]);
+  } else if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
+    logLevel = getLogLevelFromKey(series.labels['level']);
+  } else {
+    logLevel = getLogLevel(message);
+  }
   const hasAnsi = hasAnsiCodes(message);
   const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
