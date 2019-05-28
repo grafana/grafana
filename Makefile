@@ -104,7 +104,8 @@ endif
 # drop down the envs
 devenv-down:
 	@cd devenv; \
-	docker-compose down;
+	test -f docker-compose.yaml && \
+	docker-compose down || exit 0;
 
 # TODO recheck the rules and leave only necessary exclusions
 gosec: scripts/go/bin/gosec
