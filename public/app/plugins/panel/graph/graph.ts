@@ -23,10 +23,11 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
-import { GraphCtrl, GraphContextMenuCtrl } from './module';
+import { GraphCtrl } from './module';
 import { getValueFormat, ContextMenuItem } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
