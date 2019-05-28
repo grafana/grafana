@@ -86,16 +86,25 @@ revive: scripts/go/bin/revive
 
 # create docker-compose file with provided sources and start them
 # example: make devenv sources=postgres,openldap
+ifeq ($(sources),)
+devenv:
+	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
+else
 devenv: devenv-down
 	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
 
 	@cd devenv; \
-	./create_docker_compose.sh $(targets); \
+	./create_docker_compose.sh $(targets) || \
+	(rm -rf docker-compose.yaml; exit 1)
+
+	@cd devenv; \
 	docker-compose up -d
+endif
 
 # drop down the envs
 devenv-down:
-	@cd devenv; docker-compose down;
+	@cd devenv; \
+	docker-compose down;
 
 # TODO recheck the rules and leave only necessary exclusions
 gosec: scripts/go/bin/gosec
