@@ -35,7 +35,8 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
-} from '@grafana/ui/src/types';
+  LogsDedupStrategy,
+} from '@grafana/ui';
 import {
   ExploreId,
   ExploreUrlState,
@@ -44,6 +45,7 @@ import {
   QueryOptions,
   ExploreUIState,
   QueryTransaction,
+  ExploreMode,
 } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
@@ -71,10 +73,8 @@ import {
   splitOpenAction,
   addQueryRowAction,
   toggleGraphAction,
-  toggleLogsAction,
   toggleTableAction,
   ToggleGraphPayload,
-  ToggleLogsPayload,
   ToggleTablePayload,
   updateUIStateAction,
   runQueriesAction,
@@ -85,12 +85,13 @@ import {
   queryStartAction,
   historyUpdatedAction,
   resetQueryErrorAction,
+  changeModeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
-import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
+import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/features/explore/state/epics';
 
 /**
  * Updates UI state and save it to the URL
@@ -117,7 +118,7 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasource: string): ThunkResult<void> {
+export function changeDatasource(exploreId: ExploreId, datasource: string, replaceUrl = false): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi = null;
 
@@ -135,7 +136,16 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    dispatch(runQueries(exploreId, false, replaceUrl));
+  };
+}
 
+/**
+ * Change the display mode in Explore.
+ */
+export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
+  return dispatch => {
+    dispatch(changeModeAction({ exploreId, mode }));
     dispatch(runQueries(exploreId));
   };
 }
@@ -232,7 +242,7 @@ export function loadExploreDatasourcesAndSetDatasource(
     dispatch(loadExploreDatasources({ exploreId, exploreDatasources }));
 
     if (exploreDatasources.length >= 1) {
-      dispatch(changeDatasource(exploreId, datasourceName));
+      dispatch(changeDatasource(exploreId, datasourceName, true));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
@@ -501,19 +511,16 @@ export function processQueryResults(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
+export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceUrl = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const {
       datasourceInstance,
       queries,
-      showingLogs,
       showingGraph,
       showingTable,
-      supportsGraph,
-      supportsLogs,
-      supportsTable,
       datasourceError,
       containerWidth,
+      mode,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -523,7 +530,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     if (!hasNonEmptyQuery(queries)) {
       dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to saves to state and update location
+      dispatch(stateSave(replaceUrl)); // Remember to save to state and update location
       return;
     }
 
@@ -533,7 +540,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
 
     dispatch(runQueriesAction({ exploreId }));
     // Keep table queries first since they need to return quickly
-    if ((ignoreUIState || showingTable) && supportsTable) {
+    if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Table', {
           interval,
@@ -543,7 +550,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
         })
       );
     }
-    if ((ignoreUIState || showingGraph) && supportsGraph) {
+    if ((ignoreUIState || showingGraph) && mode === ExploreMode.Metrics) {
       dispatch(
         runQueriesForType(exploreId, 'Graph', {
           interval,
@@ -553,11 +560,11 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkRe
         })
       );
     }
-    if ((ignoreUIState || showingLogs) && supportsLogs) {
+    if (mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
-    dispatch(stateSave());
+    dispatch(stateSave(replaceUrl));
   };
 }
 
@@ -577,6 +584,16 @@ function runQueriesForType(
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning, history } = getState().explore[
       exploreId
     ];
+
+    if (resultType === 'Logs' && datasourceInstance.convertToStreamTargets) {
+      dispatch(
+        startSubscriptionsAction({
+          exploreId,
+          dataReceivedActionCreator: subscriptionDataReceivedAction,
+        })
+      );
+    }
+
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
     dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
@@ -681,7 +698,7 @@ const toRawTimeRange = (range: TimeRange): RawTimeRange => {
  * Saves Explore state to URL using the `left` and `right` parameters.
  * If split view is not active, `right` will not be set.
  */
-export function stateSave(): ThunkResult<void> {
+export function stateSave(replaceUrl = false): ThunkResult<void> {
   return (dispatch, getState) => {
     const { left, right, split } = getState().explore;
     const urlStates: { [index: string]: string } = {};
@@ -691,7 +708,7 @@ export function stateSave(): ThunkResult<void> {
       range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
-        showingLogs: left.showingLogs,
+        showingLogs: true,
         showingTable: left.showingTable,
         dedupStrategy: left.dedupStrategy,
       },
@@ -704,7 +721,7 @@ export function stateSave(): ThunkResult<void> {
         range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
-          showingLogs: right.showingLogs,
+          showingLogs: true,
           showingTable: right.showingTable,
           dedupStrategy: right.dedupStrategy,
         },
@@ -713,7 +730,7 @@ export function stateSave(): ThunkResult<void> {
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
     }
 
-    dispatch(updateLocation({ query: urlStates }));
+    dispatch(updateLocation({ query: urlStates, replace: replaceUrl }));
   };
 }
 
@@ -722,10 +739,7 @@ export function stateSave(): ThunkResult<void> {
  * queries won't be run
  */
 const togglePanelActionCreator = (
-  actionCreator:
-    | ActionCreator<ToggleGraphPayload>
-    | ActionCreator<ToggleLogsPayload>
-    | ActionCreator<ToggleTablePayload>
+  actionCreator: ActionCreator<ToggleGraphPayload> | ActionCreator<ToggleTablePayload>
 ) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
@@ -734,9 +748,6 @@ const togglePanelActionCreator = (
     switch (actionCreator.type) {
       case toggleGraphAction.type:
         uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
-        break;
-      case toggleLogsAction.type:
-        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
       case toggleTableAction.type:
         uiFragmentStateUpdate = { showingTable: !isPanelVisible };
@@ -756,11 +767,6 @@ const togglePanelActionCreator = (
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
 export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
-
-/**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.

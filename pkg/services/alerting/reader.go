@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,35 +9,24 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type RuleReader interface {
-	Fetch() []*Rule
+type ruleReader interface {
+	fetch() []*Rule
 }
 
-type DefaultRuleReader struct {
+type defaultRuleReader struct {
 	sync.RWMutex
-	serverPosition int
-	clusterSize    int
-	log            log.Logger
+	log log.Logger
 }
 
-func NewRuleReader() *DefaultRuleReader {
-	ruleReader := &DefaultRuleReader{
+func newRuleReader() *defaultRuleReader {
+	ruleReader := &defaultRuleReader{
 		log: log.New("alerting.ruleReader"),
 	}
 
-	go ruleReader.initReader()
 	return ruleReader
 }
 
-func (arr *DefaultRuleReader) initReader() {
-	heartbeat := time.NewTicker(time.Second * 10)
-
-	for range heartbeat.C {
-		arr.heartbeat()
-	}
-}
-
-func (arr *DefaultRuleReader) Fetch() []*Rule {
+func (arr *defaultRuleReader) fetch() []*Rule {
 	cmd := &models.GetAllAlertsQuery{}
 
 	if err := bus.Dispatch(cmd); err != nil {
@@ -57,9 +45,4 @@ func (arr *DefaultRuleReader) Fetch() []*Rule {
 
 	metrics.M_Alerting_Active_Alerts.Set(float64(len(res)))
 	return res
-}
-
-func (arr *DefaultRuleReader) heartbeat() {
-	arr.clusterSize = 1
-	arr.serverPosition = 1
 }

@@ -30,6 +30,7 @@ type User struct {
 	EmailVerified bool
 	Theme         string
 	HelpFlags1    HelpFlags1
+	IsDisabled    bool
 
 	IsAdmin bool
 	OrgId   int64
@@ -88,6 +89,16 @@ type UpdateUserPermissionsCommand struct {
 	UserId         int64 `json:"-"`
 }
 
+type DisableUserCommand struct {
+	UserId     int64
+	IsDisabled bool
+}
+
+type BatchDisableUsersCommand struct {
+	UserIds    []int64
+	IsDisabled bool
+}
+
 type DeleteUserCommand struct {
 	UserId int64
 }
@@ -142,6 +153,22 @@ type SearchUserQueryResult struct {
 	Users      []*UserSearchHitDTO `json:"users"`
 	Page       int                 `json:"page"`
 	PerPage    int                 `json:"perPage"`
+}
+
+type SearchExternalUsersQuery struct {
+	OrgId int64
+	Query string
+	Page  int
+	Limit int
+
+	Result SearchExternalUserQueryResult
+}
+
+type SearchExternalUserQueryResult struct {
+	TotalCount int64                       `json:"totalCount"`
+	Users      []*ExternalUserSearchHitDTO `json:"users"`
+	Page       int                         `json:"page"`
+	PerPage    int                         `json:"perPage"`
 }
 
 type GetUserOrgListQuery struct {
@@ -203,6 +230,7 @@ type UserProfileDTO struct {
 	Theme          string `json:"theme"`
 	OrgId          int64  `json:"orgId"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+	IsDisabled     bool   `json:"isDisabled"`
 }
 
 type UserSearchHitDTO struct {
@@ -212,8 +240,24 @@ type UserSearchHitDTO struct {
 	Email         string    `json:"email"`
 	AvatarUrl     string    `json:"avatarUrl"`
 	IsAdmin       bool      `json:"isAdmin"`
+	IsDisabled    bool      `json:"isDisabled"`
 	LastSeenAt    time.Time `json:"lastSeenAt"`
 	LastSeenAtAge string    `json:"lastSeenAtAge"`
+}
+
+type ExternalUserSearchHitDTO struct {
+	Id            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Login         string    `json:"login"`
+	Email         string    `json:"email"`
+	AvatarUrl     string    `json:"avatarUrl"`
+	IsAdmin       bool      `json:"isAdmin"`
+	IsDisabled    bool      `json:"isDisabled"`
+	LastSeenAt    time.Time `json:"lastSeenAt"`
+	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	IsExternal    bool      `json:"isExternal"`
+	AuthModule    string    `json:"authModule"`
+	AuthId        string    `json:"authId"`
 }
 
 type UserIdDTO struct {

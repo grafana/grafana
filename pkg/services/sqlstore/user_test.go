@@ -175,6 +175,30 @@ func TestUserDataAccess(t *testing.T) {
 					So(found, ShouldBeTrue)
 				})
 			})
+
+			Convey("When batch disabling users", func() {
+				userIdsToDisable := []int64{}
+				for i := 0; i < 3; i++ {
+					userIdsToDisable = append(userIdsToDisable, users[i].Id)
+				}
+				disableCmd := m.BatchDisableUsersCommand{UserIds: userIdsToDisable, IsDisabled: true}
+
+				err = BatchDisableUsers(&disableCmd)
+				So(err, ShouldBeNil)
+
+				Convey("Should disable all provided users", func() {
+					query := m.SearchUsersQuery{}
+					err = SearchUsers(&query)
+
+					So(query.Result.TotalCount, ShouldEqual, 5)
+					So(query.Result.Users[0].IsDisabled, ShouldBeTrue)
+					So(query.Result.Users[1].IsDisabled, ShouldBeTrue)
+					So(query.Result.Users[2].IsDisabled, ShouldBeTrue)
+
+					So(query.Result.Users[3].IsDisabled, ShouldBeFalse)
+					So(query.Result.Users[4].IsDisabled, ShouldBeFalse)
+				})
+			})
 		})
 
 		Convey("Given one grafana admin user", func() {

@@ -40,6 +40,8 @@ func init() {
 
 }
 
+// NewWebHookNotifier is the constructor for
+// the WebHook notifier.
 func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
@@ -48,25 +50,29 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),
-		Url:          url,
+		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
-		HttpMethod:   model.Settings.Get("httpMethod").MustString("POST"),
+		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
 	}, nil
 }
 
+// WebhookNotifier is responsible for sending
+// alert notifications as webhooks.
 type WebhookNotifier struct {
 	NotifierBase
-	Url        string
+	URL        string
 	User       string
 	Password   string
-	HttpMethod string
+	HTTPMethod string
 	log        log.Logger
 }
 
-func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Sending webhook")
+// Notify send alert notifications as
+// webhook as http requests.
+func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
+	wn.log.Info("Sending webhook")
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("title", evalContext.GetNotificationTitle())
@@ -75,9 +81,9 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("state", evalContext.Rule.State)
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleUrl()
 	if err == nil {
-		bodyJSON.Set("ruleUrl", ruleUrl)
+		bodyJSON.Set("ruleUrl", ruleURL)
 	}
 
 	if evalContext.ImagePublicUrl != "" {
@@ -91,15 +97,15 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &models.SendWebhookSync{
-		Url:        this.Url,
-		User:       this.User,
-		Password:   this.Password,
+		Url:        wn.URL,
+		User:       wn.User,
+		Password:   wn.Password,
 		Body:       string(body),
-		HttpMethod: this.HttpMethod,
+		HttpMethod: wn.HTTPMethod,
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
+		wn.log.Error("Failed to send webhook", "error", err, "webhook", wn.Name)
 		return err
 	}
 

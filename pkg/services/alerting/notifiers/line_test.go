@@ -44,6 +44,5 @@ func TestLineNotifier(t *testing.T) {
 			So(lineNotifier.Type, ShouldEqual, "line")
 			So(lineNotifier.Token, ShouldEqual, "abcdefgh0123456789")
 		})
-
 	})
 }

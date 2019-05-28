@@ -145,6 +145,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			usersRoute.Get("/", Wrap(SearchUsers))
 			usersRoute.Get("/search", Wrap(SearchUsersWithPaging))
+			usersRoute.Get("/ext", Wrap(SearchUsersExtWithPaging))
 			usersRoute.Get("/:id", Wrap(GetUserByID))
 			usersRoute.Get("/:id/teams", Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", Wrap(GetUserOrgList))
@@ -381,6 +382,8 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
 		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
 		adminRoute.Delete("/users/:id", AdminDeleteUser)
+		adminRoute.Post("/users/:id/disable", Wrap(hs.AdminDisableUser))
+		adminRoute.Post("/users/:id/enable", Wrap(AdminEnableUser))
 		adminRoute.Get("/users/:id/quotas", Wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
@@ -393,7 +396,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDasboards))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
-		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLdapCfg))
+		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
 	}, reqGrafanaAdmin)
 
 	// rendering
