@@ -94,7 +94,8 @@ devenv: devenv-down
 	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
 
 	@cd devenv; \
-	./create_docker_compose.sh $(targets) && rm -f devenv/docker-compose.yaml
+	./create_docker_compose.sh $(targets) || \
+	(rm -rf docker-compose.yaml; exit 1)
 
 	@cd devenv; \
 	docker-compose up -d
