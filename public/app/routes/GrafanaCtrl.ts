@@ -18,6 +18,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { updateLocation } from 'app/core/actions';
 import { store } from 'app/store/store';
+import { importAppPlugin } from 'app/features/plugins/plugin_loader';
 
 // Types
 import { KioskUrlValue } from 'app/types';
@@ -63,6 +64,7 @@ export class GrafanaCtrl {
       timeSrv,
       store,
       updateLocation,
+      importAppPlugin,
     };
 
     $rootScope.colors = colors;
