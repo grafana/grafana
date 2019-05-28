@@ -53,10 +53,11 @@
             <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
               <i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
               <i class="fa fa-lock" ng-show="user.isDisabled" bs-tooltip="'User disabled'"></i>
+              <i class="fa fa-building" ng-show="user.isExternal" bs-tooltip="'User is managed outside Grafana'"></i>
             </a>
           </td>
           <td class="text-right">
-            <a ng-click="ctrl.disableUser(user)" class="btn btn-small"
+            <a ng-if="!user.isExternal" ng-click="ctrl.disableUser(user)" class="btn btn-small"
               ng-class="{'btn-success': user.isDisabled, 'btn-danger': !user.isDisabled}">
               <i class="fa" ng-class="{'fa-unlock-alt': user.isDisabled, 'fa-lock': !user.isDisabled}"></i>
             </a>
