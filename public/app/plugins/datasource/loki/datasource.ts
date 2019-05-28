@@ -174,16 +174,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .filter(target => target.expr && !target.hide && target.live)
       .map(target => this.prepareLiveTarget(target, options));
 
-    liveTargets.forEach(liveTarget => {
+    for (const liveTarget of liveTargets) {
       const subscription = webSocket(liveTarget.url)
         .pipe(
           map((results: any[]) => {
-            const series = this.processResult(results, liveTarget);
+            const delta = this.processResult(results, liveTarget);
             const state: DataStreamState = {
               key: `loki-${liveTarget.refId}`,
               request: options,
               state: LoadingState.Streaming,
-              series,
+              delta,
               unsubscribe: () => this.unsubscribe(liveTarget.refId),
             };
 
@@ -207,7 +207,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         });
 
       this.subscriptions[liveTarget.refId] = subscription;
-    });
+    }
   };
 
   runQueries = async (options: DataQueryRequest<LokiQuery>) => {

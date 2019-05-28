@@ -2,7 +2,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
-  container?: 'explore' | 'panel';
+  context?: 'explore' | 'panel';
   format?: string;
   instant?: boolean;
   hinting?: boolean;

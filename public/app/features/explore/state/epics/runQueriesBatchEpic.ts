@@ -1,8 +1,10 @@
 import { Epic } from 'redux-observable';
 import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
+import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { DataStreamState, LoadingState, DataQueryResponse, SeriesData } from '@grafana/ui';
+import { DataStreamState, LoadingState, DataQueryResponse, SeriesData, DataQueryResponseData } from '@grafana/ui';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -20,6 +22,7 @@ import {
   queryStartAction,
   limitMessageRatePayloadAction,
   stateSaveAction,
+  changeRangeAction,
 } from '../actionTypes';
 import { ExploreId, ExploreItemState } from 'app/types';
 
@@ -28,56 +31,38 @@ interface ProcessResponseConfig {
   exploreItemState: ExploreItemState;
   datasourceId: string;
   now: number;
-  replacePreviousResults: boolean;
-  queryResponse?: DataQueryResponse;
-  observerResponse?: SeriesData[];
+  series?: DataQueryResponseData[];
+  delta?: SeriesData[];
 }
 
-const processResponse = (config: ProcessResponseConfig) => {
-  const {
-    exploreId,
-    exploreItemState,
-    datasourceId,
-    now,
-    replacePreviousResults,
-    queryResponse,
-    observerResponse,
-  } = config;
-  const { eventBridge, queries, history } = exploreItemState;
-  const emitData = queryResponse && queryResponse.data ? queryResponse.data : observerResponse || [];
-  const response = queryResponse ? queryResponse : observerResponse ? { data: observerResponse } : { data: [] };
-  eventBridge.emit('data-received', emitData);
+const publishActions = (outerObservable: Subject<any>, actions: Array<ActionOf<any>>) => {
+  for (const action of actions) {
+    outerObservable.next(action);
+  }
+};
 
-  const actions: Array<ActionOf<any>> = [];
+const processResponse = (config: ProcessResponseConfig) => {
+  const { exploreId, exploreItemState, datasourceId, now, series, delta } = config;
+  const { queries, history } = exploreItemState;
   const latency = Date.now() - now;
+
   // Side-effect: Saving history in localstorage
   const nextHistory = updateHistory(history, datasourceId, queries);
-  actions.push(historyUpdatedAction({ exploreId, history: nextHistory }));
-  actions.push(
-    processQueryResultsAction({
-      exploreId,
-      response,
-      latency,
-      datasourceId,
-      replacePreviousResults,
-    })
-  );
-  actions.push(stateSaveAction());
-
-  return actions;
+  return [
+    historyUpdatedAction({ exploreId, history: nextHistory }),
+    processQueryResultsAction({ exploreId, latency, datasourceId, series, delta }),
+    stateSaveAction(),
+  ];
 };
 
 interface ProcessErrorConfig {
   exploreId: ExploreId;
-  exploreItemState: ExploreItemState;
   datasourceId: string;
   error: any;
 }
 
 const processError = (config: ProcessErrorConfig) => {
-  const { exploreId, exploreItemState, datasourceId, error } = config;
-  const { eventBridge } = exploreItemState;
-  eventBridge.emit('data-error', error);
+  const { exploreId, datasourceId, error } = config;
 
   return [processQueryErrorsAction({ exploreId, response: error, datasourceId })];
 };
@@ -116,23 +101,32 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         // observer subscription, handles datasourceInstance.query observer events and pushes that forward
         const streamSubscription = streamHandler.subscribe({
           next: event => {
-            const { state, error, series } = event;
-            if (!series && !error) {
+            const { state, error, series, delta } = event;
+            if (!series && !delta && !error) {
               return;
             }
 
             if (state === LoadingState.Error) {
-              const actions = processError({ exploreId, exploreItemState, datasourceId, error });
-              actions.forEach(action => {
-                outerObservable.next(action);
-              });
+              const actions = processError({ exploreId, datasourceId, error });
+              publishActions(outerObservable, actions);
             }
 
             if (state === LoadingState.Streaming) {
+              if (event.request && event.request.range) {
+                let newRange = event.request.range;
+                if (isString(newRange.raw.from)) {
+                  newRange = {
+                    from: dateMath.parse(newRange.raw.from, false),
+                    to: dateMath.parse(newRange.raw.to, true),
+                    raw: newRange.raw,
+                  };
+                }
+                outerObservable.next(changeRangeAction({ exploreId, range: newRange }));
+              }
               outerObservable.next(
                 limitMessageRatePayloadAction({
                   exploreId,
-                  series,
+                  series: delta,
                   datasourceId,
                 })
               );
@@ -144,12 +138,10 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 exploreItemState,
                 datasourceId,
                 now,
-                replacePreviousResults: false,
-                observerResponse: series,
+                series: null,
+                delta,
               });
-              actions.forEach(action => {
-                outerObservable.next(action);
-              });
+              publishActions(outerObservable, actions);
             }
           },
         });
@@ -163,12 +155,12 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 exploreItemState,
                 datasourceId,
                 now,
-                replacePreviousResults: true,
-                queryResponse: response,
+                series: response && response.data ? response.data : [],
+                delta: null,
               });
             }),
             catchError(error => {
-              return processError({ exploreId, exploreItemState, datasourceId, error });
+              return processError({ exploreId, datasourceId, error });
             })
           )
           .subscribe({ next: (action: ActionOf<any>) => outerObservable.next(action) });

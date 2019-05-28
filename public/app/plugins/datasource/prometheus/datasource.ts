@@ -170,7 +170,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     activeTargets: PromQuery[],
     end: number
   ) => {
-    queries.forEach((query, index) => {
+    for (let index = 0; index < queries.length; index++) {
+      const query = queries[index];
       const target = activeTargets[index];
       let observable: Observable<any> = null;
 
@@ -194,12 +195,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               key: `prometheus-${target.refId}`,
               state: LoadingState.Done,
               request: options,
-              series,
+              series: null,
+              delta: series,
               unsubscribe: () => undefined,
             });
           },
         });
-    });
+    }
   };
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -211,7 +213,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
-      if (target.container === 'explore') {
+      if (target.context === 'explore') {
         target.format = 'time_series';
         target.instant = false;
         const instantTarget: any = _.cloneDeep(target);
@@ -247,10 +249,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
-    if (
-      observer &&
-      options.targets.filter(target => target.container === 'explore').length === options.targets.length
-    ) {
+    if (observer && options.targets.filter(target => target.context === 'explore').length === options.targets.length) {
       // using observer to make the instant query return immediately
       this.runObserverQueries(options, observer, queries, activeTargets, end);
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;

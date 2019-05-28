@@ -13,10 +13,10 @@ export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState
       const { exploreId, series, datasourceId } = action.payload;
       return processQueryResultsAction({
         exploreId,
-        response: { data: series },
         latency: 0,
         datasourceId,
-        replacePreviousResults: false,
+        series: null,
+        delta: series,
       });
     })
   );

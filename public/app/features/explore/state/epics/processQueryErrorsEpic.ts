@@ -13,12 +13,15 @@ export const processQueryErrorsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSta
     mergeMap((action: ActionOf<ProcessQueryErrorsPayload>) => {
       const { exploreId, datasourceId } = action.payload;
       let { response } = action.payload;
-      const { datasourceInstance } = state$.value.explore[exploreId];
+      const { datasourceInstance, eventBridge } = state$.value.explore[exploreId];
 
       if (datasourceInstance.meta.id !== datasourceId || response.cancelled) {
         // Navigated away, queries did not matter
         return NEVER;
       }
+
+      // For Angular editors
+      eventBridge.emit('data-error', response);
 
       console.error(response); // To help finding problems with query syntax
 

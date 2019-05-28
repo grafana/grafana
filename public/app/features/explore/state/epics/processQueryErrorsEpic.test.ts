@@ -19,7 +19,7 @@ describe('processQueryErrorsEpic', () => {
     describe('and datasourceInstance is the same', () => {
       describe('and the response is not cancelled', () => {
         it('then queryFailureAction is dispatched', () => {
-          const { datasourceId, exploreId, state } = mockExploreState();
+          const { datasourceId, exploreId, state, eventBridge } = mockExploreState();
           const response = { message: 'Something went terribly wrong!' };
 
           epicTester(processQueryErrorsEpic, state)
@@ -28,12 +28,14 @@ describe('processQueryErrorsEpic', () => {
 
           expect(console.error).toBeCalledTimes(1);
           expect(console.error).toBeCalledWith(response);
+          expect(eventBridge.emit).toBeCalledTimes(1);
+          expect(eventBridge.emit).toBeCalledWith('data-error', response);
         });
       });
 
       describe('and the response is cancelled', () => {
         it('then no actions are dispatched', () => {
-          const { datasourceId, exploreId, state } = mockExploreState();
+          const { datasourceId, exploreId, state, eventBridge } = mockExploreState();
           const response = { cancelled: true, message: 'Something went terribly wrong!' };
 
           epicTester(processQueryErrorsEpic, state)
@@ -41,6 +43,7 @@ describe('processQueryErrorsEpic', () => {
             .thenNoActionsWhereDispatched();
 
           expect(console.error).not.toBeCalled();
+          expect(eventBridge.emit).not.toBeCalled();
         });
       });
     });
@@ -48,7 +51,7 @@ describe('processQueryErrorsEpic', () => {
     describe('and datasourceInstance is not the same', () => {
       describe('and the response is not cancelled', () => {
         it('then no actions are dispatched', () => {
-          const { exploreId, state } = mockExploreState();
+          const { exploreId, state, eventBridge } = mockExploreState();
           const response = { message: 'Something went terribly wrong!' };
 
           epicTester(processQueryErrorsEpic, state)
@@ -56,6 +59,7 @@ describe('processQueryErrorsEpic', () => {
             .thenNoActionsWhereDispatched();
 
           expect(console.error).not.toBeCalled();
+          expect(eventBridge.emit).not.toBeCalled();
         });
       });
     });

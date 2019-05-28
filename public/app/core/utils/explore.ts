@@ -9,7 +9,6 @@ import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
@@ -20,30 +19,19 @@ import {
   IntervalValues,
   DataQuery,
   DataSourceApi,
-  toSeriesData,
-  guessFieldTypes,
   TimeFragment,
   DataQueryError,
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
   isTableData,
-  DataQueryResponseData,
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
+  TableData,
 } from '@grafana/ui';
-import {
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  QueryIntervals,
-  QueryOptions,
-  ExploreMode,
-} from 'app/types/explore';
-import { seriesDataToLogsModel } from 'app/core/logs_model';
+import { ExploreUrlState, HistoryItem, QueryTransaction, QueryIntervals, QueryOptions } from 'app/types/explore';
 import { config } from '../config';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { TimeSeries } from '../core';
 
 export const DEFAULT_RANGE = {
@@ -332,63 +320,25 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryBatch(
-  result: any[],
-  mode: ExploreMode,
-  graphInterval: number,
-  replacePreviousResults: boolean,
-  prevGraphResult: any[],
-  prevTableResult: TableModel,
-  prevLogsResult: LogsModel,
-  refreshInterval: string
-) {
-  const flattenedResult: any[] = _.flatten(result);
+export const separateResultIntoTableAndTimeSeriesData = (result: any[]) => {
+  const metrics: TimeSeries[] = [];
+  const tables: TableData[] = [];
 
-  if (mode === ExploreMode.Metrics) {
-    const metrics: DataQueryResponseData[] = replacePreviousResults ? [] : prevGraphResult || [];
-    const tables: DataQueryResponseData[] = [];
-
-    for (let index = 0; index < flattenedResult.length; index++) {
-      const res = flattenedResult[index];
-      if (isTableData(res)) {
-        tables.push(res);
-      } else {
-        metrics.push(res);
-      }
+  for (let index = 0; index < result.length; index++) {
+    const res: any = result[index];
+    const isTable = isTableData(res);
+    if (isTable) {
+      tables.push(res);
+    } else {
+      metrics.push(res);
     }
-
-    const tablesToMerge = replacePreviousResults ? tables : [].concat(prevTableResult || [], tables);
-
-    return {
-      graphResult: makeTimeSeriesList(metrics),
-      tableResult: mergeTablesIntoModel(new TableModel(), ...tablesToMerge),
-      logsResult: { hasUniqueLabels: false, rows: [] },
-    };
   }
-
-  const rowsInState = sortLogsResult(prevLogsResult, refreshInterval).rows;
-  const newResults = result
-    ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
-    : null;
-
-  const processedRows = [];
-  for (const row of rowsInState) {
-    processedRows.push({ ...row, fresh: false });
-  }
-  for (const row of newResults.rows) {
-    processedRows.push({ ...row, fresh: true });
-  }
-
-  const rows = processedRows.slice(processedRows.length - 1000, 1000);
-
-  const logsResult: LogsModel = { ...newResults, rows };
 
   return {
-    graphResult: [],
-    tableResult: new TableModel(),
-    logsResult,
+    metrics,
+    tables,
   };
-}
+};
 
 export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
@@ -397,12 +347,6 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
-
-export const makeTimeSeriesList = (seriesData: DataQueryResponseData[]) => {
-  const series = getProcessedSeriesData(seriesData);
-
-  return TimeSeries.fromSeriesData(series);
-};
 
 /**
  * Update the query history. Side-effect: store history in local storage

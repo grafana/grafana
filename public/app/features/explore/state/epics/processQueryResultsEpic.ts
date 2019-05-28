@@ -14,21 +14,30 @@ import {
   resetQueryErrorAction,
   scanStopAction,
 } from '../actionTypes';
+import { ResultProcessor } from '../../utils/ResultProcessor';
 
 export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
   return action$.ofType(processQueryResultsAction.type).pipe(
     mergeMap((action: ActionOf<ProcessQueryResultsPayload>) => {
-      const { exploreId, datasourceId, response, latency, replacePreviousResults } = action.payload;
-      const { datasourceInstance, scanning, scanner } = state$.value.explore[exploreId];
+      const { exploreId, datasourceId, latency, series, delta } = action.payload;
+      const { datasourceInstance, scanning, scanner, eventBridge } = state$.value.explore[exploreId];
 
       // If datasource already changed, results do not matter
       if (datasourceInstance.meta.id !== datasourceId) {
         return NEVER;
       }
 
-      const series: any[] = response.data;
-      const refIds = getRefIds(series);
+      const result = series || delta || [];
+      const replacePreviousResults = series && !delta ? true : false;
+      const resultProcessor = new ResultProcessor(state$.value.explore[exploreId], replacePreviousResults, result);
+      const graphResult = resultProcessor.getGraphResult();
+      const tableResult = resultProcessor.getTableResult();
+      const logsResult = resultProcessor.getLogsResult();
+      const refIds = getRefIds(result);
       const actions: Array<ActionOf<any>> = [];
+
+      // For Angular editors
+      eventBridge.emit('data-received', resultProcessor.getRawData());
 
       // Clears any previous errors that now have a successful query, important so Angular editors are updated correctly
       actions.push(
@@ -38,14 +47,13 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
         })
       );
 
-      const result = series || [];
-
       actions.push(
         querySuccessAction({
           exploreId,
-          result,
           latency,
-          replacePreviousResults,
+          graphResult,
+          tableResult,
+          logsResult,
         })
       );
 

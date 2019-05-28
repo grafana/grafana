@@ -14,7 +14,32 @@ import {
   clearQueriesAction,
   stateSaveAction,
 } from '../actionTypes';
-import { LoadingState, DataQueryRequest } from '@grafana/ui';
+import { LoadingState, DataQueryRequest, SeriesData, FieldType } from '@grafana/ui';
+
+const testContext = () => {
+  const series: SeriesData[] = [
+    {
+      fields: [
+        {
+          name: 'Value',
+        },
+        {
+          name: 'Time',
+          type: FieldType.time,
+          unit: 'dateTimeAsIso',
+        },
+      ],
+      rows: [],
+      refId: 'A',
+    },
+  ];
+  const response = { data: series };
+
+  return {
+    response,
+    series,
+  };
+};
 
 describe('runQueriesBatchEpic', () => {
   let originalDateNow = Date.now;
@@ -30,9 +55,9 @@ describe('runQueriesBatchEpic', () => {
   describe('when runQueriesBatchAction is dispatched', () => {
     describe('and query targets are not live', () => {
       describe('and query is successful', () => {
-        it('then correct actions are dispatched and eventBridge emits correct message', () => {
-          const response = { data: [{}] };
-          const { exploreId, state, eventBridge, history, datasourceId } = mockExploreState();
+        it('then correct actions are dispatched', () => {
+          const { response, series } = testContext();
+          const { exploreId, state, history, datasourceId } = mockExploreState();
 
           epicTester(runQueriesBatchEpic, state)
             .whenActionIsDispatched(
@@ -44,25 +69,22 @@ describe('runQueriesBatchEpic', () => {
               historyUpdatedAction({ exploreId, history }),
               processQueryResultsAction({
                 exploreId,
-                response,
+                delta: null,
+                series,
                 latency: 0,
                 datasourceId,
-                replacePreviousResults: true,
               }),
               stateSaveAction()
             );
-
-          expect(eventBridge.emit).toBeCalledTimes(1);
-          expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         });
       });
 
       describe('and query is not successful', () => {
-        it('then correct actions are dispatched and eventBridge emits correct message', () => {
+        it('then correct actions are dispatched', () => {
           const error = {
             message: 'Error parsing line x',
           };
-          const { exploreId, state, eventBridge, datasourceId } = mockExploreState();
+          const { exploreId, state, datasourceId } = mockExploreState();
 
           epicTester(runQueriesBatchEpic, state)
             .whenActionIsDispatched(
@@ -73,9 +95,6 @@ describe('runQueriesBatchEpic', () => {
               queryStartAction({ exploreId }),
               processQueryErrorsAction({ exploreId, response: error, datasourceId })
             );
-
-          expect(eventBridge.emit).toBeCalledTimes(1);
-          expect(eventBridge.emit).toBeCalledWith('data-error', error);
         });
       });
     });
@@ -102,14 +121,14 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Streaming,
-              series: [serieA],
+              delta: [serieA],
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
             })
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Streaming,
-              series: [serieB],
+              delta: [serieB],
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
@@ -123,8 +142,8 @@ describe('runQueriesBatchEpic', () => {
       });
 
       describe('and state equals Error', () => {
-        it('then correct actions are dispatched and eventBridge emits correct message', () => {
-          const { exploreId, state, datasourceId, eventBridge } = mockExploreState();
+        it('then correct actions are dispatched', () => {
+          const { exploreId, state, datasourceId } = mockExploreState();
           const unsubscribe = jest.fn();
           const error = { message: 'Something went really wrong!' };
 
@@ -143,15 +162,12 @@ describe('runQueriesBatchEpic', () => {
               queryStartAction({ exploreId }),
               processQueryErrorsAction({ exploreId, response: error, datasourceId })
             );
-
-          expect(eventBridge.emit).toBeCalledTimes(1);
-          expect(eventBridge.emit).toBeCalledWith('data-error', error);
         });
       });
 
       describe('and state equals Done', () => {
-        it('then correct actions are dispatched and eventBridge emits correct message', () => {
-          const { exploreId, state, datasourceId, eventBridge, history } = mockExploreState();
+        it('then correct actions are dispatched', () => {
+          const { exploreId, state, datasourceId, history } = mockExploreState();
           const unsubscribe = jest.fn();
           const serieA = {
             fields: [],
@@ -163,7 +179,7 @@ describe('runQueriesBatchEpic', () => {
             rows: [],
             refId: 'B',
           };
-          const series = [serieA, serieB];
+          const delta = [serieA, serieB];
 
           epicTester(runQueriesBatchEpic, state)
             .whenActionIsDispatched(
@@ -171,7 +187,8 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Done,
-              series,
+              series: null,
+              delta,
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
@@ -181,24 +198,21 @@ describe('runQueriesBatchEpic', () => {
               historyUpdatedAction({ exploreId, history }),
               processQueryResultsAction({
                 exploreId,
-                response: { data: series },
+                delta,
+                series: null,
                 latency: 0,
                 datasourceId,
-                replacePreviousResults: false,
               }),
               stateSaveAction()
             );
-
-          expect(eventBridge.emit).toBeCalledTimes(1);
-          expect(eventBridge.emit).toBeCalledWith('data-received', series);
         });
       });
     });
 
     describe('and another runQueriesBatchAction is dispatched', () => {
       it('then the observable should be unsubscribed', () => {
-        const response = { data: [{}] };
-        const { exploreId, state, eventBridge, history, datasourceId } = mockExploreState();
+        const { response, series } = testContext();
+        const { exploreId, state, history, datasourceId } = mockExploreState();
         const unsubscribe = jest.fn();
 
         epicTester(runQueriesBatchEpic, state)
@@ -226,26 +240,24 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }), // output from first observable
             historyUpdatedAction({ exploreId, history }), // output from first observable
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction(),
             // output from first observable
             queryStartAction({ exploreId }), // output from second observable
             historyUpdatedAction({ exploreId, history }), // output from second observable
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction()
             // output from second observable
           );
 
-        expect(eventBridge.emit).toBeCalledTimes(2);
-        expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         expect(unsubscribe).toBeCalledTimes(1); // first unsubscribe should be called but not second as that isn't unsubscribed
       });
     });
 
     describe('and resetExploreAction is dispatched', () => {
       it('then the observable should be unsubscribed', () => {
-        const response = { data: [{}] };
-        const { exploreId, state, eventBridge, history, datasourceId } = mockExploreState();
+        const { response, series } = testContext();
+        const { exploreId, state, history, datasourceId } = mockExploreState();
         const unsubscribe = jest.fn();
 
         epicTester(runQueriesBatchEpic, state)
@@ -264,20 +276,18 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction()
           );
 
-        expect(eventBridge.emit).toBeCalledTimes(1);
-        expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         expect(unsubscribe).toBeCalledTimes(1);
       });
     });
 
     describe('and updateDatasourceInstanceAction is dispatched', () => {
       it('then the observable should be unsubscribed', () => {
-        const response = { data: [{}] };
-        const { exploreId, state, eventBridge, history, datasourceId, datasourceInstance } = mockExploreState();
+        const { response, series } = testContext();
+        const { exploreId, state, history, datasourceId, datasourceInstance } = mockExploreState();
         const unsubscribe = jest.fn();
 
         epicTester(runQueriesBatchEpic, state)
@@ -296,20 +306,18 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction()
           );
 
-        expect(eventBridge.emit).toBeCalledTimes(1);
-        expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         expect(unsubscribe).toBeCalledTimes(1);
       });
     });
 
     describe('and changeRefreshIntervalAction is dispatched', () => {
       it('then the observable should be unsubscribed', () => {
-        const response = { data: [{}] };
-        const { exploreId, state, eventBridge, history, datasourceId } = mockExploreState();
+        const { response, series } = testContext();
+        const { exploreId, state, history, datasourceId } = mockExploreState();
         const unsubscribe = jest.fn();
 
         epicTester(runQueriesBatchEpic, state)
@@ -328,20 +336,18 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction()
           );
 
-        expect(eventBridge.emit).toBeCalledTimes(1);
-        expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         expect(unsubscribe).toBeCalledTimes(1);
       });
     });
 
     describe('and clearQueriesAction is dispatched', () => {
       it('then the observable should be unsubscribed', () => {
-        const response = { data: [{}] };
-        const { exploreId, state, eventBridge, history, datasourceId } = mockExploreState();
+        const { response, series } = testContext();
+        const { exploreId, state, history, datasourceId } = mockExploreState();
         const unsubscribe = jest.fn();
 
         epicTester(runQueriesBatchEpic, state)
@@ -360,12 +366,10 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, response, latency: 0, datasourceId, replacePreviousResults: true }),
+            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
             stateSaveAction()
           );
 
-        expect(eventBridge.emit).toBeCalledTimes(1);
-        expect(eventBridge.emit).toBeCalledWith('data-received', response.data);
         expect(unsubscribe).toBeCalledTimes(1);
       });
     });

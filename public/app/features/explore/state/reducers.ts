@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import {
-  calculateResultsFromQueryBatch,
   getIntervals,
   ensureQueries,
   getQueryKeys,
@@ -30,6 +29,7 @@ import {
   resetQueryErrorAction,
   queryStartAction,
   runQueriesAction,
+  changeRangeAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -387,25 +387,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { queryIntervals, refreshInterval, mode, graphResult, tableResult, logsResult } = state;
-      const { result, latency, replacePreviousResults } = action.payload;
-      const results = calculateResultsFromQueryBatch(
-        result,
-        mode,
-        queryIntervals.intervalMs,
-        replacePreviousResults,
-        graphResult,
-        tableResult,
-        logsResult,
-        refreshInterval
-      );
+      const { refreshInterval } = state;
+      const { latency, graphResult, tableResult, logsResult } = action.payload;
       const live = isLive(refreshInterval);
 
       return {
         ...state,
-        graphResult: results.graphResult,
-        tableResult: results.tableResult,
-        logsResult: results.logsResult,
+        graphResult,
+        tableResult,
+        logsResult,
         latency,
         graphIsLoading: live ? true : false,
         logIsLoading: live ? true : false,
@@ -598,6 +588,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         urlReplaced: true,
+      };
+    },
+  })
+  .addMapper({
+    filter: changeRangeAction,
+    mapper: (state, action): ExploreItemState => {
+      return {
+        ...state,
+        range: action.payload.range,
       };
     },
   })

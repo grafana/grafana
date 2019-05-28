@@ -10,6 +10,9 @@ import {
   TimeRange,
   DataQueryError,
   SeriesData,
+  LogsModel,
+  TimeSeries,
+  DataQueryResponseData,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -21,6 +24,7 @@ import {
   QueryOptions,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import TableModel from 'app/core/table_model';
 
 /**  Higher order actions
  *
@@ -150,9 +154,10 @@ export interface QueryStartPayload {
 
 export interface QuerySuccessPayload {
   exploreId: ExploreId;
-  result: any;
   latency: number;
-  replacePreviousResults: boolean;
+  graphResult: TimeSeries[];
+  tableResult: TableModel;
+  logsResult: LogsModel;
 }
 
 export interface HistoryUpdatedPayload {
@@ -245,10 +250,10 @@ export interface ProcessQueryErrorsPayload {
 
 export interface ProcessQueryResultsPayload {
   exploreId: ExploreId;
-  response: any;
   latency: number;
   datasourceId: string;
-  replacePreviousResults: boolean;
+  series?: DataQueryResponseData[];
+  delta?: SeriesData[];
 }
 
 export interface RunQueriesBatchPayload {
@@ -260,6 +265,11 @@ export interface LimitMessageRatePayload {
   series: SeriesData[];
   exploreId: ExploreId;
   datasourceId: string;
+}
+
+export interface ChangeRangePayload {
+  exploreId: ExploreId;
+  range: TimeRange;
 }
 
 /**
@@ -473,6 +483,8 @@ export const runQueriesBatchAction = actionCreatorFactory<RunQueriesBatchPayload
 export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRatePayload>(
   'explore/LIMIT_MESSAGE_RATE_PAYLOAD'
 ).create();
+
+export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

@@ -1,19 +1,6 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import {
-  getValueFormat,
-  stringToJsRegex,
-  ValueFormatter,
-  DecimalCount,
-  SeriesData,
-  TimeRange,
-  FieldCache,
-  FieldType,
-  colors,
-  getColorFromHexRgbOrName,
-  Field,
-} from '@grafana/ui';
-import { config } from './config';
+import { getValueFormat, stringToJsRegex, ValueFormatter, DecimalCount } from '@grafana/ui';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -372,85 +359,5 @@ export default class TimeSeries {
   setColor(color: string) {
     this.color = color;
     this.bars.fillColor = color;
-  }
-
-  static fromSeriesData(
-    dataList: SeriesData[],
-    range?: TimeRange,
-    aliasColors?: { [key: string]: string }
-  ): TimeSeries[] {
-    const list: TimeSeries[] = [];
-
-    if (!dataList || !dataList.length) {
-      return list;
-    }
-
-    for (const series of dataList) {
-      const { fields } = series;
-      const cache = new FieldCache(fields);
-      const time = cache.getFirstFieldOfType(FieldType.time);
-
-      if (!time) {
-        continue;
-      }
-
-      const seriesName = series.name ? series.name : series.refId;
-
-      for (let i = 0; i < fields.length; i++) {
-        if (fields[i].type !== FieldType.number) {
-          continue;
-        }
-
-        const field = fields[i];
-        let name = field.title;
-
-        if (!field.title) {
-          name = field.name;
-        }
-
-        if (seriesName && dataList.length > 0 && name !== seriesName) {
-          name = seriesName + ' ' + name;
-        }
-
-        const datapoints = [];
-        for (const row of series.rows) {
-          datapoints.push([row[i], row[time.index]]);
-        }
-
-        list.push(TimeSeries.toTimeSerie(field, name, datapoints, list.length, range, aliasColors));
-      }
-    }
-
-    return list;
-  }
-
-  private static toTimeSerie(
-    field: Field,
-    alias: string,
-    datapoints: any[][],
-    index: number,
-    range?: TimeRange,
-    aliasColors?: { [key: string]: string }
-  ): TimeSeries {
-    const colorIndex = index % colors.length;
-    const color = aliasColors && aliasColors[alias] ? aliasColors[alias] : colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints: datapoints || [],
-      alias: alias,
-      color: getColorFromHexRgbOrName(color, config.theme.type),
-      unit: field.unit,
-    });
-
-    if (datapoints && datapoints.length > 0 && range) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = range.from;
-
-      if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
-      }
-    }
-
-    return series;
   }
 }
