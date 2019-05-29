@@ -24,6 +24,12 @@
   height: 0.8em;
 }
 
+.gicon-alert-list-alerting {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert_list_alerting.svg');
+  width: 24px;
+  height: 24px;
+}
+
 .gicon-add-annotation {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation.svg');
 }

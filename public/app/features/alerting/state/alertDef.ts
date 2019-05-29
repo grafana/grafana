@@ -74,7 +74,7 @@ function getStateDisplayModel(state: string) {
     case 'alerting': {
       return {
         text: 'ALERTING',
-        iconClass: 'icon-gf icon-gf-critical',
+        iconClass: 'gicon gicon-alert-list-alerting',
         stateClass: 'alert-state-critical',
       };
     }
