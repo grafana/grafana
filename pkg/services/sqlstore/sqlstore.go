@@ -37,6 +37,8 @@ var (
 const ContextSessionName = "db-session"
 
 func init() {
+	xorm.DefaultPostgresSchema = ""
+
 	registry.Register(&registry.Descriptor{
 		Name:         "SqlStore",
 		Instance:     &SqlStore{},
