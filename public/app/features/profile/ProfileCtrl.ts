@@ -1,11 +1,13 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class ProfileCtrl {
   user: any;
   oldTheme: any;
   teams: any = [];
   orgs: any = [];
+  sessions: object[] = [];
   userForm: any;
   showTeamsList = false;
   showOrgsList = false;
@@ -15,6 +17,7 @@ export class ProfileCtrl {
   /** @ngInject */
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
+    this.getUserSessions();
     this.getUserTeams();
     this.getUserOrgs();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
@@ -24,6 +27,19 @@ export class ProfileCtrl {
     this.backendSrv.get('/api/user').then(user => {
       this.user = user;
       this.user.theme = user.theme || 'dark';
+    });
+  }
+
+  getUserSessions() {
+    this.backendSrv.get('/api/user/auth-tokens').then(sessions => {
+      this.sessions = sessions.map(session => {
+        return {
+          seenAt: dateTime(session.seenAt).fromNow(true),
+          createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+          clientIp: session.clientIp,
+          browserOs: this.getBrowserOS(session.userAgent),
+        };
+      });
     });
   }
 
@@ -45,6 +61,16 @@ export class ProfileCtrl {
     this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       window.location.href = config.appSubUrl + '/profile';
     });
+  }
+
+  getBrowserOS(userAgent) {
+    const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
+      os = userAgent.match(/(Windows|Linux|iOS|Android|OS |MacOS)([^;|)|\s]*)/gi);
+
+    let browserOS = browser.length ? browser[0] + ' on ' : 'Undetected browser on ';
+
+    browserOS += os;
+    return browserOS;
   }
 
   update() {
