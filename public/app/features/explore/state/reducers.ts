@@ -599,8 +599,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   })
   .addMapper({
     filter: runQueriesAction,
-    mapper: (state): ExploreItemState => {
-      const { range, datasourceInstance, containerWidth } = state;
+    mapper: (state, action): ExploreItemState => {
+      const { range } = action.payload;
+      const { datasourceInstance, containerWidth } = state;
       let interval = '1s';
       if (datasourceInstance && datasourceInstance.interval) {
         interval = datasourceInstance.interval;
@@ -608,6 +609,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const queryIntervals = getIntervals(range, interval, containerWidth);
       return {
         ...state,
+        range,
         queryIntervals,
         showingStartPage: false,
       };

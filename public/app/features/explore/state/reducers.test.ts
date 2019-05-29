@@ -4,6 +4,7 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
+  DEFAULT_RANGE,
 } from './reducers';
 import {
   ExploreId,
@@ -31,7 +32,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, dateTime } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -193,6 +194,7 @@ describe('Explore item reducer', () => {
       it('then it should set correct state', () => {
         const initalState: Partial<ExploreItemState> = {
           showingStartPage: true,
+          range: null,
         };
         const expectedState = {
           queryIntervals: {
@@ -200,11 +202,16 @@ describe('Explore item reducer', () => {
             intervalMs: 1000,
           },
           showingStartPage: false,
+          range: {
+            from: dateTime(),
+            to: dateTime(),
+            raw: DEFAULT_RANGE,
+          },
         };
 
         reducerTester()
           .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
           .thenStateShouldEqual(expectedState);
       });
     });

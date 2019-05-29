@@ -21,12 +21,16 @@ export default class LogAnalyticsQuerystringBuilder {
         if (p1 === 'timeFilter') {
           return this.getTimeFilter(p2, this.options);
         }
+        if (p1 === 'timeFrom') {
+          return this.getFrom(this.options);
+        }
+        if (p1 === 'timeTo') {
+          return this.getUntil(this.options);
+        }
 
         return match;
       });
       queryString = queryString.replace(/\$__interval/gi, this.options.interval);
-      queryString = queryString.replace(/\$__from/gi, this.getFrom(this.options));
-      queryString = queryString.replace(/\$__to/gi, this.getUntil(this.options));
     }
     const rawQuery = queryString;
     queryString = encodeURIComponent(queryString);
@@ -44,7 +48,10 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getUntil(options) {
     if (options.rangeRaw.to === 'now') {
-      return 'now()';
+      const now = Date.now();
+      return `datetime(${dateTime(now)
+        .startOf('minute')
+        .toISOString()})`;
     } else {
       const until = options.range.to;
       return `datetime(${dateTime(until)
