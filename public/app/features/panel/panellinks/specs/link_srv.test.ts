@@ -1,4 +1,4 @@
-import { LinkSrv } from '../link_srv';
+import { LinkSrv, DrilldownLinkBuiltInVars } from '../link_srv';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -74,24 +74,24 @@ describe('linkSrv', () => {
   });
 
   describe('built in variables', () => {
-    it('should add time range to url if $__urlTimeRange variable present', () => {
+    it('should add time range to url if $__url_time_range variable present', () => {
       expect(
         linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__urlTimeRange',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.keepTime}`,
           },
           {}
         ).url
       ).toEqual('/d/1?from=now-1h&to=now');
     });
 
-    it('should add all variables to url if $__allVariables variable present', () => {
+    it('should add all variables to url if $__all_variables variable present', () => {
       expect(
         linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__allVariables',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.includeVars}`,
           },
           {}
         ).url
@@ -103,7 +103,7 @@ describe('linkSrv', () => {
         linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__seriesName',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.seriesName}`,
           },
           {},
           dataPointMock
@@ -115,7 +115,7 @@ describe('linkSrv', () => {
         linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__dataPointTs',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.valueTime}`,
           },
           {},
           dataPointMock

@@ -6,11 +6,11 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { PanelDrillDownLink, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
 import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
 
-const DrilldownLinkBuiltInVars = {
-  keepTime: '__urlTimeRange',
-  includeVars: '__allVariables',
-  seriesName: '__seriesName',
-  dataPointTs: '__dataPointTs',
+export const DrilldownLinkBuiltInVars = {
+  keepTime: '__url_time_range',
+  includeVars: '__all_variables',
+  seriesName: '__series_name',
+  valueTime: '__value_time',
 };
 
 // Represents factor by which the original time range will be narrowed down when
@@ -62,14 +62,14 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataPointVars = (seriesName: string, dataPointTs: DateTime) => {
+  getDataPointVars = (seriesName: string, valueTime: DateTime) => {
     const timeRange = this.timeSrv.timeRange();
     const targetAbsoluteTimeRange = transformAbsoluteTimeRange(timeRange, DrilldownLinkDataPointRangeFactor);
     const dataPointRangeQuery = toUrlParams({
-      from: dateTime(dataPointTs)
+      from: dateTime(valueTime)
         .subtract(targetAbsoluteTimeRange)
         .valueOf(),
-      to: dateTime(dataPointTs)
+      to: dateTime(valueTime)
         .add(targetAbsoluteTimeRange)
         .valueOf(),
     });
@@ -79,7 +79,7 @@ export class LinkSrv implements LinkService {
     });
 
     return {
-      [DrilldownLinkBuiltInVars.dataPointTs]: {
+      [DrilldownLinkBuiltInVars.valueTime]: {
         text: dataPointRangeQuery,
         value: dataPointRangeQuery,
       },

@@ -19,6 +19,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
+import { DrilldownLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -635,11 +636,11 @@ function upgradePanelLink(link: any): PanelDrillDownLink {
   let url = link.url;
 
   if (link.keepTime) {
-    url = appendQueryToUrl(url, '$__urlTimeRange');
+    url = appendQueryToUrl(url, `$${DrilldownLinkBuiltInVars.keepTime}`);
   }
 
   if (link.includeVars) {
-    url = appendQueryToUrl(url, '$__allVariables');
+    url = appendQueryToUrl(url, `$${DrilldownLinkBuiltInVars.includeVars}`);
   }
 
   if (link.params) {
