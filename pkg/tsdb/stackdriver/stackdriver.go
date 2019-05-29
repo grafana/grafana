@@ -608,6 +608,27 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 		if err != nil {
 			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
 		}
+		token, err := defaultCredentials.TokenSource.Token()
+		if err != nil {
+			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+		}
+		if !token.Valid() {
+			return "", fmt.Errorf("Failed to validate GCP credentials.")
+		}
+
+		if defaultCredentials.ProjectID == "" {
+			cloudresourcemanagerService, err := cloudresourcemanager.NewService(ctx, option.WithScopes("https://www.googleapis.com/auth/monitoring.read"))
+			if err != nil {
+				return "", fmt.Errorf("Failed to start resource manager service credentials. error: %v", err)
+			}
+			projectList, err := cloudresourcemanagerService.Projects.List().Do()
+			if err != nil {
+				return "", fmt.Errorf("Failed to retrieve cloud resource manager projects error: %v", err)
+			}
+
+			return projectList.Projects[0].ProjectId, nil
+		}
+
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
