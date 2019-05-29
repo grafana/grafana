@@ -101,7 +101,7 @@ func (multiples *MultiLDAP) User(login string) (
 
 	search := []string{login}
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
@@ -134,7 +134,7 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
