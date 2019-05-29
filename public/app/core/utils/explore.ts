@@ -24,15 +24,12 @@ import {
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
-  isTableData,
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
-  TableData,
 } from '@grafana/ui';
 import { ExploreUrlState, HistoryItem, QueryTransaction, QueryIntervals, QueryOptions } from 'app/types/explore';
 import { config } from '../config';
-import { TimeSeries } from '../core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -319,26 +316,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
     )
   );
 }
-
-export const separateResultIntoTableAndTimeSeriesData = (result: any[]) => {
-  const metrics: TimeSeries[] = [];
-  const tables: TableData[] = [];
-
-  for (let index = 0; index < result.length; index++) {
-    const res: any = result[index];
-    const isTable = isTableData(res);
-    if (isTable) {
-      tables.push(res);
-    } else {
-      metrics.push(res);
-    }
-  }
-
-  return {
-    metrics,
-    tables,
-  };
-};
 
 export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
