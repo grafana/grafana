@@ -14,6 +14,7 @@ import TimeSeries from 'app/core/time_series2';
 import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -30,6 +31,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
+  contextMenuCtrl: GraphContextMenuCtrl;
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -131,6 +133,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel);
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
@@ -311,6 +314,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       modalClass: 'modal--narrow',
     });
   }
+
+  onContextMenuClose = () => {
+    this.contextMenuCtrl.toggleMenu();
+  };
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };

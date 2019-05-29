@@ -8,7 +8,7 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, ContextMenu } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 
@@ -71,5 +71,11 @@ export function registerAngularDirectives() {
     'labelWidth',
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('contextMenu', ContextMenu, [
+    'x',
+    'y',
+    'items',
+    ['onClose', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

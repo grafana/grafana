@@ -24,14 +24,16 @@ import ReactDOM from 'react-dom';
 import { Legend, GraphLegendProps } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
+  contextMenu: GraphContextMenuCtrl;
   tooltip: any;
   dashboard: any;
   annotations: object[];
@@ -47,6 +49,7 @@ class GraphElement {
 
   constructor(private scope, private elem, private timeSrv) {
     this.ctrl = scope.ctrl;
+    this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
     this.annotations = [];
@@ -171,7 +174,32 @@ class GraphElement {
     }
   }
 
+  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: any): ContextMenuItem[] => {
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Add annotation',
+        icon: 'gicon gicon-annotation',
+        onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+      },
+    ];
+
+    return item
+      ? [
+          ...items,
+          // TODO: generate drilldown links URLs
+          {
+            label: 'Some drilldown link',
+            icon: 'gicon gicon-link',
+            onClick: () => {},
+          },
+        ]
+      : items;
+  };
+
   onPlotClick(event, pos, item) {
+    const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
+    const contextMenuSourceItem = item;
+    let contextMenuItems;
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;
@@ -179,12 +207,23 @@ class GraphElement {
 
     if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Skip if range selected (added in "plotselected" event handler)
-      const isRangeSelection = pos.x !== pos.x1;
-      if (!isRangeSelection) {
-        setTimeout(() => {
-          this.eventManager.updateTime({ from: pos.x, to: null });
-        }, 100);
+      if (pos.x !== pos.x1) {
+        return;
       }
+      setTimeout(() => {
+        this.eventManager.updateTime({ from: pos.x, to: null });
+      }, 100);
+      return;
+    } else {
+      this.tooltip.clear(this.plot);
+      contextMenuItems = this.getContextMenuItems(pos, item);
+      this.scope.$apply(() => {
+        // Setting nearest CustomScrollbar element as a scroll context for graph context menu
+        this.contextMenu.setScrollContextElement(scrollContextElement);
+        this.contextMenu.setSource(contextMenuSourceItem);
+        this.contextMenu.setMenuItems(contextMenuItems);
+        this.contextMenu.toggleMenu(pos);
+      });
     }
   }
 
@@ -446,6 +485,7 @@ class GraphElement {
         color: gridColor,
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
+        mouseActiveRadius: 30,
       },
       selection: {
         mode: 'x',
