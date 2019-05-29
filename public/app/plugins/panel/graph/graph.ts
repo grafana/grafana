@@ -177,7 +177,7 @@ class GraphElement {
   }
 
   getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuItem[] => {
-    const drilldownLinks: PanelDrillDownLink[] = this.panel.links || [];
+    const drilldownLinks: PanelDrillDownLink[] = this.panel.options.drilldownLinks || [];
 
     const items: ContextMenuItem[] = [
       {

@@ -11,7 +11,7 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, PanelDrillDownLink } from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -120,6 +120,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
+    options: {
+      drilldownLinks: [],
+    },
   };
 
   /** @ngInject */
@@ -130,6 +133,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    _.defaults(this.panel.options, this.panelDefaults.options);
 
     this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel);
@@ -141,6 +145,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+
+    this.onDrilldownLinksChange = this.onDrilldownLinksChange.bind(this);
   }
 
   onInitEditMode() {
@@ -148,6 +154,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Drilldown links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
@@ -284,6 +291,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     override.yaxis = info.yaxis;
     this.render();
   };
+
+  onDrilldownLinksChange(drilldownLinks: PanelDrillDownLink[]) {
+    this.panel.updateOptions({
+      ...this.panel.options,
+      drilldownLinks,
+    });
+  }
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});
