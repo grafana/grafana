@@ -48,6 +48,13 @@
     </div>
   </div>
 
+  <div ng-if="ctrl.current.jsonData.authenticationType !== ctrl.defaultAuthenticationType">
+    <div class="gf-form">
+      <label class="gf-form-label width-10">GCP Project ID</label>
+      <input type="text" class="gf-form-input max-width-24" ng-model='ctrl.current.jsonData.defaultProject' placeholder="project-id"></input>
+    </div>
+  </div>
+
   <div ng-if="ctrl.current.jsonData.authenticationType === ctrl.defaultAuthenticationType && !ctrl.current.jsonData.clientEmail && !ctrl.inputDataValid">
     <div class="gf-form-group" ng-if="!ctrl.inputDataValid">
       <div class="gf-form">
