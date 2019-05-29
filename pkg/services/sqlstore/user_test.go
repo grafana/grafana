@@ -191,12 +191,22 @@ func TestUserDataAccess(t *testing.T) {
 					err = SearchUsers(&query)
 
 					So(query.Result.TotalCount, ShouldEqual, 5)
-					So(query.Result.Users[0].IsDisabled, ShouldBeTrue)
-					So(query.Result.Users[1].IsDisabled, ShouldBeTrue)
-					So(query.Result.Users[2].IsDisabled, ShouldBeTrue)
+					for _, user := range query.Result.Users {
+						shouldBeDisabled := false
 
-					So(query.Result.Users[3].IsDisabled, ShouldBeFalse)
-					So(query.Result.Users[4].IsDisabled, ShouldBeFalse)
+						// Check if user id is in the userIdsToDisable list
+						for _, disabledUserId := range userIdsToDisable {
+							if user.Id == disabledUserId {
+								So(user.IsDisabled, ShouldBeTrue)
+								shouldBeDisabled = true
+							}
+						}
+
+						// Otherwise user shouldn't be disabled
+						if !shouldBeDisabled {
+							So(user.IsDisabled, ShouldBeFalse)
+						}
+					}
 				})
 			})
 		})
