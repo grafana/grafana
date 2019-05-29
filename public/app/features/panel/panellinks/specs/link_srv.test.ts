@@ -11,7 +11,7 @@ jest.mock('angular', () => {
 });
 
 const dataPointMock = {
-  seriesLabel: 'A-series',
+  seriesName: 'A-series',
   datapoint: [1000000000, 1],
 };
 

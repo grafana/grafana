@@ -28,7 +28,7 @@ interface LinkModel {
 
 interface LinkDataPoint {
   datapoint: TimeSeriesValue[];
-  seriesLabel: string;
+  seriesName: string;
 }
 export interface LinkService {
   getDrilldownLinkUIModel: (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
@@ -118,7 +118,7 @@ export class LinkSrv implements LinkService {
     return dataPoint
       ? {
           ...info,
-          url: this.templateSrv.replace(info.url, this.getDataPointVars(dataPoint.seriesLabel, dateTime(dataPoint[0]))),
+          url: this.templateSrv.replace(info.url, this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))),
         }
       : info;
   };

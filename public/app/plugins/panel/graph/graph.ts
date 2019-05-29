@@ -192,7 +192,7 @@ class GraphElement {
           ...items,
           ...drilldownLinks.map<ContextMenuItem>(link => {
             const linkUiModel = this.linkSrv.getDrilldownLinkUIModel(link, this.panel.scopedVariables, {
-              seriesLabel: item.series.alias,
+              seriesName: item.series.alias,
               datapoint: item.datapoint,
             });
             return {
