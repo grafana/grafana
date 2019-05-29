@@ -26,7 +26,6 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", UpdateUserLastSeenAt)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", SearchUsers)
-	bus.AddHandler("sql", SearchUsersExt)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DisableUser)
 	bus.AddHandler("sql", DeleteUser)
@@ -429,56 +428,6 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 func SearchUsers(query *m.SearchUsersQuery) error {
 	query.Result = m.SearchUserQueryResult{
 		Users: make([]*m.UserSearchHitDTO, 0),
-	}
-
-	queryWithWildcards := "%" + query.Query + "%"
-
-	whereConditions := make([]string, 0)
-	whereParams := make([]interface{}, 0)
-	sess := x.Table("user")
-
-	if query.OrgId > 0 {
-		whereConditions = append(whereConditions, "org_id = ?")
-		whereParams = append(whereParams, query.OrgId)
-	}
-
-	if query.Query != "" {
-		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
-		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
-	}
-
-	if len(whereConditions) > 0 {
-		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
-
-	offset := query.Limit * (query.Page - 1)
-	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "email", "name", "login", "is_admin", "is_disabled", "last_seen_at")
-	if err := sess.Find(&query.Result.Users); err != nil {
-		return err
-	}
-
-	// get total
-	user := m.User{}
-	countSess := x.Table("user")
-
-	if len(whereConditions) > 0 {
-		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-	}
-
-	count, err := countSess.Count(&user)
-	query.Result.TotalCount = count
-
-	for _, user := range query.Result.Users {
-		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
-	}
-
-	return err
-}
-
-func SearchUsersExt(query *m.SearchExternalUsersQuery) error {
-	query.Result = m.SearchExternalUserQueryResult{
-		Users: make([]*m.ExternalUserSearchHitDTO, 0),
 	}
 
 	queryWithWildcards := "%" + query.Query + "%"
