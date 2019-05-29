@@ -6,6 +6,7 @@ export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
 export * from './Button/Button';
+export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
 export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
@@ -65,3 +66,4 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem } from './ContextMenu/ContextMenu';
+export { DrilldownLinksEditor } from './DrilldownLinks/DrilldownLinksEditor';

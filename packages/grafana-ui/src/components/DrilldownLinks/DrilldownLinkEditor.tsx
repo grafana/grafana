@@ -1,51 +1,15 @@
-// Libraries
-import React, { FC, ChangeEvent, useState } from 'react';
+import React, { FC, useState, ChangeEvent } from 'react';
+import { PanelDrillDownLink } from '../../index';
+import { FormField, Switch } from '../index';
 
-// Components
-import { PanelOptionsGroup, PanelDrillDownLink, FormField, Switch } from '@grafana/ui';
-
-export interface Props {
-  value: PanelDrillDownLink[];
-  onChange: (links: PanelDrillDownLink[]) => void;
-}
-
-export const PanelLinksEditor: FC<Props> = React.memo(({ value, onChange }) => {
-  const onAdd = () => {
-    onChange([...value, { url: '', title: '' }]);
-  };
-
-  const onLinkChanged = (linkIndex: number, newLink: PanelDrillDownLink) => {
-    onChange(
-      value.map((item, listIndex) => {
-        if (linkIndex === listIndex) {
-          return newLink;
-        }
-        return item;
-      })
-    );
-  };
-
-  const onRemove = (link: PanelDrillDownLink) => {
-    onChange(value.filter(item => item !== link));
-  };
-
-  return (
-    <PanelOptionsGroup title="Drilldown links" onAdd={onAdd}>
-      {value.map((link, index) => (
-        <LinkEditor key={index.toString()} index={index} value={link} onChange={onLinkChanged} onRemove={onRemove} />
-      ))}
-    </PanelOptionsGroup>
-  );
-});
-
-export interface LinkEditor {
+export interface DrilldownLinkEditor {
   index: number;
   value: PanelDrillDownLink;
   onChange: (index: number, link: PanelDrillDownLink) => void;
   onRemove: (link: PanelDrillDownLink) => void;
 }
 
-export const LinkEditor: FC<LinkEditor> = React.memo(({ index, value, onChange, onRemove }) => {
+export const DrilldownLinkEditor: FC<DrilldownLinkEditor> = React.memo(({ index, value, onChange, onRemove }) => {
   const [linkUrl, setLinkUrl] = useState(value.url);
   const [title, setTitle] = useState(value.title);
 
