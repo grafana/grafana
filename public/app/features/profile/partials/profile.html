@@ -89,7 +89,8 @@
       </thead>
       <tbody>
         <tr ng-repeat="session in ctrl.sessions">
-          <td>{{session.seenAt}}</td>
+          <td ng-if="session.isActive">Now</td>
+          <td ng-if="!session.isActive">{{session.seenAt}}</td>
           <td>{{session.createdAt}}</td>
           <td>{{session.clientIp}}</td>
           <td>{{session.browserOs}}</td>

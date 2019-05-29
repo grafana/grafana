@@ -32,8 +32,21 @@ export class ProfileCtrl {
 
   getUserSessions() {
     this.backendSrv.get('/api/user/auth-tokens').then(sessions => {
+      sessions.reverse();
+
+      const found = sessions.findIndex(session => {
+        return session.isActive;
+      });
+
+      if (found) {
+        const now = sessions[found];
+        sessions.splice(found, found);
+        sessions.unshift(now);
+      }
+
       this.sessions = sessions.map(session => {
         return {
+          isActive: session.isActive,
           seenAt: dateTime(session.seenAt).fromNow(true),
           createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
           clientIp: session.clientIp,
@@ -65,11 +78,11 @@ export class ProfileCtrl {
 
   getBrowserOS(userAgent) {
     const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
-      os = userAgent.match(/(Windows|Linux|iOS|Android|OS |MacOS)([^;|)|\s]*)/gi);
+      os = userAgent.match(/(Windows|Linux|iOS|Android|OS |Mac OS)(?: |\s|\d|\w)([^;|)]*)/gi);
 
     let browserOS = browser.length ? browser[0] + ' on ' : 'Undetected browser on ';
 
-    browserOS += os;
+    browserOS += os[0].replace(/_/g, '.');
     return browserOS;
   }
 
