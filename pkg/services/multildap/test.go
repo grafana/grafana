@@ -35,9 +35,6 @@ func (mock *mockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
 
 	return mock.usersRestReturn, mock.usersErrReturn
 }
-func (mock *mockLDAP) ExtractGrafanaUser(*ldap.UserInfo) (*models.ExternalUserInfo, error) {
-	return nil, nil
-}
 func (mock *mockLDAP) InitialBind(string, string) error {
 	return nil
 }
