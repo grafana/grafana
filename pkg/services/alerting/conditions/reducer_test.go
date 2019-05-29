@@ -184,8 +184,8 @@ func TestSimpleReducer(t *testing.T) {
 	})
 }
 
-func testReducer(typ string, datapoints ...float64) float64 {
-	reducer := newSimpleReducer(typ)
+func testReducer(reducerType string, datapoints ...float64) float64 {
+	reducer := newSimpleReducer(reducerType)
 	series := &tsdb.TimeSeries{
 		Name: "test time serie",
 	}

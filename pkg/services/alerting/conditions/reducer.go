@@ -117,8 +117,8 @@ func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 	return null.FloatFrom(value)
 }
 
-func newSimpleReducer(typ string) *queryReducer {
-	return &queryReducer{Type: typ}
+func newSimpleReducer(t string) *queryReducer {
+	return &queryReducer{Type: t}
 }
 
 func calculateDiff(series *tsdb.TimeSeries, allNull bool, value float64, fn func(float64, float64) float64) (bool, float64) {
