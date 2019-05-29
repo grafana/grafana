@@ -5,6 +5,7 @@ import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { PanelDrillDownLink, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
 import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
+import { deprecationWarning } from '@grafana/ui';
 
 export const DrilldownLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -121,6 +122,16 @@ export class LinkSrv implements LinkService {
         }
       : info;
   };
+
+  /**
+   * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
+   *
+   * @deprecated Drilldown links should be generated using getDrilldownLinkUIModel method
+   */
+  getPanelLinkAnchorInfo(link: PanelDrillDownLink, scopedVars: ScopedVars) {
+    deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDrilldownLinkUIModel');
+    return this.getDrilldownLinkUIModel(link, scopedVars);
+  }
 }
 
 let singleton: LinkService;
