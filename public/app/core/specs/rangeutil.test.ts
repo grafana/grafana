@@ -1,6 +1,7 @@
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import _ from 'lodash';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { TimeRange } from '@grafana/ui';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
@@ -112,6 +113,18 @@ describe('rangeUtil', () => {
     it('Date range with from and to both are either in now-* or now+* format', () => {
       const text = rangeUtil.describeTimeRange({ from: 'now-6h', to: 'now+1h' });
       expect(text).toBe('now-6h to now+1h');
+    });
+  });
+
+  describe('Time range transformation', () => {
+    it('modifies time range by given factor', () => {
+      const timeRange: TimeRange = {
+        from: dateTime(10),
+        to: dateTime(20),
+        raw: { from: '10', to: '20' },
+      };
+
+      expect(rangeUtil.transformAbsoluteTimeRange(timeRange, 0.2)).toEqual(2);
     });
   });
 });

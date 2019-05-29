@@ -49,7 +49,7 @@ describe('ShareModalCtrl', () => {
       {},
       ctx.timeSrv,
       ctx.templateSrv,
-      new LinkSrv({}, ctx.stimeSrv)
+      new LinkSrv({} as any, ctx.stimeSrv)
     );
   });
 

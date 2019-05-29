@@ -1,6 +1,11 @@
 import { has } from 'lodash';
-import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex } from '@grafana/ui';
-import deprecationWarning from '@grafana/ui/src/utils/deprecationWarning';
+import {
+  getValueFormat,
+  getValueFormatterIndex,
+  getValueFormats,
+  stringToJsRegex,
+  deprecationWarning,
+} from '@grafana/ui';
 
 const kbn: any = {};
 

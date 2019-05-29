@@ -18,6 +18,7 @@ import { configureStore } from 'app/store/configureStore';
 
 // Types
 import { KioskUrlValue } from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -30,6 +31,7 @@ export class GrafanaCtrl {
     bridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
+    linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
@@ -39,6 +41,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDatasourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     configureStore();
 

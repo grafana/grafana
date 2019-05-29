@@ -1,6 +1,6 @@
 import { ContextMenuItem } from '@grafana/ui';
 
-interface FlotItem {
+export interface FlotDataPoint {
   dataIndex: number;
   datapoint: number[];
   pageX: number;
@@ -10,7 +10,7 @@ interface FlotItem {
 }
 
 export class GraphContextMenuCtrl {
-  private source?: FlotItem | null;
+  private source?: FlotDataPoint | null;
   private scope?: any;
   menuItems: ContextMenuItem[];
   scrollContextElement: HTMLElement;
@@ -62,7 +62,7 @@ export class GraphContextMenuCtrl {
     this.scrollContextElement = el;
   };
 
-  setSource = (source: FlotItem | null) => {
+  setSource = (source: FlotDataPoint | null) => {
     this.source = source;
   };
 

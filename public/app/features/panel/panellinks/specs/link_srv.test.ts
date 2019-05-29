@@ -1,13 +1,19 @@
-import { LinkSrv } from '../link_srv';
+import { LinkSrv, DrilldownLinkBuiltInVars } from '../link_srv';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { advanceTo } from 'jest-date-mock';
 // import { ContextSrvStub } from 'test/specs/helpers';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
   return new AngularJSMock();
 });
+
+const dataPointMock = {
+  seriesName: 'A-series',
+  datapoint: [1000000000, 1],
+};
 
 describe('linkSrv', () => {
   let linkSrv: LinkSrv;
@@ -36,7 +42,7 @@ describe('linkSrv', () => {
 
     const timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, {} as any);
     timeSrv.init(_dashboard);
-    timeSrv.setTime({ from: 'now-1', to: 'now' });
+    timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
 
     const _templateSrv = new TemplateSrv();
@@ -61,33 +67,60 @@ describe('linkSrv', () => {
 
     linkSrv = new LinkSrv(_templateSrv, timeSrv);
   }
+
   beforeEach(() => {
     initLinkSrv();
+    advanceTo(1000000000);
   });
 
   describe('built in variables', () => {
-    it('should add time range to url if $__urlTimeRange variable present', () => {
+    it('should add time range to url if $__url_time_range variable present', () => {
       expect(
-        linkSrv.getPanelLinkAnchorInfo(
+        linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__urlTimeRange',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.keepTime}`,
           },
           {}
-        ).href
-      ).toEqual('/d/1?from=now-1&to=now');
+        ).url
+      ).toEqual('/d/1?from=now-1h&to=now');
     });
 
-    it('should add all variables to url if $__allVariables variable present', () => {
+    it('should add all variables to url if $__all_variables variable present', () => {
       expect(
-        linkSrv.getPanelLinkAnchorInfo(
+        linkSrv.getDrilldownLinkUIModel(
           {
             title: 'Any title',
-            url: '/d/1?$__allVariables',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.includeVars}`,
           },
           {}
-        ).href
+        ).url
       ).toEqual('/d/1?var-test1=val1&var-test2=val2');
+    });
+
+    it('should interpolate series name from datapoint', () => {
+      expect(
+        linkSrv.getDrilldownLinkUIModel(
+          {
+            title: 'Any title',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.seriesName}`,
+          },
+          {},
+          dataPointMock
+        ).url
+      ).toEqual('/d/1?series=A-series');
+    });
+    it('should interpolate time range based on datapoint timestamp', () => {
+      expect(
+        linkSrv.getDrilldownLinkUIModel(
+          {
+            title: 'Any title',
+            url: `/d/1?$${DrilldownLinkBuiltInVars.valueTime}`,
+          },
+          {},
+          dataPointMock
+        ).url
+      ).toEqual('/d/1?from=998200000&to=1001800000');
     });
   });
 });
