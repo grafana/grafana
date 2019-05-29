@@ -140,9 +140,9 @@
   },
   "scripts": {
     "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
-    "start": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --watchTheme",
-    "start:hot": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot --watchTheme",
-    "start:ignoreTheme": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts core:start --hot",
+    "start": "npm run cli -- core:start --watchTheme",
+    "start:hot": "npm run cli -- core:start --hot --watchTheme",
+    "start:ignoreTheme": "npm run cli -- core:start --hot",
     "watch": "yarn start -d watch,start core:start --watchTheme ",
     "build": "grunt build",
     "test": "grunt test",
@@ -156,13 +156,13 @@
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
+    "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts",
     "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
-    "gui:build": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:build",
-    "gui:releasePrepare": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release",
+    "gui:build": "npm run cli -- gui:build",
+    "gui:releasePrepare": "npm run cli -- gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
-    "gui:release": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts gui:release -p --createVersionCommit",
-    "precommit": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts precommit",
-    "cli": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/index.ts"
+    "gui:release": "npm run cli -- gui:release -p --createVersionCommit",
+    "precommit": "npm run cli -- precommit"
   },
   "husky": {
     "hooks": {
