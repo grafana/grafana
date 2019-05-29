@@ -521,6 +521,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
       datasourceError,
       containerWidth,
       mode,
+      range,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -538,7 +539,10 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction({ exploreId }));
+    const timeZone = getTimeZone(getState().user);
+    const updatedRange = getTimeRange(timeZone, range.raw);
+
+    dispatch(runQueriesAction({ exploreId, range: updatedRange }));
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
