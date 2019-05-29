@@ -22,12 +22,13 @@ import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Legend, GraphLegendProps } from './Legend/Legend';
+import { GraphLegendProps, Legend } from './Legend/Legend';
 
-import { GraphCtrl, GraphContextMenuCtrl, FlotDataPoint } from './module';
+import { GraphCtrl } from './module';
 import { getValueFormat, ContextMenuItem, PanelDrillDownLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
