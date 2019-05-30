@@ -12,6 +12,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
   url: string;
   baseUrl: string;
   projectName: string;
+  projectList: any[];
   authenticationType: string;
   queryPromise: Promise<any>;
   metricTypes: any[];
@@ -261,6 +262,28 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
       } else {
         return this.projectName;
       }
+    } catch (error) {
+      throw this.formatStackdriverError(error);
+    }
+  }
+
+  async getProjects() {
+    try {
+      const { data } = await this.backendSrv.datasourceRequest({
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: {
+          queries: [
+            {
+              refId: 'ensureProjectsListQuery',
+              type: 'ensureProjectsListQuery',
+              datasourceId: this.id,
+            },
+          ],
+        },
+      });
+      this.projectList = data.results.ensureProjectsListQuery.meta.projectsList;
+      return this.projectList;
     } catch (error) {
       throw this.formatStackdriverError(error);
     }
