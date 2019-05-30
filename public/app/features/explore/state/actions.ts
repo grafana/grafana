@@ -113,7 +113,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance));
-    dispatch(runQueries(exploreId, false));
+    dispatch(runQueries(exploreId));
   };
 }
 
@@ -399,9 +399,14 @@ export function modifyQueries(
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
-  return dispatch => {
-    dispatch(runQueriesAction({ exploreId }));
+export function runQueries(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const { range } = getState().explore[exploreId];
+
+    const timeZone = getTimeZone(getState().user);
+    const updatedRange = getTimeRange(timeZone, range.raw);
+
+    dispatch(runQueriesAction({ exploreId, range: updatedRange }));
   };
 }
 

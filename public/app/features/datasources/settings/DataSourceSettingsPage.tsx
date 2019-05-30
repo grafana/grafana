@@ -276,7 +276,7 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
         <div className="gf-form-group">
           {testingMessage && (
-            <div className={`alert-${testingStatus} alert`}>
+            <div className={`alert-${testingStatus} alert`} aria-label="Datasource settings page Alert">
               <div className="alert-icon">
                 {testingStatus === 'error' ? (
                   <i className="fa fa-exclamation-triangle" />
@@ -285,7 +285,9 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
                 )}
               </div>
               <div className="alert-body">
-                <div className="alert-title">{testingMessage}</div>
+                <div className="alert-title" aria-label="Datasource settings page Alert message">
+                  {testingMessage}
+                </div>
               </div>
             </div>
           )}

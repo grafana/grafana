@@ -12,22 +12,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type mockConnection struct {
-	searchResult     *ldap.SearchResult
-	searchCalled     bool
-	searchAttributes []string
+// MockConnection struct for testing
+type MockConnection struct {
+	SearchResult     *ldap.SearchResult
+	SearchCalled     bool
+	SearchAttributes []string
 
-	addParams *ldap.AddRequest
-	addCalled bool
+	AddParams *ldap.AddRequest
+	AddCalled bool
 
-	delParams *ldap.DelRequest
-	delCalled bool
+	DelParams *ldap.DelRequest
+	DelCalled bool
 
 	bindProvider                func(username, password string) error
 	unauthenticatedBindProvider func(username string) error
 }
 
-func (c *mockConnection) Bind(username, password string) error {
+// Bind mocks Bind connection function
+func (c *MockConnection) Bind(username, password string) error {
 	if c.bindProvider != nil {
 		return c.bindProvider(username, password)
 	}
@@ -35,7 +37,8 @@ func (c *mockConnection) Bind(username, password string) error {
 	return nil
 }
 
-func (c *mockConnection) UnauthenticatedBind(username string) error {
+// UnauthenticatedBind mocks UnauthenticatedBind connection function
+func (c *MockConnection) UnauthenticatedBind(username string) error {
 	if c.unauthenticatedBindProvider != nil {
 		return c.unauthenticatedBindProvider(username)
 	}
@@ -43,35 +46,40 @@ func (c *mockConnection) UnauthenticatedBind(username string) error {
 	return nil
 }
 
-func (c *mockConnection) Close() {}
+// Close mocks Close connection function
+func (c *MockConnection) Close() {}
 
-func (c *mockConnection) setSearchResult(result *ldap.SearchResult) {
-	c.searchResult = result
+func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {
+	c.SearchResult = result
 }
 
-func (c *mockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
-	c.searchCalled = true
-	c.searchAttributes = sr.Attributes
-	return c.searchResult, nil
+// Search mocks Search connection function
+func (c *MockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+	c.SearchCalled = true
+	c.SearchAttributes = sr.Attributes
+	return c.SearchResult, nil
 }
 
-func (c *mockConnection) Add(request *ldap.AddRequest) error {
-	c.addCalled = true
-	c.addParams = request
+// Add mocks Add connection function
+func (c *MockConnection) Add(request *ldap.AddRequest) error {
+	c.AddCalled = true
+	c.AddParams = request
 	return nil
 }
 
-func (c *mockConnection) Del(request *ldap.DelRequest) error {
-	c.delCalled = true
-	c.delParams = request
+// Del mocks Del connection function
+func (c *MockConnection) Del(request *ldap.DelRequest) error {
+	c.DelCalled = true
+	c.DelParams = request
 	return nil
 }
 
-func (c *mockConnection) StartTLS(*tls.Config) error {
+// StartTLS mocks StartTLS connection function
+func (c *MockConnection) StartTLS(*tls.Config) error {
 	return nil
 }
 
-func authScenario(desc string, fn scenarioFunc) {
+func serverScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 

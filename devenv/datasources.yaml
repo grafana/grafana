@@ -143,6 +143,17 @@ datasources:
       timeField: "@timestamp"
       esVersion: 70
 
+  - name: gdev-elasticsearch-v7-metricbeat
+    type: elasticsearch
+    access: proxy
+    database: "[metricbeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      timeInterval: "10s"
+
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
