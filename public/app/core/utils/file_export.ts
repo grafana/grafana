@@ -17,7 +17,11 @@ function csvEscaped(text) {
     return text;
   }
 
-  return text.split(QUOTE).join(QUOTE + QUOTE);
+  return text
+    .split(QUOTE)
+    .join(QUOTE + QUOTE)
+    .replace(/^([-+=@])/, "'$1")
+    .replace(/\s+$/, '');
 }
 
 const domParser = new DOMParser();
