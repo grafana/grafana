@@ -4,13 +4,13 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
+  DEFAULT_RANGE,
 } from './reducers';
 import {
   ExploreId,
   ExploreItemState,
   ExploreUrlState,
   ExploreState,
-  QueryTransaction,
   RangeScanner,
   ExploreMode,
 } from 'app/types/explore';
@@ -25,18 +25,18 @@ import {
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
+  runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
-import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, dateTime } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
-    test('should start scanning', () => {
+    it('should start scanning', () => {
       const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
@@ -53,7 +53,7 @@ describe('Explore item reducer', () => {
           scanner,
         });
     });
-    test('should stop scanning', () => {
+    it('should stop scanning', () => {
       const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
@@ -96,7 +96,6 @@ describe('Explore item reducer', () => {
     describe('when testDataSourceFailureAction is dispatched', () => {
       it('then it should set correct state', () => {
         const error = 'some error';
-        const queryTransactions: QueryTransaction[] = [];
         const initalState: Partial<ExploreItemState> = {
           datasourceError: null,
           graphResult: [],
@@ -111,7 +110,6 @@ describe('Explore item reducer', () => {
         };
         const expectedState = {
           datasourceError: error,
-          queryTransactions,
           graphResult: undefined as any[],
           tableResult: undefined as TableModel,
           logsResult: undefined as LogsModel,
@@ -144,9 +142,9 @@ describe('Explore item reducer', () => {
           const StartPage = {};
           const datasourceInstance = {
             meta: {
-              metrics: {},
-              logs: {},
-              tables: {},
+              metrics: true,
+              logs: true,
+              tables: true,
             },
             components: {
               ExploreStartPage: StartPage,
@@ -175,6 +173,11 @@ describe('Explore item reducer', () => {
             queryKeys,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
+            graphIsLoading: false,
+            tableIsLoading: false,
+            logIsLoading: false,
+            latency: 0,
+            queryErrors: [],
           };
 
           reducerTester()
@@ -182,6 +185,34 @@ describe('Explore item reducer', () => {
             .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
             .thenStateShouldEqual(expectedState);
         });
+      });
+    });
+  });
+
+  describe('run queries', () => {
+    describe('when runQueriesAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        const initalState: Partial<ExploreItemState> = {
+          showingStartPage: true,
+          range: null,
+        };
+        const expectedState = {
+          queryIntervals: {
+            interval: '1s',
+            intervalMs: 1000,
+          },
+          showingStartPage: false,
+          range: {
+            from: dateTime(),
+            to: dateTime(),
+            raw: DEFAULT_RANGE,
+          },
+        };
+
+        reducerTester()
+          .givenReducer(itemReducer, initalState)
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
+          .thenStateShouldEqual(expectedState);
       });
     });
   });
@@ -529,46 +560,8 @@ describe('Explore reducer', () => {
             });
           });
 
-          describe('and refreshInterval differs', () => {
-            it('then it should return update refreshInterval', () => {
-              const { initalState, serializedUrlState } = setup();
-              const expectedState = {
-                ...initalState,
-                left: {
-                  ...initalState.left,
-                  update: {
-                    ...initalState.left.update,
-                    refreshInterval: true,
-                  },
-                },
-              };
-              const stateWithDifferentDataSource = {
-                ...initalState,
-                left: {
-                  ...initalState.left,
-                  urlState: {
-                    ...initalState.left.urlState,
-                    refreshInterval: '5s',
-                  },
-                },
-              };
-
-              reducerTester()
-                .givenReducer(exploreReducer, stateWithDifferentDataSource)
-                .whenActionIsDispatched(
-                  updateLocation({
-                    query: {
-                      left: serializedUrlState,
-                    },
-                    path: '/explore',
-                  })
-                )
-                .thenStateShouldEqual(expectedState);
-            });
-          });
-
           describe('and nothing differs', () => {
-            fit('then it should return update ui', () => {
+            it('then it should return update ui', () => {
               const { initalState, serializedUrlState } = setup();
               const expectedState = { ...initalState };
 

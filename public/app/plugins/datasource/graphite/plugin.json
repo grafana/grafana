@@ -6,6 +6,7 @@
 
   "includes": [{ "type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json" }],
 
+  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,

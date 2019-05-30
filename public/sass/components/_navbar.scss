@@ -67,11 +67,6 @@
   min-height: $navbarHeight;
   line-height: $navbarHeight;
 
-  .fa-caret-down {
-    font-size: 60%;
-    padding-left: 6px;
-  }
-
   .gicon {
     top: -2px;
     position: relative;
@@ -85,15 +80,30 @@
       display: inline-block;
     }
   }
+}
 
-  &--folder {
-    color: $text-color-weak;
-    display: none;
+.navbar-page-btn__folder {
+  color: $text-color-weak;
+  display: none;
 
-    @include media-breakpoint-up(lg) {
-      display: inline-block;
-    }
+  @include media-breakpoint-up(lg) {
+    display: inline-block;
   }
+}
+
+// element is needed here to override font-awesome specificity
+i.navbar-page-btn__folder-icon {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+  padding: 0 $space-sm;
+  position: relative;
+  top: -1px;
+}
+
+// element is needed here to override font-awesome specificity
+i.navbar-page-btn__search {
+  font-size: $font-size-xs;
+  padding: 0 $space-xs;
 }
 
 .navbar-buttons {

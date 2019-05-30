@@ -67,6 +67,7 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	if err != nil {
 		return err
 	}
+	defer fileReader.Close()
 
 	reqUrl := fmt.Sprintf(uploadUrl, u.bucket, key)
 	u.log.Debug("Request URL: ", reqUrl)

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// DashAlertExtractor extracts alerts from the dashboard json
+// DashAlertExtractor extracts alerts from the dashboard json.
 type DashAlertExtractor struct {
 	User  *models.SignedInUser
 	Dash  *models.Dashboard
@@ -19,7 +19,7 @@ type DashAlertExtractor struct {
 	log   log.Logger
 }
 
-// NewDashAlertExtractor returns a new DashAlertExtractor
+// NewDashAlertExtractor returns a new DashAlertExtractor.
 func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.SignedInUser) *DashAlertExtractor {
 	return &DashAlertExtractor{
 		User:  user,
@@ -207,7 +207,7 @@ func validateAlertRule(alert *models.Alert) bool {
 	return alert.ValidToSave()
 }
 
-// GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data
+// GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
 func (e *DashAlertExtractor) GetAlerts() ([]*models.Alert, error) {
 	return e.extractAlerts(validateAlertRule)
 }
@@ -247,7 +247,7 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 }
 
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
-// in the first validation pass
+// in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
 	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 })
 	return err

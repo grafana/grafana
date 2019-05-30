@@ -16,7 +16,8 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-} from '@grafana/ui/src/types';
+  LogRowModel,
+} from '@grafana/ui';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -38,6 +39,11 @@ function serializeParams(data: any) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(v);
     })
     .join('&');
+}
+
+interface LokiContextQueryOptions {
+  direction?: 'BACKWARD' | 'FORWARD';
+  limit?: number;
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
@@ -66,6 +72,42 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     };
     return this.backendSrv.datasourceRequest(req);
   }
+
+  convertToStreamTargets = (options: DataQueryRequest<LokiQuery>): Array<{ url: string; refId: string }> => {
+    return options.targets
+      .filter(target => target.expr && !target.hide)
+      .map(target => {
+        const interpolated = this.templateSrv.replace(target.expr);
+        const { query, regexp } = parseQuery(interpolated);
+        const refId = target.refId;
+        const baseUrl = this.instanceSettings.url;
+        const params = serializeParams({ query, regexp });
+        const url = `${baseUrl}/api/prom/tail?${params}`;
+
+        return {
+          url,
+          refId,
+        };
+      });
+  };
+
+  resultToSeriesData = (data: any, refId: string): SeriesData[] => {
+    const toSeriesData = (stream: any, refId: string) => ({
+      ...logStreamToSeriesData(stream),
+      refId,
+    });
+
+    if (data.streams) {
+      // new Loki API purposed in https://github.com/grafana/loki/pull/590
+      const series: SeriesData[] = [];
+      for (const stream of data.streams || []) {
+        series.push(toSeriesData(stream, refId));
+      }
+      return series;
+    }
+
+    return [toSeriesData(data, refId)];
+  };
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
     const interpolated = this.templateSrv.replace(target.expr);
@@ -186,6 +228,72 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
     return Math.ceil(date.valueOf() * 1e6);
   }
+
+  prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+    const query = Object.keys(row.labels)
+      .map(label => {
+        return `${label}="${row.labels[label]}"`;
+      })
+      .join(',');
+    const contextTimeBuffer = 2 * 60 * 60 * 1000 * 1e6; // 2h buffer
+    const timeEpochNs = row.timeEpochMs * 1e6;
+
+    const commontTargetOptons = {
+      limit,
+      query: `{${query}}`,
+      direction,
+    };
+
+    if (direction === 'BACKWARD') {
+      return {
+        ...commontTargetOptons,
+        start: timeEpochNs - contextTimeBuffer,
+        end: timeEpochNs,
+        direction,
+      };
+    } else {
+      return {
+        ...commontTargetOptons,
+        start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
+        end: timeEpochNs + contextTimeBuffer,
+      };
+    }
+  };
+
+  getLogRowContext = async (row: LogRowModel, options?: LokiContextQueryOptions) => {
+    const target = this.prepareLogRowContextQueryTarget(
+      row,
+      (options && options.limit) || 10,
+      (options && options.direction) || 'BACKWARD'
+    );
+    const series: SeriesData[] = [];
+
+    try {
+      const result = await this._request('/api/prom/query', target);
+      if (result.data) {
+        for (const stream of result.data.streams || []) {
+          const seriesData = logStreamToSeriesData(stream);
+          series.push(seriesData);
+        }
+      }
+      if (options && options.direction === 'FORWARD') {
+        if (series[0] && series[0].rows) {
+          series[0].rows.reverse();
+        }
+      }
+
+      return {
+        data: series,
+      };
+    } catch (e) {
+      const error: DataQueryError = {
+        message: 'Error during context query. Please check JS console logs.',
+        status: e.status,
+        statusText: e.statusText,
+      };
+      throw error;
+    }
+  };
 
   testDatasource() {
     return this._request('/api/prom/label')

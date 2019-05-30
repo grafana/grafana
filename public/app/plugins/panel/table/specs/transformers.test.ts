@@ -108,7 +108,6 @@ describe('when transforming time series table', () => {
         {
           type: 'foo',
           columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
-          rows: [[time, 'Label Value 1', 42]],
         },
       ];
 

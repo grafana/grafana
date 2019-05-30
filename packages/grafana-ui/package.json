@@ -1,6 +1,6 @@
 {
   "name": "@grafana/ui",
-  "version": "6.2.0-alpha.0",
+  "version": "6.3.0-alpha.0",
   "description": "Grafana Components Library",
   "keywords": [
     "typescript",
@@ -23,7 +23,7 @@
     "@types/react-color": "2.17.0",
     "classnames": "2.2.6",
     "d3": "5.9.1",
-    "jquery": "3.4.0",
+    "jquery": "3.4.1",
     "lodash": "4.17.11",
     "moment": "2.24.0",
     "papaparse": "4.6.3",

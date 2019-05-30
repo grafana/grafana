@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// AlertTestCommand initiates an test evaluation
+// of an alert rule.
 type AlertTestCommand struct {
 	Dashboard *simplejson.Json
 	PanelId   int64

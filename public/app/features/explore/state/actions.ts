@@ -35,7 +35,8 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   TimeRange,
-} from '@grafana/ui/src/types';
+  LogsDedupStrategy,
+} from '@grafana/ui';
 import {
   ExploreId,
   ExploreUrlState,
@@ -72,10 +73,8 @@ import {
   splitOpenAction,
   addQueryRowAction,
   toggleGraphAction,
-  toggleLogsAction,
   toggleTableAction,
   ToggleGraphPayload,
-  ToggleLogsPayload,
   ToggleTablePayload,
   updateUIStateAction,
   runQueriesAction,
@@ -89,10 +88,10 @@ import {
   changeModeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
-import { LogsDedupStrategy } from 'app/core/logs_model';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
+import { startSubscriptionsAction, subscriptionDataReceivedAction } from 'app/features/explore/state/epics';
 
 /**
  * Updates UI state and save it to the URL
@@ -517,12 +516,12 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
     const {
       datasourceInstance,
       queries,
-      showingLogs,
       showingGraph,
       showingTable,
       datasourceError,
       containerWidth,
       mode,
+      range,
     } = getState().explore[exploreId];
 
     if (datasourceError) {
@@ -540,7 +539,10 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    dispatch(runQueriesAction({ exploreId }));
+    const timeZone = getTimeZone(getState().user);
+    const updatedRange = getTimeRange(timeZone, range.raw);
+
+    dispatch(runQueriesAction({ exploreId, range: updatedRange }));
     // Keep table queries first since they need to return quickly
     if ((ignoreUIState || showingTable) && mode === ExploreMode.Metrics) {
       dispatch(
@@ -562,7 +564,7 @@ export function runQueries(exploreId: ExploreId, ignoreUIState = false, replaceU
         })
       );
     }
-    if ((ignoreUIState || showingLogs) && mode === ExploreMode.Logs) {
+    if (mode === ExploreMode.Logs) {
       dispatch(runQueriesForType(exploreId, 'Logs', { interval, format: 'logs' }));
     }
 
@@ -586,6 +588,16 @@ function runQueriesForType(
     const { datasourceInstance, eventBridge, queries, queryIntervals, range, scanning, history } = getState().explore[
       exploreId
     ];
+
+    if (resultType === 'Logs' && datasourceInstance.convertToStreamTargets) {
+      dispatch(
+        startSubscriptionsAction({
+          exploreId,
+          dataReceivedActionCreator: subscriptionDataReceivedAction,
+        })
+      );
+    }
+
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, resultType, queryOptions, range, queryIntervals, scanning);
     dispatch(queryStartAction({ exploreId, resultType, rowIndex: 0, transaction }));
@@ -700,7 +712,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
       range: toRawTimeRange(left.range),
       ui: {
         showingGraph: left.showingGraph,
-        showingLogs: left.showingLogs,
+        showingLogs: true,
         showingTable: left.showingTable,
         dedupStrategy: left.dedupStrategy,
       },
@@ -713,7 +725,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
         range: toRawTimeRange(right.range),
         ui: {
           showingGraph: right.showingGraph,
-          showingLogs: right.showingLogs,
+          showingLogs: true,
           showingTable: right.showingTable,
           dedupStrategy: right.dedupStrategy,
         },
@@ -731,10 +743,7 @@ export function stateSave(replaceUrl = false): ThunkResult<void> {
  * queries won't be run
  */
 const togglePanelActionCreator = (
-  actionCreator:
-    | ActionCreator<ToggleGraphPayload>
-    | ActionCreator<ToggleLogsPayload>
-    | ActionCreator<ToggleTablePayload>
+  actionCreator: ActionCreator<ToggleGraphPayload> | ActionCreator<ToggleTablePayload>
 ) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
   return dispatch => {
     let uiFragmentStateUpdate: Partial<ExploreUIState>;
@@ -743,9 +752,6 @@ const togglePanelActionCreator = (
     switch (actionCreator.type) {
       case toggleGraphAction.type:
         uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
-        break;
-      case toggleLogsAction.type:
-        uiFragmentStateUpdate = { showingLogs: !isPanelVisible };
         break;
       case toggleTableAction.type:
         uiFragmentStateUpdate = { showingTable: !isPanelVisible };
@@ -765,11 +771,6 @@ const togglePanelActionCreator = (
  * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
  */
 export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
-
-/**
- * Expand/collapse the logs result viewer. When collapsed, log queries won't be run.
- */
-export const toggleLogs = togglePanelActionCreator(toggleLogsAction);
 
 /**
  * Expand/collapse the table result viewer. When collapsed, table queries won't be run.

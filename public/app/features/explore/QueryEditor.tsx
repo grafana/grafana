@@ -35,7 +35,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
-    const target = { ...initialQuery };
+    const target = { datasource: datasource.name, ...initialQuery };
     const scopeProps = {
       ctrl: {
         datasource,
