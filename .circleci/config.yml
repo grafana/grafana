@@ -73,7 +73,8 @@ jobs:
   end-to-end-test:
       docker:
         - image: circleci/node:8-browsers
-        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
+        # - image: grafana/grafana-dev:master-$CIRCLE_SHA1
+        - image: grafana/grafana-dev:master-a0bb01103eebfa7e0d94201db5536b295c4f4529
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
@@ -91,6 +92,9 @@ jobs:
               name: run end-to-end tests
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
+          - store_artifacts:
+                path: /public/e2e-test/screenShots
+                destination: screenshots
 
   codespell:
     docker:
@@ -726,6 +730,8 @@ workflows:
 
   build-branches-and-prs:
       jobs:
+        - end-to-end-test:
+            filters: *filter-not-release-or-master
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:
