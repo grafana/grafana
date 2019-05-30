@@ -28,6 +28,7 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DisableUser)
+	bus.AddHandler("sql", BatchDisableUsers)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
