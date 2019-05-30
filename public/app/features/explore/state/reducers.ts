@@ -9,7 +9,7 @@ import {
   sortLogsResult,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { DataQuery } from '@grafana/ui';
+import { DataQuery, LoadingState } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -99,9 +99,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   scanRange: null,
   showingGraph: true,
   showingTable: true,
-  graphIsLoading: false,
-  logIsLoading: false,
-  tableIsLoading: false,
+  loadingState: LoadingState.NotStarted,
   supportsGraph: null,
   supportsLogs: null,
   supportsTable: null,
@@ -194,10 +192,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       return {
         ...state,
-        refreshInterval: refreshInterval,
-        graphIsLoading: live ? true : false,
-        tableIsLoading: live ? true : false,
-        logIsLoading: live ? true : false,
+        refreshInterval,
+        loadingState: live ? LoadingState.Streaming : LoadingState.NotStarted,
         isLive: live,
         logsResult,
       };
@@ -271,9 +267,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         datasourceInstance,
         queryErrors: [],
         latency: 0,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
+        loadingState: LoadingState.NotStarted,
         supportsGraph,
         supportsLogs,
         supportsTable,
@@ -363,9 +357,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         logsResult: null,
         latency: 0,
         queryErrors,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
+        loadingState: LoadingState.Error,
         update: makeInitialUpdateState(),
       };
     },
@@ -377,9 +369,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queryErrors: [],
         latency: 0,
-        graphIsLoading: true,
-        logIsLoading: true,
-        tableIsLoading: true,
+        loadingState: LoadingState.Loading,
         update: makeInitialUpdateState(),
       };
     },
@@ -387,19 +377,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { refreshInterval } = state;
-      const { latency, graphResult, tableResult, logsResult } = action.payload;
-      const live = isLive(refreshInterval);
+      const { latency, loadingState, graphResult, tableResult, logsResult } = action.payload;
 
       return {
         ...state,
+        loadingState,
         graphResult,
         tableResult,
         logsResult,
         latency,
-        graphIsLoading: live ? true : false,
-        logIsLoading: live ? true : false,
-        tableIsLoading: live ? true : false,
         showingStartPage: false,
         update: makeInitialUpdateState(),
       };

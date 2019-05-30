@@ -26,23 +26,24 @@ import {
 } from '../actionTypes';
 import { ExploreId, ExploreItemState } from 'app/types';
 
-interface ProcessResponseConfig {
-  exploreId: ExploreId;
-  exploreItemState: ExploreItemState;
-  datasourceId: string;
-  now: number;
-  series?: DataQueryResponseData[];
-  delta?: SeriesData[];
-}
-
 const publishActions = (outerObservable: Subject<any>, actions: Array<ActionOf<any>>) => {
   for (const action of actions) {
     outerObservable.next(action);
   }
 };
 
+interface ProcessResponseConfig {
+  exploreId: ExploreId;
+  exploreItemState: ExploreItemState;
+  datasourceId: string;
+  now: number;
+  loadingState: LoadingState;
+  series?: DataQueryResponseData[];
+  delta?: SeriesData[];
+}
+
 const processResponse = (config: ProcessResponseConfig) => {
-  const { exploreId, exploreItemState, datasourceId, now, series, delta } = config;
+  const { exploreId, exploreItemState, datasourceId, now, loadingState, series, delta } = config;
   const { queries, history } = exploreItemState;
   const latency = Date.now() - now;
 
@@ -50,7 +51,7 @@ const processResponse = (config: ProcessResponseConfig) => {
   const nextHistory = updateHistory(history, datasourceId, queries);
   return [
     historyUpdatedAction({ exploreId, history: nextHistory }),
-    processQueryResultsAction({ exploreId, latency, datasourceId, series, delta }),
+    processQueryResultsAction({ exploreId, latency, datasourceId, loadingState, series, delta }),
     stateSaveAction(),
   ];
 };
@@ -132,12 +133,13 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
               );
             }
 
-            if (state === LoadingState.Done) {
+            if (state === LoadingState.Done || state === LoadingState.Loading) {
               const actions = processResponse({
                 exploreId,
                 exploreItemState,
                 datasourceId,
                 now,
+                loadingState: state,
                 series: null,
                 delta,
               });
@@ -155,6 +157,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 exploreItemState,
                 datasourceId,
                 now,
+                loadingState: LoadingState.Done,
                 series: response && response.data ? response.data : [],
                 delta: null,
               });

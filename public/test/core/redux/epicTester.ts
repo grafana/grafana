@@ -67,7 +67,7 @@ export const epicTester = (
   };
 
   const thenResultingActionsEqual = (...actions: Array<ActionOf<any>>) => {
-    expect(resultingActions).toEqual(actions);
+    expect(actions).toEqual(resultingActions);
 
     return instance;
   };

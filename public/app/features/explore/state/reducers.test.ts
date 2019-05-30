@@ -31,7 +31,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -172,9 +172,7 @@ describe('Explore item reducer', () => {
             queryKeys,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            graphIsLoading: false,
-            tableIsLoading: false,
-            logIsLoading: false,
+            loadingState: LoadingState.NotStarted,
             latency: 0,
             queryErrors: [],
           };

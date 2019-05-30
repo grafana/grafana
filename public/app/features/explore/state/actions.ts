@@ -9,7 +9,6 @@ import {
   LAST_USED_DATASOURCE_KEY,
   ensureQueries,
   generateEmptyQuery,
-  hasNonEmptyQuery,
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
@@ -401,20 +400,7 @@ export function modifyQueries(
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
 export function runQueries(exploreId: ExploreId, ignoreUIState = false): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const { queries, datasourceError } = getState().explore[exploreId];
-
-    if (datasourceError) {
-      // let's not run any queries if data source is in a faulty state
-      return;
-    }
-
-    if (!hasNonEmptyQuery(queries)) {
-      dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSaveAction()); // Remember to save to state and update location
-      return;
-    }
-
+  return dispatch => {
     dispatch(runQueriesAction({ exploreId }));
   };
 }

@@ -191,14 +191,25 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         )
         .subscribe({
           next: series => {
-            observer({
-              key: `prometheus-${target.refId}`,
-              state: LoadingState.Done,
-              request: options,
-              series: null,
-              delta: series,
-              unsubscribe: () => undefined,
-            });
+            if (query.instant) {
+              observer({
+                key: `prometheus-${target.refId}`,
+                state: LoadingState.Loading,
+                request: options,
+                series: null,
+                delta: series,
+                unsubscribe: () => undefined,
+              });
+            } else {
+              observer({
+                key: `prometheus-${target.refId}`,
+                state: LoadingState.Done,
+                request: options,
+                series: null,
+                delta: series,
+                unsubscribe: () => undefined,
+              });
+            }
           },
         });
     }

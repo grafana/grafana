@@ -170,7 +170,6 @@ describe('ResultProcessor', () => {
           rows: [
             {
               entry: 'This is a message',
-              fresh: true,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
@@ -184,7 +183,6 @@ describe('ResultProcessor', () => {
             },
             {
               entry: 'This is a message',
-              fresh: true,
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',

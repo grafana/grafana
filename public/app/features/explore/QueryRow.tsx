@@ -20,7 +20,6 @@ import {
   QueryFixAction,
   DataSourceStatus,
   PanelData,
-  LoadingState,
   DataQueryError,
 } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
@@ -180,9 +179,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     datasourceError,
     graphResult,
-    graphIsLoading,
-    tableIsLoading,
-    logIsLoading,
+    loadingState,
     latency,
     queryErrors,
   } = item;
@@ -190,15 +187,9 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
   const series = graphResult ? graphResult : []; // TODO: use SeriesData
-  const queryResponseState =
-    graphIsLoading || tableIsLoading || logIsLoading
-      ? LoadingState.Loading
-      : error
-      ? LoadingState.Error
-      : LoadingState.Done;
   const queryResponse: PanelData = {
     series,
-    state: queryResponseState,
+    state: loadingState,
     error,
   };
 

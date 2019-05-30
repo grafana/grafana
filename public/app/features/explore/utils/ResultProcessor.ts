@@ -76,14 +76,18 @@ export class ResultProcessor {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }
+    const graphInterval = this.state.queryIntervals.intervalMs;
+    const seriesData = this.rawData.map(result => guessFieldTypes(toSeriesData(result)));
+    const newResults = this.rawData ? seriesDataToLogsModel(seriesData, graphInterval) : null;
+
+    if (this.replacePreviousResults) {
+      return newResults;
+    }
 
     const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
-    const graphInterval = this.state.queryIntervals.intervalMs;
     const sortedLogResult = sortLogsResult(prevLogsResult, this.state.refreshInterval);
     const rowsInState = sortedLogResult.rows;
     const seriesInState = sortedLogResult.series || [];
-    const seriesData = this.rawData.map(result => guessFieldTypes(toSeriesData(result)));
-    const newResults = this.rawData ? seriesDataToLogsModel(seriesData, graphInterval) : null;
 
     const processedRows = [];
     for (const row of rowsInState) {
@@ -95,8 +99,9 @@ export class ResultProcessor {
 
     const processedSeries = this.mergeGraphResults(newResults.series, seriesInState);
 
-    const rows = processedRows.slice(processedRows.length - 1000, 1000);
-    const series = processedSeries.slice(processedSeries.length - 1000, 1000);
+    const slice = -1000;
+    const rows = processedRows.slice(slice);
+    const series = processedSeries.slice(slice);
 
     return { ...newResults, rows, series };
   };

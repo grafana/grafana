@@ -12,6 +12,7 @@ import {
   DataQueryError,
   LogsModel,
   LogsDedupStrategy,
+  LoadingState,
 } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
@@ -226,9 +227,7 @@ export interface ExploreItemState {
    */
   supportsTable: boolean | null;
 
-  graphIsLoading: boolean;
-  logIsLoading: boolean;
-  tableIsLoading: boolean;
+  loadingState: LoadingState;
   /**
    * Table model that combines all query table results into a single table.
    */

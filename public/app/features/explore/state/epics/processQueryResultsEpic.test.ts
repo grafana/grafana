@@ -7,7 +7,7 @@ import {
   scanStopAction,
   scanRangeAction,
 } from '../actionTypes';
-import { SeriesData } from '@grafana/ui';
+import { SeriesData, LoadingState } from '@grafana/ui';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
 
@@ -24,10 +24,12 @@ const testContext = () => {
   };
   const series = [serieA, serieB];
   const latency = 0;
+  const loadingState = LoadingState.Done;
 
   return {
     latency,
     series,
+    loadingState,
   };
 };
 
@@ -37,16 +39,18 @@ describe('processQueryResultsEpic', () => {
       describe('and explore is not scanning', () => {
         it('then resetQueryErrorAction and querySuccessAction are dispatched and eventBridge emits correct message', () => {
           const { datasourceId, exploreId, state, eventBridge } = mockExploreState();
-          const { latency, series } = testContext();
+          const { latency, series, loadingState } = testContext();
           const graphResult = [];
           const tableResult = new TableModel();
           const logsResult = null;
 
           epicTester(processQueryResultsEpic, state)
-            .whenActionIsDispatched(processQueryResultsAction({ exploreId, datasourceId, series, latency }))
+            .whenActionIsDispatched(
+              processQueryResultsAction({ exploreId, datasourceId, loadingState, series, latency })
+            )
             .thenResultingActionsEqual(
               resetQueryErrorAction({ exploreId, refIds: ['A', 'B'] }),
-              querySuccessAction({ exploreId, graphResult, tableResult, logsResult, latency })
+              querySuccessAction({ exploreId, loadingState, graphResult, tableResult, logsResult, latency })
             );
 
           expect(eventBridge.emit).toBeCalledTimes(1);
@@ -58,16 +62,18 @@ describe('processQueryResultsEpic', () => {
         describe('and we have a result', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
-            const { latency, series } = testContext();
+            const { latency, series, loadingState } = testContext();
             const graphResult = [];
             const tableResult = new TableModel();
             const logsResult = null;
 
             epicTester(processQueryResultsEpic, state)
-              .whenActionIsDispatched(processQueryResultsAction({ exploreId, datasourceId, series, latency }))
+              .whenActionIsDispatched(
+                processQueryResultsAction({ exploreId, datasourceId, loadingState, series, latency })
+              )
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: ['A', 'B'] }),
-                querySuccessAction({ exploreId, graphResult, tableResult, logsResult, latency }),
+                querySuccessAction({ exploreId, loadingState, graphResult, tableResult, logsResult, latency }),
                 scanStopAction({ exploreId })
               );
           });
@@ -76,23 +82,18 @@ describe('processQueryResultsEpic', () => {
         describe('and we do not have a result', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state, scanner } = mockExploreState({ scanning: true });
-            const { latency } = testContext();
+            const { latency, loadingState } = testContext();
             const graphResult = [];
             const tableResult = new TableModel();
             const logsResult = null;
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(
-                processQueryResultsAction({
-                  exploreId,
-                  datasourceId,
-                  series: [],
-                  latency,
-                })
+                processQueryResultsAction({ exploreId, datasourceId, loadingState, series: [], latency })
               )
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: [] }),
-                querySuccessAction({ exploreId, graphResult, tableResult, logsResult, latency }),
+                querySuccessAction({ exploreId, loadingState, graphResult, tableResult, logsResult, latency }),
                 scanRangeAction({ exploreId, range: scanner() })
               );
           });
@@ -103,11 +104,11 @@ describe('processQueryResultsEpic', () => {
     describe('and datasourceInstance is not the same', () => {
       it('then no actions are dispatched and eventBridge does not emit message', () => {
         const { exploreId, state, eventBridge } = mockExploreState();
-        const { series } = testContext();
+        const { series, loadingState } = testContext();
 
         epicTester(processQueryResultsEpic, state)
           .whenActionIsDispatched(
-            processQueryResultsAction({ exploreId, datasourceId: 'other id', series, latency: 0 })
+            processQueryResultsAction({ exploreId, datasourceId: 'other id', loadingState, series, latency: 0 })
           )
           .thenNoActionsWhereDispatched();
 

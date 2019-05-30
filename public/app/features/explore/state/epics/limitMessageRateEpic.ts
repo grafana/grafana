@@ -1,5 +1,6 @@
 import { Epic } from 'redux-observable';
 import { map, throttleTime } from 'rxjs/operators';
+import { LoadingState } from '@grafana/ui';
 
 import { StoreState } from 'app/types';
 import { ActionOf } from '../../../../core/redux/actionCreatorFactory';
@@ -15,6 +16,7 @@ export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState
         exploreId,
         latency: 0,
         datasourceId,
+        loadingState: LoadingState.Streaming,
         series: null,
         delta: series,
       });

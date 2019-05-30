@@ -13,6 +13,7 @@ import {
   LogsModel,
   TimeSeries,
   DataQueryResponseData,
+  LoadingState,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -155,6 +156,7 @@ export interface QueryStartPayload {
 export interface QuerySuccessPayload {
   exploreId: ExploreId;
   latency: number;
+  loadingState: LoadingState;
   graphResult: TimeSeries[];
   tableResult: TableModel;
   logsResult: LogsModel;
@@ -252,6 +254,7 @@ export interface ProcessQueryResultsPayload {
   exploreId: ExploreId;
   latency: number;
   datasourceId: string;
+  loadingState: LoadingState;
   series?: DataQueryResponseData[];
   delta?: SeriesData[];
 }

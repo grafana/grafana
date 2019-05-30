@@ -73,6 +73,7 @@ describe('runQueriesBatchEpic', () => {
                 series,
                 latency: 0,
                 datasourceId,
+                loadingState: LoadingState.Done,
               }),
               stateSaveAction()
             );
@@ -202,6 +203,7 @@ describe('runQueriesBatchEpic', () => {
                 series: null,
                 latency: 0,
                 datasourceId,
+                loadingState: LoadingState.Done,
               }),
               stateSaveAction()
             );
@@ -240,12 +242,26 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }), // output from first observable
             historyUpdatedAction({ exploreId, history }), // output from first observable
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction(),
             // output from first observable
             queryStartAction({ exploreId }), // output from second observable
             historyUpdatedAction({ exploreId, history }), // output from second observable
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction()
             // output from second observable
           );
@@ -276,7 +292,14 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction()
           );
 
@@ -306,7 +329,14 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction()
           );
 
@@ -336,7 +366,14 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction()
           );
 
@@ -366,7 +403,14 @@ describe('runQueriesBatchEpic', () => {
           .thenResultingActionsEqual(
             queryStartAction({ exploreId }),
             historyUpdatedAction({ exploreId, history }),
-            processQueryResultsAction({ exploreId, delta: null, series, latency: 0, datasourceId }),
+            processQueryResultsAction({
+              exploreId,
+              delta: null,
+              series,
+              latency: 0,
+              datasourceId,
+              loadingState: LoadingState.Done,
+            }),
             stateSaveAction()
           );
 
