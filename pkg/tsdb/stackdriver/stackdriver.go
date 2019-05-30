@@ -17,6 +17,8 @@ import (
 
 	"golang.org/x/net/context/ctxhttp"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/option"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -79,6 +81,8 @@ func (e *StackdriverExecutor) Query(ctx context.Context, dsInfo *models.DataSour
 		result, err = e.executeAnnotationQuery(ctx, tsdbQuery)
 	case "ensureDefaultProjectQuery":
 		result, err = e.ensureDefaultProject(ctx, tsdbQuery)
+	case "ensureProjectsListQuery":
+		result, err = e.ensureProjectsList(ctx, tsdbQuery)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -93,6 +97,7 @@ func (e *StackdriverExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQu
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 
+	// TODO: Fetch currently selected project/configured as 'default' project in query.
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultProject, err := e.getDefaultProject(ctx)
@@ -616,20 +621,36 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 			return "", fmt.Errorf("Failed to validate GCP credentials.")
 		}
 
-		if defaultCredentials.ProjectID == "" {
-			cloudresourcemanagerService, err := cloudresourcemanager.NewService(ctx, option.WithScopes("https://www.googleapis.com/auth/monitoring.read"))
-			if err != nil {
-				return "", fmt.Errorf("Failed to start resource manager service credentials. error: %v", err)
-			}
-			projectList, err := cloudresourcemanagerService.Projects.List().Do()
-			if err != nil {
-				return "", fmt.Errorf("Failed to retrieve cloud resource manager projects error: %v", err)
-			}
-
-			return projectList.Projects[0].ProjectId, nil
-		}
-
 		return defaultCredentials.ProjectID, nil
 	}
 	return e.dsInfo.JsonData.Get("defaultProject").MustString(), nil
+}
+
+func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]string, error) {
+	var projects []string
+	defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
+	if err != nil {
+		return projects, fmt.Errorf("Failed to retrieve credentials from GCE metadata server. error: %v", err)
+	}
+
+	token, err := defaultCredentials.TokenSource.Token()
+	if err != nil {
+		return projects, fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+	}
+	if !token.Valid() {
+		return projects, fmt.Errorf("Failed to validate GCP credentials.")
+	}
+
+	cloudresourcemanagerService, err := cloudresourcemanager.NewService(ctx, option.WithScopes("https://www.googleapis.com/auth/monitoring.read"))
+	if err != nil {
+		return projects, fmt.Errorf("Failed to start resource manager service credentials. error: %v", err)
+	}
+	projectList, err := cloudresourcemanagerService.Projects.List().Do()
+	if err != nil {
+		return projects, fmt.Errorf("Failed to retrieve cloud resource manager projects error: %v", err)
+	}
+	for _, project := range projectList.Projects {
+		projects = append(projects, project.ProjectId)
+	}
+	return projects, nil
 }

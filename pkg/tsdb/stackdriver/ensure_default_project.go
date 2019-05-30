@@ -22,3 +22,19 @@ func (e *StackdriverExecutor) ensureDefaultProject(ctx context.Context, tsdbQuer
 	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
 	return result, nil
 }
+
+func (e *StackdriverExecutor) ensureProjectsList(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: tsdbQuery.Queries[0].RefId}
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+	projectsList, err := e.getProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	e.dsInfo.JsonData.Set("projectsList", projectsList)
+	queryResult.Meta.Set("projectsList", projectsList)
+	result.Results[tsdbQuery.Queries[0].RefId] = queryResult
+	return result, nil
+}
