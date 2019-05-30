@@ -74,7 +74,7 @@ jobs:
       docker:
         - image: circleci/node:8-browsers
         # - image: grafana/grafana-dev:master-$CIRCLE_SHA1
-        - image: grafana/grafana-dev:master-a0bb01103eebfa7e0d94201db5536b295c4f4529
+        - image: grafana/grafana-dev:master-a0bb01103eebfa7e0d94201db5536b295c4f4529        
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
@@ -669,6 +669,10 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
+      - end-to-end-test:
+          requires:
+            - grafana-docker-master
+          filters: *filter-only-master
   release:
     jobs:
       - build-all:
@@ -734,7 +738,7 @@ workflows:
   build-branches-and-prs:
       jobs:
         - end-to-end-test:
-            filters: *filter-not-release-or-master
+            filters: *filter-not-release-or-master        
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:

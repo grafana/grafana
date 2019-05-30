@@ -46,7 +46,7 @@ e2eScenario(
     await editPanelPage.init(page);
     await editPanelPage.waitForNavigation();
     await editPanelPage.pageObjects.queriesTab.click();
-    await editPanelPage.pageObjects.scenarioSelect.select('string:csv_metric_values');
+    await editPanelPage.pageObjects.scenarioSelect.select('string:csv_metric_valuesss');
     await editPanelPage.pageObjects.visualizationTab.click();
     await editPanelPage.pageObjects.showXAxis.click();
     await editPanelPage.pageObjects.saveDashboard.click();

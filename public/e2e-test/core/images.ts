@@ -25,17 +25,17 @@ export const compareScreenShots = async (fileName: string) =>
 
       if (screenShotFromTest.width !== screenShotFromTruth.width) {
         throw new Error(
-          `The screenshot:<${fileName}> taken during the test has a width:<${
+          `The screenshot:[${fileName}] taken during the test has a width:[${
             screenShotFromTest.width
-          }> that differs from the expected: <${screenShotFromTruth.width}>.`
+          }] that differs from the expected: [${screenShotFromTruth.width}].`
         );
       }
 
       if (screenShotFromTest.height !== screenShotFromTruth.height) {
         throw new Error(
-          `The screenshot:<${fileName}> taken during the test has a width:<${
+          `The screenshot:[${fileName}] taken during the test has a width:[${
             screenShotFromTest.height
-          }> that differs from the expected: <${screenShotFromTruth.height}>.`
+          }] that differs from the expected: [${screenShotFromTruth.height}].`
         );
       }
 
@@ -50,9 +50,24 @@ export const compareScreenShots = async (fileName: string) =>
       );
 
       if (numDiffPixels !== 0) {
-        throw new Error(
-          `The screenshot:<${fileName}> taken during the test differs by:<${numDiffPixels}> pixels from the expected.`
-        );
+        const localMessage = `\nCompare the output from expected:[${constants.screenShotsTruthDir}] with outcome:[${
+          constants.screenShotsOutputDir
+        }]`;
+        const circleCIMessage = '\nCheck the Artifacts tab in the CircleCi build output for the actual screenshots.';
+        const checkMessage = process.env.CIRCLE_SHA1 ? circleCIMessage : localMessage;
+        let msg = `\nThe screenshot:[${
+          constants.screenShotsOutputDir
+        }/${fileName}.png] taken during the test differs by:[${numDiffPixels}] pixels from the expected.`;
+        msg += '\n';
+        msg += checkMessage;
+        msg += '\n';
+        msg += '\n  If the difference between expected and outcome is NOT acceptable then do the following:';
+        msg += '\n    - Check the code for changes that causes this difference, fix that and retry.';
+        msg += '\n';
+        msg += '\n  If the difference between expected and outcome is acceptable then do the following:';
+        msg += '\n    - Replace the expected image with the outcome and retry.';
+        msg += '\n';
+        throw new Error(msg);
       }
 
       resolve();
