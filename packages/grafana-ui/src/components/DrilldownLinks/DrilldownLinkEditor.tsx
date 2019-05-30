@@ -2,14 +2,14 @@ import React, { FC, useState, ChangeEvent } from 'react';
 import { PanelDrillDownLink } from '../../index';
 import { FormField, Switch } from '../index';
 
-export interface DrilldownLinkEditor {
+interface DrilldownLinkEditorProps {
   index: number;
   value: PanelDrillDownLink;
   onChange: (index: number, link: PanelDrillDownLink) => void;
   onRemove: (link: PanelDrillDownLink) => void;
 }
 
-export const DrilldownLinkEditor: FC<DrilldownLinkEditor> = React.memo(({ index, value, onChange, onRemove }) => {
+export const DrilldownLinkEditor: FC<DrilldownLinkEditorProps> = React.memo(({ index, value, onChange, onRemove }) => {
   const [linkUrl, setLinkUrl] = useState(value.url);
   const [title, setTitle] = useState(value.title);
 

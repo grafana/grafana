@@ -7,12 +7,12 @@ import { PanelDrillDownLink, ThemeContext } from '../../index';
 import { Button, ButtonVariant } from '../index';
 import { DrilldownLinkEditor } from './DrilldownLinkEditor';
 
-export interface Props {
+interface DrilldownLinksEditorProps {
   value: PanelDrillDownLink[];
   onChange: (links: PanelDrillDownLink[]) => void;
 }
 
-export const DrilldownLinksEditor: FC<Props> = React.memo(({ value, onChange }) => {
+export const DrilldownLinksEditor: FC<DrilldownLinksEditorProps> = React.memo(({ value, onChange }) => {
   const theme = useContext(ThemeContext);
 
   const onAdd = () => {
