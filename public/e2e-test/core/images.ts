@@ -23,8 +23,21 @@ export const compareScreenShots = async (fileName: string) =>
         return;
       }
 
-      expect(screenShotFromTest.width).toEqual(screenShotFromTruth.width);
-      expect(screenShotFromTest.height).toEqual(screenShotFromTruth.height);
+      if (screenShotFromTest.width !== screenShotFromTruth.width) {
+        throw new Error(
+          `The screenshot:<${fileName}> taken during the test has a width:<${
+            screenShotFromTest.width
+          }> that differs from the expected: <${screenShotFromTruth.width}>.`
+        );
+      }
+
+      if (screenShotFromTest.height !== screenShotFromTruth.height) {
+        throw new Error(
+          `The screenshot:<${fileName}> taken during the test has a width:<${
+            screenShotFromTest.height
+          }> that differs from the expected: <${screenShotFromTruth.height}>.`
+        );
+      }
 
       const diff = new PNG({ width: screenShotFromTest.width, height: screenShotFromTruth.height });
       const numDiffPixels = pixelmatch(
@@ -36,7 +49,12 @@ export const compareScreenShots = async (fileName: string) =>
         { threshold: 0.1 }
       );
 
-      expect(numDiffPixels).toBe(0);
+      if (numDiffPixels !== 0) {
+        throw new Error(
+          `The screenshot:<${fileName}> taken during the test differs by:<${numDiffPixels}> pixels from the expected.`
+        );
+      }
+
       resolve();
     };
 
