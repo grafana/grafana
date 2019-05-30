@@ -434,8 +434,8 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 	whereConditions := make([]string, 0)
 	whereParams := make([]interface{}, 0)
-	sess := x.Table("user")
-	sess.Join("LEFT", "user_auth", "user_auth.user_id=user.id")
+	sess := x.Table("user").Alias("u")
+	sess.Join("LEFT", "user_auth", "user_auth.user_id=u.id")
 
 	if query.OrgId > 0 {
 		whereConditions = append(whereConditions, "org_id = ?")
@@ -453,7 +453,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Cols("user.id", "user.email", "user.name", "user.login", "user.is_admin", "user.is_disabled", "user.last_seen_at", "user_auth.auth_module", "user_auth.auth_id")
+	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "user_auth.auth_id")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
