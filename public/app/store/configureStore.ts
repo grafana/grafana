@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware, compose, combineReducers } from 'redux';
 import thunk from 'redux-thunk';
 import { combineEpics, createEpicMiddleware } from 'redux-observable';
-// import { createLogger } from 'redux-logger';
+import { createLogger } from 'redux-logger';
 import sharedReducers from 'app/core/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
@@ -17,6 +17,8 @@ import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
 import { startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic } from 'app/features/explore/state/epics';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
+import { StoreState } from 'app/types/store';
+import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 
 const rootReducers = {
   ...sharedReducers,
@@ -51,15 +53,17 @@ const epicMiddleware = createEpicMiddleware({ dependencies });
 
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
   const rootReducer = combineReducers(rootReducers);
+  const logger = createLogger({
+    predicate: (getState: () => StoreState) => {
+      return getState().application.logActions;
+    },
+  });
+  const storeEnhancers =
+    process.env.NODE_ENV !== 'production'
+      ? applyMiddleware(toggleLogActionsMiddleware, thunk, epicMiddleware, logger)
+      : applyMiddleware(thunk, epicMiddleware);
 
-  if (process.env.NODE_ENV !== 'production') {
-    // DEV builds we had the logger middleware
-    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, epicMiddleware))));
-  } else {
-    setStore(createStore(rootReducer, {}, composeEnhancers(applyMiddleware(thunk, epicMiddleware))));
-  }
-
+  setStore(createStore(rootReducer, {}, composeEnhancers(storeEnhancers)));
   epicMiddleware.run(rootEpic);
 }
