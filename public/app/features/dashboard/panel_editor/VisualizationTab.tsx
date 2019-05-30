@@ -109,20 +109,21 @@ export class VisualizationTab extends PureComponent<Props, State> {
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
-      template +=
-        `
-      <div class="panel-options-group" ng-cloak>` +
-        (i > 0
-          ? `<div class="panel-options-group__header">
-           <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}
-           </span>
-         </div>`
-          : '') +
-        `<div class="panel-options-group__body">
-          <panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>
-        </div>
-      </div>
-      `;
+      const contentTemplate = `<panel-editor-tab editor-tab="ctrl.editorTabs[${i}]" ctrl="ctrl"></panel-editor-tab>`;
+      const headerTemplate = `<div class="panel-options-group__header">
+                                <span class="panel-options-group__title">{{ctrl.editorTabs[${i}].title}}</span>
+                              </div>`;
+
+      if (panelCtrl.editorTabs[i].noBox) {
+        template += contentTemplate;
+      } else {
+        template += `<div class="panel-options-group" ng-cloak>
+                        ${i > 0 ? headerTemplate : ''}
+                        <div class="panel-options-group__body">
+                          ${contentTemplate}
+                        </div>
+                     </div>`;
+      }
     }
 
     const loader = getAngularLoader();

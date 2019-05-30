@@ -99,8 +99,8 @@ export class PanelCtrl {
     }
   }
 
-  addEditorTab(title, directiveFn, index?, icon?) {
-    const editorTab = { title, directiveFn, icon };
+  addEditorTab(title: string, directiveFn: any, index?: number, icon?: string, noBox?: boolean) {
+    const editorTab = { title, directiveFn, icon, noBox };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = () => {
