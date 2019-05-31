@@ -25,11 +25,47 @@ import (
 )
 
 const (
-	prefix   = "GRPC_GO_"
-	retryStr = prefix + "RETRY"
+	prefix              = "GRPC_GO_"
+	retryStr            = prefix + "RETRY"
+	requireHandshakeStr = prefix + "REQUIRE_HANDSHAKE"
+)
+
+// RequireHandshakeSetting describes the settings for handshaking.
+type RequireHandshakeSetting int
+
+const (
+	// RequireHandshakeHybrid (default, deprecated) indicates to not wait for
+	// handshake before considering a connection ready, but wait before
+	// considering successful.
+	RequireHandshakeHybrid RequireHandshakeSetting = iota
+	// RequireHandshakeOn (default after the 1.17 release) indicates to wait
+	// for handshake before considering a connection ready/successful.
+	RequireHandshakeOn
+	// RequireHandshakeOff indicates to not wait for handshake before
+	// considering a connection ready/successful.
+	RequireHandshakeOff
 )
 
 var (
 	// Retry is set if retry is explicitly enabled via "GRPC_GO_RETRY=on".
 	Retry = strings.EqualFold(os.Getenv(retryStr), "on")
+	// RequireHandshake is set based upon the GRPC_GO_REQUIRE_HANDSHAKE
+	// environment variable.
+	//
+	// Will be removed after the 1.18 release.
+	RequireHandshake RequireHandshakeSetting
 )
+
+func init() {
+	switch strings.ToLower(os.Getenv(requireHandshakeStr)) {
+	case "on":
+		fallthrough
+	default:
+		RequireHandshake = RequireHandshakeOn
+	case "off":
+		RequireHandshake = RequireHandshakeOff
+	case "hybrid":
+		// Will be removed after the 1.17 release.
+		RequireHandshake = RequireHandshakeHybrid
+	}
+}

@@ -21,13 +21,15 @@
 package balancer
 
 import (
+	"context"
 	"errors"
 	"net"
 	"strings"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/internal"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -46,8 +48,20 @@ func Register(b Builder) {
 	m[strings.ToLower(b.Name())] = b
 }
 
+// unregisterForTesting deletes the balancer with the given name from the
+// balancer map.
+//
+// This function is not thread-safe.
+func unregisterForTesting(name string) {
+	delete(m, name)
+}
+
+func init() {
+	internal.BalancerUnregister = unregisterForTesting
+}
+
 // Get returns the resolver builder registered with the given name.
-// Note that the compare is done in a case-insenstive fashion.
+// Note that the compare is done in a case-insensitive fashion.
 // If no builder is register with the name, nil will be returned.
 func Get(name string) Builder {
 	if b, ok := m[strings.ToLower(name)]; ok {
@@ -88,7 +102,15 @@ type SubConn interface {
 }
 
 // NewSubConnOptions contains options to create new SubConn.
-type NewSubConnOptions struct{}
+type NewSubConnOptions struct {
+	// CredsBundle is the credentials bundle that will be used in the created
+	// SubConn. If it's nil, the original creds from grpc DialOptions will be
+	// used.
+	CredsBundle credentials.Bundle
+	// HealthCheckEnabled indicates whether health check service should be
+	// enabled on this SubConn
+	HealthCheckEnabled bool
+}
 
 // ClientConn represents a gRPC ClientConn.
 //
@@ -105,7 +127,7 @@ type ClientConn interface {
 	// The SubConn will be shutdown.
 	RemoveSubConn(SubConn)
 
-	// UpdateBalancerState is called by balancer to nofity gRPC that some internal
+	// UpdateBalancerState is called by balancer to notify gRPC that some internal
 	// state in balancer has changed.
 	//
 	// gRPC will update the connectivity state of the ClientConn, and will call pick
@@ -125,6 +147,8 @@ type BuildOptions struct {
 	// use to dial to a remote load balancer server. The Balancer implementations
 	// can ignore this if it does not need to talk to another party securely.
 	DialCreds credentials.TransportCredentials
+	// CredsBundle is the credentials bundle that the Balancer can use.
+	CredsBundle credentials.Bundle
 	// Dialer is the custom dialer the Balancer implementation can use to dial
 	// to a remote load balancer server. The Balancer implementations
 	// can ignore this if it doesn't need to talk to remote balancer.
@@ -147,12 +171,17 @@ type PickOptions struct {
 	// FullMethodName is the method name that NewClientStream() is called
 	// with. The canonical format is /service/Method.
 	FullMethodName string
+	// Header contains the metadata from the RPC's client header.  The metadata
+	// should not be modified; make a copy first if needed.
+	Header metadata.MD
 }
 
 // DoneInfo contains additional information for done.
 type DoneInfo struct {
 	// Err is the rpc error the RPC finished with. It could be nil.
 	Err error
+	// Trailer contains the metadata from the RPC's trailer, if present.
+	Trailer metadata.MD
 	// BytesSent indicates if any bytes have been sent to the server.
 	BytesSent bool
 	// BytesReceived indicates if any byte has been received from the server.
@@ -198,9 +227,10 @@ type Picker interface {
 	// - Else (error is other non-nil error):
 	//   - The RPC will fail with unavailable error.
 	//
-	// The returned done() function will be called once the rpc has finished, with the
-	// final status of that RPC.
-	// done may be nil if balancer doesn't care about the RPC status.
+	// The returned done() function will be called once the rpc has finished,
+	// with the final status of that RPC.  If the SubConn returned is not a
+	// valid SubConn type, done may not be called.  done may be nil if balancer
+	// doesn't care about the RPC status.
 	Pick(ctx context.Context, opts PickOptions) (conn SubConn, done func(DoneInfo), err error)
 }
 

@@ -64,45 +64,45 @@ const (
 )
 
 type Stat_t struct {
-	Dev      uint64
-	Ino      uint64
-	Nlink    uint64
-	Mode     uint16
-	_0       int16
-	Uid      uint32
-	Gid      uint32
-	_1       int32
-	Rdev     uint64
-	Atim     Timespec
-	Mtim     Timespec
-	Ctim     Timespec
-	Birthtim Timespec
-	Size     int64
-	Blocks   int64
-	Blksize  int32
-	Flags    uint32
-	Gen      uint64
-	Spare    [10]uint64
+	Dev     uint64
+	Ino     uint64
+	Nlink   uint64
+	Mode    uint16
+	_0      int16
+	Uid     uint32
+	Gid     uint32
+	_1      int32
+	Rdev    uint64
+	Atim    Timespec
+	Mtim    Timespec
+	Ctim    Timespec
+	Btim    Timespec
+	Size    int64
+	Blocks  int64
+	Blksize int32
+	Flags   uint32
+	Gen     uint64
+	Spare   [10]uint64
 }
 
 type stat_freebsd11_t struct {
-	Dev      uint32
-	Ino      uint32
-	Mode     uint16
-	Nlink    uint16
-	Uid      uint32
-	Gid      uint32
-	Rdev     uint32
-	Atim     Timespec
-	Mtim     Timespec
-	Ctim     Timespec
-	Size     int64
-	Blocks   int64
-	Blksize  int32
-	Flags    uint32
-	Gen      uint32
-	Lspare   int32
-	Birthtim Timespec
+	Dev     uint32
+	Ino     uint32
+	Mode    uint16
+	Nlink   uint16
+	Uid     uint32
+	Gid     uint32
+	Rdev    uint32
+	Atim    Timespec
+	Mtim    Timespec
+	Ctim    Timespec
+	Size    int64
+	Blocks  int64
+	Blksize int32
+	Flags   uint32
+	Gen     uint32
+	Lspare  int32
+	Btim    Timespec
 }
 
 type Statfs_t struct {

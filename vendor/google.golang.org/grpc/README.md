@@ -16,11 +16,11 @@ $ go get -u google.golang.org/grpc
 Prerequisites
 -------------
 
-This requires Go 1.6 or later. Go 1.7 will be required soon.
+gRPC-Go requires Go 1.9 or later.
 
 Constraints
 -----------
-The grpc package should only depend on standard Go packages and a small number of exceptions. If your contribution introduces new dependencies which are NOT in the [list](http://godoc.org/google.golang.org/grpc?imports), you need a discussion with gRPC-Go authors and consultants.
+The grpc package should only depend on standard Go packages and a small number of exceptions. If your contribution introduces new dependencies which are NOT in the [list](https://godoc.org/google.golang.org/grpc?imports), you need a discussion with gRPC-Go authors and consultants.
 
 Documentation
 -------------
@@ -43,3 +43,25 @@ Please update proto package, gRPC package and rebuild the proto files:
  - `go get -u github.com/golang/protobuf/{proto,protoc-gen-go}`
  - `go get -u google.golang.org/grpc`
  - `protoc --go_out=plugins=grpc:. *.proto`
+
+#### How to turn on logging
+
+The default logger is controlled by the environment variables. Turn everything
+on by setting:
+
+```
+GRPC_GO_LOG_VERBOSITY_LEVEL=99 GRPC_GO_LOG_SEVERITY_LEVEL=info
+```
+
+#### The RPC failed with error `"code = Unavailable desc = transport is closing"`
+
+This error means the connection the RPC is using was closed, and there are many
+possible reasons, including:
+ 1. mis-configured transport credentials, connection failed on handshaking
+ 1. bytes disrupted, possibly by a proxy in between
+ 1. server shutdown
+
+It can be tricky to debug this because the error happens on the client side but
+the root cause of the connection being closed is on the server side. Turn on
+logging on __both client and server__, and see if there are any transport
+errors.

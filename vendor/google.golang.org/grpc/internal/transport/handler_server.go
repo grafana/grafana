@@ -24,6 +24,7 @@
 package transport
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -34,7 +35,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"golang.org/x/net/context"
 	"golang.org/x/net/http2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -237,9 +237,9 @@ func (ht *serverHandlerTransport) WriteStatus(s *Stream, st *status.Status) erro
 		if ht.stats != nil {
 			ht.stats.HandleRPC(s.Context(), &stats.OutTrailer{})
 		}
-		ht.Close()
 		close(ht.writes)
 	}
+	ht.Close()
 	return err
 }
 
@@ -307,7 +307,7 @@ func (ht *serverHandlerTransport) WriteHeader(s *Stream, md metadata.MD) error {
 func (ht *serverHandlerTransport) HandleStreams(startStream func(*Stream), traceCtx func(context.Context, string) context.Context) {
 	// With this transport type there will be exactly 1 stream: this HTTP request.
 
-	ctx := contextFromRequest(ht.req)
+	ctx := ht.req.Context()
 	var cancel context.CancelFunc
 	if ht.timeoutSet {
 		ctx, cancel = context.WithTimeout(ctx, ht.timeout)
@@ -326,11 +326,11 @@ func (ht *serverHandlerTransport) HandleStreams(startStream func(*Stream), trace
 	go func() {
 		select {
 		case <-requestOver:
-			return
 		case <-ht.closedCh:
 		case <-clientGone:
 		}
 		cancel()
+		ht.Close()
 	}()
 
 	req := ht.req
@@ -441,6 +441,9 @@ func mapRecvMsgError(err error) error {
 		if code, ok := http2ErrConvTab[se.Code]; ok {
 			return status.Error(code, se.Error())
 		}
+	}
+	if strings.Contains(err.Error(), "body closed by handler") {
+		return status.Error(codes.Canceled, err.Error())
 	}
 	return connectionErrorf(true, err, err.Error())
 }

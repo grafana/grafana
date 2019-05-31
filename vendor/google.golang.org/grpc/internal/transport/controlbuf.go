@@ -104,7 +104,6 @@ type headerFrame struct {
 
 type cleanupStream struct {
 	streamID uint32
-	idPtr    *uint32
 	rst      bool
 	rstCode  http2.ErrCode
 	onWrite  func()
@@ -136,9 +135,6 @@ type incomingSettings struct {
 
 type outgoingSettings struct {
 	ss []http2.Setting
-}
-
-type settingsAck struct {
 }
 
 type incomingGoAway struct {

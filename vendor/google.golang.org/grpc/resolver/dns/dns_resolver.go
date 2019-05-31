@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2017 gRPC authors.
+ * Copyright 2018 gRPC authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package dns
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal/backoff"
 	"google.golang.org/grpc/internal/grpcrand"
@@ -43,9 +43,10 @@ func init() {
 }
 
 const (
-	defaultPort = "443"
-	defaultFreq = time.Minute * 30
-	golang      = "GO"
+	defaultPort       = "443"
+	defaultFreq       = time.Minute * 30
+	defaultDNSSvrPort = "53"
+	golang            = "GO"
 	// In DNS, service config is encoded in a TXT record via the mechanism
 	// described in RFC-1464 using the attribute name grpc_config.
 	txtAttribute = "grpc_config="
@@ -61,6 +62,31 @@ var (
 	errEndsWithColon = errors.New("dns resolver: missing port after port-separator colon")
 )
 
+var (
+	defaultResolver netResolver = net.DefaultResolver
+)
+
+var customAuthorityDialler = func(authority string) func(ctx context.Context, network, address string) (net.Conn, error) {
+	return func(ctx context.Context, network, address string) (net.Conn, error) {
+		var dialer net.Dialer
+		return dialer.DialContext(ctx, network, authority)
+	}
+}
+
+var customAuthorityResolver = func(authority string) (netResolver, error) {
+	host, port, err := parseTarget(authority, defaultDNSSvrPort)
+	if err != nil {
+		return nil, err
+	}
+
+	authorityWithPort := net.JoinHostPort(host, port)
+
+	return &net.Resolver{
+		PreferGo: true,
+		Dial:     customAuthorityDialler(authorityWithPort),
+	}, nil
+}
+
 // NewBuilder creates a dnsBuilder which is used to factory DNS resolvers.
 func NewBuilder() resolver.Builder {
 	return &dnsBuilder{minFreq: defaultFreq}
@@ -73,10 +99,7 @@ type dnsBuilder struct {
 
 // Build creates and starts a DNS resolver that watches the name resolution of the target.
 func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
-	if target.Authority != "" {
-		return nil, fmt.Errorf("Default DNS resolver does not support custom DNS server")
-	}
-	host, port, err := parseTarget(target.Endpoint)
+	host, port, err := parseTarget(target.Endpoint, defaultPort)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +134,15 @@ func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts 
 		disableServiceConfig: opts.DisableServiceConfig,
 	}
 
+	if target.Authority == "" {
+		d.resolver = defaultResolver
+	} else {
+		d.resolver, err = customAuthorityResolver(target.Authority)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	d.wg.Add(1)
 	go d.watcher()
 	return d, nil
@@ -119,6 +151,12 @@ func (b *dnsBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts 
 // Scheme returns the naming scheme of this resolver builder, which is "dns".
 func (b *dnsBuilder) Scheme() string {
 	return "dns"
+}
+
+type netResolver interface {
+	LookupHost(ctx context.Context, host string) (addrs []string, err error)
+	LookupSRV(ctx context.Context, service, proto, name string) (cname string, addrs []*net.SRV, err error)
+	LookupTXT(ctx context.Context, name string) (txts []string, err error)
 }
 
 // ipResolver watches for the name resolution update for an IP address.
@@ -161,6 +199,7 @@ type dnsResolver struct {
 	retryCount int
 	host       string
 	port       string
+	resolver   netResolver
 	ctx        context.Context
 	cancel     context.CancelFunc
 	cc         resolver.ClientConn
@@ -218,13 +257,13 @@ func (d *dnsResolver) watcher() {
 
 func (d *dnsResolver) lookupSRV() []resolver.Address {
 	var newAddrs []resolver.Address
-	_, srvs, err := lookupSRV(d.ctx, "grpclb", "tcp", d.host)
+	_, srvs, err := d.resolver.LookupSRV(d.ctx, "grpclb", "tcp", d.host)
 	if err != nil {
 		grpclog.Infof("grpc: failed dns SRV record lookup due to %v.\n", err)
 		return nil
 	}
 	for _, s := range srvs {
-		lbAddrs, err := lookupHost(d.ctx, s.Target)
+		lbAddrs, err := d.resolver.LookupHost(d.ctx, s.Target)
 		if err != nil {
 			grpclog.Infof("grpc: failed load balancer address dns lookup due to %v.\n", err)
 			continue
@@ -243,7 +282,7 @@ func (d *dnsResolver) lookupSRV() []resolver.Address {
 }
 
 func (d *dnsResolver) lookupTXT() string {
-	ss, err := lookupTXT(d.ctx, d.host)
+	ss, err := d.resolver.LookupTXT(d.ctx, d.host)
 	if err != nil {
 		grpclog.Infof("grpc: failed dns TXT record lookup due to %v.\n", err)
 		return ""
@@ -263,7 +302,7 @@ func (d *dnsResolver) lookupTXT() string {
 
 func (d *dnsResolver) lookupHost() []resolver.Address {
 	var newAddrs []resolver.Address
-	addrs, err := lookupHost(d.ctx, d.host)
+	addrs, err := d.resolver.LookupHost(d.ctx, d.host)
 	if err != nil {
 		grpclog.Warningf("grpc: failed dns A record lookup due to %v.\n", err)
 		return nil
@@ -305,16 +344,16 @@ func formatIP(addr string) (addrIP string, ok bool) {
 	return "[" + addr + "]", true
 }
 
-// parseTarget takes the user input target string, returns formatted host and port info.
+// parseTarget takes the user input target string and default port, returns formatted host and port info.
 // If target doesn't specify a port, set the port to be the defaultPort.
-// If target is in IPv6 format and host-name is enclosed in sqarue brackets, brackets
-// are strippd when setting the host.
+// If target is in IPv6 format and host-name is enclosed in square brackets, brackets
+// are stripped when setting the host.
 // examples:
-// target: "www.google.com" returns host: "www.google.com", port: "443"
-// target: "ipv4-host:80" returns host: "ipv4-host", port: "80"
-// target: "[ipv6-host]" returns host: "ipv6-host", port: "443"
-// target: ":80" returns host: "localhost", port: "80"
-func parseTarget(target string) (host, port string, err error) {
+// target: "www.google.com" defaultPort: "443" returns host: "www.google.com", port: "443"
+// target: "ipv4-host:80" defaultPort: "443" returns host: "ipv4-host", port: "80"
+// target: "[ipv6-host]" defaultPort: "443" returns host: "ipv6-host", port: "443"
+// target: ":80" defaultPort: "443" returns host: "localhost", port: "80"
+func parseTarget(target, defaultPort string) (host, port string, err error) {
 	if target == "" {
 		return "", "", errMissingAddr
 	}

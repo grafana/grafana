@@ -2307,7 +2307,16 @@ type chunkWriter struct{ rws *responseWriterState }
 
 func (cw chunkWriter) Write(p []byte) (n int, err error) { return cw.rws.writeChunk(p) }
 
-func (rws *responseWriterState) hasTrailers() bool { return len(rws.trailers) != 0 }
+func (rws *responseWriterState) hasTrailers() bool { return len(rws.trailers) > 0 }
+
+func (rws *responseWriterState) hasNonemptyTrailers() bool {
+	for _, trailer := range rws.trailers {
+		if _, ok := rws.handlerHeader[trailer]; ok {
+			return true
+		}
+	}
+	return false
+}
 
 // declareTrailer is called for each Trailer header when the
 // response header is written. It notes that a header will need to be
@@ -2407,7 +2416,10 @@ func (rws *responseWriterState) writeChunk(p []byte) (n int, err error) {
 		rws.promoteUndeclaredTrailers()
 	}
 
-	endStream := rws.handlerDone && !rws.hasTrailers()
+	// only send trailers if they have actually been defined by the
+	// server handler.
+	hasNonemptyTrailers := rws.hasNonemptyTrailers()
+	endStream := rws.handlerDone && !hasNonemptyTrailers
 	if len(p) > 0 || endStream {
 		// only send a 0 byte DATA frame if we're ending the stream.
 		if err := rws.conn.writeDataFromHandler(rws.stream, p, endStream); err != nil {
@@ -2416,7 +2428,7 @@ func (rws *responseWriterState) writeChunk(p []byte) (n int, err error) {
 		}
 	}
 
-	if rws.handlerDone && rws.hasTrailers() {
+	if rws.handlerDone && hasNonemptyTrailers {
 		err = rws.conn.writeHeaders(rws.stream, &writeResHeaders{
 			streamID:  rws.stream.id,
 			h:         rws.handlerHeader,
