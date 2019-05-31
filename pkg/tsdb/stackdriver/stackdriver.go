@@ -618,7 +618,7 @@ func (e *StackdriverExecutor) getDefaultProject(ctx context.Context) (string, er
 			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
 		}
 		if !token.Valid() {
-			return "", fmt.Errorf("Failed to validate GCP credentials.")
+			return "", errors.New("Failed to validate GCP credentials")
 		}
 
 		return defaultCredentials.ProjectID, nil
@@ -638,7 +638,7 @@ func (e *StackdriverExecutor) getProjects(ctx context.Context) ([]string, error)
 		return projects, fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
 	}
 	if !token.Valid() {
-		return projects, fmt.Errorf("Failed to validate GCP credentials.")
+		return projects, errors.New("Failed to validate GCP credentials")
 	}
 
 	cloudresourcemanagerService, err := cloudresourcemanager.NewService(ctx, option.WithScopes("https://www.googleapis.com/auth/monitoring.read"))
