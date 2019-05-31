@@ -151,6 +151,7 @@ Display styles control visual properties of the graph.
 - **Line Width** - The width of the line for a series (default 1).
 - **Staircase** - Draws adjacent points as staircase
 - **Points Radius** - Adjust the size of points when *Points* are selected as *Draw Mode*.
+- **Hidden Series** - Hide series by default in graph.
 
 #### Hover tooltip
 
