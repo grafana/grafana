@@ -196,7 +196,7 @@ $btn-semi-transparent: rgba(0, 0, 0, 0.2) !default;
 $side-menu-width: 60px;
 
 // dashboard
-$dashboard-padding: $space-md;
+$dashboard-padding: $space-sm;
 $panel-padding: ${theme.panelPadding}px;
 $panel-header-height: ${theme.panelHeaderHeight}px;
 $panel-header-z-index: 10;
