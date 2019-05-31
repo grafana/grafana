@@ -98,4 +98,23 @@
 		</tr>
 	</table>
 
+	<form name="disableUserForm" class="gf-form-group">
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-danger"
+				ng-if="!user.isDisabled"
+				ng-click="disableUser()"
+				bs-tooltip="user.authModule ? 'External user can not be deactivated' : 'Deactivate user'"
+				ng-disabled="user.authModule">
+				Deactivate
+			</button>
+			<button type="submit" class="btn btn-primary"
+				ng-if="user.isDisabled"
+				ng-click="disableUser()"
+				bs-tooltip="user.authModule ? 'External user can not be deactivated' : 'Activate user'"
+				ng-disabled="user.authModule">
+				Activate
+			</button>
+		</div>
+	</form>
+
 </div>

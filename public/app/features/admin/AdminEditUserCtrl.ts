@@ -117,6 +117,14 @@ export default class AdminEditUserCtrl {
       });
     };
 
+    $scope.disableUser = () => {
+      const user = $scope.user;
+      const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
+      backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
+        $location.path('/admin/users');
+      });
+    };
+
     $scope.init();
   }
 }
