@@ -85,6 +85,7 @@ export default class TimeSeries {
   isOutsideRange: boolean;
 
   lines: any;
+  hiddenSeries: boolean;
   dashes: any;
   bars: any;
   points: any;
@@ -188,6 +189,9 @@ export default class TimeSeries {
 
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
+      }
+      if (override.visible === false) {
+        this.hiddenSeries = override.hiddenSeries;
       }
     }
   }

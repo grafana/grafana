@@ -102,6 +102,7 @@ export function SeriesOverridesCtrl($scope, $element, popoverSrv) {
   $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
   $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
   $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
+  $scope.addOverrideOption('Hidden Series', 'hiddenSeries', [true, false]);
   $scope.addOverrideOption('Dash Length', 'dashLength', [
     1,
     2,

@@ -20,6 +20,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   renderError: boolean;
   hiddenSeries: any = {};
+  hiddenSeriesTainted = false;
   seriesList: TimeSeries[] = [];
   dataList: SeriesData[] = [];
   annotations: any = [];
@@ -73,6 +74,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     linewidth: 1,
     // show/hide dashed line
     dashes: false,
+    // show/hide line
+    hiddenSeries: false,
     // length of a dash
     dashLength: 10,
     // length of space between two dashes
@@ -252,6 +255,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
+      if (this.hiddenSeriesTainted === false && series.hiddenSeries === true) {
+        this.hiddenSeries[series.alias] = true;
+      }
     }
   }
 
@@ -262,6 +268,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleSeries = hiddenSeries => {
+    this.hiddenSeriesTainted = true;
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
