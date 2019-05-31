@@ -8,8 +8,6 @@
   "alerting": false,
   "annotations": false,
   "logs": true,
-  "explore": true,
-  "tables": false,
 
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",

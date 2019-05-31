@@ -103,9 +103,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   graphIsLoading: false,
   logIsLoading: false,
   tableIsLoading: false,
-  supportsGraph: null,
-  supportsLogs: null,
-  supportsTable: null,
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
@@ -246,7 +243,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       // Capabilities
       const supportsGraph = datasourceInstance.meta.metrics;
       const supportsLogs = datasourceInstance.meta.logs;
-      const supportsTable = datasourceInstance.meta.tables;
 
       let mode = ExploreMode.Metrics;
       const supportedModes: ExploreMode[] = [];
@@ -274,9 +270,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         graphIsLoading: false,
         logIsLoading: false,
         tableIsLoading: false,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
         StartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: getQueryKeys(state.queries, datasourceInstance),
