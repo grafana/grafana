@@ -29,6 +29,12 @@
     top: 1px;
     padding-right: 4px;
   }
+
+  &.muted {
+    opacity: 0.85;
+    background-color: darken($purple, 10%);
+    color: $text-muted;
+  }
 }
 
 .label-tag:hover {
