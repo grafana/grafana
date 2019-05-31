@@ -190,7 +190,7 @@ export default class TimeSeries {
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
       }
-      if (override.visible === false) {
+      if (override.hiddenSeries !== void 0) {
         this.hiddenSeries = override.hiddenSeries;
       }
     }
