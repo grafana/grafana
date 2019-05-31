@@ -4,12 +4,12 @@ import React, { PureComponent } from 'react';
 // Components
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
-import { PanelLinksEditor } from '../../panel/PanelLinksEditor/PanelLinksEditor';
+import { DrilldownLinksEditor } from '@grafana/ui';
 import './../../panel/GeneralTabCtrl';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { PanelDrillDownLink } from '@grafana/ui';
+import { PanelDrillDownLink, PanelOptionsGroup } from '@grafana/ui';
 
 interface Props {
   panel: PanelModel;
@@ -60,7 +60,9 @@ export class GeneralTab extends PureComponent<Props> {
       <EditorTabBody heading="General" toolbarItems={[]}>
         <>
           <div ref={element => (this.element = element)} />
-          <PanelLinksEditor value={panel.links} onChange={this.onPanelDrillDownLinksChanged} />
+          <PanelOptionsGroup title="Panel links">
+            <DrilldownLinksEditor value={panel.links} onChange={this.onPanelDrillDownLinksChanged} />
+          </PanelOptionsGroup>
         </>
       </EditorTabBody>
     );

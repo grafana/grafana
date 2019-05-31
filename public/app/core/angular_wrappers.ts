@@ -8,7 +8,13 @@ import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, ContextMenu } from '@grafana/ui';
+import {
+  ColorPicker,
+  SeriesColorPickerPopoverWithTheme,
+  SecretFormField,
+  ContextMenu,
+  DrilldownLinksEditor,
+} from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 
@@ -77,5 +83,10 @@ export function registerAngularDirectives() {
     'y',
     'items',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+
+  react2AngularDirective('drilldownLinksEditor', DrilldownLinksEditor, [
+    'value',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

@@ -6,6 +6,7 @@ import { Portal, List } from '../index';
 
 export interface ContextMenuItem {
   label: string;
+  target?: string;
   icon?: string;
   url?: string;
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
@@ -88,6 +89,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
             return (
               <a
                 href={item.url}
+                target={item.target || '_self'}
                 className={styles.link}
                 onClick={e => {
                   if (item.onClick) {
