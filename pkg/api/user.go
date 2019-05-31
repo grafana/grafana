@@ -252,16 +252,6 @@ func SearchUsersWithPaging(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-// GET /api/users/ext
-func SearchUsersExtWithPaging(c *m.ReqContext) Response {
-	query, err := searchUserExt(c)
-	if err != nil {
-		return Error(500, "Failed to fetch users", err)
-	}
-
-	return JSON(200, query.Result)
-}
-
 func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
@@ -276,34 +266,6 @@ func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 	searchQuery := c.Query("query")
 
 	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
-	if err := bus.Dispatch(query); err != nil {
-		return nil, err
-	}
-
-	for _, user := range query.Result.Users {
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
-	}
-
-	query.Result.Page = page
-	query.Result.PerPage = perPage
-
-	return query, nil
-}
-
-func searchUserExt(c *m.ReqContext) (*m.SearchExternalUsersQuery, error) {
-	perPage := c.QueryInt("perpage")
-	if perPage <= 0 {
-		perPage = 1000
-	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
-
-	searchQuery := c.Query("query")
-
-	query := &m.SearchExternalUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
