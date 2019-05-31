@@ -149,6 +149,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
     this.subTabIndex = 0;
+    this.hiddenSeriesTainted = false;
   }
 
   onInitPanelActions(actions) {
