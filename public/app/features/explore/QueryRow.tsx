@@ -22,7 +22,7 @@ import {
   PanelData,
   DataQueryError,
 } from '@grafana/ui';
-import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
+import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import QueryStatus from './QueryStatus';
@@ -50,6 +50,7 @@ interface QueryRowProps extends PropsFromParent {
   queryResponse: PanelData;
   latency: number;
   queryErrors: DataQueryError[];
+  mode: ExploreMode;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps> {
@@ -114,8 +115,17 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       queryResponse,
       latency,
       queryErrors,
+      mode,
     } = this.props;
-    const QueryField = datasourceInstance.components.ExploreQueryField;
+    let QueryField;
+
+    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+      QueryField = datasourceInstance.components.ExploreLogsQueryField;
+    } else {
+      QueryField = datasourceInstance.components.ExploreQueryField;
+    }
 
     return (
       <div className="query-row">
@@ -182,6 +192,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     loadingState,
     latency,
     queryErrors,
+    mode,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
@@ -202,6 +213,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     queryResponse,
     latency,
     queryErrors,
+    mode,
   };
 }
 
