@@ -215,6 +215,7 @@ type UserProfileDTO struct {
 	OrgId          int64  `json:"orgId"`
 	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 	IsDisabled     bool   `json:"isDisabled"`
+	AuthModule     string `json:"authModule"`
 }
 
 type UserSearchHitDTO struct {
