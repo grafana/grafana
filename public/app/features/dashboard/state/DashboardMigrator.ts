@@ -8,7 +8,7 @@ import { appendQueryToUrl } from 'app/core/utils/url';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { PanelDrillDownLink } from '@grafana/ui/src/types/panel';
+import { DrillDownLink } from '@grafana/ui/src/types/panel';
 
 // Constants
 import {
@@ -632,7 +632,7 @@ class RowArea {
   }
 }
 
-function upgradePanelLink(link: any): PanelDrillDownLink {
+function upgradePanelLink(link: any): DrillDownLink {
   let url = link.url;
 
   if (link.keepTime) {

@@ -87,6 +87,7 @@ export function registerAngularDirectives() {
 
   react2AngularDirective('drilldownLinksEditor', DrilldownLinksEditor, [
     'value',
+    'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

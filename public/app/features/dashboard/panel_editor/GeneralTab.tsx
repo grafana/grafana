@@ -4,12 +4,12 @@ import React, { PureComponent } from 'react';
 // Components
 import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
 import { EditorTabBody } from './EditorTabBody';
-import { DrilldownLinksEditor } from '@grafana/ui';
 import './../../panel/GeneralTabCtrl';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { PanelDrillDownLink, PanelOptionsGroup } from '@grafana/ui';
+import { DrillDownLink, PanelOptionsGroup, DrilldownLinksEditor } from '@grafana/ui';
+import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 interface Props {
   panel: PanelModel;
@@ -47,7 +47,7 @@ export class GeneralTab extends PureComponent<Props> {
     }
   }
 
-  onPanelDrillDownLinksChanged = (links: PanelDrillDownLink[]) => {
+  onPanelDrillDownLinksChanged = (links: DrillDownLink[]) => {
     this.props.panel.links = links;
     this.props.panel.render();
     this.forceUpdate();
@@ -55,13 +55,19 @@ export class GeneralTab extends PureComponent<Props> {
 
   render() {
     const { panel } = this.props;
+    const suggestions = getPanelLinksVariableSuggestions();
 
     return (
       <EditorTabBody heading="General" toolbarItems={[]}>
         <>
           <div ref={element => (this.element = element)} />
           <PanelOptionsGroup title="Panel links">
-            <DrilldownLinksEditor value={panel.links} onChange={this.onPanelDrillDownLinksChanged} />
+            <DrilldownLinksEditor
+              value={panel.links}
+              onChange={this.onPanelDrillDownLinksChanged}
+              suggestions={suggestions}
+              maxLinks={10}
+            />
           </PanelOptionsGroup>
         </>
       </EditorTabBody>

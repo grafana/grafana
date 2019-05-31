@@ -9,7 +9,7 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ClickOutsideWrapper, PanelDrillDownLink } from '@grafana/ui';
+import { ClickOutsideWrapper, DrillDownLink } from '@grafana/ui';
 
 export interface Props {
   panel: PanelModel;
@@ -18,7 +18,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: PanelDrillDownLink[];
+  links?: DrillDownLink[];
   error?: string;
   isFullscreen: boolean;
 }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Remarkable from 'remarkable';
-import { Tooltip, ScopedVars, PanelDrillDownLink } from '@grafana/ui';
+import { Tooltip, ScopedVars, DrillDownLink } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
@@ -18,7 +18,7 @@ interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: PanelDrillDownLink[];
+  links?: DrillDownLink[];
   error?: string;
 }
 

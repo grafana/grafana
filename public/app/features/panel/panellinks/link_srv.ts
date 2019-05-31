@@ -3,7 +3,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { PanelDrillDownLink, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
+import { DrillDownLink, VariableSuggestion, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
 import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
 import { deprecationWarning } from '@grafana/ui';
 
@@ -13,6 +13,29 @@ export const DrilldownLinkBuiltInVars = {
   seriesName: '__series_name',
   valueTime: '__value_time',
 };
+
+export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  {
+    value: `$${DrilldownLinkBuiltInVars.includeVars}`,
+    documentation: 'Adds current variables',
+  },
+  {
+    value: `$${DrilldownLinkBuiltInVars.keepTime}`,
+    documentation: 'Adds current time range',
+  },
+];
+
+export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...getPanelLinksVariableSuggestions(),
+  {
+    value: `$${DrilldownLinkBuiltInVars.seriesName}`,
+    documentation: 'Adds series name',
+  },
+  {
+    value: `$${DrilldownLinkBuiltInVars.valueTime}`,
+    documentation: "Adds narrowed down time range relative to data point's timestamp",
+  },
+];
 
 // Represents factor by which the original time range will be narrowed down when
 // using drilldown link
@@ -31,7 +54,7 @@ interface LinkDataPoint {
   seriesName: string;
 }
 export interface LinkService {
-  getDrilldownLinkUIModel: (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
+  getDrilldownLinkUIModel: (link: DrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
   getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
 }
 
@@ -91,7 +114,7 @@ export class LinkSrv implements LinkService {
     };
   };
 
-  getDrilldownLinkUIModel = (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
+  getDrilldownLinkUIModel = (link: DrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
     const info: LinkModel = {
@@ -128,7 +151,7 @@ export class LinkSrv implements LinkService {
    *
    * @deprecated Drilldown links should be generated using getDrilldownLinkUIModel method
    */
-  getPanelLinkAnchorInfo(link: PanelDrillDownLink, scopedVars: ScopedVars) {
+  getPanelLinkAnchorInfo(link: DrillDownLink, scopedVars: ScopedVars) {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDrilldownLinkUIModel');
     return this.getDrilldownLinkUIModel(link, scopedVars);
   }

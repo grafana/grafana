@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, PanelDrillDownLink } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, DrillDownLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
@@ -177,7 +177,7 @@ class GraphElement {
   }
 
   getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuItem[] => {
-    const drilldownLinks: PanelDrillDownLink[] = this.panel.options.drilldownLinks || [];
+    const drilldownLinks: DrillDownLink[] = this.panel.options.drilldownLinks || [];
 
     const items: ContextMenuItem[] = [
       {

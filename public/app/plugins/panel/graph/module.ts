@@ -11,10 +11,17 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, PanelDrillDownLink } from '@grafana/ui';
+import {
+  getColorFromHexRgbOrName,
+  LegacyResponseData,
+  SeriesData,
+  DrillDownLink,
+  VariableSuggestion,
+} from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -32,6 +39,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
+  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -292,7 +300,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  onDrilldownLinksChange(drilldownLinks: PanelDrillDownLink[]) {
+  onDrilldownLinksChange(drilldownLinks: DrillDownLink[]) {
     this.panel.updateOptions({
       ...this.panel.options,
       drilldownLinks,
