@@ -228,9 +228,7 @@ type UserSearchHitDTO struct {
 	IsDisabled    bool      `json:"isDisabled"`
 	LastSeenAt    time.Time `json:"lastSeenAt"`
 	LastSeenAtAge string    `json:"lastSeenAtAge"`
-	IsExternal    bool      `json:"isExternal"`
 	AuthModule    string    `json:"authModule"`
-	AuthId        string    `json:"authId"`
 }
 
 type UserIdDTO struct {
