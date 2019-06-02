@@ -37,6 +37,8 @@ import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
 
+import 'sass/antd.less';
+
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
 extensionsIndex.keys().forEach((key: any) => {

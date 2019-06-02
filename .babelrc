@@ -7,5 +7,10 @@
 		  "useBuiltIns": "entry"
       }
     ]
-  ]
+  ],
+  "plugins": [["import", {
+    "libraryName": "antd",
+    "libraryDirectory": "lib",   // default: lib
+    "style": true
+  }]]
 }
