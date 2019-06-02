@@ -6,7 +6,7 @@ import { PluginConfigPageProps, AppPlugin } from '@grafana/ui';
 
 interface Props extends PluginConfigPageProps<AppPlugin> {}
 
-import { Drawer, Button, Badge } from 'antd';
+import { Drawer, Button, Badge, Avatar } from 'antd';
 
 interface State {
   visible: boolean;
@@ -56,8 +56,10 @@ export class ExamplePage1 extends PureComponent<Props, State> {
           </Drawer>
         </div>
         <div>
+          <br />
+          <br />
           <Badge count={99}>
-            <a href="#" className="head-example" />
+            <Avatar size="large" icon="user" />
           </Badge>
         </div>
       </div>
