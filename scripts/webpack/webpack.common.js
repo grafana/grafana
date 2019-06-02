@@ -1,6 +1,8 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
+const antd_theme = require('../../public/sass/antd.dark');
+
 module.exports = {
   target: 'web',
   entry: {
@@ -66,16 +68,15 @@ module.exports = {
           loader: 'css-loader', // translates CSS into CommonJS
         }, {
           loader: 'less-loader', // compiles Less to CSS
-         options: {
-           modifyVars: {
-             'primary-color': '#1DA57A',
-             'link-color': '#1DA57A',
-             'border-radius-base': '2px',
-             // or
-             //'hack': `true; @import "your-less-file-path.less";`, // Override with less file
-           },
-           javascriptEnabled: true,
-         },
+          options: {
+            // modifyVars: {
+            //   //  'primary-color': '#FF0000',
+            //   //  'border-radius-base': '2px',
+            //   // or
+            //   //  'hack': `true; @import "your-less-file-path.less";`, // Override with less file
+            // },
+            javascriptEnabled: true,
+          },
         }]
         }
     ]
