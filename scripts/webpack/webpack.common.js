@@ -1,8 +1,6 @@
 const path = require('path');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
-const antd_theme = require('../../public/sass/antd.dark');
-
 module.exports = {
   target: 'web',
   entry: {
