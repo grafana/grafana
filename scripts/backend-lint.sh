@@ -36,4 +36,5 @@ exit_if_fail golangci-lint run --deadline 10m --disable-all \
 exit_if_fail go vet ./pkg/...
 
 exit_if_fail make revive
+exit_if_fail make revive-alerting
 exit_if_fail make gosec

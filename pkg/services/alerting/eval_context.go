@@ -26,7 +26,7 @@ type EvalContext struct {
 
 	dashboardRef *models.DashboardRef
 
-	ImagePublicUrl  string
+	ImagePublicURL  string
 	ImageOnDiskPath string
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
@@ -102,7 +102,7 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
+	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
 	if err := bus.Dispatch(uidQuery); err != nil {
 		return nil, err
 	}
@@ -113,8 +113,8 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 
 const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
-// GetRuleUrl returns the url to the dashboard containing the alert.
-func (c *EvalContext) GetRuleUrl() (string, error) {
+// GetRuleURL returns the url to the dashboard containing the alert.
+func (c *EvalContext) GetRuleURL() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
 	}
@@ -123,7 +123,7 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.
@@ -148,7 +148,7 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
-			"ruleId", c.Rule.Id,
+			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"error", c.Error,
 			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
@@ -165,7 +165,7 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 
 	if c.NoDataFound {
 		c.log.Info("Alert Rule returned no data",
-			"ruleId", c.Rule.Id,
+			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
 

@@ -145,9 +145,9 @@ type SlackNotifier struct {
 
 // Notify send alert notification to Slack.
 func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
-	sn.log.Info("Executing slack notification", "ruleId", evalContext.Rule.Id, "notification", sn.Name)
+	sn.log.Info("Executing slack notification", "ruleId", evalContext.Rule.ID, "notification", sn.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		sn.log.Error("Failed get rule link", "error", err)
 		return err
@@ -181,7 +181,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	imageURL := ""
 	// default to file.upload API method if a token is provided
 	if sn.Token == "" {
-		imageURL = evalContext.ImagePublicUrl
+		imageURL = evalContext.ImagePublicURL
 	}
 
 	body := map[string]interface{}{

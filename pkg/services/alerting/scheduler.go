@@ -27,8 +27,8 @@ func (s *schedulerImpl) Update(rules []*Rule) {
 
 	for i, rule := range rules {
 		var job *Job
-		if s.jobs[rule.Id] != nil {
-			job = s.jobs[rule.Id]
+		if s.jobs[rule.ID] != nil {
+			job = s.jobs[rule.ID]
 		} else {
 			job = &Job{
 				Running: false,
@@ -42,7 +42,7 @@ func (s *schedulerImpl) Update(rules []*Rule) {
 		if job.Offset == 0 { //zero offset causes division with 0 panics.
 			job.Offset = 1
 		}
-		jobs[rule.Id] = job
+		jobs[rule.ID] = job
 	}
 
 	s.jobs = jobs
@@ -73,6 +73,6 @@ func (s *schedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 }
 
 func (s *schedulerImpl) enqueue(job *Job, execQueue chan *Job) {
-	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.Id)
+	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.ID)
 	execQueue <- job
 }
