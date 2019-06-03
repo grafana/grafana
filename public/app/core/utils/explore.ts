@@ -1,44 +1,35 @@
 // Libraries
 import _ from 'lodash';
+import { from } from 'rxjs';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  colors,
   TimeRange,
   RawTimeRange,
   TimeZone,
   IntervalValues,
   DataQuery,
   DataSourceApi,
-  toSeriesData,
-  guessFieldTypes,
   TimeFragment,
   DataQueryError,
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
 } from '@grafana/ui';
-import TimeSeries from 'app/core/time_series2';
-import {
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  ResultType,
-  QueryIntervals,
-  QueryOptions,
-  ResultGetter,
-} from 'app/types/explore';
-import { seriesDataToLogsModel } from 'app/core/logs_model';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
-import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { ExploreUrlState, HistoryItem, QueryTransaction, QueryIntervals, QueryOptions } from 'app/types/explore';
+import { config } from '../config';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -116,7 +107,6 @@ export async function getExploreUrl(
 
 export function buildQueryTransaction(
   queries: DataQuery[],
-  resultType: ResultType,
   queryOptions: QueryOptions,
   range: TimeRange,
   queryIntervals: QueryIntervals,
@@ -137,7 +127,7 @@ export function buildQueryTransaction(
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
-  const panelId = `${queryOptions.format}-${key}`;
+  const panelId = `${key}`;
 
   const options = {
     interval,
@@ -156,7 +146,6 @@ export function buildQueryTransaction(
   return {
     queries,
     options,
-    resultType,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -328,28 +317,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
-  const flattenedResult: any[] = _.flatten(result);
-  const graphResult = resultType === 'Graph' && result ? result : null;
-  const tableResult =
-    resultType === 'Table' && result
-      ? mergeTablesIntoModel(
-          new TableModel(),
-          ...flattenedResult.filter((r: any) => r.columns && r.rows).map((r: any) => r as TableModel)
-        )
-      : mergeTablesIntoModel(new TableModel());
-  const logsResult =
-    resultType === 'Logs' && result
-      ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
-      : null;
-
-  return {
-    graphResult,
-    tableResult,
-    logsResult,
-  };
-}
-
 export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
@@ -357,37 +324,6 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
-
-export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
-  // Prevent multiple Graph transactions to have the same colors
-  let colorIndexOffset = 0;
-  for (const other of allTransactions) {
-    // Only need to consider transactions that came before the current one
-    if (other === transaction) {
-      break;
-    }
-    // Count timeseries of previous query results
-    if (other.resultType === 'Graph' && other.done) {
-      colorIndexOffset += other.result.length;
-    }
-  }
-
-  return dataList.map((seriesData, index: number) => {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-    const colorIndex = (colorIndexOffset + index) % colors.length;
-    const color = colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints,
-      alias,
-      color,
-      unit: seriesData.unit,
-    });
-
-    return series;
-  });
-};
 
 /**
  * Update the query history. Side-effect: store history in local storage
@@ -565,4 +501,21 @@ export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) =
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 
   return result;
+};
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, backend.length - 1);
+  }
+  return `${backend}${url}`;
+};
+
+export const getQueryResponse = (
+  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
+  options: DataQueryRequest<DataQuery>,
+  observer?: DataStreamObserver
+) => {
+  return from(datasourceInstance.query(options, observer));
 };

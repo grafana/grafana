@@ -37,6 +37,11 @@ var (
 const ContextSessionName = "db-session"
 
 func init() {
+	// This change will make xorm use an empty default schema for postgres and
+	// by that mimic the functionality of how it was functioning before
+	// xorm's changes above.
+	xorm.DefaultPostgresSchema = ""
+
 	registry.Register(&registry.Descriptor{
 		Name:         "SqlStore",
 		Instance:     &SqlStore{},
