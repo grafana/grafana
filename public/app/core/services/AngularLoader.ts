@@ -34,4 +34,4 @@ export class AngularLoaderClass implements AngularLoader {
   }
 }
 
-coreModule.service('angularLoader', AngularLoader);
+coreModule.service('angularLoader', AngularLoaderClass);
