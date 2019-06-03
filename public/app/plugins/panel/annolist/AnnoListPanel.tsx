@@ -261,6 +261,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   render() {
+    const { height } = this.props;
     const { loaded, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
       return <div>loading...</div>;
@@ -276,7 +277,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const hasFilter = queryUser || queryTags.length > 0;
 
     return (
-      <div>
+      <div style={{ height, overflow: 'scroll' }}>
         {hasFilter && (
           <div>
             <b>Filter: &nbsp; </b>
