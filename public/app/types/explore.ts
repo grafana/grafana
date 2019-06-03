@@ -214,18 +214,6 @@ export interface ExploreItemState {
    * True if table result viewer is expanded. Query runs will contain table queries.
    */
   showingTable: boolean;
-  /**
-   * True if `datasourceInstance` supports graph queries.
-   */
-  supportsGraph: boolean | null;
-  /**
-   * True if `datasourceInstance` supports logs queries.
-   */
-  supportsLogs: boolean | null;
-  /**
-   * True if `datasourceInstance` supports table queries.
-   */
-  supportsTable: boolean | null;
 
   graphIsLoading: boolean;
   logIsLoading: boolean;
