@@ -9,6 +9,7 @@ import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { PanelOptionsGroup } from '@grafana/ui';
 import { QueryEditorRow } from './QueryEditorRow';
+import { QueryEditorOptions } from './QueryEditorOptions';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -252,6 +253,20 @@ export class QueriesTab extends PureComponent<Props, State> {
                 inMixedMode={currentDS.meta.mixed}
               />
             ))}
+          </div>
+          <div className="query-editor-options">
+            <QueryEditorOptions
+              dataSourceValue={panel.targets[0].datasource || panel.datasource}
+              key={panel.targets[0].refId}
+              panel={panel}
+              dashboard={dashboard}
+              query={panel.targets[0]}
+              onChange={query => this.onQueryChange(query, 0)}
+              onRemoveQuery={this.onRemoveQuery}
+              onAddQuery={this.onAddQuery}
+              onMoveQuery={this.onMoveQuery}
+              inMixedMode={currentDS.meta.mixed}
+            />
           </div>
           <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />

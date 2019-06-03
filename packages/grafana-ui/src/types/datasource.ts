@@ -33,6 +33,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setQueryOptionsCtrl(QueryOptionsCtrl: any) {
+    this.components.QueryOptionsCtrl = QueryOptionsCtrl;
+    return this;
+  }
+
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
     this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
@@ -62,6 +67,7 @@ export class DataSourcePlugin<
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
+    this.components.QueryOptionsCtrl = pluginExports.QueryOptionsCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
     this.components.ExploreStartPage = pluginExports.ExploreStartPage;
@@ -100,6 +106,7 @@ export interface DataSourcePluginComponents<
   TQuery extends DataQuery = DataQuery
 > {
   QueryCtrl?: any;
+  QueryOptionsCtrl?: any;
   AnnotationsQueryCtrl?: any;
   VariableQueryEditor?: any;
   QueryEditor?: ComponentClass<QueryEditorProps<DataSourceApi, TQuery>>;
