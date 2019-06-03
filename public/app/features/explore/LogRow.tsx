@@ -3,7 +3,7 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
+import { calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
@@ -15,7 +15,15 @@ import {
   HasMoreContextRows,
   LogRowContextQueryErrors,
 } from './LogRowContextProvider';
-import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
+import {
+  ThemeContext,
+  selectThemeVariant,
+  GrafanaTheme,
+  DataQueryResponse,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+} from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
 
@@ -29,7 +37,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, limit: number) => Promise<DataQueryResponse>;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   className?: string;
 }
 

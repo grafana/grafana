@@ -10,10 +10,13 @@ import {
   toUtc,
   dateTime,
   DataSourceApi,
+  LogsModel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LoadingState,
 } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy, LogRowModel } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, changeTime } from './state/actions';
@@ -29,6 +32,7 @@ interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
+
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   dedupedResult?: LogsModel;
@@ -77,11 +81,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
-  getLogRowContext = async (row: LogRowModel, limit: number) => {
+  getLogRowContext = async (row: LogRowModel, options?: any) => {
     const { datasourceInstance } = this.props;
 
     if (datasourceInstance) {
-      return datasourceInstance.getLogRowContext(row, limit);
+      return datasourceInstance.getLogRowContext(row, options);
     }
 
     return [];
@@ -148,14 +152,14 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const {
     logsHighlighterExpressions,
     logsResult,
-    logIsLoading,
+    loadingState,
     scanning,
     scanRange,
     range,
     datasourceInstance,
     isLive,
   } = item;
-  const loading = logIsLoading;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);

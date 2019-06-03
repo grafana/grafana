@@ -254,6 +254,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
             options={panel.getOptions()}
+            transparent={panel.transparent}
             width={width - theme.panelPadding * 2}
             height={innerPanelHeight}
             renderCounter={renderCounter}

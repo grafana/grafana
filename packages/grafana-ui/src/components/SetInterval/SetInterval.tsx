@@ -38,7 +38,7 @@ export class SetInterval extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (_.isEqual(prevProps, this.props)) {
+    if ((isLive(prevProps.interval) && isLive(this.props.interval)) || _.isEqual(prevProps, this.props)) {
       return;
     }
 

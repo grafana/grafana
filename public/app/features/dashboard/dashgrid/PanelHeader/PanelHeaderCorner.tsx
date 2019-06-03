@@ -48,7 +48,7 @@ export class PanelHeaderCorner extends Component<Props> {
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 
     return (
-      <div className="markdown-html">
+      <div className="panel-info-content markdown-html">
         <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links && panel.links.length > 0 && (
           <ul className="text-left">
@@ -71,7 +71,7 @@ export class PanelHeaderCorner extends Component<Props> {
   renderCornerType(infoMode: InfoMode, content: string | JSX.Element) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
-      <Tooltip content={content} placement="bottom-start" theme={theme}>
+      <Tooltip content={content} placement="top-start" theme={theme}>
         <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
           <i className="fa" />
           <span className="panel-info-corner-inner" />
@@ -91,7 +91,7 @@ export class PanelHeaderCorner extends Component<Props> {
       return this.renderCornerType(infoMode, this.props.error);
     }
 
-    if (infoMode === InfoMode.Info) {
+    if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
       return this.renderCornerType(infoMode, this.getInfoContent());
     }
 

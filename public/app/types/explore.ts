@@ -3,7 +3,6 @@ import { Value } from 'slate';
 import {
   RawTimeRange,
   DataQuery,
-  DataQueryResponseData,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
@@ -11,10 +10,12 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
+  LogsModel,
+  LogsDedupStrategy,
+  LoadingState,
 } from '@grafana/ui';
 
-import { Emitter, TimeSeries } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
@@ -213,22 +214,8 @@ export interface ExploreItemState {
    * True if table result viewer is expanded. Query runs will contain table queries.
    */
   showingTable: boolean;
-  /**
-   * True if `datasourceInstance` supports graph queries.
-   */
-  supportsGraph: boolean | null;
-  /**
-   * True if `datasourceInstance` supports logs queries.
-   */
-  supportsLogs: boolean | null;
-  /**
-   * True if `datasourceInstance` supports table queries.
-   */
-  supportsTable: boolean | null;
 
-  graphIsLoading: boolean;
-  logIsLoading: boolean;
-  tableIsLoading: boolean;
+  loadingState: LoadingState;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -265,6 +252,7 @@ export interface ExploreItemState {
   mode: ExploreMode;
 
   isLive: boolean;
+  urlReplaced: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -325,11 +313,8 @@ export interface QueryIntervals {
 
 export interface QueryOptions {
   interval: string;
-  format: string;
-  hinting?: boolean;
-  instant?: boolean;
-  valueWithRefId?: boolean;
   maxDataPoints?: number;
+  live?: boolean;
 }
 
 export interface QueryTransaction {
@@ -341,17 +326,10 @@ export interface QueryTransaction {
   options: any;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
-  resultType: ResultType;
   scanning?: boolean;
 }
 
 export type RangeScanner = () => RawTimeRange;
-
-export type ResultGetter = (
-  result: DataQueryResponseData,
-  transaction: QueryTransaction,
-  allTransactions: QueryTransaction[]
-) => TimeSeries;
 
 export interface TextMatch {
   text: string;
@@ -359,5 +337,3 @@ export interface TextMatch {
   length: number;
   end: number;
 }
-
-export type ResultType = 'Graph' | 'Logs' | 'Table';

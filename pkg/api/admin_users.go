@@ -112,43 +112,44 @@ func AdminDeleteUser(c *models.ReqContext) {
 }
 
 // POST /api/admin/users/:id/disable
-func AdminDisableUser(c *models.ReqContext) {
+func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
 	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
-		c.JsonApiErr(500, "Could not disable external user", nil)
-		return
+		return Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		c.JsonApiErr(500, "Failed to disable user", err)
-		return
+		return Error(500, "Failed to disable user", err)
 	}
 
-	c.JsonOK("User disabled")
+	err := server.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	if err != nil {
+		return Error(500, "Failed to disable user", err)
+	}
+
+	return Success("User disabled")
 }
 
 // POST /api/admin/users/:id/enable
-func AdminEnableUser(c *models.ReqContext) {
+func AdminEnableUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
 	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
-		c.JsonApiErr(500, "Could not enable external user", nil)
-		return
+		return Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		c.JsonApiErr(500, "Failed to enable user", err)
-		return
+		return Error(500, "Failed to enable user", err)
 	}
 
-	c.JsonOK("User enabled")
+	return Success("User enabled")
 }
 
 // POST /api/admin/users/:id/logout
