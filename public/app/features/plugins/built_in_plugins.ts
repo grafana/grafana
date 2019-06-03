@@ -14,6 +14,7 @@ import * as testDataDSPlugin from 'app/plugins/datasource/testdata/module';
 import * as inputDatasourcePlugin from 'app/plugins/datasource/input/module';
 import * as stackdriverPlugin from 'app/plugins/datasource/stackdriver/module';
 import * as azureMonitorPlugin from 'app/plugins/datasource/grafana-azure-monitor-datasource/module';
+import * as verticaPlugin from 'app/plugins/datasource/vertica/module';
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as text2Panel from 'app/plugins/panel/text2/module';
@@ -51,6 +52,7 @@ const builtInPlugins = {
   'app/plugins/datasource/input/module': inputDatasourcePlugin,
   'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/vertica/module': verticaPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/text2/module': text2Panel,

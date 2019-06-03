@@ -1,0 +1,27 @@
+{
+  "type": "datasource",
+  "name": "Vertica",
+  "id": "vertica",
+
+  "info": {
+    "description": "Micro Focus Vertica Data Source for Grafana",
+    "author": {
+      "name": "Micro Focus",
+      "url": "https://www.microfocus.com"
+    },
+    "logos": {
+      "small": "img/vertica_wht_lrg.svg",
+      "large": "img/vertica_wht_lrg.svg"
+    },
+    "version": "0.0.2"
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+
+}
