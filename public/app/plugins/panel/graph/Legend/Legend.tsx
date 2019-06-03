@@ -46,6 +46,13 @@ interface LegendSortProps {
   sortDesc?: boolean;
 }
 
+const legendCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+  ignorePunctuation: true,
+  caseFirst: 'upper',
+});
+
 export type GraphLegendProps = LegendProps &
   LegendDisplayProps &
   LegendValuesProps &
@@ -100,6 +107,11 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       if (this.props.sortDesc) {
         seriesList = seriesList.reverse();
       }
+    } else {
+      // if no special sorting is enabled, sorting by the metric alias alphabetically
+      seriesList = seriesList.sort((a, b) => {
+        return legendCollator.compare(String(a.alias), String(b.alias));
+      });
     }
     return seriesList;
   }
