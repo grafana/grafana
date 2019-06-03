@@ -19,7 +19,7 @@ type postgresMacroEngine struct {
 	timescaledb bool
 }
 
-func newPostgresMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
+func newVerticaMacroEngine(timescaledb bool) tsdb.SqlMacroEngine {
 	return &postgresMacroEngine{
 		SqlMacroEngineBase: tsdb.NewSqlMacroEngineBase(),
 		timescaledb:        timescaledb,

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 
@@ -34,7 +34,7 @@ func newVerticaQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpo
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newVerticaMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
