@@ -15,8 +15,22 @@ import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
-import { startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic } from 'app/features/explore/state/epics';
-import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
+import { limitMessageRateEpic } from 'app/features/explore/state/epics/limitMessageRateEpic';
+import { stateSaveEpic } from 'app/features/explore/state/epics/stateSaveEpic';
+import { processQueryResultsEpic } from 'app/features/explore/state/epics/processQueryResultsEpic';
+import { processQueryErrorsEpic } from 'app/features/explore/state/epics/processQueryErrorsEpic';
+import { runQueriesEpic } from 'app/features/explore/state/epics/runQueriesEpic';
+import { runQueriesBatchEpic } from 'app/features/explore/state/epics/runQueriesBatchEpic';
+import {
+  DataSourceApi,
+  DataQueryResponse,
+  DataQuery,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
+} from '@grafana/ui';
+import { Observable } from 'rxjs';
+import { getQueryResponse } from 'app/core/utils/explore';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 
@@ -39,14 +53,25 @@ export function addRootReducer(reducers) {
   Object.assign(rootReducers, ...reducers);
 }
 
-export const rootEpic: any = combineEpics(startSubscriptionsEpic, startSubscriptionEpic, limitMessageRateEpic);
+export const rootEpic: any = combineEpics(
+  limitMessageRateEpic,
+  stateSaveEpic,
+  runQueriesEpic,
+  runQueriesBatchEpic,
+  processQueryResultsEpic,
+  processQueryErrorsEpic
+);
 
 export interface EpicDependencies {
-  getWebSocket: <T>(urlConfigOrSource: string) => WebSocketSubject<T>;
+  getQueryResponse: (
+    datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
+    options: DataQueryRequest<DataQuery>,
+    observer?: DataStreamObserver
+  ) => Observable<DataQueryResponse>;
 }
 
 const dependencies: EpicDependencies = {
-  getWebSocket: webSocket,
+  getQueryResponse,
 };
 
 const epicMiddleware = createEpicMiddleware({ dependencies });
