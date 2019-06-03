@@ -8,8 +8,6 @@
   "alerting": false,
   "annotations": false,
   "logs": true,
-  "explore": true,
-  "tables": false,
   "streaming": true,
 
   "info": {
