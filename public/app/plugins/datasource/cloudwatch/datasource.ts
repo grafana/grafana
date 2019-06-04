@@ -9,9 +9,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // import * as moment from 'moment';
 
-export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQuery> {
+export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery> {
   type: any;
-  name: any;
   proxyUrl: any;
   defaultRegion: any;
   standardStatistics: any;
@@ -24,8 +23,8 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {
+    super(instanceSettings);
     this.type = 'cloudwatch';
-    this.name = instanceSettings.name;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.instanceSettings = instanceSettings;
@@ -150,12 +149,14 @@ export default class CloudWatchDatasource implements DataSourceApi<CloudWatchQue
       if (res.results) {
         for (const query of request.queries) {
           const queryRes = res.results[query.refId];
-          for (const series of queryRes.series) {
-            const s = { target: series.name, datapoints: series.points } as any;
-            if (queryRes.meta.unit) {
-              s.unit = queryRes.meta.unit;
+          if (queryRes) {
+            for (const series of queryRes.series) {
+              const s = { target: series.name, datapoints: series.points } as any;
+              if (queryRes.meta.unit) {
+                s.unit = queryRes.meta.unit;
+              }
+              data.push(s);
             }
-            data.push(s);
           }
         }
       }

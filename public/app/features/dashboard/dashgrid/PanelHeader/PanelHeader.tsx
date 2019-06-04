@@ -81,15 +81,15 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={panel.links}
-          error={error}
-        />
         <div className={panelHeaderClass}>
+          <PanelHeaderCorner
+            panel={panel}
+            title={panel.title}
+            description={panel.description}
+            scopedVars={panel.scopedVars}
+            links={panel.links}
+            error={error}
+          />
           <div
             className="panel-title-container"
             onClick={this.onMenuToggle}

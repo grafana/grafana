@@ -2,15 +2,17 @@ import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
 import q from 'q';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { PromOptions } from '../types';
 
 describe('PrometheusMetricFindQuery', () => {
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
   const raw = {
     from: toUtc('2018-04-25 10:00'),
     to: toUtc('2018-04-25 11:00'),

@@ -56,11 +56,11 @@ export interface CommonProps<T> {
   tabSelectsValue?: boolean;
 }
 
-export interface SelectProps<T> {
+export interface SelectProps<T> extends CommonProps<T> {
   options: Array<SelectOptionItem<T>>;
 }
 
-interface AsyncProps<T> {
+interface AsyncProps<T> extends CommonProps<T> {
   defaultOptions: boolean;
   loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
   loadingMessage?: () => string;
@@ -96,9 +96,8 @@ export const MenuList = (props: any) => {
   );
 };
 
-export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
-  static defaultProps = {
-    width: null,
+export class Select<T> extends PureComponent<SelectProps<T>> {
+  static defaultProps: Partial<SelectProps<any>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -109,7 +108,6 @@ export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
     isLoading: false,
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
-    menuIsOpen: false,
     tabSelectsValue: true,
     components: {
       Option: SelectOption,
@@ -205,9 +203,8 @@ export class Select<T> extends PureComponent<CommonProps<T> & SelectProps<T>> {
   }
 }
 
-export class AsyncSelect<T> extends PureComponent<CommonProps<T> & AsyncProps<T>> {
-  static defaultProps = {
-    width: null,
+export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
+  static defaultProps: Partial<AsyncProps<any>> = {
     className: '',
     components: {},
     loadingMessage: () => 'Loading...',

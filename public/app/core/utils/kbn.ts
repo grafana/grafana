@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { has } from 'lodash';
 import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex } from '@grafana/ui';
 import deprecationWarning from '@grafana/ui/src/utils/deprecationWarning';
 
@@ -133,7 +133,7 @@ kbn.secondsToHms = seconds => {
 };
 
 kbn.secondsToHhmmss = seconds => {
-  const strings = [];
+  const strings: string[] = [];
   const numhours = Math.floor(seconds / 3600);
   const numminutes = Math.floor((seconds % 3600) / 60);
   const numseconds = Math.floor((seconds % 3600) % 60);
@@ -193,7 +193,7 @@ kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
 
 kbn.describe_interval = str => {
   const matches = str.match(kbn.interval_regex);
-  if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
+  if (!matches || !has(kbn.intervals_in_seconds, matches[2])) {
     throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
   } else {
     return {

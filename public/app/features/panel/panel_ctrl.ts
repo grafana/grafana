@@ -60,7 +60,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    profiler.renderingCompleted(this.panel.id);
+    profiler.renderingCompleted();
   }
 
   refresh() {

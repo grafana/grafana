@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+// @ts-ignore
 import tinycolor from 'tinycolor2';
 import { SearchQuery } from './search';
 import { css, cx } from 'emotion';

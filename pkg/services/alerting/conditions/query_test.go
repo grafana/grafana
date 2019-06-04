@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
@@ -27,16 +27,15 @@ func TestQueryCondition(t *testing.T) {
 
 				So(ctx.condition.Query.From, ShouldEqual, "5m")
 				So(ctx.condition.Query.To, ShouldEqual, "now")
-				So(ctx.condition.Query.DatasourceId, ShouldEqual, 1)
+				So(ctx.condition.Query.DatasourceID, ShouldEqual, 1)
 
 				Convey("Can read query reducer", func() {
-					reducer, ok := ctx.condition.Reducer.(*SimpleReducer)
-					So(ok, ShouldBeTrue)
+					reducer := ctx.condition.Reducer
 					So(reducer.Type, ShouldEqual, "avg")
 				})
 
 				Convey("Can read evaluator", func() {
-					evaluator, ok := ctx.condition.Evaluator.(*ThresholdEvaluator)
+					evaluator, ok := ctx.condition.Evaluator.(*thresholdEvaluator)
 					So(ok, ShouldBeTrue)
 					So(evaluator.Type, ShouldEqual, "gt")
 				})
@@ -163,12 +162,12 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
           }`))
 	So(err, ShouldBeNil)
 
-	condition, err := NewQueryCondition(jsonModel, 0)
+	condition, err := newQueryCondition(jsonModel, 0)
 	So(err, ShouldBeNil)
 
 	ctx.condition = condition
 
-	condition.HandleRequest = func(context context.Context, dsInfo *m.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {Series: ctx.series},
@@ -182,8 +181,8 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
 
-		bus.AddHandler("test", func(query *m.GetDataSourceByIdQuery) error {
-			query.Result = &m.DataSource{Id: 1, Type: "graphite"}
+		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})
 

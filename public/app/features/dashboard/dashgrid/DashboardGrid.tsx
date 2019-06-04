@@ -205,7 +205,7 @@ export class DashboardGrid extends PureComponent<Props> {
       return false;
     }
 
-    const top = parseInt(elem.style.top.replace('px', ''), 10);
+    const top = elem.offsetTop;
     const height = panel.gridPos.h * GRID_CELL_HEIGHT + 40;
     const bottom = top + height;
 

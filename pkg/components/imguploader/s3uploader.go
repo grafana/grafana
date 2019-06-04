@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -69,6 +69,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	sess, err = session.NewSession(cfg)
 	if err != nil {

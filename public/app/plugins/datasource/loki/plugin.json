@@ -4,12 +4,11 @@
   "id": "loki",
   "category": "logging",
 
-  "metrics": true,
+  "metrics": false,
   "alerting": false,
   "annotations": false,
   "logs": true,
-  "explore": true,
-  "tables": false,
+  "streaming": true,
 
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",

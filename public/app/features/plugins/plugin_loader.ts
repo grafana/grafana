@@ -29,6 +29,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as grafanaUI from '@grafana/ui';
+import * as grafanaRT from '@grafana/runtime';
 
 // rxjs
 import { Observable, Subject } from 'rxjs';
@@ -68,6 +69,7 @@ function exposeToPlugin(name: string, component: any) {
 }
 
 exposeToPlugin('@grafana/ui', grafanaUI);
+exposeToPlugin('@grafana/runtime', grafanaRT);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
@@ -75,6 +77,10 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+exposeToPlugin('rxjs', {
+  Subject: Subject,
+  Observable: Observable,
+});
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
@@ -83,12 +89,6 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
-
-// backward compatible path
-exposeToPlugin('vendor/npm/rxjs/Rx', {
-  Subject: Subject,
-  Observable: Observable,
-});
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
@@ -106,7 +106,7 @@ exposeToPlugin('app/core/services/backend_srv', {
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('@grafana/ui/src/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/datemath', datemath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
@@ -183,8 +183,9 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Data
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
-    plugin.meta = meta;
     plugin.setComponentsFromLegacyExports(pluginExports);
+    plugin.init(meta);
+    plugin.meta = meta;
     return plugin;
   });
 }

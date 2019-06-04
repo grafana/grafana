@@ -4,7 +4,7 @@ import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
 
 // Types
-import { SeriesData, Field, TimeSeries, FieldType, TableData } from '../types/index';
+import { SeriesData, Field, TimeSeries, FieldType, TableData, Column } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 
 function convertTableToSeriesData(table: TableData): SeriesData {
@@ -19,6 +19,7 @@ function convertTableToSeriesData(table: TableData): SeriesData {
     rows: table.rows,
     refId: table.refId,
     meta: table.meta,
+    name: table.name,
   };
 }
 
@@ -159,6 +160,7 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
     const type = guessFieldTypeFromSeries(series, 1);
     if (type === FieldType.time) {
       return {
+        alias: fields[0].name || series.name,
         target: fields[0].name || series.name,
         datapoints: rows,
         unit: fields[0].unit,
@@ -170,14 +172,12 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
 
   return {
     columns: fields.map(f => {
-      return {
-        text: f.name,
-        filterable: f.filterable,
-        unit: f.unit,
-        refId: series.refId,
-        meta: series.meta,
-      };
+      const { name, ...column } = f;
+      (column as Column).text = name;
+      return column as Column;
     }),
+    refId: series.refId,
+    meta: series.meta,
     rows,
   };
 };

@@ -37,7 +37,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     </p>
   </div>
   <div
-    className="css-17l4171 track-horizontal"
+    className="css-52gpmd track-horizontal"
     style={
       Object {
         "display": "none",
@@ -58,7 +58,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     />
   </div>
   <div
-    className="css-17l4171 track-vertical"
+    className="css-52gpmd track-vertical"
     style={
       Object {
         "display": "none",

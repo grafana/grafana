@@ -461,9 +461,9 @@ class GraphElement {
   sortSeries(series, panel) {
     const sortBy = panel.legend.sort;
     const sortOrder = panel.legend.sortDesc;
-    const haveSortBy = sortBy !== null && sortBy !== undefined;
+    const haveSortBy = sortBy !== null && sortBy !== undefined && panel.legend[sortBy];
     const haveSortOrder = sortOrder !== null && sortOrder !== undefined;
-    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder && panel.legend.alignAsTable;
     const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {

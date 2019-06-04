@@ -85,7 +85,7 @@ describe('Alert rules', () => {
     };
 
     const result = alertRulesReducer(initialState, action);
-
-    expect(result.items).toEqual(payload);
+    expect(result.items.length).toEqual(payload.length);
+    expect(result.items[0].stateClass).toEqual('alert-state-critical');
   });
 });
