@@ -42,7 +42,7 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 		if err := reader.startWalkingDisk(); err != nil {
 			if os.IsNotExist(err) {
 				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
-				provider.log.Warn("Failed to provision config ", reader.Cfg.Name, "error", err)
+				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)
 				return nil
 			}
 
