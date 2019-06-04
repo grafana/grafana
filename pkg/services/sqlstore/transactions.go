@@ -12,7 +12,7 @@ import (
 
 // WithTransactionalDbSession calls the callback with an session within a transaction
 func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
-	return inTransactionWithRetryCtx(ss.engine, ctx, callback, 0)
+	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }
 
 func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -20,17 +20,17 @@ func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 }
 
 func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
-	return inTransactionWithRetryCtx(ss.engine, ctx, func(sess *DBSession) error {
+	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
 		withValue := context.WithValue(ctx, ContextSessionName, sess)
 		return fn(withValue)
 	}, retry)
 }
 
 func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
-	return inTransactionWithRetryCtx(x, context.Background(), callback, retry)
+	return inTransactionWithRetryCtx(context.Background(), x, callback, retry)
 }
 
-func inTransactionWithRetryCtx(engine *xorm.Engine, ctx context.Context, callback dbTransactionFunc, retry int) error {
+func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc, retry int) error {
 	sess, err := startSession(ctx, engine, true)
 	if err != nil {
 		return err
@@ -40,12 +40,12 @@ func inTransactionWithRetryCtx(engine *xorm.Engine, ctx context.Context, callbac
 
 	err = callback(sess)
 
-	// special handling of database locked errors for sqlite, then we can retry 3 times
+	// special handling of database locked errors for sqlite, then we can retry 5 times
 	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
-		if sqlError.Code == sqlite3.ErrLocked {
+		if sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy {
 			sess.Rollback()
 			time.Sleep(time.Millisecond * time.Duration(10))
-			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
+			sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
 			return inTransactionWithRetry(callback, retry+1)
 		}
 	}
@@ -73,5 +73,5 @@ func inTransaction(callback dbTransactionFunc) error {
 }
 
 func inTransactionCtx(ctx context.Context, callback dbTransactionFunc) error {
-	return inTransactionWithRetryCtx(x, ctx, callback, 0)
+	return inTransactionWithRetryCtx(ctx, x, callback, 0)
 }

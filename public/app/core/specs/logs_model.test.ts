@@ -1,15 +1,12 @@
+import { SeriesData, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/ui';
 import {
+  dedupLogRows,
   calculateFieldStats,
   calculateLogsLabelStats,
-  dedupLogRows,
   getParser,
-  LogsDedupStrategy,
-  LogsModel,
   LogsParsers,
   seriesDataToLogsModel,
-  LogsMetaKind,
 } from '../logs_model';
-import { SeriesData, FieldType } from '@grafana/ui';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -463,8 +460,12 @@ describe('seriesDataToLogsModel', () => {
             name: 'message',
             type: FieldType.string,
           },
+          {
+            name: 'level',
+            type: FieldType.string,
+          },
         ],
-        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
+        rows: [['1970-01-01T00:00:01Z', 'WARN boooo', 'dbug']],
       },
     ];
     const logsModel = seriesDataToLogsModel(series, 0);
@@ -473,7 +474,7 @@ describe('seriesDataToLogsModel', () => {
       {
         entry: 'WARN boooo',
         labels: undefined,
-        logLevel: 'warning',
+        logLevel: LogLevel.debug,
         uniqueLabels: {},
       },
     ]);
@@ -485,6 +486,7 @@ describe('seriesDataToLogsModel', () => {
         labels: {
           foo: 'bar',
           baz: '1',
+          level: 'dbug',
         },
         fields: [
           {
@@ -503,6 +505,7 @@ describe('seriesDataToLogsModel', () => {
         labels: {
           foo: 'bar',
           baz: '2',
+          level: 'err',
         },
         fields: [
           {
@@ -524,19 +527,19 @@ describe('seriesDataToLogsModel', () => {
       {
         entry: 'INFO 2',
         labels: { foo: 'bar', baz: '2' },
-        logLevel: 'info',
+        logLevel: LogLevel.error,
         uniqueLabels: { baz: '2' },
       },
       {
         entry: 'WARN boooo',
         labels: { foo: 'bar', baz: '1' },
-        logLevel: 'warning',
+        logLevel: LogLevel.debug,
         uniqueLabels: { baz: '1' },
       },
       {
         entry: 'INFO 1',
         labels: { foo: 'bar', baz: '2' },
-        logLevel: 'info',
+        logLevel: LogLevel.error,
         uniqueLabels: { baz: '2' },
       },
     ]);

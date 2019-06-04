@@ -31,34 +31,37 @@ The datasource can access metrics from four different services. You can configur
 - [Guide to setting up an Azure Active Directory Application for Azure Log Analytics.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
 - [Quickstart Guide for Application Insights.](https://dev.applicationinsights.io/quickstart/)
 
-1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the  "Add data source" button in the upper right. The data source will be available for selection in the Type select box.
+1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the "Add data source" button in the upper right. The Azure Monitor data source will be available for selection in the Cloud section in the list of data sources.
 
-2. Select Azure Monitor from the Type dropdown:<br/>
-![Data Source Type](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_1_select_type.png)
-3. In the name field, fill in a name for the data source. It can be anything. Some suggestions are Azure Monitor or App Insights.
+2. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources then change the name to something more informative.
 
-4. If you are using Azure Monitor, then you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
-    - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
-    - **Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
-    - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-    - **Client Secret** ( Azure Active Directory -> App Registrations -> Choose your app -> Keys)
+3. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
 
-5. Paste these four items into the fields in the Azure Monitor API Details section:<br/>
-![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_2_azure_monitor_api_details.png)
+   - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
+   - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
+   - **Client Secret** ( Azure Active Directory -> App Registrations -> Choose your app -> Keys)
+   - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
-6. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
-    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-    - Client Secret ( Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
+4. Paste these four items into the fields in the Azure Monitor API Details section:
+   {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
-7. If you are are using  Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
-    - Application ID
-    - API Key
+   - The Subscription Id can be changed per query. Save the datasource and refresh the page to see the list of subscriptions available for the specified Client Id.
 
-8. Paste these two items into the appropriate fields in the Application Insights API Details section:<br/>
-![Application Insights API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_3_app_insights_api_details.png)
+5. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
 
-9. Test that the configuration details are correct by clicking on the "Save & Test" button:<br/>
-![Azure Monitor API Details](https://raw.githubusercontent.com/grafana/azure-monitor-datasource/master/src/img/config_4_save_and_test.png)
+   - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
+   - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
+
+6. If you are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
+
+   - Application ID
+   - API Key
+
+7. Paste these two items into the appropriate fields in the Application Insights API Details section:
+   {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
+
+8. Test that the configuration details are correct by clicking on the "Save & Test" button:
+   {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
 
@@ -68,17 +71,25 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor datasource, the first option is to choose a service. There are three options here: Azure Monitor, Application Insights and Azure Log Analytics. The query editor will change depending on which one you pick. Azure Monitor is the default.
+In the query editor for a panel, after choosing your Azure Monitor datasource, the first option is to choose a service. There are three options here:
+
+- `Azure Monitor`
+- `Application Insights`
+- `Azure Log Analytics`
+
+The query editor will change depending on which one you pick. Azure Monitor is the default.
 
 ## Querying the Azure Monitor Service
 
 The Azure Monitor service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
 
+If your Azure Monitor credentials give you access to multiple subscriptions then choose the appropriate subscription first.
+
 Examples of metrics that you can get from the service are:
 
-- Microsoft.Compute/virtualMachines - Percentage CPU
-- Microsoft.Network/networkInterfaces - Bytes sent
-- Microsoft.Storage/storageAccounts - Used Capacity
+- `Microsoft.Compute/virtualMachines - Percentage CPU`
+- `Microsoft.Network/networkInterfaces - Bytes sent`
+- `Microsoft.Storage/storageAccounts - Used Capacity`
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
 
@@ -112,12 +123,17 @@ Note that the Azure Monitor service does not support multiple values yet. If you
 
 The Azure Monitor Datasource Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
 
-| Name                                                     | Description                                                    |
-| -------------------------------------------------------- | -------------------------------------------------------------- |
-| *ResourceGroups()*                                       | Returns a list of resource groups.                             |
-| *Namespaces(aResourceGroup)*                             | Returns a list of namespaces for the specified resource group. |
-| *ResourceNames(aResourceGroup, aNamespace)*              | Returns a list of resource names.                              |
-| *MetricNames(aResourceGroup, aNamespace, aResourceName)* | Returns a list of metric names.                                |
+| Name                                                                                         | Description                                                                     |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| _Subscriptions()_                                                                            | Returns a list of subscriptions.                                                |
+| _ResourceGroups()_                                                                           | Returns a list of resource groups.                                              |
+| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                       | Returns a list of resource groups for a specified subscription.                 |
+| _Namespaces(aResourceGroup)_                                                                 | Returns a list of namespaces for the specified resource group.                  |
+| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                           | Returns a list of namespaces for the specified resource group and subscription. |
+| _ResourceNames(aResourceGroup, aNamespace)_                                                  | Returns a list of resource names.                                               |
+| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaaaResourceGroup, aNamespace)_              | Returns a list of resource names for a specified subscription.                  |
+| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                     | Returns a list of metric names.                                                 |
+| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaaaResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric names for a specified subscription.                    |
 
 Examples:
 
@@ -185,8 +201,8 @@ types of template variables.
 
 | Name                               | Description                                                |
 | ---------------------------------- | ---------------------------------------------------------- |
-| *AppInsightsMetricNames()*         | Returns a list of metric names.                            |
-| *AppInsightsGroupBys(aMetricName)* | Returns a list of group bys for the specified metric name. |
+| _AppInsightsMetricNames()_         | Returns a list of metric names.                            |
+| _AppInsightsGroupBys(aMetricName)_ | Returns a list of group bys for the specified metric name. |
 
 Examples:
 
@@ -222,6 +238,8 @@ AzureActivity
 | order by TimeGenerated desc
 ```
 
+If your credentials give you access to multiple subscriptions then choose the appropriate subscription first.
+
 {{< docs-imagebox img="/img/docs/v60/azureloganalytics-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Log Analytics Query Editor" >}}
 
 ### Azure Log Analytics Macros
@@ -229,25 +247,27 @@ AzureActivity
 To make writing queries easier there are several Grafana macros that can be used in the where clause of a query:
 
 - `$__timeFilter()` - Expands to
-    `TimeGenerated ≥ datetime(2018-06-05T18:09:58.907Z) and`
-    `TimeGenerated ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+  `TimeGenerated ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `TimeGenerated ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
 
 - `$__timeFilter(datetimeColumn)` - Expands to
-    `datetimeColumn  ≥ datetime(2018-06-05T18:09:58.907Z) and`
-    `datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+  `datetimeColumn ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
 
-- `$__escapeMulti($myVar)` - is to be used with multi-value template variables that contains illegal characters. If $myVar has the value  `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If using single value variables there no need for this macro, simply escape the variable inline instead - `@'\$myVar'`
+- `$__timeFrom()` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T18:09:58.907Z)`.
 
-- `$__contains(colName, $myVar)` - is to be used with multi-value template variables. If $myVar has the value `'value1','value2'`, it expands to: `colName in ('value1','value2')`.
+- `$__timeTo()` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
 
-     If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If $myVar has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large where..in clause.
+- `$__escapeMulti($myVar)` - is to be used with multi-value template variables that contain illegal characters. If `$myVar` has the following two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If using single value variables there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.
+
+- `$__contains(colName, $myVar)` - is to be used with multi-value template variables. If `$myVar` has the value `'value1','value2'`, it expands to: `colName in ('value1','value2')`.
+
+  If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large where..in clause.
 
 ### Azure Log Analytics Builtin Variables
 
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
-- `$__from` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T18:09:58.907Z)`.
-- `$__to` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
 - `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Azure Log Analytics Alerting

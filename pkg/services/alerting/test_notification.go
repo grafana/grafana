@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// NotificationTestCommand initiates an test
+// execution of an alert notification.
 type NotificationTestCommand struct {
 	State    models.AlertStateType
 	Name     string
@@ -27,7 +29,7 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := NewNotificationService(nil).(*notificationService)
+	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{
 		Name:     cmd.Name,
@@ -47,8 +49,8 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 
 func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	testRule := &Rule{
-		DashboardId: 1,
-		PanelId:     1,
+		DashboardID: 1,
+		PanelID:     1,
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
 		State:       models.AlertStateAlerting,
@@ -56,7 +58,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 
 	ctx := NewEvalContext(context.Background(), testRule)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
-		ctx.ImagePublicUrl = "https://grafana.com/assets/img/blog/mixed_styles.png"
+		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true

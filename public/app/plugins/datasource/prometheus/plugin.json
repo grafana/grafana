@@ -24,8 +24,6 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "explore": true,
-  "tables": true,
   "queryOptions": {
     "minInterval": true
   },

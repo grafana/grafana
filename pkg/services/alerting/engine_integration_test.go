@@ -17,7 +17,8 @@ import (
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
-		engine := NewEngine()
+		engine := &AlertEngine{}
+		engine.Init()
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
@@ -89,7 +90,7 @@ func (handler *FakeCommonTimeoutHandler) Eval(evalContext *EvalContext) {
 	evalContext.Error = errors.New("Fake evaluation timeout test failure; wrong response")
 }
 
-func (handler *FakeCommonTimeoutHandler) Handle(evalContext *EvalContext) error {
+func (handler *FakeCommonTimeoutHandler) handle(evalContext *EvalContext) error {
 	// 1. prepare mock server
 	path := "/resulthandle"
 	srv := runBusyServer(path, handler.ServerBusySleepDuration)

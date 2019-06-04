@@ -146,8 +146,8 @@ export class PanelModel {
     }
   }
 
-  getOptions(panelDefaults: any) {
-    return _.defaultsDeep(this.options || {}, panelDefaults);
+  getOptions() {
+    return this.options;
   }
 
   updateOptions(options: object) {
@@ -168,7 +168,6 @@ export class PanelModel {
 
       model[property] = _.cloneDeep(this[property]);
     }
-
     return model;
   }
 
@@ -236,8 +235,17 @@ export class PanelModel {
     });
   }
 
+  private applyPluginOptionDefaults(plugin: PanelPlugin) {
+    if (plugin.angularConfigCtrl) {
+      return;
+    }
+    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
+  }
+
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+
+    this.applyPluginOptionDefaults(plugin);
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
@@ -273,7 +281,7 @@ export class PanelModel {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
-
+    this.applyPluginOptionDefaults(newPlugin);
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
       this.options = this.options || {};

@@ -132,7 +132,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled
-	authTypes["ldap"] = setting.LdapEnabled
+	authTypes["ldap"] = setting.LDAPEnabled
 	authTypes["auth_proxy"] = setting.AuthProxyEnabled
 
 	for provider, enabled := range oauthProviders {
