@@ -13,7 +13,7 @@ import {
   SeriesColorPickerPopoverWithTheme,
   SecretFormField,
   ContextMenu,
-  DrilldownLinksEditor,
+  DataLinksEditor,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
@@ -85,7 +85,7 @@ export function registerAngularDirectives() {
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('drilldownLinksEditor', DrilldownLinksEditor, [
+  react2AngularDirective('drilldownLinksEditor', DataLinksEditor, [
     'value',
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],

@@ -9,14 +9,14 @@ export interface VariableSuggestion {
   documentation: string;
 }
 
-interface DrilldownSuggestionsProps {
+interface DataLinkSuggestionsProps {
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
   onClose?: () => void;
 }
 
-const getDrilldownSuggestionsStyles = (theme: GrafanaTheme) => {
+const DataLinkSuggestionsStyles = (theme: GrafanaTheme) => {
   const wrapperBg = selectThemeVariant(
     {
       light: theme.colors.white,
@@ -98,7 +98,7 @@ const getDrilldownSuggestionsStyles = (theme: GrafanaTheme) => {
   };
 };
 
-export const DrilldownSuggestions: React.FC<DrilldownSuggestionsProps> = ({
+export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({
   suggestions,
   onSuggestionSelect,
   onClose,
@@ -112,7 +112,7 @@ export const DrilldownSuggestions: React.FC<DrilldownSuggestionsProps> = ({
     }
   });
 
-  const styles = getDrilldownSuggestionsStyles(theme);
+  const styles = DataLinkSuggestionsStyles(theme);
 
   return (
     <div ref={ref} className={styles.wrapper}>

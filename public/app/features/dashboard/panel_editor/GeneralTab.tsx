@@ -8,7 +8,7 @@ import './../../panel/GeneralTabCtrl';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DrillDownLink, PanelOptionsGroup, DrilldownLinksEditor } from '@grafana/ui';
+import { DrillDownLink, PanelOptionsGroup, DataLinksEditor } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 interface Props {
@@ -62,7 +62,7 @@ export class GeneralTab extends PureComponent<Props> {
         <>
           <div ref={element => (this.element = element)} />
           <PanelOptionsGroup title="Panel links">
-            <DrilldownLinksEditor
+            <DataLinksEditor
               value={panel.links}
               onChange={this.onPanelDrillDownLinksChanged}
               suggestions={suggestions}

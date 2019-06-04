@@ -13,13 +13,14 @@ import Plain from 'slate-plain-serializer';
 
 import useDebounce from 'react-use/lib/useDebounce';
 import { Popper as ReactPopper } from 'react-popper';
-import { DrilldownSuggestions, VariableSuggestion } from './LinksSuggestions';
+import { DataLinkSuggestions, VariableSuggestion } from './DataLinkSuggestions';
 import { SelectionReference } from './SelectionReference';
 import { css } from 'emotion';
 import { ThemeContext } from '../../themes/index';
+
 import { makeValue } from '../../utils/slate';
 
-interface DrilldownLinkEditorProps {
+interface DataLinkEditorProps {
   index: number;
   value: DrillDownLink;
   suggestions: VariableSuggestion[];
@@ -34,7 +35,7 @@ const plugins = [
   }),
 ];
 
-export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.memo(
+export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
   ({ index, value, onChange, onRemove, suggestions }) => {
     const theme = useContext(ThemeContext);
 
@@ -190,7 +191,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
                     {({ ref, style, placement }) => {
                       return (
                         <div ref={ref} style={style} data-placement={placement}>
-                          <DrilldownSuggestions
+                          <DataLinkSuggestions
                             suggestions={getCurrentSuggestions}
                             onSuggestionSelect={onVariableSelect}
                             onClose={() => setShowingSuggestions(false)}
