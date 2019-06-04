@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
+import { getBrowserOS } from 'app/core/utils/userAgent';
 import { User } from 'app/core/services/context_srv';
 import { UserSession } from 'app/types';
 
@@ -41,7 +42,7 @@ export default class AdminEditUserCtrl {
             seenAt: dateTime(session.seenAt).fromNow(true),
             createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
             clientIp: session.clientIp,
-            userAgent: $scope.getBrowserOS(session.userAgent),
+            userAgent: getBrowserOS(session.userAgent),
           };
         });
       });
@@ -66,16 +67,6 @@ export default class AdminEditUserCtrl {
       backendSrv.post('/api/admin/users/' + $scope.user_id + '/logout').then(() => {
         $scope.sessions = [];
       });
-    };
-
-    $scope.getBrowserOS = userAgent => {
-      const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
-        os = userAgent.match(/(Windows|Linux|iOS|Android|OS |Mac OS)(?: |\s|\d|\w)([^;|)]*)/gi);
-
-      let browserOS = browser.length ? browser[0] + ' on ' : 'Undetected browser on ';
-
-      browserOS += os[0].replace(/_/g, '.');
-      return browserOS;
     };
 
     $scope.setPassword = () => {

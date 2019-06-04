@@ -1,5 +1,6 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
+import { getBrowserOS } from 'app/core/utils/userAgent';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { UserSession } from 'app/types';
 
@@ -52,7 +53,7 @@ export class ProfileCtrl {
           seenAt: dateTime(session.seenAt).fromNow(true),
           createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
           clientIp: session.clientIp,
-          userAgent: this.getBrowserOS(session.userAgent),
+          userAgent: getBrowserOS(session.userAgent),
         };
       });
     });
@@ -91,16 +92,6 @@ export class ProfileCtrl {
     this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       window.location.href = config.appSubUrl + '/profile';
     });
-  }
-
-  getBrowserOS(userAgent: string) {
-    const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
-      os = userAgent.match(/(Windows|Linux|iOS|Android|OS |Mac OS)(?: |\s|\d|\w)([^;|)]*)/gi);
-
-    let browserOS = browser.length ? browser[0] + ' on ' : 'Undetected browser on ';
-
-    browserOS += os[0].replace(/_/g, '.');
-    return browserOS;
   }
 
   update() {

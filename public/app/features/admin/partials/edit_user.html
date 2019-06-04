@@ -118,12 +118,16 @@
 			<td>{{session.createdAt}}</td>
 			<td>{{session.clientIp}}</td>
 			<td>{{session.userAgent}}</td>
-			<td><button ng-click="revokeUserSession(session.id)"></button></td>
+			<td>
+				<button class="btn btn-danger btn-small" ng-click="revokeUserSession(session.id)">
+					<i class="fa fa-power-off"></i>
+				</button>
+			</td>
 		  </tr>
 		</tbody>
 	  </table>
 	</div>
 
-	<button ng-click="revokeAllUserSessions()">Logout user from all devices</button>
+	<button ng-if="sessions.length" class="btn btn-danger" ng-click="revokeAllUserSessions()">Logout user from all devices</button>
 
 </div>

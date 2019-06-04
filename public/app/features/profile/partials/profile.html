@@ -94,7 +94,11 @@
           <td>{{session.createdAt}}</td>
           <td>{{session.clientIp}}</td>
           <td>{{session.userAgent}}</td>
-          <td><button ng-click="ctrl.revokeUserSession(session.id)"></button></td>
+          <td>
+            <button class="btn btn-danger btn-small" ng-click="ctrl.revokeUserSession(session.id)">
+              <i class="fa fa-power-off"></i>
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
