@@ -1,8 +1,13 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
 
+export enum PromContext {
+  Explore = 'explore',
+  Panel = 'panel',
+}
+
 export interface PromQuery extends DataQuery {
   expr: string;
-  context?: 'explore' | 'panel';
+  context?: PromContext;
   format?: string;
   instant?: boolean;
   hinting?: boolean;

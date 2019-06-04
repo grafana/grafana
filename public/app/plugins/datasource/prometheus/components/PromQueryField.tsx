@@ -13,7 +13,7 @@ import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { PromQuery } from '../types';
+import { PromQuery, PromContext } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
 
@@ -223,7 +223,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value, context: 'explore' };
+      const nextQuery: PromQuery = { ...query, expr: value, context: PromContext.Explore };
       onChange(nextQuery);
 
       if (override && onRunQuery) {
