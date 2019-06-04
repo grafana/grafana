@@ -114,12 +114,15 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
       if (event.key === 'Backspace') {
         setShowingSuggestions(false);
         setSuggestionsIndex(0);
+        return;
       }
 
       if (event.key === 'Enter') {
         if (showingSuggestions) {
           onVariableSelect(getCurrentSuggestions[suggestionsIndex]);
+          return true;
         }
+        return true;
       }
 
       if (showingSuggestions) {
@@ -128,6 +131,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
           setSuggestionsIndex(index => {
             return (index + 1) % suggestions.length;
           });
+          return true;
         }
         if (event.key === 'ArrowUp') {
           event.preventDefault();
@@ -135,11 +139,14 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
             const nextIndex = index - 1 < 0 ? suggestions.length - 1 : (index - 1) % suggestions.length;
             return nextIndex;
           });
+          return true;
         }
+        return true;
       }
 
       if (event.key === '?' || event.key === '&' || (event.keyCode === 32 && event.ctrlKey)) {
         setShowingSuggestions(true);
+        return true;
       }
       return true;
     };
