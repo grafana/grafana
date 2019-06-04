@@ -95,6 +95,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
+	proxy.addTraceFromHeaderValue(span, "X-Dashboard-UId", "dashboard_uid")
 
 	opentracing.GlobalTracer().Inject(
 		span.Context(),
@@ -112,10 +113,10 @@ func (proxy *DataSourceProxy) HandleRequest() {
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
-	panelId := proxy.ctx.Req.Header.Get(headerName)
-	dashId, err := strconv.Atoi(panelId)
+	panelID := proxy.ctx.Req.Header.Get(headerName)
+	dashID, err := strconv.Atoi(panelID)
 	if err == nil {
-		span.SetTag(tagName, dashId)
+		span.SetTag(tagName, dashID)
 	}
 }
 

@@ -1,9 +1,9 @@
-import { ComponentType, ComponentClass } from 'react';
-import { TimeRange } from './time';
-import { PluginMeta, GrafanaPlugin } from './plugin';
-import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
-import { PanelData } from './panel';
+import { ComponentClass, ComponentType } from 'react';
+import { LoadingState, SeriesData, TableData, TimeSeries } from './data';
 import { LogRowModel } from './logs';
+import { PanelData } from './panel';
+import { GrafanaPlugin, PluginMeta } from './plugin';
+import { TimeRange } from './time';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -349,6 +349,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   targets: TQuery[];
   panelId: number;
   dashboardId: number;
+  dashboardUId: string;
   cacheTimeout?: string;
   interval: string;
   intervalMs: number;

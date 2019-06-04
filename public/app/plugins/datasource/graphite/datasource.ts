@@ -1,6 +1,6 @@
-import _ from 'lodash';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
+import _ from 'lodash';
 import gfunc from './gfunc';
 
 /** @ngInject */
@@ -66,6 +66,7 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UId'] = options.dashboardUId;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   };

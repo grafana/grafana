@@ -1,4 +1,4 @@
-import { DataQueryRequest, DataQuery } from '@grafana/ui';
+import { DataQuery, DataQueryRequest } from '@grafana/ui';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export function getQueryOptions<TQuery extends DataQuery>(
@@ -15,6 +15,7 @@ export function getQueryOptions<TQuery extends DataQuery>(
     timezone: 'browser',
     panelId: 1,
     dashboardId: 1,
+    dashboardUId: '000001',
     interval: '60s',
     intervalMs: 60000,
     maxDataPoints: 500,

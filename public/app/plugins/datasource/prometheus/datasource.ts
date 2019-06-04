@@ -1,35 +1,23 @@
 // Libraries
-import _ from 'lodash';
-import $ from 'jquery';
-import { from, Observable } from 'rxjs';
-
+import { AnnotationEvent, DataQueryError, DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, DataStreamObserver, LoadingState } from '@grafana/ui/src/types';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
-import PrometheusMetricFindQuery from './metric_find_query';
-import { ResultTransformer } from './result_transformer';
-import PrometheusLanguageProvider from './language_provider';
-import { BackendSrv } from 'app/core/services/backend_srv';
-import addLabelToQuery from './add_label_to_query';
-import { getQueryHints } from './query_hints';
-import { expandRecordingRules } from './language_utils';
-
-// Types
-import { PromQuery, PromOptions, PromQueryRequest } from './types';
-import {
-  DataQueryRequest,
-  DataSourceApi,
-  AnnotationEvent,
-  DataSourceInstanceSettings,
-  DataQueryError,
-  DataStreamObserver,
-  LoadingState,
-} from '@grafana/ui/src/types';
-import { ExploreUrlState } from 'app/types/explore';
-import { safeStringifyValue } from 'app/core/utils/explore';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { single, map, filter } from 'rxjs/operators';
+import $ from 'jquery';
+import _ from 'lodash';
+import { from, Observable } from 'rxjs';
+import { filter, map, single } from 'rxjs/operators';
+import addLabelToQuery from './add_label_to_query';
+import PrometheusLanguageProvider from './language_provider';
+import { expandRecordingRules } from './language_utils';
+import PrometheusMetricFindQuery from './metric_find_query';
+import { getQueryHints } from './query_hints';
+import { ResultTransformer } from './result_transformer';
+// Types
+import { PromOptions, PromQuery, PromQueryRequest } from './types';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -83,6 +71,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UId'] = options.dashboardUId;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   }

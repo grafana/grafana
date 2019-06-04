@@ -1,24 +1,22 @@
 // Libraries
-import cloneDeep from 'lodash/cloneDeep';
-import throttle from 'lodash/throttle';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
-
-// Services & Utils
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
-import templateSrv from 'app/features/templating/template_srv';
-import { PanelQueryState } from './PanelQueryState';
-
 // Types
 import {
-  PanelData,
   DataQuery,
-  TimeRange,
-  ScopedVars,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  PanelData,
+  ScopedVars,
+  TimeRange,
 } from '@grafana/ui';
+import kbn from 'app/core/utils/kbn';
+// Services & Utils
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import templateSrv from 'app/features/templating/template_srv';
+import cloneDeep from 'lodash/cloneDeep';
+import throttle from 'lodash/throttle';
+import { PartialObserver, Subject, Unsubscribable } from 'rxjs';
+import { PanelQueryState } from './PanelQueryState';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -28,6 +26,7 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
+  dashboardUId?: string;
   timezone?: string;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -98,6 +97,7 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
+      dashboardUId,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -113,6 +113,7 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
+      dashboardUId,
       range: timeRange,
       timeInfo,
       interval: '',

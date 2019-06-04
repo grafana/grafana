@@ -1,24 +1,22 @@
-import _ from 'lodash';
-
-import kbn from 'app/core/utils/kbn';
-
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-import { getExploreUrl } from 'app/core/utils/explore';
-import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
-import { ContextSrv } from 'app/core/services/context_srv';
 import {
-  toLegacyResponseData,
+  DataQueryResponse,
+  DataSourceApi,
   isSeriesData,
   LegacyResponseData,
-  TimeRange,
-  DataSourceApi,
-  PanelData,
   LoadingState,
-  DataQueryResponse,
+  PanelData,
   SeriesData,
+  TimeRange,
+  toLegacyResponseData,
 } from '@grafana/ui';
-import { Unsubscribable } from 'rxjs';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { getExploreUrl } from 'app/core/utils/explore';
+import kbn from 'app/core/utils/kbn';
 import { PanelModel } from 'app/features/dashboard/state';
+import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import _ from 'lodash';
+import { Unsubscribable } from 'rxjs';
 import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
@@ -212,6 +210,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       queries: panel.targets,
       panelId: panel.id,
       dashboardId: this.dashboard.id,
+      dashboardUId: this.dashboard.uid,
       timezone: this.dashboard.timezone,
       timeRange: this.range,
       widthPixels: this.resolution, // The pixel width
