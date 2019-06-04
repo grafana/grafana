@@ -73,6 +73,18 @@ export class TimePicker extends PureComponent<Props, State> {
     isMenuOpen: false,
   };
 
+  componentWillUnmount = () => {
+    this.removeResizeListener();
+  };
+
+  removeResizeListener = () => {
+    window.removeEventListener('resize', this.onCloseMenu);
+  };
+
+  addResizeListener = () => {
+    window.addEventListener('resize', this.onCloseMenu);
+  };
+
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
     const { value, isTimezoneUtc, timezone } = this.props;
     const options = selectOptions.map(timeOption => {
@@ -109,14 +121,20 @@ export class TimePicker extends PureComponent<Props, State> {
       isMenuOpen: isOpen,
     });
   };
-  onOpenMenu = () => this.onChangeMenuOpenState(true);
-  onCloseMenu = () => this.onChangeMenuOpenState(false);
+
+  onOpenMenu = () => {
+    this.onChangeMenuOpenState(true);
+    this.addResizeListener();
+  };
+
+  onCloseMenu = () => {
+    this.onChangeMenuOpenState(false);
+    this.removeResizeListener();
+  };
 
   onPopoverClose = (timeRange: TimeRange) => {
     const { onChange } = this.props;
     onChange(timeRange);
-    // Here we should also close the Select but no sure how to solve this without introducing state in this component
-    // Edit: State introduced
     this.onCloseMenu();
   };
 
