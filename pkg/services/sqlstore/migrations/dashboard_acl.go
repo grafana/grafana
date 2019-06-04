@@ -20,7 +20,6 @@ func addDashboardAclMigrations(mg *Migrator) {
 			{Cols: []string{"dashboard_id"}},
 			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
 			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
-			{Cols: []string{"org_id"}},
 		},
 	}
 
@@ -47,7 +46,4 @@ INSERT INTO dashboard_acl
 	`
 
 	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSqlMigration(rawSQL))
-
-	// Add index for org_id
-	mg.AddMigration("add unique index dashboard_acl_org_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[3]))
 }
