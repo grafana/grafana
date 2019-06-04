@@ -1,5 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
+import moment from 'moment-timezone';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -14,6 +15,7 @@ export class ElasticDatasource {
   timeField: string;
   esVersion: number;
   interval: string;
+  timeZone: string;
   maxConcurrentShardRequests: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
@@ -29,6 +31,11 @@ export class ElasticDatasource {
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
+    if (timeSrv.dashboard && timeSrv.dashboard.timezone === 'utc') {
+      this.timeZone = 'UTC';
+    } else {
+      this.timeZone = moment.tz.guess();
+    }
     this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
@@ -275,6 +282,7 @@ export class ElasticDatasource {
 
     payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
     payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
+    payload = payload.replace(/\$timeZone/g, this.timeZone);
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     const url = this.getMultiSearchUrl();
@@ -378,6 +386,7 @@ export class ElasticDatasource {
 
     esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+    esQuery = esQuery.replace(/\$timeZone/g, this.timeZone);
     esQuery = header + '\n' + esQuery + '\n';
 
     const url = this.getMultiSearchUrl();

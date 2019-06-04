@@ -16,7 +16,14 @@ export class ElasticQueryBuilder {
       lte: '$timeTo',
       format: 'epoch_millis',
     };
-
+    if (this.esVersion >= 70) {
+      filter[this.timeField] = {
+        gte: '$timeFrom',
+        lte: '$timeTo',
+        format: 'epoch_millis',
+        time_zone: '$timeZone',
+      };
+    }
     return filter;
   }
 
@@ -71,6 +78,10 @@ export class ElasticQueryBuilder {
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
     esAgg.format = 'epoch_millis';
+
+    if (this.esVersion >= 70) {
+      esAgg.time_zone = '$timeZone';
+    }
 
     if (settings.offset !== '') {
       esAgg.offset = settings.offset;

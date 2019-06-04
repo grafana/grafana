@@ -209,6 +209,7 @@
     "jquery": "3.4.1",
     "lodash": "4.17.11",
     "moment": "2.24.0",
+    "moment-timezone": "^0.5.23",
     "mousetrap": "1.6.3",
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "1.18.10",
