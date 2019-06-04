@@ -1,20 +1,23 @@
 // @ts-ignore
 import PluginPrism from 'slate-prism';
-// @ts-ignore
-import Prism from 'prismjs';
-import React, { useState, ChangeEvent, useMemo } from 'react';
+
+import React, { useState, ChangeEvent, useMemo, useContext, useCallback } from 'react';
 import { DrillDownLink } from '../../index';
 import { FormField, Switch, Portal } from '../index';
 // @ts-ignore
 import { Editor } from 'slate-react';
 // @ts-ignore
-import { Value, Change } from 'slate';
+import { Value, Change, Document } from 'slate';
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import useDebounce from 'react-use/lib/useDebounce';
 import { Popper as ReactPopper } from 'react-popper';
 import { DrilldownSuggestions, VariableSuggestion } from './LinksSuggestions';
+import { SelectionReference } from './SelectionReference';
+import { css } from 'emotion';
+import { ThemeContext } from '../../themes/index';
+import { makeValue } from '../../utils/slate';
 
 interface DrilldownLinkEditorProps {
   index: number;
@@ -23,81 +26,52 @@ interface DrilldownLinkEditorProps {
   onChange: (index: number, link: DrillDownLink) => void;
   onRemove: (link: DrillDownLink) => void;
 }
+
 const plugins = [
   PluginPrism({
     onlyIn: (node: any) => node.type === 'code_block',
+    getSyntax: () => 'links',
   }),
 ];
 
-class SelectionReference {
-  getBoundingClientRect() {
-    const selection = window.getSelection();
-    const node = selection && selection.anchorNode;
-
-    if (node && node.parentElement) {
-      const rect = node.parentElement.getBoundingClientRect();
-      return rect;
-    }
-
-    return {
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-      width: 0,
-      height: 0,
-    };
-  }
-
-  get clientWidth() {
-    return this.getBoundingClientRect().width;
-  }
-
-  get clientHeight() {
-    return this.getBoundingClientRect().height;
-  }
-}
-
 export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.memo(
   ({ index, value, onChange, onRemove, suggestions }) => {
-    const [showingSuggestions, setShowingSuggestions] = useState(false);
-    const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-    const [usedSuggestions, setUsedSuggestions] = useState<VariableSuggestion[]>([]);
+    const theme = useContext(ThemeContext);
+
+    const getStyles = useCallback(() => {
+      return {
+        editor: css`
+          .token.builtInVariable {
+            color: ${theme.colors.queryGreen};
+          }
+          .token.variable {
+            color: ${theme.colors.queryKeyword};
+          }
+        `,
+      };
+    }, [theme]);
 
     const [title, setTitle] = useState(value.title);
-    const [linkUrl, setLinkUrl] = useState(
-      Value.fromJSON({
-        document: {
-          nodes: [
-            {
-              object: 'block',
-              type: 'code_block',
-              nodes: [
-                {
-                  object: 'text',
-                  leaves: [
-                    {
-                      text: value.url,
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+    const [showingSuggestions, setShowingSuggestions] = useState(false);
+    const [suggestionsIndex, setSuggestionsIndex] = useState(0);
+    const [usedSuggestions, setUsedSuggestions] = useState(
+      suggestions.filter(suggestion => {
+        return value.url.indexOf(suggestion.value) > -1;
       })
     );
-
+    const [linkUrl, setLinkUrl] = useState(makeValue(value.url));
     const getCurrentSuggestions = useMemo(
       () =>
         suggestions.filter(suggestion => {
           return usedSuggestions.map(s => s.value).indexOf(suggestion.value) === -1;
         }),
-      [usedSuggestions]
+      [usedSuggestions, suggestions]
     );
 
+    // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = new SelectionReference();
 
+    // Keep track of variables that has been used already
     const updateUsedSuggestions = () => {
       const currentLink = Plain.serialize(linkUrl);
       const next = usedSuggestions.filter(suggestion => {
@@ -114,15 +88,12 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
       if (event.key === 'Backspace') {
         setShowingSuggestions(false);
         setSuggestionsIndex(0);
-        return;
       }
 
       if (event.key === 'Enter') {
         if (showingSuggestions) {
           onVariableSelect(getCurrentSuggestions[suggestionsIndex]);
-          return true;
         }
-        return true;
       }
 
       if (showingSuggestions) {
@@ -131,7 +102,6 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
           setSuggestionsIndex(index => {
             return (index + 1) % suggestions.length;
           });
-          return true;
         }
         if (event.key === 'ArrowUp') {
           event.preventDefault();
@@ -139,16 +109,19 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
             const nextIndex = index - 1 < 0 ? suggestions.length - 1 : (index - 1) % suggestions.length;
             return nextIndex;
           });
-          return true;
         }
-        return true;
       }
 
-      if (event.key === '?' || event.key === '&' || (event.keyCode === 32 && event.ctrlKey)) {
+      if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
         setShowingSuggestions(true);
+      }
+
+      if (event.key === 'Backspace') {
+        // @ts-ignore
+        return;
+      } else {
         return true;
       }
-      return true;
     };
 
     const onUrlChange = ({ value }: Change) => {
@@ -176,8 +149,9 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
     };
 
     const onVariableSelect = (item: VariableSuggestion) => {
+      const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
       const change = linkUrl.change();
-      change.insertText(item.value);
+      change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       setLinkUrl(change.value);
       setShowingSuggestions(false);
       setUsedSuggestions(previous => {
@@ -235,6 +209,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
                 onBlur={onUrlBlur}
                 onKeyDown={onKeyDown}
                 plugins={plugins}
+                className={getStyles().editor}
               />
             </div>
           </div>

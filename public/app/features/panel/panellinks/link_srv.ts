@@ -16,11 +16,11 @@ export const DrilldownLinkBuiltInVars = {
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   {
-    value: `$${DrilldownLinkBuiltInVars.includeVars}`,
+    value: `${DrilldownLinkBuiltInVars.includeVars}`,
     documentation: 'Adds current variables',
   },
   {
-    value: `$${DrilldownLinkBuiltInVars.keepTime}`,
+    value: `${DrilldownLinkBuiltInVars.keepTime}`,
     documentation: 'Adds current time range',
   },
 ];
@@ -28,11 +28,11 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
 export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getPanelLinksVariableSuggestions(),
   {
-    value: `$${DrilldownLinkBuiltInVars.seriesName}`,
+    value: `${DrilldownLinkBuiltInVars.seriesName}`,
     documentation: 'Adds series name',
   },
   {
-    value: `$${DrilldownLinkBuiltInVars.valueTime}`,
+    value: `${DrilldownLinkBuiltInVars.valueTime}`,
     documentation: "Adds narrowed down time range relative to data point's timestamp",
   },
 ];
