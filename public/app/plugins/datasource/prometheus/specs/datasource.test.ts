@@ -12,6 +12,7 @@ import { DataSourceInstanceSettings } from '@grafana/ui';
 import { PromOptions } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { CustomVariable } from 'app/features/templating/custom_variable';
 
 jest.mock('../metric_find_query');
 
@@ -287,7 +288,7 @@ describe('PrometheusDatasource', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
-    it('should escape $^*+?.()\\', () => {
+    it('should escape $^*+?.()|\\', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -302,9 +303,57 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
       expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
       expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+      expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
     });
     it('should escape multiple special characters', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ctx.variable = new CustomVariable({}, {});
+    });
+
+    describe('and value is a string', () => {
+      it('should only escape single quotes', () => {
+        expect(ctx.ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", ctx.variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return a number', () => {
+        expect(ctx.ds.interpolateQueryExpr(1000, ctx.variable)).toEqual(1000);
+      });
+    });
+
+    describe('and variable allows multi-value', () => {
+      beforeEach(() => {
+        ctx.variable.multi = true;
+      });
+
+      it('should regex escape values if the value is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
+    });
+
+    describe('and variable allows all', () => {
+      beforeEach(() => {
+        ctx.variable.includeAll = true;
+      });
+
+      it('should regex escape values if the array is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
     });
   });
 
@@ -418,7 +467,7 @@ describe('PrometheusDatasource', () => {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
-  describe('When querying prometheus with one target which return multiple series', () => {
+  describe('When querying prometheus with one target which returns multiple series', () => {
     let results;
     const start = 60;
     const end = 360;
