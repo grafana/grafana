@@ -1,10 +1,14 @@
-import { DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import { DashboardQuery } from './types';
 
 /**
  * This should not really be called
  */
 export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
+  }
+
   getCollapsedText(query: DashboardQuery) {
     return `Dashboard Reference: ${query.panelId}`;
   }
