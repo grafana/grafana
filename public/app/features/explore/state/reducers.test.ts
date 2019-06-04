@@ -4,6 +4,7 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
+  DEFAULT_RANGE,
 } from './reducers';
 import {
   ExploreId,
@@ -16,7 +17,6 @@ import {
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
-  scanStopAction,
   testDataSourcePendingAction,
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
@@ -24,15 +24,15 @@ import {
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
+  scanStopAction,
   runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
-import { LogsDedupStrategy, LogsModel } from 'app/core/logs_model';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState, dateTime } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -144,7 +144,6 @@ describe('Explore item reducer', () => {
             meta: {
               metrics: true,
               logs: true,
-              tables: true,
             },
             components: {
               ExploreStartPage: StartPage,
@@ -154,9 +153,6 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            supportsGraph: false,
-            supportsLogs: false,
-            supportsTable: false,
             StartPage: null,
             showingStartPage: false,
             queries,
@@ -164,18 +160,13 @@ describe('Explore item reducer', () => {
           };
           const expectedState = {
             datasourceInstance,
-            supportsGraph: true,
-            supportsLogs: true,
-            supportsTable: true,
             StartPage,
             showingStartPage: true,
             queries,
             queryKeys,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            graphIsLoading: false,
-            tableIsLoading: false,
-            logIsLoading: false,
+            loadingState: LoadingState.NotStarted,
             latency: 0,
             queryErrors: [],
           };
@@ -194,6 +185,7 @@ describe('Explore item reducer', () => {
       it('then it should set correct state', () => {
         const initalState: Partial<ExploreItemState> = {
           showingStartPage: true,
+          range: null,
         };
         const expectedState = {
           queryIntervals: {
@@ -201,11 +193,16 @@ describe('Explore item reducer', () => {
             intervalMs: 1000,
           },
           showingStartPage: false,
+          range: {
+            from: dateTime(),
+            to: dateTime(),
+            raw: DEFAULT_RANGE,
+          },
         };
 
         reducerTester()
           .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
           .thenStateShouldEqual(expectedState);
       });
     });

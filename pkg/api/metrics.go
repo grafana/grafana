@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -66,7 +67,14 @@ func (hs *HTTPServer) QueryMetrics(c *m.ReqContext, reqDto dtos.MetricRequest) R
 func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
-	for _, scenario := range testdata.ScenarioRegistry {
+	scenarioIds := make([]string, 0)
+	for id := range testdata.ScenarioRegistry {
+		scenarioIds = append(scenarioIds, id)
+	}
+	sort.Strings(scenarioIds)
+
+	for _, scenarioId := range scenarioIds {
+		scenario := testdata.ScenarioRegistry[scenarioId]
 		result = append(result, map[string]interface{}{
 			"id":          scenario.Id,
 			"name":        scenario.Name,

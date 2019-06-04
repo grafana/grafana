@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -65,4 +66,20 @@ func GetAgeString(t time.Time) string {
 	}
 
 	return "< 1m"
+}
+
+// ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.
+func ToCamelCase(str string) string {
+	var finalParts []string
+	parts := strings.Split(str, "_")
+
+	for _, part := range parts {
+		finalParts = append(finalParts, strings.Split(part, "-")...)
+	}
+
+	for index, part := range finalParts[1:] {
+		finalParts[index+1] = strings.Title(part)
+	}
+
+	return strings.Join(finalParts, "")
 }

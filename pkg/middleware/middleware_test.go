@@ -300,7 +300,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyWhitelist = ""
 			setting.AuthProxyAutoSignUp = true
-			setting.LdapEnabled = true
+			setting.LDAPEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			name := "markelog"
@@ -326,7 +326,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			middlewareScenario(t, "should create an user from a header", func(sc *scenarioContext) {
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 				setting.AuthProxyAutoSignUp = true
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -354,7 +354,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			middlewareScenario(t, "should get an existing user from header", func(sc *scenarioContext) {
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
@@ -379,7 +379,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			middlewareScenario(t, "should allow the request from whitelist IP", func(sc *scenarioContext) {
 				setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
@@ -405,7 +405,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			middlewareScenario(t, "should not allow the request from whitelist IP", func(sc *scenarioContext) {
 				setting.AuthProxyWhitelist = "8.8.8.8"
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}

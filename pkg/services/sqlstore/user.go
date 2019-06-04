@@ -27,6 +27,8 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
+	bus.AddHandler("sql", DisableUser)
+	bus.AddHandler("sql", BatchDisableUsers)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
@@ -326,6 +328,7 @@ func GetUserProfile(query *m.GetUserProfileQuery) error {
 		Login:          user.Login,
 		Theme:          user.Theme,
 		IsGrafanaAdmin: user.IsAdmin,
+		IsDisabled:     user.IsDisabled,
 		OrgId:          user.OrgId,
 	}
 
@@ -450,7 +453,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "email", "name", "login", "is_admin", "last_seen_at")
+	sess.Cols("id", "email", "name", "login", "is_admin", "is_disabled", "last_seen_at")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
@@ -471,6 +474,43 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	}
 
 	return err
+}
+
+func DisableUser(cmd *m.DisableUserCommand) error {
+	user := m.User{}
+	sess := x.Table("user")
+	sess.ID(cmd.UserId).Get(&user)
+
+	user.IsDisabled = cmd.IsDisabled
+	sess.UseBool("is_disabled")
+
+	_, err := sess.ID(cmd.UserId).Update(&user)
+	return err
+}
+
+func BatchDisableUsers(cmd *m.BatchDisableUsersCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		userIds := cmd.UserIds
+
+		if len(userIds) == 0 {
+			return nil
+		}
+
+		user_id_params := strings.Repeat(",?", len(userIds)-1)
+		disableSQL := "UPDATE " + dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+
+		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
+		for _, v := range userIds {
+			disableParams = append(disableParams, v)
+		}
+
+		_, err := sess.Exec(disableParams...)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {

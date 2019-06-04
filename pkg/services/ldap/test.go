@@ -12,22 +12,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type mockConnection struct {
-	searchResult     *ldap.SearchResult
-	searchCalled     bool
-	searchAttributes []string
+// MockConnection struct for testing
+type MockConnection struct {
+	SearchResult     *ldap.SearchResult
+	SearchCalled     bool
+	SearchAttributes []string
 
-	addParams *ldap.AddRequest
-	addCalled bool
+	AddParams *ldap.AddRequest
+	AddCalled bool
 
-	delParams *ldap.DelRequest
-	delCalled bool
+	DelParams *ldap.DelRequest
+	DelCalled bool
 
 	bindProvider                func(username, password string) error
 	unauthenticatedBindProvider func(username string) error
 }
 
-func (c *mockConnection) Bind(username, password string) error {
+// Bind mocks Bind connection function
+func (c *MockConnection) Bind(username, password string) error {
 	if c.bindProvider != nil {
 		return c.bindProvider(username, password)
 	}
@@ -35,7 +37,8 @@ func (c *mockConnection) Bind(username, password string) error {
 	return nil
 }
 
-func (c *mockConnection) UnauthenticatedBind(username string) error {
+// UnauthenticatedBind mocks UnauthenticatedBind connection function
+func (c *MockConnection) UnauthenticatedBind(username string) error {
 	if c.unauthenticatedBindProvider != nil {
 		return c.unauthenticatedBindProvider(username)
 	}
@@ -43,35 +46,40 @@ func (c *mockConnection) UnauthenticatedBind(username string) error {
 	return nil
 }
 
-func (c *mockConnection) Close() {}
+// Close mocks Close connection function
+func (c *MockConnection) Close() {}
 
-func (c *mockConnection) setSearchResult(result *ldap.SearchResult) {
-	c.searchResult = result
+func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {
+	c.SearchResult = result
 }
 
-func (c *mockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
-	c.searchCalled = true
-	c.searchAttributes = sr.Attributes
-	return c.searchResult, nil
+// Search mocks Search connection function
+func (c *MockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+	c.SearchCalled = true
+	c.SearchAttributes = sr.Attributes
+	return c.SearchResult, nil
 }
 
-func (c *mockConnection) Add(request *ldap.AddRequest) error {
-	c.addCalled = true
-	c.addParams = request
+// Add mocks Add connection function
+func (c *MockConnection) Add(request *ldap.AddRequest) error {
+	c.AddCalled = true
+	c.AddParams = request
 	return nil
 }
 
-func (c *mockConnection) Del(request *ldap.DelRequest) error {
-	c.delCalled = true
-	c.delParams = request
+// Del mocks Del connection function
+func (c *MockConnection) Del(request *ldap.DelRequest) error {
+	c.DelCalled = true
+	c.DelParams = request
 	return nil
 }
 
-func (c *mockConnection) StartTLS(*tls.Config) error {
+// StartTLS mocks StartTLS connection function
+func (c *MockConnection) StartTLS(*tls.Config) error {
 	return nil
 }
 
-func authScenario(desc string, fn scenarioFunc) {
+func serverScenario(desc string, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -115,6 +123,18 @@ func authScenario(desc string, fn scenarioFunc) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(cmd *models.GetExternalUserInfoByLoginQuery) error {
+			sc.getExternalUserInfoByLoginQuery = cmd
+			sc.getExternalUserInfoByLoginQuery.Result = &models.ExternalUserInfo{UserId: 42, IsDisabled: false}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+			sc.disableExternalUserCalled = true
+			sc.disableUserCmd = cmd
+			return nil
+		})
+
 		bus.AddHandler("test", func(cmd *models.AddOrgUserCommand) error {
 			sc.addOrgUserCmd = cmd
 			return nil
@@ -145,16 +165,19 @@ func authScenario(desc string, fn scenarioFunc) {
 }
 
 type scenarioContext struct {
-	loginUserQuery           *models.LoginUserQuery
-	getUserByAuthInfoQuery   *models.GetUserByAuthInfoQuery
-	getUserOrgListQuery      *models.GetUserOrgListQuery
-	createUserCmd            *models.CreateUserCommand
-	addOrgUserCmd            *models.AddOrgUserCommand
-	updateOrgUserCmd         *models.UpdateOrgUserCommand
-	removeOrgUserCmd         *models.RemoveOrgUserCommand
-	updateUserCmd            *models.UpdateUserCommand
-	setUsingOrgCmd           *models.SetUsingOrgCommand
-	updateUserPermissionsCmd *models.UpdateUserPermissionsCommand
+	loginUserQuery                  *models.LoginUserQuery
+	getUserByAuthInfoQuery          *models.GetUserByAuthInfoQuery
+	getExternalUserInfoByLoginQuery *models.GetExternalUserInfoByLoginQuery
+	getUserOrgListQuery             *models.GetUserOrgListQuery
+	createUserCmd                   *models.CreateUserCommand
+	disableUserCmd                  *models.DisableUserCommand
+	addOrgUserCmd                   *models.AddOrgUserCommand
+	updateOrgUserCmd                *models.UpdateOrgUserCommand
+	removeOrgUserCmd                *models.RemoveOrgUserCommand
+	updateUserCmd                   *models.UpdateUserCommand
+	setUsingOrgCmd                  *models.SetUsingOrgCommand
+	updateUserPermissionsCmd        *models.UpdateUserPermissionsCommand
+	disableExternalUserCalled       bool
 }
 
 func (sc *scenarioContext) userQueryReturns(user *models.User) {
@@ -173,6 +196,17 @@ func (sc *scenarioContext) userQueryReturns(user *models.User) {
 func (sc *scenarioContext) userOrgsQueryReturns(orgs []*models.UserOrgDTO) {
 	bus.AddHandler("test", func(query *models.GetUserOrgListQuery) error {
 		query.Result = orgs
+		return nil
+	})
+}
+
+func (sc *scenarioContext) getExternalUserInfoByLoginQueryReturns(externalUser *models.ExternalUserInfo) {
+	bus.AddHandler("test", func(cmd *models.GetExternalUserInfoByLoginQuery) error {
+		sc.getExternalUserInfoByLoginQuery = cmd
+		sc.getExternalUserInfoByLoginQuery.Result = &models.ExternalUserInfo{
+			UserId:     externalUser.UserId,
+			IsDisabled: externalUser.IsDisabled,
+		}
 		return nil
 	})
 }
