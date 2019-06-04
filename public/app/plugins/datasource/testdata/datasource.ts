@@ -32,10 +32,11 @@ export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
         scenarioId: item.scenarioId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
+        datasourceId: this.id,
         stringInput: item.stringInput,
         points: item.points,
         alias: item.alias,
-        datasourceId: this.id,
+        ...item,
       };
     });
 

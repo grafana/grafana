@@ -27,6 +27,7 @@ exit_if_fail gometalinter --enable-gc --vendor --deadline 10m --disable-all \
 exit_if_fail golangci-lint run --deadline 10m --disable-all \
   --enable=deadcode\
   --enable=gofmt\
+  --enable=gosimple\
   --enable=ineffassign\
   --enable=structcheck\
   --enable=unconvert\
@@ -35,4 +36,5 @@ exit_if_fail golangci-lint run --deadline 10m --disable-all \
 exit_if_fail go vet ./pkg/...
 
 exit_if_fail make revive
+exit_if_fail make revive-alerting
 exit_if_fail make gosec

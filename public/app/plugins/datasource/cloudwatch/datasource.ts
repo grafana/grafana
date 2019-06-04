@@ -149,12 +149,14 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       if (res.results) {
         for (const query of request.queries) {
           const queryRes = res.results[query.refId];
-          for (const series of queryRes.series) {
-            const s = { target: series.name, datapoints: series.points } as any;
-            if (queryRes.meta.unit) {
-              s.unit = queryRes.meta.unit;
+          if (queryRes) {
+            for (const series of queryRes.series) {
+              const s = { target: series.name, datapoints: series.points } as any;
+              if (queryRes.meta.unit) {
+                s.unit = queryRes.meta.unit;
+              }
+              data.push(s);
             }
-            data.push(s);
           }
         }
       }

@@ -1,6 +1,6 @@
 import { ThunkAction } from 'redux-thunk';
 import { StoreState } from '../../../types';
-import { getBackendSrv } from '../../../core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { Invitee, OrgUser } from 'app/types';
 
 export enum ActionTypes {

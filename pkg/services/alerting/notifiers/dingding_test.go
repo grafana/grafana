@@ -20,7 +20,7 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewDingDingNotifier(model)
+			_, err := newDingDingNotifier(model)
 			So(err, ShouldNotBeNil)
 
 		})
@@ -34,14 +34,13 @@ func TestDingDingNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewDingDingNotifier(model)
+			not, err := newDingDingNotifier(model)
 			notifier := not.(*DingDingNotifier)
 
 			So(err, ShouldBeNil)
 			So(notifier.Name, ShouldEqual, "dingding_testing")
 			So(notifier.Type, ShouldEqual, "dingding")
-			So(notifier.Url, ShouldEqual, "https://www.google.com")
+			So(notifier.URL, ShouldEqual, "https://www.google.com")
 		})
-
 	})
 }

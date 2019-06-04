@@ -49,7 +49,6 @@ func TestKafkaNotifier(t *testing.T) {
 				So(kafkaNotifier.Endpoint, ShouldEqual, "http://localhost:8082")
 				So(kafkaNotifier.Topic, ShouldEqual, "topic1")
 			})
-
 		})
 	})
 }

@@ -1,4 +1,4 @@
-package commands
+package utils
 
 import (
 	"github.com/codegangsta/cli"
@@ -22,30 +22,30 @@ type CommandLine interface {
 	PluginURL() string
 }
 
-type contextCommandLine struct {
+type ContextCommandLine struct {
 	*cli.Context
 }
 
-func (c *contextCommandLine) ShowHelp() {
+func (c *ContextCommandLine) ShowHelp() {
 	cli.ShowCommandHelp(c.Context, c.Command.Name)
 }
 
-func (c *contextCommandLine) ShowVersion() {
+func (c *ContextCommandLine) ShowVersion() {
 	cli.ShowVersion(c.Context)
 }
 
-func (c *contextCommandLine) Application() *cli.App {
+func (c *ContextCommandLine) Application() *cli.App {
 	return c.App
 }
 
-func (c *contextCommandLine) PluginDirectory() string {
+func (c *ContextCommandLine) PluginDirectory() string {
 	return c.GlobalString("pluginsDir")
 }
 
-func (c *contextCommandLine) RepoDirectory() string {
+func (c *ContextCommandLine) RepoDirectory() string {
 	return c.GlobalString("repo")
 }
 
-func (c *contextCommandLine) PluginURL() string {
+func (c *ContextCommandLine) PluginURL() string {
 	return c.GlobalString("pluginUrl")
 }

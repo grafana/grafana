@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
@@ -35,7 +35,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
-    const target = { ...initialQuery };
+    const target = { datasource: datasource.name, ...initialQuery };
     const scopeProps = {
       ctrl: {
         datasource,

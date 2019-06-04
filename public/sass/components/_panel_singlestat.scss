@@ -6,17 +6,13 @@
 }
 
 .singlestat-panel-value-container {
-  // line-height 0 is imporant here as the font-size is on this
-  // level but overriden one level deeper and but the line-height: is still
-  // based on the base font size on this level. Using line-height: 0 fixes that
-  line-height: 0;
   display: table-cell;
   vertical-align: middle;
   text-align: center;
   position: relative;
   z-index: 1;
   font-weight: $font-weight-semi-bold;
-  font-size: 38px;
+  line-height: 1;
 }
 
 // Helps

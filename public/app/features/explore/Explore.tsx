@@ -51,11 +51,11 @@ import {
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
+import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -87,6 +87,7 @@ interface ExploreProps {
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
   mode: ExploreMode;
+  isLive: boolean;
 }
 
 /**
@@ -315,6 +316,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     update,
     queryErrors,
     mode,
+    isLive,
   } = item;
 
   const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
@@ -340,6 +342,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialUI,
     queryErrors,
     mode,
+    isLive,
   };
 }
 
