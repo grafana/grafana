@@ -1,3 +1,4 @@
+//@ts-ignore
 import execa from 'execa';
 import fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
@@ -5,12 +6,15 @@ import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
 
-let distDir, cwd;
+let distDir: string, cwd: string;
 
+// @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
 
+// @ts-ignore
 const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
+// @ts-ignore
 const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'build']));
 
 export const savePackage = useSpinner<{
@@ -28,7 +32,7 @@ export const savePackage = useSpinner<{
   });
 });
 
-const preparePackage = async pkg => {
+const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
   pkg.types = 'index.d.ts';
   await savePackage({
@@ -71,6 +75,4 @@ const buildTaskRunner: TaskRunner<void> = async () => {
   restoreCwd();
 };
 
-export const buildTask = new Task<void>();
-buildTask.setName('@grafana/ui build');
-buildTask.setRunner(buildTaskRunner);
+export const buildTask = new Task<void>('@grafana/ui build', buildTaskRunner);

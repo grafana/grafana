@@ -28,13 +28,18 @@ const tasks = {
 const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
   const status = await simpleGit.status();
   const sassFiles = status.files.filter(
-    file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.scss)$/g) || file.path.indexOf('.sass-lint.yml') > -1
+    (file: any) =>
+      (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.scss)$/g) || file.path.indexOf('.sass-lint.yml') > -1
   );
 
-  const tsFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.(ts|tsx))$/g));
-  const testFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.test.(ts|tsx))$/g));
-  const goTestFiles = status.files.filter(file => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\_test.go)$/g));
-  const grafanaUiFiles = tsFiles.filter(file => (file.path as string).indexOf('grafana-ui') > -1);
+  const tsFiles = status.files.filter((file: any) => (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.(ts|tsx))$/g));
+  const testFiles = status.files.filter((file: any) =>
+    (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\.test.(ts|tsx))$/g)
+  );
+  const goTestFiles = status.files.filter((file: any) =>
+    (file.path as string).match(/^[a-zA-Z0-9\_\-\/]+(\_test.go)$/g)
+  );
+  const grafanaUiFiles = tsFiles.filter((file: any) => (file.path as string).indexOf('grafana-ui') > -1);
 
   const grafanaUIFilesChangedOnly = tsFiles.length > 0 && tsFiles.length - grafanaUiFiles.length === 0;
   const coreFilesChangedOnly = tsFiles.length > 0 && grafanaUiFiles.length === 0;
@@ -69,13 +74,13 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
     const task = execa('grunt', gruntTasks);
     // @ts-ignore
     const stream = task.stdout;
-    stream.pipe(process.stdout);
+    if (stream) {
+      stream.pipe(process.stdout);
+    }
     return task;
   }
   console.log(chalk.yellow('Skipping precommit checks, not front-end changes detected'));
   return;
 };
 
-export const precommitTask = new Task<PrecommitOptions>();
-precommitTask.setName('Precommit task');
-precommitTask.setRunner(precommitRunner);
+export const precommitTask = new Task<PrecommitOptions>('Precommit task', precommitRunner);
