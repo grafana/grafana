@@ -8,8 +8,6 @@ import find from 'lodash/find';
 import { UrlQueryMap } from '@grafana/runtime';
 import { StoreState } from 'app/types';
 import {
-  NavModel,
-  NavModelItem,
   PluginType,
   GrafanaPlugin,
   PluginInclude,
@@ -20,6 +18,7 @@ import {
   AppPlugin,
   PluginIncludeType,
 } from '@grafana/ui';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';

@@ -34,6 +34,7 @@ module.exports = function(grunt) {
   grunt.registerTask('no-only-tests', function() {
     var files = grunt.file.expand(
       'public/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
+      'packages/grafana-data/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
       'packages/grafana-ui/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
       'packages/grafana-runtime/**/*@(_specs|.test).@(ts|js|tsx|jsx)'
     );

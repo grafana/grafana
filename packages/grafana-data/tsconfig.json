@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx", "../grafana-data/src/utils/string.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../../public/app/types/jquery/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "rootDirs": [".", "stories"],
+    "rootDirs": ["."],
     "module": "esnext",
     "outDir": "compiled",
     "declaration": true,

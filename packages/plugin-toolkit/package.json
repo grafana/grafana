@@ -1,5 +1,5 @@
 {
-  "name": "@grafana/build",
+  "name": "@grafana/plugin-toolkit",
   "private": true,
   "version": "1.0.0",
   "description": "",

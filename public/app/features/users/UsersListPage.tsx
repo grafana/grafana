@@ -11,7 +11,7 @@ import appEvents from 'app/core/app_events';
 import { loadUsers, loadInvitees, setUsersSearchQuery, updateUser, removeUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;

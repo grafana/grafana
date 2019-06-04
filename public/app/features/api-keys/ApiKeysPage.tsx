@@ -12,7 +12,8 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, Input, NavModel } from '@grafana/ui';
+import { DeleteButton, Input } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {

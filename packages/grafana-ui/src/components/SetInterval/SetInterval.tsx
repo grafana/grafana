@@ -3,8 +3,16 @@ import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 import _ from 'lodash';
 
-import { stringToMs } from '../../utils/string';
+import { stringToMs } from '@grafana/data';
 import { isLive } from '../RefreshPicker/RefreshPicker';
+import { SelectOptionItem } from '../Select/Select';
+
+export function getIntervalFromString(strInterval: string): SelectOptionItem<number> {
+  return {
+    label: strInterval,
+    value: stringToMs(strInterval),
+  };
+}
 
 interface Props {
   func: () => any; // TODO
