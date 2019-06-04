@@ -1,11 +1,21 @@
 // Libraries
-import { AnnotationEvent, DataQueryError, DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, DataStreamObserver, LoadingState } from '@grafana/ui/src/types';
+import {
+  AnnotationEvent,
+  DataQueryError,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataStreamObserver,
+  LoadingState,
+} from '@grafana/ui/src/types';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { ExploreUrlState } from 'app/types/explore';
 import $ from 'jquery';
 import _ from 'lodash';
 import { from, Observable } from 'rxjs';
