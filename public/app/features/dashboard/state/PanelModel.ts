@@ -146,8 +146,8 @@ export class PanelModel {
     }
   }
 
-  getOptions(panelDefaults: any) {
-    return _.defaultsDeep(this.options || {}, panelDefaults);
+  getOptions() {
+    return this.options;
   }
 
   updateOptions(options: object) {
