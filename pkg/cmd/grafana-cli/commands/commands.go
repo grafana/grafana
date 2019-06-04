@@ -7,14 +7,16 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func runDbCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
-		cmd := &contextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 
 		cfg := setting.NewCfg()
 		cfg.Load(&setting.CommandLineArgs{
@@ -28,7 +30,7 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 		engine.Bus = bus.GetBus()
 		engine.Init()
 
-		if err := command(cmd); err != nil {
+		if err := command(cmd, engine); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s\n\n", err)
 
@@ -40,10 +42,10 @@ func runDbCommand(command func(commandLine CommandLine) error) func(context *cli
 	}
 }
 
-func runPluginCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 
-		cmd := &contextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
@@ -104,6 +106,17 @@ var adminCommands = []cli.Command{
 			cli.StringFlag{
 				Name:  "config",
 				Usage: "path to config file",
+			},
+		},
+	},
+	{
+		Name:  "data-migration",
+		Usage: "Runs a script that migrates or cleanups data in your db",
+		Subcommands: []cli.Command{
+			{
+				Name:   "encrypt-datasource-passwords",
+				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
+				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
 			},
 		},
 	},

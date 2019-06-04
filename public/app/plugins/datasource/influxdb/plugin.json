@@ -8,7 +8,6 @@
   "metrics": true,
   "annotations": true,
   "alerting": true,
-  "tables": true,
 
   "queryOptions": {
     "minInterval": true

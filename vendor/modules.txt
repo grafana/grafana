@@ -56,9 +56,6 @@ github.com/benbjohnson/clock
 github.com/beorn7/perks/quantile
 # github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
 github.com/bradfitz/gomemcache/memcache
-# github.com/brianvoe/gofakeit v3.17.0+incompatible
-github.com/brianvoe/gofakeit
-github.com/brianvoe/gofakeit/data
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
 # github.com/davecgh/go-spew v1.1.1

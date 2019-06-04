@@ -35,7 +35,7 @@ type notificationService struct {
 }
 
 func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
@@ -56,13 +56,13 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
 	notifier := notifierState.notifier
 
-	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUid(), "isDefault", notifier.GetIsDefault())
+	n.log.Debug("Sending notification", "type", notifier.GetType(), "uid", notifier.GetNotifierUID(), "isDefault", notifier.GetIsDefault())
 	metrics.M_Alerting_Notification_Sent.WithLabelValues(notifier.GetType()).Inc()
 
 	err := notifier.Notify(evalContext)
 
 	if err != nil {
-		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUid(), "error", err)
+		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
 	}
 
 	if evalContext.IsTestRun {
@@ -106,7 +106,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
-			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUid(), "error", err)
+			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		Width:           1000,
 		Height:          500,
 		Timeout:         setting.AlertingEvaluationTimeout,
-		OrgId:           context.Rule.OrgId,
+		OrgId:           context.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
@@ -133,7 +133,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgId, context.Rule.PanelId)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgID, context.Rule.PanelID)
 
 	result, err := n.renderService.Render(context.Ctx, renderOpts)
 	if err != nil {
@@ -141,13 +141,13 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	context.ImageOnDiskPath = result.FilePath
-	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
+	context.ImagePublicURL, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}
 
-	if context.ImagePublicUrl != "" {
-		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicUrl)
+	if context.ImagePublicURL != "" {
+		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicURL)
 	}
 
 	return nil
@@ -170,8 +170,8 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 
 		query := &models.GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
-			AlertId:    evalContext.Rule.Id,
-			OrgId:      evalContext.Rule.OrgId,
+			AlertId:    evalContext.Rule.ID,
+			OrgId:      evalContext.Rule.OrgID,
 		}
 
 		err = bus.DispatchCtx(evalContext.Ctx, query)
