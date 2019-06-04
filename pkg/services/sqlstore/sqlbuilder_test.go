@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
@@ -163,7 +162,6 @@ type dashboardResponse struct {
 
 func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool) {
 	// Will also cleanup the db
-	_ = os.Setenv("GRAFANA_TEST_DB", "postgres")
 	sqlStore := InitTestDB(t)
 
 	dashboard, err := createDummyDashboard(dashboardProps)
