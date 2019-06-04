@@ -5,7 +5,8 @@ import { connect } from 'react-redux';
 import find from 'lodash/find';
 
 // Types
-import { StoreState, UrlQueryMap } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
+import { StoreState } from 'app/types';
 import {
   NavModel,
   NavModelItem,

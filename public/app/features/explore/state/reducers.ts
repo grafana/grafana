@@ -55,7 +55,7 @@ import {
   toggleLogLevelAction,
 } from './actionTypes';
 import { updateLocation } from 'app/core/actions/location';
-import { LocationUpdate } from 'app/types';
+import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
