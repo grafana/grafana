@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import darkTheme from '@grafana/ui/src/themes/dark';
 import lightTheme from '@grafana/ui/src/themes/light';
 import defaultTheme from '@grafana/ui/src/themes/default';
@@ -6,9 +6,9 @@ import { darkThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.dark.sc
 import { lightThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.light.scss.tmpl';
 import { commonThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.scss.tmpl';
 
-const darkThemeVariablesPath = __dirname + '/../../../../public/sass/_variables.dark.generated.scss';
-const lightThemeVariablesPath = __dirname + '/../../../../public/sass/_variables.light.generated.scss';
-const defaultThemeVariablesPath = __dirname + '/../../../../public/sass/_variables.generated.scss';
+const darkThemeVariablesPath = __dirname + '/../../public/sass/_variables.dark.generated.scss';
+const lightThemeVariablesPath = __dirname + '/../../public/sass/_variables.light.generated.scss';
+const defaultThemeVariablesPath = __dirname + '/../../public/sass/_variables.generated.scss';
 
 const writeVariablesFile = async (path: string, data: string) => {
   return new Promise((resolve, reject) => {

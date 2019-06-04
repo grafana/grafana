@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.json",
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
@@ -11,6 +10,7 @@
     "strictNullChecks": true,
     "typeRoots": ["./node_modules/@types"],
     "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
-    "removeComments": false
+    "removeComments": false,
+    "esModuleInterop": true
   }
 }

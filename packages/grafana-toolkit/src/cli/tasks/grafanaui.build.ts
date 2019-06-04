@@ -1,6 +1,5 @@
-//@ts-ignore
-import execa from 'execa';
-import fs from 'fs';
+import * as execa from 'execa';
+import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';

@@ -12,25 +12,17 @@
   },
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts",
-    "cli": "ts-node --project ./cli/tsconfig.json ./cli/index.ts",
-    "themes:generate": "ts-node --project ./tsconfig.json ./src/cli/generateSassVariableFiles.ts"
+    "typecheck": "tsc --noEmit"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/commander": "^2.12.2",
-    "ts-node": "^8.2.0"
-  },
-  "devDependencies": {
-    "@types/chalk": "^2.2.0",
-    "@types/commander": "^2.12.2",
+    "axios": "0.19.0",
+    "lodash": "4.17.11",
+    "ts-node": "^8.2.0",
     "@types/execa": "^0.9.0",
     "@types/inquirer": "^6.0.3",
     "@types/node": "^12.0.4",
-    "@types/ora": "^3.2.0",
     "@types/semver": "^6.0.0",
     "chalk": "^2.4.2",
     "commander": "^2.20.0",
@@ -38,7 +30,9 @@
     "inquirer": "^6.3.1",
     "ora": "^3.4.0",
     "semver": "^6.1.1",
-    "typescript": "^3.5.1"
+    "typescript": "^3.5.1",
+    "concurrently": "4.1.0",
+    "simple-git": "^1.112.0"
   },
   "resolutions": {
     "@types/lodash": "4.14.119"

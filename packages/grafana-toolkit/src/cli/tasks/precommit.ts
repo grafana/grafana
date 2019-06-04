@@ -1,6 +1,8 @@
 import { Task, TaskRunner } from './task';
 import chalk from 'chalk';
+// @ts-ignore
 import get from 'lodash/get';
+// @ts-ignore
 import flatten from 'lodash/flatten';
 import execa = require('execa');
 const simpleGit = require('simple-git/promise')(process.cwd());

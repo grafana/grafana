@@ -1,3 +1,4 @@
+// @ts-ignore
 import program from 'commander';
 import { execTask } from './utils/execTask';
 import chalk from 'chalk';
@@ -7,6 +8,7 @@ import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
 import { precommitTask } from './tasks/precommit';
+import { templateTask } from './tasks/template';
 
 export const run = () => {
   program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
@@ -71,6 +73,13 @@ export const run = () => {
     .description('Executes checks')
     .action(async cmd => {
       await execTask(precommitTask)({});
+    });
+
+  program
+    .command('debug:template')
+    .description('Just testing')
+    .action(async cmd => {
+      await execTask(templateTask)({});
     });
 
   program.parse(process.argv);

@@ -47,7 +47,6 @@
     "babel-loader": "8.0.5",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "clean-webpack-plugin": "2.0.0",
-    "concurrently": "4.1.0",
     "css-loader": "2.1.1",
     "enzyme": "3.9.0",
     "enzyme-adapter-react-16": "1.11.2",
@@ -108,7 +107,6 @@
     "rimraf": "2.6.3",
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
-    "simple-git": "^1.112.0",
     "sinon": "1.17.6",
     "style-loader": "0.23.1",
     "systemjs": "0.20.19",
@@ -145,7 +143,6 @@
     "api-tests": "jest --notify --watch --config=tests/api/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
-    "themes:generate": "cd packages/grafana-toolkit && ts-node --project ./tsconfig.json ./src/cli/generateSassVariableFiles.ts",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
     "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
@@ -153,7 +150,8 @@
     "gui:releasePrepare": "grafana-toolkit gui:release",
     "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
     "gui:release": "grafana-toolkit gui:release -p --createVersionCommit",
-    "precommit": "grafana-toolkit precommit"
+    "precommit": "grafana-toolkit precommit",
+    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts"
   },
   "husky": {
     "hooks": {
