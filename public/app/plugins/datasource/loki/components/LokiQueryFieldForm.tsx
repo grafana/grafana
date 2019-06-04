@@ -16,7 +16,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
+import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {
@@ -65,7 +65,7 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreDataSourceApi<LokiQuery>, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
   history: HistoryItem[];
   syntax: any;
   logLabelOptions: any[];
