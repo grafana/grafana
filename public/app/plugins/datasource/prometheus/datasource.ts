@@ -701,7 +701,7 @@ export function prometheusRegularEscape(value) {
 
 export function prometheusSpecialRegexEscape(value) {
   if (typeof value === 'string') {
-    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()]/g, '\\\\$&'));
+    return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }
   return value;
 }
