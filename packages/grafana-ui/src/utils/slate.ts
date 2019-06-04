@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Block, Document, Text, Value } from 'slate';
 
 const SCHEMA = {
